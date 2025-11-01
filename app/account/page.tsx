@@ -411,32 +411,35 @@ export default function Account() {
                     <h2 className="text-lg font-semibold">Recent Visits</h2>
                   </div>
                   <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                    {visitedPlaces.slice(0, 10).map((place, index) => (
-                      <div
-                        key={place.destination_slug}
-                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                        onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      >
-                        <div className="flex items-center gap-4">
-                          {place.destination.image && (
-                            <img
-                              src={place.destination.image}
-                              alt={place.destination.name}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">{place.destination.name}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                              {capitalizeCity(place.destination.city)} • {place.destination.category}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                              {new Date(place.visited_at).toLocaleDateString()}
+                    {visitedPlaces.filter(place => place.destination).slice(0, 10).map((place) => {
+                      const dest = place.destination!;
+                      return (
+                        <div
+                          key={place.destination_slug}
+                          className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                          onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                        >
+                          <div className="flex items-center gap-4">
+                            {dest.image && (
+                              <img
+                                src={dest.image}
+                                alt={dest.name}
+                                className="w-12 h-12 object-cover rounded"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{dest.name}</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                {capitalizeCity(dest.city)} • {dest.category}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                {new Date(place.visited_at).toLocaleDateString()}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -454,32 +457,35 @@ export default function Account() {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {savedPlaces.map((place) => (
-                    <div
-                      key={place.destination_slug}
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                    >
-                      <div className="flex items-center gap-4">
-                        {place.destination.image && (
-                          <img
-                            src={place.destination.image}
-                            alt={place.destination.name}
-                            className="w-16 h-16 object-cover rounded"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{place.destination.name}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
-                            {capitalizeCity(place.destination.city)}
+                  {savedPlaces.filter(place => place.destination).map((place) => {
+                    const dest = place.destination!;
+                    return (
+                      <div
+                        key={place.destination_slug}
+                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                        onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                      >
+                        <div className="flex items-center gap-4">
+                          {dest.image && (
+                            <img
+                              src={dest.image}
+                              alt={dest.name}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{dest.name}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
+                              {capitalizeCity(dest.city)}
+                            </div>
+                            <Badge variant="secondary" className="mt-2 text-xs">
+                              {dest.category}
+                            </Badge>
                           </div>
-                          <Badge variant="secondary" className="mt-2 text-xs">
-                            {place.destination.category}
-                          </Badge>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -496,37 +502,40 @@ export default function Account() {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {visitedPlaces.map((place) => (
-                    <div
-                      key={place.destination_slug}
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                    >
-                      <div className="flex items-center gap-4">
-                        {place.destination.image && (
-                          <img
-                            src={place.destination.image}
-                            alt={place.destination.name}
-                            className="w-16 h-16 object-cover rounded"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{place.destination.name}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
-                            {capitalizeCity(place.destination.city)}
-                          </div>
-                          <div className="flex items-center gap-3 mt-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {place.destination.category}
-                            </Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-500">
-                              {new Date(place.visited_at).toLocaleDateString()}
-                            </span>
+                  {visitedPlaces.filter(place => place.destination).map((place) => {
+                    const dest = place.destination!;
+                    return (
+                      <div
+                        key={place.destination_slug}
+                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                        onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                      >
+                        <div className="flex items-center gap-4">
+                          {dest.image && (
+                            <img
+                              src={dest.image}
+                              alt={dest.name}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{dest.name}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
+                              {capitalizeCity(dest.city)}
+                            </div>
+                            <div className="flex items-center gap-3 mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {dest.category}
+                              </Badge>
+                              <span className="text-xs text-gray-500 dark:text-gray-500">
+                                {new Date(place.visited_at).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
