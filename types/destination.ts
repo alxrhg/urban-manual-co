@@ -2,6 +2,7 @@ export interface Destination {
   slug: string;
   name: string;
   city: string;
+  country?: string;
   category: string;
   content?: string;
   image?: string;

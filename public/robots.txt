@@ -7,5 +7,5 @@ Disallow: /api/
 Disallow: /admin/
 
 # Sitemap location
-Sitemap: https://urbanmanual.co/sitemap.xml
+Sitemap: https://www.urbanmanual.co/sitemap.xml
 

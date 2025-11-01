@@ -7,8 +7,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
-  title: "The Urban Manual",
-  description: "Your guide to the world's best destinations",
+  title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
+  description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.",
 };
 
 export default function RootLayout({
