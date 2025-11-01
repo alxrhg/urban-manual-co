@@ -222,13 +222,13 @@ export default function Account() {
 
   // Memoize statistics
   const stats = useMemo(() => {
-    const uniqueCities = new Set([
-      ...savedPlaces.map(p => p.destination?.city).filter(Boolean),
-      ...visitedPlaces.filter(p => p.destination).map(p => p.destination!.city)
+    const uniqueCities = new Set<string>([
+      ...savedPlaces.map(p => p.destination?.city).filter((city): city is string => Boolean(city)),
+      ...visitedPlaces.filter(p => p.destination).map(p => p.destination!.city).filter((city): city is string => Boolean(city))
     ]);
 
     const uniqueCountries = new Set(
-      Array.from(uniqueCities).map(city => cityCountryMap[city] || 'Other')
+      Array.from(uniqueCities).map(city => cityCountryMap[city as keyof typeof cityCountryMap] || 'Other')
     );
 
     return {
