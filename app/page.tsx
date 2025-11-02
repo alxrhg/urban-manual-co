@@ -609,8 +609,54 @@ export default function Home() {
                 availableCategories={categories}
               />
               
-              {/* Filter - Below search, left-aligned */}
-              <div className="mt-6">
+              {/* Country List - Under search bar */}
+              {!searchTerm && (
+                <div className="mt-8">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                    <button
+                      onClick={() => {
+                        setSelectedCity("");
+                        trackFilterChange({ filterType: 'city', value: 'all' });
+                      }}
+                      className={`transition-all ${
+                        !selectedCity
+                          ? "font-medium text-black dark:text-white"
+                          : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {displayedCities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => {
+                          const newCity = city === selectedCity ? "" : city;
+                          setSelectedCity(newCity);
+                          trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                        }}
+                        className={`transition-all ${
+                          selectedCity === city
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                        }`}
+                      >
+                        {capitalizeCity(city)}
+                      </button>
+                    ))}
+                    {cities.length > 20 && (
+                      <button
+                        onClick={() => setShowAllCities(!showAllCities)}
+                        className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
+                      >
+                        {showAllCities ? '- Show Less' : '+ Show More'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Filter - Below country list, aligned right */}
+              <div className="mt-4 flex justify-end">
                 <SearchFiltersComponent
                   filters={advancedFilters}
                   onFiltersChange={(newFilters) => {
@@ -648,52 +694,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        {/* Country List - Bottom section (mobile: bottom, desktop: can be elsewhere) */}
-        {!searchTerm && (
-          <div className="px-8 pb-8 text-center">
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
-              <button
-                onClick={() => {
-                  setSelectedCity("");
-                  trackFilterChange({ filterType: 'city', value: 'all' });
-                }}
-                className={`transition-all ${
-                  !selectedCity
-                    ? "font-medium text-black dark:text-white"
-                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                }`}
-              >
-                All
-              </button>
-              {displayedCities.map((city) => (
-                <button
-                  key={city}
-                  onClick={() => {
-                    const newCity = city === selectedCity ? "" : city;
-                    setSelectedCity(newCity);
-                    trackFilterChange({ filterType: 'city', value: newCity || 'all' });
-                  }}
-                  className={`transition-all ${
-                    selectedCity === city
-                      ? "font-medium text-black dark:text-white"
-                      : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                  }`}
-                >
-                  {capitalizeCity(city)}
-                </button>
-              ))}
-              {cities.length > 20 && (
-                <button
-                  onClick={() => setShowAllCities(!showAllCities)}
-                  className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
-                >
-                  {showAllCities ? '- Show Less' : '+ Show More'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Content Section - Grid directly below hero */}
         <div className="px-8 pb-20">
