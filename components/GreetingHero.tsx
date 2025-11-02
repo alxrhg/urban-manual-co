@@ -157,7 +157,7 @@ export default function GreetingHero({
                 setShowSuggestions(true);
               }
             }}
-            className="w-full text-left text-2xl md:text-3xl font-light placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
+            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
             style={{ 
               paddingLeft: isSearching ? '32px' : '0',
               paddingRight: '0'
