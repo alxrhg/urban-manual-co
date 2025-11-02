@@ -560,7 +560,7 @@ export default function Account() {
           </div>
 
           {/* Navigation Tabs - Horizontally scrollable on mobile */}
-          <div className="mb-8 border-b border-gray-200 dark:border-gray-800 overflow-x-auto -mx-4 md:-mx-8 lg:-mx-10 px-4 md:px-8 lg:px-10 scrollbar-hide">
+          <div className="mt-2.5 mb-8 border-b border-gray-200 dark:border-gray-800 overflow-x-auto -mx-4 md:-mx-8 lg:-mx-10 px-4 md:px-8 lg:px-10 scrollbar-hide">
             <nav className="flex gap-6 md:gap-8 min-w-max md:min-w-0">
               <button
                 onClick={() => setActiveTab('overview')}
