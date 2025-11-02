@@ -115,7 +115,7 @@ export default function GreetingHero({
 
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
-      <div className="max-w-2xl mx-auto px-8 relative">
+      <div className="w-full relative">
         {/* Greeting above search - Keep this */}
         <div className="text-left mb-8">
           <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
