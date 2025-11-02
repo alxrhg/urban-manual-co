@@ -553,10 +553,10 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
-        {/* Hero Section - Right half, aligned left */}
+        {/* Hero Section - Responsive: Centered on mobile, right half on desktop */}
         <div className="min-h-[70vh] flex items-center px-8 py-20">
-          <div className="w-full flex justify-end">
-            <div className="w-1/2 max-w-2xl">
+          <div className="w-full flex md:justify-end">
+            <div className="w-full md:w-1/2 max-w-2xl">
               <GreetingHero
                 searchQuery={searchTerm}
                 onSearchChange={(value) => {
@@ -648,6 +648,52 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Country List - Bottom section (mobile: bottom, desktop: can be elsewhere) */}
+        {!searchTerm && (
+          <div className="px-8 pb-8 text-center">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+              <button
+                onClick={() => {
+                  setSelectedCity("");
+                  trackFilterChange({ filterType: 'city', value: 'all' });
+                }}
+                className={`transition-all ${
+                  !selectedCity
+                    ? "font-medium text-black dark:text-white"
+                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                }`}
+              >
+                All
+              </button>
+              {displayedCities.map((city) => (
+                <button
+                  key={city}
+                  onClick={() => {
+                    const newCity = city === selectedCity ? "" : city;
+                    setSelectedCity(newCity);
+                    trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                  }}
+                  className={`transition-all ${
+                    selectedCity === city
+                      ? "font-medium text-black dark:text-white"
+                      : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                  }`}
+                >
+                  {capitalizeCity(city)}
+                </button>
+              ))}
+              {cities.length > 20 && (
+                <button
+                  onClick={() => setShowAllCities(!showAllCities)}
+                  className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
+                >
+                  {showAllCities ? '- Show Less' : '+ Show More'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Content Section - Grid directly below hero */}
         <div className="px-8 pb-20">
