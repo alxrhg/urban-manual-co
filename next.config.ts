@@ -13,46 +13,8 @@ const nextConfig: NextConfig = {
   // Optimize production builds (no source maps for smaller bundles)
   productionBrowserSourceMaps: false,
   
-  // Optimize webpack chunk splitting
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Optimize chunk splitting for better caching
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Framework chunk (React, Next.js)
-            framework: {
-              name: 'framework',
-              test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
-              priority: 40,
-              enforce: true,
-            },
-            // Vendor chunk (other node_modules)
-            vendor: {
-              name: 'vendor',
-              test: /[\\/]node_modules[\\/]/,
-              priority: 30,
-              minChunks: 2,
-            },
-            // Common chunk (shared code)
-            common: {
-              name: 'common',
-              minChunks: 2,
-              priority: 20,
-              reuseExistingChunk: true,
-            },
-          },
-          maxInitialRequests: 25,
-          minSize: 20000,
-        },
-      };
-    }
-    return config;
-  },
+  // Note: Next.js 16 uses Turbopack by default which handles chunk splitting automatically
+  // Webpack config removed to avoid conflicts with Turbopack
   
   images: {
     formats: ['image/avif', 'image/webp'],
