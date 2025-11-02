@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, Clock } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +34,10 @@ function capitalizeCity(city: string): string {
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+function getCitySlug(city: string): string {
+  return city.toLowerCase().replace(/\s+/g, '-');
 }
 
 const CITY_TIMEZONES: Record<string, string> = {
@@ -110,6 +115,7 @@ function parseTime(timeStr: string): number {
 }
 
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
@@ -390,11 +396,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  onClose();
+                  router.push(`/city/${encodeURIComponent(destination.city)}`);
+                }}
+                className="flex items-center gap-2 hover:text-black dark:hover:text-white transition-colors"
+              >
                 <MapPin className="h-4 w-4" />
                 <span>{capitalizeCity(destination.city)}</span>
                 {destination.country && <span className="text-gray-400">• {destination.country}</span>}
-              </div>
+              </button>
               {destination.category && (
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4" />

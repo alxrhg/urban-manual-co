@@ -190,7 +190,7 @@ export default function CitiesPage() {
       </section>
 
       {/* Content Section - Grid directly below hero */}
-      <div className="px-8 pb-20">
+      <div className="px-8 pb-8">
         <div className="max-w-[1800px] mx-auto">
           {/* Filter - Top right of grid section */}
           <div className="flex justify-end mb-6 relative">
