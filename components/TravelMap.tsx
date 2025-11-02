@@ -151,8 +151,6 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
         <MapProvider
           initialFillColors={initialFillColors}
           defaultFillColor="transparent"
-          strokeColor="#9ca3af"
-          strokeWidth={0.5}
         >
           <World />
         </MapProvider>
