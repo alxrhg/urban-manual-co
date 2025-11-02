@@ -88,12 +88,11 @@ export function Header() {
       {/* Top Bar */}
       <div className="px-6 md:px-10 py-4">
         <div className={`max-w-[1920px] mx-auto relative`}>
-          {/* Logo */}
-          <div className={`flex justify-center`}>
+          {/* Logo - Top Left */}
+          <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
             <button
               onClick={() => navigate("/")}
-              className="font-bold uppercase leading-none tracking-tight hover:opacity-60 transition-opacity"
-              style={{ fontSize: 'clamp(20px, 4vw, 36px)' }}
+              className="font-bold uppercase leading-none tracking-tight hover:opacity-60 transition-opacity text-sm"
             >
               The Urban Manual
             </button>

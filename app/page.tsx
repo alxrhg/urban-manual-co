@@ -551,7 +551,7 @@ export default function Home() {
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
         {/* Lovably-style layout: Full height with centered search */}
-        <div className="fixed inset-0 flex flex-col">
+        <div className="fixed inset-0 flex flex-col" style={{ top: '73px' }}>
           {/* Centered Search Bar (replaces "DESIGN, EXACTLY.") */}
           <div className="flex-1 flex items-center justify-center">
             <GreetingHero
