@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { cityCountryMap } from '@/data/cityCountryMap';
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 
 interface TravelMapProps {
   visitedPlaces: Array<{
@@ -16,63 +15,6 @@ interface TravelMapProps {
     };
   }>;
 }
-
-// Map country names to ISO country codes for react-simple-maps
-const countryNameToISO: Record<string, string> = {
-  'United States': 'USA',
-  'USA': 'USA',
-  'Japan': 'JPN',
-  'France': 'FRA',
-  'United Kingdom': 'GBR',
-  'UK': 'GBR',
-  'Italy': 'ITA',
-  'Spain': 'ESP',
-  'Germany': 'DEU',
-  'Canada': 'CAN',
-  'Australia': 'AUS',
-  'Mexico': 'MEX',
-  'Brazil': 'BRA',
-  'China': 'CHN',
-  'India': 'IND',
-  'South Korea': 'KOR',
-  'Thailand': 'THA',
-  'Singapore': 'SGP',
-  'Malaysia': 'MYS',
-  'Indonesia': 'IDN',
-  'Philippines': 'PHL',
-  'Vietnam': 'VNM',
-  'Turkey': 'TUR',
-  'Greece': 'GRC',
-  'Portugal': 'PRT',
-  'Netherlands': 'NLD',
-  'Belgium': 'BEL',
-  'Switzerland': 'CHE',
-  'Austria': 'AUT',
-  'Sweden': 'SWE',
-  'Norway': 'NOR',
-  'Denmark': 'DNK',
-  'Poland': 'POL',
-  'Czech Republic': 'CZE',
-  'Ireland': 'IRL',
-  'Iceland': 'ISL',
-  'New Zealand': 'NZL',
-  'South Africa': 'ZAF',
-  'Argentina': 'ARG',
-  'Chile': 'CHL',
-  'Peru': 'PER',
-  'Colombia': 'COL',
-  'Egypt': 'EGY',
-  'Morocco': 'MAR',
-  'UAE': 'ARE',
-  'Qatar': 'QAT',
-  'Saudi Arabia': 'SAU',
-  'Israel': 'ISR',
-  'Jordan': 'JOR',
-  'Lebanon': 'LBN',
-  'Russia': 'RUS',
-  'Taiwan': 'TWN',
-  'Hong Kong': 'HKG',
-};
 
 export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMapProps) {
   const visitedCountries = useMemo(() => {
@@ -103,15 +45,6 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
     return countrySet;
   }, [visitedPlaces, savedPlaces]);
 
-  // Get ISO codes for visited countries
-  const visitedISOCodes = useMemo(() => {
-    return new Set(
-      Array.from(visitedCountries)
-        .map(country => countryNameToISO[country])
-        .filter(Boolean) as string[]
-    );
-  }, [visitedCountries]);
-
   if (visitedCountries.size === 0) {
     return (
       <div className="w-full h-64 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center">
@@ -141,41 +74,33 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
         <div className="text-2xl font-bold">{visitedCountries.size}</div>
       </div>
 
-      {/* Map */}
+      {/* Map - Simple world map with visited countries highlighted */}
       <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative">
-        <ComposableMap
-          projectionConfig={{
-            scale: 147,
-            center: [0, 20],
-          }}
-          className="w-full h-full"
-        >
-          <Geographies geography="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json">
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const iso = geo.properties.ISO_A2;
-                const iso3 = geo.properties.ISO_A3;
-                // Check if this country is visited by matching ISO codes
-                const isVisited = visitedISOCodes.has(iso3) || visitedISOCodes.has(iso);
-
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill={isVisited ? '#6b7280' : 'transparent'}
-                    stroke="#9ca3af"
-                    strokeWidth={0.5}
-                    style={{
-                      default: { outline: 'none' },
-                      hover: { outline: 'none', fill: isVisited ? '#4b5563' : '#e5e7eb' },
-                      pressed: { outline: 'none' },
-                    }}
-                  />
-                );
-              })
-            }
-          </Geographies>
-        </ComposableMap>
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-center p-8">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              World Map Visualization
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              {visitedCountries.size} countries visited
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {Array.from(visitedCountries).sort().slice(0, 12).map((country) => (
+                <span
+                  key={country}
+                  className="px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800"
+                >
+                  {country}
+                </span>
+              ))}
+              {visitedCountries.size > 12 && (
+                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full text-sm text-gray-500 dark:text-gray-500 border border-gray-200 dark:border-gray-800">
+                  +{visitedCountries.size - 12} more
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
         
         {/* Legend */}
         <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg border border-gray-200 dark:border-gray-700">
