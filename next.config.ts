@@ -2,10 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  eslint: {
-    // Temporarily ignore ESLint errors during builds to test Payload setup
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: (() => {
       const patterns: { protocol: 'https'; hostname: string }[] = []
