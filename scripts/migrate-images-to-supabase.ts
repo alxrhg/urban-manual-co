@@ -3,6 +3,29 @@ import sharp from 'sharp';
 import fs from 'fs/promises';
 import path from 'path';
 
+// Load environment variables from .env.local if it exists
+async function loadEnvFile() {
+  try {
+    const envPath = path.join(process.cwd(), '.env.local');
+    const envExists = await fs.access(envPath).then(() => true).catch(() => false);
+    
+    if (envExists) {
+      const envFile = await fs.readFile(envPath, 'utf-8');
+      envFile.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const match = trimmed.match(/^([^=]+)=(.*)$/);
+          if (match && !process.env[match[1]]) {
+            process.env[match[1]] = match[2].trim().replace(/^["']|["']$/g, '');
+          }
+        }
+      });
+    }
+  } catch (error) {
+    // Ignore if .env.local doesn't exist
+  }
+}
+
 // Initialize Supabase
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -191,6 +214,11 @@ async function updateDatabase(
   }
 }
 
+// Sanitize filename for Supabase Storage (only allow alphanumeric, hyphens, underscores)
+function sanitizeFilename(slug: string): string {
+  return slug.replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
 // Process a single destination
 async function processDestination(dest: Destination): Promise<void> {
   if (!dest.image) {
@@ -203,6 +231,7 @@ async function processDestination(dest: Destination): Promise<void> {
   }
 
   const startTime = Date.now();
+  const sanitizedSlug = sanitizeFilename(dest.slug);
 
   // Download image
   const imageBuffer = await retryWithBackoff(
@@ -226,8 +255,8 @@ async function processDestination(dest: Destination): Promise<void> {
   console.log(`  ✓ Generated thumbnail (${(thumbSize / 1024).toFixed(0)} KB)`);
 
   if (!isDryRun) {
-    // Upload full image
-    const fullPath = `full/${dest.slug}.webp`;
+    // Upload full image (use sanitized slug for filename)
+    const fullPath = `full/${sanitizedSlug}.webp`;
     const fullUrl = await retryWithBackoff(
       () => uploadToSupabase(optimizedBuffer, fullPath),
       3,
@@ -235,8 +264,8 @@ async function processDestination(dest: Destination): Promise<void> {
     );
     console.log(`  ✓ Uploaded full image`);
 
-    // Upload thumbnail
-    const thumbPath = `thumbnails/${dest.slug}.webp`;
+    // Upload thumbnail (use sanitized slug for filename)
+    const thumbPath = `thumbnails/${sanitizedSlug}.webp`;
     const thumbUrl = await retryWithBackoff(
       () => uploadToSupabase(thumbnailBuffer, thumbPath),
       3,
@@ -261,6 +290,9 @@ async function processDestination(dest: Destination): Promise<void> {
 
 // Main migration function
 async function migrateImages(): Promise<void> {
+  // Load environment variables first
+  await loadEnvFile();
+  
   console.log('🚀 Starting image migration to Supabase Storage...\n');
 
   if (isDryRun) {
