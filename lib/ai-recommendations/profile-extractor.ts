@@ -8,6 +8,7 @@ export interface UserBehaviorProfile {
   
   // Explicit preferences (from profile)
   favoriteCities: string[];
+  followedCities: string[]; // Cities user explicitly follows (highest priority)
   favoriteCategories: string[];
   dietaryPreferences: string[];
   pricePreference: number; // 1-4
@@ -48,7 +49,15 @@ export async function extractUserProfile(userId: string): Promise<UserBehaviorPr
     .eq('user_id', userId)
     .single();
   
-  // 2. Get visit history (last 100 visits)
+  // 2. Get followed cities (explicit follows - highest priority)
+  const { data: followedCitiesData } = await supabase
+    .from('follow_cities')
+    .select('city_slug')
+    .eq('user_id', userId);
+  
+  const followedCities = followedCitiesData?.map(f => f.city_slug) || [];
+  
+  // 3. Get visit history (last 100 visits)
   const { data: visits } = await supabase
     .from('visit_history')
     .select(`
@@ -62,7 +71,7 @@ export async function extractUserProfile(userId: string): Promise<UserBehaviorPr
     .order('visited_at', { ascending: false })
     .limit(100);
   
-  // 3. Get saved destinations
+  // 4. Get saved destinations
   const { data: saved } = await supabase
     .from('saved_destinations')
     .select(`
@@ -74,7 +83,7 @@ export async function extractUserProfile(userId: string): Promise<UserBehaviorPr
     `)
     .eq('user_id', userId);
   
-  // 4. Analyze patterns
+  // 5. Analyze patterns
   const visitedDests = visits?.map((v: any) => v.destination).filter(Boolean) || [];
   const savedDests = saved?.map((s: any) => s.destination).filter(Boolean) || [];
   const allDests = [...visitedDests, ...savedDests];
@@ -181,6 +190,7 @@ export async function extractUserProfile(userId: string): Promise<UserBehaviorPr
     
     // Explicit
     favoriteCities: profile?.favorite_cities || [],
+    followedCities, // Highest priority - explicitly followed cities
     favoriteCategories: profile?.favorite_categories || [],
     dietaryPreferences: profile?.dietary_preferences || [],
     pricePreference: profile?.price_preference || 2,

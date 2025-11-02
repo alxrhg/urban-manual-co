@@ -29,7 +29,7 @@ ${candidateList}
 
 SCORING CRITERIA:
 
-1. City Match (30%): Prefer user's favorite and frequently visited cities
+1. City Match (40%): HEAVILY prefer destinations in user's FOLLOWED cities (explicit interest). Also prefer favorite and frequently visited cities.
 
 2. Category Match (25%): Prefer user's favorite categories
 
@@ -75,6 +75,10 @@ function buildProfileSummary(profile: UserBehaviorProfile): string {
   const parts: string[] = [];
   
   // Explicit preferences
+  if (profile.followedCities.length > 0) {
+    parts.push(`FOLLOWED CITIES (HIGHEST PRIORITY): ${profile.followedCities.join(', ')}`);
+  }
+  
   if (profile.favoriteCities.length > 0) {
     parts.push(`Favorite Cities: ${profile.favoriteCities.join(', ')}`);
   }

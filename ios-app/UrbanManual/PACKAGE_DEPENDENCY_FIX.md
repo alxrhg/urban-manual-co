@@ -18,6 +18,10 @@ The error shows it's looking for version 3.0.0, but the correct version for Supa
 3. **Right-click > Delete** (Move to Trash)
 4. It's causing conflicts
 
+**⚠️ If you get "missing package file" error after deletion:**
+- See `FIX_MISSING_PACKAGE.md` for detailed fix steps
+- Quick fix: Remove Package.swift references from project, reset caches, re-add packages via UI
+
 #### Step 2: Add Packages in Xcode (Correct Method)
 
 1. **Select your project** (top of navigator)

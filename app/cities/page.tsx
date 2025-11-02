@@ -7,6 +7,7 @@ import { Destination } from '@/types/destination';
 import { MapPin, Search, X } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { cityCountryMap } from '@/data/cityCountryMap';
+import { FollowCityButton } from '@/components/FollowCityButton';
 
 interface CityStats {
   city: string;
@@ -100,33 +101,33 @@ export default function CitiesPage() {
   }
 
   return (
-    <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
+    <main className="px-4 md:px-8 lg:px-10 py-8 md:py-12 dark:text-white min-h-screen">
       <div className="max-w-[1920px] mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">Cities</h1>
-          <span className="text-base text-gray-600 dark:text-gray-400">
+        {/* Header - Minimal style */}
+        <div className="mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">Cities</h1>
+          <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">
             Discover {cityStats.length} cities around the world
           </span>
         </div>
 
-        {/* Search */}
-        <div className="mb-8">
+        {/* Search - Minimal borderless style */}
+        <div className="mb-8 md:mb-12">
           <div className="relative max-w-[680px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search cities or countries..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-12 py-3 bg-gray-100 dark:bg-gray-800 rounded-2xl text-base border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+              className="w-full pl-6 pr-8 py-2 bg-transparent text-sm md:text-base border-b border-gray-200 dark:border-gray-700 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -162,6 +163,16 @@ export default function CitiesPage() {
                   {/* City count badge */}
                   <div className="absolute bottom-2 right-2 bg-black/70 dark:bg-white/70 backdrop-blur-sm text-white dark:text-black px-2 py-1 rounded text-xs font-medium">
                     {count}
+                  </div>
+                  
+                  {/* Follow button */}
+                  <div className="absolute top-2 right-2">
+                    <FollowCityButton 
+                      citySlug={city}
+                      cityName={capitalizeCity(city)}
+                      variant="compact"
+                      showLabel={false}
+                    />
                   </div>
                 </div>
 

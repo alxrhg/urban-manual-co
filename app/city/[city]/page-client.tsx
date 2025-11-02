@@ -17,6 +17,7 @@ const DestinationDrawer = dynamic(
 );
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
+import { FollowCityButton } from '@/components/FollowCityButton';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 
@@ -105,17 +106,29 @@ export default function CityPageClient() {
           </button>
 
           {/* Hero Section */}
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-3">
-              {capitalizeCity(city)}
-            </h1>
-            <div className="flex items-center gap-2 text-base text-gray-600 dark:text-gray-400 mb-2">
-              <MapPin className="h-5 w-5" />
-              <span>{country}</span>
+          <div className="mb-12 flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-4xl md:text-5xl font-bold mb-3">
+                {capitalizeCity(city)}
+              </h1>
+              <div className="flex items-center gap-2 text-base text-gray-600 dark:text-gray-400 mb-2">
+                <MapPin className="h-5 w-5" />
+                <span>{country}</span>
+              </div>
+              <span className="text-base text-gray-600 dark:text-gray-400">
+                {destinations.length} destination{destinations.length !== 1 ? 's' : ''}
+              </span>
             </div>
-            <span className="text-base text-gray-600 dark:text-gray-400">
-              {destinations.length} destination{destinations.length !== 1 ? 's' : ''}
-            </span>
+            {user && (
+              <div className="flex-shrink-0">
+                <FollowCityButton 
+                  citySlug={city}
+                  cityName={capitalizeCity(city)}
+                  variant="default"
+                  showLabel={true}
+                />
+              </div>
+            )}
           </div>
 
           {/* Personalized Recommendations for this city (if user is logged in) */}

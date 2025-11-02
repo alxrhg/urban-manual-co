@@ -525,12 +525,12 @@ export default function Account() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
-      <main className="px-6 md:px-10 py-12 dark:text-white">
+      <main className="px-4 md:px-8 lg:px-10 py-8 md:py-12 dark:text-white">
         <div className="max-w-7xl mx-auto">
-          {/* Header - Vercel style */}
+          {/* Header - Minimal style */}
           <div className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-3xl font-bold">Account</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold">Account</h1>
               <div className="flex items-center gap-3">
                 {isAdmin && (
                   <button
@@ -559,12 +559,12 @@ export default function Account() {
             </div>
           </div>
 
-          {/* Navigation Tabs - Vercel style */}
-          <div className="mb-8 border-b border-gray-200 dark:border-gray-800">
-            <nav className="flex gap-8">
+          {/* Navigation Tabs - Horizontally scrollable on mobile */}
+          <div className="mb-8 border-b border-gray-200 dark:border-gray-800 overflow-x-auto -mx-6 md:mx-0 px-6 md:px-0">
+            <nav className="flex gap-6 md:gap-8 min-w-max md:min-w-0">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'overview'
                     ? 'border-black dark:border-white text-black dark:text-white'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
@@ -574,7 +574,7 @@ export default function Account() {
               </button>
               <button
                 onClick={() => setActiveTab('saved')}
-                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'saved'
                     ? 'border-black dark:border-white text-black dark:text-white'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
@@ -584,7 +584,7 @@ export default function Account() {
               </button>
               <button
                 onClick={() => setActiveTab('visited')}
-                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'visited'
                     ? 'border-black dark:border-white text-black dark:text-white'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
@@ -594,7 +594,7 @@ export default function Account() {
               </button>
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'profile'
                     ? 'border-black dark:border-white text-black dark:text-white'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
@@ -604,7 +604,7 @@ export default function Account() {
               </button>
               <button
                 onClick={() => setActiveTab('lists')}
-                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'lists'
                     ? 'border-black dark:border-white text-black dark:text-white'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
@@ -614,7 +614,7 @@ export default function Account() {
               </button>
               <button
                 onClick={() => setActiveTab('collections')}
-                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'collections'
                     ? 'border-black dark:border-white text-black dark:text-white'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
@@ -624,7 +624,7 @@ export default function Account() {
               </button>
               <button
                 onClick={() => setActiveTab('history')}
-                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'history'
                     ? 'border-black dark:border-white text-black dark:text-white'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'

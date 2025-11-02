@@ -1,27 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
-
-if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  console.error('Missing Supabase credentials');
-}
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase-server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check admin status
-    const authHeader = request.headers.get('x-admin-email');
-    if (!authHeader) {
+    // 1. Verify user is authenticated via Supabase Auth
+    const supabase = await createServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '').split(',').map(e => e.trim());
-    if (!adminEmails.includes(authHeader)) {
+    // 2. Check if authenticated user is admin
+    const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (!adminEmails.includes(user.email?.toLowerCase() || '')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // 3. Use service role client for admin operations
+    const supabaseAdmin = createServiceRoleClient();
 
     // Get form data
     const formData = await request.formData();
