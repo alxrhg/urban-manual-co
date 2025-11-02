@@ -628,50 +628,89 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Country List - Uses space below greeting, aligned to bottom */}
+              {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!searchTerm && (
                 <div className="flex-1 flex items-end">
-                  <div className="w-full pt-8">
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                    <button
-                      onClick={() => {
-                        setSelectedCity("");
-                        trackFilterChange({ filterType: 'city', value: 'all' });
-                      }}
-                      className={`transition-all ${
-                        !selectedCity
-                          ? "font-medium text-black dark:text-white"
-                          : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                      }`}
-                    >
-                      All
-                    </button>
-                    {displayedCities.map((city) => (
+                  <div className="w-full pt-8 space-y-4">
+                    {/* City List */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                       <button
-                        key={city}
                         onClick={() => {
-                          const newCity = city === selectedCity ? "" : city;
-                          setSelectedCity(newCity);
-                          trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                          setSelectedCity("");
+                          trackFilterChange({ filterType: 'city', value: 'all' });
                         }}
                         className={`transition-all ${
-                          selectedCity === city
+                          !selectedCity
                             ? "font-medium text-black dark:text-white"
                             : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                         }`}
                       >
-                        {capitalizeCity(city)}
+                        All
                       </button>
-                    ))}
-                    {cities.length > 20 && (
-                      <button
-                        onClick={() => setShowAllCities(!showAllCities)}
-                        className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
-                      >
-                        {showAllCities ? '- Show Less' : '+ Show More'}
-                      </button>
+                      {displayedCities.map((city) => (
+                        <button
+                          key={city}
+                          onClick={() => {
+                            const newCity = city === selectedCity ? "" : city;
+                            setSelectedCity(newCity);
+                            trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                          }}
+                          className={`transition-all ${
+                            selectedCity === city
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          {capitalizeCity(city)}
+                        </button>
+                      ))}
+                      {cities.length > 20 && (
+                        <button
+                          onClick={() => setShowAllCities(!showAllCities)}
+                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
+                        >
+                          {showAllCities ? '- Show Less' : '+ Show More'}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Category List */}
+                    {categories.length > 0 && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                        <button
+                          onClick={() => {
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined }));
+                            trackFilterChange({ filterType: 'category', value: 'all' });
+                          }}
+                          className={`transition-all ${
+                            !selectedCategory
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {categories.map((category) => (
+                          <button
+                            key={category}
+                            onClick={() => {
+                              const newCategory = category === selectedCategory ? "" : category;
+                              setSelectedCategory(newCategory);
+                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined }));
+                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                            }}
+                            className={`transition-all ${
+                              selectedCategory === category
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            {capitalizeCategory(category)}
+                          </button>
+                        ))}
+                      </div>
                     )}
-                  </div>
                   </div>
                 </div>
               )}
