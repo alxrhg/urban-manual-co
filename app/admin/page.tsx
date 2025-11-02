@@ -765,8 +765,20 @@ export default function AdminPage() {
     );
   }
 
+  // If not admin, show nothing (redirect happens in useEffect)
   if (!isAdmin) {
-    return null;
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <main className="px-6 md:px-10 py-12">
+          <div className="max-w-7xl mx-auto flex items-center justify-center h-[50vh]">
+            <div className="text-center">
+              <p className="text-gray-500 mb-4">Redirecting...</p>
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
