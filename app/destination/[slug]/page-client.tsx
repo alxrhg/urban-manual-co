@@ -146,7 +146,7 @@ export default function DestinationPageClient() {
 
   if (!destination) {
     return (
-      <div className="px-4 md:px-6 lg:px-10 py-8 max-w-4xl mx-auto dark:text-white min-h-screen">
+      <div className="px-4 md:px-8 lg:px-10 py-8 md:py-12 max-w-4xl mx-auto dark:text-white min-h-screen">
         <div className="text-center py-12">
           <h1 className="text-2xl font-bold mb-4">Destination not found</h1>
           <button

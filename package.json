@@ -10,6 +10,8 @@
     "enrich:google": "tsx scripts/enrich-with-google.ts"
   },
   "dependencies": {
+    "@amcharts/amcharts5": "^5.14.3",
+    "@amcharts/amcharts5-geodata": "^5.1.5",
     "@google-cloud/discoveryengine": "^2.5.2",
     "@google/generative-ai": "^0.21.0",
     "@radix-ui/react-slot": "^1.2.3",
