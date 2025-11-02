@@ -98,9 +98,9 @@ export function Header() {
               The Urban Manual
             </button>
           </div>
-          {/* Theme + Burger on right */}
+          {/* Information menu + Theme on right */}
           <div className={`absolute right-0 top-1/2 -translate-y-1/2`}>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               {isAdmin && buildVersion && (
                 <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded" title="Build version">
                   {buildVersion}
@@ -113,10 +113,10 @@ export function Header() {
               )}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 hover:opacity-60 transition-opacity"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal tracking-normal"
                 aria-label="Toggle menu"
               >
-                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                Information
               </button>
             </div>
           </div>

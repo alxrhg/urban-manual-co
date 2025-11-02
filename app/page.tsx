@@ -549,128 +549,149 @@ export default function Home() {
 
   return (
     <ErrorBoundary>
-      <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-        <div className="max-w-[1920px] mx-auto">
-        {/* Greeting Hero above the search bar with integrated filters */}
-        <div className="mb-4 relative" id="greeting-hero-container">
-          <GreetingHero
-            searchQuery={searchTerm}
-            onSearchChange={(value) => {
-              setSearchTerm(value);
-              // Clear conversation history only if search is cleared
-              if (!value.trim()) {
-                setConversationHistory([]);
-                setSearchSuggestions([]);
-                setSearchIntent(null);
-                setSearchTier(null);
-                setChatResponse('');
-                setFilteredDestinations([]);
-              }
-            }}
-            onSubmit={(query) => {
-              // CHAT MODE: Explicit submit on Enter key (like chat component)
-              if (query.trim() && !searching) {
-                performAISearch(query);
-              }
-            }}
-            userName={(function () {
-              const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-              if (!raw) return undefined;
-              return raw
-                .split(/[\s._-]+/)
-                .filter(Boolean)
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(' ');
-            })()}
-            isAIEnabled={isAIEnabled}
-            isSearching={searching}
-            filters={advancedFilters}
-            onFiltersChange={(newFilters) => {
-              setAdvancedFilters(newFilters);
-              // Sync with legacy state for backward compatibility
-              if (newFilters.city !== undefined) {
-                setSelectedCity(newFilters.city || '');
-              }
-              if (newFilters.category !== undefined) {
-                setSelectedCategory(newFilters.category || '');
-              }
-              // Track filter changes
-              Object.entries(newFilters).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && value !== '') {
-                  trackFilterChange({ filterType: key, value });
+      <main className="relative min-h-screen dark:text-white">
+        {/* Lovably-style layout: Full height with centered search */}
+        <div className="fixed inset-0 flex flex-col">
+          {/* Centered Search Bar (replaces "DESIGN, EXACTLY.") */}
+          <div className="flex-1 flex items-center justify-center">
+            <GreetingHero
+              searchQuery={searchTerm}
+              onSearchChange={(value) => {
+                setSearchTerm(value);
+                // Clear conversation history only if search is cleared
+                if (!value.trim()) {
+                  setConversationHistory([]);
+                  setSearchSuggestions([]);
+                  setSearchIntent(null);
+                  setSearchTier(null);
+                  setChatResponse('');
+                  setFilteredDestinations([]);
                 }
-              });
-            }}
-            availableCities={cities}
-            availableCategories={categories}
-          />
-        </div>
+              }}
+              onSubmit={(query) => {
+                // CHAT MODE: Explicit submit on Enter key (like chat component)
+                if (query.trim() && !searching) {
+                  performAISearch(query);
+                }
+              }}
+              userName={(function () {
+                const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                if (!raw) return undefined;
+                return raw
+                  .split(/[\s._-]+/)
+                  .filter(Boolean)
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(' ');
+              })()}
+              isAIEnabled={isAIEnabled}
+              isSearching={searching}
+              filters={advancedFilters}
+              onFiltersChange={(newFilters) => {
+                setAdvancedFilters(newFilters);
+                // Sync with legacy state for backward compatibility
+                if (newFilters.city !== undefined) {
+                  setSelectedCity(newFilters.city || '');
+                }
+                if (newFilters.category !== undefined) {
+                  setSelectedCategory(newFilters.category || '');
+                }
+                // Track filter changes
+                Object.entries(newFilters).forEach(([key, value]) => {
+                  if (value !== undefined && value !== null && value !== '') {
+                    trackFilterChange({ filterType: key, value });
+                  }
+                });
+              }}
+              availableCities={cities}
+              availableCategories={categories}
+            />
+          </div>
 
-        {/* City Filter - Hidden during search, replaced by AI chat response */}
-        {!searchTerm ? (
-          <div className="mb-6 text-center">
-            <div className="max-w-[680px] mx-auto px-[24px]">
-              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
-              <button
-                onClick={() => {
-                  setSelectedCity("");
-                  trackFilterChange({ filterType: 'city', value: 'all' });
-                }}
-                  className={`transition-all ${
-                  !selectedCity
-                    ? "font-medium text-black dark:text-white"
-                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                  }`}
-              >
-                All
-              </button>
-              {displayedCities.map((city) => (
-                <button
-                  key={city}
-                  onClick={() => {
-                    const newCity = city === selectedCity ? "" : city;
-                    setSelectedCity(newCity);
-                    trackFilterChange({ filterType: 'city', value: newCity || 'all' });
-                  }}
+          {/* Bottom Right: Country List & Chat Interface (replaces paragraph) */}
+          <div className="absolute bottom-8 right-8 max-w-md text-right">
+            {!searchTerm ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap justify-end gap-x-4 gap-y-2 text-xs">
+                  <button
+                    onClick={() => {
+                      setSelectedCity("");
+                      trackFilterChange({ filterType: 'city', value: 'all' });
+                    }}
                     className={`transition-all ${
-                      selectedCity === city
+                      !selectedCity
                         ? "font-medium text-black dark:text-white"
                         : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                     }`}
-                >
-                  {capitalizeCity(city)}
-                </button>
-              ))}
-              {cities.length > 20 && (
-                <button
-                  onClick={() => setShowAllCities(!showAllCities)}
-                    className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
-            >
-                  {showAllCities ? '- Show Less' : '+ Show More'}
-                </button>
-              )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Simple AI Chat Response - replaces country list */}
-            <div className="mb-6 text-center">
-              <div className="max-w-[680px] mx-auto px-[24px]">
-                <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {searching ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="animate-pulse">✨</span>
-                      <span>Thinking...</span>
-                    </div>
-                  ) : chatResponse ? (
-                    <span className="whitespace-pre-line block">{chatResponse}</span>
-                  ) : null}
+                  >
+                    All
+                  </button>
+                  {displayedCities.map((city) => (
+                    <button
+                      key={city}
+                      onClick={() => {
+                        const newCity = city === selectedCity ? "" : city;
+                        setSelectedCity(newCity);
+                        trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                      }}
+                      className={`transition-all ${
+                        selectedCity === city
+                          ? "font-medium text-black dark:text-white"
+                          : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                      }`}
+                    >
+                      {capitalizeCity(city)}
+                    </button>
+                  ))}
+                  {cities.length > 20 && (
+                    <button
+                      onClick={() => setShowAllCities(!showAllCities)}
+                      className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
+                    >
+                      {showAllCities ? '- Show Less' : '+ Show More'}
+                    </button>
+                  )}
+                </div>
+                {/* Filter button - subtle placement */}
+                <div className="flex justify-end mt-2">
+                  <SearchFiltersComponent
+                    filters={advancedFilters}
+                    onFiltersChange={(newFilters) => {
+                      setAdvancedFilters(newFilters);
+                      if (newFilters.city !== undefined) {
+                        setSelectedCity(newFilters.city || '');
+                      }
+                      if (newFilters.category !== undefined) {
+                        setSelectedCategory(newFilters.category || '');
+                      }
+                      Object.entries(newFilters).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null && value !== '') {
+                          trackFilterChange({ filterType: key, value });
+                        }
+                      });
+                    }}
+                    availableCities={cities}
+                    availableCategories={categories}
+                  />
                 </div>
               </div>
-            </div>
-          </>
-        )}
+            ) : (
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-right max-w-md">
+                {searching ? (
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="animate-pulse">✨</span>
+                    <span>Thinking...</span>
+                  </div>
+                ) : chatResponse ? (
+                  <span className="whitespace-pre-line block">{chatResponse}</span>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable content below (destinations grid, etc.) */}
+        <div className="relative pt-[100vh] px-4 md:px-6 lg:px-10 py-8">
+          <div className="max-w-[1920px] mx-auto">
 
         {/* Personalized Recommendations - Show only when user is logged in and no active search */}
         {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
@@ -794,7 +815,8 @@ export default function Home() {
           setTimeout(() => setSelectedDestination(null), 300);
         }}
       />
-
+        </div>
+      </div>
       </main>
     </ErrorBoundary>
   );
