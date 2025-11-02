@@ -599,17 +599,36 @@ export default function AdminPage() {
 
       // Check admin status
       try {
+        // Get the access token from the session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const accessToken = currentSession?.access_token;
+        
         const res = await fetch('/api/is-admin', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': accessToken ? `Bearer ${accessToken}` : '',
+          },
           body: JSON.stringify({ email: session.user.email })
         });
+        
+        if (!res.ok) {
+          console.error('Admin check failed:', res.status);
+          setIsAdmin(false);
+          router.push('/account');
+          return;
+        }
+        
         const j = await res.json();
         setIsAdmin(!!j.isAdmin);
         if (!j.isAdmin) {
           router.push('/account');
         }
-      } catch {}
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+        router.push('/account');
+      }
     }
 
     checkAuth();
