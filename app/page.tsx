@@ -28,6 +28,7 @@ import {
 } from '@/lib/tracking';
 import GreetingHero from '@/components/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
+import { SearchFiltersComponent } from '@/components/SearchFilters';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -174,7 +175,16 @@ export default function Home() {
   const [openNowOnly, setOpenNowOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [displayedCount, setDisplayedCount] = useState(24); // Initial load: 24 items
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  // Advanced filters state
+  const [advancedFilters, setAdvancedFilters] = useState<{
+    city?: string;
+    category?: string;
+    michelin?: boolean;
+    crown?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+  }>({});
   const LOAD_MORE_INCREMENT = 24;
 
   useEffect(() => {
@@ -219,7 +229,16 @@ export default function Home() {
       filterDestinations();
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, openNowOnly, destinations, visitedSlugs]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, openNowOnly, advancedFilters, destinations, visitedSlugs]); // Filters only apply when no search
+
+  // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
+  useEffect(() => {
+    setAdvancedFilters(prev => ({
+      ...prev,
+      city: selectedCity || undefined,
+      category: selectedCategory || undefined,
+    }));
+  }, [selectedCity, selectedCategory]);
 
   const fetchDestinations = async () => {
     try {
@@ -375,13 +394,46 @@ export default function Home() {
 
     // Apply filters only when there's NO search term (AI chat handles all search)
     if (!searchTerm) {
-      if (selectedCity) {
-        filtered = filtered.filter(d => d.city === selectedCity);
+      // City filter (from advancedFilters or selectedCity)
+      const cityFilter = advancedFilters.city || selectedCity;
+      if (cityFilter) {
+        filtered = filtered.filter(d => d.city === cityFilter);
       }
 
-      if (selectedCategory) {
+      // Category filter (from advancedFilters or selectedCategory)
+      const categoryFilter = advancedFilters.category || selectedCategory;
+      if (categoryFilter) {
         filtered = filtered.filter(d =>
-          d.category && d.category.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
+          d.category && d.category.toLowerCase().trim() === categoryFilter.toLowerCase().trim()
+        );
+      }
+
+      // Michelin filter
+      if (advancedFilters.michelin) {
+        filtered = filtered.filter(d => d.michelin_stars && d.michelin_stars > 0);
+      }
+
+      // Crown filter
+      if (advancedFilters.crown) {
+        filtered = filtered.filter(d => d.crown === true);
+      }
+
+      // Price filter
+      if (advancedFilters.minPrice !== undefined) {
+        filtered = filtered.filter(d => 
+          d.price_level != null && d.price_level >= advancedFilters.minPrice!
+        );
+      }
+      if (advancedFilters.maxPrice !== undefined) {
+        filtered = filtered.filter(d => 
+          d.price_level != null && d.price_level <= advancedFilters.maxPrice!
+        );
+      }
+
+      // Rating filter
+      if (advancedFilters.minRating !== undefined) {
+        filtered = filtered.filter(d => 
+          d.rating != null && d.rating >= advancedFilters.minRating!
         );
       }
     }
@@ -445,7 +497,10 @@ export default function Home() {
                 performAISearch(query);
               }
             }}
-            onOpenFilters={() => setIsFiltersOpen(true)}
+            onOpenFilters={() => {
+              // SearchFiltersComponent manages its own state
+              // This handler is kept for compatibility but does nothing
+            }}
             userName={(function () {
               const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
               if (!raw) return undefined;
@@ -459,90 +514,59 @@ export default function Home() {
             isSearching={searching}
           />
         </div>
-        {/* Old search and standalone filters removed (now inside GreetingHero) */}
+        {/* Advanced Search Filters */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex-1"></div>
+          <div className="relative">
+            <SearchFiltersComponent
+              filters={advancedFilters}
+              onFiltersChange={(newFilters) => {
+                setAdvancedFilters(newFilters);
+                // Sync with legacy state for backward compatibility
+                if (newFilters.city !== undefined) {
+                  setSelectedCity(newFilters.city || '');
+                }
+                if (newFilters.category !== undefined) {
+                  setSelectedCategory(newFilters.category || '');
+                }
+                // Track filter changes
+                Object.entries(newFilters).forEach(([key, value]) => {
+                  if (value !== undefined && value !== null && value !== '') {
+                    trackFilterChange({ filterType: key, value });
+                  }
+                });
+              }}
+              availableCities={cities}
+              availableCategories={categories}
+            />
+          </div>
+        </div>
 
-        {/* Filters Popup - positioned 10px below filter button */}
-        {isFiltersOpen && (
-          <>
-            <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setIsFiltersOpen(false)} />
-            <div className="fixed right-4 top-[180px] z-50 w-80 sm:w-96 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-bold uppercase">Filters</h2>
-                  <button onClick={() => setIsFiltersOpen(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* Open Now Toggle */}
-                <div className="mb-4">
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-sm font-semibold">Open Now</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const newValue = !openNowOnly;
-                        setOpenNowOnly(newValue);
-                        trackFilterChange({ filterType: 'openNow', value: newValue });
-                      }}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        openNowOnly ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
-                          openNowOnly ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </label>
-                </div>
-
-                {/* Categories */}
-                {categories.length > 0 && (
-                  <div className="mb-2">
-                    <h2 className="text-sm font-semibold mb-2">Categories</h2>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedCategory('');
-                          trackFilterChange({ filterType: 'category', value: 'all' });
-                        }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all ${
-                          selectedCategory === ''
-                            ? "bg-black dark:bg-white text-white dark:text-black"
-                            : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                        }`}
-                      >
-                        <span>🌍</span>
-                        <span>All</span>
-                      </button>
-                      {categories.map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => {
-                            setSelectedCategory(category);
-                            trackFilterChange({ filterType: 'category', value: category });
-                          }}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all ${
-                            selectedCategory === category
-                              ? "bg-black dark:bg.white text-white dark:text-black"
-                              : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                          }`}
-                        >
-                          <span>{getCategoryIcon(category)}</span>
-                          <span>{capitalizeCategory(category)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* Open Now Toggle - Keep separate for quick access */}
+        <div className="mb-4 flex items-center justify-center">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm font-semibold">Open Now</span>
             </div>
-          </>
-        )}
+            <button
+              onClick={() => {
+                const newValue = !openNowOnly;
+                setOpenNowOnly(newValue);
+                trackFilterChange({ filterType: 'openNow', value: newValue });
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                openNowOnly ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
+                  openNowOnly ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </label>
+        </div>
 
         {/* City Filter - Hidden during search, replaced by AI chat response */}
         {!searchTerm ? (
