@@ -37,6 +37,8 @@ export default function Account() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'saved' | 'visited' | 'profile' | 'lists' | 'collections' | 'history'>('overview');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const { collections, loading: loadingCollections } = useCollections(user?.id);
   
   // Lists state
@@ -275,6 +277,7 @@ export default function Account() {
         if (profileResult.data) {
           setUserProfile(profileResult.data);
           setBirthday(profileResult.data.birthday || "");
+          setAvatarUrl(profileResult.data.avatar_url || null);
         }
 
         // Get destination IDs from saved_destinations
@@ -353,6 +356,84 @@ export default function Account() {
     loadUserData();
   }, [user?.id]);
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size must be less than 2MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-profile-picture', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      setAvatarUrl(data.url);
+
+      // Update user profile state
+      if (userProfile) {
+        setUserProfile({ ...userProfile, avatar_url: data.url });
+      }
+
+      // Trigger a page reload to update header avatar
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      alert(`Failed to upload photo: ${error.message}`);
+    } finally {
+      setUploadingAvatar(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+
+    setUploadingAvatar(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: null })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setAvatarUrl(null);
+      if (userProfile) {
+        setUserProfile({ ...userProfile, avatar_url: null });
+      }
+
+      // Trigger a page reload to update header avatar
+      window.location.reload();
+    } catch (error) {
+      console.error('Error removing avatar:', error);
+      alert('Failed to remove photo. Please try again.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -361,6 +442,7 @@ export default function Account() {
       const profileData = {
         user_id: user.id,
         birthday,
+        avatar_url: avatarUrl,
         updated_at: new Date().toISOString()
       };
 
@@ -900,7 +982,7 @@ export default function Account() {
 
                           {list.cities && list.cities.length > 0 && (
                             <div className="text-xs text-gray-400 dark:text-gray-500">
-                              {list.cities.slice(0, 3).map(city => capitalizeCity(city)).join(', ')}
+                              {list.cities.slice(0, 3).map((city: string) => capitalizeCity(city)).join(', ')}
                               {list.cities.length > 3 && ` +${list.cities.length - 3} more`}
                             </div>
                           )}
@@ -939,6 +1021,67 @@ export default function Account() {
                 )}
               </div>
               <div className="p-6 space-y-6">
+                {/* Profile Picture */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Profile Picture
+                  </label>
+                  <div className="flex items-center gap-4">
+                    {avatarUrl ? (
+                      <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                        <Image
+                          src={avatarUrl}
+                          alt="Profile"
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-2xl font-medium text-gray-600 dark:text-gray-400">
+                        {user.email?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        disabled={uploadingAvatar || !isEditingProfile}
+                        className="hidden"
+                        id="avatar-upload"
+                      />
+                      <label
+                        htmlFor="avatar-upload"
+                        className={`inline-block px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer text-sm ${
+                          uploadingAvatar || !isEditingProfile ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        {uploadingAvatar ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Uploading...
+                          </span>
+                        ) : (
+                          'Upload Photo'
+                        )}
+                      </label>
+                      {avatarUrl && (
+                        <button
+                          onClick={handleRemoveAvatar}
+                          disabled={uploadingAvatar || !isEditingProfile}
+                          className="ml-2 text-sm text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      )}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        JPG, PNG or GIF. Max size 2MB.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium mb-2">
                     Email

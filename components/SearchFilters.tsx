@@ -47,7 +47,7 @@ export function SearchFiltersComponent({
   const hasActiveFilters = Object.keys(filters).length > 0;
 
   return (
-    <>
+    <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0"
@@ -57,7 +57,12 @@ export function SearchFiltersComponent({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 p-4 space-y-4">
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Filters</h3>
             <button
@@ -221,15 +226,9 @@ export function SearchFiltersComponent({
             </div>
           </div>
         </div>
+        </>
       )}
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-    </>
+    </div>
   );
 }
 

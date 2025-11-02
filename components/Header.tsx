@@ -4,6 +4,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import Image from "next/image";
 
 export function Header() {
   const router = useRouter();
@@ -12,7 +14,35 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const isHome = pathname === '/';
+
+  // Fetch user profile and avatar
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user?.id) {
+        setAvatarUrl(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('avatar_url')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && data?.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      } catch {
+        // Ignore errors (table might not exist)
+        setAvatarUrl(null);
+      }
+    }
+
+    fetchProfile();
+  }, [user]);
 
   // Check admin status and fetch build version
   useEffect(() => {
@@ -67,7 +97,7 @@ export function Header() {
               Urban Manual®
             </button>
           </div>
-          {/* Information menu on right */}
+          {/* Profile picture / Menu dropdown on right */}
           <div className={`absolute right-0 top-1/2 -translate-y-1/2`}>
             <div className="flex items-center gap-4">
               {isAdmin && buildVersion && (
@@ -75,16 +105,43 @@ export function Header() {
                   {buildVersion}
                 </span>
               )}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal"
-                aria-label="Toggle menu"
-              >
-                Menu
-                <svg className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+              {user ? (
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  aria-label="Toggle menu"
+                >
+                  {avatarUrl ? (
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                      <Image
+                        src={avatarUrl}
+                        alt={user.email || 'Profile'}
+                        fill
+                        className="object-cover"
+                        sizes="32px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {user.email?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  <svg className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal"
+                  aria-label="Toggle menu"
+                >
+                  Menu
+                  <svg className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -107,7 +164,6 @@ export function Header() {
               <button onClick={() => { navigate('/category/bars'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 pl-8">Bars</button>
               <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Map</button>
               <button onClick={() => { navigate('/explore'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Explore</button>
-              <button onClick={() => { navigate('/lists'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Lists</button>
               <button onClick={() => { navigate('/feed'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Feed</button>
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
               {user ? (

@@ -679,12 +679,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Content Section - Grid directly below hero */}
-        <div className="px-8 pb-20">
-          <div className="max-w-[1800px] mx-auto">
-            {/* Filter - Top right of grid section */}
-            <div className="flex justify-end mb-6">
-              <SearchFiltersComponent
+              {/* Content Section - Grid directly below hero */}
+              <div className="px-8 pb-20">
+                <div className="max-w-[1800px] mx-auto">
+                  {/* Filter - Top right of grid section */}
+                  <div className="flex justify-end mb-6 relative">
+                    <SearchFiltersComponent
                 filters={advancedFilters}
                 onFiltersChange={(newFilters) => {
                   setAdvancedFilters(newFilters);
