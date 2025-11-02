@@ -84,9 +84,9 @@ export function Header() {
   };
 
   return (
-    <header>
+    <header className="mt-5">
       {/* Top Bar */}
-      <div className="px-6 md:px-10 pt-[10px] pb-4">
+      <div className="px-6 md:px-10 pb-4">
         <div className={`max-w-[1920px] mx-auto relative`}>
           {/* Logo - Top Left */}
           <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>

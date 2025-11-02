@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { MapPin, ArrowLeft } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 // Lazy load drawer (only when opened)
@@ -18,6 +18,7 @@ const DestinationDrawer = dynamic(
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { FollowCityButton } from '@/components/FollowCityButton';
+import { SearchFiltersComponent } from '@/components/SearchFilters';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 
@@ -34,10 +35,25 @@ export default function CityPageClient() {
   const params = useParams();
   const city = decodeURIComponent(params.city as string);
   const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
+  const [displayedCount, setDisplayedCount] = useState(7);
+  const [advancedFilters, setAdvancedFilters] = useState<{
+    city?: string;
+    category?: string;
+    michelin?: boolean;
+    crown?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    openNow?: boolean;
+  }>({});
+  const LOAD_MORE_INCREMENT = 24;
 
   useEffect(() => {
     fetchDestinations();
@@ -55,14 +71,50 @@ export default function CityPageClient() {
         .order('name');
 
       if (error) throw error;
-      setDestinations(data || []);
+      const dests = data || [];
+      setDestinations(dests);
+      
+      // Extract unique categories
+      const uniqueCategories = Array.from(new Set(dests.map(d => d.category).filter(Boolean))) as string[];
+      setCategories(uniqueCategories);
+      
+      // Apply initial filtering
+      applyFilters(dests, selectedCategory, advancedFilters);
     } catch (error) {
       console.error('Error fetching destinations:', error);
       setDestinations([]);
+      setFilteredDestinations([]);
     } finally {
       setLoading(false);
     }
   };
+
+  const applyFilters = (dests: Destination[], category: string, filters: typeof advancedFilters) => {
+    let filtered = [...dests];
+    
+    // Category filter
+    if (category) {
+      filtered = filtered.filter(d => d.category === category);
+    }
+    
+    // Advanced filters
+    if (filters.michelin) {
+      filtered = filtered.filter(d => d.michelin_stars && d.michelin_stars > 0);
+    }
+    if (filters.crown) {
+      filtered = filtered.filter(d => d.crown);
+    }
+    
+    setFilteredDestinations(filtered);
+    // Reset displayed count when filters change
+    setDisplayedCount(7);
+  };
+
+  useEffect(() => {
+    if (destinations.length > 0) {
+      applyFilters(destinations, selectedCategory, advancedFilters);
+    }
+  }, [selectedCategory, advancedFilters]);
 
   const fetchVisitedPlaces = async () => {
     if (!user) return;
@@ -82,7 +134,12 @@ export default function CityPageClient() {
     }
   };
 
-  const country = cityCountryMap[city] || 'Unknown';
+  function capitalizeCategory(category: string): string {
+    return category
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
 
   if (loading) {
     return (
@@ -92,68 +149,130 @@ export default function CityPageClient() {
     );
   }
 
+  const cityDisplayName = capitalizeCity(city);
+  const country = cityCountryMap[city] || 'Unknown';
+
   return (
     <>
-      <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-        <div className="max-w-[1920px] mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={() => router.push('/cities')}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white mb-6 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm font-medium">Back to Cities</span>
-          </button>
-
-          {/* Hero Section */}
-          <div className="mb-12 flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="text-4xl md:text-5xl font-bold mb-3">
-                {capitalizeCity(city)}
-              </h1>
-              <div className="flex items-center gap-2 text-base text-gray-600 dark:text-gray-400 mb-2">
-                <MapPin className="h-5 w-5" />
-                <span>{country}</span>
+      <main className="relative min-h-screen">
+        {/* Hero Section - Matching homepage design */}
+        <section className="min-h-[70vh] flex flex-col px-8 py-20">
+          <div className="max-w-[1920px] mx-auto w-full">
+            <div className="w-full flex md:justify-start flex-1">
+              <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
+                {/* Greeting - Always vertically centered */}
+                <div className="flex-1 flex items-center">
+                  <div className="w-full">
+                    <div className="text-left mb-8">
+                      <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+                        {cityDisplayName}'s Manual
+                      </h1>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>{country}</span>
+                        <span className="text-gray-300 dark:text-gray-700">•</span>
+                        <span>{destinations.length} destination{destinations.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      {user && (
+                        <div className="mt-4">
+                          <FollowCityButton 
+                            citySlug={city}
+                            cityName={cityDisplayName}
+                            variant="default"
+                            showLabel={true}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Category List - Uses space below greeting, aligned to bottom */}
+                {categories.length > 0 && (
+                  <div className="flex-1 flex items-end">
+                    <div className="w-full pt-8">
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                        <button
+                          onClick={() => {
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined }));
+                          }}
+                          className={`transition-all ${
+                            !selectedCategory
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {categories.map((category) => (
+                          <button
+                            key={category}
+                            onClick={() => {
+                              const newCategory = category === selectedCategory ? "" : category;
+                              setSelectedCategory(newCategory);
+                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined }));
+                            }}
+                            className={`transition-all ${
+                              selectedCategory === category
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            {capitalizeCategory(category)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <span className="text-base text-gray-600 dark:text-gray-400">
-                {destinations.length} destination{destinations.length !== 1 ? 's' : ''}
-              </span>
             </div>
-            {user && (
-              <div className="flex-shrink-0">
-                <FollowCityButton 
-                  citySlug={city}
-                  cityName={capitalizeCity(city)}
-                  variant="default"
-                  showLabel={true}
-                />
-              </div>
-            )}
           </div>
+        </section>
 
-          {/* Personalized Recommendations for this city (if user is logged in) */}
-          {user && destinations.length > 0 && (
-            <PersonalizedRecommendations
-              limit={6}
-              title={`Recommended in ${capitalizeCity(city)}`}
-              showTitle={true}
-              filterCity={city}
-              onDestinationClick={(destination) => {
-                setSelectedDestination(destination);
-                setIsDrawerOpen(true);
-              }}
-              className="mb-12"
-            />
-          )}
-
-          {/* Destinations Grid */}
-          {destinations.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              No destinations found in {city}.
+        {/* Content Section - Grid directly below hero */}
+        <div className="px-8 pb-20">
+          <div className="max-w-[1800px] mx-auto">
+            {/* Filter - Top right of grid section */}
+            <div className="flex justify-end mb-6 relative">
+              <SearchFiltersComponent
+                filters={advancedFilters}
+                onFiltersChange={(newFilters) => {
+                  setAdvancedFilters(newFilters);
+                  if (newFilters.category !== undefined) {
+                    setSelectedCategory(newFilters.category || '');
+                  }
+                }}
+                availableCities={[city]}
+                availableCategories={categories}
+              />
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-              {destinations.map((destination, index) => {
+
+            {/* Personalized Recommendations for this city (if user is logged in) */}
+            {user && filteredDestinations.length > 0 && (
+              <PersonalizedRecommendations
+                limit={6}
+                title={`Recommended in ${cityDisplayName}`}
+                showTitle={true}
+                filterCity={city}
+                onDestinationClick={(destination) => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+                }}
+                className="mb-12"
+              />
+            )}
+
+            {/* Destinations Grid */}
+            {filteredDestinations.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                No destinations found in {cityDisplayName}.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+                  {filteredDestinations.slice(0, displayedCount).map((destination, index) => {
                 const isVisited = user && visitedSlugs.has(destination.slug);
                 return (
                   <button
@@ -219,10 +338,24 @@ export default function CityPageClient() {
                       </div>
                     </div>
                   </button>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+                </div>
+
+                {/* Load More Button */}
+                {displayedCount < filteredDestinations.length && (
+                  <div className="mt-12 text-center">
+                    <button
+                      onClick={() => setDisplayedCount(prev => prev + LOAD_MORE_INCREMENT)}
+                      className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+                    >
+                      Load More ({filteredDestinations.length - displayedCount} remaining)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </main>
 

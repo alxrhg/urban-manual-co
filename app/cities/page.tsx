@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { MapPin, Search, X } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
+import { SearchFiltersComponent } from '@/components/SearchFilters';
+import Image from 'next/image';
 
 interface CityStats {
   city: string;
@@ -27,25 +29,41 @@ export default function CitiesPage() {
   const router = useRouter();
   const [cityStats, setCityStats] = useState<CityStats[]>([]);
   const [filteredCities, setFilteredCities] = useState<CityStats[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [countries, setCountries] = useState<string[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState('');
   const [loading, setLoading] = useState(true);
+  const [displayedCount, setDisplayedCount] = useState(7);
+  const [advancedFilters, setAdvancedFilters] = useState<{
+    city?: string;
+    category?: string;
+    michelin?: boolean;
+    crown?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    openNow?: boolean;
+  }>({});
+  const LOAD_MORE_INCREMENT = 24;
 
   useEffect(() => {
     fetchCityStats();
   }, []);
 
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = cityStats.filter(
-        (city) =>
-          city.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          city.country.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredCities(filtered);
-    } else {
-      setFilteredCities(cityStats);
+    applyFilters(cityStats, selectedCountry, advancedFilters);
+  }, [selectedCountry, advancedFilters, cityStats]);
+
+  const applyFilters = (cities: CityStats[], country: string, filters: typeof advancedFilters) => {
+    let filtered = [...cities];
+    
+    // Country filter
+    if (country) {
+      filtered = filtered.filter(c => c.country === country);
     }
-  }, [searchTerm, cityStats]);
+    
+    setFilteredCities(filtered);
+    setDisplayedCount(7);
+  };
 
   const fetchCityStats = async () => {
     try {
@@ -84,7 +102,13 @@ export default function CitiesPage() {
         .sort((a, b) => b.count - a.count); // Sort by count descending
 
       setCityStats(stats);
-      setFilteredCities(stats);
+      
+      // Extract unique countries
+      const uniqueCountries = Array.from(new Set(stats.map(s => s.country).filter(Boolean))) as string[];
+      setCountries(uniqueCountries.sort());
+      
+      // Apply initial filtering
+      applyFilters(stats, selectedCountry, advancedFilters);
     } catch (error) {
       console.error('Error fetching city stats:', error);
     } finally {
@@ -101,58 +125,109 @@ export default function CitiesPage() {
   }
 
   return (
-    <main className="px-4 md:px-8 lg:px-10 py-8 md:py-12 dark:text-white min-h-screen">
-      <div className="max-w-[1920px] mx-auto">
-        {/* Header - Minimal style */}
-        <div className="mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">Cities</h1>
-          <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">
-            Discover {cityStats.length} cities around the world
-          </span>
+    <main className="relative min-h-screen">
+      {/* Hero Section - Matching homepage design */}
+      <section className="min-h-[70vh] flex flex-col px-8 py-20">
+        <div className="max-w-[1920px] mx-auto w-full">
+          <div className="w-full flex md:justify-start flex-1">
+            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
+              {/* Greeting - Always vertically centered */}
+              <div className="flex-1 flex items-center">
+                <div className="w-full">
+                  <div className="text-left mb-8">
+                    <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+                      All Cities
+                    </h1>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      <span>{cityStats.length} cities around the world</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Country List - Uses space below greeting, aligned to bottom */}
+              {countries.length > 0 && (
+                <div className="flex-1 flex items-end">
+                  <div className="w-full pt-8">
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                      <button
+                        onClick={() => {
+                          setSelectedCountry("");
+                          setAdvancedFilters(prev => ({ ...prev, city: undefined }));
+                        }}
+                        className={`transition-all ${
+                          !selectedCountry
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                        }`}
+                      >
+                        All
+                      </button>
+                      {countries.map((country) => (
+                        <button
+                          key={country}
+                          onClick={() => {
+                            const newCountry = country === selectedCountry ? "" : country;
+                            setSelectedCountry(newCountry);
+                            setAdvancedFilters(prev => ({ ...prev, city: undefined }));
+                          }}
+                          className={`transition-all ${
+                            selectedCountry === country
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          {country}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Search - Minimal borderless style */}
-        <div className="mb-8 md:mb-12">
-          <div className="relative max-w-[680px]">
-            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search cities or countries..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-6 pr-8 py-2 bg-transparent text-sm md:text-base border-b border-gray-200 dark:border-gray-700 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+      {/* Content Section - Grid directly below hero */}
+      <div className="px-8 pb-20">
+        <div className="max-w-[1800px] mx-auto">
+          {/* Filter - Top right of grid section */}
+          <div className="flex justify-end mb-6 relative">
+            <SearchFiltersComponent
+              filters={advancedFilters}
+              onFiltersChange={(newFilters) => {
+                setAdvancedFilters(newFilters);
+              }}
+              availableCities={cityStats.map(s => s.city)}
+              availableCategories={[]}
             />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
           </div>
-        </div>
 
-        {/* Grid */}
-        {filteredCities.length === 0 ? (
-          <div className="text-center py-16">
-            <span className="text-gray-500">No cities found</span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-            {filteredCities.map(({ city, country, count, featuredImage }) => (
+          {/* Grid */}
+          {filteredCities.length === 0 ? (
+            <div className="text-center py-16">
+              <span className="text-gray-500">No cities found</span>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+                {filteredCities.slice(0, displayedCount).map(({ city, country, count, featuredImage }) => (
               <button
                 key={city}
                 onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
                 className={`${CARD_WRAPPER} cursor-pointer text-left`}
               >
                 {/* Image Container */}
-                <div className={`${CARD_MEDIA} mb-2`}>
+                <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
                   {featuredImage ? (
-                    <img
+                    <Image
                       src={featuredImage}
                       alt={capitalizeCity(city)}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      quality={80}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
@@ -191,8 +266,22 @@ export default function CitiesPage() {
                 </div>
               </button>
             ))}
-          </div>
-        )}
+              </div>
+
+              {/* Load More Button */}
+              {displayedCount < filteredCities.length && (
+                <div className="mt-12 text-center">
+                  <button
+                    onClick={() => setDisplayedCount(prev => prev + LOAD_MORE_INCREMENT)}
+                    className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+                  >
+                    Load More ({filteredCities.length - displayedCount} remaining)
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </main>
   );
