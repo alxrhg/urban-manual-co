@@ -161,7 +161,7 @@ export default function CitiesPage() {
                             : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                         }`}
                       >
-                        All
+                        All Countries
                       </button>
                       {countries.map((country) => (
                         <button

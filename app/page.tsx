@@ -645,7 +645,7 @@ export default function Home() {
                             : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                         }`}
                       >
-                        All
+                        All Cities
                       </button>
                       {displayedCities.map((city) => (
                         <button
@@ -689,7 +689,7 @@ export default function Home() {
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          All
+                          All Categories
                         </button>
                         {categories.map((category) => (
                           <button
