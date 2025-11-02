@@ -126,7 +126,7 @@ export default function DestinationPageClient() {
         <div className="aspect-[16/9] rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
           <img
             src={destination.image}
-            alt={destination.name}
+            alt={`${destination.name} - ${destination.category} in ${destination.city}`}
             className="w-full h-full object-cover"
           />
         </div>
@@ -175,6 +175,7 @@ export default function DestinationPageClient() {
       {/* Content */}
       {destination.content && (
         <div className="prose dark:prose-invert max-w-none mb-8">
+          <h2 className="text-2xl font-bold mb-4">About</h2>
           <div className="text-lg leading-relaxed whitespace-pre-wrap">
             {stripHtmlTags(destination.content)}
           </div>
@@ -186,9 +187,9 @@ export default function DestinationPageClient() {
         <div className="mb-8 pt-8 border-t border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-            <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
-              You might also like
-            </h3>
+            <h2 className="text-2xl font-bold">
+              Similar Destinations
+            </h2>
           </div>
 
           {loadingRecommendations ? (
@@ -213,7 +214,7 @@ export default function DestinationPageClient() {
                     {rec.image ? (
                       <img
                         src={rec.image}
-                        alt={rec.name}
+                        alt={`${rec.name} - ${rec.category} in ${rec.city}`}
                         className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                       />
                     ) : (
