@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
+import Image from 'next/image';
 
 interface Recommendation {
   slug: string;
@@ -345,8 +346,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         <div className="p-6">
           {destination.image && (
-            <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
-              <img src={destination.image} alt={destination.name} className="w-full h-full object-cover" />
+            <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 relative">
+              <Image
+                src={destination.image}
+                alt={destination.name}
+                fill
+                sizes="(max-width: 480px) 100vw, 480px"
+                className="object-cover"
+                quality={80}
+                loading="lazy"
+              />
             </div>
           )}
 
@@ -615,10 +624,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   >
                     <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
                       {rec.image ? (
-                        <img
+                        <Image
                           src={rec.image}
                           alt={rec.name}
-                          className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                          fill
+                          sizes="160px"
+                          className="object-cover group-hover:opacity-90 transition-opacity"
+                          quality={75}
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">

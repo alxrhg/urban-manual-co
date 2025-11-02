@@ -3,6 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: (() => {
       const patterns: { protocol: 'https'; hostname: string }[] = []
       try {
@@ -12,6 +18,16 @@ const nextConfig: NextConfig = {
           patterns.push({ protocol: 'https', hostname })
         }
       } catch {}
+      // Add common image CDN domains
+      patterns.push(
+        { protocol: 'https', hostname: 'guide.michelin.com' },
+        { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
+        { protocol: 'https', hostname: 'framerusercontent.com' },
+        { protocol: 'https', hostname: '*.framerusercontent.com' },
+        { protocol: 'https', hostname: '*.webflow.com' },
+        { protocol: 'https', hostname: '*.supabase.co' },
+        { protocol: 'https', hostname: '*.supabase.in' }
+      )
       return patterns
     })(),
   },

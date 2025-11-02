@@ -9,6 +9,7 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/Ca
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   initializeSession,
   trackPageView,
@@ -622,12 +623,16 @@ export default function Home() {
                 className={`${CARD_WRAPPER} cursor-pointer text-left ${isVisited ? 'opacity-60' : ''}`}
               >
                 {/* Image Container */}
-                <div className={`${CARD_MEDIA} mb-2`}>
+                <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
                   {destination.image ? (
-                    <img
+                    <Image
                       src={destination.image}
                       alt={destination.name}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${isVisited ? 'grayscale' : ''}`}
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isVisited ? 'grayscale' : ''}`}
+                      quality={80}
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
@@ -640,10 +645,12 @@ export default function Home() {
 
                   {/* Michelin Stars */}
                   {destination.michelin_stars && destination.michelin_stars > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 shadow-lg">
-                      <img
+                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 shadow-lg z-10">
+                      <Image
                         src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                         alt="Michelin star"
+                        width={12}
+                        height={12}
                         className="h-3 w-3"
                       />
                       <span>{destination.michelin_stars}</span>

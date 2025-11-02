@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { MapPin, Star, ArrowLeft, Tag, Sparkles } from 'lucide-react';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
+import Image from 'next/image';
 
 interface Recommendation {
   slug: string;
@@ -123,11 +124,15 @@ export default function DestinationPageClient() {
 
       {/* Hero Image */}
       {destination.image && (
-        <div className="aspect-[16/9] rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
-          <img
+        <div className="aspect-[16/9] rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800 relative">
+          <Image
             src={destination.image}
             alt={`${destination.name} - ${destination.category} in ${destination.city}`}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1024px"
+            className="object-cover"
+            quality={85}
+            priority
           />
         </div>
       )}
@@ -159,9 +164,11 @@ export default function DestinationPageClient() {
 
           {destination.michelin_stars && destination.michelin_stars > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
-              <img
+              <Image
                 src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                 alt="Michelin star"
+                width={16}
+                height={16}
                 className="h-4 w-4"
               />
               <span className="font-medium">
@@ -212,10 +219,14 @@ export default function DestinationPageClient() {
                 >
                   <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
                     {rec.image ? (
-                      <img
+                      <Image
                         src={rec.image}
                         alt={`${rec.name} - ${rec.category} in ${rec.city}`}
-                        className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        className="object-cover group-hover:opacity-90 transition-opacity"
+                        quality={75}
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -223,10 +234,12 @@ export default function DestinationPageClient() {
                       </div>
                     )}
                     {rec.michelin_stars && rec.michelin_stars > 0 && (
-                      <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
-                        <img
+                      <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5 z-10">
+                        <Image
                           src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                           alt="Michelin star"
+                          width={12}
+                          height={12}
                           className="h-3 w-3"
                         />
                         <span>{rec.michelin_stars}</span>

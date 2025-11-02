@@ -9,6 +9,7 @@ import {
 import VisitedCountriesMap from "@/components/VisitedCountriesMap";
 import { Badge } from "@/components/ui/badge";
 import { cityCountryMap } from "@/data/cityCountryMap";
+import Image from 'next/image';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -421,11 +422,17 @@ export default function Account() {
                         >
                           <div className="flex items-center gap-4">
                             {dest.image && (
-                              <img
-                                src={dest.image}
-                                alt={dest.name}
-                                className="w-12 h-12 object-cover rounded"
-                              />
+                              <div className="relative w-12 h-12 flex-shrink-0">
+                                <Image
+                                  src={dest.image}
+                                  alt={dest.name}
+                                  fill
+                                  sizes="48px"
+                                  className="object-cover rounded"
+                                  quality={75}
+                                  loading="lazy"
+                                />
+                              </div>
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">{dest.name}</div>
