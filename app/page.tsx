@@ -553,10 +553,10 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
-        {/* Hero Section - Centered search and country list */}
+        {/* Hero Section - Right half, left-aligned */}
         <div className="min-h-[70vh] flex items-center px-8 py-20">
-          <div className="w-full flex justify-center">
-            <div className="w-full max-w-2xl">
+          <div className="w-full flex justify-end">
+            <div className="w-full md:w-1/2 max-w-2xl">
               <GreetingHero
                 searchQuery={searchTerm}
                 onSearchChange={(value) => {
