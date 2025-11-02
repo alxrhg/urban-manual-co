@@ -46,6 +46,12 @@ pids
 *.pid.lock
 *.bak
 
+# Prevent duplicate files
+* 2.*
+* 2.ts
+* 2.tsx
+*.backup
+
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov

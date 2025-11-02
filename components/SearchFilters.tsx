@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { X, SlidersHorizontal, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export interface SearchFilters {
@@ -12,6 +12,7 @@ export interface SearchFilters {
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
+  openNow?: boolean;
 }
 
 interface SearchFiltersProps {
@@ -78,21 +79,31 @@ export function SearchFiltersComponent({
 
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-              {Object.entries(filters).map(([key, value]) => (
-                <Badge
-                  key={key}
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
-                  {key}: {String(value)}
-                  <button
-                    onClick={() => clearFilter(key as keyof SearchFilters)}
-                    className="ml-1 hover:text-red-500"
+              {Object.entries(filters).map(([key, value]) => {
+                let displayValue = String(value);
+                if (key === 'openNow' && value === true) displayValue = 'Open Now';
+                else if (key === 'michelin' && value === true) displayValue = 'Michelin';
+                else if (key === 'crown' && value === true) displayValue = 'Crown';
+                else if (key === 'minPrice') displayValue = `Min $${'$'.repeat(value as number)}`;
+                else if (key === 'maxPrice') displayValue = `Max $${'$'.repeat(value as number)}`;
+                else if (key === 'minRating') displayValue = `${value}+ ⭐`;
+                
+                return (
+                  <Badge
+                    key={key}
+                    variant="secondary"
+                    className="flex items-center gap-1"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
+                    {displayValue}
+                    <button
+                      onClick={() => clearFilter(key as keyof SearchFilters)}
+                      className="ml-1 hover:text-red-500"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                );
+              })}
               <button
                 onClick={clearAll}
                 className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -200,6 +211,22 @@ export function SearchFiltersComponent({
                 <option value="3.5">3.5+ ⭐</option>
                 <option value="3.0">3.0+ ⭐</option>
               </select>
+            </div>
+
+            {/* Open Now Filter */}
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.openNow || false}
+                  onChange={(e) => updateFilter('openNow', e.target.checked || undefined)}
+                  className="w-4 h-4 rounded"
+                />
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <span className="text-sm">Open Now</span>
+                </div>
+              </label>
             </div>
           </div>
         </div>

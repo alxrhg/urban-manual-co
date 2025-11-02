@@ -172,7 +172,6 @@ export default function Home() {
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [searchIntent, setSearchIntent] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [openNowOnly, setOpenNowOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [displayedCount, setDisplayedCount] = useState(24); // Initial load: 24 items
   // Advanced filters state
@@ -184,6 +183,7 @@ export default function Home() {
     minPrice?: number;
     maxPrice?: number;
     minRating?: number;
+    openNow?: boolean;
   }>({});
   const LOAD_MORE_INCREMENT = 24;
 
@@ -229,7 +229,7 @@ export default function Home() {
       filterDestinations();
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, openNowOnly, advancedFilters, destinations, visitedSlugs]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, destinations, visitedSlugs]); // Filters only apply when no search
 
   // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
   useEffect(() => {
@@ -436,6 +436,82 @@ export default function Home() {
           d.rating != null && d.rating >= advancedFilters.minRating!
         );
       }
+
+      // Open Now filter
+      if (advancedFilters.openNow) {
+        filtered = filtered.filter(d => {
+          const hours = d.opening_hours;
+          if (!hours?.weekday_text) return false;
+          
+          try {
+            // Get current time in destination's timezone
+            const cityKey = d.city.toLowerCase().replace(/\s+/g, '-');
+            const CITY_TIMEZONES: Record<string, string> = {
+              'tokyo': 'Asia/Tokyo',
+              'new-york': 'America/New_York',
+              'london': 'Europe/London',
+              'paris': 'Europe/Paris',
+              'los-angeles': 'America/Los_Angeles',
+              'singapore': 'Asia/Singapore',
+              'hong-kong': 'Asia/Hong_Kong',
+              'sydney': 'Australia/Sydney',
+              'dubai': 'Asia/Dubai',
+              'bangkok': 'Asia/Bangkok',
+            };
+            
+            let now: Date;
+            if (CITY_TIMEZONES[cityKey]) {
+              now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[cityKey] }));
+            } else {
+              now = new Date();
+            }
+            
+            const dayOfWeek = now.getDay();
+            const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const todayText = hours.weekday_text[googleDayIndex];
+            if (!todayText) return false;
+            
+            const hoursText = todayText.substring(todayText.indexOf(':') + 1).trim();
+            
+            if (!hoursText || hoursText.toLowerCase().includes('closed')) {
+              return false;
+            }
+            
+            if (hoursText.toLowerCase().includes('24 hours')) {
+              return true;
+            }
+            
+            const timeRanges = hoursText.split(',').map((range: string) => range.trim());
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            for (const range of timeRanges) {
+              const times = range.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi);
+              if (times && times.length >= 2) {
+                const parseTime = (timeStr: string): number => {
+                  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                  if (!match) return 0;
+                  let hours = parseInt(match[1]);
+                  const minutes = parseInt(match[2]);
+                  const period = match[3].toUpperCase();
+                  if (period === 'PM' && hours !== 12) hours += 12;
+                  if (period === 'AM' && hours === 12) hours = 0;
+                  return hours * 60 + minutes;
+                };
+                
+                const openTime = parseTime(times[0]);
+                const closeTime = parseTime(times[1]);
+                if (currentTime >= openTime && currentTime < closeTime) {
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          } catch {
+            return false;
+          }
+        });
+      }
     }
     // When searchTerm exists, AI chat handles all filtering - don't apply text search here
 
@@ -540,32 +616,6 @@ export default function Home() {
               availableCategories={categories}
             />
           </div>
-        </div>
-
-        {/* Open Now Toggle - Keep separate for quick access */}
-        <div className="mb-4 flex items-center justify-center">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-semibold">Open Now</span>
-            </div>
-            <button
-              onClick={() => {
-                const newValue = !openNowOnly;
-                setOpenNowOnly(newValue);
-                trackFilterChange({ filterType: 'openNow', value: newValue });
-              }}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                openNowOnly ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
-                  openNowOnly ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </label>
         </div>
 
         {/* City Filter - Hidden during search, replaced by AI chat response */}
