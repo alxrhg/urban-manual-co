@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function Header() {
@@ -10,36 +10,9 @@ export function Header() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-  const [currentTime, setCurrentTime] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const isHome = pathname === '/';
-
-  // Initialize dark mode from localStorage (only use system preference if no saved preference)
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('theme');
-    
-    // Only check system preference if user hasn't set a preference
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    let shouldBeDark: boolean;
-    
-    if (savedTheme) {
-      // User has explicitly set a preference - use it
-      shouldBeDark = savedTheme === 'dark';
-    } else {
-      // No saved preference - use system preference
-      shouldBeDark = systemPrefersDark;
-      // Save the system preference so it persists
-      localStorage.setItem('theme', systemPrefersDark ? 'dark' : 'light');
-    }
-
-    setIsDark(shouldBeDark);
-    document.documentElement.classList.toggle('dark', shouldBeDark);
-    document.documentElement.style.colorScheme = shouldBeDark ? 'dark' : 'light';
-  }, []);
 
   // Check admin status and fetch build version
   useEffect(() => {
@@ -75,28 +48,9 @@ export function Header() {
     checkAdmin();
   }, [user]);
 
-  // (Removed time display)
-
   const navigate = (path: string) => {
     router.push(path);
     setIsMenuOpen(false);
-  };
-
-  const toggleDark = () => {
-    const newDarkState = !isDark;
-    setIsDark(newDarkState);
-
-    // Update DOM immediately
-    if (newDarkState) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.style.colorScheme = 'dark';
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.style.colorScheme = 'light';
-    }
-    
-    // Persist preference
-    localStorage.setItem('theme', newDarkState ? 'dark' : 'light');
   };
 
   return (
@@ -113,18 +67,13 @@ export function Header() {
               Urban Manual®
             </button>
           </div>
-          {/* Information menu + Theme on right */}
+          {/* Information menu on right */}
           <div className={`absolute right-0 top-1/2 -translate-y-1/2`}>
             <div className="flex items-center gap-4">
               {isAdmin && buildVersion && (
                 <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded" title="Build version">
                   {buildVersion}
                 </span>
-              )}
-              {mounted && (
-                <button onClick={toggleDark} className="p-2 hover:opacity-60 transition-opacity" aria-label="Toggle theme">
-                  {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </button>
               )}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
