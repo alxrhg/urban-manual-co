@@ -10,9 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
-
 // Destination Form Component
 function DestinationForm({ 
   destination, 
