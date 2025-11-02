@@ -114,7 +114,7 @@ export default function GreetingHero({
   };
 
   return (
-    <div className="w-full pt-10 pb-2 relative" data-name="Greeting and Filters">
+    <div className="w-full pt-16 pb-8 relative" data-name="Greeting and Filters">
       <div className="max-w-[680px] mx-auto px-[24px] relative">
         {/* Greeting */}
         <div className="text-center mb-3">
@@ -127,7 +127,7 @@ export default function GreetingHero({
         </div>
 
         {/* Search Bar with AI */}
-        <div className="mt-8 mb-2">
+        <div className="mt-12 mb-4">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999] z-10">
