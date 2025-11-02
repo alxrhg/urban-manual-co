@@ -15,7 +15,7 @@ export interface UserProfile {
   
   // Interests
   interests?: string[];
-  travel_style?: 'Luxury' | 'Budget' | 'Adventure' | 'Relaxation';
+  travel_style?: 'Luxury' | 'Budget' | 'Adventure' | 'Relaxation' | 'Balanced';
   
   // Settings
   privacy_mode: boolean;
