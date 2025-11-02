@@ -50,17 +50,10 @@ export function SearchFiltersComponent({
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0 ${
-          hasActiveFilters ? 'relative' : ''
-        }`}
+        className="flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0"
         aria-label="Open filters"
       >
         <SlidersHorizontal className="h-5 w-5" />
-        {hasActiveFilters && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-600 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
-            {Object.keys(filters).length}
-          </span>
-        )}
       </button>
 
       {isOpen && (
@@ -120,7 +113,7 @@ export function SearchFiltersComponent({
                 onChange={(e) => updateFilter('city', e.target.value || undefined)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
               >
-                <option value="">All Cities</option>
+                <option value="">Select City</option>
                 {availableCities.map(city => (
                   <option key={city} value={city}>{city}</option>
                 ))}
@@ -135,7 +128,7 @@ export function SearchFiltersComponent({
                 onChange={(e) => updateFilter('category', e.target.value || undefined)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
               >
-                <option value="">All Categories</option>
+                <option value="">Select Category</option>
                 {availableCategories.map(category => (
                   <option key={category} value={category}>{category}</option>
                 ))}
