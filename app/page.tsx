@@ -693,65 +693,6 @@ export default function Home() {
         {/* Scrollable content below (destinations grid, etc.) */}
         <div className="relative pt-[100vh] px-8 pb-20">
           <div className="max-w-[1800px] mx-auto">
-            {/* Country List + Chat Interface (Before Grid) */}
-            <section className="mb-12">
-              {/* Country Filter */}
-              <div className="flex items-center gap-4 overflow-x-auto pb-4 scrollbar-hide mb-6">
-                <button
-                  onClick={() => {
-                    setSelectedCity("");
-                    trackFilterChange({ filterType: 'city', value: 'all' });
-                  }}
-                  className={`
-                    px-4 py-2 text-sm whitespace-nowrap transition-colors
-                    ${!selectedCity
-                      ? 'text-black dark:text-white font-medium'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
-                    }
-                  `}
-                >
-                  All
-                </button>
-                {displayedCities.map((city) => (
-                  <button
-                    key={city}
-                    onClick={() => {
-                      const newCity = city === selectedCity ? "" : city;
-                      setSelectedCity(newCity);
-                      trackFilterChange({ filterType: 'city', value: newCity || 'all' });
-                    }}
-                    className={`
-                      px-4 py-2 text-sm whitespace-nowrap transition-colors
-                      ${selectedCity === city
-                        ? 'text-black dark:text-white font-medium'
-                        : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
-                      }
-                    `}
-                  >
-                    {capitalizeCity(city)}
-                  </button>
-                ))}
-                {cities.length > 20 && (
-                  <button
-                    onClick={() => setShowAllCities(!showAllCities)}
-                    className="px-4 py-2 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors whitespace-nowrap"
-                  >
-                    {showAllCities ? '- Show Less' : '+ Show More'}
-                  </button>
-                )}
-              </div>
-
-              {/* Chat Interface */}
-              <ChatInterface 
-                onSendMessage={(message) => {
-                  setSearchTerm(message);
-                  if (message.trim() && !searching) {
-                    performAISearch(message);
-                  }
-                }}
-              />
-            </section>
-
             {/* Personalized Recommendations - Show only when user is logged in and no active search */}
             {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
               <PersonalizedRecommendations
