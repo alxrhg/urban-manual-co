@@ -115,31 +115,24 @@ export default function GreetingHero({
 
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
-      <div className="max-w-[680px] mx-auto px-[24px] relative">
-        {/* Greeting above search */}
-        <div className="text-center mb-6">
-          <h1 className="font-['Inter:Regular',sans-serif] text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] mb-1 font-medium">
+      <div className="max-w-2xl mx-auto px-8 relative">
+        {/* Greeting above search - Keep this */}
+        <div className="text-center mb-8">
+          <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
             {greeting}{userName ? `, ${userName}` : ''}
           </h1>
         </div>
 
-        {/* Centered Search Bar - Lovably style */}
+        {/* Borderless Text Input - Lovably style (no icon, no border) */}
         <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999] z-10">
-            {isSearching ? (
-              <Loader2 className="w-full h-full animate-spin" />
-            ) : (
-              <Search className="w-full h-full" strokeWidth={1.5} />
-            )}
-          </div>
-          {isAIEnabled && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10" title="AI Enhanced Search">
-              <Sparkles className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} aria-label="AI Enhanced Search" />
+          {isSearching && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+              <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           )}
           <input
             ref={inputRef}
-            placeholder={isAIEnabled ? "Ask me anything: 'romantic restaurant in Tokyo' or 'cozy cafe Paris'..." : "Search places..."}
+            placeholder={isAIEnabled ? "Where would you like to go?" : "Search places..."}
             value={searchQuery}
             onChange={(e) => {
               onSearchChange(e.target.value);
@@ -164,7 +157,11 @@ export default function GreetingHero({
                 setShowSuggestions(true);
               }
             }}
-            className={`h-14 w-full ${isAIEnabled ? 'pr-[44px]' : 'pr-[44px]'} pl-[44px] bg-transparent border-none font-['Inter:Regular',sans-serif] text-lg md:text-xl text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-center outline-none focus:ring-0 transition-all`}
+            className="w-full text-center text-2xl md:text-3xl font-light placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
+            style={{ 
+              paddingLeft: isSearching ? '32px' : '0',
+              paddingRight: '0'
+            }}
           />
           
           {/* AI Suggestions Dropdown */}

@@ -44,28 +44,13 @@ export function SplashScreen() {
       }`}
       style={{ willChange: 'opacity' }}
     >
-      <div className="h-full flex flex-col">
-        {/* Main content area - centered */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center px-8">
-            <h1 className="text-5xl md:text-6xl font-light text-gray-300 dark:text-gray-600 tracking-[0.2em] mb-4">
-              URBAN MANUAL
-            </h1>
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-light tracking-[0.3em] uppercase">
-              Travel Curation
-            </p>
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-sm font-light text-gray-400 dark:text-gray-500 tracking-wide">
+                Urban Manual
+              </h1>
+            </div>
           </div>
-        </div>
-
-        {/* Bottom right - brand placement */}
-        <div className="absolute bottom-8 right-8">
-          <div className="text-right">
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-light tracking-widest">
-              URBAN<br />MANUAL
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

@@ -92,9 +92,9 @@ export function Header() {
           <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
             <button
               onClick={() => navigate("/")}
-              className="font-bold uppercase leading-none tracking-tight hover:opacity-60 transition-opacity text-sm"
+              className="font-medium text-sm hover:opacity-70 transition-opacity"
             >
-              The Urban Manual
+              Urban Manual®
             </button>
           </div>
           {/* Information menu + Theme on right */}
@@ -112,10 +112,13 @@ export function Header() {
               )}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal tracking-normal"
+                className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal"
                 aria-label="Toggle menu"
               >
                 Information
+                <svg className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
             </div>
           </div>
