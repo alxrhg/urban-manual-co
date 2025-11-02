@@ -61,15 +61,48 @@ export default function DestinationPageClient() {
     try {
       // Try personalized recommendations first (for authenticated users)
       let response = await fetch(`/api/recommendations?limit=6`);
-      
-      // If 401 (unauthorized), fall back to old recommendations API
+
+      // If 401 (unauthorized), try related destinations API
       if (response.status === 401) {
+        response = await fetch(`/api/related-destinations?slug=${destination.slug}&limit=6`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Transform related destinations to recommendation format
+          setRecommendations((data.related || []).map((dest: any) => ({
+            slug: dest.slug,
+            name: dest.name,
+            city: dest.city,
+            category: dest.category,
+            image: dest.image,
+            michelin_stars: dest.michelin_stars,
+            crown: dest.crown,
+            rating: dest.rating,
+          })));
+          return;
+        }
+        
+        // Fall back to old recommendations API
         response = await fetch(`/api/recommendations?slug=${destination.slug}&limit=6`);
       }
 
       // Handle 404 gracefully (recommendations endpoint might not be available)
       if (!response.ok && response.status === 404) {
-        setRecommendations([]);
+        // Try related destinations as fallback
+        const relatedResponse = await fetch(`/api/related-destinations?slug=${destination.slug}&limit=6`);
+        if (relatedResponse.ok) {
+          const data = await relatedResponse.json();
+          setRecommendations((data.related || []).map((dest: any) => ({
+            slug: dest.slug,
+            name: dest.name,
+            city: dest.city,
+            category: dest.category,
+            image: dest.image,
+            michelin_stars: dest.michelin_stars,
+            crown: dest.crown,
+            rating: dest.rating,
+          })));
+        }
         return;
       }
 
