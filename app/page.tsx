@@ -608,31 +608,8 @@ export default function Home() {
                 availableCities={cities}
                 availableCategories={categories}
               />
-              
-              {/* Filter - Below search */}
-              <div className="mt-4">
-                <SearchFiltersComponent
-                  filters={advancedFilters}
-                  onFiltersChange={(newFilters) => {
-                    setAdvancedFilters(newFilters);
-                    if (newFilters.city !== undefined) {
-                      setSelectedCity(newFilters.city || '');
-                    }
-                    if (newFilters.category !== undefined) {
-                      setSelectedCategory(newFilters.category || '');
-                    }
-                    Object.entries(newFilters).forEach(([key, value]) => {
-                      if (value !== undefined && value !== null && value !== '') {
-                        trackFilterChange({ filterType: key, value });
-                      }
-                    });
-                  }}
-                  availableCities={cities}
-                  availableCategories={categories}
-                />
-              </div>
 
-              {/* AI Chat Response - Below filter */}
+              {/* AI Chat Response - Below search */}
               {searchTerm && (
                 <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                   {searching ? (
@@ -698,6 +675,29 @@ export default function Home() {
         {/* Content Section - Grid directly below hero */}
         <div className="px-8 pb-20">
           <div className="max-w-[1800px] mx-auto">
+            {/* Filter - Top right of grid section */}
+            <div className="flex justify-end mb-6">
+              <SearchFiltersComponent
+                filters={advancedFilters}
+                onFiltersChange={(newFilters) => {
+                  setAdvancedFilters(newFilters);
+                  if (newFilters.city !== undefined) {
+                    setSelectedCity(newFilters.city || '');
+                  }
+                  if (newFilters.category !== undefined) {
+                    setSelectedCategory(newFilters.category || '');
+                  }
+                  Object.entries(newFilters).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                      trackFilterChange({ filterType: key, value });
+                    }
+                  });
+                }}
+                availableCities={cities}
+                availableCategories={categories}
+              />
+            </div>
+            
             {/* Personalized Recommendations - Show only when user is logged in and no active search */}
             {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
               <PersonalizedRecommendations
