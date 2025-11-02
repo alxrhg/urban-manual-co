@@ -555,8 +555,8 @@ export default function Home() {
       <main className="relative min-h-screen dark:text-white">
         {/* Hero Section - Right half, left edge aligned to center */}
         <div className="min-h-[70vh] flex items-center px-8 py-20">
-          <div className="w-full flex md:justify-center md:pl-[50%]">
-            <div className="w-full md:w-1/2 max-w-2xl">
+          <div className="w-full flex md:justify-start">
+            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl">
               <GreetingHero
                 searchQuery={searchTerm}
                 onSearchChange={(value) => {
