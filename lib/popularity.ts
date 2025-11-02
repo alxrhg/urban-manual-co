@@ -277,9 +277,9 @@ export function sortByPopularity<T extends { slug: string }>(
     }
 
     // Fallback to name
-    const nameA = ('name' in a ? a.name : '') || '';
-    const nameB = ('name' in b ? b.name : '') || '';
-    return nameA.localeCompare(nameB);
+    const nameA = ('name' in a && typeof a.name === 'string' ? a.name : '') || '';
+    const nameB = ('name' in b && typeof b.name === 'string' ? b.name : '') || '';
+    return String(nameA).localeCompare(String(nameB));
   });
 }
 
