@@ -560,74 +560,74 @@ export default function Account() {
           </div>
 
           {/* Navigation Tabs - Horizontally scrollable on mobile */}
-          <div className="mt-8 mb-8 overflow-x-auto -mx-4 md:-mx-8 lg:-mx-10 px-4 md:px-8 lg:px-10 scrollbar-hide">
+          <div className="mb-8 border-b border-gray-200 dark:border-gray-800 overflow-x-auto -mx-4 md:-mx-8 lg:-mx-10 px-4 md:px-8 lg:px-10 scrollbar-hide">
             <nav className="flex gap-6 md:gap-8 min-w-max md:min-w-0">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`px-1 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'overview'
-                    ? 'text-black dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Overview
               </button>
               <button
                 onClick={() => setActiveTab('saved')}
-                className={`px-1 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'saved'
-                    ? 'text-black dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Saved
               </button>
               <button
                 onClick={() => setActiveTab('visited')}
-                className={`px-1 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'visited'
-                    ? 'text-black dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Visited
               </button>
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`px-1 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'profile'
-                    ? 'text-black dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Profile
               </button>
               <button
                 onClick={() => setActiveTab('lists')}
-                className={`px-1 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'lists'
-                    ? 'text-black dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Lists
               </button>
               <button
                 onClick={() => setActiveTab('collections')}
-                className={`px-1 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'collections'
-                    ? 'text-black dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Collections
               </button>
               <button
                 onClick={() => setActiveTab('history')}
-                className={`px-1 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === 'history'
-                    ? 'text-black dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 History
