@@ -553,10 +553,10 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
-        {/* Hero Section - Responsive: Centered on mobile, right half on desktop */}
+        {/* Hero Section - Left-aligned search and country list */}
         <div className="min-h-[70vh] flex items-center px-8 py-20">
-          <div className="w-full flex md:justify-end">
-            <div className="w-full md:w-1/2 max-w-2xl">
+          <div className="w-full">
+            <div className="w-full max-w-2xl">
               <GreetingHero
                 searchQuery={searchTerm}
                 onSearchChange={(value) => {
@@ -656,7 +656,7 @@ export default function Home() {
               )}
 
               {/* Filter - Below country list, aligned right */}
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-start">
                 <SearchFiltersComponent
                   filters={advancedFilters}
                   onFiltersChange={(newFilters) => {
