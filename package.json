@@ -17,7 +17,6 @@
     "@supabase/supabase-js": "^2.76.1",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
-    "@yanikemmenegger/react-world-map": "^1.3.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.3.0",

@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { cityCountryMap } from '@/data/cityCountryMap';
-import { MapProvider, World } from '@yanikemmenegger/react-world-map';
 
 interface TravelMapProps {
   visitedPlaces: Array<{
@@ -75,6 +74,8 @@ const countryNameToISO2: Record<string, string> = {
 };
 
 export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMapProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
   const visitedCountries = useMemo(() => {
     const countrySet = new Set<string>();
     
@@ -103,19 +104,83 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
     return countrySet;
   }, [visitedPlaces, savedPlaces]);
 
-  // Get ISO-2 codes for visited countries and create fill color mapping
-  const initialFillColors = useMemo(() => {
-    const fillColors: Record<string, string> = {};
-    
-    Array.from(visitedCountries).forEach(country => {
-      const isoCode = countryNameToISO2[country];
-      if (isoCode) {
-        fillColors[isoCode] = '#6b7280'; // Grey for visited countries
-      }
-    });
-    
-    return fillColors;
+  // Get ISO-2 codes for visited countries
+  const visitedISOCodes = useMemo(() => {
+    return new Set(
+      Array.from(visitedCountries)
+        .map(country => countryNameToISO2[country])
+        .filter(Boolean) as string[]
+    );
   }, [visitedCountries]);
+
+  // Load and highlight countries in the map
+  useEffect(() => {
+    if (!mapContainerRef.current || visitedISOCodes.size === 0) return;
+
+    // Load world map SVG from a reliable CDN
+    const loadMap = async () => {
+      try {
+        // Using a free world map SVG
+        const response = await fetch('https://cdn.jsdelivr.net/npm/simplemaps@3.0.5/dist/svg/world.svg');
+        if (!response.ok) throw new Error('Failed to load map');
+        const svgText = await response.text();
+        
+        // Create a container for the SVG
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+        const svgElement = svgDoc.querySelector('svg');
+        
+        if (!svgElement) return;
+
+        // Update viewBox and styling
+        svgElement.setAttribute('viewBox', '0 0 1000 500');
+        svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        svgElement.style.width = '100%';
+        svgElement.style.height = '100%';
+
+        // Highlight visited countries
+        const paths = svgElement.querySelectorAll('path, polygon, circle');
+        paths.forEach((path) => {
+          const id = path.getAttribute('id')?.toUpperCase();
+          const dataCode = path.getAttribute('data-code')?.toUpperCase();
+          const className = path.getAttribute('class') || '';
+          
+          const countryCode = id || dataCode || className.match(/\b([A-Z]{2})\b/)?.[1];
+          
+          if (countryCode && visitedISOCodes.has(countryCode)) {
+            path.setAttribute('fill', '#6b7280'); // Grey for visited
+          } else {
+            path.setAttribute('fill', 'transparent'); // Transparent for not visited
+          }
+          path.setAttribute('stroke', '#9ca3af'); // Border
+          path.setAttribute('stroke-width', '0.5');
+        });
+
+        // Clear container and add SVG
+        if (mapContainerRef.current) {
+          mapContainerRef.current.innerHTML = '';
+          mapContainerRef.current.appendChild(svgElement);
+        }
+      } catch (error) {
+        console.error('Error loading world map:', error);
+        // Fallback: Show a simple representation
+        if (mapContainerRef.current) {
+          mapContainerRef.current.innerHTML = `
+            <div class="w-full h-full flex items-center justify-center">
+              <div class="text-center">
+                <p class="text-gray-600 dark:text-gray-400 mb-4">World Map</p>
+                <p class="text-sm text-gray-500 dark:text-gray-500">
+                  ${visitedCountries.size} countries visited
+                </p>
+              </div>
+            </div>
+          `;
+        }
+      }
+    };
+
+    loadMap();
+  }, [visitedISOCodes, visitedCountries.size]);
 
   if (visitedCountries.size === 0) {
     return (
@@ -146,14 +211,9 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
         <div className="text-2xl font-bold">{visitedCountries.size}</div>
       </div>
 
-      {/* Map - World map with country borders */}
-      <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative">
-        <MapProvider
-          initialFillColors={initialFillColors}
-          defaultFillColor="transparent"
-        >
-          <World />
-        </MapProvider>
+      {/* Map - World map SVG with country borders */}
+      <div className="w-full h-96 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+        <div ref={mapContainerRef} className="w-full h-full" />
         
         {/* Legend */}
         <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
