@@ -36,7 +36,7 @@ export default function Account() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'saved' | 'visited' | 'profile' | 'lists' | 'collections'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'saved' | 'visited' | 'profile' | 'lists' | 'collections' | 'history'>('overview');
   const [collections, setCollections] = useState<any[]>([]);
   const [loadingCollections, setLoadingCollections] = useState(false);
   
