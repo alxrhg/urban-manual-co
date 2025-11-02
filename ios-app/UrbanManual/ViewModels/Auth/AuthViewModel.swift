@@ -36,19 +36,9 @@ class AuthViewModel: ObservableObject {
     }
     
     func listenToAuthChanges() async {
-        for await event in authRepository.authStateChanges() {
-            switch event {
-            case .signedIn:
-                self.isAuthenticated = true
-                Task {
-                    self.currentUser = try? await authRepository.getCurrentUser()
-                }
-            case .signedOut:
-                self.isAuthenticated = false
-                self.currentUser = nil
-            default:
-                break
-            }
+        // Check auth status periodically since authStateChanges might not work exactly as expected
+        for await _ in authRepository.authStateChanges() {
+            await checkAuthStatus()
         }
     }
     

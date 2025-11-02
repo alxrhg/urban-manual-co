@@ -33,28 +33,37 @@ class AuthRepository {
     }
     
     // Get current session
-    func getSession() async throws -> Session? {
+    func getSession() async throws -> Auth.Session? {
         try? await client.auth.session
     }
     
     // Get current user
     func getCurrentUser() async throws -> User? {
-        guard let session = try await getSession() else { return nil }
-        let authUser = try await client.auth.user
-        
-        return User(
-            id: UUID(uuidString: authUser.id.uuidString) ?? UUID(),
-            email: authUser.email ?? "",
-            createdAt: Date()
-        )
+        do {
+            let session = try await client.auth.session
+            guard let session = session else { return nil }
+            let authUser = session.user
+            
+            return User(
+                id: UUID(uuidString: authUser.id.uuidString) ?? UUID(),
+                email: authUser.email ?? "",
+                createdAt: Date()
+            )
+        } catch {
+            return nil
+        }
     }
     
     // Listen to auth state changes
     func authStateChanges() -> AsyncStream<AuthChangeEvent> {
         AsyncStream { continuation in
             Task {
-                for await state in await client.auth.authStateChanges {
-                    continuation.yield(state)
+                do {
+                    for try await state in await client.auth.authStateChanges {
+                        continuation.yield(state)
+                    }
+                } catch {
+                    continuation.finish()
                 }
             }
         }
