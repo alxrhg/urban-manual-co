@@ -553,9 +553,9 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
-        {/* Hero Section - Left-aligned search and country list */}
+        {/* Hero Section - Centered search and country list */}
         <div className="min-h-[70vh] flex items-center px-8 py-20">
-          <div className="w-full">
+          <div className="w-full flex justify-center">
             <div className="w-full max-w-2xl">
               <GreetingHero
                 searchQuery={searchTerm}
