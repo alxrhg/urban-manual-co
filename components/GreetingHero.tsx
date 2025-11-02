@@ -117,13 +117,13 @@ export default function GreetingHero({
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="max-w-2xl mx-auto px-8 relative">
         {/* Greeting above search - Keep this */}
-        <div className="text-center mb-8">
+        <div className="text-left mb-8">
           <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
             {greeting}{userName ? `, ${userName}` : ''}
           </h1>
         </div>
 
-        {/* Borderless Text Input - Lovably style (no icon, no border) */}
+        {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
         <div className="relative">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
@@ -157,7 +157,7 @@ export default function GreetingHero({
                 setShowSuggestions(true);
               }
             }}
-            className="w-full text-center text-2xl md:text-3xl font-light placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
+            className="w-full text-left text-2xl md:text-3xl font-light placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
             style={{ 
               paddingLeft: isSearching ? '32px' : '0',
               paddingRight: '0'

@@ -551,10 +551,9 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
-        {/* Lovably-style layout: Full height with centered search */}
-        <div className="fixed inset-0 flex flex-col z-50" style={{ top: '73px', pointerEvents: 'none' }}>
-          {/* Centered Search Bar (replaces "DESIGN, EXACTLY.") */}
-          <div className="flex-1 flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
+        {/* Hero Section - Vertically centered, normal flow */}
+        <div className="min-h-[70vh] flex items-center justify-center px-8 py-20">
+          <div className="w-full max-w-2xl mx-auto">
             <GreetingHero
               searchQuery={searchTerm}
               onSearchChange={(value) => {
@@ -606,13 +605,11 @@ export default function Home() {
               availableCities={cities}
               availableCategories={categories}
             />
-          </div>
-
-          {/* Bottom Right: Country List & Chat Interface (replaces paragraph) */}
-          <div className="absolute bottom-8 right-8 max-w-md text-right" style={{ pointerEvents: 'auto' }}>
+            
+            {/* Country List & Filter - Below search, centered */}
             {!searchTerm ? (
-              <div className="space-y-3">
-                <div className="flex flex-wrap justify-end gap-x-4 gap-y-2 text-xs">
+              <div className="mt-12 space-y-3">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
                   <button
                     onClick={() => {
                       setSelectedCity("");
@@ -652,8 +649,8 @@ export default function Home() {
                     </button>
                   )}
                 </div>
-                {/* Filter button - subtle placement */}
-                <div className="flex justify-end mt-2">
+                {/* Filter button - centered */}
+                <div className="flex justify-center mt-2">
                   <SearchFiltersComponent
                     filters={advancedFilters}
                     onFiltersChange={(newFilters) => {
@@ -676,9 +673,9 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-right max-w-md">
+              <div className="mt-8 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left max-w-2xl mx-auto">
                 {searching ? (
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center gap-2">
                     <span className="animate-pulse">✨</span>
                     <span>Thinking...</span>
                   </div>
@@ -690,8 +687,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scrollable content below (destinations grid, etc.) */}
-        <div className="relative pt-[100vh] px-8 pb-20">
+        {/* Content Section - Grid directly below hero */}
+        <div className="px-8 pb-20">
           <div className="max-w-[1800px] mx-auto">
             {/* Personalized Recommendations - Show only when user is logged in and no active search */}
             {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
