@@ -692,8 +692,7 @@ export default function Home() {
         {/* Scrollable content below (destinations grid, etc.) */}
         <div className="relative pt-[100vh] px-4 md:px-6 lg:px-10 py-8">
           <div className="max-w-[1920px] mx-auto">
-
-        {/* Personalized Recommendations - Show only when user is logged in and no active search */}
+            {/* Personalized Recommendations - Show only when user is logged in and no active search */}
         {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
           <PersonalizedRecommendations
             limit={12}
@@ -804,19 +803,18 @@ export default function Home() {
           )}
           </>
         )}
-      </div>
+          </div>
 
-      {/* Destination Drawer */}
-      <DestinationDrawer
-        destination={selectedDestination}
-        isOpen={isDrawerOpen}
-        onClose={() => {
-          setIsDrawerOpen(false);
-          setTimeout(() => setSelectedDestination(null), 300);
-        }}
-      />
+          {/* Destination Drawer */}
+          <DestinationDrawer
+            destination={selectedDestination}
+            isOpen={isDrawerOpen}
+            onClose={() => {
+              setIsDrawerOpen(false);
+              setTimeout(() => setSelectedDestination(null), 300);
+            }}
+          />
         </div>
-      </div>
       </main>
     </ErrorBoundary>
   );
