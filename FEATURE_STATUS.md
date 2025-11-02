@@ -246,6 +246,7 @@ This document tracks the implementation status of all major features and improve
 - [x] Personalized boost in search results
 - [x] Basic search API with filters
 - [x] Search filters UI component (city, category, Michelin, price, rating, crown badge)
+- [x] Search filters integrated into homepage (`app/page.tsx`)
 - [x] Autocomplete/suggestions API (`/api/autocomplete`)
 - [x] Autocomplete integrated in GreetingHero search bar
 - [x] Advanced search ranking (boost Michelin, crown, exact matches)
@@ -368,6 +369,7 @@ This document tracks the implementation status of all major features and improve
 - ✅ Created Internal Linking System (Related Destinations API)
 - ✅ Built Analytics Dashboard
 - ✅ Created Search Filters component
+- ✅ Integrated Search Filters into homepage
 - ✅ Integrated Search Autocomplete
 - ✅ Updated Account Page to use new saved_destinations table
 
