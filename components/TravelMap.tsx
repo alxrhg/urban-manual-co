@@ -138,11 +138,11 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
     // Create map chart
     const chart = root.container.children.push(
       am5map.MapChart.new(root, {
-        panX: 'rotateX',
+        panX: 'none',
         panY: 'none',
         projection: am5map.geoMercator(),
-        wheelY: 'zoom',
-        wheelX: 'zoom',
+        wheelY: 'none',
+        wheelX: 'none',
       })
     );
 
@@ -193,9 +193,6 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
         console.log('Clicked:', id, name);
       }
     });
-
-    // Zoom control (optional)
-    const zoomControl = chart.set('zoomControl', am5map.ZoomControl.new(root, {}));
 
     // Cleanup on unmount
     return () => {
