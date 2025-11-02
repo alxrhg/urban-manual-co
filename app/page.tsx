@@ -29,7 +29,6 @@ import {
 import GreetingHero from '@/components/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { SearchFiltersComponent } from '@/components/SearchFilters';
-import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
 import { ChatInterface } from '@/components/ChatInterface';
 
 // Dynamically import MapView to avoid SSR issues
@@ -767,29 +766,86 @@ export default function Home() {
               />
             )}
 
-            {/* Destination Grid - Lovably Style (4 columns, square cards) */}
+            {/* Destination Grid - Original design */}
             {filteredDestinations.length > 0 && (
               <>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                 {filteredDestinations.slice(0, displayedCount).map((destination, index) => {
-                  const borderColor = LOVABLY_BORDER_COLORS[index % LOVABLY_BORDER_COLORS.length];
+                  const isVisited = user && visitedSlugs.has(destination.slug);
                   return (
-                    <LovablyDestinationCard
-                      key={destination.slug}
-                      destination={destination}
-                      borderColor={borderColor}
-                      onClick={() => {
-                        setSelectedDestination(destination);
-                        setIsDrawerOpen(true);
+                  <button
+                    key={destination.slug}
+                    onClick={() => {
+                      setSelectedDestination(destination);
+                      setIsDrawerOpen(true);
 
-                        // Track destination click
-                        trackDestinationClick({
-                          destinationSlug: destination.slug,
-                          position: index,
-                          source: 'grid',
-                        });
-                      }}
-                    />
+                      // Track destination click
+                      trackDestinationClick({
+                        destinationSlug: destination.slug,
+                        position: index,
+                        source: 'grid',
+                      });
+                    }}
+                    className={`${CARD_WRAPPER} cursor-pointer text-left ${isVisited ? 'opacity-60' : ''}`}
+                  >
+                    {/* Image Container */}
+                    <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
+                      {destination.image ? (
+                        <Image
+                          src={destination.image}
+                          alt={destination.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isVisited ? 'grayscale' : ''}`}
+                          quality={80}
+                          loading={index < 6 ? 'eager' : 'lazy'}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                          <MapPin className="h-12 w-12 opacity-20" />
+                        </div>
+                      )}
+
+                      {/* Crown Badge */}
+                      {/* Feature badge hidden for now */}
+
+                      {/* Michelin Stars */}
+                      {destination.michelin_stars && destination.michelin_stars > 0 && (
+                        <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 shadow-lg z-10">
+                          <Image
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            width={12}
+                            height={12}
+                            className="h-3 w-3"
+                          />
+                          <span>{destination.michelin_stars}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="space-y-0.5">
+                      <div className={`${CARD_TITLE}`} role="heading" aria-level={3}>
+                        {destination.name}
+                      </div>
+
+                      <div className={`${CARD_META}`}>
+                        <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                          {capitalizeCity(destination.city)}
+                        </span>
+                        {destination.category && (
+                          <>
+                            <span className="text-gray-300 dark:text-gray-700">•</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
+                              {destination.category}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </button>
                   );
                 })}
           </div>
