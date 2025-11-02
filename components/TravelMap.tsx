@@ -182,7 +182,56 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
 
       {/* Map */}
       <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <WorldMapSVG visitedCountries={visitedCountries} />
+        <ComposableMap
+          projectionConfig={{
+            scale: 147,
+            center: [0, 20],
+          }}
+          className="w-full h-full"
+        >
+          <Geographies geography="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json">
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const iso = geo.properties.ISO_A2;
+                const iso3 = geo.properties.ISO_A3;
+                // Check if this country is visited by matching ISO codes
+                const isVisited = Array.from(visitedCountries).some((country) => {
+                  const countryISO = countryNameToISO[country];
+                  return countryISO === iso3 || countryISO === iso;
+                });
+
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill={isVisited ? '#6b7280' : 'transparent'}
+                    stroke="#9ca3af"
+                    strokeWidth={0.5}
+                    style={{
+                      default: { outline: 'none' },
+                      hover: { outline: 'none', fill: isVisited ? '#4b5563' : '#e5e7eb' },
+                      pressed: { outline: 'none' },
+                    }}
+                  />
+                );
+              })
+            }
+          </Geographies>
+        </ComposableMap>
+        
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gray-500 rounded"></div>
+              <span className="text-gray-700 dark:text-gray-300">Visited</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border border-gray-400 rounded bg-transparent"></div>
+              <span className="text-gray-700 dark:text-gray-300">Not visited</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Country list */}
