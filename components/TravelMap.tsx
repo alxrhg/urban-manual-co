@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { cityCountryMap } from '@/data/cityCountryMap';
+import { MapProvider, World } from '@yanikemmenegger/react-world-map';
 
 interface TravelMapProps {
   visitedPlaces: Array<{
@@ -15,6 +16,63 @@ interface TravelMapProps {
     };
   }>;
 }
+
+// Map country names to ISO 3166-1 alpha-2 country codes (2-letter codes)
+const countryNameToISO2: Record<string, string> = {
+  'United States': 'US',
+  'USA': 'US',
+  'Japan': 'JP',
+  'France': 'FR',
+  'United Kingdom': 'GB',
+  'UK': 'GB',
+  'Italy': 'IT',
+  'Spain': 'ES',
+  'Germany': 'DE',
+  'Canada': 'CA',
+  'Australia': 'AU',
+  'Mexico': 'MX',
+  'Brazil': 'BR',
+  'China': 'CN',
+  'India': 'IN',
+  'South Korea': 'KR',
+  'Thailand': 'TH',
+  'Singapore': 'SG',
+  'Malaysia': 'MY',
+  'Indonesia': 'ID',
+  'Philippines': 'PH',
+  'Vietnam': 'VN',
+  'Turkey': 'TR',
+  'Greece': 'GR',
+  'Portugal': 'PT',
+  'Netherlands': 'NL',
+  'Belgium': 'BE',
+  'Switzerland': 'CH',
+  'Austria': 'AT',
+  'Sweden': 'SE',
+  'Norway': 'NO',
+  'Denmark': 'DK',
+  'Poland': 'PL',
+  'Czech Republic': 'CZ',
+  'Ireland': 'IE',
+  'Iceland': 'IS',
+  'New Zealand': 'NZ',
+  'South Africa': 'ZA',
+  'Argentina': 'AR',
+  'Chile': 'CL',
+  'Peru': 'PE',
+  'Colombia': 'CO',
+  'Egypt': 'EG',
+  'Morocco': 'MA',
+  'UAE': 'AE',
+  'Qatar': 'QA',
+  'Saudi Arabia': 'SA',
+  'Israel': 'IL',
+  'Jordan': 'JO',
+  'Lebanon': 'LB',
+  'Russia': 'RU',
+  'Taiwan': 'TW',
+  'Hong Kong': 'HK',
+};
 
 export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMapProps) {
   const visitedCountries = useMemo(() => {
@@ -45,6 +103,20 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
     return countrySet;
   }, [visitedPlaces, savedPlaces]);
 
+  // Get ISO-2 codes for visited countries and create fill color mapping
+  const initialFillColors = useMemo(() => {
+    const fillColors: Record<string, string> = {};
+    
+    Array.from(visitedCountries).forEach(country => {
+      const isoCode = countryNameToISO2[country];
+      if (isoCode) {
+        fillColors[isoCode] = '#6b7280'; // Grey for visited countries
+      }
+    });
+    
+    return fillColors;
+  }, [visitedCountries]);
+
   if (visitedCountries.size === 0) {
     return (
       <div className="w-full h-64 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center">
@@ -74,36 +146,19 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
         <div className="text-2xl font-bold">{visitedCountries.size}</div>
       </div>
 
-      {/* Map - Simple world map with visited countries highlighted */}
+      {/* Map - World map with country borders */}
       <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative">
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="text-center p-8">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              World Map Visualization
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              {visitedCountries.size} countries visited
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {Array.from(visitedCountries).sort().slice(0, 12).map((country) => (
-                <span
-                  key={country}
-                  className="px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800"
-                >
-                  {country}
-                </span>
-              ))}
-              {visitedCountries.size > 12 && (
-                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full text-sm text-gray-500 dark:text-gray-500 border border-gray-200 dark:border-gray-800">
-                  +{visitedCountries.size - 12} more
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
+        <MapProvider
+          initialFillColors={initialFillColors}
+          defaultFillColor="transparent"
+          strokeColor="#9ca3af"
+          strokeWidth={0.5}
+        >
+          <World />
+        </MapProvider>
         
         {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-gray-500 rounded"></div>
