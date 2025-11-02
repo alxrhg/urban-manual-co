@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import { VisitHistoryComponent } from "@/components/VisitHistory";
 import { useCollections } from "@/hooks/useCollections";
+import { Achievements } from "@/components/Achievements";
 import Image from 'next/image';
 
 // Force dynamic rendering
@@ -36,7 +37,7 @@ export default function Account() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'saved' | 'visited' | 'profile' | 'lists' | 'collections' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'saved' | 'visited' | 'profile' | 'lists' | 'collections' | 'history' | 'achievements'>('overview');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const { collections, loading: loadingCollections } = useCollections(user?.id);
@@ -632,6 +633,16 @@ export default function Account() {
               >
                 History
               </button>
+              <button
+                onClick={() => setActiveTab('achievements')}
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                  activeTab === 'achievements'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                Achievements
+              </button>
             </nav>
           </div>
 
@@ -1144,6 +1155,14 @@ export default function Account() {
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'achievements' && (
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+              <div className="p-6">
+                <Achievements />
               </div>
             </div>
           )}
