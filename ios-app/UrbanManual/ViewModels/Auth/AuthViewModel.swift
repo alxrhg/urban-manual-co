@@ -36,7 +36,8 @@ class AuthViewModel: ObservableObject {
     }
     
     func listenToAuthChanges() async {
-        // Check auth status periodically since authStateChanges might not work exactly as expected
+        // Simplified - just check auth status on init
+        // For production, implement proper auth state monitoring
         for await _ in authRepository.authStateChanges() {
             await checkAuthStatus()
         }
