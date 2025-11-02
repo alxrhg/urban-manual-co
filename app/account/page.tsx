@@ -102,8 +102,8 @@ export default function Account() {
               return result;
             }),
           supabase
-            .from('saved_places')
-            .select('destination_slug')
+            .from('saved_destinations')
+            .select('destination_id, collection_id, collection:collections(id, name, emoji, color), saved_at')
             .eq('user_id', user.id)
             .then(result => {
               // Handle 406/400 errors gracefully (RLS or missing table)
@@ -131,53 +131,70 @@ export default function Account() {
           setBirthday(profileResult.data.birthday || "");
         }
 
-        const allSlugs = new Set<string>();
+        // Get destination IDs from saved_destinations
+        const savedDestinationIds = new Set<number>();
+        const savedCollections: Record<number, any> = {};
+        
         if (savedResult.data) {
-          savedResult.data.forEach(item => allSlugs.add(item.destination_slug));
-        }
-        if (visitedResult.data) {
-          visitedResult.data.forEach(item => allSlugs.add(item.destination_slug));
+          savedResult.data.forEach((item: any) => {
+            savedDestinationIds.add(item.destination_id);
+            if (item.collection_id && item.collection) {
+              savedCollections[item.destination_id] = item.collection;
+            }
+          });
         }
 
-        if (allSlugs.size > 0) {
-          const { data: destData } = await supabase
+        // Get visited slugs (still using old table for now)
+        const allVisitedSlugs = new Set<string>();
+        if (visitedResult.data) {
+          visitedResult.data.forEach(item => allVisitedSlugs.add(item.destination_slug));
+        }
+
+        // Fetch destinations by ID for saved places
+        if (savedDestinationIds.size > 0) {
+          const { data: savedDestData } = await supabase
+            .from('destinations')
+            .select('id, slug, name, city, category, image')
+            .in('id', Array.from(savedDestinationIds));
+
+          if (savedDestData) {
+            setSavedPlaces(savedDestData.map((dest: any) => ({
+              destination_id: dest.id,
+              destination_slug: dest.slug,
+              collection: savedCollections[dest.id],
+              destination: {
+                name: dest.name,
+                city: dest.city,
+                category: dest.category,
+                image: dest.image
+              }
+            })));
+          }
+        }
+
+        // Fetch destinations by slug for visited places
+        if (allVisitedSlugs.size > 0) {
+          const { data: visitedDestData } = await supabase
             .from('destinations')
             .select('slug, name, city, category, image')
-            .in('slug', Array.from(allSlugs));
+            .in('slug', Array.from(allVisitedSlugs));
 
-          if (destData) {
-            if (savedResult.data) {
-              setSavedPlaces(savedResult.data.map((item: any) => {
-                const dest = destData.find((d: any) => d.slug === item.destination_slug);
-                return dest ? {
-                  destination_slug: dest.slug,
-                  destination: {
-                    name: dest.name,
-                    city: dest.city,
-                    category: dest.category,
-                    image: dest.image
-                  }
-                } : null;
-              }).filter((item: any) => item !== null));
-            }
-
-            if (visitedResult.data) {
-              setVisitedPlaces(visitedResult.data.map((item: any) => {
-                const dest = destData.find((d: any) => d.slug === item.destination_slug);
-                return dest ? {
-                  destination_slug: item.destination_slug,
-                  visited_at: item.visited_at,
-                  rating: item.rating,
-                  notes: item.notes,
-                  destination: {
-                    name: dest.name,
-                    city: dest.city,
-                    category: dest.category,
-                    image: dest.image
-                  }
-                } : null;
-              }).filter((item: any) => item !== null));
-            }
+          if (visitedDestData && visitedResult.data) {
+            setVisitedPlaces(visitedResult.data.map((item: any) => {
+              const dest = visitedDestData.find((d: any) => d.slug === item.destination_slug);
+              return dest ? {
+                destination_slug: item.destination_slug,
+                visited_at: item.visited_at,
+                rating: item.rating,
+                notes: item.notes,
+                destination: {
+                  name: dest.name,
+                  city: dest.city,
+                  category: dest.category,
+                  image: dest.image
+                }
+              } : null;
+            }).filter((item: any) => item !== null));
           }
         }
       } catch (error) {
@@ -508,9 +525,21 @@ export default function Account() {
                             <div className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
                               {capitalizeCity(dest.city)}
                             </div>
-                            <Badge variant="secondary" className="mt-2 text-xs">
-                              {dest.category}
-                            </Badge>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {dest.category}
+                              </Badge>
+                              {place.collection && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs flex items-center gap-1"
+                                  style={{ borderColor: place.collection.color, color: place.collection.color }}
+                                >
+                                  <span>{place.collection.emoji}</span>
+                                  <span>{place.collection.name}</span>
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

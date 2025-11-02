@@ -84,9 +84,18 @@ export default function GreetingHero({
   }, [searchQuery, isAIEnabled]);
 
   const handleSuggestionClick = (suggestion: string) => {
-    onSearchChange(suggestion);
+    // Remove emoji prefixes for cleaner search
+    const cleanSuggestion = suggestion
+      .replace(/^[📍🏛️🏷️]\s*/, '') // Remove emoji prefixes
+      .split(' - ')[0] // Take only the main part (remove city suffix for destinations)
+      .trim();
+    onSearchChange(cleanSuggestion);
     setShowSuggestions(false);
     inputRef.current?.focus();
+    // Auto-submit if onSubmit handler is provided
+    if (onSubmit && cleanSuggestion.trim()) {
+      onSubmit(cleanSuggestion.trim());
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
