@@ -552,9 +552,9 @@ export default function Home() {
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
         {/* Lovably-style layout: Full height with centered search */}
-        <div className="fixed inset-0 flex flex-col" style={{ top: '73px' }}>
+        <div className="fixed inset-0 flex flex-col z-50" style={{ top: '73px', pointerEvents: 'none' }}>
           {/* Centered Search Bar (replaces "DESIGN, EXACTLY.") */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
             <GreetingHero
               searchQuery={searchTerm}
               onSearchChange={(value) => {
@@ -609,7 +609,7 @@ export default function Home() {
           </div>
 
           {/* Bottom Right: Country List & Chat Interface (replaces paragraph) */}
-          <div className="absolute bottom-8 right-8 max-w-md text-right">
+          <div className="absolute bottom-8 right-8 max-w-md text-right" style={{ pointerEvents: 'auto' }}>
             {!searchTerm ? (
               <div className="space-y-3">
                 <div className="flex flex-wrap justify-end gap-x-4 gap-y-2 text-xs">
