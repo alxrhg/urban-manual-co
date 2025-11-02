@@ -17,20 +17,28 @@ export function Header() {
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const isHome = pathname === '/';
 
-  // Initialize dark mode from localStorage or system preference
+  // Initialize dark mode from localStorage (only use system preference if no saved preference)
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem('theme');
+    
+    // Only check system preference if user hasn't set a preference
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && systemPrefersDark);
+    let shouldBeDark: boolean;
+    
+    if (savedTheme) {
+      // User has explicitly set a preference - use it
+      shouldBeDark = savedTheme === 'dark';
+    } else {
+      // No saved preference - use system preference
+      shouldBeDark = systemPrefersDark;
+      // Save the system preference so it persists
+      localStorage.setItem('theme', systemPrefersDark ? 'dark' : 'light');
+    }
 
     setIsDark(shouldBeDark);
-    if (shouldBeDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', shouldBeDark);
+    document.documentElement.style.colorScheme = shouldBeDark ? 'dark' : 'light';
   }, []);
 
   // Check admin status and fetch build version
@@ -78,8 +86,16 @@ export function Header() {
     const newDarkState = !isDark;
     setIsDark(newDarkState);
 
-    document.documentElement.classList.toggle('dark', newDarkState);
-    document.documentElement.style.colorScheme = newDarkState ? 'dark' : 'light';
+    // Update DOM immediately
+    if (newDarkState) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+    
+    // Persist preference
     localStorage.setItem('theme', newDarkState ? 'dark' : 'light');
   };
 

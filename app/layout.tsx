@@ -50,12 +50,31 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                // Prevent flash of wrong theme by checking localStorage before page renders
                 const savedTheme = localStorage.getItem('theme');
-                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const shouldBeDark = savedTheme === 'dark' || (!savedTheme && systemPrefersDark);
-                if (shouldBeDark) {
-                  document.documentElement.classList.add('dark');
-                  document.documentElement.style.colorScheme = 'dark';
+                
+                if (savedTheme) {
+                  // User has explicitly set a preference - use it
+                  const isDark = savedTheme === 'dark';
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
+                  }
+                } else {
+                  // No saved preference - use system preference and save it
+                  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (systemPrefersDark) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                    localStorage.setItem('theme', 'dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
+                    localStorage.setItem('theme', 'light');
+                  }
                 }
               })();
             `,
