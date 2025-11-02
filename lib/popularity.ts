@@ -43,6 +43,7 @@ export async function getAllDestinationPopularity(): Promise<Map<string, Destina
               popularityMap.set(slug, {
                 destination_slug: slug,
                 saves_count: 0,
+                views_count: 0,
                 visits_count: 0,
                 popularity_score: 0,
               });
@@ -67,6 +68,7 @@ export async function getAllDestinationPopularity(): Promise<Map<string, Destina
             popularityMap.set(slug, {
               destination_slug: slug,
               saves_count: 0,
+              views_count: 0,
               visits_count: 0,
               popularity_score: 0,
             });
@@ -77,9 +79,58 @@ export async function getAllDestinationPopularity(): Promise<Map<string, Destina
       });
     }
 
-    // Calculate popularity scores
+    // Get views count per destination (from visit_history and user_interactions)
+    const { data: viewsData, error: viewsError } = await supabaseAdmin
+      .from('visit_history')
+      .select('destination_id, destination:destinations(slug)');
+
+    if (!viewsError && viewsData) {
+      viewsData.forEach((item: any) => {
+        const slug = item.destination?.slug;
+        if (slug) {
+          if (!popularityMap.has(slug)) {
+            popularityMap.set(slug, {
+              destination_slug: slug,
+              saves_count: 0,
+              views_count: 0,
+              visits_count: 0,
+              popularity_score: 0,
+            });
+          }
+          const pop = popularityMap.get(slug)!;
+          pop.views_count = (pop.views_count || 0) + 1;
+        }
+      });
+    }
+
+    // Also count views from user_interactions table
+    const { data: interactionsData, error: interactionsError } = await supabaseAdmin
+      .from('user_interactions')
+      .select('destination_slug')
+      .eq('interaction_type', 'view');
+
+    if (!interactionsError && interactionsData) {
+      interactionsData.forEach((item: any) => {
+        const slug = item.destination_slug;
+        if (slug) {
+          if (!popularityMap.has(slug)) {
+            popularityMap.set(slug, {
+              destination_slug: slug,
+              saves_count: 0,
+              views_count: 0,
+              visits_count: 0,
+              popularity_score: 0,
+            });
+          }
+          const pop = popularityMap.get(slug)!;
+          pop.views_count = (pop.views_count || 0) + 1;
+        }
+      });
+    }
+
+    // Calculate popularity scores with views included
     popularityMap.forEach((pop) => {
-      pop.popularity_score = (pop.saves_count * 2) + (pop.visits_count * 1);
+      pop.popularity_score = (pop.saves_count * 3) + (pop.views_count * 2) + (pop.visits_count * 1);
     });
 
     return popularityMap;
@@ -161,9 +212,42 @@ export async function getDestinationsPopularity(
       });
     }
 
-    // Calculate popularity scores
+    // Get views count per destination
+    const { data: viewsData } = await supabaseAdmin
+      .from('visit_history')
+      .select('destination_id, destination:destinations(slug)')
+      .in('destination_id', destinationIds);
+
+    if (viewsData) {
+      viewsData.forEach((item: any) => {
+        const slug = item.destination?.slug;
+        if (slug && popularityMap.has(slug)) {
+          const pop = popularityMap.get(slug)!;
+          pop.views_count = (pop.views_count || 0) + 1;
+        }
+      });
+    }
+
+    // Also count views from user_interactions table
+    const { data: interactionsData } = await supabaseAdmin
+      .from('user_interactions')
+      .select('destination_slug')
+      .eq('interaction_type', 'view')
+      .in('destination_slug', slugs);
+
+    if (interactionsData) {
+      interactionsData.forEach((item: any) => {
+        const slug = item.destination_slug;
+        if (slug && popularityMap.has(slug)) {
+          const pop = popularityMap.get(slug)!;
+          pop.views_count = (pop.views_count || 0) + 1;
+        }
+      });
+    }
+
+    // Calculate popularity scores with views included
     popularityMap.forEach((pop) => {
-      pop.popularity_score = (pop.saves_count * 2) + (pop.visits_count * 1);
+      pop.popularity_score = (pop.saves_count * 3) + (pop.views_count * 2) + (pop.visits_count * 1);
     });
 
     return popularityMap;
