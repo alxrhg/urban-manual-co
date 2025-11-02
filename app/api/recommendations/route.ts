@@ -1,183 +1,183 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createServerClient } from '@/lib/supabase-server';
+import { AIRecommendationEngine } from '@/lib/ai-recommendations/engine';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+// Rate limiting (simple in-memory, use Redis in production)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const limit = rateLimitMap.get(userId);
+  
+  if (!limit || now > limit.resetAt) {
+    // Reset limit (5 requests per hour)
+    rateLimitMap.set(userId, {
+      count: 1,
+      resetAt: now + 60 * 60 * 1000
+    });
+    return true;
+  }
+  
+  if (limit.count >= 5) {
+    return false;
+  }
+  
+  limit.count++;
+  return true;
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const slug = searchParams.get('slug');
-    const limit = parseInt(searchParams.get('limit') || '6');
-
-    if (!slug) {
+    // 1. Authenticate user
+    const supabase = await createServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Slug is required' },
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // 2. Check rate limit
+    if (!checkRateLimit(user.id)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Try again later.' },
+        { status: 429 }
+      );
+    }
+    
+    // 3. Get query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const forceRefresh = searchParams.get('refresh') === 'true';
+    const filterCity = searchParams.get('city');
+    
+    // Validate limit
+    if (limit < 1 || limit > 50) {
+      return NextResponse.json(
+        { error: 'Limit must be between 1 and 50' },
         { status: 400 }
       );
     }
-
-    // Fetch the destination details
-    const { data: destination, error: destError } = await supabase
+    
+    // 4. Initialize engine
+    const engine = new AIRecommendationEngine(user.id);
+    
+    // 5. Check if refresh needed
+    const needsRefresh = forceRefresh || await engine.needsRefresh();
+    
+    let recommendations;
+    
+    if (needsRefresh) {
+      // Generate new recommendations
+      console.log('[API] Generating new recommendations...');
+      recommendations = await engine.generateRecommendations(filterCity ? limit * 2 : limit);
+    } else {
+      // Use cached recommendations
+      console.log('[API] Using cached recommendations...');
+      recommendations = await engine.getCachedRecommendations(filterCity ? limit * 2 : limit);
+    }
+    
+    // 6. Fetch full destination data (with RLS enforced)
+    const destinationIds = recommendations.map(r => r.destinationId);
+    
+    if (destinationIds.length === 0) {
+      return NextResponse.json({
+        recommendations: [],
+        cached: !needsRefresh,
+        count: 0
+      });
+    }
+    
+    const { data: destinations } = await supabase
       .from('destinations')
-      .select('name, city, category, description, content, michelin_stars, rating, place_types_json, editorial_summary')
-      .eq('slug', slug)
-      .single();
-
-    if (destError || !destination) {
-      return NextResponse.json(
-        { error: 'Destination not found' },
-        { status: 404 }
-      );
+      .select('*')
+      .in('id', destinationIds);
+    
+    // 7. Combine scores with destinations
+    let result = recommendations.map(rec => {
+      const destination = destinations?.find((d: any) => d.id === rec.destinationId);
+      return {
+        ...rec,
+        destination
+      };
+    }).filter(r => r.destination); // Remove any missing destinations
+    
+    // 8. Filter by city if specified
+    if (filterCity) {
+      result = result.filter(rec => 
+        rec.destination?.city?.toLowerCase() === filterCity.toLowerCase()
+      ).slice(0, limit);
     }
-
-    // Parse place types if available
-    let placeTypes: string[] = [];
-    if (destination.place_types_json) {
-      try {
-        placeTypes = typeof destination.place_types_json === 'string'
-          ? JSON.parse(destination.place_types_json)
-          : destination.place_types_json;
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-
-    // Use Gemini to understand what makes this place special and suggest similar ones
-    let searchCriteria = '';
-    if (GOOGLE_API_KEY) {
-      try {
-        const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
-        const prompt = `You are a travel expert. Based on this place, suggest what other places would be similar or complementary:
-
-Place: ${destination.name}
-City: ${destination.city}
-Category: ${destination.category || 'unknown'}
-${destination.rating ? `Rating: ${destination.rating}/5` : ''}
-${placeTypes.length > 0 ? `Place Types: ${placeTypes.join(', ')}` : ''}
-${destination.editorial_summary ? `Summary: ${destination.editorial_summary.substring(0, 200)}` : ''}
-
-Based on this place, provide search criteria to find similar places. Return ONLY valid JSON:
-{
-  "keywords": ["keyword1", "keyword2", "keyword3"],
-  "categories": ["category1", "category2"],
-  "description": "What makes this place special and what to look for in similar places"
+    
+    return NextResponse.json({
+      recommendations: result,
+      cached: !needsRefresh,
+      count: result.length
+    });
+    
+  } catch (error: any) {
+    console.error('[API] Error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }
 
-Keywords should be descriptive (e.g., "romantic", "rooftop", "authentic", "fine-dining", "casual", "historic").
-Categories should match the place type (e.g., "restaurant", "cafe", "bar", "museum").`;
-
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
-
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            const parsed = JSON.parse(jsonMatch[0]);
-            searchCriteria = parsed.description || '';
-            // Use keywords and categories from AI, or fallback to defaults
-            const keywords = parsed.keywords || [];
-            const aiCategories = parsed.categories || [];
-            
-            // Build Supabase query based on AI suggestions
-            let query = supabase
-              .from('destinations')
-              .select('slug, name, city, category, image, michelin_stars, rating')
-              .neq('slug', slug)
-              .limit(limit * 2); // Get more to filter
-
-            // Filter by city first (similar places in same city)
-            query = query.ilike('city', `%${destination.city}%`);
-
-            // Filter by category if available
-            if (destination.category) {
-              query = query.or(`category.ilike.%${destination.category}%,category.is.null`);
-            }
-
-            const { data, error } = await query;
-
-            if (error) throw error;
-
-            // Filter and rank results based on keywords
-            if (data && data.length > 0) {
-              let ranked = data.map((d: any) => {
-                let score = 0;
-                const searchText = `${d.name || ''} ${d.category || ''}`.toLowerCase();
-                
-                // Boost if same category
-                if (d.category?.toLowerCase() === destination.category?.toLowerCase()) {
-                  score += 10;
-                }
-                
-                // Check keywords
-                keywords.forEach((keyword: string) => {
-                  if (searchText.includes(keyword.toLowerCase())) {
-                    score += 5;
-                  }
-                });
-
-                // Boost by rating if available
-                if (d.rating) {
-                  score += d.rating;
-                }
-
-                // Boost by Michelin stars
-                if (d.michelin_stars) {
-                  score += d.michelin_stars * 3;
-                }
-
-                return { ...d, _score: score };
-              }).sort((a, b) => b._score - a._score)
-                .slice(0, limit);
-
-              return NextResponse.json({
-                recommendations: ranked,
-                criteria: searchCriteria
-              });
-            }
-          } catch (e) {
-            console.error('Failed to parse Gemini response:', e);
-          }
-        }
-      } catch (error) {
-        console.error('Gemini API error:', error);
-      }
-    }
-
-    // Fallback: Find similar places by category and city
-    let query = supabase
-      .from('destinations')
-      .select('slug, name, city, category, image, michelin_stars, rating')
-      .neq('slug', slug)
-      .ilike('city', `%${destination.city}%`)
-      .limit(limit);
-
-    if (destination.category) {
-      query = query.ilike('category', `%${destination.category}%`);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Supabase error:', error);
+// Force refresh endpoint (POST)
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Database error' },
-        { status: 500 }
+        { error: 'Unauthorized' },
+        { status: 401 }
       );
     }
-
+    
+    // Check rate limit (stricter for POST)
+    if (!checkRateLimit(user.id)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+    }
+    
+    const body = await request.json().catch(() => ({}));
+    const limit = parseInt(body.limit || '20', 10);
+    
+    const engine = new AIRecommendationEngine(user.id);
+    const recommendations = await engine.generateRecommendations(limit);
+    
+    // Fetch destinations
+    const destinationIds = recommendations.map(r => r.destinationId);
+    const { data: destinations } = await supabase
+      .from('destinations')
+      .select('*')
+      .in('id', destinationIds);
+    
+    const result = recommendations.map(rec => {
+      const destination = destinations?.find((d: any) => d.id === rec.destinationId);
+      return {
+        ...rec,
+        destination
+      };
+    }).filter(r => r.destination);
+    
     return NextResponse.json({
-      recommendations: data || [],
-      criteria: ''
+      recommendations: result,
+      cached: false,
+      count: result.length
     });
-
+    
   } catch (error: any) {
-    console.error('Recommendations API error:', error);
+    console.error('[API] Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to get recommendations' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

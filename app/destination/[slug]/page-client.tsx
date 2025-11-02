@@ -59,8 +59,14 @@ export default function DestinationPageClient() {
 
     setLoadingRecommendations(true);
     try {
-      const response = await fetch(`/api/recommendations?slug=${destination.slug}&limit=6`);
+      // Try personalized recommendations first (for authenticated users)
+      let response = await fetch(`/api/recommendations?limit=6`);
       
+      // If 401 (unauthorized), fall back to old recommendations API
+      if (response.status === 401) {
+        response = await fetch(`/api/recommendations?slug=${destination.slug}&limit=6`);
+      }
+
       // Handle 404 gracefully (recommendations endpoint might not be available)
       if (!response.ok && response.status === 404) {
         setRecommendations([]);
@@ -73,7 +79,17 @@ export default function DestinationPageClient() {
 
       const data = await response.json();
 
+      // Handle new personalized recommendations format
       if (data.recommendations && Array.isArray(data.recommendations)) {
+        // Transform to old format for compatibility
+        setRecommendations(
+          data.recommendations
+            .map((rec: any) => rec.destination)
+            .filter(Boolean)
+            .slice(0, 6)
+        );
+      } else if (data.recommendations && Array.isArray(data.recommendations)) {
+        // Old format - keep as is
         setRecommendations(data.recommendations);
       } else {
         setRecommendations([]);

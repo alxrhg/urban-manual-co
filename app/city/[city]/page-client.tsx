@@ -9,6 +9,7 @@ import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { DestinationDrawer } from '@/components/DestinationDrawer';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
+import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import Image from 'next/image';
 
 function capitalizeCity(city: string): string {
@@ -108,6 +109,21 @@ export default function CityPageClient() {
               {destinations.length} destination{destinations.length !== 1 ? 's' : ''}
             </span>
           </div>
+
+          {/* Personalized Recommendations for this city (if user is logged in) */}
+          {user && destinations.length > 0 && (
+            <PersonalizedRecommendations
+              limit={6}
+              title={`Recommended in ${capitalizeCity(city)}`}
+              showTitle={true}
+              filterCity={city}
+              onDestinationClick={(destination) => {
+                setSelectedDestination(destination);
+                setIsDrawerOpen(true);
+              }}
+              className="mb-12"
+            />
+          )}
 
           {/* Destinations Grid */}
           {destinations.length === 0 ? (

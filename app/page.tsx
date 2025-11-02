@@ -19,6 +19,7 @@ import {
   getSessionId,
 } from '@/lib/tracking';
 import GreetingHero from '@/components/GreetingHero';
+import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -598,6 +599,20 @@ export default function Home() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Personalized Recommendations - Show only when user is logged in and no active search */}
+        {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
+          <PersonalizedRecommendations
+            limit={12}
+            title="For You"
+            showTitle={true}
+            onDestinationClick={(destination) => {
+              setSelectedDestination(destination);
+              setIsDrawerOpen(true);
+            }}
+            className="mb-12"
+          />
         )}
 
         {/* Destination Grid */}

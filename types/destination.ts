@@ -1,4 +1,5 @@
 export interface Destination {
+  id?: number; // Database primary key
   slug: string;
   name: string;
   city: string;

@@ -1,0 +1,30 @@
+[
+  {
+    "slug": "arabica-kyoto-arashiyama",
+    "error": "Already migrated (Supabase URL detected)"
+  },
+  {
+    "slug": "1-hotel-hanalei-bay",
+    "error": "Already migrated (Supabase URL detected)"
+  },
+  {
+    "slug": "1-hotel-mayfair",
+    "error": "Already migrated (Supabase URL detected)"
+  },
+  {
+    "slug": "11-howard",
+    "error": "Already migrated (Supabase URL detected)"
+  },
+  {
+    "slug": "21-carpenter",
+    "error": "Already migrated (Supabase URL detected)"
+  },
+  {
+    "slug": "21c-museum-hotel-chicago",
+    "error": "Already migrated (Supabase URL detected)"
+  },
+  {
+    "slug": "4-charles-prime-rib",
+    "error": "Already migrated (Supabase URL detected)"
+  }
+]

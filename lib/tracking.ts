@@ -1,236 +1,211 @@
-import { supabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
+import type { UserInteraction } from '@/types/personalization';
 
-function trackingDisabled(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  return !url || !key || url.includes('placeholder.supabase.co') || key === 'placeholder-key';
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-// Generate or retrieve session ID from localStorage
-export function getSessionId(): string {
+// Session ID management (for anonymous tracking)
+function getSessionId(): string {
   if (typeof window === 'undefined') return '';
-
-  let sessionId = sessionStorage.getItem('session_id');
+  
+  let sessionId = localStorage.getItem('um_session_id');
   if (!sessionId) {
     sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem('session_id', sessionId);
+    localStorage.setItem('um_session_id', sessionId);
   }
   return sessionId;
 }
 
-// Get user context for tracking
-export async function getUserContext() {
-  if (trackingDisabled()) return { userId: undefined, sessionId: getSessionId(), timestamp: new Date().toISOString(), deviceType: getDeviceType(), timeOfDay: getTimeOfDay() };
-  const { data: { user } } = await supabase.auth.getUser();
-
-  return {
-    userId: user?.id,
-    sessionId: getSessionId(),
-    timestamp: new Date().toISOString(),
-    deviceType: getDeviceType(),
-    timeOfDay: getTimeOfDay(),
-  };
-}
-
-// Detect device type
-function getDeviceType(): string {
-  if (typeof window === 'undefined') return 'unknown';
-
-  const userAgent = navigator.userAgent.toLowerCase();
-  if (/mobile|android|iphone|ipad|ipod/.test(userAgent)) {
-    return 'mobile';
+// Initialize session (compatibility function)
+export function initializeSession(): void {
+  if (typeof window !== 'undefined') {
+    getSessionId();
   }
-  if (/tablet|ipad/.test(userAgent)) {
-    return 'tablet';
+}
+
+// Legacy tracking functions (for backward compatibility)
+export function trackPageView(data?: { pageType?: string }): void {
+  // Legacy function - can be enhanced to use PersonalizationTracker
+  if (typeof window !== 'undefined') {
+    console.debug('[Tracking] Page view:', data);
   }
-  return 'desktop';
 }
 
-// Get time of day category
-function getTimeOfDay(): string {
-  const hour = new Date().getHours();
-
-  if (hour >= 6 && hour < 11) return 'morning';
-  if (hour >= 11 && hour < 14) return 'lunch';
-  if (hour >= 14 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 22) return 'evening';
-  return 'night';
+export function trackDestinationClick(data?: { destinationId?: number; destinationSlug?: string; position?: number; source?: string }): void {
+  // Legacy function - can be enhanced to use PersonalizationTracker
+  if (typeof window !== 'undefined') {
+    console.debug('[Tracking] Destination click:', data);
+  }
 }
 
-// Track user interaction
-export async function trackInteraction(params: {
-  type: 'view' | 'click' | 'save' | 'visit' | 'search' | 'filter' | 'scroll';
-  destinationSlug?: string;
-  city?: string;
-  category?: string;
-  duration?: number;
-  metadata?: Record<string, any>;
-}) {
-  try {
-    if (trackingDisabled()) return;
-    const context = await getUserContext();
+export function trackSearch(data?: { query?: string }): void {
+  // Legacy function - can be enhanced to use PersonalizationTracker
+  if (typeof window !== 'undefined') {
+    console.debug('[Tracking] Search:', data);
+  }
+}
 
-    const { error } = await supabase
-      .from('user_interactions')
-      .insert({
-        session_id: context.sessionId,
-        user_id: context.userId || null,
-        interaction_type: params.type,
-        destination_slug: params.destinationSlug || null,
-        city: params.city || null,
-        category: params.category || null,
-        duration_seconds: params.duration || null,
-        metadata: params.metadata || {},
+export function trackFilterChange(data?: { filterType?: string; value?: any }): void {
+  // Legacy function - can be enhanced to use PersonalizationTracker
+  if (typeof window !== 'undefined') {
+    console.debug('[Tracking] Filter change:', data);
+  }
+}
+
+export { getSessionId };
+
+export class PersonalizationTracker {
+  private supabase = createClient(supabaseUrl, supabaseAnonKey);
+  private userId?: string;
+
+  constructor(userId?: string) {
+    this.userId = userId;
+  }
+
+  /**
+   * Track destination view
+   */
+  async trackView(
+    destinationId: number,
+    source?: string,
+    searchQuery?: string
+  ): Promise<void> {
+    if (!this.userId) return;
+
+    try {
+      // Add to visit history
+      await this.supabase.from('visit_history').insert({
+        user_id: this.userId,
+        destination_id: destinationId,
+        source,
+        search_query: searchQuery,
       });
 
-    if (error) {
-      console.error('Error tracking interaction:', error);
+      // Add interaction
+      await this.trackInteraction(destinationId, 'view');
+    } catch (error) {
+      console.error('Failed to track view:', error);
     }
-  } catch (error) {
-    console.error('Failed to track interaction:', error);
   }
-}
 
-// Track page view
-export async function trackPageView(params: {
-  pageType: 'home' | 'destination' | 'city' | 'category';
-  destinationSlug?: string;
-  city?: string;
-  category?: string;
-}) {
-  await trackInteraction({
-    type: 'view',
-    destinationSlug: params.destinationSlug,
-    city: params.city,
-    category: params.category,
-    metadata: { page_type: params.pageType },
-  });
-}
+  /**
+   * Track save/unsave
+   */
+  async trackSave(destinationId: number, collectionId?: string): Promise<void> {
+    if (!this.userId) return;
 
-// Track destination click
-export async function trackDestinationClick(params: {
-  destinationSlug: string;
-  position: number;
-  source: 'grid' | 'map' | 'search' | 'recommendation';
-}) {
-  await trackInteraction({
-    type: 'click',
-    destinationSlug: params.destinationSlug,
-    metadata: {
-      position: params.position,
-      source: params.source,
-    },
-  });
-}
+    try {
+      await this.supabase.from('saved_destinations').insert({
+        user_id: this.userId,
+        destination_id: destinationId,
+        collection_id: collectionId,
+      });
 
-// Track search
-export async function trackSearch(params: {
-  query: string;
-  resultsCount: number;
-  filters?: {
-    city?: string;
-    category?: string;
-    openNow?: boolean;
-  };
-}) {
-  await trackInteraction({
-    type: 'search',
-    city: params.filters?.city,
-    category: params.filters?.category,
-    metadata: {
-      query: params.query,
-      results_count: params.resultsCount,
-      filters: params.filters,
-    },
-  });
-}
-
-// Track filter change
-export async function trackFilterChange(params: {
-  filterType: 'city' | 'category' | 'openNow' | 'viewMode';
-  value: string | boolean;
-}) {
-  await trackInteraction({
-    type: 'filter',
-    metadata: {
-      filter_type: params.filterType,
-      value: params.value,
-    },
-  });
-}
-
-// Track save/favorite
-export async function trackSave(destinationSlug: string) {
-  await trackInteraction({
-    type: 'save',
-    destinationSlug,
-  });
-}
-
-// Track visit marking
-export async function trackVisit(destinationSlug: string) {
-  await trackInteraction({
-    type: 'visit',
-    destinationSlug,
-  });
-}
-
-// Track scroll depth
-export async function trackScrollDepth(params: {
-  page: string;
-  depthPercent: number;
-}) {
-  await trackInteraction({
-    type: 'scroll',
-    metadata: {
-      page: params.page,
-      depth_percent: params.depthPercent,
-    },
-  });
-}
-
-// Initialize session tracking
-export async function initializeSession() {
-  if (trackingDisabled()) return;
-  const context = await getUserContext();
-
-  // Create or update session record
-  // Silently fail if table doesn't exist (optional feature)
-  const { error } = await supabase
-    .from('user_sessions')
-    .upsert({
-      session_id: context.sessionId,
-      user_id: context.userId || null,
-      started_at: new Date().toISOString(),
-      device_type: context.deviceType,
-      referrer: typeof window !== 'undefined' ? document.referrer : null,
-    }, {
-      onConflict: 'session_id',
-      ignoreDuplicates: false,
-    });
-
-  // Silently fail if table doesn't exist (optional tracking feature)
-  if (error && error.code !== 'PGRST116') {
-    // PGRST116 = relation does not exist, which is fine
-    console.error('Error initializing session:', error);
+      await this.trackInteraction(destinationId, 'save');
+    } catch (error) {
+      console.error('Failed to track save:', error);
+    }
   }
-}
 
-// End session tracking
-export async function endSession() {
-  if (trackingDisabled()) return;
-  const sessionId = getSessionId();
+  /**
+   * Track unsave
+   */
+  async trackUnsave(destinationId: number): Promise<void> {
+    if (!this.userId) return;
 
-  const { error } = await supabase
-    .from('user_sessions')
-    .update({
-      ended_at: new Date().toISOString(),
-    })
-    .eq('session_id', sessionId);
+    try {
+      await this.supabase
+        .from('saved_destinations')
+        .delete()
+        .eq('user_id', this.userId)
+        .eq('destination_id', destinationId);
 
-  // Silently fail if table doesn't exist (optional tracking feature)
-  if (error && error.code !== 'PGRST116') {
-    // PGRST116 = relation does not exist, which is fine
-    console.error('Error ending session:', error);
+      await this.trackInteraction(destinationId, 'unsave');
+    } catch (error) {
+      console.error('Failed to track unsave:', error);
+    }
+  }
+
+  /**
+   * Track external link clicks
+   */
+  async trackExternalClick(
+    destinationId: number,
+    type: 'website' | 'maps'
+  ): Promise<void> {
+    if (!this.userId) return;
+
+    try {
+      await this.trackInteraction(
+        destinationId,
+        type === 'website' ? 'click_website' : 'click_maps'
+      );
+    } catch (error) {
+      console.error('Failed to track external click:', error);
+    }
+  }
+
+  /**
+   * Track share action
+   */
+  async trackShare(destinationId: number): Promise<void> {
+    if (!this.userId) return;
+
+    try {
+      await this.trackInteraction(destinationId, 'share');
+    } catch (error) {
+      console.error('Failed to track share:', error);
+    }
+  }
+
+  /**
+   * Generic interaction tracking
+   */
+  private async trackInteraction(
+    destinationId: number,
+    type: UserInteraction['interaction_type']
+  ): Promise<void> {
+    if (!this.userId) return;
+
+    try {
+      await this.supabase.from('user_interactions').insert({
+        user_id: this.userId,
+        destination_id: destinationId,
+        interaction_type: type,
+      });
+    } catch (error) {
+      console.error('Failed to track interaction:', error);
+    }
+  }
+
+  /**
+   * Update visit duration when user leaves page
+   */
+  async updateVisitDuration(
+    destinationId: number,
+    durationSeconds: number
+  ): Promise<void> {
+    if (!this.userId) return;
+
+    try {
+      // Get the most recent visit for this destination
+      const { data: recentVisit } = await this.supabase
+        .from('visit_history')
+        .select('id')
+        .eq('user_id', this.userId)
+        .eq('destination_id', destinationId)
+        .order('visited_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (recentVisit) {
+        await this.supabase
+          .from('visit_history')
+          .update({ duration_seconds: durationSeconds })
+          .eq('id', recentVisit.id);
+      }
+    } catch (error) {
+      console.error('Failed to update visit duration:', error);
+    }
   }
 }
