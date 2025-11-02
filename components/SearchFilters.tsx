@@ -50,23 +50,21 @@ export function SearchFiltersComponent({
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-          hasActiveFilters
-            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+        className={`flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0 ${
+          hasActiveFilters ? 'relative' : ''
         }`}
+        aria-label="Open filters"
       >
-        <SlidersHorizontal className="h-4 w-4" />
-        <span className="text-sm">Filters</span>
+        <SlidersHorizontal className="h-5 w-5" />
         {hasActiveFilters && (
-          <span className="px-1.5 py-0.5 bg-purple-600 text-white text-xs rounded-full">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-600 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
             {Object.keys(filters).length}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 p-4 space-y-4">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Filters</h3>
             <button

@@ -1,16 +1,21 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, SlidersHorizontal, Sparkles, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Sparkles, Loader2, X, Clock } from 'lucide-react';
+import { SearchFiltersComponent } from '@/components/SearchFilters';
 
 interface GreetingHeroProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  onOpenFilters: () => void;
+  onOpenFilters?: () => void;
   onSubmit?: (query: string) => void; // CHAT MODE: Explicit submit handler
   userName?: string;
   isAIEnabled?: boolean;
   isSearching?: boolean;
+  filters?: any;
+  onFiltersChange?: (filters: any) => void;
+  availableCities?: string[];
+  availableCategories?: string[];
 }
 
 export default function GreetingHero({
@@ -21,6 +26,10 @@ export default function GreetingHero({
   userName,
   isAIEnabled = false,
   isSearching = false,
+  filters,
+  onFiltersChange,
+  availableCities = [],
+  availableCategories = [],
 }: GreetingHeroProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -190,13 +199,14 @@ export default function GreetingHero({
                 </div>
               )}
             </div>
-            <button
-              onClick={onOpenFilters}
-              className="flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0"
-              aria-label="Open filters"
-            >
-              <SlidersHorizontal className="h-5 w-5" />
-            </button>
+            <div className="relative">
+              <SearchFiltersComponent
+                filters={filters || {}}
+                onFiltersChange={onFiltersChange || (() => {})}
+                availableCities={availableCities}
+                availableCategories={availableCategories}
+              />
+            </div>
           </div>
         </div>
       </div>

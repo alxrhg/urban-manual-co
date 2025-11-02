@@ -551,7 +551,7 @@ export default function Home() {
     <ErrorBoundary>
       <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
         <div className="max-w-[1920px] mx-auto">
-        {/* Greeting Hero above the search bar */}
+        {/* Greeting Hero above the search bar with integrated filters */}
         <div className="mb-4 relative" id="greeting-hero-container">
           <GreetingHero
             searchQuery={searchTerm}
@@ -573,10 +573,6 @@ export default function Home() {
                 performAISearch(query);
               }
             }}
-            onOpenFilters={() => {
-              // SearchFiltersComponent manages its own state
-              // This handler is kept for compatibility but does nothing
-            }}
             userName={(function () {
               const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
               if (!raw) return undefined;
@@ -588,34 +584,26 @@ export default function Home() {
             })()}
             isAIEnabled={isAIEnabled}
             isSearching={searching}
+            filters={advancedFilters}
+            onFiltersChange={(newFilters) => {
+              setAdvancedFilters(newFilters);
+              // Sync with legacy state for backward compatibility
+              if (newFilters.city !== undefined) {
+                setSelectedCity(newFilters.city || '');
+              }
+              if (newFilters.category !== undefined) {
+                setSelectedCategory(newFilters.category || '');
+              }
+              // Track filter changes
+              Object.entries(newFilters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                  trackFilterChange({ filterType: key, value });
+                }
+              });
+            }}
+            availableCities={cities}
+            availableCategories={categories}
           />
-        </div>
-        {/* Advanced Search Filters */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex-1"></div>
-          <div className="relative">
-            <SearchFiltersComponent
-              filters={advancedFilters}
-              onFiltersChange={(newFilters) => {
-                setAdvancedFilters(newFilters);
-                // Sync with legacy state for backward compatibility
-                if (newFilters.city !== undefined) {
-                  setSelectedCity(newFilters.city || '');
-                }
-                if (newFilters.category !== undefined) {
-                  setSelectedCategory(newFilters.category || '');
-                }
-                // Track filter changes
-                Object.entries(newFilters).forEach(([key, value]) => {
-                  if (value !== undefined && value !== null && value !== '') {
-                    trackFilterChange({ filterType: key, value });
-                  }
-                });
-              }}
-              availableCities={cities}
-              availableCategories={categories}
-            />
-          </div>
         </div>
 
         {/* City Filter - Hidden during search, replaced by AI chat response */}
