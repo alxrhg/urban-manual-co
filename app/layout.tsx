@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { SplashScreen } from "@/components/SplashScreen";
 
 export const metadata: Metadata = {
   title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
@@ -35,6 +36,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://guide.michelin.com" />
         
         {/* Critical inline CSS for above-the-fold content */}
+        {/* Safe: Static CSS from codebase, no user input */}
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Critical CSS - Above the fold */
@@ -61,6 +63,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <SplashScreen />
         <AuthProvider>
           <Header />
           <main className="min-h-screen page-transition">
