@@ -5,6 +5,8 @@ export const cityCountryMap: Record<string, string> = {
   'taichung': 'Taiwan',
   'tainan': 'Taiwan',
   'kaohsiung': 'Taiwan',
+  'pintung': 'Taiwan',
+  'chiayi': 'Taiwan',
   
   // Japan
   'tokyo': 'Japan',
@@ -17,6 +19,14 @@ export const cityCountryMap: Record<string, string> = {
   'yokohama': 'Japan',
   'nara': 'Japan',
   'hiroshima': 'Japan',
+  'kyushu': 'Japan',
+  'nagato': 'Japan',
+  'karuizawa': 'Japan',
+  'okinawa': 'Japan',
+  'kamakura': 'Japan',
+  'kanazawa': 'Japan',
+  'atami': 'Japan',
+  'hakone': 'Japan',
   
   // USA
   'new-york': 'USA',
@@ -35,6 +45,11 @@ export const cityCountryMap: Record<string, string> = {
   'san-diego': 'USA',
   'nashville': 'USA',
   'new-orleans': 'USA',
+  'colorado': 'USA',
+  'charleston': 'USA',
+  'hawaii': 'USA',
+  'orlando': 'USA',
+  'hudson-valley': 'USA',
   
   // UK
   'london': 'UK',
@@ -52,6 +67,8 @@ export const cityCountryMap: Record<string, string> = {
   'nice': 'France',
   'bordeaux': 'France',
   'cannes': 'France',
+  'provence-alpes-cote-d-azur': 'France',
+  'auvergne-rhone-alpes': 'France',
   
   // Italy
   'rome': 'Italy',
@@ -61,6 +78,8 @@ export const cityCountryMap: Record<string, string> = {
   'naples': 'Italy',
   'bologna': 'Italy',
   'turin': 'Italy',
+  'como': 'Italy',
+  'lake-como': 'Italy',
   
   // Spain
   'barcelona': 'Spain',
@@ -90,6 +109,8 @@ export const cityCountryMap: Record<string, string> = {
   'basel': 'Switzerland',
   'bern': 'Switzerland',
   'lausanne': 'Switzerland',
+  'luzern': 'Switzerland',
+  'valais': 'Switzerland',
   
   // Austria
   'vienna': 'Austria',
@@ -160,6 +181,7 @@ export const cityCountryMap: Record<string, string> = {
   'bangkok': 'Thailand',
   'chiang-mai': 'Thailand',
   'phuket': 'Thailand',
+  'koh-samui': 'Thailand',
   
   // Malaysia
   'kuala-lumpur': 'Malaysia',
@@ -172,6 +194,8 @@ export const cityCountryMap: Record<string, string> = {
   // Vietnam
   'hanoi': 'Vietnam',
   'ho-chi-minh-city': 'Vietnam',
+  'saigon': 'Vietnam',
+  'da-nang': 'Vietnam',
   
   // Philippines
   'manila': 'Philippines',
