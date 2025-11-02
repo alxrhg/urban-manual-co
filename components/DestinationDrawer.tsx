@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
+import { SaveDestinationModal } from './SaveDestinationModal';
 import Image from 'next/image';
 
 interface Recommendation {
@@ -117,6 +118,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
   const [showVisitModal, setShowVisitModal] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [destinationId, setDestinationId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -141,7 +144,27 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setEnrichedData(null);
         setIsSaved(false);
         setIsVisited(false);
+        setDestinationId(null);
         return;
+      }
+
+      // Get destination ID if not present
+      if (!destination.id) {
+        try {
+          const { data } = await supabase
+            .from('destinations')
+            .select('id')
+            .eq('slug', destination.slug)
+            .single();
+          
+          if (data?.id) {
+            setDestinationId(data.id);
+          }
+        } catch (error) {
+          console.error('Error fetching destination ID:', error);
+        }
+      } else {
+        setDestinationId(destination.id);
       }
 
       try {
@@ -211,17 +234,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         console.log('Error loading enriched data:', error);
       }
 
-      if (!user) {
+      if (!user || !destinationId) {
         setIsSaved(false);
         setIsVisited(false);
         return;
       }
 
+      // Check saved status using new saved_destinations table
       const { data: savedData } = await supabase
-        .from('saved_places')
+        .from('saved_destinations')
         .select('*')
         .eq('user_id', user.id)
-        .eq('destination_slug', destination.slug)
+        .eq('destination_id', destinationId)
         .single();
       setIsSaved(!!savedData);
 
@@ -268,16 +292,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   }, [destination, isOpen]);
 
   const handleSave = async () => {
-    if (!user || !destination) return;
-    const newSaved = !isSaved;
+    if (!user || !destination || !destinationId) return;
+    
+    // Open save modal to select collection
+    setShowSaveModal(true);
+  };
+
+  const handleSaveComplete = async (collectionId: string | null) => {
+    if (!user || !destination || !destinationId) return;
+    
+    const newSaved = collectionId !== null;
     setIsSaved(newSaved);
-
-    if (newSaved) {
-      await supabase.from('saved_places').insert({ user_id: user.id, destination_slug: destination.slug });
-    } else {
-      await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', destination.slug);
-    }
-
     onSaveToggle?.(destination.slug, newSaved);
   };
 
@@ -662,6 +687,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         destinationName={destination?.name || ''}
         isCurrentlyVisited={isVisited}
       />
+      
+      {destinationId && destination && (
+        <SaveDestinationModal
+          destinationId={destinationId}
+          destinationSlug={destination.slug}
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleSaveComplete}
+        />
+      )}
     </>
   );
 }
