@@ -8,7 +8,6 @@ import { MapPin } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
-import { SearchFiltersComponent } from '@/components/SearchFilters';
 import Image from 'next/image';
 
 interface CityStats {
@@ -186,32 +185,17 @@ export default function CitiesPage() {
               )}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Content Section - Grid directly below hero */}
-      <div className="px-8 pb-8">
-        <div className="max-w-[1800px] mx-auto">
-          {/* Filter - Top right of grid section */}
-          <div className="flex justify-end mb-6 relative">
-            <SearchFiltersComponent
-              filters={advancedFilters}
-              onFiltersChange={(newFilters) => {
-                setAdvancedFilters(newFilters);
-              }}
-              availableCities={cityStats.map(s => s.city)}
-              availableCategories={[]}
-            />
-          </div>
-
-          {/* Grid */}
-          {filteredCities.length === 0 ? (
-            <div className="text-center py-16">
-              <span className="text-gray-500">No cities found</span>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+          {/* Grid - Right below filter lists */}
+          <div className="mt-8 pb-8 px-8">
+            <div className="max-w-[1800px] mx-auto">
+              {filteredCities.length === 0 ? (
+                <div className="text-center py-16">
+                  <span className="text-gray-500">No cities found</span>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                 {filteredCities.slice(0, displayedCount).map(({ city, country, count, featuredImage }) => (
               <button
                 key={city}
@@ -266,23 +250,24 @@ export default function CitiesPage() {
                 </div>
               </button>
             ))}
-              </div>
+                  </div>
 
-              {/* Load More Button */}
-              {displayedCount < filteredCities.length && (
-                <div className="mt-12 text-center">
-                  <button
-                    onClick={() => setDisplayedCount(prev => prev + LOAD_MORE_INCREMENT)}
-                    className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
-                  >
-                    Load More ({filteredCities.length - displayedCount} remaining)
-                  </button>
-                </div>
+                  {/* Load More Button */}
+                  {displayedCount < filteredCities.length && (
+                    <div className="mt-12 text-center">
+                      <button
+                        onClick={() => setDisplayedCount(prev => prev + LOAD_MORE_INCREMENT)}
+                        className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+                      >
+                        Load More ({filteredCities.length - displayedCount} remaining)
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </div>
-      </div>
-    </main>
-  );
-}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
