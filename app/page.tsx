@@ -555,9 +555,12 @@ export default function Home() {
       <main className="relative min-h-screen dark:text-white">
         {/* Hero Section - Separate section, never overlaps with grid */}
         <section className="min-h-[70vh] flex flex-col px-8 py-20">
-          <div className="w-full flex md:justify-start flex-1">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col">
-              <GreetingHero
+          <div className="w-full flex md:justify-start flex-1 items-center">
+            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
+              {/* Greeting - Always vertically centered */}
+              <div className="flex-1 flex items-center">
+                <div className="w-full">
+                  <GreetingHero
                 searchQuery={searchTerm}
                 onSearchChange={(value) => {
                   setSearchTerm(value);
@@ -607,25 +610,28 @@ export default function Home() {
                 }}
                 availableCities={cities}
                 availableCategories={categories}
-              />
+                  />
 
-              {/* AI Chat Response - Below search */}
-              {searchTerm && (
-                <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                  {searching ? (
-                    <div className="flex items-center gap-2">
-                      <span className="animate-pulse">✨</span>
-                      <span>Thinking...</span>
+                  {/* AI Chat Response - Below search */}
+                  {searchTerm && (
+                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                      {searching ? (
+                        <div className="flex items-center gap-2">
+                          <span className="animate-pulse">✨</span>
+                          <span>Thinking...</span>
+                        </div>
+                      ) : chatResponse ? (
+                        <span className="whitespace-pre-line block">{chatResponse}</span>
+                      ) : null}
                     </div>
-                  ) : chatResponse ? (
-                    <span className="whitespace-pre-line block">{chatResponse}</span>
-                  ) : null}
+                  )}
                 </div>
-              )}
+              </div>
               
-              {/* Country List - Aligned to bottom of hero section */}
+              {/* Country List - Uses space below greeting, aligned to bottom */}
               {!searchTerm && (
-                <div className="mt-auto pt-8">
+                <div className="flex-1 flex items-end">
+                  <div className="w-full pt-8">
                   <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                     <button
                       onClick={() => {
@@ -665,6 +671,7 @@ export default function Home() {
                         {showAllCities ? '- Show Less' : '+ Show More'}
                       </button>
                     )}
+                  </div>
                   </div>
                 </div>
               )}
