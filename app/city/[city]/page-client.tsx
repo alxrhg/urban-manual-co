@@ -229,49 +229,33 @@ export default function CityPageClient() {
               </div>
             </div>
           </div>
-        </section>
 
-        {/* Content Section - Grid directly below hero */}
-        <div className="px-8 pb-8">
-          <div className="max-w-[1800px] mx-auto">
-            {/* Filter - Top right of grid section */}
-            <div className="flex justify-end mb-6 relative">
-              <SearchFiltersComponent
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                }}
-                availableCities={[city]}
-                availableCategories={categories}
-              />
-            </div>
+          {/* Grid - Right below filter lists */}
+          <div className="mt-8 pb-8 px-8">
+            <div className="max-w-[1800px] mx-auto">
+              {/* Personalized Recommendations for this city (if user is logged in) */}
+              {user && filteredDestinations.length > 0 && (
+                <PersonalizedRecommendations
+                  limit={6}
+                  title={`Recommended in ${cityDisplayName}`}
+                  showTitle={true}
+                  filterCity={city}
+                  onDestinationClick={(destination) => {
+                    setSelectedDestination(destination);
+                    setIsDrawerOpen(true);
+                  }}
+                  className="mb-12"
+                />
+              )}
 
-            {/* Personalized Recommendations for this city (if user is logged in) */}
-            {user && filteredDestinations.length > 0 && (
-              <PersonalizedRecommendations
-                limit={6}
-                title={`Recommended in ${cityDisplayName}`}
-                showTitle={true}
-                filterCity={city}
-                onDestinationClick={(destination) => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
-                }}
-                className="mb-12"
-              />
-            )}
-
-            {/* Destinations Grid */}
-            {filteredDestinations.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                No destinations found in {cityDisplayName}.
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+              {/* Destinations Grid */}
+              {filteredDestinations.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  No destinations found in {cityDisplayName}.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                   {filteredDestinations.slice(0, displayedCount).map((destination, index) => {
                 const isVisited = user && visitedSlugs.has(destination.slug);
                 return (
@@ -357,7 +341,8 @@ export default function CityPageClient() {
             )}
           </div>
         </div>
-      </main>
+      </section>
+    </main>
 
       {/* Destination Drawer */}
       <DestinationDrawer
