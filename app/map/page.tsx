@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Destination } from '@/types/destination'
 import dynamic from 'next/dynamic'
-import { DestinationDrawer } from '@/components/DestinationDrawer'
 
+// Lazy load both map and drawer
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false })
+const DestinationDrawer = dynamic(
+  () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
+  { ssr: false, loading: () => null }
+)
 
 export default function MapPage() {
   const [destinations, setDestinations] = useState<Destination[]>([])

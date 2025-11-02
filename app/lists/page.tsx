@@ -220,7 +220,7 @@ export default function ListsPage() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-1">{list.name}</h3>
+                    <h2 className="font-bold text-lg mb-1">{list.name}</h2>
                     {list.description && (
                       <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                         {list.description}

@@ -153,6 +153,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { query, pageSize = 50, filters = {}, userId } = body;
+    
+    // Try to get userId from cookies/auth if not provided
+    let authenticatedUserId = userId;
+    if (!authenticatedUserId) {
+      try {
+        const { createServerClient } = await import('@/lib/supabase-server');
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        authenticatedUserId = user?.id;
+      } catch {
+        // Silently fail - userId is optional
+      }
+    }
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({ 
@@ -390,6 +403,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Get personalized recommendations for user (if authenticated)
+    let personalizedScores: Map<number, number> = new Map();
+    if (authenticatedUserId) {
+      try {
+        // Use internal API call with user context
+        const { createServerClient } = await import('@/lib/supabase-server');
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { AIRecommendationEngine } = await import('@/lib/ai-recommendations/engine');
+          const engine = new AIRecommendationEngine(user.id);
+          const recommendations = await engine.getCachedRecommendations(50);
+          
+          recommendations.forEach(rec => {
+            personalizedScores.set(rec.destinationId, rec.score);
+          });
+        }
+      } catch (error) {
+        // Silently fail - personalization is optional
+        console.log('[Search] Could not fetch personalized scores:', error);
+      }
+    }
+
     // Rank and sort results
     const lowerQuery = query.toLowerCase();
     const rankedResults = results
@@ -418,6 +455,12 @@ export async function POST(request: NextRequest) {
 
         // Boost for high ratings
         if (dest.rating && dest.rating >= 4.5) score += 0.05;
+
+        // Boost personalized recommendations (strong boost)
+        const personalizationScore = personalizedScores.get(dest.id);
+        if (personalizationScore) {
+          score += personalizationScore * 0.3; // 30% boost from personalization
+        }
 
         return { ...dest, _score: score };
       })

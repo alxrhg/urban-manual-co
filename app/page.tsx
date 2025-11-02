@@ -4,12 +4,20 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
-import { DestinationDrawer } from '@/components/DestinationDrawer';
+// Lazy load drawer (only when opened)
+const DestinationDrawer = dynamic(
+  () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
+  { 
+    ssr: false,
+    loading: () => null
+  }
+);
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
   initializeSession,
   trackPageView,
@@ -412,8 +420,9 @@ export default function Home() {
   }
 
   return (
-    <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-      <div className="max-w-[1920px] mx-auto">
+    <ErrorBoundary>
+      <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
+        <div className="max-w-[1920px] mx-auto">
         {/* Greeting Hero above the search bar */}
         <div className="mb-4 relative" id="greeting-hero-container">
           <GreetingHero
@@ -494,7 +503,7 @@ export default function Home() {
                 {/* Categories */}
                 {categories.length > 0 && (
                   <div className="mb-2">
-                    <h3 className="text-sm font-semibold mb-2">Categories</h3>
+                    <h2 className="text-sm font-semibold mb-2">Categories</h2>
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => {
@@ -647,7 +656,8 @@ export default function Home() {
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isVisited ? 'grayscale' : ''}`}
                       quality={80}
-                      loading="lazy"
+                      loading={index < 6 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
@@ -675,9 +685,9 @@ export default function Home() {
 
                 {/* Info */}
                 <div className="space-y-0.5">
-                  <h3 className={`${CARD_TITLE}`}>
+                  <div className={`${CARD_TITLE}`} role="heading" aria-level={3}>
                     {destination.name}
-                  </h3>
+                  </div>
 
                   <div className={`${CARD_META}`}>
                     <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
@@ -723,6 +733,7 @@ export default function Home() {
         }}
       />
 
-    </main>
+      </main>
+    </ErrorBoundary>
   );
 }

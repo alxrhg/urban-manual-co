@@ -457,7 +457,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {enrichedData?.editorial_summary && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
+              <h2 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">From Google</h2>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(enrichedData.editorial_summary)}
               </p>
@@ -466,7 +466,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {destination.content && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">About</h3>
+              <h2 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">About</h2>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(destination.content)}
               </p>
@@ -475,10 +475,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {openStatus && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              <h2 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400 flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 Opening Hours
-              </h3>
+              </h2>
               <div className={`p-3 rounded-lg ${openStatus.isOpen ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800'}`}>
                 <div className="text-sm font-medium">{openStatus.currentDay || 'Today'}</div>
                 <div className={`text-sm ${openStatus.isOpen ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'}`}>
@@ -500,7 +500,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">Address</h3>
+              <h2 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">Address</h2>
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
@@ -517,7 +517,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {(enrichedData?.place_types && Array.isArray(enrichedData.place_types) && enrichedData.place_types.length > 0) && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">Types</h3>
+              <h2 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">Types</h2>
               <div className="flex flex-wrap gap-2">
                 {enrichedData.place_types.slice(0, 8).map((type: string, idx: number) => (
                   <span
@@ -533,7 +533,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {(destination.google_maps_url || enrichedData?.website || destination.website || enrichedData?.international_phone_number || destination.phone_number || destination.instagram_url) && (
             <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Links</h3>
+              <h2 className="text-sm font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Links</h2>
               <div className="flex flex-wrap gap-2">
                 {destination.google_maps_url && (
                   <a

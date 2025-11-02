@@ -262,9 +262,9 @@ export default function DestinationPageClient() {
                       </div>
                     )}
                   </div>
-                  <h4 className="font-medium text-sm mb-1 line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  <div className="font-medium text-sm mb-1 line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" role="heading" aria-level={3}>
                     {rec.name}
-                  </h4>
+                  </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                     {rec.city}
                   </p>

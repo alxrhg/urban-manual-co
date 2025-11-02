@@ -20,6 +20,30 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="dark light" />
+        
+        {/* Preconnect hints for faster resource loading */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        )}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://maps.googleapis.com" />
+        <link rel="preconnect" href="https://maps.gstatic.com" />
+        
+        {/* DNS Prefetch for additional domains */}
+        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        <link rel="dns-prefetch" href="https://guide.michelin.com" />
+        
+        {/* Critical inline CSS for above-the-fold content */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Critical CSS - Above the fold */
+            *,::before,::after{box-sizing:border-box}
+            body{margin:0;font-family:system-ui,-apple-system,sans-serif}
+            .dark{color-scheme:dark}
+          `
+        }} />
+        
         <script
           dangerouslySetInnerHTML={{
             __html: `

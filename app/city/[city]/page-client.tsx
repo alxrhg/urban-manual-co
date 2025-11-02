@@ -7,10 +7,18 @@ import { Destination } from '@/types/destination';
 import { MapPin, ArrowLeft } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
-import { DestinationDrawer } from '@/components/DestinationDrawer';
+// Lazy load drawer (only when opened)
+const DestinationDrawer = dynamic(
+  () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
+  { 
+    ssr: false,
+    loading: () => null
+  }
+);
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 
 function capitalizeCity(city: string): string {
   return city
@@ -153,7 +161,8 @@ export default function CityPageClient() {
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isVisited ? 'grayscale' : ''}`}
                           quality={80}
-                          loading="lazy"
+                          loading={index < 6 ? 'eager' : 'lazy'}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
@@ -178,9 +187,9 @@ export default function CityPageClient() {
 
                     {/* Info */}
                     <div className="space-y-0.5">
-                      <h3 className={`${CARD_TITLE}`}>
+                      <div className={`${CARD_TITLE}`} role="heading" aria-level={3}>
                         {destination.name}
-                      </h3>
+                      </div>
 
                       <div className={`${CARD_META}`}>
                         <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
