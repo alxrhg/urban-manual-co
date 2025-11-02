@@ -9,6 +9,8 @@ import {
 import VisitedCountriesMap from "@/components/VisitedCountriesMap";
 import { Badge } from "@/components/ui/badge";
 import { cityCountryMap } from "@/data/cityCountryMap";
+import { VisitHistoryComponent } from "@/components/VisitHistory";
+import { useCollections } from "@/hooks/useCollections";
 import Image from 'next/image';
 
 // Force dynamic rendering
@@ -366,6 +368,26 @@ export default function Account() {
               >
                 Lists
               </button>
+              <button
+                onClick={() => setActiveTab('collections')}
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                  activeTab === 'collections'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                Collections
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
+                  activeTab === 'history'
+                    ? 'border-black dark:border-white text-black dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                History
+              </button>
             </nav>
           </div>
 
@@ -545,6 +567,83 @@ export default function Account() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'history' && user && (
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <h2 className="text-lg font-semibold">Visit History</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Destinations you've recently viewed
+                </p>
+              </div>
+              <div className="p-6">
+                <VisitHistoryComponent userId={user.id} limit={50} />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'collections' && (
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Collections</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Organize your saved destinations
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push('/profile')}
+                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Manage Preferences
+                </button>
+              </div>
+              {loadingCollections ? (
+                <div className="p-12 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Loading collections...</p>
+                </div>
+              ) : collections.length === 0 ? (
+                <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+                  <div className="text-4xl mb-3">📍</div>
+                  <p>No collections yet</p>
+                  <p className="text-sm mt-1">Create collections when you save destinations</p>
+                </div>
+              ) : (
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {collections.map((collection) => (
+                    <div
+                      key={collection.id}
+                      onClick={() => {
+                        // TODO: Navigate to collection detail page
+                      }}
+                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                          style={{ backgroundColor: `${collection.color}20`, color: collection.color }}
+                        >
+                          {collection.emoji}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{collection.name}</div>
+                          {collection.description && (
+                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              {collection.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {collection.destination_count || 0} {collection.destination_count === 1 ? 'place' : 'places'}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
