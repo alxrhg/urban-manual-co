@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import {
   MapPin, Heart, CheckCircle2, Map, Loader2, User, Settings, LogOut, Plus, Lock, Globe, Trash2, X
 } from "lucide-react";
-import VisitedCountriesMap from "@/components/VisitedCountriesMap";
+import TravelMap from "@/components/TravelMap";
 import { Badge } from "@/components/ui/badge";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import { VisitHistoryComponent } from "@/components/VisitHistory";
@@ -439,7 +439,7 @@ export default function Account() {
               {/* World Map */}
               <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
                 <h2 className="text-lg font-semibold mb-4">Travel Map</h2>
-                <VisitedCountriesMap 
+                <TravelMap 
                   visitedPlaces={visitedPlaces}
                   savedPlaces={savedPlaces}
                 />
