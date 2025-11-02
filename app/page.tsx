@@ -553,10 +553,10 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
-        {/* Hero Section - Right half, left edge aligned to center */}
-        <div className="min-h-[70vh] flex items-center px-8 py-20">
-          <div className="w-full flex md:justify-start">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl">
+        {/* Hero Section - Separate section, never overlaps with grid */}
+        <section className="min-h-[70vh] flex flex-col px-8 py-20">
+          <div className="w-full flex md:justify-start flex-1">
+            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col">
               <GreetingHero
                 searchQuery={searchTerm}
                 onSearchChange={(value) => {
@@ -609,9 +609,46 @@ export default function Home() {
                 availableCategories={categories}
               />
               
-              {/* Country List - Under search bar */}
+              {/* Filter - Below search */}
+              <div className="mt-4">
+                <SearchFiltersComponent
+                  filters={advancedFilters}
+                  onFiltersChange={(newFilters) => {
+                    setAdvancedFilters(newFilters);
+                    if (newFilters.city !== undefined) {
+                      setSelectedCity(newFilters.city || '');
+                    }
+                    if (newFilters.category !== undefined) {
+                      setSelectedCategory(newFilters.category || '');
+                    }
+                    Object.entries(newFilters).forEach(([key, value]) => {
+                      if (value !== undefined && value !== null && value !== '') {
+                        trackFilterChange({ filterType: key, value });
+                      }
+                    });
+                  }}
+                  availableCities={cities}
+                  availableCategories={categories}
+                />
+              </div>
+
+              {/* AI Chat Response - Below filter */}
+              {searchTerm && (
+                <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                  {searching ? (
+                    <div className="flex items-center gap-2">
+                      <span className="animate-pulse">✨</span>
+                      <span>Thinking...</span>
+                    </div>
+                  ) : chatResponse ? (
+                    <span className="whitespace-pre-line block">{chatResponse}</span>
+                  ) : null}
+                </div>
+              )}
+              
+              {/* Country List - Aligned to bottom of hero section */}
               {!searchTerm && (
-                <div className="mt-8">
+                <div className="mt-auto pt-8">
                   <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                     <button
                       onClick={() => {
@@ -654,46 +691,9 @@ export default function Home() {
                   </div>
                 </div>
               )}
-
-              {/* Filter - Below country list, aligned right */}
-              <div className="mt-4 flex justify-start">
-                <SearchFiltersComponent
-                  filters={advancedFilters}
-                  onFiltersChange={(newFilters) => {
-                    setAdvancedFilters(newFilters);
-                    if (newFilters.city !== undefined) {
-                      setSelectedCity(newFilters.city || '');
-                    }
-                    if (newFilters.category !== undefined) {
-                      setSelectedCategory(newFilters.category || '');
-                    }
-                    Object.entries(newFilters).forEach(([key, value]) => {
-                      if (value !== undefined && value !== null && value !== '') {
-                        trackFilterChange({ filterType: key, value });
-                      }
-                    });
-                  }}
-                  availableCities={cities}
-                  availableCategories={categories}
-                />
-              </div>
-
-              {/* AI Chat Response - Below filter */}
-              {searchTerm && (
-                <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                  {searching ? (
-                    <div className="flex items-center gap-2">
-                      <span className="animate-pulse">✨</span>
-                      <span>Thinking...</span>
-                    </div>
-                  ) : chatResponse ? (
-                    <span className="whitespace-pre-line block">{chatResponse}</span>
-                  ) : null}
-                </div>
-              )}
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Content Section - Grid directly below hero */}
         <div className="px-8 pb-20">
