@@ -127,7 +127,8 @@ export default function CityPageClient() {
       filtered = filtered.filter(d => d.opening_hours?.open_now);
     }
     if (typeof filters.minRating === 'number') {
-      filtered = filtered.filter(d => (d.rating ?? 0) >= filters.minRating);
+      const threshold = filters.minRating;
+      filtered = filtered.filter(d => (d.rating ?? 0) >= threshold);
     }
 
     setFilteredDestinations(filtered);
