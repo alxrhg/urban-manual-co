@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase-server';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
 
-// Optional: lightweight intent parsing using our existing helper
-// Falls back gracefully if helper is unavailable
+// Lightweight intent parsing (no dependency on client helpers)
 async function parseIntentSafe(query: string): Promise<any> {
-  try {
-    const { parseIntent } = await import('@/lib/contextual-search');
-    return await parseIntent(query);
-  } catch {
-    const lower = (query || '').toLowerCase();
-    const cityMatch = lower.match(/in ([a-z\-\s]+)/i);
-    return { city: cityMatch ? cityMatch[1].trim() : undefined, category: undefined, modifiers: [], keywords: [] };
-  }
+  const lower = (query || '').toLowerCase();
+  const cityMatch = lower.match(/in ([a-z\-\s]+)/i);
+  const categoryMatch = lower.match(/(restaurant|hotel|cafe|bar|gallery|museum|park)/i);
+  const modifiers: string[] = [];
+  const MODS = ['romantic','michelin','fine-dining','vegetarian','vegan','cozy','modern','quiet','buzzy'];
+  for (const m of MODS) if (lower.includes(m)) modifiers.push(m);
+  return {
+    city: cityMatch ? cityMatch[1].trim() : undefined,
+    category: categoryMatch ? categoryMatch[1] : undefined,
+    modifiers,
+    keywords: []
+  };
 }
 
 function getClientHints(req: NextRequest) {
