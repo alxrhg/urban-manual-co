@@ -7,13 +7,14 @@ const supabase = createClient(url, key);
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { user_id: string } }
+  context: { params: Promise<{ user_id: string }> }
 ) {
   try {
+    const { user_id } = await context.params;
     const { data, error } = await supabase
       .from('personalization_scores')
       .select('cache, ttl')
-      .eq('user_id', params.user_id)
+      .eq('user_id', user_id)
       .order('ttl', { ascending: false })
       .limit(1)
       .maybeSingle();
