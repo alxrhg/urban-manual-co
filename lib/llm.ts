@@ -2,8 +2,9 @@ import { openai, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
-const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const ENABLE_GEMINI_FALLBACK = (process.env.ENABLE_GEMINI_FALLBACK || 'false').toLowerCase() === 'true';
+const genAI = GOOGLE_API_KEY && ENABLE_GEMINI_FALLBACK ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
 
 export async function generateJSON(system: string, user: string): Promise<any | null> {
   // Prefer OpenAI if configured
@@ -22,7 +23,7 @@ export async function generateJSON(system: string, user: string): Promise<any | 
       if (match) return JSON.parse(match[0]);
     } catch (_) {}
   }
-  // Fallback to Gemini
+  // Optional fallback to Gemini (disabled by default)
   if (genAI) {
     try {
       const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
@@ -30,7 +31,9 @@ export async function generateJSON(system: string, user: string): Promise<any | 
       const text = result.response.text();
       const match = text.match(/\{[\s\S]*\}/);
       if (match) return JSON.parse(match[0]);
-    } catch (_) {}
+    } catch (err) {
+      console.error('[LLM] Gemini fallback error:', (err as any)?.message || err);
+    }
   }
   return null;
 }
@@ -43,7 +46,7 @@ export async function embedText(input: string): Promise<number[] | null> {
       return emb.data?.[0]?.embedding || null;
     } catch (_) {}
   }
-  // Optional: add Gemini embeddings if needed in future
+  // No Gemini embeddings fallback to avoid model/version issues
   return null;
 }
 
