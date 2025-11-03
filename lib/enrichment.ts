@@ -10,10 +10,14 @@ export interface PlacesEnrichmentData {
   rating: number | null;
   price_level: number | null;
   opening_hours: any | null;
+  current_opening_hours: any | null;
   phone_number: string | null;
   website: string | null;
   google_maps_url: string | null;
   google_types: string[];
+  formatted_address: string | null;
+  editorial_summary: string | null;
+  reviews_json: any[];
 }
 
 export interface GeminiTagsData {
@@ -51,7 +55,7 @@ export async function findPlaceByText(
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': GOOGLE_API_KEY,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.priceLevel,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.types',
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.priceLevel,places.regularOpeningHours,places.currentOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.types',
         },
         body: JSON.stringify({
           textQuery: searchQuery,
@@ -75,10 +79,14 @@ export async function findPlaceByText(
         rating: null,
         price_level: null,
         opening_hours: null,
+        current_opening_hours: null,
         phone_number: null,
         website: null,
         google_maps_url: null,
         google_types: [],
+        formatted_address: null,
+        editorial_summary: null,
+        reviews_json: [],
       };
     }
 
@@ -96,15 +104,40 @@ export async function findPlaceByText(
       'PRICE_LEVEL_VERY_EXPENSIVE': 4,
     };
 
+    // Fetch details to get address, editorial summary, reviews
+    let formatted_address: string | null = null;
+    let editorial_summary: string | null = null;
+    let reviews_json: any[] = [];
+    try {
+      if (place.id) {
+        const detailsRes = await fetch(`https://places.googleapis.com/v1/places/${place.id}` , {
+          headers: {
+            'X-Goog-Api-Key': GOOGLE_API_KEY,
+            'X-Goog-FieldMask': 'formattedAddress,editorialSummary,reviews',
+          }
+        });
+        if (detailsRes.ok) {
+          const details = await detailsRes.json();
+          formatted_address = details.formattedAddress || null;
+          editorial_summary = details.editorialSummary?.text || null;
+          reviews_json = Array.isArray(details.reviews) ? details.reviews : [];
+        }
+      }
+    } catch {}
+
     return {
       place_id: place.id || null,
       rating: place.rating || null,
       price_level: place.priceLevel ? priceLevelMap[place.priceLevel] || null : null,
       opening_hours: place.regularOpeningHours || null,
+      current_opening_hours: place.currentOpeningHours || null,
       phone_number: place.internationalPhoneNumber || null,
       website: place.websiteUri || null,
       google_maps_url: place.googleMapsUri || null,
       google_types: place.types || [],
+      formatted_address,
+      editorial_summary,
+      reviews_json,
     };
   } catch (error) {
     console.error('Places API error:', error);
@@ -113,10 +146,14 @@ export async function findPlaceByText(
       rating: null,
       price_level: null,
       opening_hours: null,
+      current_opening_hours: null,
       phone_number: null,
       website: null,
       google_maps_url: null,
       google_types: [],
+      formatted_address: null,
+      editorial_summary: null,
+      reviews_json: [],
     };
   }
 }
