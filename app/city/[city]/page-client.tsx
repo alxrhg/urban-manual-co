@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -16,6 +17,7 @@ import { FollowCityButton } from '@/components/FollowCityButton';
 import DynamicPrompt from '@/components/DynamicPrompt';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
+import { childFade, fadeIn, staggerChildren } from '@/lib/motion';
 
 const DestinationDrawer = dynamic(
   () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -202,13 +204,22 @@ export default function CityPageClient() {
 
         <PageContainer className="space-y-10">
           {categories.length > 0 && (
-            <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-6 py-6 shadow-sm">
+            <motion.div
+              className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-6 py-6 shadow-sm"
+              {...fadeIn}
+            >
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
-                  <h2 className="text-sm font-semibold uppercase tracking-[1.5px] text-gray-600 dark:text-gray-400">
+                  <motion.h2
+                    className="text-sm font-semibold uppercase tracking-[1.5px] text-gray-600 dark:text-gray-400"
+                    {...childFade}
+                  >
                     Categories
-                  </h2>
-                  <button
+                  </motion.h2>
+                  <motion.button
+                    {...childFade}
+                    layout
+                    whileHover={{ y: -2 }}
                     onClick={() => {
                       setSelectedCategory('');
                       setAdvancedFilters(prev => ({ ...prev, category: undefined }));
@@ -220,13 +231,16 @@ export default function CityPageClient() {
                     }`}
                   >
                     View All
-                  </button>
+                  </motion.button>
                 </div>
 
-                <div className="flex flex-wrap gap-2.5">
+                <motion.div className="flex flex-wrap gap-2.5" {...staggerChildren(0.05)}>
                   {categories.map(category => (
-                    <button
+                    <motion.button
                       key={category}
+                      layout
+                      {...childFade}
+                      whileHover={{ y: -2 }}
                       onClick={() => handleCategorySelect(category)}
                       className={`px-3 py-1.5 rounded-full border text-xs transition-all ${
                         selectedCategory === category
@@ -235,15 +249,18 @@ export default function CityPageClient() {
                       }`}
                     >
                       {capitalizeCategory(category)}
-                    </button>
+                    </motion.button>
                   ))}
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           )}
 
-          <div className="flex flex-wrap gap-3 text-xs">
-            <button
+          <motion.div className="flex flex-wrap gap-3 text-xs" {...staggerChildren(0.05)}>
+            <motion.button
+              layout
+              {...childFade}
+              whileHover={{ y: -2 }}
               onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
               className={`px-3 py-1.5 rounded-full border transition-all ${
                 advancedFilters.michelin
@@ -252,8 +269,11 @@ export default function CityPageClient() {
               }`}
             >
               Michelin
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              layout
+              {...childFade}
+              whileHover={{ y: -2 }}
               onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
               className={`px-3 py-1.5 rounded-full border transition-all ${
                 advancedFilters.crown
@@ -262,8 +282,11 @@ export default function CityPageClient() {
               }`}
             >
               Crowned
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              layout
+              {...childFade}
+              whileHover={{ y: -2 }}
               onClick={() => setAdvancedFilters(prev => ({ ...prev, openNow: !prev.openNow }))}
               className={`px-3 py-1.5 rounded-full border transition-all ${
                 advancedFilters.openNow
@@ -272,8 +295,11 @@ export default function CityPageClient() {
               }`}
             >
               Open now
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              layout
+              {...childFade}
+              whileHover={{ y: -2 }}
               onClick={() =>
                 setAdvancedFilters(prev => ({ ...prev, minRating: prev.minRating ? undefined : 4.5 }))
               }
@@ -284,8 +310,8 @@ export default function CityPageClient() {
               }`}
             >
               Rating 4.5+
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           <DynamicPrompt city={cityDisplayName} category={selectedCategory} className="mb-2" />
 
@@ -304,25 +330,33 @@ export default function CityPageClient() {
           )}
 
           {filteredDestinations.length === 0 ? (
-            <div className="rounded-[32px] border border-dashed border-gray-300 dark:border-gray-700 px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+            <motion.div
+              className="rounded-[32px] border border-dashed border-gray-300 dark:border-gray-700 px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+              {...fadeIn}
+            >
               No destinations found in {cityDisplayName}.
-            </div>
+            </motion.div>
           ) : (
             <div className="space-y-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
+              <motion.div
+                layout
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6"
+                {...staggerChildren(0.03)}
+              >
                 {paginatedDestinations.map((destination, index) => {
                   const isVisited = user && visitedSlugs.has(destination.slug);
 
                   return (
-                    <button
+                    <motion.button
+                      layout
+                      {...childFade}
+                      whileHover={{ y: -4 }}
                       key={destination.slug}
                       onClick={() => {
                         setSelectedDestination(destination);
                         setIsDrawerOpen(true);
                       }}
-                      className={`${CARD_WRAPPER} cursor-pointer text-left transition-transform duration-300 hover:-translate-y-1 ${
-                        isVisited ? 'opacity-70' : ''
-                      }`}
+                      className={`${CARD_WRAPPER} cursor-pointer text-left transition-transform duration-300 hover:-translate-y-1`}
                     >
                       <div className={`${CARD_MEDIA} mb-2 relative`}>
                         {destination.image ? (
@@ -331,9 +365,7 @@ export default function CityPageClient() {
                             alt={destination.name}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
-                              isVisited ? 'grayscale' : ''
-                            }`}
+                            className={`object-cover transition-transform duration-300 group-hover:scale-105`}
                             quality={80}
                             loading={index < 6 ? 'eager' : 'lazy'}
                             fetchPriority={index === 0 ? 'high' : 'auto'}
@@ -372,24 +404,25 @@ export default function CityPageClient() {
                               <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
                                 {destination.category}
                               </span>
-                            </>
-                          )}
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                    </motion.button>
                   );
                 })}
-              </div>
+              </motion.div>
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2">
-                  <button
+                  <motion.button
+                    whileHover={{ y: -2 }}
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
                     className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
-                  </button>
+                  </motion.button>
 
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
@@ -421,13 +454,14 @@ export default function CityPageClient() {
                     })}
                   </div>
 
-                  <button
+                  <motion.button
+                    whileHover={{ y: -2 }}
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
-                  </button>
+                  </motion.button>
 
                   <span className="ml-4 text-sm text-gray-600 dark:text-gray-400">
                     Page {currentPage} of {totalPages}
