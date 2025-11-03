@@ -34,13 +34,10 @@ async function generateGreeting(context: any): Promise<string> {
     const { generateJSON } = await import('@/lib/llm');
     const json = await generateJSON(
       URBAN_MANUAL_EDITOR_SYSTEM_PROMPT,
-      {
-        role: 'user',
-        content: `Create a 1-2 sentence warm greeting acknowledging the user's context.
+      `Create a 1-2 sentence warm greeting acknowledging the user's context.
 Context: ${JSON.stringify(context)}
-Constraints: concise, modern tone, end by inviting a follow-up.`
-      },
-      { schema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] }, temperature: 0.8, max_output_tokens: 120 }
+Constraints: concise, modern tone, end by inviting a follow-up.
+Return only JSON: { "text": "..." }`
     );
     return json?.text || defaultGreeting(context);
   } catch {
