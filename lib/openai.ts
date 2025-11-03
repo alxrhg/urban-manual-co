@@ -11,7 +11,8 @@ if (apiKey) {
 
 export const openai = apiKey && OpenAILib ? new OpenAILib({ apiKey }) : null;
 
-export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5-turbo';
+// Default to widely available model; can be overridden via env
+export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4.1';
 export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';
 
 

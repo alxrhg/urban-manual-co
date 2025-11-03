@@ -14,8 +14,9 @@ export async function GET(_req: NextRequest) {
 
   try {
     // Tiny, cheap sanity request
+    let modelTried = OPENAI_MODEL;
     const resp = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
+      model: modelTried,
       messages: [
         { role: 'system', content: 'You are a health check.' },
         { role: 'user', content: 'pong' }
@@ -24,9 +25,30 @@ export async function GET(_req: NextRequest) {
       temperature: 0,
     });
     status.chatOk = Boolean(resp?.choices?.length);
+    status.modelUsed = modelTried;
   } catch (e: any) {
     status.chatOk = false;
     status.chatError = e?.message || String(e);
+    // Retry with fallbacks if model not found
+    if (String(status.chatError).includes('does not exist')) {
+      const fallbacks = ['gpt-4.1', 'gpt-4o-mini'];
+      for (const m of fallbacks) {
+        try {
+          const retry = await openai.chat.completions.create({
+            model: m,
+            messages: [
+              { role: 'system', content: 'You are a health check.' },
+              { role: 'user', content: 'pong' }
+            ],
+            max_tokens: 2,
+            temperature: 0,
+          });
+          status.chatOk = Boolean(retry?.choices?.length);
+          status.modelSuggested = m;
+          break;
+        } catch {}
+      }
+    }
   }
 
   try {
