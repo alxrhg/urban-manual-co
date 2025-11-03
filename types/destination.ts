@@ -5,6 +5,7 @@ export interface Destination {
   city: string;
   country?: string;
   category: string;
+  description?: string;
   content?: string;
   image?: string;
   michelin_stars?: number;
