@@ -97,6 +97,16 @@ Return only the JSON, no other text:`
             parsed.filters.michelinStar = 1;
           }
         }
+        // Guard: if the raw query includes cuisine keywords, set cuisine filter
+        const cuisineWords = ['french','italian','japanese','sushi','ramen','izakaya','yakitori','bbq','steak','seafood','indian','thai','vietnamese','korean','mexican','spanish','mediterranean','greek','lebanese','turkish','chinese','cantonese','sichuan','taiwanese','hotpot','shabu','noodle','pasta','bistro'];
+        const lowered = query.toLowerCase();
+        for (const cw of cuisineWords) {
+          if (lowered.includes(cw)) {
+            parsed.filters = parsed.filters || {};
+            parsed.filters.cuisine = cw;
+            break;
+          }
+        }
         console.log('[AI Search] Parsed intent:', parsed);
         return parsed;
       } catch (parseError) {
@@ -126,10 +136,12 @@ function parseQueryFallback(query: string): {
   ];
   const countries = ['japan', 'france', 'united states', 'usa', 'uk', 'united kingdom', 'italy', 'spain', 'germany', 'netherlands', 'australia', 'uae', 'taiwan', 'singapore', 'korea', 'thailand', 'china'];
   const categories = ['restaurant','cafe','hotel','bar','shop','museum','park','temple','shrine','hotpot','shabu','bbq','yakitori','ramen','sushi','izakaya'];
+  const cuisines = ['french','italian','japanese','sushi','ramen','izakaya','yakitori','bbq','steak','seafood','indian','thai','vietnamese','korean','mexican','spanish','mediterranean','greek','lebanese','turkish','chinese','cantonese','sichuan','taiwanese','hotpot','shabu','noodle','pasta','bistro'];
   
   let city: string | undefined;
   let country: string | undefined;
   let category: string | undefined;
+  let cuisine: string | undefined;
   const keywords: string[] = [];
   const hasMichelin = lowerQuery.includes('michelin');
 
@@ -143,6 +155,13 @@ function parseQueryFallback(query: string): {
   for (const cat of categories) {
     if (lowerQuery.includes(cat)) {
       category = cat;
+      break;
+    }
+  }
+
+  for (const cu of cuisines) {
+    if (lowerQuery.includes(cu)) {
+      cuisine = cu;
       break;
     }
   }
@@ -165,6 +184,7 @@ function parseQueryFallback(query: string): {
 
   const filters: any = {};
   if (hasMichelin) filters.michelinStar = 1;
+  if (cuisine) filters.cuisine = cuisine;
   return { keywords, city, country, category, filters };
 }
 
@@ -311,6 +331,7 @@ export async function POST(request: NextRequest) {
           city: intent.city || filters.city,
           country: intent.country || filters.country,
           category: intent.category || filters.category,
+          cuisine: intent.filters?.cuisine || filters.cuisine,
           open_now: intent.filters?.openNow || filters.openNow,
         });
         if (blended && blended.length) {
@@ -343,6 +364,11 @@ export async function POST(request: NextRequest) {
         if (intent.category || filters.category) {
           const categoryFilter = intent.category || filters.category;
           fullTextQuery = fullTextQuery.ilike('category', `%${categoryFilter}%`);
+        }
+
+        if (intent.filters?.cuisine || (filters as any).cuisine) {
+          const cuisineFilter = (intent.filters?.cuisine || (filters as any).cuisine) as string;
+          fullTextQuery = fullTextQuery.contains('tags', [cuisineFilter.toLowerCase()]);
         }
 
         // Build keyword search: use extracted keywords OR split query into meaningful words
@@ -458,6 +484,11 @@ export async function POST(request: NextRequest) {
       if (intent.category || filters.category) {
         const categoryFilter = intent.category || filters.category;
         fallbackQuery = fallbackQuery.ilike('category', `%${categoryFilter}%`);
+      }
+
+      if (intent.filters?.cuisine || (filters as any).cuisine) {
+        const cuisineFilter = (intent.filters?.cuisine || (filters as any).cuisine) as string;
+        fallbackQuery = fallbackQuery.contains('tags', [cuisineFilter.toLowerCase()]);
       }
 
       // Keyword matching
