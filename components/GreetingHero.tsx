@@ -34,7 +34,19 @@ export default function GreetingHero({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Rotating AI-powered search cues
+  const aiPlaceholders = [
+    "Ask me anything",
+    "Where would you like to go?",
+    "Find romantic hotels in Tokyo",
+    "Best time to visit Kyoto?",
+    "Show me Michelin restaurants",
+    "Vegetarian cafes in Paris",
+    "When do cherry blossoms bloom?",
+  ];
 
   // Get current time for greeting
   const now = new Date();
@@ -107,6 +119,19 @@ export default function GreetingHero({
     }
   };
 
+  // Rotate placeholder text every 3 seconds when input is empty
+  useEffect(() => {
+    if (!isAIEnabled || searchQuery.trim().length > 0) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentPlaceholderIndex((prev) => (prev + 1) % aiPlaceholders.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [searchQuery, isAIEnabled]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       setShowSuggestions(false);
@@ -130,39 +155,48 @@ export default function GreetingHero({
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           )}
-          <input
-            ref={inputRef}
-            placeholder={isAIEnabled ? "Where would you like to go?" : "Search places..."}
-            value={searchQuery}
-            onChange={(e) => {
-              onSearchChange(e.target.value);
-              if (e.target.value.trim().length >= 2) {
-                setShowSuggestions(true);
-              } else {
-                setShowSuggestions(false);
-              }
-            }}
-            onKeyDown={(e) => {
-              handleKeyDown(e);
-              // CHAT MODE: Submit on Enter key (instant, bypasses debounce)
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (onSubmit && searchQuery.trim()) {
-                  onSubmit(searchQuery.trim());
+          <div className="relative w-full">
+            <input
+              ref={inputRef}
+              placeholder={isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
+              value={searchQuery}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                if (e.target.value.trim().length >= 2) {
+                  setShowSuggestions(true);
+                } else {
+                  setShowSuggestions(false);
                 }
-              }
-            }}
-            onFocus={() => {
-              if (suggestions.length > 0 && searchQuery.trim().length >= 2) {
-                setShowSuggestions(true);
-              }
-            }}
-            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
-            style={{ 
-              paddingLeft: isSearching ? '32px' : '0',
-              paddingRight: '0'
-            }}
-          />
+              }}
+              onKeyDown={(e) => {
+                handleKeyDown(e);
+                // CHAT MODE: Submit on Enter key (instant, bypasses debounce)
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (onSubmit && searchQuery.trim()) {
+                    onSubmit(searchQuery.trim());
+                  }
+                }
+              }}
+              onFocus={() => {
+                if (suggestions.length > 0 && searchQuery.trim().length >= 2) {
+                  setShowSuggestions(true);
+                }
+              }}
+              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300"
+              style={{ 
+                paddingLeft: isSearching ? '32px' : '0',
+                paddingRight: isAIEnabled && !searchQuery ? '80px' : '0'
+              }}
+            />
+            {/* AI-powered hint */}
+            {isAIEnabled && !searchQuery && (
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-[1px]">
+                <Sparkles className="h-3 w-3" />
+                <span>AI</span>
+              </div>
+            )}
+          </div>
           
           {/* AI Suggestions Dropdown */}
           {isAIEnabled && showSuggestions && (suggestions.length > 0 || loadingSuggestions) && (
