@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateJSON } from '@/lib/llm';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 
 export interface EnhancedIntent {
@@ -56,12 +57,7 @@ export class IntentAnalysisService {
     conversationHistory: Array<{ role: string; content: string }> = [],
     userId?: string
   ): Promise<EnhancedIntent> {
-    if (!this.genAI) {
-      return this.fallbackAnalysis(query);
-    }
-
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
       // Build context
       const conversationContext = conversationHistory.length > 0
@@ -94,51 +90,10 @@ export class IntentAnalysisService {
         }
       }
 
-      const prompt = `Analyze this travel query deeply. Extract not just what, but WHY and HOW.
-      
-Return ONLY valid JSON with this exact structure:
-{
-  "primaryIntent": "discover|plan|compare|recommend|learn|book",
-  "secondaryIntents": ["array", "of", "additional", "intents"],
-  "temporalContext": {
-    "timeframe": "now|soon|future|flexible",
-    "dateRange": {"start": "YYYY-MM-DD or null", "end": "YYYY-MM-DD or null"},
-    "specificDate": "YYYY-MM-DD or null"
-  },
-  "comparisonMode": true/false,
-  "referenceResolution": {
-    "type": "previous_result|conversation|user_saved|search",
-    "reference": "what is being referenced",
-    "confidence": 0.0-1.0
-  },
-  "constraints": {
-    "budget": {"min": number or null, "max": number or null, "currency": "USD or null"},
-    "time": {"duration": "string or null", "timeOfDay": "string or null"},
-    "preferences": ["array", "of", "preferences"],
-    "exclusions": ["array", "of", "things", "to", "exclude"]
-  },
-  "urgency": "low|medium|high",
-  "queryComplexity": "simple|moderate|complex"
-}
-
-Query: "${query}"${conversationContext}${userContext}
-
-Guidelines:
-- Detect temporal references: "this weekend", "next month", "peak season"
-- Identify comparisons: "better than", "similar to", "cheaper than"
-- Resolve references: "that one", "the first result", "the hotel you mentioned"
-- Extract constraints: budget, time, preferences
-- Determine urgency: "urgent", "asap", "flexible"
-- Assess complexity: simple (single intent), moderate (2-3 intents), complex (4+ intents)
-
-Return only JSON, no other text:`;
-
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+      const system = `Analyze travel queries deeply and return STRICT JSON only with these fields: primaryIntent, secondaryIntents, temporalContext{timeframe,dateRange{start,end},specificDate}, comparisonMode, referenceResolution{type,reference,confidence}, constraints{budget{min,max,currency},time{duration,timeOfDay},preferences,exclusions}, urgency, queryComplexity.`;
+      const userPayload = `Query: "${query}"${conversationContext}${userContext}`;
+      const parsed = await generateJSON(system, userPayload);
+      if (parsed) {
         return this.validateAndEnhanceIntent(parsed, query, conversationHistory);
       }
     } catch (error) {
