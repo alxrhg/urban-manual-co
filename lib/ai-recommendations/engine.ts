@@ -92,6 +92,11 @@ export class AIRecommendationEngine {
       expires_at: expiresAt.toISOString()
     }));
     
+    if (!supabase) {
+      console.error('Cannot update personalization scores: Supabase client not available');
+      return;
+    }
+    
     const { error } = await supabase
       .from('personalization_scores')
       .upsert(records, { 
