@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
     // Build base query
     let baseQuery = supabase
       .from('destinations')
-      .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, tags')
+      .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, tags, style_tags, ambience_tags, experience_tags')
       .limit(100);
     
     // Apply city filter
@@ -267,12 +267,17 @@ export async function POST(request: NextRequest) {
     
     const results = baseResults || [];
     
-    // Filter by modifiers if any
+    // Filter by modifiers if any (use tags + style/ambience/experience)
     let filteredResults = results;
     let noModifierMatches = false;
     
     if (intent.modifiers.length > 0) {
-      filteredResults = filterByModifiers(results, intent.modifiers);
+      const lowerModifiers = intent.modifiers.map(m => m.toLowerCase());
+      filteredResults = results.filter((d: any) => {
+        const tags = (d.tags || []).concat(d.style_tags || [], d.ambience_tags || [], d.experience_tags || []);
+        const lowerTags = (tags as any[]).map((t: any) => String(t).toLowerCase());
+        return lowerModifiers.every((m: string) => lowerTags.some((t: string) => t === m || t.includes(m)));
+      });
       
       if (filteredResults.length === 0) {
         // No matches for modifiers, fall back to base results
@@ -281,20 +286,35 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Boosting: apply simple scoring for presentation order
+    const boosted = filteredResults
+      .map((d: any) => {
+        let score = 0;
+        // Popularity proxies
+        if (d.michelin_stars && d.michelin_stars > 0) score += 15;
+        if (d.rating) score += d.rating * 2;
+        // Modifiers match bonus across style/ambience
+        const pool = (d.style_tags || []).concat(d.ambience_tags || [], d.experience_tags || [], d.tags || []);
+        const lowerPool = (pool as any[]).map((t: any) => String(t).toLowerCase());
+        score += intent.modifiers.reduce((acc: number, m: string) => acc + (lowerPool.some((t: string) => t === m || t.includes(m)) ? 3 : 0), 0);
+        return { ...d, _score: score };
+      })
+      .sort((a: any, b: any) => b._score - a._score);
+
     // Generate context string using gemini service
     const context = await generateContextString(
       query,
       intent.city,
       intent.category,
       intent.modifiers,
-      filteredResults.length,
+      boosted.length,
       noModifierMatches,
-      filteredResults
+      boosted
     );
     
     return NextResponse.json({
       context,
-      results: filteredResults.slice(0, 50), // Limit to 50 results
+      results: boosted.slice(0, 50), // Limit to 50 results
       noModifierMatches,
       intent,
     });
