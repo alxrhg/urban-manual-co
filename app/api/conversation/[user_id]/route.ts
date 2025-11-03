@@ -168,8 +168,9 @@ export async function POST(
 
     // Final fallback
     if (!assistantResponse) {
-      assistantResponse = getContextSuggestions({ ...session.context, ...contextUpdates }).length > 0
-        ? getContextSuggestions({ ...session.context, ...contextUpdates })[0]
+      const fallbackSuggestions = await getContextSuggestions({ ...session.context, ...contextUpdates });
+      assistantResponse = fallbackSuggestions.length > 0
+        ? fallbackSuggestions[0]
         : "Noted. I'll help you find something great.";
     }
 
@@ -198,7 +199,7 @@ export async function POST(
     });
 
     // Get suggestions for next turn
-    const suggestions = getContextSuggestions({ ...session.context, ...contextUpdates });
+    const suggestions = await getContextSuggestions({ ...session.context, ...contextUpdates });
 
     return NextResponse.json({
       message: assistantResponse,
