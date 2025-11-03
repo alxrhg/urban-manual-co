@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { rerankResults } from '@/lib/ai/rerank';
 import { semanticBlendSearch } from '@/lib/search/semanticSearch';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
@@ -472,7 +473,7 @@ export async function POST(request: NextRequest) {
 
     // Rank and sort results
     const lowerQuery = query.toLowerCase();
-    const rankedResults = results
+    let rankedResults = results
       .map((dest: any) => {
         let score = dest.similarity || dest.rank || 0;
         const lowerName = (dest.name || '').toLowerCase();
@@ -510,6 +511,11 @@ export async function POST(request: NextRequest) {
       .sort((a: any, b: any) => b._score - a._score)
       .slice(0, pageSize)
       .map(({ _score, similarity, rank, ...rest }: any) => rest);
+
+    // Apply LLM re-ranker on the top N for improved ordering
+    try {
+      rankedResults = await rerankResults(query, rankedResults, 20);
+    } catch {}
 
     // Generate suggestions
     const suggestions: string[] = [];

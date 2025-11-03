@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { generateJSON } from '@/lib/llm';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
 import { semanticBlendSearch } from '@/lib/search/semanticSearch';
+import { rerankResults } from '@/lib/ai/rerank';
 import { getLocation, getWeather } from '@/lib/ai/contextLocation';
 
 const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
@@ -44,7 +45,11 @@ export async function POST(req: NextRequest) {
       });
     } catch {}
 
-    const finalResults = (hybridResults && hybridResults.length > 0) ? hybridResults : (data || []);
+    let finalResults = (hybridResults && hybridResults.length > 0) ? hybridResults : (data || []);
+    // Re-rank top 20 for better personalization/contextual fit
+    try {
+      finalResults = await rerankResults(query, finalResults, 20);
+    } catch {}
 
     // Editorial insight banner (only when any search/filter applied)
     let insight: string | null = null;
