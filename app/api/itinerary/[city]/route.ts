@@ -7,15 +7,16 @@ const supabase = createClient(url, key);
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { city: string } }
+  context: { params: Promise<{ city: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const { city } = await context.params;
     const { data, error } = await supabase
       .from('itinerary_templates')
       .select('*')
-      .ilike('city', `%${params.city}%`)
+      .ilike('city', `%${city}%`)
       .order('generated_at', { ascending: false })
       .limit(limit);
     if (error) throw error;
