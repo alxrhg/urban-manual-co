@@ -647,39 +647,40 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         {/* Content */}
         <div className="p-6">
-          {/* Image */}
-          {destination.image && (
-            <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
+          {/* Image - Always show placeholder if missing */}
+          <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
+            {destination.image ? (
               <img
                 src={destination.image}
                 alt={destination.name}
                 className="w-full h-full object-cover"
               />
-            </div>
-          )}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <MapPin className="h-12 w-12 text-gray-400 dark:text-gray-600" />
+              </div>
+            )}
+          </div>
 
-          {/* Title */}
+          {/* Title Section - Always rendered */}
           <div className="mb-6">
             <div className="flex items-start gap-3 mb-4">
               <h1 className="text-3xl font-bold flex-1">
-                {destination.name}
+                {destination.name || 'Destination'}
               </h1>
-              {/* Crown hidden for now */}
             </div>
 
-            {/* Meta Info */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+            {/* Meta Info - Always show, with fallbacks */}
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                <span>{capitalizeCity(destination.city)}</span>
+                <span>{destination.city ? capitalizeCity(destination.city) : 'Location unknown'}</span>
               </div>
 
-              {destination.category && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
-                  <span className="capitalize">{destination.category}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                <span className="capitalize">{destination.category || 'Uncategorized'}</span>
+              </div>
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
                 <div className="flex items-center gap-2">
@@ -693,72 +694,77 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               )}
             </div>
 
-            {/* Tags removed to align with homepage minimal design */}
+            {/* Rating & Price Level - Always show section */}
+            <div className="mt-4 flex items-center gap-4 text-sm">
+              {(enrichedData?.rating || destination.rating) ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-yellow-500">⭐</span>
+                  <span className="font-semibold">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {enrichedData?.user_ratings_total ? ` (${enrichedData.user_ratings_total.toLocaleString()} reviews)` : ''}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-gray-400 dark:text-gray-500 text-sm">No rating available</div>
+              )}
+              {(enrichedData?.price_level || destination.price_level) && (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {'$'.repeat(enrichedData?.price_level || destination.price_level)}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400">Price Level</span>
+                </div>
+              )}
+            </div>
 
-            {/* Rating & Price Level */}
-            {((enrichedData?.rating || enrichedData?.price_level) || (destination.rating || destination.price_level)) && (
-              <div className="mt-4 flex items-center gap-4 text-sm">
-                {(enrichedData?.rating || destination.rating) && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-yellow-500">⭐</span>
-                    <span className="font-semibold">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Google Rating{enrichedData?.user_ratings_total ? ` (${enrichedData.user_ratings_total.toLocaleString()} reviews)` : ''}
-                    </span>
-                  </div>
-                )}
-                {(enrichedData?.price_level || destination.price_level) && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-green-600 dark:text-green-400 font-semibold">
-                      {'$'.repeat(enrichedData?.price_level || destination.price_level)}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">Price Level</span>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Business Status - Always show if non-operational */}
+            <div className="mt-4">
+              {enrichedData?.business_status && enrichedData.business_status !== 'OPERATIONAL' && (
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <span className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>Status:</strong> {enrichedData.business_status.replace(/_/g, ' ')}
+                  </span>
+                </div>
+              )}
+            </div>
 
-            {/* Business Status */}
-            {enrichedData?.business_status && enrichedData.business_status !== 'OPERATIONAL' && (
-              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <span className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Status:</strong> {enrichedData.business_status.replace(/_/g, ' ')}
-                </span>
-              </div>
-            )}
-
-            {/* Editorial Summary */}
-            {enrichedData?.editorial_summary && (
-              <div className="mt-4">
-                <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
-                <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            {/* Editorial Summary - Always show section */}
+            <div className="mt-4">
+              <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">Description</h3>
+              {enrichedData?.editorial_summary ? (
+                <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed block">
                   {stripHtmlTags(enrichedData.editorial_summary)}
                 </span>
-              </div>
-            )}
+              ) : destination.content ? (
+                <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {stripHtmlTags(destination.content)}
+                </div>
+              ) : (
+                <span className="text-sm text-gray-400 dark:text-gray-500 italic">No description available</span>
+              )}
+            </div>
 
-            {/* Formatted Address */}
-            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
-              <div className="mt-4">
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Address</div>
-                    {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
-                    )}
-                    {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
-                    )}
-                  </div>
+            {/* Address - Always show section */}
+            <div className="mt-4">
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Address</div>
+                  {enrichedData?.formatted_address ? (
+                    <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
+                  ) : enrichedData?.vicinity ? (
+                    <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.vicinity}</div>
+                  ) : (
+                    <div className="text-sm text-gray-400 dark:text-gray-500 italic">Address not available</div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Place Types */}
-            {enrichedData?.place_types && Array.isArray(enrichedData.place_types) && enrichedData.place_types.length > 0 && (
-              <div className="mt-4">
-                <span className="text-xs text-gray-500 dark:text-gray-400 mb-2">Types</span>
+            {/* Place Types - Always show section */}
+            <div className="mt-4">
+              <span className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Types</span>
+              {enrichedData?.place_types && Array.isArray(enrichedData.place_types) && enrichedData.place_types.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {enrichedData.place_types.slice(0, 5).map((type: string, idx: number) => (
                     <span
@@ -769,86 +775,79 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </span>
                   ))}
                 </div>
+              ) : (
+                <span className="text-xs text-gray-400 dark:text-gray-500 italic">No type information</span>
+              )}
+            </div>
+
+            {/* Opening Hours - Always show section */}
+            <div className="mt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">Hours</span>
               </div>
-            )}
+              {(() => {
+                const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
+                
+                if (hours && hours.weekday_text && Array.isArray(hours.weekday_text) && hours.weekday_text.length > 0) {
+                  const openStatus = getOpenStatus(
+                    hours, 
+                    destination.city, 
+                    enrichedData?.timezone_id, 
+                    enrichedData?.utc_offset
+                  );
+                  
+                  let now: Date;
+                  if (enrichedData?.timezone_id) {
+                    now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
+                  } else if (CITY_TIMEZONES[destination.city]) {
+                    now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[destination.city] }));
+                  } else if (enrichedData?.utc_offset !== null && enrichedData?.utc_offset !== undefined) {
+                    const utcNow = new Date();
+                    now = new Date(utcNow.getTime() + (enrichedData.utc_offset * 60 * 1000));
+                  } else {
+                    now = new Date();
+                  }
+                  
+                  return (
+                    <>
+                      {openStatus.todayHours && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`text-sm font-semibold ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {openStatus.isOpen ? 'Open now' : 'Closed'}
+                          </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            · {openStatus.todayHours}
+                          </span>
+                        </div>
+                      )}
+                      <details className="text-sm">
+                        <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                          View all hours
+                        </summary>
+                        <div className="mt-2 space-y-1 pl-6">
+                          {hours.weekday_text.map((day: string, index: number) => {
+                            const [dayName, hoursText] = day.split(': ');
+                            const dayOfWeek = now.getDay();
+                            const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                            const isToday = index === googleDayIndex;
 
-            {/* Opening Hours */}
-            {(() => {
-              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
-              // Only render if we have opening hours with weekday_text
-              if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
-                // Debug: log why opening hours aren't showing
-                if (hours && !hours.weekday_text) {
-                  console.log('Opening hours data exists but missing weekday_text:', hours);
+                            return (
+                              <div key={index} className={`flex justify-between ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                                <span>{dayName}</span>
+                                <span>{hoursText}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    </>
+                  );
                 }
-                return null;
-              }
-              
-              const openStatus = getOpenStatus(
-                hours, 
-                destination.city, 
-                enrichedData?.timezone_id, 
-                enrichedData?.utc_offset
-              );
-              
-              // Calculate timezone for "today" highlighting using same logic as getOpenStatus
-              let now: Date;
-              if (enrichedData?.timezone_id) {
-                now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
-              } else if (CITY_TIMEZONES[destination.city]) {
-                now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[destination.city] }));
-              } else if (enrichedData?.utc_offset !== null && enrichedData?.utc_offset !== undefined) {
-                const utcNow = new Date();
-                now = new Date(utcNow.getTime() + (enrichedData.utc_offset * 60 * 1000));
-              } else {
-                now = new Date();
-              }
-              
-              return (
-                <div className="mt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    {openStatus.todayHours && (
-                      <span className={`text-sm font-semibold ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {openStatus.isOpen ? 'Open now' : 'Closed'}
-                      </span>
-                    )}
-                    {openStatus.todayHours && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        · {openStatus.todayHours}
-                      </span>
-                    )}
-                    {enrichedData?.timezone_id && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                        ({enrichedData.timezone_id.replace('_', ' ')})
-                      </span>
-                    )}
-                  </div>
-                  {hours.weekday_text && (
-                    <details className="text-sm">
-                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                        View all hours
-                      </summary>
-                      <div className="mt-2 space-y-1 pl-6">
-                        {hours.weekday_text.map((day: string, index: number) => {
-                          const [dayName, hoursText] = day.split(': ');
-                          const dayOfWeek = now.getDay();
-                          const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                          const isToday = index === googleDayIndex;
-
-                          return (
-                            <div key={index} className={`flex justify-between ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-                              <span>{dayName}</span>
-                              <span>{hoursText}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </details>
-                  )}
-                </div>
-              );
-            })()}
+                
+                return <span className="text-sm text-gray-400 dark:text-gray-500 italic">Hours not available</span>;
+              })()}
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -934,104 +933,96 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Description */}
-          {destination.content && (
-            <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">About</h3>
-              <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {stripHtmlTags(destination.content)}
-              </div>
+          {/* Contact & Links Section - Always show */}
+          <div className="mb-8">
+            <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Contact & Links</h3>
+            <style jsx>{`
+              .pill-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 16px;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(10px);
+                color: white;
+                font-size: 14px;
+                font-weight: 500;
+                border-radius: 9999px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-decoration: none;
+              }
+              .pill-button:hover {
+                background: rgba(0, 0, 0, 0.7);
+              }
+              .pill-separator {
+                color: rgba(255, 255, 255, 0.6);
+              }
+            `}</style>
+            <div className="flex flex-wrap gap-3">
+              {destination.google_maps_url ? (
+                <a
+                  href={destination.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pill-button"
+                >
+                  <span>📍</span>
+                  <span className="pill-separator">•</span>
+                  <span>Google Maps</span>
+                </a>
+              ) : null}
+              {(enrichedData?.website || destination.website) ? (
+                <a
+                  href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pill-button"
+                >
+                  <span>🌐</span>
+                  <span className="pill-separator">•</span>
+                  <span>Website</span>
+                </a>
+              ) : null}
+              {(enrichedData?.international_phone_number || destination.phone_number) ? (
+                <a
+                  href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                  className="pill-button"
+                >
+                  <span>📞</span>
+                  <span className="pill-separator">•</span>
+                  <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
+                </a>
+              ) : null}
+              {destination.instagram_url ? (
+                <a
+                  href={destination.instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pill-button"
+                >
+                  <span>📷</span>
+                  <span className="pill-separator">•</span>
+                  <span>Instagram</span>
+                </a>
+              ) : null}
+              {!destination.google_maps_url && !enrichedData?.website && !destination.website && !enrichedData?.international_phone_number && !destination.phone_number && !destination.instagram_url && (
+                <span className="text-sm text-gray-400 dark:text-gray-500 italic">No contact information available</span>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Contact & Links Section */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
-            <div className="mb-8">
-              <style jsx>{`
-                .pill-button {
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  padding: 8px 16px;
-                  background: rgba(0, 0, 0, 0.6);
-                  backdrop-filter: blur(10px);
-                  color: white;
-                  font-size: 14px;
-                  font-weight: 500;
-                  border-radius: 9999px;
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                  cursor: pointer;
-                  transition: all 0.2s ease;
-                  text-decoration: none;
-                }
-                .pill-button:hover {
-                  background: rgba(0, 0, 0, 0.7);
-                }
-                .pill-separator {
-                  color: rgba(255, 255, 255, 0.6);
-                }
-              `}</style>
-              <div className="flex flex-wrap gap-3">
-                {destination.google_maps_url && (
-                  <a
-                    href={destination.google_maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button"
-                  >
-                    <span>📍</span>
-                    <span className="pill-separator">•</span>
-                    <span>Google Maps</span>
-                  </a>
-                )}
-                {(enrichedData?.website || destination.website) && (
-                  <a
-                    href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button"
-                  >
-                    <span>🌐</span>
-                    <span className="pill-separator">•</span>
-                    <span>Website</span>
-                  </a>
-                )}
-                {(enrichedData?.international_phone_number || destination.phone_number) && (
-                  <a
-                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="pill-button"
-                  >
-                    <span>📞</span>
-                    <span className="pill-separator">•</span>
-                    <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
-                  </a>
-                )}
-                {destination.instagram_url && (
-                  <a
-                    href={destination.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button"
-                  >
-                    <span>📷</span>
-                    <span className="pill-separator">•</span>
-                    <span>Instagram</span>
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Reviews */}
-          {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
+          {/* Reviews - Always show section */}
+          <div className="mb-8">
+            <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
+            {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 ? (
               <div className="space-y-4">
                 {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
                   <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <span className="font-medium text-sm">{review.author_name}</span>
+                        <span className="font-medium text-sm">{review.author_name || 'Anonymous'}</span>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-yellow-500">⭐</span>
                           <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
@@ -1042,117 +1033,127 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       </div>
                     </div>
                     {review.text && (
-                      <span className="text-sm text-gray-700 dark:text-gray-300 mt-2 line-clamp-3">{review.text}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 mt-2 line-clamp-3 block">{review.text}</span>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <span className="text-sm text-gray-400 dark:text-gray-500 italic">No reviews available</span>
+            )}
+          </div>
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
 
-          {/* Map Section (Google Maps) */}
+          {/* Map Section - Always show */}
           <div className="mb-8">
             <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Location</h3>
-            <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-              <iframe
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                allowFullScreen
-                referrerPolicy="no-referrer-when-downgrade"
-                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ''}&q=${encodeURIComponent(destination.name + ', ' + destination.city)}&zoom=15`}
-                title={`Map showing location of ${destination.name}`}
-              />
-            </div>
+            {destination.name && destination.city ? (
+              <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ''}&q=${encodeURIComponent(destination.name + ', ' + destination.city)}&zoom=15`}
+                  title={`Map showing location of ${destination.name}`}
+                />
+              </div>
+            ) : (
+              <div className="w-full h-64 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <span className="text-sm text-gray-400 dark:text-gray-500 italic">Map not available</span>
+              </div>
+            )}
           </div>
 
-          {/* Directions Button */}
+          {/* Directions Button - Always show */}
           <div className="mb-6">
-            <a
-              href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-lg"
-            >
-              <Navigation className="h-4 w-4" />
-              <span>Get Directions</span>
-            </a>
+            {destination.name && destination.city ? (
+              <a
+                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-lg"
+              >
+                <Navigation className="h-4 w-4" />
+                <span>Get Directions</span>
+              </a>
+            ) : (
+              <div className="text-sm text-gray-400 dark:text-gray-500 italic">Directions not available</div>
+            )}
           </div>
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
 
-          {/* AI Recommendations */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
-                  You might also like
-                </h3>
-              </div>
-
-              {loadingRecommendations ? (
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex-shrink-0 w-40">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
-                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
-                  {recommendations.map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => {
-                        // Navigate to recommended destination
-                        window.location.href = `/destination/${rec.slug}`;
-                      }}
-                      className="flex-shrink-0 w-40 group text-left"
-                    >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
-                        {rec.image ? (
-                          <img
-                            src={rec.image}
-                            alt={rec.name}
-                            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="h-8 w-8 opacity-20" />
-                          </div>
-                        )}
-                        {/* Crown hidden for now */}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
-                            <img
-                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                            />
-                            <span>{rec.michelin_stars}</span>
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1">
-                        {rec.name}
-                      </h4>
-                      <span className="text-xs text-gray-500">
-                        {capitalizeCity(rec.city)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+          {/* AI Recommendations - Always show section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
+                You might also like
+              </h3>
             </div>
-          )}
+
+            {loadingRecommendations ? (
+              <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="flex-shrink-0 w-40">
+                    <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : recommendations.length > 0 ? (
+              <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+                {recommendations.map(rec => (
+                  <button
+                    key={rec.slug}
+                    onClick={() => {
+                      window.location.href = `/destination/${rec.slug}`;
+                    }}
+                    className="flex-shrink-0 w-40 group text-left"
+                  >
+                    <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+                      {rec.image ? (
+                        <img
+                          src={rec.image}
+                          alt={rec.name}
+                          className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <MapPin className="h-8 w-8 opacity-20" />
+                        </div>
+                      )}
+                      {rec.michelin_stars && rec.michelin_stars > 0 && (
+                        <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            className="h-3 w-3"
+                          />
+                          <span>{rec.michelin_stars}</span>
+                        </div>
+                      )}
+                    </div>
+                    <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1">
+                      {rec.name}
+                    </h4>
+                    <span className="text-xs text-gray-500">
+                      {capitalizeCity(rec.city)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <span className="text-sm text-gray-400 dark:text-gray-500 italic">No recommendations available</span>
+            )}
+          </div>
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
