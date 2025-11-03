@@ -23,6 +23,13 @@ interface ForecastResult {
 export class ForecastingService {
   private supabase = createServiceRoleClient();
 
+  constructor() {
+    // Ensure supabase is available
+    if (!this.supabase) {
+      console.warn('ForecastingService: Supabase client not available');
+    }
+  }
+
   /**
    * Forecast demand for a city or destination
    */
@@ -108,6 +115,10 @@ export class ForecastingService {
     metricType: string = 'popularity',
     days: number = 60
   ): Promise<Array<{ date: string; value: number }> | null> {
+    if (!this.supabase) {
+      return this.createSyntheticData(days);
+    }
+    
     try {
       let query = this.supabase
         .from('forecasting_data')
@@ -360,6 +371,8 @@ export class ForecastingService {
     value: number,
     metadata?: any
   ): Promise<void> {
+    if (!this.supabase) return;
+    
     try {
       await this.supabase.from('forecasting_data').insert({
         destination_id: destinationId,

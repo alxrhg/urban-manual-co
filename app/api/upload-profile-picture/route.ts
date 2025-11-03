@@ -39,6 +39,10 @@ export async function POST(request: NextRequest) {
     const filePath = `profiles/${fileName}`;
 
     // Upload to Supabase Storage
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('profile-images')
       .upload(filePath, file, {

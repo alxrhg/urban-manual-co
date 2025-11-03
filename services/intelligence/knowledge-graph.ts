@@ -15,10 +15,17 @@ export interface DestinationRelationship {
 }
 
 export class KnowledgeGraphService {
-  private supabase = createServiceRoleClient();
+  private supabase;
   private genAI: GoogleGenerativeAI | null = null;
 
   constructor() {
+    try {
+      this.supabase = createServiceRoleClient();
+    } catch (error) {
+      this.supabase = null;
+      console.warn('KnowledgeGraphService: Supabase client not available');
+    }
+    
     const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
@@ -32,6 +39,8 @@ export class KnowledgeGraphService {
     destinationId: string,
     limit: number = 5
   ): Promise<Array<{ destination_id: string; similarity: number; reason: string }>> {
+    if (!this.supabase) return [];
+    
     try {
       // Check if relationships exist
       const { data: relationships } = await this.supabase
@@ -66,6 +75,8 @@ export class KnowledgeGraphService {
     radiusKm: number = 5,
     limit: number = 10
   ): Promise<Array<{ destination_id: string; distance: number }>> {
+    if (!this.supabase) return [];
+    
     try {
       // Get destination location
       const { data: dest } = await this.supabase
@@ -123,6 +134,8 @@ export class KnowledgeGraphService {
     destinationId: string,
     limit: number = 5
   ): Promise<Array<{ destination_id: string; reason: string }>> {
+    if (!this.supabase) return [];
+    
     try {
       const { data: dest } = await this.supabase
         .from('destinations')
@@ -173,6 +186,8 @@ export class KnowledgeGraphService {
     destinationId: string,
     limit: number
   ): Promise<Array<{ destination_id: string; similarity: number; reason: string }>> {
+    if (!this.supabase) return [];
+    
     try {
       const { data: dest } = await this.supabase
         .from('destinations')
@@ -305,6 +320,8 @@ export class KnowledgeGraphService {
    * Store relationship in knowledge graph
    */
   async storeRelationship(relationship: DestinationRelationship): Promise<void> {
+    if (!this.supabase) return;
+    
     try {
       await this.supabase.from('destination_relationships').upsert({
         source_destination_id: relationship.source_id,

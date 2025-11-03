@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
+import { forecastingService } from '@/services/intelligence/forecasting';
+import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -278,7 +281,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Extract structured filters using AI with conversation context
+    // Use enhanced intent analysis for deeper understanding
+    const enhancedIntent = await intentAnalysisService.analyzeIntent(
+      query,
+      conversationHistory,
+      userId
+    );
+
+    // Also get basic intent for backward compatibility
     const intent = await understandQuery(query, conversationHistory, userId);
     
     // Normalize category using synonyms
@@ -393,6 +403,24 @@ export async function POST(request: NextRequest) {
       enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
     }
 
+    // Get intelligence insights if city detected
+    let intelligenceInsights = null;
+    if (intent.city) {
+      try {
+        const [forecast, opportunities] = await Promise.all([
+          forecastingService.forecastDemand(intent.city, undefined, 30),
+          opportunityDetectionService.detectOpportunities(userId, intent.city, 3),
+        ]);
+
+        intelligenceInsights = {
+          forecast,
+          opportunities: opportunities.slice(0, 3),
+        };
+      } catch (error) {
+        // Silently fail - insights are optional
+      }
+    }
+
     return NextResponse.json({
       content: enhancedContent,
       destinations: results,
@@ -400,7 +428,9 @@ export async function POST(request: NextRequest) {
         ...intent,
         resultCount: results.length,
         hasResults: results.length > 0
-      }
+      },
+      enhancedIntent, // Include full enhanced intent
+      intelligence: intelligenceInsights,
     });
 
   } catch (error: any) {

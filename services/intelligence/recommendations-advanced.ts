@@ -19,10 +19,17 @@ interface RecommendationResult {
 }
 
 export class AdvancedRecommendationEngine {
-  private supabase = createServiceRoleClient();
+  private supabase;
   private genAI: GoogleGenerativeAI | null = null;
 
   constructor() {
+    try {
+      this.supabase = createServiceRoleClient();
+    } catch (error) {
+      this.supabase = null;
+      console.warn('AdvancedRecommendationEngine: Supabase client not available');
+    }
+    
     const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
@@ -88,6 +95,8 @@ export class AdvancedRecommendationEngine {
     userId: string,
     options?: { city?: string; category?: string }
   ): Promise<Map<string, number>> {
+    if (!this.supabase) return new Map();
+    
     try {
       // Get user's interaction history
       const { data: userInteractions } = await this.supabase
@@ -150,6 +159,8 @@ export class AdvancedRecommendationEngine {
     userId: string,
     options?: { city?: string; category?: string }
   ): Promise<Map<string, number>> {
+    if (!this.supabase) return new Map();
+    
     try {
       // Get user's saved destinations and their attributes
       const { data: saved } = await this.supabase
@@ -185,23 +196,25 @@ export class AdvancedRecommendationEngine {
       let priceSum = 0;
       let count = 0;
 
-      saved.forEach(item => {
+      saved.forEach((item: any) => {
         const dest = item.destination;
-        if (!dest) return;
+        if (!dest || typeof dest !== 'object') return;
 
-        if (dest.city) preferences.cities.add(dest.city);
-        if (dest.category) preferences.categories.add(dest.category);
-        if (dest.tags && Array.isArray(dest.tags)) {
-          dest.tags.forEach((tag: string) => preferences.tags.add(tag));
+        const destination = dest as any;
+        
+        if (destination.city) preferences.cities.add(destination.city);
+        if (destination.category) preferences.categories.add(destination.category);
+        if (destination.tags && Array.isArray(destination.tags)) {
+          destination.tags.forEach((tag: string) => preferences.tags.add(tag));
         }
-        if (dest.rating) {
-          ratingSum += dest.rating;
+        if (destination.rating) {
+          ratingSum += destination.rating;
           count++;
         }
-        if (dest.price_level) {
-          priceSum += dest.price_level;
+        if (destination.price_level) {
+          priceSum += destination.price_level;
         }
-        if (dest.michelin_stars && dest.michelin_stars > 0) {
+        if (destination.michelin_stars && destination.michelin_stars > 0) {
           preferences.hasMichelin++;
         }
       });
@@ -209,6 +222,8 @@ export class AdvancedRecommendationEngine {
       preferences.avgRating = count > 0 ? ratingSum / count : 0;
       preferences.avgPriceLevel = saved.length > 0 ? priceSum / saved.length : 0;
 
+      if (!this.supabase) return new Map();
+      
       // Find destinations matching preferences
       let query = this.supabase
         .from('destinations')
@@ -289,6 +304,8 @@ export class AdvancedRecommendationEngine {
   private async getPopularityScores(
     options?: { city?: string; category?: string }
   ): Promise<Map<string, number>> {
+    if (!this.supabase) return new Map();
+    
     try {
       // Get popularity from visit_history and saved_destinations
       let query = this.supabase
@@ -441,6 +458,8 @@ export class AdvancedRecommendationEngine {
   }
 
   private async getVisitedDestinations(userId: string): Promise<Set<string>> {
+    if (!this.supabase) return new Set();
+    
     const { data } = await this.supabase
       .from('visit_history')
       .select('destination_id')
@@ -450,6 +469,8 @@ export class AdvancedRecommendationEngine {
   }
 
   private async getSavedDestinations(userId: string): Promise<Set<string>> {
+    if (!this.supabase) return new Set();
+    
     const { data } = await this.supabase
       .from('saved_destinations')
       .select('destination_id')

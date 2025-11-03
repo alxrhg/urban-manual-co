@@ -26,7 +26,16 @@ export interface Opportunity {
 }
 
 export class OpportunityDetectionService {
-  private supabase = createServiceRoleClient();
+  private supabase;
+
+  constructor() {
+    try {
+      this.supabase = createServiceRoleClient();
+    } catch (error) {
+      this.supabase = null;
+      console.warn('OpportunityDetectionService: Supabase client not available');
+    }
+  }
 
   /**
    * Detect opportunities for a user
@@ -74,7 +83,7 @@ export class OpportunityDetectionService {
 
     if (seasonalContext) {
       const daysUntil = Math.ceil(
-        (new Date(seasonalContext.start).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (seasonalContext.start.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       );
 
       if (daysUntil > 0 && daysUntil <= 30) {
@@ -82,7 +91,7 @@ export class OpportunityDetectionService {
           opportunity_type: 'seasonal',
           city,
           title: `${seasonalContext.event} is approaching`,
-          description: `${seasonalContext.event} starts in ${daysUntil} days. ${seasonalContext.description}`,
+          description: `${seasonalContext.event} starts in ${daysUntil} days. ${seasonalContext.text}`,
           opportunity_data: {
             availability_window: {
               start: seasonalContext.start.toISOString(),
@@ -102,6 +111,8 @@ export class OpportunityDetectionService {
    * Detect trending destinations
    */
   private async detectTrendingOpportunities(city?: string): Promise<Opportunity[]> {
+    if (!this.supabase) return [];
+    
     try {
       // Calculate trending score based on recent interactions
       const { data: recentInteractions } = await this.supabase
@@ -183,6 +194,8 @@ export class OpportunityDetectionService {
    * Store opportunity alert
    */
   async storeOpportunity(opportunity: Opportunity, userId?: string): Promise<void> {
+    if (!this.supabase) return;
+    
     try {
       await this.supabase.from('opportunity_alerts').insert({
         opportunity_type: opportunity.opportunity_type,
@@ -206,6 +219,8 @@ export class OpportunityDetectionService {
    * Get stored opportunities for a user
    */
   async getUserOpportunities(userId: string, activeOnly: boolean = true): Promise<Opportunity[]> {
+    if (!this.supabase) return [];
+    
     try {
       let query = this.supabase
         .from('opportunity_alerts')

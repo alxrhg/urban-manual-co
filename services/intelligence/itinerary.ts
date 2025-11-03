@@ -30,10 +30,17 @@ export interface Itinerary {
 }
 
 export class ItineraryIntelligenceService {
-  private supabase = createServiceRoleClient();
+  private supabase;
   private genAI: GoogleGenerativeAI | null = null;
 
   constructor() {
+    try {
+      this.supabase = createServiceRoleClient();
+    } catch (error) {
+      this.supabase = null;
+      console.warn('ItineraryIntelligenceService: Supabase client not available');
+    }
+    
     const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
@@ -54,6 +61,8 @@ export class ItineraryIntelligenceService {
     },
     userId?: string
   ): Promise<Itinerary | null> {
+    if (!this.supabase) return null;
+    
     try {
       // Get destinations in city
       const { data: destinations } = await this.supabase
@@ -252,6 +261,8 @@ Return only JSON, no other text:`;
    * Save itinerary template
    */
   async saveItinerary(itinerary: Itinerary, userId: string): Promise<string | null> {
+    if (!this.supabase) return null;
+    
     try {
       const { data, error } = await this.supabase
         .from('itinerary_templates')

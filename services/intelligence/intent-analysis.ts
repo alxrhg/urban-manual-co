@@ -32,12 +32,19 @@ export interface EnhancedIntent {
 
 export class IntentAnalysisService {
   private genAI: GoogleGenerativeAI | null = null;
-  private supabase = createServiceRoleClient();
+  private supabase;
 
   constructor() {
     const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
+    }
+    
+    try {
+      this.supabase = createServiceRoleClient();
+    } catch (error) {
+      this.supabase = null;
+      console.warn('IntentAnalysisService: Supabase client not available');
     }
   }
 
@@ -63,7 +70,7 @@ export class IntentAnalysisService {
 
       // Get user context if available
       let userContext = '';
-      if (userId) {
+      if (userId && this.supabase) {
         const { data: profile } = await this.supabase
           .from('user_profiles')
           .select('favorite_cities, favorite_categories, travel_style')
