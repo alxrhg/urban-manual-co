@@ -1,0 +1,23 @@
+{
+  "name": "Urban Manual Intelligence Jobs",
+  "nodes": [
+    {
+      "parameters": {"triggerTimes": {"item": [{"mode": "everyDay"}]}},
+      "id": "cron-daily",
+      "name": "Daily Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {"url": "{{ $json.baseUrl }}/api/intelligence/embeddings/refresh?limit=200&onlyMissing=true", "options": {"method": "POST"}},
+      "id": "refresh-embeddings",
+      "name": "Refresh Embeddings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [300, 200]
+    }
+  ],
+  "connections": {"refresh-embeddings": {"main": [[{"node": "Daily Cron", "type": "main", "index": 0}]]}}
+}
+
+

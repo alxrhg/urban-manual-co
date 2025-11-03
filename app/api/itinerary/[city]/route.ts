@@ -1,0 +1,28 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
+const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
+const supabase = createClient(url, key);
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { city: string } }
+) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const { data, error } = await supabase
+      .from('itinerary_templates')
+      .select('*')
+      .ilike('city', `%${params.city}%`)
+      .order('generated_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return NextResponse.json({ items: data || [] });
+  } catch (e: any) {
+    return NextResponse.json({ error: 'Failed to load itineraries', details: e.message }, { status: 500 });
+  }
+}
+
+
