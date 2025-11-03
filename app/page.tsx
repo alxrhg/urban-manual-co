@@ -28,7 +28,6 @@ import {
 } from '@/lib/tracking';
 import GreetingHero from '@/components/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
-import { IntelligentSearchFeedback } from '@/components/IntelligentSearchFeedback';
 import { SearchFiltersComponent } from '@/components/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 
@@ -636,20 +635,7 @@ export default function Home() {
                 availableCategories={categories}
                   />
 
-                  {/* Intelligent Search Feedback - Travel Intelligence Display */}
-                  {searchTerm && !searching && searchIntent && (
-                    <IntelligentSearchFeedback
-                      intent={searchIntent}
-                      isSearching={searching}
-                      seasonalContext={seasonalContext}
-                      onRefine={(suggestion) => {
-                        setSearchTerm(suggestion);
-                        performAISearch(suggestion);
-                      }}
-                    />
-                  )}
-
-                  {/* Loading State - Travel Intelligence Analysis */}
+                  {/* Loading State */}
                   {searchTerm && searching && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <div className="flex items-center gap-2">
@@ -659,10 +645,17 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Simple Chat Response Fallback */}
-                  {searchTerm && !searching && !searchIntent && chatResponse && (
+                  {/* Simple "I found x results" message */}
+                  {searchTerm && !searching && filteredDestinations.length > 0 && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <span className="whitespace-pre-line block">{chatResponse}</span>
+                      <span>I found {filteredDestinations.length} {filteredDestinations.length === 1 ? 'result' : 'results'}.</span>
+                    </div>
+                  )}
+
+                  {/* No results message */}
+                  {searchTerm && !searching && filteredDestinations.length === 0 && (
+                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                      <span>No results found. Try refining your search.</span>
                     </div>
                   )}
                 </div>
