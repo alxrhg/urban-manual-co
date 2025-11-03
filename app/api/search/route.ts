@@ -45,6 +45,7 @@ async function understandQuery(query: string): Promise<{
     priceLevel?: number;
     rating?: number;
     michelinStar?: number;
+    cuisine?: string;
   };
 }> {
   if (!openai) {
@@ -299,7 +300,7 @@ export async function POST(request: NextRequest) {
           filter_min_rating: intent.filters?.rating || filters.rating || null,
           filter_max_price_level: intent.filters?.priceLevel || filters.priceLevel || null,
           search_query: query, // For full-text search ranking boost
-          filter_cuisine: (intent.filters?.cuisine || (filters as any).cuisine || null)
+          filter_cuisine: intent.filters?.cuisine || null
         });
 
         if (!vectorError && vectorResults && vectorResults.length > 0) {
@@ -332,7 +333,7 @@ export async function POST(request: NextRequest) {
           city: intent.city || filters.city,
           country: intent.country || filters.country,
           category: intent.category || filters.category,
-          cuisine: intent.filters?.cuisine || filters.cuisine,
+          cuisine: intent.filters?.cuisine,
           open_now: intent.filters?.openNow || filters.openNow,
         });
         if (blended && blended.length) {
@@ -367,8 +368,8 @@ export async function POST(request: NextRequest) {
           fullTextQuery = fullTextQuery.ilike('category', `%${categoryFilter}%`);
         }
 
-        if (intent.filters?.cuisine || (filters as any).cuisine) {
-          const cuisineFilter = (intent.filters?.cuisine || (filters as any).cuisine) as string;
+        if (intent.filters?.cuisine) {
+          const cuisineFilter = intent.filters.cuisine;
           fullTextQuery = fullTextQuery.contains('tags', [cuisineFilter.toLowerCase()]);
         }
 
@@ -494,8 +495,8 @@ export async function POST(request: NextRequest) {
         fallbackQuery = fallbackQuery.ilike('category', `%${categoryFilter}%`);
       }
 
-      if (intent.filters?.cuisine || (filters as any).cuisine) {
-        const cuisineFilter = (intent.filters?.cuisine || (filters as any).cuisine) as string;
+      if (intent.filters?.cuisine) {
+        const cuisineFilter = intent.filters.cuisine;
         fallbackQuery = fallbackQuery.contains('tags', [cuisineFilter.toLowerCase()]);
       }
 
