@@ -57,16 +57,36 @@ export async function POST(req: NextRequest) {
         let greeting = '';
         const loc = await getLocation(req);
         let localTime = '';
+        let timeOfDay = '';
         if (loc?.timezone) {
-          try { localTime = new Date().toLocaleTimeString('en-US', { timeZone: loc.timezone, hour: '2-digit', minute: '2-digit' }); } catch {}
+          try {
+            const now = new Date();
+            const fmt = new Intl.DateTimeFormat('en-US', { timeZone: loc.timezone, hour: '2-digit', minute: '2-digit', hour12: false });
+            localTime = fmt.format(now);
+            const hour = parseInt(localTime.split(':')[0] || '12', 10);
+            if (hour >= 5 && hour < 12) timeOfDay = 'Morning';
+            else if (hour >= 12 && hour < 17) timeOfDay = 'Afternoon';
+            else if (hour >= 17 && hour < 22) timeOfDay = 'Evening';
+            else timeOfDay = 'Late night';
+          } catch {}
         }
         const weather = await getWeather(loc?.city, loc?.latitude, loc?.longitude);
         if (loc?.city) {
-          greeting = localTime ? `Context: ${localTime} in ${loc.city}.` : `Context: ${loc.city}.`;
-          if (weather?.temperature_c !== undefined) {
-            greeting += ` ${Math.round(weather.temperature_c)}°C`;
-            if (weather.is_raining) greeting += ', raining';
+          const city = loc.city;
+          const pieces: string[] = [];
+          if (timeOfDay) {
+            // On-brand short greeting
+            if (timeOfDay === 'Morning') pieces.push(`Morning in ${city}`);
+            else if (timeOfDay === 'Afternoon') pieces.push(`Good afternoon in ${city}`);
+            else if (timeOfDay === 'Evening') pieces.push(`Good evening in ${city}`);
+            else pieces.push(`Late night in ${city}`);
+          } else {
+            pieces.push(city);
           }
+          if (weather?.temperature_c !== undefined) {
+            pieces.push(`${Math.round(weather.temperature_c)}°C${weather.is_raining ? ', raining' : ''}`);
+          }
+          greeting = pieces.join(' — ');
         }
 
         const systemPrompt = 'Urban Manual Editorial Intelligence';
@@ -80,7 +100,8 @@ export async function POST(req: NextRequest) {
           temperature: 0.5,
           max_tokens: 120,
         });
-        insight = (resp.choices?.[0]?.message?.content || '').trim();
+        const raw = (resp.choices?.[0]?.message?.content || '').trim();
+        insight = greeting ? `${greeting}. ${raw}` : raw;
       } catch (_) {
         insight = null;
       }
