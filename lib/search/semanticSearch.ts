@@ -59,8 +59,25 @@ export async function semanticBlendSearch(query: string, filters: { city?: strin
   const norm = normalize(rankValues);
   const normTrend = normalize(trendValues);
 
-  const withEmbeddings = data.filter((d: any) => Array.isArray(d.vector_embedding));
+  const withEmbeddings = data.filter((d: any) => Array.isArray(d.vector_embedding) && d.vector_embedding.length > 0);
   console.log('[SemanticBlend]', withEmbeddings.length, 'destinations have vector_embedding out of', data.length);
+
+  // Check dimension compatibility
+  const queryDim = qEmbedding.length;
+  const sampleDim = withEmbeddings[0]?.vector_embedding?.length;
+  if (sampleDim && queryDim !== sampleDim) {
+    console.warn(`[SemanticBlend] Dimension mismatch: query=${queryDim}, stored=${sampleDim}. Vector similarity will be inaccurate. Using rank_score only.`);
+    // Fall back to rank_score only if dimensions don't match
+    const ranked = data
+      .map((d: any) => ({
+        ...d,
+        _score: 0.6 * norm(d.rank_score || 0) + 0.4 * normTrend(d.trending_score || 0),
+      }))
+      .sort((a: any, b: any) => b._score - a._score)
+      .slice(0, 20);
+    console.log('[SemanticBlend] Returning', ranked.length, 'rank-only results (dimension mismatch)');
+    return ranked.map(({ _score, ...rest }: any) => rest);
+  }
 
   const scored = withEmbeddings
     .map((d: any) => {
