@@ -174,9 +174,9 @@ export default function Home() {
   const [searchIntent, setSearchIntent] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
-  // Show one row initially based on grid columns (responsive)
-  // Mobile: 2, Small: 3, Medium: 4, Large: 5, XL: 6, 2XL: 7
-  const [displayedCount, setDisplayedCount] = useState(7); // One row at largest breakpoint
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 21; // ~3 rows at 7 columns, fits in ~1vh
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<{
     city?: string;
@@ -188,7 +188,6 @@ export default function Home() {
     minRating?: number;
     openNow?: boolean;
   }>({});
-  const LOAD_MORE_INCREMENT = 24;
 
   useEffect(() => {
     fetchDestinations();
@@ -762,7 +761,11 @@ export default function Home() {
             {filteredDestinations.length > 0 && (
               <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-                {filteredDestinations.slice(0, displayedCount).map((destination, index) => {
+                {(() => {
+                  const startIndex = (currentPage - 1) * itemsPerPage;
+                  const endIndex = startIndex + itemsPerPage;
+                  const paginatedDestinations = filteredDestinations.slice(startIndex, endIndex);
+                  return paginatedDestinations.map((destination, index) => {
                   const isVisited = user && visitedSlugs.has(destination.slug);
                   return (
                   <button
@@ -839,20 +842,68 @@ export default function Home() {
                     </div>
                   </button>
                   );
-                })}
+                  });
+                })()}
           </div>
 
-          {/* Load More Button */}
-          {displayedCount < filteredDestinations.length && (
-            <div className="mt-12 text-center">
-              <button
-                onClick={() => setDisplayedCount(prev => prev + LOAD_MORE_INCREMENT)}
-                className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
-              >
-                Load More ({filteredDestinations.length - displayedCount} remaining)
-              </button>
-            </div>
-          )}
+          {/* Pagination */}
+          {(() => {
+            const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
+            if (totalPages <= 1) return null;
+            
+            return (
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
+                            : 'border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                
+                <span className="ml-4 text-sm text-gray-600 dark:text-gray-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
+            );
+          })()}
           </>
         )}
           </div>
