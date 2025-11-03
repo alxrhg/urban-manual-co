@@ -1,52 +1,18 @@
-import { Variants } from 'framer-motion';
-
-export const fadeIn: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.3, ease: 'easeOut' }
-  }
-};
-
-export const childFade: Variants = {
-  hidden: { opacity: 0, y: 6 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.25, ease: 'easeOut' }
-  }
-};
-
-export function staggerChildren(stagger: number = 0.04): Variants {
-  return {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: stagger,
-        delayChildren: 0.02
-      }
-    }
-  };
-}
-
-import { MotionProps } from 'framer-motion';
-
-export const fadeInUp: MotionProps = {
+export const fadeInUp = {
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.4 },
   transition: { duration: 0.6, ease: [0.33, 1, 0.68, 1] },
 };
 
-export const fadeIn: MotionProps = {
+export const fadeIn = {
   initial: { opacity: 0 },
   whileInView: { opacity: 1 },
   viewport: { once: true, amount: 0.6 },
   transition: { duration: 0.5, ease: 'easeOut' },
 };
 
-export const staggerChildren = (stagger = 0.08): MotionProps => ({
+export const staggerChildren = (stagger = 0.08) => ({
   variants: {
     show: { transition: { staggerChildren: stagger } },
   },
@@ -55,7 +21,7 @@ export const staggerChildren = (stagger = 0.08): MotionProps => ({
   viewport: { once: true, amount: 0.3 },
 });
 
-export const childFade: MotionProps = {
+export const childFade = {
   variants: {
     hidden: { opacity: 0, y: 12 },
     show: { opacity: 1, y: 0 },
