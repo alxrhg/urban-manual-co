@@ -1,0 +1,67 @@
+{
+  "name": "Urban Manual Scheduler Jobs",
+  "nodes": [
+    {
+      "parameters": {"triggerTimes": {"item": [{"mode": "everyDay", "hour": 3, "minute": 5}]}},
+      "id": "cron-daily",
+      "name": "Daily Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [100, 100]
+    },
+    {
+      "parameters": {"triggerTimes": {"item": [{"mode": "everyWeek", "weekday": "sunday", "hour": 4, "minute": 15}]}},
+      "id": "cron-weekly",
+      "name": "Weekly Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {"triggerTimes": {"item": [{"mode": "everyMonth", "dayOfMonth": 1, "hour": 5, "minute": 0}]}},
+      "id": "cron-monthly",
+      "name": "Monthly Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [100, 500]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl}}/api/jobs/rank",
+        "options": {"method": "POST", "headers": {"x-jobs-token": "={{$json.jobsToken}}"}}
+      },
+      "id": "http-rank",
+      "name": "Run Daily Rank",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [350, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl}}/api/jobs/covisit",
+        "options": {"method": "POST", "headers": {"x-jobs-token": "={{$json.jobsToken}}"}}
+      },
+      "id": "http-covisit",
+      "name": "Run Weekly Co-Visit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl}}/api/jobs/forecast",
+        "options": {"method": "POST", "headers": {"x-jobs-token": "={{$json.jobsToken}}"}}
+      },
+      "id": "http-forecast",
+      "name": "Run Monthly Forecast",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [350, 500]
+    }
+  ],
+  "connections": {
+    "Run Daily Rank": {"main": [[{"node": "Daily Cron", "type": "main", "index": 0}]]},
+    "Run Weekly Co-Visit": {"main": [[{"node": "Weekly Cron", "type": "main", "index": 0}]]},
+    "Run Monthly Forecast": {"main": [[{"node": "Monthly Cron", "type": "main", "index": 0}]]}
+  }
+}
