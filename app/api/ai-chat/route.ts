@@ -56,6 +56,7 @@ async function understandQuery(
     priceLevel?: number;
     rating?: number;
     michelinStar?: number;
+    cuisine?: string;
   };
   intent?: string; // User's apparent intent (e.g., "find", "compare", "recommend")
   confidence?: number; // 0-1 confidence score
@@ -110,7 +111,8 @@ async function understandQuery(
     "openNow": true/false/null,
     "priceLevel": 1-4 or null,
     "rating": 4-5 or null,
-    "michelinStar": 1-3 or null
+    "michelinStar": 1-3 or null,
+    "cuisine": "cuisine type like french/italian/japanese or null"
   },
   "intent": "brief description of user intent (e.g., 'finding romantic dinner spots', 'comparing hotels', 'discovering hidden gems')",
   "confidence": 0.0-1.0,
@@ -151,10 +153,29 @@ Return only the JSON, no other text:`;
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[0]);
+          
+          // Guard: if the raw query mentions michelin, enforce michelin >= 1
+          const lowerQuery = query.toLowerCase();
+          if (lowerQuery.includes('michelin')) {
+            parsed.filters = parsed.filters || {};
+            if (!parsed.filters.michelinStar || parsed.filters.michelinStar < 1) {
+              parsed.filters.michelinStar = 1;
+            }
+          }
+          
+          // Guard: if the raw query includes cuisine keywords, set cuisine filter
+          const cuisineWords = ['french','italian','japanese','sushi','ramen','izakaya','yakitori','bbq','steak','seafood','indian','thai','vietnamese','korean','mexican','spanish','mediterranean','greek','lebanese','turkish','chinese','cantonese','sichuan','taiwanese','hotpot','shabu','noodle','pasta','bistro'];
+          for (const cw of cuisineWords) {
+            if (lowerQuery.includes(cw)) {
+              parsed.filters = parsed.filters || {};
+              parsed.filters.cuisine = cw;
+              break;
+            }
+          }
+          
           console.log('[AI Chat] Enhanced parsed intent:', parsed);
           
           // If query contains relative terms, enhance intent from conversation
-          const lowerQuery = query.toLowerCase();
           if ((lowerQuery.includes('more') || lowerQuery.includes('another') || lowerQuery.includes('similar') || lowerQuery.includes('different')) && conversationHistory.length > 0) {
             // Try to extract context from last assistant response
             const lastAssistant = conversationHistory.filter(m => m.role === 'assistant').pop();
@@ -233,7 +254,8 @@ Return only the JSON, no other text:`;
     "openNow": true/false/null,
     "priceLevel": 1-4 or null,
     "rating": 4-5 or null,
-    "michelinStar": 1-3 or null
+    "michelinStar": 1-3 or null,
+    "cuisine": "cuisine type like french/italian/japanese or null"
   },
   "intent": "brief description of user intent (e.g., 'finding romantic dinner spots', 'comparing hotels', 'discovering hidden gems')",
   "confidence": 0.0-1.0,
@@ -387,6 +409,7 @@ export async function POST(request: NextRequest) {
           filter_michelin_stars: intent.filters?.michelinStar || null,
           filter_min_rating: intent.filters?.rating || null,
           filter_max_price_level: intent.filters?.priceLevel || null,
+          filter_cuisine: intent.filters?.cuisine || null,
           search_query: query
         });
 
@@ -438,6 +461,10 @@ export async function POST(request: NextRequest) {
 
         if (intent.filters?.michelinStar) {
           fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
+        }
+
+        if (intent.filters?.cuisine) {
+          fallbackQuery = fallbackQuery.contains('tags', [intent.filters.cuisine.toLowerCase()]);
         }
 
         const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
