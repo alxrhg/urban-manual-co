@@ -30,6 +30,9 @@ export async function POST(req: NextRequest) {
 
     if (parsed?.city) q = q.ilike('city', `%${parsed.city}%`);
     if (parsed?.category) q = q.ilike('category', `%${parsed.category}%`);
+    // Hard-prioritize city/country if present
+    if (parsed?.city) q = q.ilike('city', `%${parsed.city}%`);
+    if ((parsed as any)?.country) q = q.ilike('country', `%${(parsed as any).country}%`);
     if (parsed?.openNow === true) q = q.eq('is_open_now', true);
 
     const { data, error } = await q;
@@ -40,6 +43,7 @@ export async function POST(req: NextRequest) {
     try {
       hybridResults = await semanticBlendSearch(query, {
         city: parsed?.city || undefined,
+        country: (parsed as any)?.country || undefined,
         category: parsed?.category || undefined,
         open_now: parsed?.openNow === true ? true : undefined,
       });

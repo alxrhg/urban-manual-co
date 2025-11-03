@@ -56,6 +56,7 @@ async function generateEmbedding(query: string): Promise<number[] | null> {
 async function understandQuery(query: string): Promise<{
   keywords: string[];
   city?: string;
+  country?: string;
   category?: string;
   filters?: {
     openNow?: boolean;
@@ -76,6 +77,7 @@ async function understandQuery(query: string): Promise<{
 {
   "keywords": ["array", "of", "main", "keywords"],
   "city": "city name or null",
+  "country": "country name or null",
   "category": "category like restaurant/cafe/hotel or null",
   "filters": {
     "openNow": true/false/null,
@@ -114,6 +116,7 @@ Return only the JSON, no other text:`;
 function parseQueryFallback(query: string): {
   keywords: string[];
   city?: string;
+  country?: string;
   category?: string;
   filters?: any;
 } {
@@ -121,9 +124,11 @@ function parseQueryFallback(query: string): {
   const words = query.split(/\s+/);
 
   const cities = ['tokyo', 'paris', 'new york', 'london', 'rome', 'barcelona', 'berlin', 'amsterdam', 'sydney', 'dubai'];
+  const countries = ['japan', 'france', 'united states', 'usa', 'uk', 'united kingdom', 'italy', 'spain', 'germany', 'netherlands', 'australia', 'uae'];
   const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'shop', 'museum', 'park', 'temple', 'shrine'];
   
   let city: string | undefined;
+  let country: string | undefined;
   let category: string | undefined;
   const keywords: string[] = [];
 
@@ -141,16 +146,23 @@ function parseQueryFallback(query: string): {
     }
   }
 
+  for (const ctry of countries) {
+    if (lowerQuery.includes(ctry)) {
+      country = ctry;
+      break;
+    }
+  }
+
   for (const word of words) {
     const lowerWord = word.toLowerCase();
-    if (!city?.includes(lowerWord) && !category?.includes(lowerWord)) {
+    if (!city?.includes(lowerWord) && !country?.includes(lowerWord) && !category?.includes(lowerWord)) {
       if (word.length > 2) {
         keywords.push(word);
       }
     }
   }
 
-  return { keywords, city, category };
+  return { keywords, city, country, category };
 }
 
 export async function POST(request: NextRequest) {
@@ -287,6 +299,7 @@ export async function POST(request: NextRequest) {
       try {
         const blended = await semanticBlendSearch(query, {
           city: intent.city || filters.city,
+          country: intent.country || filters.country,
           category: intent.category || filters.category,
           open_now: intent.filters?.openNow || filters.openNow,
         });
@@ -315,6 +328,10 @@ export async function POST(request: NextRequest) {
         if (intent.city || filters.city) {
           const cityFilter = intent.city || filters.city;
           fullTextQuery = fullTextQuery.ilike('city', `%${cityFilter}%`);
+        }
+        if (intent.country || filters.country) {
+          const countryFilter = intent.country || filters.country;
+          fullTextQuery = fullTextQuery.ilike('country', `%${countryFilter}%`);
         }
 
         if (intent.category || filters.category) {
@@ -404,6 +421,10 @@ export async function POST(request: NextRequest) {
       if (intent.city || filters.city) {
         const cityFilter = intent.city || filters.city;
         fallbackQuery = fallbackQuery.ilike('city', `%${cityFilter}%`);
+      }
+      if (intent.country || filters.country) {
+        const countryFilter = intent.country || filters.country;
+        fallbackQuery = fallbackQuery.ilike('country', `%${countryFilter}%`);
       }
 
       if (intent.category || filters.category) {

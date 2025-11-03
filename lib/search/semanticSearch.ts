@@ -24,7 +24,7 @@ function normalize(values: number[]): (x: number) => number {
   return (x: number) => (x - min) / range;
 }
 
-export async function semanticBlendSearch(query: string, filters: { city?: string; category?: string; open_now?: boolean } = {}) {
+export async function semanticBlendSearch(query: string, filters: { city?: string; country?: string; category?: string; open_now?: boolean } = {}) {
   const qEmbedding = await embedText(query);
   if (!qEmbedding) return [];
 
@@ -35,6 +35,7 @@ export async function semanticBlendSearch(query: string, filters: { city?: strin
     .limit(200);
   if (filters.city) q = q.ilike('city', `%${filters.city}%`);
   if (filters.category) q = q.ilike('category', `%${filters.category}%`);
+  if (filters.country) q = q.ilike('country', `%${filters.country}%`);
   if (filters.open_now) q = q.eq('is_open_now', true);
 
   const { data, error } = await q;
