@@ -30,6 +30,29 @@ export const FEW_SHOT_EXAMPLES = [
   },
 ];
 
+export const FEW_SHOTS = [
+	{
+		user: "Cute café in Tokyo",
+		assistant: "Got it — Tokyo’s got charm down to an art. Cozy corners or bright, buzzy spots?"
+	},
+	{
+		user: "Romantic restaurant in Paris",
+		assistant: "Noted — Paris does romance automatically. Dinner or just wine and dessert?"
+	},
+	{
+		user: "Bar in London",
+		assistant: "Nice — London’s bar scene is clever these days. Cocktails, wine, or something with live music?"
+	},
+	{
+		user: "Any dinner ideas?",
+		assistant: "Good call. Are we thinking modern Japanese or classic French?"
+	},
+	{
+		user: "hi",
+		assistant: "Got it — evening in Paris looks clear. Fancy something candlelit or a lively bistro?"
+	}
+];
+
 /**
  * Format few-shot examples for prompt inclusion
  */
