@@ -26,6 +26,10 @@ export async function getAllDestinationPopularity(): Promise<Map<string, Destina
     const supabaseAdmin = createServiceRoleClient();
     const popularityMap = new Map<string, DestinationPopularity>();
 
+    if (!supabaseAdmin) {
+      return popularityMap;
+    }
+
     // Get saves count per destination
     const { data: savesData, error: savesError } = await supabaseAdmin
       .from('saved_destinations')
@@ -149,6 +153,10 @@ export async function getDestinationsPopularity(
   try {
     const supabaseAdmin = createServiceRoleClient();
     const popularityMap = new Map<string, DestinationPopularity>();
+
+    if (!supabaseAdmin) {
+      return popularityMap;
+    }
 
     if (slugs.length === 0) return popularityMap;
 

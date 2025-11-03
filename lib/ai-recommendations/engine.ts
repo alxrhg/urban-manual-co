@@ -80,6 +80,11 @@ export class AIRecommendationEngine {
   private async saveScores(scores: ParsedScore[]): Promise<void> {
     const supabase = createServiceRoleClient();
     
+    if (!supabase) {
+      console.error('Cannot save recommendations: Supabase client not available');
+      return;
+    }
+    
     const cacheHours = parseInt(process.env.RECOMMENDATION_CACHE_HOURS || '168', 10);
     const expiresAt = new Date(Date.now() + (cacheHours * 60 * 60 * 1000));
     
@@ -144,9 +149,13 @@ export class AIRecommendationEngine {
   
   // Check if recommendations need refresh
   async needsRefresh(): Promise<boolean> {
-    const supabase = createServiceRoleClient();
+    const client = createServiceRoleClient();
     
-    const { count } = await supabase
+    if (!client) {
+      return true;
+    }
+    
+    const { count } = await client
       .from('personalization_scores')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', this.userId)
