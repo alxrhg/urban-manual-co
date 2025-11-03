@@ -693,19 +693,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               )}
             </div>
 
-            {/* AI-Generated Tags */}
-            {destination.tags && destination.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {destination.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2.5 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full border border-purple-200 dark:border-purple-800"
-                  >
-                    ✨ {tag}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* Tags removed to align with homepage minimal design */}
 
             {/* Rating & Price Level */}
             {((enrichedData?.rating || enrichedData?.price_level) || (destination.rating || destination.price_level)) && (
