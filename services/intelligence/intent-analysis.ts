@@ -3,7 +3,6 @@
  * Deep understanding of user queries with temporal, comparative, and multi-intent support
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateJSON } from '@/lib/llm';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 
@@ -32,15 +31,9 @@ export interface EnhancedIntent {
 }
 
 export class IntentAnalysisService {
-  private genAI: GoogleGenerativeAI | null = null;
   private supabase;
 
   constructor() {
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-    if (apiKey) {
-      this.genAI = new GoogleGenerativeAI(apiKey);
-    }
-    
     try {
       this.supabase = createServiceRoleClient();
     } catch (error) {

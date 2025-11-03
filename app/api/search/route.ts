@@ -314,8 +314,10 @@ export async function POST(request: NextRequest) {
           searchTier = 'vector-semantic';
           console.log('[Search API] Vector search found', results.length, 'results');
         } else if (vectorError) {
-          // If function doesn't exist or embeddings not ready, silently fall through to next strategy
-          if (vectorError.code === '42883' || vectorError.message?.includes('does not exist') || 
+          // Handle dimension mismatch gracefully
+          if (vectorError.message?.includes('different vector dimensions') || vectorError.code === '22000') {
+            console.warn('[Search API] Vector dimension mismatch - stored embeddings may be from different model. Falling back to SQL search.');
+          } else if (vectorError.code === '42883' || vectorError.message?.includes('does not exist') || 
               vectorError.message?.includes('embedding') || vectorError.code === 'P0001') {
             console.log('[Search API] Vector search not available (embeddings may not be generated yet), using fallback');
           } else {
@@ -323,8 +325,10 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (error: any) {
-        // Handle gracefully if vector search isn't ready
-        if (error.message?.includes('match_destinations') || error.message?.includes('embedding')) {
+        // Handle dimension mismatch and other errors gracefully
+        if (error.message?.includes('different vector dimensions') || error.code === '22000') {
+          console.warn('[Search API] Vector dimension mismatch caught - falling back to SQL search.');
+        } else if (error.message?.includes('match_destinations') || error.message?.includes('embedding')) {
           console.log('[Search API] Vector search not available, using fallback');
         } else {
           console.error('[Search API] Vector search exception:', error);

@@ -374,6 +374,10 @@ export async function POST(request: NextRequest) {
     // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
       try {
+        // Check embedding dimension (OpenAI text-embedding-3-large = 3072, older models = 768 or 1536)
+        const embeddingDim = queryEmbedding.length;
+        console.log('[AI Chat] Query embedding dimension:', embeddingDim);
+        
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
           query_embedding: queryEmbedding,
           match_threshold: 0.6, // Lower threshold for more results
@@ -390,10 +394,20 @@ export async function POST(request: NextRequest) {
           results = vectorResults;
           console.log('[AI Chat] Vector search found', results.length, 'results');
         } else if (vectorError) {
-          console.error('[AI Chat] Vector search error:', vectorError);
+          // Handle dimension mismatch gracefully
+          if (vectorError.message?.includes('different vector dimensions') || vectorError.code === '22000') {
+            console.warn('[AI Chat] Vector dimension mismatch - stored embeddings may be from different model. Falling back to SQL search.');
+          } else {
+            console.error('[AI Chat] Vector search error:', vectorError);
+          }
         }
       } catch (error: any) {
-        console.error('[AI Chat] Vector search exception:', error);
+        // Handle dimension mismatch in catch block too
+        if (error.message?.includes('different vector dimensions') || error.code === '22000') {
+          console.warn('[AI Chat] Vector dimension mismatch caught - falling back to SQL search.');
+        } else {
+          console.error('[AI Chat] Vector search exception:', error);
+        }
       }
     }
 
