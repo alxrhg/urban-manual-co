@@ -90,6 +90,13 @@ Return only the JSON, no other text:`
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
+        // Guard: if the raw query mentions michelin, enforce michelin >= 1
+        if (query.toLowerCase().includes('michelin')) {
+          parsed.filters = parsed.filters || {};
+          if (!parsed.filters.michelinStar || parsed.filters.michelinStar < 1) {
+            parsed.filters.michelinStar = 1;
+          }
+        }
         console.log('[AI Search] Parsed intent:', parsed);
         return parsed;
       } catch (parseError) {
@@ -124,6 +131,7 @@ function parseQueryFallback(query: string): {
   let country: string | undefined;
   let category: string | undefined;
   const keywords: string[] = [];
+  const hasMichelin = lowerQuery.includes('michelin');
 
   for (const cityName of cities) {
     if (lowerQuery.includes(cityName)) {
@@ -155,7 +163,9 @@ function parseQueryFallback(query: string): {
     }
   }
 
-  return { keywords, city, country, category };
+  const filters: any = {};
+  if (hasMichelin) filters.michelinStar = 1;
+  return { keywords, city, country, category, filters };
 }
 
 export async function POST(request: NextRequest) {
