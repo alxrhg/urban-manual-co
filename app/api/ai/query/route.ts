@@ -9,6 +9,33 @@ const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) a
 const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
 const supabase = createClient(url, key);
 
+type MatchDestinationParams = {
+  query_embedding: number[];
+  match_threshold?: number;
+  match_count?: number;
+  filter_city?: string | null;
+  filter_category?: string | null;
+  filter_michelin_stars?: number | null;
+  filter_min_rating?: number | null;
+  filter_max_price_level?: number | null;
+  filter_cuisine?: string | null;
+  search_query?: string | null;
+};
+
+async function callMatchDestinations(params: MatchDestinationParams) {
+  const { data, error } = await supabase.rpc('match_destinations', params);
+
+  if (error && error.code === 'PGRST202' && 'filter_cuisine' in params) {
+    const { filter_cuisine, ...legacyParams } = params;
+    if (filter_cuisine !== undefined) {
+      console.warn('[AI Query] match_destinations missing cuisine filter, retrying without it');
+      return supabase.rpc('match_destinations', legacyParams);
+    }
+  }
+
+  return { data, error };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -21,20 +48,40 @@ export async function POST(req: NextRequest) {
     const parsed = await generateJSON(system, query);
 
     const limit = 50;
-    let q = supabase
-      .from('destinations')
-      .select('slug, name, city, category, rating, price_level, image, rank_score, is_open_now')
-      .order('rank_score', { ascending: false })
-      .limit(limit);
+    const buildBaseQuery = (omitRankingColumns = false) => {
+      const selectColumns = omitRankingColumns
+        ? 'slug, name, city, category, rating, price_level, image, is_open_now'
+        : 'slug, name, city, category, rating, price_level, image, rank_score, is_open_now';
 
-    if (parsed?.city) q = q.ilike('city', `%${parsed.city}%`);
-    if (parsed?.category) q = q.ilike('category', `%${parsed.category}%`);
-    // Hard-prioritize city/country if present
-    if (parsed?.city) q = q.ilike('city', `%${parsed.city}%`);
-    if ((parsed as any)?.country) q = q.ilike('country', `%${(parsed as any).country}%`);
-    if (parsed?.openNow === true) q = q.eq('is_open_now', true);
+      let qb = supabase
+        .from('destinations')
+        .select(selectColumns)
+        .limit(limit);
 
-    const { data, error } = await q;
+      qb = omitRankingColumns
+        ? qb.order('rating', { ascending: false })
+        : qb.order('rank_score', { ascending: false });
+
+      if (parsed?.city) qb = qb.ilike('city', `%${parsed.city}%`);
+      if (parsed?.category) qb = qb.ilike('category', `%${parsed.category}%`);
+      if ((parsed as any)?.country) qb = qb.ilike('country', `%${(parsed as any).country}%`);
+      if (parsed?.openNow === true) qb = qb.eq('is_open_now', true);
+
+      return qb;
+    };
+
+    let baseUsedMinimal = false;
+    let { data, error } = await buildBaseQuery(false);
+
+    if (error && error.code === '42703') {
+      console.warn('[AI Query] rank_score not available, retrying without ranking columns');
+      const retryQuery = buildBaseQuery(true);
+      const retryResult = await retryQuery;
+      data = retryResult.data;
+      error = retryResult.error;
+      baseUsedMinimal = !retryResult.error;
+    }
+
     if (error) throw error;
 
     // Vector-first retrieval using Supabase RPC
@@ -42,7 +89,7 @@ export async function POST(req: NextRequest) {
     try {
       const queryEmbedding = await embedText(query);
       if (queryEmbedding) {
-        const { data: rpcResults, error: rpcError } = await supabase.rpc('match_destinations', {
+        const { data: rpcResults, error: rpcError } = await callMatchDestinations({
           query_embedding: queryEmbedding,
           match_threshold: 0.55,
           match_count: limit,
@@ -61,7 +108,9 @@ export async function POST(req: NextRequest) {
 
     let finalResults = vectorResults.length > 0 ? vectorResults : (data || []).map((d: any) => ({
       ...d,
-      blended_rank: (d.rank_score || 0) * 0.7
+      blended_rank: baseUsedMinimal
+        ? (typeof d.rating === 'number' ? d.rating : 0)
+        : (d.rank_score || 0) * 0.7
     }));
 
     finalResults = finalResults.slice(0, limit);

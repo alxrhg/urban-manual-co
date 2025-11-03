@@ -6,6 +6,9 @@
 DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int);
 DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int, text, text, int, numeric, int, text);
 DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int, text, text, int, numeric, int, text, text);
+DROP FUNCTION IF EXISTS match_destinations(vector(1536), float, int);
+DROP FUNCTION IF EXISTS match_destinations(vector(1536), float, int, text, text, int, numeric, int, text);
+DROP FUNCTION IF EXISTS match_destinations(vector(1536), float, int, text, text, int, numeric, int, text, text);
 
 -- Ensure the new vector column exists
 ALTER TABLE destinations
@@ -122,5 +125,58 @@ BEGIN
   FROM ranked r
   ORDER BY blended_rank DESC
   LIMIT match_count;
+END;
+$$;
+
+-- Backwards-compatible wrapper without cuisine filter to support cached RPC definitions
+CREATE OR REPLACE FUNCTION match_destinations(
+  query_embedding vector(1536),
+  match_threshold float DEFAULT 0.55,
+  match_count int DEFAULT 50,
+  filter_city text DEFAULT NULL,
+  filter_category text DEFAULT NULL,
+  filter_michelin_stars int DEFAULT NULL,
+  filter_min_rating numeric DEFAULT NULL,
+  filter_max_price_level int DEFAULT NULL,
+  search_query text DEFAULT NULL
+)
+RETURNS TABLE (
+  id integer,
+  slug text,
+  name text,
+  city text,
+  country text,
+  category text,
+  description text,
+  content text,
+  image text,
+  michelin_stars int,
+  crown boolean,
+  rating numeric,
+  price_level int,
+  tags text[],
+  rank_score numeric,
+  trending_score numeric,
+  vector_similarity float,
+  full_text_rank float,
+  blended_rank float
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM match_destinations(
+    query_embedding,
+    match_threshold,
+    match_count,
+    filter_city,
+    filter_category,
+    filter_michelin_stars,
+    filter_min_rating,
+    filter_max_price_level,
+    NULL::text,
+    search_query
+  );
 END;
 $$;

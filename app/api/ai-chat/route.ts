@@ -14,6 +14,33 @@ const ENABLE_GEMINI_FALLBACK = (process.env.ENABLE_GEMINI_FALLBACK || 'false').t
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+type MatchDestinationParams = {
+  query_embedding: number[];
+  match_threshold?: number;
+  match_count?: number;
+  filter_city?: string | null;
+  filter_category?: string | null;
+  filter_michelin_stars?: number | null;
+  filter_min_rating?: number | null;
+  filter_max_price_level?: number | null;
+  filter_cuisine?: string | null;
+  search_query?: string | null;
+};
+
+async function callMatchDestinations(params: MatchDestinationParams) {
+  const { data, error } = await supabase.rpc('match_destinations', params);
+
+  if (error && error.code === 'PGRST202' && 'filter_cuisine' in params) {
+    const { filter_cuisine, ...legacyParams } = params;
+    if (filter_cuisine !== undefined) {
+      console.warn('[AI Chat] match_destinations missing cuisine filter, retrying without it');
+      return supabase.rpc('match_destinations', legacyParams);
+    }
+  }
+
+  return { data, error };
+}
+
 // Category synonym mapping
 const CATEGORY_SYNONYMS: Record<string, string> = {
   'restaurant': 'Dining',
@@ -395,7 +422,7 @@ export async function POST(request: NextRequest) {
 
     if (queryEmbedding) {
       try {
-        const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
+        const { data: vectorResults, error: vectorError } = await callMatchDestinations({
           query_embedding: queryEmbedding,
           match_threshold: 0.55,
           match_count: 200,
@@ -420,36 +447,79 @@ export async function POST(request: NextRequest) {
 
     if (results.length === 0) {
       try {
-        let fallbackQuery = supabase
-          .from('destinations')
-          .select('id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags')
-          .order('rank_score', { ascending: false })
-          .limit(200);
+        const keywords = intent.keywords?.length
+          ? intent.keywords
+          : query.split(/\s+/).filter((w: string) => w.length > 2);
 
-        if (intent.city) {
-          fallbackQuery = fallbackQuery.ilike('city', `%${intent.city}%`);
-        }
-        if (intent.category) {
-          fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
-        }
-        if (intent.filters?.rating) {
-          fallbackQuery = fallbackQuery.gte('rating', intent.filters.rating);
-        }
-        if (intent.filters?.priceLevel) {
-          fallbackQuery = fallbackQuery.lte('price_level', intent.filters.priceLevel);
-        }
-        if (intent.filters?.michelinStar) {
-          fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
-        }
-        if (intent.filters?.cuisine) {
-          fallbackQuery = fallbackQuery.contains('tags', [intent.filters.cuisine.toLowerCase()]);
+        const applyFilters = (queryBuilder: any) => {
+          let qb = queryBuilder;
+          if (intent.city) {
+            qb = qb.ilike('city', `%${intent.city}%`);
+          }
+          if (intent.category) {
+            qb = qb.ilike('category', `%${intent.category}%`);
+          }
+          if (intent.filters?.rating) {
+            qb = qb.gte('rating', intent.filters.rating);
+          }
+          if (intent.filters?.priceLevel) {
+            qb = qb.lte('price_level', intent.filters.priceLevel);
+          }
+          if (intent.filters?.michelinStar) {
+            qb = qb.gte('michelin_stars', intent.filters.michelinStar);
+          }
+          if (intent.filters?.cuisine) {
+            qb = qb.contains('tags', [intent.filters.cuisine.toLowerCase()]);
+          }
+          if (keywords.length > 0) {
+            const conditions = keywords
+              .map((keyword: string) => [
+                `name.ilike.%${keyword}%`,
+                `description.ilike.%${keyword}%`,
+                `content.ilike.%${keyword}%`,
+                `search_text.ilike.%${keyword}%`
+              ])
+              .flat();
+            qb = qb.or(conditions.join(','));
+          }
+          return qb;
+        };
+
+        const buildFallbackQuery = (omitRankingColumns = false) => {
+          const selectColumns = omitRankingColumns
+            ? 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, tags'
+            : 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags';
+
+          let qb = supabase
+            .from('destinations')
+            .select(selectColumns)
+            .limit(200);
+
+          qb = omitRankingColumns
+            ? qb.order('rating', { ascending: false })
+            : qb.order('rank_score', { ascending: false });
+
+          return applyFilters(qb);
+        };
+
+        let fallbackUsedMinimal = false;
+        let { data: fallbackResults, error: fallbackError } = await buildFallbackQuery(false);
+
+        if (fallbackError && fallbackError.code === '42703') {
+          console.warn('[AI Chat] rank_score not available, retrying fallback without ranking columns');
+          const retryQuery = buildFallbackQuery(true);
+          const { data: minimalResults, error: minimalError } = await retryQuery;
+          fallbackResults = minimalResults;
+          fallbackError = minimalError;
+          fallbackUsedMinimal = !minimalError;
         }
 
-        const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
         if (!fallbackError && Array.isArray(fallbackResults)) {
           results = fallbackResults.map((d: any) => ({
             ...d,
-            blended_rank: (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
+            blended_rank: fallbackUsedMinimal
+              ? (typeof d.rating === 'number' ? d.rating : 0)
+              : (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
             vector_similarity: 0,
             full_text_rank: 0
           }));

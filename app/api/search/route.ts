@@ -10,6 +10,33 @@ const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+type MatchDestinationParams = {
+  query_embedding: number[];
+  match_threshold?: number;
+  match_count?: number;
+  filter_city?: string | null;
+  filter_category?: string | null;
+  filter_michelin_stars?: number | null;
+  filter_min_rating?: number | null;
+  filter_max_price_level?: number | null;
+  filter_cuisine?: string | null;
+  search_query?: string | null;
+};
+
+async function callMatchDestinations(params: MatchDestinationParams) {
+  const { data, error } = await supabase.rpc('match_destinations', params);
+
+  if (error && error.code === 'PGRST202' && 'filter_cuisine' in params) {
+    const { filter_cuisine, ...legacyParams } = params;
+    if (filter_cuisine !== undefined) {
+      console.warn('[Search API] match_destinations missing cuisine filter, retrying without it');
+      return supabase.rpc('match_destinations', legacyParams);
+    }
+  }
+
+  return { data, error };
+}
+
 // Generate embedding for a query using OpenAI's text-embedding-3-large model
 async function generateEmbedding(query: string): Promise<number[] | null> {
   if (!openai) {
@@ -294,7 +321,7 @@ export async function POST(request: NextRequest) {
 
     if (queryEmbedding) {
       try {
-        const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
+        const { data: vectorResults, error: vectorError } = await callMatchDestinations({
           query_embedding: queryEmbedding,
           match_threshold: 0.55,
           match_count: pageSize,
@@ -320,61 +347,90 @@ export async function POST(request: NextRequest) {
 
     if (results.length === 0) {
       try {
-        let fallbackQuery = supabase
-          .from('destinations')
-          .select('id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags')
-          .order('rank_score', { ascending: false })
-          .limit(pageSize);
+        const keywords = intent.keywords?.length
+          ? intent.keywords
+          : query.split(/\s+/).filter((w: string) => w.length > 2);
 
-        if (intent.city || filters.city) {
-          const cityFilter = intent.city || filters.city;
-          fallbackQuery = fallbackQuery.ilike('city', `%${cityFilter}%`);
-        }
-        if (intent.country || filters.country) {
-          const countryFilter = intent.country || filters.country;
-          fallbackQuery = fallbackQuery.ilike('country', `%${countryFilter}%`);
-        }
-        if (intent.category || filters.category) {
-          const categoryFilter = intent.category || filters.category;
-          fallbackQuery = fallbackQuery.ilike('category', `%${categoryFilter}%`);
-        }
-        if (intent.filters?.cuisine || filters.cuisine) {
-          const cuisineFilter = intent.filters?.cuisine || filters.cuisine;
-          fallbackQuery = fallbackQuery.contains('tags', [cuisineFilter.toLowerCase()]);
+        const applyFilters = (queryBuilder: any) => {
+          let qb = queryBuilder;
+          if (intent.city || filters.city) {
+            const cityFilter = intent.city || filters.city;
+            qb = qb.ilike('city', `%${cityFilter}%`);
+          }
+          if (intent.country || filters.country) {
+            const countryFilter = intent.country || filters.country;
+            qb = qb.ilike('country', `%${countryFilter}%`);
+          }
+          if (intent.category || filters.category) {
+            const categoryFilter = intent.category || filters.category;
+            qb = qb.ilike('category', `%${categoryFilter}%`);
+          }
+          if (intent.filters?.cuisine || filters.cuisine) {
+            const cuisineFilter = intent.filters?.cuisine || filters.cuisine;
+            qb = qb.contains('tags', [cuisineFilter.toLowerCase()]);
+          }
+          if (keywords.length > 0) {
+            const conditions = keywords
+              .map((keyword: string) => [
+                `name.ilike.%${keyword}%`,
+                `description.ilike.%${keyword}%`,
+                `content.ilike.%${keyword}%`,
+                `search_text.ilike.%${keyword}%`
+              ])
+              .flat();
+            qb = qb.or(conditions.join(','));
+          }
+          if (intent.filters?.rating || filters.rating) {
+            qb = qb.gte('rating', intent.filters?.rating || filters.rating);
+          }
+          if (intent.filters?.priceLevel || filters.priceLevel) {
+            qb = qb.lte('price_level', intent.filters?.priceLevel || filters.priceLevel);
+          }
+          if (intent.filters?.michelinStar || filters.michelinStar) {
+            qb = qb.gte('michelin_stars', intent.filters?.michelinStar || filters.michelinStar);
+          }
+          return qb;
+        };
+
+        const buildFallbackQuery = (omitRankingColumns = false) => {
+          const selectColumns = omitRankingColumns
+            ? 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, tags'
+            : 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags';
+
+          let qb = supabase
+            .from('destinations')
+            .select(selectColumns)
+            .limit(pageSize);
+
+          qb = omitRankingColumns
+            ? qb.order('rating', { ascending: false })
+            : qb.order('rank_score', { ascending: false });
+
+          return applyFilters(qb);
+        };
+
+        let fallbackUsedMinimal = false;
+        let { data: fallbackResults, error: fallbackError } = await buildFallbackQuery(false);
+
+        if (fallbackError && fallbackError.code === '42703') {
+          console.warn('[Search API] rank_score not available, retrying fallback without ranking columns');
+          const retryQuery = buildFallbackQuery(true);
+          const { data: minimalResults, error: minimalError } = await retryQuery;
+          fallbackResults = minimalResults;
+          fallbackError = minimalError;
+          fallbackUsedMinimal = !minimalError;
         }
 
-        const keywords = intent.keywords?.length ? intent.keywords : query.split(/\s+/).filter((w: string) => w.length > 2);
-        if (keywords.length > 0) {
-          const conditions = keywords
-            .map((keyword: string) => [
-              `name.ilike.%${keyword}%`,
-              `description.ilike.%${keyword}%`,
-              `content.ilike.%${keyword}%`,
-              `search_text.ilike.%${keyword}%`
-            ])
-            .flat();
-          fallbackQuery = fallbackQuery.or(conditions.join(','));
-        }
-
-        if (intent.filters?.rating || filters.rating) {
-          fallbackQuery = fallbackQuery.gte('rating', intent.filters?.rating || filters.rating);
-        }
-        if (intent.filters?.priceLevel || filters.priceLevel) {
-          fallbackQuery = fallbackQuery.lte('price_level', intent.filters?.priceLevel || filters.priceLevel);
-        }
-        if (intent.filters?.michelinStar || filters.michelinStar) {
-          fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters?.michelinStar || filters.michelinStar);
-        }
-
-        const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
         if (!fallbackError && Array.isArray(fallbackResults)) {
           results = fallbackResults.map((d: any) => ({
             ...d,
-            blended_rank: (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
+            blended_rank: fallbackUsedMinimal
+              ? (typeof d.rating === 'number' ? d.rating : 0)
+              : (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
             vector_similarity: 0,
             full_text_rank: 0
           }));
-          searchTier = 'fulltext';
+          searchTier = fallbackUsedMinimal ? 'rating-fallback' : 'fulltext';
         } else if (fallbackError) {
           console.error('[Search API] Full-text fallback error:', fallbackError);
         }
