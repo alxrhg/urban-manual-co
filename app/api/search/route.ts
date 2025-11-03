@@ -106,7 +106,7 @@ Return only the JSON, no other text:`;
       }
     }
   } catch (error: any) {
-    console.error('Gemini API error:', error);
+    console.error('[Search AI] Gemini error:', error?.message || error);
   }
 
   return parseQueryFallback(query);
@@ -320,11 +320,7 @@ export async function POST(request: NextRequest) {
           .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
           .limit(pageSize);
 
-        // Full-text search - use ILIKE on search_text as fallback (textSearch requires tsvector column)
-        // If search_text column exists but no tsvector, use pattern matching
-        fullTextQuery = fullTextQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,search_text.ilike.%${query}%`);
-
-        // Apply filters
+        // Apply city/country filters FIRST (strict priority)
         if (intent.city || filters.city) {
           const cityFilter = intent.city || filters.city;
           fullTextQuery = fullTextQuery.ilike('city', `%${cityFilter}%`);
@@ -337,6 +333,28 @@ export async function POST(request: NextRequest) {
         if (intent.category || filters.category) {
           const categoryFilter = intent.category || filters.category;
           fullTextQuery = fullTextQuery.ilike('category', `%${categoryFilter}%`);
+        }
+
+        // Build keyword search: use extracted keywords OR split query into meaningful words
+        const searchKeywords = intent.keywords && intent.keywords.length > 0 
+          ? intent.keywords 
+          : query.split(/\s+/).filter(w => w.length > 2 && !['in', 'the', 'for', 'and', 'or'].includes(w.toLowerCase()));
+        
+        if (searchKeywords.length > 0) {
+          // Search for any keyword in name/description/content
+          const keywordConditions: string[] = [];
+          for (const keyword of searchKeywords) {
+            keywordConditions.push(`name.ilike.%${keyword}%`);
+            keywordConditions.push(`description.ilike.%${keyword}%`);
+            keywordConditions.push(`content.ilike.%${keyword}%`);
+            keywordConditions.push(`search_text.ilike.%${keyword}%`);
+          }
+          if (keywordConditions.length > 0) {
+            fullTextQuery = fullTextQuery.or(keywordConditions.join(','));
+          }
+        } else {
+          // Fallback: search entire query if no keywords extracted
+          fullTextQuery = fullTextQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,search_text.ilike.%${query}%`);
         }
 
         if (intent.filters?.rating || filters.rating) {

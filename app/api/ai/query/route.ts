@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
         const systemPrompt = 'Urban Manual Editorial Intelligence';
         const userPrompt = `Search: ${query}\nTop destination tags: ${topTags.join(', ')}\n\nWrite a concise 1–2 sentence editorial insight to introduce these results. Tone: modern luxury, quiet confidence. Do not mention AI.`;
-        const resp = await openai.chat.completions.create({
+            const resp = await openai.chat.completions.create({
           model: OPENAI_MODEL,
           messages: [
             { role: 'system', content: systemPrompt },
@@ -148,8 +148,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ intent: parsed || null, insight, results: finalResults });
-  } catch (e: any) {
-    return NextResponse.json({ error: 'AI query failed', details: e.message }, { status: 500 });
+      } catch (e: any) {
+        console.error('[AI Query] Error:', e?.message || e);
+        return NextResponse.json({ error: 'AI query failed', details: e.message }, { status: 500 });
   }
 }
 
