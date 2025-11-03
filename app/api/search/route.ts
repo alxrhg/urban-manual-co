@@ -2,57 +2,39 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { openai, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { rerankResults } from '@/lib/ai/rerank';
 import { semanticBlendSearch } from '@/lib/search/semanticSearch';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Generate embedding for a query using Google's text-embedding-004 model
+// Generate embedding for a query using OpenAI's text-embedding-3-large model
 async function generateEmbedding(query: string): Promise<number[] | null> {
-  if (!GOOGLE_API_KEY) {
+  if (!openai) {
     return null;
   }
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'models/text-embedding-004',
-          content: { parts: [{ text: query }] }
-        })
-      }
-    );
+    const response = await openai.embeddings.create({
+      model: OPENAI_EMBEDDING_MODEL,
+      input: query,
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Search API] Embedding API error:', response.status, errorText);
-      return null;
-    }
-
-    const data = await response.json();
-    
-    // text-embedding-004 returns embedding in data.embedding.values
-    if (data.embedding?.values) {
-      return data.embedding.values;
+    if (response.data && response.data.length > 0) {
+      return response.data[0].embedding;
     }
     
-    console.error('[Search API] Unexpected embedding response format:', data);
     return null;
-  } catch (error) {
-    console.error('[Search API] Error generating embedding:', error);
+  } catch (error: any) {
+    console.error('[Search API] Error generating embedding:', error?.message || error);
     return null;
   }
 }
 
-// AI-powered query understanding (kept for filter extraction)
+// AI-powered query understanding using OpenAI gpt-4.1
 async function understandQuery(query: string): Promise<{
   keywords: string[];
   city?: string;
@@ -65,15 +47,21 @@ async function understandQuery(query: string): Promise<{
     michelinStar?: number;
   };
 }> {
-  if (!GOOGLE_API_KEY) {
+  if (!openai) {
     return parseQueryFallback(query);
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-
-    const prompt = `Analyze this travel/dining search query and extract structured information. Return ONLY valid JSON with this exact structure:
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a travel search query analyzer. Extract structured information from user queries and return ONLY valid JSON.'
+        },
+        {
+          role: 'user',
+          content: `Analyze this travel/dining search query and extract structured information. Return ONLY valid JSON with this exact structure:
 {
   "keywords": ["array", "of", "main", "keywords"],
   "city": "city name or null",
@@ -89,11 +77,14 @@ async function understandQuery(query: string): Promise<{
 
 Query: "${query}"
 
-Return only the JSON, no other text:`;
+Return only the JSON, no other text:`
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 200,
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const text = response.choices?.[0]?.message?.content || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     
     if (jsonMatch) {
@@ -102,11 +93,11 @@ Return only the JSON, no other text:`;
         console.log('[AI Search] Parsed intent:', parsed);
         return parsed;
       } catch (parseError) {
-        console.error('Failed to parse AI response:', parseError);
+        console.error('[AI Search] Failed to parse JSON response:', parseError);
       }
     }
   } catch (error: any) {
-    console.error('[Search AI] Gemini error:', error?.message || error);
+    console.error('[AI Search] OpenAI error:', error?.message || error);
   }
 
   return parseQueryFallback(query);
