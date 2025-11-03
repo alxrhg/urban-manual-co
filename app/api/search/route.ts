@@ -114,9 +114,11 @@ function parseQueryFallback(query: string): {
   const lowerQuery = query.toLowerCase();
   const words = query.split(/\s+/);
 
-  const cities = ['tokyo', 'paris', 'new york', 'london', 'rome', 'barcelona', 'berlin', 'amsterdam', 'sydney', 'dubai'];
-  const countries = ['japan', 'france', 'united states', 'usa', 'uk', 'united kingdom', 'italy', 'spain', 'germany', 'netherlands', 'australia', 'uae'];
-  const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'shop', 'museum', 'park', 'temple', 'shrine'];
+  const cities = [
+    'tokyo','paris','new york','london','rome','barcelona','berlin','amsterdam','sydney','dubai','taipei','taipei city','singapore','hong kong','seoul','bangkok'
+  ];
+  const countries = ['japan', 'france', 'united states', 'usa', 'uk', 'united kingdom', 'italy', 'spain', 'germany', 'netherlands', 'australia', 'uae', 'taiwan', 'singapore', 'korea', 'thailand', 'china'];
+  const categories = ['restaurant','cafe','hotel','bar','shop','museum','park','temple','shrine','hotpot','shabu','bbq','yakitori','ramen','sushi','izakaya'];
   
   let city: string | undefined;
   let country: string | undefined;
@@ -215,6 +217,13 @@ export async function POST(request: NextRequest) {
       'food': 'Dining',
       'eat': 'Dining',
       'meal': 'Dining',
+      'hotpot': 'Dining',
+      'shabu': 'Dining',
+      'bbq': 'Dining',
+      'yakitori': 'Dining',
+      'ramen': 'Dining',
+      'sushi': 'Dining',
+      'izakaya': 'Dining',
       'hotel': 'Hotel',
       'stay': 'Hotel',
       'accommodation': 'Hotel',
