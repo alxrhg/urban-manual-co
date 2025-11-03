@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Calendar, MapPin, Trash2, X } from 'lucide-react';
-import { ProvenanceRibbon } from '@/components/ProvenanceRibbon';
 
 interface Trip {
   id: string;
@@ -124,18 +123,18 @@ export default function TripsPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'planning':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-blue-500';
       case 'upcoming':
-        return 'bg-emerald-100 text-emerald-700';
+        return 'bg-green-500';
       case 'ongoing':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-purple-500';
       case 'completed':
-        return 'bg-gray-200 text-gray-700';
+        return 'bg-gray-500';
       default:
-        return 'bg-gray-200 text-gray-700';
+        return 'bg-gray-500';
     }
   };
 
@@ -151,7 +150,7 @@ export default function TripsPage() {
   if (authLoading || loading) {
     return (
       <div className="px-6 md:px-10 py-12 dark:text-white">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center py-20">
             <span className="text-gray-500">Loading...</span>
           </div>
@@ -166,23 +165,20 @@ export default function TripsPage() {
 
   return (
     <div className="px-6 md:px-10 py-12 dark:text-white">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-12">
-          <div className="space-y-4 max-w-xl">
-            <ProvenanceRibbon variant="compact" />
-            <div>
-              <h1 className="text-3xl md:text-4xl font-serif tracking-tight text-gray-900">Your Manual of Journeys</h1>
-              <p className="mt-2 text-sm text-gray-600">
-                Curate itineraries with the same considered lens—catalog cities, mark moments, and return to an evolving atlas of personal travel.
-              </p>
-            </div>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">My Trips</h1>
+            <span className="text-gray-600 dark:text-gray-400">
+              Plan and organize your adventures
+            </span>
           </div>
           <button
             onClick={() => setShowCreateDialog(true)}
-            className="inline-flex items-center gap-2 rounded-full bg-black text-white px-5 py-2.5 text-sm tracking-[0.16em] uppercase hover:opacity-85 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-5 w-5" />
             <span>New Trip</span>
           </button>
         </div>
@@ -197,96 +193,103 @@ export default function TripsPage() {
             </span>
             <button
               onClick={() => setShowCreateDialog(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-black text-white px-5 py-2.5 text-sm tracking-[0.16em] uppercase hover:opacity-85 transition-all"
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
             >
-              <Plus className="h-4 w-4" />
-              <span>Create Your First Trip</span>
+              Create Your First Trip
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-            {trips.map((trip) => {
-              const start = formatDate(trip.start_date);
-              const end = formatDate(trip.end_date);
-              return (
-                <article
-                  key={trip.id}
-                  className="group flex flex-col gap-5 rounded-[28px] border border-gray-200 bg-white/75 px-5 pt-5 pb-6 shadow-sm hover:shadow-xl transition-all duration-300"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <span className="text-[0.65rem] tracking-[0.2em] uppercase text-gray-500">
-                        Itinerary
-                      </span>
-                      <h3 className="font-serif text-xl tracking-tight text-gray-900 line-clamp-2">
-                        {trip.title}
-                      </h3>
-                    </div>
-                    <span className={`rounded-full px-3 py-1 text-[0.65rem] uppercase tracking-[0.16em] ${getStatusBadge(trip.status)}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trips.map((trip) => (
+              <div
+                key={trip.id}
+                className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+              >
+                {/* Cover Image */}
+                <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                  {trip.cover_image && (
+                    <img
+                      src={trip.cover_image}
+                      alt={trip.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    <span
+                      className={`${getStatusColor(
+                        trip.status
+                      )} text-white text-xs px-3 py-1 rounded-full capitalize`}
+                    >
                       {trip.status}
                     </span>
                   </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="text-lg font-bold mb-2 line-clamp-2">{trip.title}</h3>
 
                   {trip.description && (
-                    <p className="text-sm leading-relaxed text-gray-600 line-clamp-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                       {trip.description}
-                    </p>
+                    </span>
                   )}
 
-                  <div className="space-y-3 text-sm text-gray-600">
+                  <div className="space-y-2 mb-4">
                     {trip.destination && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium text-gray-700">{trip.destination}</span>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <MapPin className="h-4 w-4" />
+                        <span>{trip.destination}</span>
                       </div>
                     )}
 
-                    {(start || end) && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
+                    {(trip.start_date || trip.end_date) && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Calendar className="h-4 w-4" />
                         <span>
-                          {start || 'Date TBD'}
-                          {end && ` — ${end}`}
+                          {formatDate(trip.start_date)}
+                          {trip.end_date && ` - ${formatDate(trip.end_date)}`}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-200">
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-800">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(`/trips/${trip.id}`);
                       }}
-                      className="inline-flex items-center gap-2 text-sm font-medium tracking-[0.14em] uppercase text-gray-700 hover:text-black"
+                      className="flex-1 text-sm font-medium py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
                     >
-                      Open Trip
+                      View Details
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteTrip(trip.id, trip.title);
                       }}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                </article>
-              );
-            })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {/* Create Trip Dialog */}
         {showCreateDialog && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-[24px] max-w-md w-full p-6 shadow-xl">
+            <div className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-serif tracking-tight">Create New Trip</h2>
+                <h2 className="text-xl font-bold">Create New Trip</h2>
                 <button
                   onClick={() => setShowCreateDialog(false)}
-                  className="p-1.5 hover:bg-gray-100 rounded-full"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -294,7 +297,7 @@ export default function TripsPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs tracking-[0.18em] uppercase text-gray-500 mb-2">
+                  <label className="block text-sm font-medium mb-1">
                     Trip Title *
                   </label>
                   <input
@@ -307,7 +310,7 @@ export default function TripsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs tracking-[0.18em] uppercase text-gray-500 mb-2">Description</label>
+                  <label className="block text-sm font-medium mb-1">Description</label>
                   <textarea
                     value={newTrip.description}
                     onChange={(e) =>
@@ -320,7 +323,7 @@ export default function TripsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs tracking-[0.18em] uppercase text-gray-500 mb-2">Destination</label>
+                  <label className="block text-sm font-medium mb-1">Destination</label>
                   <input
                     type="text"
                     value={newTrip.destination}
@@ -334,7 +337,7 @@ export default function TripsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs tracking-[0.18em] uppercase text-gray-500 mb-2">Start Date</label>
+                    <label className="block text-sm font-medium mb-1">Start Date</label>
                     <input
                       type="date"
                       value={newTrip.start_date}
@@ -346,7 +349,7 @@ export default function TripsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs tracking-[0.18em] uppercase text-gray-500 mb-2">End Date</label>
+                    <label className="block text-sm font-medium mb-1">End Date</label>
                     <input
                       type="date"
                       value={newTrip.end_date}
@@ -361,13 +364,13 @@ export default function TripsPage() {
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={() => setShowCreateDialog(false)}
-                    className="flex-1 px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={createTrip}
-                    className="flex-1 px-4 py-2 rounded-full bg-black text-white tracking-[0.16em] uppercase text-xs hover:opacity-85 transition-opacity"
+                    className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
                   >
                     Create Trip
                   </button>
