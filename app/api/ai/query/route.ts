@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateJSON } from '@/lib/llm';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
+import { getLocation, getWeather } from '@/lib/ai/contextLocation';
 
 const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
 const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
@@ -52,8 +53,22 @@ export async function POST(req: NextRequest) {
           .slice(0, 5)
           .map(([t]) => t);
 
+        // Build subtle greeting from location/time/weather if available
+        let greeting = '';
+        const loc = await getLocation(req);
+        let localTime = '';
+        if (loc?.timezone) {
+          try { localTime = new Date().toLocaleTimeString('en-US', { timeZone: loc.timezone, hour: '2-digit', minute: '2-digit' }); } catch {}
+        }
+        const weather = await getWeather(loc?.latitude, loc?.longitude);
+        if (loc?.city) {
+          if (localTime) greeting = `Context: ${localTime} in ${loc.city}.`;
+          else greeting = `Context: ${loc.city}.`;
+          if (weather?.temperature_c !== undefined) greeting += ` ${Math.round(weather.temperature_c)}°C.`;
+        }
+
         const systemPrompt = 'Urban Manual Editorial Intelligence';
-        const userPrompt = `Search: ${query}\nTop destination tags: ${topTags.join(', ')}\n\nWrite a concise 1–2 sentence editorial insight to introduce these results. Tone: modern luxury, quiet confidence. Do not mention AI.`;
+        const userPrompt = `${greeting}\nSearch: ${query}\nTop destination tags: ${topTags.join(', ')}\n\nWrite a concise 1–2 sentence editorial insight to introduce these results with a subtle greeting if context is present (e.g., Good evening from Paris). Tone: modern luxury, quiet confidence. Do not mention AI.`;
         const resp = await openai.chat.completions.create({
           model: OPENAI_MODEL,
           messages: [
