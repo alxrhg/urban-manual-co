@@ -26,7 +26,11 @@ function normalize(values: number[]): (x: number) => number {
 
 export async function semanticBlendSearch(query: string, filters: { city?: string; country?: string; category?: string; cuisine?: string; open_now?: boolean } = {}) {
   const qEmbedding = await embedText(query);
-  if (!qEmbedding) return [];
+  if (!qEmbedding) {
+    console.log('[SemanticBlend] No embedding generated for query:', query);
+    return [];
+  }
+  console.log('[SemanticBlend] Embedding generated, length:', qEmbedding.length, 'filters:', filters);
 
   let q = supabase
     .from('destinations')
@@ -38,18 +42,27 @@ export async function semanticBlendSearch(query: string, filters: { city?: strin
   if (filters.country) q = q.ilike('country', `%${filters.country}%`);
   if (filters.open_now) q = q.eq('is_open_now', true);
   if (filters.cuisine) q = q.contains('tags', [filters.cuisine.toLowerCase()]);
-  if (filters.cuisine) q = q.contains('tags', [filters.cuisine.toLowerCase()]);
 
   const { data, error } = await q;
-  if (error || !data) return [];
+  if (error) {
+    console.error('[SemanticBlend] Query error:', error);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.log('[SemanticBlend] No data returned from query');
+    return [];
+  }
+  console.log('[SemanticBlend] Fetched', data.length, 'destinations from DB');
 
   const rankValues = data.map((d: any) => d.rank_score || 0);
   const trendValues = data.map((d: any) => d.trending_score || 0);
   const norm = normalize(rankValues);
   const normTrend = normalize(trendValues);
 
-  const scored = data
-    .filter((d: any) => Array.isArray(d.vector_embedding))
+  const withEmbeddings = data.filter((d: any) => Array.isArray(d.vector_embedding));
+  console.log('[SemanticBlend]', withEmbeddings.length, 'destinations have vector_embedding out of', data.length);
+
+  const scored = withEmbeddings
     .map((d: any) => {
       const sim = cosineSimilarity(qEmbedding as number[], d.vector_embedding as number[]);
       const blended = 0.6 * sim + 0.25 * norm(d.rank_score || 0) + 0.15 * normTrend(d.trending_score || 0);
@@ -57,6 +70,8 @@ export async function semanticBlendSearch(query: string, filters: { city?: strin
     })
     .sort((a: any, b: any) => b._score - a._score)
     .slice(0, 20);
+  
+  console.log('[SemanticBlend] Returning', scored.length, 'scored results');
 
   // Apply editorial integrity prioritization in the final pass
   const curated = scored.sort((a: any, b: any) => {

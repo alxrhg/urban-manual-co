@@ -53,6 +53,7 @@ async function understandQuery(query: string): Promise<{
   }
 
   try {
+    console.log('[AI Search] Calling OpenAI to understand query:', query);
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
@@ -72,7 +73,8 @@ async function understandQuery(query: string): Promise<{
     "openNow": true/false/null,
     "priceLevel": 1-4 or null,
     "rating": 4-5 or null,
-    "michelinStar": 1-3 or null
+    "michelinStar": 1-3 or null,
+    "cuisine": "cuisine type like french/italian/japanese or null"
   }
 }
 
@@ -86,6 +88,7 @@ Return only the JSON, no other text:`
     });
 
     const text = response.choices?.[0]?.message?.content || '';
+    console.log('[AI Search] OpenAI raw response:', text.substring(0, 200));
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     
     if (jsonMatch) {
@@ -108,14 +111,16 @@ Return only the JSON, no other text:`
             break;
           }
         }
-        console.log('[AI Search] Parsed intent:', parsed);
+        console.log('[AI Search] Successfully parsed intent:', JSON.stringify(parsed, null, 2));
         return parsed;
       } catch (parseError) {
-        console.error('[AI Search] Failed to parse JSON response:', parseError);
+        console.error('[AI Search] Failed to parse JSON response:', parseError, 'Raw text:', text);
       }
+    } else {
+      console.warn('[AI Search] No JSON found in OpenAI response');
     }
   } catch (error: any) {
-    console.error('[AI Search] OpenAI error:', error?.message || error);
+    console.error('[AI Search] OpenAI error:', error?.message || error, error?.stack);
   }
 
   return parseQueryFallback(query);
@@ -230,6 +235,7 @@ export async function POST(request: NextRequest) {
 
     // Extract structured filters using AI (with conversation context)
     const intent = await understandQuery(query);
+    console.log('[Search API] AI Intent parsed:', JSON.stringify(intent, null, 2));
     
     // Enhance intent with conversation context if available
     if (conversationContext) {
