@@ -252,6 +252,8 @@ Tags should be lowercase, concise, and highly searchable. Categories should be o
 function categorizePlaceFromTypes(googleTypes: string[]): string | null {
   const typeMap: Record<string, string> = {
     restaurant: 'Restaurants',
+    hot_pot_restaurant: 'Restaurants',
+    shabu_shabu_restaurant: 'Restaurants',
     cafe: 'Cafes',
     bar: 'Bars',
     night_club: 'Nightlife',
