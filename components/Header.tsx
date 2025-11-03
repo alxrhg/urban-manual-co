@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
+import { ProvenanceRibbon } from "./ProvenanceRibbon";
 
 export function Header() {
   const router = useRouter();
@@ -80,65 +81,69 @@ export function Header() {
     setIsMenuOpen(false);
   };
 
+  const userInitial = user?.email?.[0]?.toUpperCase() || 'U';
+  const menuIcon = isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />;
+
   return (
-    <header className="mt-5">
-      {/* Top Bar */}
-      <div className="px-6 md:px-10 pb-4">
-        <div className={`max-w-[1920px] mx-auto relative`}>
-          {/* Logo - Top Left */}
-          <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
+    <header className="px-6 md:px-10 pt-8 pb-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-3">
             <button
               onClick={() => navigate("/")}
-              className="font-medium text-sm hover:opacity-70 transition-opacity"
+              className="inline-flex items-center gap-2 text-xs tracking-[0.24em] uppercase text-gray-500 hover:text-gray-800 transition-colors"
+              aria-label="Return to catalogue"
             >
-              Urban Manual®
+              <span className="compass-indicator" aria-hidden />
+              Catalogue
             </button>
+            <div>
+              <button
+                onClick={() => navigate("/")}
+                className="text-3xl md:text-4xl font-serif tracking-tight hover:opacity-85 transition-opacity"
+              >
+                Urban Manual
+              </button>
+              <p className="mt-1 text-sm text-gray-600 max-w-md">
+                A living atlas of taste — considered, quiet, and editorially verified for the modern traveler.
+              </p>
+            </div>
           </div>
-          {/* Profile picture / Menu dropdown on right */}
-          <div className={`absolute right-0 top-1/2 -translate-y-1/2`}>
-            <div className="flex items-center gap-4">
+
+          <div className="flex flex-col items-end gap-3">
+            <ProvenanceRibbon />
+            <div className="flex items-center gap-3">
               {isAdmin && buildVersion && (
-                <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded" title="Build version">
+                <span
+                  className="text-[10px] tracking-[0.18em] uppercase text-gray-400 bg-gray-100 px-2 py-1 rounded-full"
+                  title="Build version"
+                >
                   {buildVersion}
                 </span>
               )}
-              {user ? (
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                  aria-label="Toggle menu"
-                >
-                  {avatarUrl ? (
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
-                      <Image
-                        src={avatarUrl}
-                        alt={user.email || 'Profile'}
-                        fill
-                        className="object-cover"
-                        sizes="32px"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
-                      {user.email?.[0]?.toUpperCase() || 'U'}
-                    </div>
-                  )}
-                  <svg className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal"
-                  aria-label="Toggle menu"
-                >
-                  Menu
-                  <svg className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              )}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="flex items-center gap-3 rounded-full bg-white/60 backdrop-blur px-3 py-2 shadow-sm border border-gray-200 hover:border-gray-300 transition-all"
+                aria-label="Toggle menu"
+              >
+                {user ? (
+                  <>
+                    {avatarUrl ? (
+                      <div className="relative w-9 h-9 rounded-full overflow-hidden border border-gray-200">
+                        <Image src={avatarUrl} alt={user.email || 'Profile'} fill sizes="36px" className="object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-semibold">
+                        {userInitial}
+                      </div>
+                    )}
+                    <span className="text-sm text-gray-700 hidden sm:inline">{user.email}</span>
+                  </>
+                ) : (
+                  <span className="text-sm font-medium tracking-[0.14em] uppercase text-gray-700">Menu</span>
+                )}
+                {menuIcon}
+              </button>
             </div>
           </div>
         </div>
