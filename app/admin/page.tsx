@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Destination Form Component
 function DestinationForm({ 
   destination, 
@@ -125,14 +128,15 @@ function DestinationForm({
       formDataToSend.append('slug', formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.email) {
+      const token = session?.access_token;
+      if (!token) {
         throw new Error('Not authenticated');
       }
 
       const res = await fetch('/api/upload-image', {
         method: 'POST',
         headers: {
-          'x-admin-email': session.user.email,
+          'Authorization': `Bearer ${token}`,
         },
         body: formDataToSend,
       });
@@ -162,7 +166,8 @@ function DestinationForm({
     setFetchingGoogle(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.email) {
+      const token = session?.access_token;
+      if (!token) {
         throw new Error('Not authenticated');
       }
 
@@ -170,7 +175,7 @@ function DestinationForm({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': session.user.email,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: formData.name,
@@ -252,12 +257,16 @@ function DestinationForm({
                     setFetchingGoogle(true);
                     try {
                       // Get user email from session
-                      const { data: { user } } = await supabase.auth.getUser();
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const token = session?.access_token;
+                      if (!token) {
+                        throw new Error('Not authenticated');
+                      }
                       const response = await fetch('/api/fetch-google-place', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'x-admin-email': user?.email || '',
+                          'Authorization': `Bearer ${token}`,
                         },
                         body: JSON.stringify({ placeId: placeDetails.placeId }),
                       });
@@ -595,38 +604,11 @@ export default function AdminPage() {
       }
 
       setUser(session.user);
+      const role = (session.user.app_metadata as Record<string, any> | null)?.role;
+      const admin = role === 'admin';
+      setIsAdmin(admin);
       setAuthChecked(true);
-
-      // Check admin status
-      try {
-        // Get the access token from the session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        const accessToken = currentSession?.access_token;
-        
-        const res = await fetch('/api/is-admin', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': accessToken ? `Bearer ${accessToken}` : '',
-          },
-          body: JSON.stringify({ email: session.user.email })
-        });
-        
-        if (!res.ok) {
-          console.error('Admin check failed:', res.status);
-          setIsAdmin(false);
-          router.push('/account');
-          return;
-        }
-        
-        const j = await res.json();
-        setIsAdmin(!!j.isAdmin);
-        if (!j.isAdmin) {
-          router.push('/account');
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
+      if (!admin) {
         router.push('/account');
       }
     }
@@ -781,53 +763,38 @@ export default function AdminPage() {
     );
   }
 
-  // If not admin, show nothing (redirect happens in useEffect)
   if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <main className="px-6 md:px-10 py-12">
-          <div className="max-w-7xl mx-auto flex items-center justify-center h-[50vh]">
-            <div className="text-center">
-              <p className="text-gray-500 mb-4">Redirecting...</p>
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
-            </div>
-          </div>
-        </main>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
       <main className="px-6 md:px-10 py-12 dark:text-white">
         <div className="max-w-7xl mx-auto">
-          {/* Header - Vercel style */}
-          <div className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <button
-                onClick={() => router.push('/account')}
-                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                Back to Account
-              </button>
+          {/* Page Header */}
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-600 dark:text-gray-400">
+                  {user?.email}
+                </span>
+                <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs">Admin</Badge>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <span>{user?.email}</span>
-              <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-                Admin
-              </Badge>
-            </div>
+            <Button onClick={() => router.push('/account')} variant="outline">
+              Back to Account
+            </Button>
           </div>
 
           {/* Enrichment Statistics */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg mb-6">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+          <Card className="mb-6">
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Enrichment Status</h2>
+                <CardTitle>Enrichment Status</CardTitle>
                 <div className="flex gap-2">
                   {enrichmentStats && enrichmentStats.needsEnrichment > 0 && (
-                    <button
+                    <Button
                       onClick={async () => {
                         if (!user?.email || bulkEnriching) return;
                         setBulkEnriching(true);
@@ -841,15 +808,21 @@ export default function AdminPage() {
                             .or('google_place_id.is.null,formatted_address.is.null,international_phone_number.is.null,website.is.null')
                             .order('slug', { ascending: true });
                           
-                          if (!needsEnrichment || needsEnrichment.length === 0) {
-                            alert('No destinations need enrichment');
-                            return;
-                          }
-                          
-                          let processed = 0;
-                          let failed = 0;
-                          const failures: Array<{ slug: string; reason: string }> = [];
-                          const batchSize = 10; // Process 10 at a time
+                      if (!needsEnrichment || needsEnrichment.length === 0) {
+                        alert('No destinations need enrichment');
+                        return;
+                      }
+                      
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const token = session?.access_token;
+                      if (!token) {
+                        throw new Error('Not authenticated');
+                      }
+                      
+                      let processed = 0;
+                      let failed = 0;
+                      const failures: Array<{ slug: string; reason: string }> = [];
+                      const batchSize = 10; // Process 10 at a time
                           
                           for (let i = 0; i < needsEnrichment.length; i += batchSize) {
                             const batch = needsEnrichment.slice(i, i + batchSize);
@@ -859,7 +832,7 @@ export default function AdminPage() {
                                 try {
                                   const res = await fetch('/api/enrich-google', {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'x-admin-email': user.email },
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                                     body: JSON.stringify({ slug: dest.slug, limit: 1, offset: 0 })
                                   });
                                   const result = await res.json();
@@ -925,7 +898,8 @@ export default function AdminPage() {
                           setBulkProgress({ current: 0, total: 0 });
                         }
                       }}
-                      className="px-3 py-1.5 text-sm bg-black dark:bg-white text-white dark:text-black rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                      variant="default"
+                      size="sm"
                       disabled={bulkEnriching || !user?.email}
                     >
                       {bulkEnriching ? (
@@ -935,19 +909,20 @@ export default function AdminPage() {
                       ) : (
                         `Enrich All (${enrichmentStats.needsEnrichment})`
                       )}
-                    </button>
+                    </Button>
                   )}
-                  <button
-                    onClick={loadEnrichmentStats}
-                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  <Button 
+                    onClick={loadEnrichmentStats} 
+                    variant="outline" 
+                    size="sm"
                     disabled={isLoadingStats}
                   >
                     {isLoadingStats ? 'Loading...' : 'Refresh'}
-                  </button>
+                  </Button>
                 </div>
               </div>
-            </div>
-            <div className="p-6">
+            </CardHeader>
+            <CardContent>
               {enrichmentStats ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
@@ -973,24 +948,26 @@ export default function AdminPage() {
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Destination List with Enrichment Status */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg mb-6">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+          <Card className="mb-6">
+            <CardHeader>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Destinations</h2>
-                <button
+                <CardTitle>Destinations</CardTitle>
+                <Button
                   onClick={() => {
                     setEditingDestination(null);
                     setShowCreateModal(true);
                   }}
-                  className="px-3 py-1.5 text-sm bg-black dark:bg-white text-white dark:text-black rounded-md hover:opacity-90 transition-opacity flex items-center gap-2"
+                  variant="default"
+                  size="sm"
+                  className="flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
                   Add Place
-                </button>
+                </Button>
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
@@ -1015,28 +992,30 @@ export default function AdminPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button 
                     onClick={() => {
                       setListOffset(Math.max(0, listOffset - 20));
                     }}
-                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    variant="outline"
+                    size="sm"
                     disabled={listOffset === 0 || isLoadingList}
                   >
                     Previous
-                  </button>
-                  <button
+                  </Button>
+                  <Button 
                     onClick={() => {
                       setListOffset(listOffset + 20);
                     }}
-                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    variant="outline"
+                    size="sm"
                     disabled={isLoadingList || destinationList.length < 20}
                   >
                     Next
-                  </button>
+                  </Button>
                 </div>
               </div>
-            </div>
-            <div className="p-6">
+            </CardHeader>
+            <CardContent>
               {isLoadingList ? (
                 <div className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
@@ -1072,33 +1051,36 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <button
+                          <Button
                             onClick={() => {
                               setEditingDestination(dest);
                               setShowCreateModal(true);
                             }}
-                            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1"
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1"
                           >
                             <Edit className="h-3 w-3" />
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => {
                               setEnrichSlug(dest.slug);
                               window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
-                            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            variant="outline"
+                            size="sm"
                           >
                             Enrich
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Create/Edit Drawer */}
           {showCreateModal && (
@@ -1186,11 +1168,11 @@ export default function AdminPage() {
           )}
 
           {/* Google Enrichment Tools */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg mb-6">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">Google Enrichment</h2>
-            </div>
-            <div className="p-6 space-y-4">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Google Enrichment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <span className="text-sm text-gray-600 dark:text-gray-400 mb-4 block">
                 Enrich destinations with Google Places API data. 
                 <br />
@@ -1242,13 +1224,14 @@ export default function AdminPage() {
                     placeholder="Search by name or city (e.g., 'tokyo', 'central park')"
                     className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none"
                   />
-                  <button
+                  <Button
                     onClick={handleSearchDestinations}
                     disabled={isSearching || !searchQuery.trim()}
-                    className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    variant="outline"
+                    size="sm"
                   >
                     {isSearching ? 'Searching...' : 'Search'}
-                  </button>
+                  </Button>
                 </div>
                 {searchResults.length > 0 && (
                   <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
@@ -1270,15 +1253,20 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <button
+              <Button
                 onClick={async () => {
                   if (!user?.email) return;
                   setEnrichRunning(true);
                   setEnrichResult(null);
                   try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+                    if (!token) {
+                      throw new Error('Not authenticated');
+                    }
                     const res = await fetch('/api/enrich-google', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json', 'x-admin-email': user.email },
+                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                       body: JSON.stringify({ slug: enrichSlug || undefined, limit: enrichLimit, offset: enrichOffset })
                     });
                     const j = await res.json();
@@ -1290,10 +1278,10 @@ export default function AdminPage() {
                   }
                 }}
                 disabled={enrichRunning || !user?.email}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="w-full sm:w-auto"
               >
                 {enrichRunning ? 'Running...' : 'Run Enrichment'}
-              </button>
+              </Button>
 
               {enrichResult && (
                 <div className="mt-4">
@@ -1302,15 +1290,15 @@ export default function AdminPage() {
                   </pre>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Regenerate Content with AI */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">Regenerate Content with AI</h2>
-            </div>
-            <div className="p-6 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Regenerate Content with AI</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Regenerate the "About" section for destinations using AI (Gemini) and all available Google Places API data.
                 The AI will create engaging, informative descriptions using ratings, reviews, opening hours, and other enriched data.
@@ -1359,7 +1347,7 @@ export default function AdminPage() {
                 </>
               )}
 
-              <button
+              <Button
                 onClick={async () => {
                   if (!user?.email) return;
                   setRegenerateRunning(true);
@@ -1367,6 +1355,9 @@ export default function AdminPage() {
                   try {
                     const { data: { session } } = await supabase.auth.getSession();
                     const token = session?.access_token;
+                    if (!token) {
+                      throw new Error('Not authenticated');
+                    }
                     
                     const res = await fetch('/api/regenerate-content', {
                       method: 'POST',
@@ -1375,7 +1366,6 @@ export default function AdminPage() {
                         'Authorization': `Bearer ${token}`,
                       },
                       body: JSON.stringify({ 
-                        email: user.email,
                         slug: regenerateSlug || undefined,
                         limit: regenerateLimit,
                         offset: regenerateOffset
@@ -1390,17 +1380,17 @@ export default function AdminPage() {
                   }
                 }}
                 disabled={regenerateRunning || !user?.email}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                className="w-full sm:w-auto"
               >
                 {regenerateRunning ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Regenerating...
                   </>
                 ) : (
                   `Regenerate Content ${regenerateSlug ? `(${regenerateSlug})` : `(${regenerateLimit} places)`}`
                 )}
-              </button>
+              </Button>
 
               {regenerateResult && (
                 <div className="mt-4">
@@ -1423,11 +1413,10 @@ export default function AdminPage() {
                   </pre>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
   );
 }
-

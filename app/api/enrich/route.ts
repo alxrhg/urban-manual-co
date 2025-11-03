@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { enrichDestination } from '@/lib/enrichment';
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 /**
  * POST /api/enrich
@@ -17,6 +17,8 @@ import { enrichDestination } from '@/lib/enrichment';
  */
 export async function POST(request: NextRequest) {
   try {
+    const { serviceClient: supabase } = await requireAdmin(request);
+
     const { slug, name, city, category, content } = await request.json();
 
     if (!slug || !name || !city) {
@@ -58,6 +60,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: error.status });
+    }
     console.error('❌ Enrichment API error:', error);
     console.error('   Stack:', error.stack);
 

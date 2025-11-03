@@ -1,29 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase-server';
-import { createServerClient } from '@/lib/supabase-server';
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify user is authenticated via Supabase Auth
-    const supabase = await createServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // 2. Check if authenticated user is admin
-    const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '')
-      .split(',')
-      .map(e => e.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (!adminEmails.includes(user.email?.toLowerCase() || '')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // 3. Use service role client for admin operations
-    const supabaseAdmin = createServiceRoleClient();
+    const { serviceClient: supabaseAdmin } = await requireAdmin(request);
 
     // Get form data
     const formData = await request.formData();
@@ -52,10 +32,6 @@ export async function POST(request: NextRequest) {
     const filePath = `destinations/${fileName}`;
 
     // Upload to Supabase Storage
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-    }
-    
     const { data, error } = await supabaseAdmin.storage
       .from('destination-images')
       .upload(filePath, file, {
@@ -79,6 +55,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Upload error:', error);
     return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 });
   }

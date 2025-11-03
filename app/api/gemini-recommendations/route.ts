@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check admin status
-    const authHeader = request.headers.get('x-admin-email');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAdmin(request);
 
-    if (!ADMIN_EMAILS.includes(authHeader.toLowerCase())) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
+    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (!GOOGLE_API_KEY) {
       return NextResponse.json({ error: 'Google API key not configured' }, { status: 500 });
     }
@@ -118,6 +109,9 @@ Guidelines:
     });
 
   } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Gemini recommendations error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to get Gemini recommendations' },
@@ -125,4 +119,3 @@ Guidelines:
     );
   }
 }
-

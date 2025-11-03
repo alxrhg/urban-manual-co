@@ -1,25 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
-const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export async function POST(request: NextRequest) {
   try {
-    // Check admin status
-    const authHeader = request.headers.get('x-admin-email');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!ADMIN_EMAILS.includes(authHeader.toLowerCase())) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const { serviceClient: supabase } = await requireAdmin(request);
 
     if (!GOOGLE_API_KEY) {
       return NextResponse.json({ error: 'Google API key not configured' }, { status: 500 });
@@ -148,6 +134,9 @@ Respond ONLY with valid JSON in this exact format:
     });
 
   } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Gemini place recommendations error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to get place recommendations' },
@@ -155,4 +144,3 @@ Respond ONLY with valid JSON in this exact format:
     );
   }
 }
-

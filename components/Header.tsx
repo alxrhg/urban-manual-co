@@ -44,39 +44,36 @@ export function Header() {
     fetchProfile();
   }, [user]);
 
-  // Check admin status and fetch build version
+  // Determine admin role from user metadata
   useEffect(() => {
-    async function checkAdmin() {
-      if (!user?.email) {
-        setIsAdmin(false);
-        return;
-      }
+    const role = (user?.app_metadata as Record<string, any> | undefined)?.role;
+    const isAdminUser = role === 'admin';
+    setIsAdmin(isAdminUser);
+    if (!isAdminUser) {
+      setBuildVersion(null);
+    }
+  }, [user]);
+
+  // Fetch build version for admins
+  useEffect(() => {
+    async function fetchBuildVersion() {
+      if (!isAdmin) return;
       try {
-        const res = await fetch('/api/is-admin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user.email })
-        });
-        const j = await res.json();
-        setIsAdmin(!!j.isAdmin);
-        
-        // Fetch build version if admin
-        if (j.isAdmin) {
-          try {
-            const versionRes = await fetch('/api/build-version');
-            const versionData = await versionRes.json();
-            // Prefer commit SHA, fallback to version
-            setBuildVersion(versionData.shortSha || versionData.commitSha?.substring(0, 7) || versionData.version || null);
-          } catch {
-            // Ignore version fetch errors
-          }
-        }
+        const versionRes = await fetch('/api/build-version');
+        const versionData = await versionRes.json();
+        setBuildVersion(
+          versionData.shortSha ||
+            versionData.commitSha?.substring(0, 7) ||
+            versionData.version ||
+            null
+        );
       } catch {
-        setIsAdmin(false);
+        // Ignore version fetch errors
+        setBuildVersion(null);
       }
     }
-    checkAdmin();
-  }, [user]);
+    fetchBuildVersion();
+  }, [isAdmin]);
 
   const navigate = (path: string) => {
     router.push(path);

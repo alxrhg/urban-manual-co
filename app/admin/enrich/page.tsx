@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminEnrichPage() {
   const { user } = useAuth()
@@ -13,11 +14,16 @@ export default function AdminEnrichPage() {
     if (!user?.email) { setOutput({ error: 'Please sign in' }); return }
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        throw new Error('Not authenticated')
+      }
       const res = await fetch('/api/enrich-google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': user.email,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ slug: slug || undefined })
       })
@@ -61,5 +67,4 @@ export default function AdminEnrichPage() {
     </main>
   )
 }
-
 

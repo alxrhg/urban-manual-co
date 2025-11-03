@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireAdmin, AuthError } from '@/lib/adminAuth'
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
-
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string
-const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string
-
-if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  console.warn('[enrich-google] Missing Supabase credentials')
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 async function findPlaceId(query: string, name?: string, city?: string): Promise<string | null> {
   // Use Places API (New) - Text Search
@@ -184,9 +174,7 @@ export async function POST(req: Request) {
   try {
     if (!GOOGLE_API_KEY) return NextResponse.json({ error: 'Missing GOOGLE_API_KEY' }, { status: 500 })
 
-    const adminEmail = (req.headers.get('x-admin-email') || '').toLowerCase()
-    const allowed = ADMIN_EMAILS.includes(adminEmail)
-    if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const { serviceClient: supabase } = await requireAdmin(req)
 
     const body = await req.json().catch(() => ({})) as { slug?: string, limit?: number, offset?: number }
     const { slug, limit = 10, offset = 0 } = body
@@ -297,6 +285,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ count: results.length, results, nextOffset: offset + results.length })
   } catch (e: any) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ error: e.message }, { status: e.status })
+    }
     return NextResponse.json({ error: e?.message || 'unknown' }, { status: 500 })
   }
 }
@@ -306,10 +297,8 @@ export async function GET() {
     ok: true,
     message: 'Use POST with JSON to run enrichment.',
     example: {
-      headers: { 'Content-Type': 'application/json', 'x-admin-email': 'you@example.com' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer <your-session-access-token>' },
       body: { limit: 100, offset: 0 },
     },
   });
 }
-
-

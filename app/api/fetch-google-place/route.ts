@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
 function stripHtmlTags(text: string | null | undefined): string {
   if (!text) return '';
@@ -142,15 +142,7 @@ function transformOpeningHours(hours: any): any {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check admin status
-    const authHeader = request.headers.get('x-admin-email');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!ADMIN_EMAILS.includes(authHeader.toLowerCase())) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    await requireAdmin(request);
 
     const body = await request.json();
     const { name, city, placeId } = body;
@@ -252,8 +244,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
 
   } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Fetch Google Place error:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch place data' }, { status: 500 });
   }
 }
-
