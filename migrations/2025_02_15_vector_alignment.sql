@@ -1,6 +1,6 @@
--- Align vector search schema with 1536-dimension embeddings and modern ranking
--- Drops legacy 768-dimension helpers and rebuilds match_destinations to read
--- from destinations.vector_embedding while blending editorial scores.
+-- Align vector search schema with 3072-dimension embeddings and modern ranking
+-- Drops legacy 768/1536-dimension helpers and rebuilds match_destinations to
+-- read from destinations.vector_embedding while blending editorial scores.
 
 -- Drop legacy functions that referenced the old embedding column
 DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int);
@@ -9,16 +9,40 @@ DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int, text, text, 
 DROP FUNCTION IF EXISTS match_destinations(vector(1536), float, int);
 DROP FUNCTION IF EXISTS match_destinations(vector(1536), float, int, text, text, int, numeric, int, text);
 DROP FUNCTION IF EXISTS match_destinations(vector(1536), float, int, text, text, int, numeric, int, text, text);
+DROP FUNCTION IF EXISTS match_destinations(vector(3072), float, int);
+DROP FUNCTION IF EXISTS match_destinations(vector(3072), float, int, text, text, int, numeric, int, text);
+DROP FUNCTION IF EXISTS match_destinations(vector(3072), float, int, text, text, int, numeric, int, text, text);
 
--- Ensure the new vector column exists
+-- Ensure the new 3072-dimension vector column exists
+DO $$
+DECLARE
+  existing_type text;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO existing_type
+  FROM pg_attribute a
+  JOIN pg_class c ON a.attrelid = c.oid
+  JOIN pg_namespace n ON c.relnamespace = n.oid
+  WHERE c.relname = 'destinations'
+    AND n.nspname = 'public'
+    AND a.attname = 'vector_embedding'
+    AND a.attnum > 0
+    AND NOT a.attisdropped;
+
+  IF existing_type IS NOT NULL AND existing_type <> 'vector(3072)' THEN
+    EXECUTE 'ALTER TABLE destinations DROP COLUMN vector_embedding';
+  END IF;
+END;
+$$;
+
 ALTER TABLE destinations
-  ADD COLUMN IF NOT EXISTS vector_embedding vector(1536);
+  ADD COLUMN IF NOT EXISTS vector_embedding vector(3072);
 
 -- Drop the legacy embedding column once the new column is present
 ALTER TABLE destinations
   DROP COLUMN IF EXISTS embedding;
 
--- Rebuild indexes for the 1536-dimension vector column
+-- Rebuild indexes for the 3072-dimension vector column
 CREATE INDEX IF NOT EXISTS idx_destinations_vector_embedding_hnsw
   ON destinations USING hnsw (vector_embedding vector_cosine_ops)
   WITH (m = 16, ef_construction = 64);
@@ -38,7 +62,7 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 -- Recreate match_destinations with vector_embedding and blended ranking
 CREATE OR REPLACE FUNCTION match_destinations(
-  query_embedding vector(1536),
+  query_embedding vector(3072),
   match_threshold float DEFAULT 0.55,
   match_count int DEFAULT 50,
   filter_city text DEFAULT NULL,
@@ -128,9 +152,8 @@ BEGIN
 END;
 $$;
 
--- Backwards-compatible wrapper without cuisine filter to support cached RPC definitions
 CREATE OR REPLACE FUNCTION match_destinations(
-  query_embedding vector(1536),
+  query_embedding vector(3072),
   match_threshold float DEFAULT 0.55,
   match_count int DEFAULT 50,
   filter_city text DEFAULT NULL,
