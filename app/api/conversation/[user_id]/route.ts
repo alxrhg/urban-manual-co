@@ -31,7 +31,7 @@ const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { user_id: string } }
+  context: { params: Promise<{ user_id: string }> }
 ) {
   try {
     const { message, session_token } = await request.json();
@@ -43,7 +43,8 @@ export async function POST(
     // Get user context
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || params.user_id || undefined;
+    const { user_id } = await context.params;
+    const userId = user?.id || user_id || undefined;
 
     // Get or create session
     const session = await getOrCreateSession(userId, session_token);
@@ -221,7 +222,7 @@ export async function POST(
  */
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { user_id: string } }
+  context: { params: Promise<{ user_id: string }> }
 ) {
   try {
     const { searchParams } = new URL(_request.url);
@@ -229,7 +230,8 @@ export async function GET(
 
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || params.user_id || undefined;
+    const { user_id } = await context.params;
+    const userId = user?.id || user_id || undefined;
 
     const session = await getOrCreateSession(userId, session_token);
     if (!session) {
