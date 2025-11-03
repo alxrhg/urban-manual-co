@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { embedText } from '@/lib/llm';
+import { openai, OPENAI_MODEL } from '@/lib/openai';
 import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
 import { forecastingService } from '@/services/intelligence/forecasting';
 import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
@@ -8,6 +10,7 @@ import { opportunityDetectionService } from '@/services/intelligence/opportunity
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const ENABLE_GEMINI_FALLBACK = (process.env.ENABLE_GEMINI_FALLBACK || 'false').toLowerCase() === 'true';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -34,38 +37,9 @@ const CATEGORY_SYNONYMS: Record<string, string> = {
   'gallery': 'Culture'
 };
 
-// Generate embedding using Google's text-embedding-004 model
+// Generate embedding using OpenAI (fallback to null if unavailable)
 async function generateEmbedding(text: string): Promise<number[] | null> {
-  if (!GOOGLE_API_KEY) {
-    console.error('[AI Chat] No Google API key available');
-    return null;
-  }
-
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'models/text-embedding-004',
-          content: { parts: [{ text }] }
-        })
-      }
-    );
-
-    const data = await response.json();
-    
-    if (data.embedding?.values) {
-      return data.embedding.values;
-    }
-    
-    console.error('[AI Chat] Unexpected embedding response format:', data);
-    return null;
-  } catch (error) {
-    console.error('[AI Chat] Error generating embedding:', error);
-    return null;
-  }
+  return await embedText(text);
 }
 
 // AI-powered query understanding with conversation context
@@ -87,13 +61,10 @@ async function understandQuery(
   confidence?: number; // 0-1 confidence score
   clarifications?: string[]; // Questions to clarify ambiguous queries
 }> {
-  if (!GOOGLE_API_KEY) {
-    return parseQueryFallback(query);
-  }
-
-  try {
-    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  // Prefer OpenAI if available
+  if (openai) {
+    try {
+      console.log('[AI Chat] Using OpenAI to understand query:', query);
 
     // Build conversation context string
     const conversationContext = conversationHistory.length > 0
@@ -130,7 +101,7 @@ async function understandQuery(
       }
     }
 
-    const prompt = `Analyze this travel/dining search query with full context. Extract structured information and understand the user's intent deeply. Return ONLY valid JSON with this exact structure:
+      const prompt = `Analyze this travel/dining search query with full context. Extract structured information and understand the user's intent deeply. Return ONLY valid JSON with this exact structure:
 {
   "keywords": ["array", "of", "main", "keywords"],
   "city": "city name or null",
@@ -158,43 +129,137 @@ Guidelines:
 
 Return only the JSON, no other text:`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        console.log('[AI Chat] Enhanced parsed intent:', parsed);
-        
-        // If query contains relative terms, enhance intent from conversation
-        const lowerQuery = query.toLowerCase();
-        if ((lowerQuery.includes('more') || lowerQuery.includes('another') || lowerQuery.includes('similar') || lowerQuery.includes('different')) && conversationHistory.length > 0) {
-          // Try to extract context from last assistant response
-          const lastAssistant = conversationHistory.filter(m => m.role === 'assistant').pop();
-          if (lastAssistant) {
-            // Infer category/city from previous conversation
-            const lastContent = lastAssistant.content.toLowerCase();
-            if (!parsed.city && lastContent.includes('in ')) {
-              const cityMatch = lastContent.match(/in ([a-z\s]+?)(?:\.|,|$)/);
-              if (cityMatch) parsed.city = cityMatch[1].trim();
-            }
-            if (!parsed.category && lastContent.includes('place') || lastContent.includes('restaurant') || lastContent.includes('hotel')) {
-              if (lastContent.includes('restaurant')) parsed.category = 'Dining';
-              else if (lastContent.includes('hotel')) parsed.category = 'Hotel';
-              else if (lastContent.includes('cafe')) parsed.category = 'Cafe';
+      const response = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a travel search query analyzer. Extract structured information from user queries and return ONLY valid JSON.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 300,
+      });
+
+      const text = response.choices?.[0]?.message?.content || '';
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log('[AI Chat] Enhanced parsed intent:', parsed);
+          
+          // If query contains relative terms, enhance intent from conversation
+          const lowerQuery = query.toLowerCase();
+          if ((lowerQuery.includes('more') || lowerQuery.includes('another') || lowerQuery.includes('similar') || lowerQuery.includes('different')) && conversationHistory.length > 0) {
+            // Try to extract context from last assistant response
+            const lastAssistant = conversationHistory.filter(m => m.role === 'assistant').pop();
+            if (lastAssistant) {
+              // Infer category/city from previous conversation
+              const lastContent = lastAssistant.content.toLowerCase();
+              if (!parsed.city && lastContent.includes('in ')) {
+                const cityMatch = lastContent.match(/in ([a-z\s]+?)(?:\.|,|$)/);
+                if (cityMatch) parsed.city = cityMatch[1].trim();
+              }
+              if (!parsed.category && lastContent.includes('place') || lastContent.includes('restaurant') || lastContent.includes('hotel')) {
+                if (lastContent.includes('restaurant')) parsed.category = 'Dining';
+                else if (lastContent.includes('hotel')) parsed.category = 'Hotel';
+                else if (lastContent.includes('cafe')) parsed.category = 'Cafe';
+              }
             }
           }
+          
+          return parsed;
+        } catch (parseError) {
+          console.error('[AI Chat] Failed to parse OpenAI response:', parseError);
         }
-        
-        return parsed;
-      } catch (parseError) {
-        console.error('Failed to parse AI response:', parseError);
       }
+    } catch (error) {
+      console.error('[AI Chat] OpenAI error:', error);
     }
-  } catch (error) {
-    console.error('[AI Chat] LLM error:', error);
+  }
+
+  // Fallback to Gemini if enabled and OpenAI failed
+  if (ENABLE_GEMINI_FALLBACK && GOOGLE_API_KEY) {
+    try {
+      const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      
+      // Build conversation context string
+      const conversationContext = conversationHistory.length > 0
+        ? `\n\nConversation History:\n${conversationHistory.slice(-6).map(msg => `${msg.role}: ${msg.content}`).join('\n')}`
+        : '';
+
+      // Fetch user preferences if available
+      let userContext = '';
+      if (userId) {
+        try {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('favorite_cities, favorite_categories, travel_style, interests')
+            .eq('user_id', userId)
+            .single();
+          
+          if (profile) {
+            const contextParts = [];
+            if (profile.favorite_cities?.length > 0) {
+              contextParts.push(`Favorite cities: ${profile.favorite_cities.join(', ')}`);
+            }
+            if (profile.favorite_categories?.length > 0) {
+              contextParts.push(`Favorite categories: ${profile.favorite_categories.join(', ')}`);
+            }
+            if (profile.travel_style) {
+              contextParts.push(`Travel style: ${profile.travel_style}`);
+            }
+            if (contextParts.length > 0) {
+              userContext = `\n\nUser Preferences: ${contextParts.join('; ')}`;
+            }
+          }
+        } catch (error) {
+          // Silently fail - user context is optional
+        }
+      }
+
+      const prompt = `Analyze this travel/dining search query with full context. Extract structured information and understand the user's intent deeply. Return ONLY valid JSON with this exact structure:
+{
+  "keywords": ["array", "of", "main", "keywords"],
+  "city": "city name or null",
+  "category": "category like restaurant/cafe/hotel or null",
+  "filters": {
+    "openNow": true/false/null,
+    "priceLevel": 1-4 or null,
+    "rating": 4-5 or null,
+    "michelinStar": 1-3 or null
+  },
+  "intent": "brief description of user intent (e.g., 'finding romantic dinner spots', 'comparing hotels', 'discovering hidden gems')",
+  "confidence": 0.0-1.0,
+  "clarifications": ["array", "of", "suggested", "questions", "if", "query", "is", "ambiguous"]
+}
+
+Query: "${query}"${conversationContext}${userContext}
+
+Return only the JSON, no other text:`;
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log('[AI Chat] Gemini fallback parsed intent:', parsed);
+          return parsed;
+        } catch (parseError) {
+          console.error('[AI Chat] Failed to parse Gemini response:', parseError);
+        }
+      }
+    } catch (error) {
+      console.error('[AI Chat] Gemini fallback error:', error);
+    }
   }
 
   return parseQueryFallback(query);
