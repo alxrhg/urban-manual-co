@@ -28,6 +28,7 @@ import {
 } from '@/lib/tracking';
 import GreetingHero from '@/components/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
+import { IntelligentSearchFeedback } from '@/components/IntelligentSearchFeedback';
 import { SearchFiltersComponent } from '@/components/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 
@@ -171,7 +172,6 @@ export default function Home() {
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
-  const [searchIntent, setSearchIntent] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   // Pagination state
@@ -306,6 +306,8 @@ export default function Home() {
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
+  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
+  const [seasonalContext, setSeasonalContext] = useState<any>(null);
 
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
@@ -358,6 +360,26 @@ export default function Home() {
       ];
       setConversationHistory(newHistory.slice(-10)); // Keep last 10 messages for context
 
+      // Store enhanced intent data for intelligent feedback
+      if (data.intent) {
+        setSearchIntent(data.intent);
+        
+        // Fetch seasonal context if city is detected
+        if (data.intent.city) {
+          try {
+            const seasonResponse = await fetch(`/api/seasonality?city=${encodeURIComponent(data.intent.city)}`);
+            if (seasonResponse.ok) {
+              const seasonData = await seasonResponse.json();
+              setSeasonalContext(seasonData);
+            }
+          } catch (error) {
+            // Silently fail - seasonal context is optional
+          }
+        } else {
+          setSeasonalContext(null);
+        }
+      }
+
       // ONLY show the latest AI response (simple text)
       setChatResponse(data.content || '');
       
@@ -367,6 +389,8 @@ export default function Home() {
       console.error('AI chat error:', error);
       setChatResponse('Sorry, I encountered an error. Please try again.');
       setFilteredDestinations([]);
+      setSearchIntent(null);
+      setSeasonalContext(null);
     } finally {
       setSearching(false);
     }
@@ -568,6 +592,7 @@ export default function Home() {
                     setConversationHistory([]);
                     setSearchSuggestions([]);
                     setSearchIntent(null);
+                    setSeasonalContext(null);
                     setSearchTier(null);
                     setChatResponse('');
                     setFilteredDestinations([]);
@@ -611,17 +636,33 @@ export default function Home() {
                 availableCategories={categories}
                   />
 
-                  {/* AI Chat Response - Below search */}
-                  {searchTerm && (
+                  {/* Intelligent Search Feedback - Travel Intelligence Display */}
+                  {searchTerm && !searching && searchIntent && (
+                    <IntelligentSearchFeedback
+                      intent={searchIntent}
+                      isSearching={searching}
+                      seasonalContext={seasonalContext}
+                      onRefine={(suggestion) => {
+                        setSearchTerm(suggestion);
+                        performAISearch(suggestion);
+                      }}
+                    />
+                  )}
+
+                  {/* Loading State - Travel Intelligence Analysis */}
+                  {searchTerm && searching && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      {searching ? (
-                        <div className="flex items-center gap-2">
-                          <span className="animate-pulse">✨</span>
-                          <span>Thinking...</span>
-                        </div>
-                      ) : chatResponse ? (
-                        <span className="whitespace-pre-line block">{chatResponse}</span>
-                      ) : null}
+                      <div className="flex items-center gap-2">
+                        <span className="animate-pulse">✨</span>
+                        <span>Analyzing your query with travel intelligence...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Simple Chat Response Fallback */}
+                  {searchTerm && !searching && !searchIntent && chatResponse && (
+                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                      <span className="whitespace-pre-line block">{chatResponse}</span>
                     </div>
                   )}
                 </div>

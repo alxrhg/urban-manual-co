@@ -65,8 +65,12 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   }
 }
 
-// AI-powered query understanding
-async function understandQuery(query: string): Promise<{
+// AI-powered query understanding with conversation context
+async function understandQuery(
+  query: string,
+  conversationHistory: Array<{role: string, content: string}> = [],
+  userId?: string
+): Promise<{
   keywords: string[];
   city?: string;
   category?: string;
@@ -76,6 +80,9 @@ async function understandQuery(query: string): Promise<{
     rating?: number;
     michelinStar?: number;
   };
+  intent?: string; // User's apparent intent (e.g., "find", "compare", "recommend")
+  confidence?: number; // 0-1 confidence score
+  clarifications?: string[]; // Questions to clarify ambiguous queries
 }> {
   if (!GOOGLE_API_KEY) {
     return parseQueryFallback(query);
@@ -85,7 +92,42 @@ async function understandQuery(query: string): Promise<{
     const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    const prompt = `Analyze this travel/dining search query and extract structured information. Return ONLY valid JSON with this exact structure:
+    // Build conversation context string
+    const conversationContext = conversationHistory.length > 0
+      ? `\n\nConversation History:\n${conversationHistory.slice(-6).map(msg => `${msg.role}: ${msg.content}`).join('\n')}`
+      : '';
+
+    // Fetch user preferences if available
+    let userContext = '';
+    if (userId) {
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('favorite_cities, favorite_categories, travel_style, interests')
+          .eq('user_id', userId)
+          .single();
+        
+        if (profile) {
+          const contextParts = [];
+          if (profile.favorite_cities?.length > 0) {
+            contextParts.push(`Favorite cities: ${profile.favorite_cities.join(', ')}`);
+          }
+          if (profile.favorite_categories?.length > 0) {
+            contextParts.push(`Favorite categories: ${profile.favorite_categories.join(', ')}`);
+          }
+          if (profile.travel_style) {
+            contextParts.push(`Travel style: ${profile.travel_style}`);
+          }
+          if (contextParts.length > 0) {
+            userContext = `\n\nUser Preferences: ${contextParts.join('; ')}`;
+          }
+        }
+      } catch (error) {
+        // Silently fail - user context is optional
+      }
+    }
+
+    const prompt = `Analyze this travel/dining search query with full context. Extract structured information and understand the user's intent deeply. Return ONLY valid JSON with this exact structure:
 {
   "keywords": ["array", "of", "main", "keywords"],
   "city": "city name or null",
@@ -95,10 +137,21 @@ async function understandQuery(query: string): Promise<{
     "priceLevel": 1-4 or null,
     "rating": 4-5 or null,
     "michelinStar": 1-3 or null
-  }
+  },
+  "intent": "brief description of user intent (e.g., 'finding romantic dinner spots', 'comparing hotels', 'discovering hidden gems')",
+  "confidence": 0.0-1.0,
+  "clarifications": ["array", "of", "suggested", "questions", "if", "query", "is", "ambiguous"]
 }
 
-Query: "${query}"
+Query: "${query}"${conversationContext}${userContext}
+
+Guidelines:
+- Use conversation history to resolve pronouns and references (e.g., "show me more like this" refers to previous results)
+- Use "more", "another", "similar" to expand on previous queries
+- If query is ambiguous (e.g., just "hotels" without city), set clarifications with helpful questions
+- Extract descriptive modifiers: romantic, cozy, luxury, budget, hidden, trendy, etc. as keywords
+- Confidence should reflect how clear the query intent is
+- For relative queries ("more", "another", "different"), infer intent from conversation history
 
 Return only the JSON, no other text:`;
 
@@ -110,7 +163,28 @@ Return only the JSON, no other text:`;
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
-        console.log('[AI Chat] Parsed intent:', parsed);
+        console.log('[AI Chat] Enhanced parsed intent:', parsed);
+        
+        // If query contains relative terms, enhance intent from conversation
+        const lowerQuery = query.toLowerCase();
+        if ((lowerQuery.includes('more') || lowerQuery.includes('another') || lowerQuery.includes('similar') || lowerQuery.includes('different')) && conversationHistory.length > 0) {
+          // Try to extract context from last assistant response
+          const lastAssistant = conversationHistory.filter(m => m.role === 'assistant').pop();
+          if (lastAssistant) {
+            // Infer category/city from previous conversation
+            const lastContent = lastAssistant.content.toLowerCase();
+            if (!parsed.city && lastContent.includes('in ')) {
+              const cityMatch = lastContent.match(/in ([a-z\s]+?)(?:\.|,|$)/);
+              if (cityMatch) parsed.city = cityMatch[1].trim();
+            }
+            if (!parsed.category && lastContent.includes('place') || lastContent.includes('restaurant') || lastContent.includes('hotel')) {
+              if (lastContent.includes('restaurant')) parsed.category = 'Dining';
+              else if (lastContent.includes('hotel')) parsed.category = 'Hotel';
+              else if (lastContent.includes('cafe')) parsed.category = 'Cafe';
+            }
+          }
+        }
+        
         return parsed;
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
@@ -128,6 +202,9 @@ function parseQueryFallback(query: string): {
   city?: string;
   category?: string;
   filters?: any;
+  intent?: string;
+  confidence?: number;
+  clarifications?: string[];
 } {
   const lowerQuery = query.toLowerCase();
   let city: string | undefined;
@@ -164,7 +241,13 @@ function parseQueryFallback(query: string): {
     }
   }
 
-  return { keywords, city, category };
+  return {
+    keywords,
+    city,
+    category,
+    intent: `finding ${category || 'places'}${city ? ` in ${city}` : ''}`,
+    confidence: (city ? 0.7 : 0.5) + (category ? 0.2 : 0),
+  };
 }
 
 // Generate natural language response
@@ -195,8 +278,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Extract structured filters using AI
-    const intent = await understandQuery(query);
+    // Extract structured filters using AI with conversation context
+    const intent = await understandQuery(query, conversationHistory, userId);
     
     // Normalize category using synonyms
     if (intent.category) {
@@ -304,10 +387,20 @@ export async function POST(request: NextRequest) {
     // Generate natural language response
     const response = generateResponse(limitedResults.length, intent.city, intent.category);
 
+    // Generate enhanced response with context if needed
+    let enhancedContent = response;
+    if (intent.clarifications && intent.clarifications.length > 0 && limitedResults.length === 0) {
+      enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
+    }
+
     return NextResponse.json({
-      content: response,
+      content: enhancedContent,
       destinations: limitedResults,
-      searchParams: intent
+      intent: {
+        ...intent,
+        resultCount: limitedResults.length,
+        hasResults: limitedResults.length > 0
+      }
     });
 
   } catch (error: any) {

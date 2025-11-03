@@ -37,15 +37,20 @@ export default function GreetingHero({
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Rotating AI-powered search cues
+  // Rotating AI-powered travel intelligence cues
   const aiPlaceholders = [
-    "Ask me anything",
-    "Where would you like to go?",
+    "Ask me anything about travel",
+    "Where would you like to explore?",
     "Find romantic hotels in Tokyo",
     "Best time to visit Kyoto?",
     "Show me Michelin restaurants",
     "Vegetarian cafes in Paris",
     "When do cherry blossoms bloom?",
+    "Hidden gems in Copenhagen",
+    "Compare hotels in Paris",
+    "Luxury stays with city views",
+    "What's trending in Tokyo?",
+    "Find places open late night",
   ];
 
   // Get current time for greeting
@@ -189,11 +194,11 @@ export default function GreetingHero({
                 paddingRight: isAIEnabled && !searchQuery ? '80px' : '0'
               }}
             />
-            {/* AI-powered hint */}
+            {/* Travel Intelligence hint */}
             {isAIEnabled && !searchQuery && (
               <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-[1px]">
                 <Sparkles className="h-3 w-3" />
-                <span>AI</span>
+                <span>Travel Intelligence</span>
               </div>
             )}
           </div>
