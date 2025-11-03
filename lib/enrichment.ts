@@ -248,31 +248,142 @@ Tags should be lowercase, concise, and highly searchable. Categories should be o
 
 /**
  * Step 3: Determine best category from Google types
+ * Expanded to include cuisine-specific restaurant types for better search matching
  */
 function categorizePlaceFromTypes(googleTypes: string[]): string | null {
   const typeMap: Record<string, string> = {
+    // General restaurant types
     restaurant: 'Restaurants',
+    meal_takeaway: 'Restaurants',
+    meal_delivery: 'Restaurants',
+    food: 'Restaurants',
+    
+    // Cuisine-specific restaurants (helps with "sushi in tokyo", "hotpot in taipei" etc.)
+    sushi_restaurant: 'Restaurants',
+    ramen_restaurant: 'Restaurants',
+    izakaya_restaurant: 'Restaurants',
+    yakitori_restaurant: 'Restaurants',
     hot_pot_restaurant: 'Restaurants',
     shabu_shabu_restaurant: 'Restaurants',
+    korean_restaurant: 'Restaurants',
+    thai_restaurant: 'Restaurants',
+    vietnamese_restaurant: 'Restaurants',
+    chinese_restaurant: 'Restaurants',
+    french_restaurant: 'Restaurants',
+    italian_restaurant: 'Restaurants',
+    indian_restaurant: 'Restaurants',
+    mexican_restaurant: 'Restaurants',
+    japanese_restaurant: 'Restaurants',
+    mediterranean_restaurant: 'Restaurants',
+    greek_restaurant: 'Restaurants',
+    lebanese_restaurant: 'Restaurants',
+    turkish_restaurant: 'Restaurants',
+    seafood_restaurant: 'Restaurants',
+    steak_house: 'Restaurants',
+    barbecue_restaurant: 'Restaurants',
+    pizza_restaurant: 'Restaurants',
+    
+    // Cafes
     cafe: 'Cafes',
+    coffee_shop: 'Cafes',
+    bakery: 'Cafes',
+    
+    // Bars
     bar: 'Bars',
     night_club: 'Nightlife',
+    pub: 'Bars',
+    lounge: 'Bars',
+    
+    // Hotels
     lodging: 'Hotels',
+    
+    // Culture
     museum: 'Culture',
     art_gallery: 'Culture',
+    library: 'Culture',
+    church: 'Culture',
+    temple: 'Culture',
+    shrine: 'Culture',
+    
+    // Shopping
     shopping_mall: 'Shopping',
     store: 'Shopping',
+    clothing_store: 'Shopping',
+    jewelry_store: 'Shopping',
+    book_store: 'Shopping',
+    
+    // Activities
     tourist_attraction: 'Activities',
     park: 'Activities',
+    zoo: 'Activities',
+    amusement_park: 'Activities',
+    spa: 'Activities',
   };
 
-  for (const type of googleTypes) {
+  // Prioritize cuisine-specific types first (more specific = better)
+  const cuisineSpecificTypes = googleTypes.filter(type => 
+    type.includes('_restaurant') && type !== 'restaurant'
+  );
+  
+  // Check cuisine-specific types first
+  for (const type of cuisineSpecificTypes) {
     if (typeMap[type]) {
       return typeMap[type];
     }
   }
+  
+  // Then check other specific types (cafe, bar, etc.)
+  for (const type of googleTypes) {
+    if (typeMap[type] && type !== 'restaurant') {
+      return typeMap[type];
+    }
+  }
+  
+  // Finally fall back to generic restaurant
+  if (googleTypes.includes('restaurant')) {
+    return 'Restaurants';
+  }
 
   return null;
+}
+
+/**
+ * Extract cuisine tags from Google types for better search matching
+ */
+function extractCuisineFromTypes(googleTypes: string[]): string[] {
+  const cuisineTypes: Record<string, string> = {
+    sushi_restaurant: 'sushi',
+    ramen_restaurant: 'ramen',
+    izakaya_restaurant: 'izakaya',
+    yakitori_restaurant: 'yakitori',
+    hot_pot_restaurant: 'hotpot',
+    shabu_shabu_restaurant: 'shabu',
+    korean_restaurant: 'korean',
+    thai_restaurant: 'thai',
+    vietnamese_restaurant: 'vietnamese',
+    chinese_restaurant: 'chinese',
+    french_restaurant: 'french',
+    italian_restaurant: 'italian',
+    indian_restaurant: 'indian',
+    mexican_restaurant: 'mexican',
+    japanese_restaurant: 'japanese',
+    mediterranean_restaurant: 'mediterranean',
+    greek_restaurant: 'greek',
+    lebanese_restaurant: 'lebanese',
+    turkish_restaurant: 'turkish',
+    seafood_restaurant: 'seafood',
+    steak_house: 'steak',
+    barbecue_restaurant: 'bbq',
+    pizza_restaurant: 'pizza',
+  };
+
+  const cuisines: string[] = [];
+  for (const type of googleTypes) {
+    if (cuisineTypes[type]) {
+      cuisines.push(cuisineTypes[type]);
+    }
+  }
+  return cuisines;
 }
 
 /**
@@ -290,7 +401,11 @@ export async function enrichDestination(
   // Step 1: Get Google Places data
   const placesData = await findPlaceByText(name, city);
 
-  // Step 2: Generate Gemini tags
+  // Step 2: Extract cuisine tags from Google types (more reliable than AI for cuisine-specific types)
+  const cuisineTags = extractCuisineFromTypes(placesData.google_types);
+  console.log(`🍽️  Extracted cuisine tags from Google types: ${cuisineTags.join(', ') || 'none'}`);
+
+  // Step 3: Generate Gemini tags (will merge with cuisine tags)
   const geminiData = await generateGeminiTags(
     name,
     city,
@@ -299,7 +414,11 @@ export async function enrichDestination(
     placesData.google_types
   );
 
-  // Step 3: Determine final category
+  // Merge cuisine tags with AI-generated tags (cuisine tags take priority)
+  const mergedTags = [...new Set([...cuisineTags, ...(geminiData.tags || [])])];
+  console.log(`🏷️  Final tags (${mergedTags.length}): ${mergedTags.join(', ')}`);
+
+  // Step 4: Determine final category
   let finalCategory = existingCategory || '';
 
   // Priority: Google types > Gemini suggestion > existing
@@ -319,12 +438,15 @@ export async function enrichDestination(
   console.log(`✨ Enrichment complete for ${name}`);
   console.log(`   Place ID: ${placesData.place_id || 'Not found'}`);
   console.log(`   Rating: ${placesData.rating || 'N/A'}`);
-  console.log(`   Tags: ${geminiData.tags.length} tags generated`);
+  console.log(`   Tags: ${mergedTags.length} tags (${cuisineTags.length} cuisine + ${geminiData.tags.length} AI)`);
   console.log(`   Final category: ${finalCategory}\n`);
 
   return {
     places: placesData,
-    gemini: geminiData,
+    gemini: {
+      ...geminiData,
+      tags: mergedTags, // Use merged tags with cuisine from Google types
+    },
     category: finalCategory,
   };
 }
