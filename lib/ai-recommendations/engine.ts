@@ -114,6 +114,10 @@ export class AIRecommendationEngine {
   async getCachedRecommendations(limit: number = 20): Promise<ParsedScore[]> {
     const supabase = createServiceRoleClient();
     
+    if (!supabase) {
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('personalization_scores')
       .select(`
