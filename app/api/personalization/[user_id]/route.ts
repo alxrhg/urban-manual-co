@@ -27,4 +27,22 @@ export async function GET(
   }
 }
 
+export async function POST(
+  _req: NextRequest,
+  context: { params: Promise<{ user_id: string }> }
+) {
+  try {
+    const { user_id } = await context.params;
+    // Soft-trigger: set TTL to now to signal refresh consumers to recompute
+    const { error } = await supabase
+      .from('personalization_scores')
+      .update({ ttl: new Date().toISOString() })
+      .eq('user_id', user_id);
+    if (error) throw error;
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: 'Failed to refresh personalization', details: e.message }, { status: 500 });
+  }
+}
+
 
