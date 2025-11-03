@@ -349,8 +349,9 @@ function categorizePlaceFromTypes(googleTypes: string[]): string | null {
 
 /**
  * Extract cuisine tags from Google types for better search matching
+ * Exported for use in migration scripts
  */
-function extractCuisineFromTypes(googleTypes: string[]): string[] {
+export function extractCuisineFromTypes(googleTypes: string[]): string[] {
   const cuisineTypes: Record<string, string> = {
     sushi_restaurant: 'sushi',
     ramen_restaurant: 'ramen',
