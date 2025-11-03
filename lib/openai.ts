@@ -11,7 +11,7 @@ if (apiKey) {
 
 export const openai = apiKey && OpenAILib ? new OpenAILib({ apiKey }) : null;
 
-export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'chatgpt-5-turbo';
+export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5-turbo';
 export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';
 
 
