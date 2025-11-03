@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         if (loc?.timezone) {
           try { localTime = new Date().toLocaleTimeString('en-US', { timeZone: loc.timezone, hour: '2-digit', minute: '2-digit' }); } catch {}
         }
-        const weather = await getWeather(loc?.city);
+        const weather = await getWeather(loc?.city, loc?.latitude, loc?.longitude);
         if (loc?.city) {
           greeting = localTime ? `Context: ${localTime} in ${loc.city}.` : `Context: ${loc.city}.`;
           if (weather?.temperature_c !== undefined) {
