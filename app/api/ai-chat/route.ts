@@ -312,7 +312,7 @@ export async function POST(request: NextRequest) {
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
           query_embedding: queryEmbedding,
           match_threshold: 0.6, // Lower threshold for more results
-          match_count: 100, // Increased from 50 to 100 for better coverage
+          match_count: 1000, // Increased from 100 to 1000 per request
           filter_city: intent.city || null,
           filter_category: intent.category || null,
           filter_michelin_stars: intent.filters?.michelinStar || null,
@@ -338,7 +338,7 @@ export async function POST(request: NextRequest) {
         let fallbackQuery = supabase
           .from('destinations')
           .select('*')
-          .limit(100); // Increased from 50 to 100
+          .limit(1000); // Increased from 100 to 1000
 
         // Apply filters
         if (intent.city) {

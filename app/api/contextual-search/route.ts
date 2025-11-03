@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
     let baseQuery = supabase
       .from('destinations')
       .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, tags, style_tags, ambience_tags, experience_tags')
-      .limit(100);
+      .limit(1000);
     
     // Apply city filter
     if (intent.city) {
