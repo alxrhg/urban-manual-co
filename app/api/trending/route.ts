@@ -12,10 +12,12 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const openNow = searchParams.get('open_now');
 
+    // Fetch destinations and join popularity_view for trending_score
     let q = supabase
       .from('destinations')
-      .select('slug, name, city, category, image, rating, price_level, rank_score')
+      .select('slug, name, city, category, image, rating, price_level, rank_score, popularity_view!inner(destination_slug, trending_score)')
       .order('rank_score', { ascending: false })
+      .order('popularity_view.trending_score', { ascending: false, nullsFirst: false })
       .limit(limit);
 
     if (city) q = q.ilike('city', `%${city}%`);
@@ -24,7 +26,19 @@ export async function GET(req: NextRequest) {
     const { data, error } = await q;
     if (error) throw error;
 
-    return NextResponse.json({ items: data || [], count: data?.length || 0 });
+    // Normalize response
+    const items = (data || []).map((d: any) => ({
+      slug: d.slug,
+      name: d.name,
+      city: d.city,
+      category: d.category,
+      image: d.image,
+      rating: d.rating,
+      price_level: d.price_level,
+      rank_score: d.rank_score,
+      trending_score: d.popularity_view?.trending_score ?? null,
+    }));
+    return NextResponse.json({ items, count: items.length });
   } catch (e: any) {
     return NextResponse.json({ error: 'Failed to load trending', details: e.message }, { status: 500 });
   }
