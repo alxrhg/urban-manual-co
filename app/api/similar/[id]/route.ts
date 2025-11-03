@@ -7,10 +7,10 @@ const supabase = createClient(url, key);
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     const limit = 20;
     const { data, error } = await supabase
       .from('destination_relationships')
