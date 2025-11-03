@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { semanticBlendSearch } from '@/lib/search/semanticSearch';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
@@ -277,6 +278,23 @@ export async function POST(request: NextRequest) {
         } else {
           console.error('[Search API] Vector search exception:', error);
         }
+      }
+    }
+
+    // Strategy 1b: Client-side hybrid semantic blend (uses stored embeddings column)
+    if (results.length === 0) {
+      try {
+        const blended = await semanticBlendSearch(query, {
+          city: intent.city || filters.city,
+          category: intent.category || filters.category,
+          open_now: intent.filters?.openNow || filters.openNow,
+        });
+        if (blended && blended.length) {
+          results = blended;
+          searchTier = 'vector-hybrid';
+        }
+      } catch (e) {
+        // ignore
       }
     }
 
