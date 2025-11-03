@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
     let results: any[] = [];
     let searchTier = 'basic';
 
-    // Strategy 1: Vector similarity search (if embeddings available)
+    // Strategy 1: Vector similarity search (RPC) with strict geo/category/cuisine filters
     if (queryEmbedding) {
       try {
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
@@ -298,7 +298,8 @@ export async function POST(request: NextRequest) {
           filter_michelin_stars: intent.filters?.michelinStar || filters.michelinStar || null,
           filter_min_rating: intent.filters?.rating || filters.rating || null,
           filter_max_price_level: intent.filters?.priceLevel || filters.priceLevel || null,
-          search_query: query // For full-text search ranking boost
+          search_query: query, // For full-text search ranking boost
+          filter_cuisine: (intent.filters?.cuisine || (filters as any).cuisine || null)
         });
 
         if (!vectorError && vectorResults && vectorResults.length > 0) {
@@ -343,12 +344,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Strategy 2: Full-text search on search_text column (if vector search didn't return results or as fallback)
+    // Strategy 2: Full-text search on name/description/content/search_text (fallback)
     if (results.length === 0) {
       try {
         let fullTextQuery = supabase
           .from('destinations')
-          .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
+          .select('id, slug, name, city, country, category, tags, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score')
           .limit(pageSize);
 
         // Apply city/country filters FIRST (strict priority)
@@ -408,7 +409,14 @@ export async function POST(request: NextRequest) {
         const { data: fullTextResults, error: fullTextError } = await fullTextQuery;
 
         if (!fullTextError && fullTextResults) {
-          results = fullTextResults;
+          // Order by blended rank/trending if present to stabilize fallback ordering
+          results = fullTextResults
+            .map((d: any) => ({
+              ...d,
+              _score: (d.rank_score || 0) * 0.6 + (d.trending_score || 0) * 0.4,
+            }))
+            .sort((a: any, b: any) => b._score - a._score)
+            .map(({ _score, ...rest }: any) => rest);
           searchTier = 'fulltext';
           console.log('[Search API] Full-text search found', results.length, 'results');
         } else if (fullTextError) {

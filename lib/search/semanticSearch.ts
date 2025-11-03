@@ -30,7 +30,7 @@ export async function semanticBlendSearch(query: string, filters: { city?: strin
 
   let q = supabase
     .from('destinations')
-    .select('slug, name, city, category, image, rating, reviews_count, rank_score, is_open_now, vector_embedding')
+    .select('id, slug, name, city, category, image, rating, reviews_count, rank_score, trending_score, is_open_now, tags, vector_embedding')
     .order('rank_score', { ascending: false })
     .limit(200);
   if (filters.city) q = q.ilike('city', `%${filters.city}%`);
@@ -38,18 +38,21 @@ export async function semanticBlendSearch(query: string, filters: { city?: strin
   if (filters.country) q = q.ilike('country', `%${filters.country}%`);
   if (filters.open_now) q = q.eq('is_open_now', true);
   if (filters.cuisine) q = q.contains('tags', [filters.cuisine.toLowerCase()]);
+  if (filters.cuisine) q = q.contains('tags', [filters.cuisine.toLowerCase()]);
 
   const { data, error } = await q;
   if (error || !data) return [];
 
   const rankValues = data.map((d: any) => d.rank_score || 0);
+  const trendValues = data.map((d: any) => d.trending_score || 0);
   const norm = normalize(rankValues);
+  const normTrend = normalize(trendValues);
 
   const scored = data
     .filter((d: any) => Array.isArray(d.vector_embedding))
     .map((d: any) => {
       const sim = cosineSimilarity(qEmbedding as number[], d.vector_embedding as number[]);
-      const blended = 0.7 * sim + 0.3 * norm(d.rank_score || 0);
+      const blended = 0.6 * sim + 0.25 * norm(d.rank_score || 0) + 0.15 * normTrend(d.trending_score || 0);
       return { ...d, _sim: sim, _score: blended };
     })
     .sort((a: any, b: any) => b._score - a._score)
