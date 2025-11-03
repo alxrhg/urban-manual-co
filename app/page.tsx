@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
+import { Search, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
 // Lazy load drawer (only when opened)
 const DestinationDrawer = dynamic(
   () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -12,11 +12,9 @@ const DestinationDrawer = dynamic(
     loading: () => null
   }
 );
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/CardStyles';
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
   initializeSession,
@@ -31,8 +29,7 @@ import { PersonalizedRecommendations } from '@/components/PersonalizedRecommenda
 import { IntelligentSearchFeedback } from '@/components/IntelligentSearchFeedback';
 import { SearchFiltersComponent } from '@/components/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
-import { getCityTheme } from '@/lib/design';
-import { stripHtmlTags } from '@/lib/stripHtmlTags';
+import { DestinationCard } from '@/components/DestinationCard';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -808,86 +805,23 @@ export default function Home() {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedDestinations = filteredDestinations.slice(startIndex, endIndex);
-                  return paginatedDestinations.map((destination, index) => {
-                    const isVisited = user && visitedSlugs.has(destination.slug);
-                    const { theme: cityTheme, tag } = getCityTheme(destination.city);
-
-                    return (
-                      <button
-                        key={destination.slug}
-                        data-city-theme={cityTheme}
-                        onClick={() => {
-                          setSelectedDestination(destination);
-                          setIsDrawerOpen(true);
-
-                          trackDestinationClick({
-                            destinationSlug: destination.slug,
-                            position: index,
-                            source: 'grid',
-                          });
-                        }}
-                        className={`${CARD_WRAPPER} cursor-pointer text-left ${isVisited ? 'opacity-60' : ''}`}
-                      >
-                        <div className={`${CARD_MEDIA}`}>
-                          {destination.image ? (
-                            <Image
-                              src={destination.image}
-                              alt={destination.name}
-                              fill
-                              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                              className={`object-cover transition-transform duration-500 group-hover:scale-[1.04] ${isVisited ? 'grayscale' : ''}`}
-                              quality={80}
-                              loading={index < 6 ? 'eager' : 'lazy'}
-                              fetchPriority={index === 0 ? 'high' : 'auto'}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-300">
-                              <MapPin className="h-10 w-10 opacity-25" />
-                            </div>
-                          )}
-
-                          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between">
-                            {destination.category && (
-                              <span
-                                className="rounded-full px-3 py-1 text-[0.65rem] tracking-[0.18em] uppercase"
-                                style={{ background: tag, color: '#334155' }}
-                              >
-                                {destination.category}
-                              </span>
-                            )}
-                            {destination.michelin_stars && destination.michelin_stars > 0 && (
-                              <span className="rounded-full bg-white/95 px-3 py-1 text-[0.65rem] font-semibold text-gray-900 shadow-sm">
-                                ⭐ {destination.michelin_stars}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[0.65rem] tracking-[0.22em] uppercase text-gray-500">
-                              {capitalizeCity(destination.city)}
-                            </span>
-                            {isVisited && (
-                              <span className="flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.16em] text-gray-400">
-                                <span className="compass-indicator spin" aria-hidden /> Visited
-                              </span>
-                            )}
-                          </div>
-
-                          <div className={`${CARD_TITLE}`} role="heading" aria-level={3}>
-                            {destination.name}
-                          </div>
-
-                          {destination.description && (
-                            <p className="text-sm leading-relaxed text-gray-600 line-clamp-2">
-                              {stripHtmlTags(destination.description)}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  });
+                  return paginatedDestinations.map((destination, index) => (
+                    <DestinationCard
+                      key={destination.slug}
+                      destination={destination}
+                      index={startIndex + index}
+                      isVisited={user ? visitedSlugs.has(destination.slug) : false}
+                      onClick={() => {
+                        setSelectedDestination(destination);
+                        setIsDrawerOpen(true);
+                        trackDestinationClick({
+                          destinationSlug: destination.slug,
+                          position: startIndex + index,
+                          source: 'grid',
+                        });
+                      }}
+                    />
+                  ));
                 })()}
           </div>
 
