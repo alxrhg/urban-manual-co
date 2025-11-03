@@ -126,7 +126,7 @@ export default function CityPageClient() {
     if (filters.openNow) {
       filtered = filtered.filter(d => d.opening_hours?.open_now);
     }
-    if (filters.minRating) {
+    if (typeof filters.minRating === 'number') {
       filtered = filtered.filter(d => (d.rating ?? 0) >= filters.minRating);
     }
 
