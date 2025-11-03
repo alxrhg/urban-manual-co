@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { generateJSON } from '@/lib/llm';
+import { embedText, generateJSON } from '@/lib/llm';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
-import { semanticBlendSearch } from '@/lib/search/semanticSearch';
 import { rerankResults } from '@/lib/ai/rerank';
 import { getLocation, getWeather } from '@/lib/ai/contextLocation';
 
@@ -38,18 +37,34 @@ export async function POST(req: NextRequest) {
     const { data, error } = await q;
     if (error) throw error;
 
-    // Run hybrid semantic + rank search using vector embeddings
-    let hybridResults: any[] = [];
+    // Vector-first retrieval using Supabase RPC
+    let vectorResults: any[] = [];
     try {
-      hybridResults = await semanticBlendSearch(query, {
-        city: parsed?.city || undefined,
-        country: (parsed as any)?.country || undefined,
-        category: parsed?.category || undefined,
-        open_now: parsed?.openNow === true ? true : undefined,
-      });
-    } catch {}
+      const queryEmbedding = await embedText(query);
+      if (queryEmbedding) {
+        const { data: rpcResults, error: rpcError } = await supabase.rpc('match_destinations', {
+          query_embedding: queryEmbedding,
+          match_threshold: 0.55,
+          match_count: limit,
+          filter_city: parsed?.city || null,
+          filter_category: parsed?.category || null,
+          search_query: query
+        });
 
-    let finalResults = (hybridResults && hybridResults.length > 0) ? hybridResults : (data || []);
+        if (!rpcError && Array.isArray(rpcResults) && rpcResults.length > 0) {
+          vectorResults = rpcResults;
+        }
+      }
+    } catch (error) {
+      console.warn('[AI Query] Vector search fallback triggered:', error);
+    }
+
+    let finalResults = vectorResults.length > 0 ? vectorResults : (data || []).map((d: any) => ({
+      ...d,
+      blended_rank: (d.rank_score || 0) * 0.7
+    }));
+
+    finalResults = finalResults.slice(0, limit);
     // Re-rank top 20 for better personalization/contextual fit
     try {
       finalResults = await rerankResults(query, finalResults, 20);

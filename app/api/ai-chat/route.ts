@@ -393,17 +393,12 @@ export async function POST(request: NextRequest) {
 
     let results: any[] = [];
 
-    // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
       try {
-        // Check embedding dimension (OpenAI text-embedding-3-large = 3072, older models = 768 or 1536)
-        const embeddingDim = queryEmbedding.length;
-        console.log('[AI Chat] Query embedding dimension:', embeddingDim);
-        
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
           query_embedding: queryEmbedding,
-          match_threshold: 0.6, // Lower threshold for more results
-          match_count: 1000, // Increased from 100 to 1000 per request
+          match_threshold: 0.55,
+          match_count: 200,
           filter_city: intent.city || null,
           filter_category: intent.category || null,
           filter_michelin_stars: intent.filters?.michelinStar || null,
@@ -413,100 +408,117 @@ export async function POST(request: NextRequest) {
           search_query: query
         });
 
-        if (!vectorError && vectorResults && vectorResults.length > 0) {
+        if (!vectorError && Array.isArray(vectorResults) && vectorResults.length > 0) {
           results = vectorResults;
-          console.log('[AI Chat] Vector search found', results.length, 'results');
         } else if (vectorError) {
-          // Handle dimension mismatch gracefully
-          if (vectorError.message?.includes('different vector dimensions') || vectorError.code === '22000') {
-            console.warn('[AI Chat] Vector dimension mismatch - stored embeddings may be from different model. Falling back to SQL search.');
-          } else {
-            console.error('[AI Chat] Vector search error:', vectorError);
-          }
+          console.warn('[AI Chat] Vector search error:', vectorError);
         }
-      } catch (error: any) {
-        // Handle dimension mismatch in catch block too
-        if (error.message?.includes('different vector dimensions') || error.code === '22000') {
-          console.warn('[AI Chat] Vector dimension mismatch caught - falling back to SQL search.');
-        } else {
-          console.error('[AI Chat] Vector search exception:', error);
-        }
+      } catch (error) {
+        console.error('[AI Chat] Vector search exception:', error);
       }
     }
 
-    // Strategy 2: Fallback to filtered search if vector search returns no results
     if (results.length === 0) {
       try {
         let fallbackQuery = supabase
           .from('destinations')
-          .select('*')
-          .limit(1000); // Increased from 100 to 1000
+          .select('id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags')
+          .order('rank_score', { ascending: false })
+          .limit(200);
 
-        // Apply filters
         if (intent.city) {
           fallbackQuery = fallbackQuery.ilike('city', `%${intent.city}%`);
         }
-
         if (intent.category) {
           fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
         }
-
         if (intent.filters?.rating) {
           fallbackQuery = fallbackQuery.gte('rating', intent.filters.rating);
         }
-
         if (intent.filters?.priceLevel) {
           fallbackQuery = fallbackQuery.lte('price_level', intent.filters.priceLevel);
         }
-
         if (intent.filters?.michelinStar) {
           fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
         }
-
         if (intent.filters?.cuisine) {
           fallbackQuery = fallbackQuery.contains('tags', [intent.filters.cuisine.toLowerCase()]);
         }
 
         const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
-
-        if (!fallbackError && fallbackResults) {
-          results = fallbackResults;
-          console.log('[AI Chat] Fallback search found', results.length, 'results');
+        if (!fallbackError && Array.isArray(fallbackResults)) {
+          results = fallbackResults.map((d: any) => ({
+            ...d,
+            blended_rank: (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
+            vector_similarity: 0,
+            full_text_rank: 0
+          }));
+        } else if (fallbackError) {
+          console.error('[AI Chat] Full-text fallback error:', fallbackError);
         }
-      } catch (error: any) {
-        console.error('[AI Chat] Fallback search exception:', error);
+      } catch (error) {
+        console.error('[AI Chat] Full-text fallback exception:', error);
       }
     }
 
-    // Strategy 3: Last resort - show popular destinations in the city or globally
-    if (results.length === 0 && intent.city) {
-      try {
-        const { data: cityResults } = await supabase
-          .from('destinations')
-          .select('*')
-          .ilike('city', `%${intent.city}%`)
-          .order('rating', { ascending: false })
-          .limit(50);
-
-        if (cityResults && cityResults.length > 0) {
-          results = cityResults;
-          console.log('[AI Chat] City fallback found', results.length, 'results');
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] City fallback exception:', error);
-      }
+    if (results.length > 0) {
+      results = results
+        .map((d: any) => ({
+          ...d,
+          blended_rank: typeof d.blended_rank === 'number' ? d.blended_rank : (typeof d.vector_similarity === 'number' ? d.vector_similarity : 0)
+        }))
+        .sort((a: any, b: any) => (b.blended_rank || 0) - (a.blended_rank || 0));
     }
 
-    // Return all results (no artificial limit)
     // Frontend pagination will handle display limits
 
-    // Generate natural language response
-    const response = generateResponse(results.length, intent.city, intent.category);
+    // Generate conversational response powered by GPT-4.1 when available
+    let enhancedContent = generateResponse(results.length, intent.city, intent.category);
 
-    // Generate enhanced response with context if needed
-    let enhancedContent = response;
+    if (openai && results.length > 0) {
+      try {
+        const topPicks = results.slice(0, 6).map((d: any, index: number) => {
+          const highlightTags = Array.isArray(d.tags) ? d.tags.slice(0, 4).join(', ') : '';
+          const description = (d.description || d.content || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+          const summaryParts = [
+            `${index + 1}. ${d.name}`,
+            d.city ? `(${d.city}${d.country ? `, ${d.country}` : ''})` : '',
+            d.category ? `Category: ${d.category}` : '',
+            d.rating ? `Rating: ${d.rating}` : '',
+            d.michelin_stars ? `${d.michelin_stars}★ Michelin` : '',
+            highlightTags ? `Tags: ${highlightTags}` : '',
+            description ? `Notes: ${description}` : ''
+          ].filter(Boolean);
+          return summaryParts.join(' · ');
+        }).join('\n');
+
+        const completion = await openai.chat.completions.create({
+          model: OPENAI_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are The Urban Manual\'s travel curator. Provide concise, evocative suggestions grounded in the provided destinations. Highlight unique qualities without sounding generic. Keep the tone modern, sophisticated, and helpful. Avoid inventing details that are not provided.'
+            },
+            {
+              role: 'user',
+              content: `Query: ${query}\nStructured intent: ${JSON.stringify(intent)}\nTop matches:\n${topPicks}\n\nCraft a short (2-3 sentences) reply summarizing why these places fit, then recommend how to explore them next.`
+            }
+          ],
+          temperature: 0.6,
+          max_tokens: 220
+        });
+
+        const narrative = completion.choices?.[0]?.message?.content?.trim();
+        if (narrative) {
+          enhancedContent = narrative;
+        }
+      } catch (error) {
+        console.warn('[AI Chat] Failed to generate GPT summary:', error);
+      }
+    }
+
     if (intent.clarifications && intent.clarifications.length > 0 && results.length === 0) {
-      enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
+      enhancedContent = `${enhancedContent}\n\n💡 ${intent.clarifications[0]}`;
     }
 
     // Get intelligence insights if city detected

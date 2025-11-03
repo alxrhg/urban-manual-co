@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { rerankResults } from '@/lib/ai/rerank';
-import { semanticBlendSearch } from '@/lib/search/semanticSearch';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -293,256 +292,94 @@ export async function POST(request: NextRequest) {
     let results: any[] = [];
     let searchTier = 'basic';
 
-    // Strategy 1: Vector similarity search (RPC) with strict geo/category/cuisine filters
     if (queryEmbedding) {
       try {
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
           query_embedding: queryEmbedding,
-          match_threshold: 0.7, // Cosine similarity threshold
+          match_threshold: 0.55,
           match_count: pageSize,
           filter_city: intent.city || filters.city || null,
           filter_category: intent.category || filters.category || null,
           filter_michelin_stars: intent.filters?.michelinStar || filters.michelinStar || null,
           filter_min_rating: intent.filters?.rating || filters.rating || null,
           filter_max_price_level: intent.filters?.priceLevel || filters.priceLevel || null,
-          search_query: query, // For full-text search ranking boost
-          filter_cuisine: intent.filters?.cuisine || null
+          filter_cuisine: intent.filters?.cuisine || null,
+          search_query: query
         });
 
-        if (!vectorError && vectorResults && vectorResults.length > 0) {
+        if (!vectorError && Array.isArray(vectorResults) && vectorResults.length > 0) {
           results = vectorResults;
-          searchTier = 'vector-semantic';
-          console.log('[Search API] Vector search found', results.length, 'results');
+          searchTier = 'vector';
         } else if (vectorError) {
-          // Handle dimension mismatch gracefully
-          if (vectorError.message?.includes('different vector dimensions') || vectorError.code === '22000') {
-            console.warn('[Search API] Vector dimension mismatch - stored embeddings may be from different model. Falling back to SQL search.');
-          } else if (vectorError.code === '42883' || vectorError.message?.includes('does not exist') || 
-              vectorError.message?.includes('embedding') || vectorError.code === 'P0001') {
-            console.log('[Search API] Vector search not available (embeddings may not be generated yet), using fallback');
-          } else {
-            console.error('[Search API] Vector search error:', vectorError);
-          }
+          console.warn('[Search API] Vector search error:', vectorError);
         }
-      } catch (error: any) {
-        // Handle dimension mismatch and other errors gracefully
-        if (error.message?.includes('different vector dimensions') || error.code === '22000') {
-          console.warn('[Search API] Vector dimension mismatch caught - falling back to SQL search.');
-        } else if (error.message?.includes('match_destinations') || error.message?.includes('embedding')) {
-          console.log('[Search API] Vector search not available, using fallback');
-        } else {
-          console.error('[Search API] Vector search exception:', error);
-        }
+      } catch (error) {
+        console.error('[Search API] Vector search exception:', error);
       }
     }
 
-    // Strategy 1b: Client-side hybrid semantic blend (uses stored embeddings column)
     if (results.length === 0) {
       try {
-        const blended = await semanticBlendSearch(query, {
-          city: intent.city || filters.city,
-          country: intent.country || filters.country,
-          category: intent.category || filters.category,
-          cuisine: intent.filters?.cuisine,
-          open_now: intent.filters?.openNow || filters.openNow,
-        });
-        if (blended && blended.length) {
-          results = blended;
-          searchTier = 'vector-hybrid';
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    // Strategy 2: Full-text search on name/description/content/search_text (fallback)
-    if (results.length === 0) {
-      try {
-        let fullTextQuery = supabase
+        let fallbackQuery = supabase
           .from('destinations')
-          .select('id, slug, name, city, country, category, tags, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score')
+          .select('id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags')
+          .order('rank_score', { ascending: false })
           .limit(pageSize);
 
-        // Apply city/country filters FIRST (strict priority)
         if (intent.city || filters.city) {
           const cityFilter = intent.city || filters.city;
-          fullTextQuery = fullTextQuery.ilike('city', `%${cityFilter}%`);
+          fallbackQuery = fallbackQuery.ilike('city', `%${cityFilter}%`);
         }
         if (intent.country || filters.country) {
           const countryFilter = intent.country || filters.country;
-          fullTextQuery = fullTextQuery.ilike('country', `%${countryFilter}%`);
+          fallbackQuery = fallbackQuery.ilike('country', `%${countryFilter}%`);
         }
-
         if (intent.category || filters.category) {
           const categoryFilter = intent.category || filters.category;
-          fullTextQuery = fullTextQuery.ilike('category', `%${categoryFilter}%`);
+          fallbackQuery = fallbackQuery.ilike('category', `%${categoryFilter}%`);
+        }
+        if (intent.filters?.cuisine || filters.cuisine) {
+          const cuisineFilter = intent.filters?.cuisine || filters.cuisine;
+          fallbackQuery = fallbackQuery.contains('tags', [cuisineFilter.toLowerCase()]);
         }
 
-        if (intent.filters?.cuisine) {
-          const cuisineFilter = intent.filters.cuisine;
-          fullTextQuery = fullTextQuery.contains('tags', [cuisineFilter.toLowerCase()]);
-        }
-
-        // Build keyword search: use extracted keywords OR split query into meaningful words
-        const searchKeywords = intent.keywords && intent.keywords.length > 0 
-          ? intent.keywords 
-          : query.split(/\s+/).filter((w: string) => w.length > 2 && !['in', 'the', 'for', 'and', 'or'].includes(w.toLowerCase()));
-        
-        if (searchKeywords.length > 0) {
-          // Search for any keyword in name/description/content
-          const keywordConditions: string[] = [];
-          for (const keyword of searchKeywords) {
-            keywordConditions.push(`name.ilike.%${keyword}%`);
-            keywordConditions.push(`description.ilike.%${keyword}%`);
-            keywordConditions.push(`content.ilike.%${keyword}%`);
-            keywordConditions.push(`search_text.ilike.%${keyword}%`);
-          }
-          if (keywordConditions.length > 0) {
-            fullTextQuery = fullTextQuery.or(keywordConditions.join(','));
-          }
-        } else {
-          // Fallback: search entire query if no keywords extracted
-          fullTextQuery = fullTextQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,search_text.ilike.%${query}%`);
+        const keywords = intent.keywords?.length ? intent.keywords : query.split(/\s+/).filter((w: string) => w.length > 2);
+        if (keywords.length > 0) {
+          const conditions = keywords
+            .map((keyword: string) => [
+              `name.ilike.%${keyword}%`,
+              `description.ilike.%${keyword}%`,
+              `content.ilike.%${keyword}%`,
+              `search_text.ilike.%${keyword}%`
+            ])
+            .flat();
+          fallbackQuery = fallbackQuery.or(conditions.join(','));
         }
 
         if (intent.filters?.rating || filters.rating) {
-          fullTextQuery = fullTextQuery.gte('rating', intent.filters?.rating || filters.rating);
+          fallbackQuery = fallbackQuery.gte('rating', intent.filters?.rating || filters.rating);
         }
-
         if (intent.filters?.priceLevel || filters.priceLevel) {
-          fullTextQuery = fullTextQuery.lte('price_level', intent.filters?.priceLevel || filters.priceLevel);
+          fallbackQuery = fallbackQuery.lte('price_level', intent.filters?.priceLevel || filters.priceLevel);
         }
-
         if (intent.filters?.michelinStar || filters.michelinStar) {
-          fullTextQuery = fullTextQuery.gte('michelin_stars', intent.filters?.michelinStar || filters.michelinStar);
+          fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters?.michelinStar || filters.michelinStar);
         }
 
-        const { data: fullTextResults, error: fullTextError } = await fullTextQuery;
-
-        if (!fullTextError && fullTextResults) {
-          // Order by blended rank/trending if present to stabilize fallback ordering
-          results = fullTextResults
-            .map((d: any) => ({
-              ...d,
-              _score: (d.rank_score || 0) * 0.6 + (d.trending_score || 0) * 0.4,
-            }))
-            .sort((a: any, b: any) => b._score - a._score)
-            .map(({ _score, ...rest }: any) => rest);
+        const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
+        if (!fallbackError && Array.isArray(fallbackResults)) {
+          results = fallbackResults.map((d: any) => ({
+            ...d,
+            blended_rank: (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
+            vector_similarity: 0,
+            full_text_rank: 0
+          }));
           searchTier = 'fulltext';
-          console.log('[Search API] Full-text search found', results.length, 'results');
-        } else if (fullTextError) {
-          console.error('[Search API] Full-text search error:', fullTextError);
+        } else if (fallbackError) {
+          console.error('[Search API] Full-text fallback error:', fallbackError);
         }
       } catch (error) {
-        console.error('[Search API] Full-text search exception:', error);
-      }
-    }
-
-    // Strategy 3: AI field search (vibe_tags, keywords, search_keywords) if still no results
-    if (results.length === 0) {
-      try {
-        const { data: aiFieldResults, error: aiFieldError } = await supabase.rpc('search_by_ai_fields', {
-          search_term: query,
-          match_count: pageSize
-        });
-
-        if (!aiFieldError && aiFieldResults && aiFieldResults.length > 0) {
-          // Fetch full destination data for AI field matches
-          const slugs = aiFieldResults.map((r: any) => r.slug);
-          const { data: fullData } = await supabase
-            .from('destinations')
-            .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
-            .in('slug', slugs)
-            .limit(pageSize);
-
-          if (fullData) {
-            // Preserve similarity order from AI field search
-            const orderedResults = slugs
-              .map((slug: string) => fullData.find((d: any) => d.slug === slug))
-              .filter(Boolean);
-            
-            results = orderedResults;
-            searchTier = 'ai-fields';
-            console.log('[Search API] AI field search found', results.length, 'results');
-          }
-        } else if (aiFieldError) {
-          // Handle gracefully if function doesn't exist
-          if (aiFieldError.code === '42883' || aiFieldError.message?.includes('does not exist')) {
-            console.log('[Search API] AI field search function not available, using fallback');
-          } else {
-            console.error('[Search API] AI field search error:', aiFieldError);
-          }
-        }
-      } catch (error: any) {
-        // Handle gracefully if RPC doesn't exist
-        if (error.message?.includes('search_by_ai_fields') || error.code === '42883') {
-          console.log('[Search API] AI field search not available, using fallback');
-        } else {
-          console.error('[Search API] AI field search exception:', error);
-        }
-      }
-    }
-
-    // Strategy 4: Fallback to keyword matching (original method)
-    if (results.length === 0) {
-      let fallbackQuery = supabase
-        .from('destinations')
-        .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
-        .limit(pageSize);
-
-      // Apply filters
-      if (intent.city || filters.city) {
-        const cityFilter = intent.city || filters.city;
-        fallbackQuery = fallbackQuery.ilike('city', `%${cityFilter}%`);
-      }
-      if (intent.country || filters.country) {
-        const countryFilter = intent.country || filters.country;
-        fallbackQuery = fallbackQuery.ilike('country', `%${countryFilter}%`);
-      }
-
-      if (intent.category || filters.category) {
-        const categoryFilter = intent.category || filters.category;
-        fallbackQuery = fallbackQuery.ilike('category', `%${categoryFilter}%`);
-      }
-
-      if (intent.filters?.cuisine) {
-        const cuisineFilter = intent.filters.cuisine;
-        fallbackQuery = fallbackQuery.contains('tags', [cuisineFilter.toLowerCase()]);
-      }
-
-      // Keyword matching
-      if (intent.keywords && intent.keywords.length > 0) {
-        const conditions: string[] = [];
-        for (const keyword of intent.keywords) {
-          conditions.push(`name.ilike.%${keyword}%`);
-          conditions.push(`description.ilike.%${keyword}%`);
-          conditions.push(`content.ilike.%${keyword}%`);
-        }
-        if (conditions.length > 0) {
-          fallbackQuery = fallbackQuery.or(conditions.join(','));
-        }
-      } else {
-        fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`);
-      }
-
-      if (intent.filters?.rating || filters.rating) {
-        fallbackQuery = fallbackQuery.gte('rating', intent.filters?.rating || filters.rating);
-      }
-
-      if (intent.filters?.priceLevel || filters.priceLevel) {
-        fallbackQuery = fallbackQuery.lte('price_level', intent.filters?.priceLevel || filters.priceLevel);
-      }
-
-      if (intent.filters?.michelinStar || filters.michelinStar) {
-        fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters?.michelinStar || filters.michelinStar);
-      }
-
-      const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
-
-      if (!fallbackError && fallbackResults) {
-        results = fallbackResults;
-        searchTier = 'keyword';
-        console.log('[Search API] Keyword search found', results.length, 'results');
+        console.error('[Search API] Full-text fallback exception:', error);
       }
     }
 
@@ -574,7 +411,9 @@ export async function POST(request: NextRequest) {
     const lowerQuery = query.toLowerCase();
     let rankedResults = results
       .map((dest: any) => {
-        let score = dest.similarity || dest.rank || 0;
+        let score = typeof dest.blended_rank === 'number'
+          ? dest.blended_rank
+          : (typeof dest.vector_similarity === 'number' ? dest.vector_similarity : 0);
         const lowerName = (dest.name || '').toLowerCase();
         const lowerDesc = (dest.description || '').toLowerCase();
         const lowerCategory = (dest.category || '').toLowerCase();
@@ -609,7 +448,7 @@ export async function POST(request: NextRequest) {
       })
       .sort((a: any, b: any) => b._score - a._score)
       .slice(0, pageSize)
-      .map(({ _score, similarity, rank, ...rest }: any) => rest);
+      .map(({ _score, ...rest }: any) => rest);
 
     // Apply LLM re-ranker on the top N for improved ordering
     try {
