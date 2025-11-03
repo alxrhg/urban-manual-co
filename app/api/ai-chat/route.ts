@@ -302,7 +302,7 @@ export async function POST(request: NextRequest) {
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
           query_embedding: queryEmbedding,
           match_threshold: 0.6, // Lower threshold for more results
-          match_count: 50,
+          match_count: 100, // Increased from 50 to 100 for better coverage
           filter_city: intent.city || null,
           filter_category: intent.category || null,
           filter_michelin_stars: intent.filters?.michelinStar || null,
@@ -328,7 +328,7 @@ export async function POST(request: NextRequest) {
         let fallbackQuery = supabase
           .from('destinations')
           .select('*')
-          .limit(50);
+          .limit(100); // Increased from 50 to 100
 
         // Apply filters
         if (intent.city) {
@@ -370,7 +370,7 @@ export async function POST(request: NextRequest) {
           .select('*')
           .ilike('city', `%${intent.city}%`)
           .order('rating', { ascending: false })
-          .limit(12);
+          .limit(50);
 
         if (cityResults && cityResults.length > 0) {
           results = cityResults;
@@ -381,25 +381,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Limit to 12 results for display
-    const limitedResults = results.slice(0, 12);
+    // Return all results (no artificial limit)
+    // Frontend pagination will handle display limits
 
     // Generate natural language response
-    const response = generateResponse(limitedResults.length, intent.city, intent.category);
+    const response = generateResponse(results.length, intent.city, intent.category);
 
     // Generate enhanced response with context if needed
     let enhancedContent = response;
-    if (intent.clarifications && intent.clarifications.length > 0 && limitedResults.length === 0) {
+    if (intent.clarifications && intent.clarifications.length > 0 && results.length === 0) {
       enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
     }
 
     return NextResponse.json({
       content: enhancedContent,
-      destinations: limitedResults,
+      destinations: results,
       intent: {
         ...intent,
-        resultCount: limitedResults.length,
-        hasResults: limitedResults.length > 0
+        resultCount: results.length,
+        hasResults: results.length > 0
       }
     });
 
