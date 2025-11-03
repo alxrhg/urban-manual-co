@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
         user_ratings_total,
         price_level,
         opening_hours_json,
-        current_opening_hours_json,
         secondary_opening_hours_json,
         business_status,
         editorial_summary,
@@ -95,9 +94,6 @@ export async function POST(request: NextRequest) {
         const openingHours = dest.opening_hours_json 
           ? (typeof dest.opening_hours_json === 'string' ? JSON.parse(dest.opening_hours_json) : dest.opening_hours_json)
           : null;
-        const currentOpeningHours = dest.current_opening_hours_json
-          ? (typeof dest.current_opening_hours_json === 'string' ? JSON.parse(dest.current_opening_hours_json) : dest.current_opening_hours_json)
-          : null;
         const secondaryOpeningHours = dest.secondary_opening_hours_json
           ? (typeof dest.secondary_opening_hours_json === 'string' ? JSON.parse(dest.secondary_opening_hours_json) : dest.secondary_opening_hours_json)
           : null;
@@ -130,7 +126,6 @@ export async function POST(request: NextRequest) {
           editorial_summary: dest.editorial_summary,
           place_types: placeTypes,
           opening_hours: openingHours,
-          current_opening_hours: currentOpeningHours,
           secondary_opening_hours: secondaryOpeningHours,
           timezone: dest.timezone_id,
           utc_offset: dest.utc_offset,
