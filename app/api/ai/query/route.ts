@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           .slice(0, 5)
           .map(([t]) => t);
 
-        // Build subtle greeting from location/time/weather if available
+        // Generate playful, personalized greeting from location/time/weather
         let greeting = '';
         const loc = await getLocation(req);
         let localTime = '';
@@ -71,26 +71,44 @@ export async function POST(req: NextRequest) {
           } catch {}
         }
         const weather = await getWeather(loc?.city, loc?.latitude, loc?.longitude);
-        if (loc?.city) {
-          const city = loc.city;
-          const pieces: string[] = [];
-          if (timeOfDay) {
-            // On-brand short greeting
-            if (timeOfDay === 'Morning') pieces.push(`Morning in ${city}`);
-            else if (timeOfDay === 'Afternoon') pieces.push(`Good afternoon in ${city}`);
-            else if (timeOfDay === 'Evening') pieces.push(`Good evening in ${city}`);
-            else pieces.push(`Late night in ${city}`);
-          } else {
-            pieces.push(city);
+        
+        // Generate personalized greeting using AI
+        if (loc?.city && openai) {
+          try {
+            const context = [
+              loc.city,
+              timeOfDay ? `${timeOfDay} (${localTime})` : '',
+              weather?.temperature_c ? `${Math.round(weather.temperature_c)}°C` : '',
+              weather?.is_raining ? 'raining' : '',
+            ].filter(Boolean).join(', ');
+            
+            const greetingResp = await openai.chat.completions.create({
+              model: OPENAI_MODEL,
+              messages: [
+                { 
+                  role: 'system', 
+                  content: 'You are The Urban Manual\'s playful travel editor. Generate a brief (8-15 words), witty, personalized greeting referencing the user\'s location, time of day, and weather. Be playful but sophisticated. Examples: "Evening in Paris — perfect for candlelight.", "Morning drizzle in Tokyo? Cozy cafés await.", "Late night in London — time for dim-lit corners." Never mention AI or be generic.' 
+                },
+                { 
+                  role: 'user', 
+                  content: `Generate a playful greeting for: ${context}` 
+                }
+              ],
+              temperature: 0.9,
+              max_tokens: 30,
+            });
+            greeting = (greetingResp.choices?.[0]?.message?.content || '').trim();
+          } catch (_) {
+            // Fallback to simple greeting if AI fails
+            if (loc?.city) {
+              greeting = timeOfDay ? `${timeOfDay} in ${loc.city}` : `From ${loc.city}`;
+              if (weather?.temperature_c) greeting += ` — ${Math.round(weather.temperature_c)}°C`;
+            }
           }
-          if (weather?.temperature_c !== undefined) {
-            pieces.push(`${Math.round(weather.temperature_c)}°C${weather.is_raining ? ', raining' : ''}`);
-          }
-          greeting = pieces.join(' — ');
         }
 
         const systemPrompt = 'Urban Manual Editorial Intelligence';
-        const userPrompt = `${greeting}\nSearch: ${query}\nTop destination tags: ${topTags.join(', ')}\n\nWrite a concise 1–2 sentence editorial insight to introduce these results with a subtle greeting if context is present (e.g., Good evening from Paris). Tone: modern luxury, quiet confidence. Do not mention AI.`;
+        const userPrompt = `Search: ${query}\nTop destination tags: ${topTags.join(', ')}\n\nWrite a concise 1–2 sentence editorial insight to introduce these results. Tone: modern luxury, quiet confidence. Do not mention AI.`;
         const resp = await openai.chat.completions.create({
           model: OPENAI_MODEL,
           messages: [
