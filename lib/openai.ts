@@ -1,11 +1,13 @@
-let OpenAILib: any = null;
-try {
-  // Dynamically import to avoid build errors if package not present in some environments
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  OpenAILib = require('openai');
-} catch (_) {}
-
 const apiKey = process.env.OPENAI_API_KEY;
+
+let OpenAILib: any = null;
+if (apiKey) {
+  try {
+    // Dynamically import only if key exists to avoid module resolution warnings
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    OpenAILib = require('openai');
+  } catch (_) {}
+}
 
 export const openai = apiKey && OpenAILib ? new OpenAILib({ apiKey }) : null;
 

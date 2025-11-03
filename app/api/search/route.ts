@@ -338,7 +338,7 @@ export async function POST(request: NextRequest) {
         // Build keyword search: use extracted keywords OR split query into meaningful words
         const searchKeywords = intent.keywords && intent.keywords.length > 0 
           ? intent.keywords 
-          : query.split(/\s+/).filter(w => w.length > 2 && !['in', 'the', 'for', 'and', 'or'].includes(w.toLowerCase()));
+          : query.split(/\s+/).filter((w: string) => w.length > 2 && !['in', 'the', 'for', 'and', 'or'].includes(w.toLowerCase()));
         
         if (searchKeywords.length > 0) {
           // Search for any keyword in name/description/content
