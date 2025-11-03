@@ -27,6 +27,17 @@ type MatchDestinationParams = {
   search_query?: string | null;
 };
 
+type FallbackOptions = {
+  omitRankingColumns?: boolean;
+  relaxCuisine?: boolean;
+  relaxRating?: boolean;
+  relaxPrice?: boolean;
+  relaxMichelin?: boolean;
+  relaxCategory?: boolean;
+  relaxCity?: boolean;
+  relaxKeywords?: boolean;
+};
+
 async function callMatchDestinations(params: MatchDestinationParams) {
   const { data, error } = await supabase.rpc('match_destinations', params);
 
@@ -368,19 +379,34 @@ function parseQueryFallback(query: string): {
 }
 
 // Generate natural language response
-function generateResponse(count: number, city?: string, category?: string): string {
+function generateResponse(count: number, city?: string, category?: string, relaxedFilters: string[] = []): string {
   const location = city ? ` in ${city}` : '';
   const categoryText = category ? ` ${category}` : ' place';
-  
+  const friendlyNames: Record<string, string> = {
+    cuisine: 'the cuisine filter',
+    rating: 'the rating minimum',
+    price: 'the price ceiling',
+    michelin: 'the Michelin requirement',
+    category: 'the category filter',
+    city: 'the city requirement',
+    keywords: 'keyword matching',
+  };
+  const relaxedFriendly = relaxedFilters.map(filter => friendlyNames[filter] || `${filter} filter`);
+  const relaxedNote = relaxedFriendly.length > 0
+    ? ` I widened the search by easing ${relaxedFriendly.length === 1
+      ? relaxedFriendly[0]
+      : `${relaxedFriendly.slice(0, -1).join(', ')}, and ${relaxedFriendly[relaxedFriendly.length - 1]}`}.`
+    : '';
+
   if (count === 0) {
-    return `I couldn't find any${categoryText}s${location}. Try a different search or browse all destinations.`;
+    return `I couldn't find any${categoryText}s${location}. Try a different search or browse all destinations.${relaxedNote}`.trim();
   }
-  
+
   if (count === 1) {
-    return `I found 1${categoryText}${location}.`;
+    return `I found 1${categoryText}${location}.${relaxedNote}`.trim();
   }
-  
-  return `I found ${count}${categoryText}s${location}.`;
+
+  return `I found ${count}${categoryText}s${location}.${relaxedNote}`.trim();
 }
 
 export async function POST(request: NextRequest) {
@@ -419,6 +445,8 @@ export async function POST(request: NextRequest) {
     const queryEmbedding = await generateEmbedding(query);
 
     let results: any[] = [];
+    let searchStrategy = queryEmbedding ? 'vector' : 'keyword';
+    let relaxedFiltersApplied: string[] = [];
 
     if (queryEmbedding) {
       try {
@@ -437,11 +465,14 @@ export async function POST(request: NextRequest) {
 
         if (!vectorError && Array.isArray(vectorResults) && vectorResults.length > 0) {
           results = vectorResults;
+          searchStrategy = 'vector';
         } else if (vectorError) {
           console.warn('[AI Chat] Vector search error:', vectorError);
+          searchStrategy = 'vector-error';
         }
       } catch (error) {
         console.error('[AI Chat] Vector search exception:', error);
+        searchStrategy = 'vector-exception';
       }
     }
 
@@ -450,29 +481,58 @@ export async function POST(request: NextRequest) {
         const keywords = intent.keywords?.length
           ? intent.keywords
           : query.split(/\s+/).filter((w: string) => w.length > 2);
-
-        const applyFilters = (queryBuilder: any) => {
+        const applyFilters = (queryBuilder: any, options: FallbackOptions) => {
           let qb = queryBuilder;
-          if (intent.city) {
+          const orConditions: string[] = [];
+
+          if (intent.city && !options.relaxCity) {
             qb = qb.ilike('city', `%${intent.city}%`);
           }
-          if (intent.category) {
+
+          if (intent.category && !options.relaxCategory) {
             qb = qb.ilike('category', `%${intent.category}%`);
           }
+
           if (intent.filters?.rating) {
-            qb = qb.gte('rating', intent.filters.rating);
+            const ratingThreshold = options.relaxRating
+              ? Math.max(3, intent.filters.rating - 0.5)
+              : intent.filters.rating;
+            if (ratingThreshold) {
+              qb = qb.gte('rating', ratingThreshold);
+            }
           }
+
           if (intent.filters?.priceLevel) {
-            qb = qb.lte('price_level', intent.filters.priceLevel);
+            const priceThreshold = options.relaxPrice
+              ? Math.min(4, intent.filters.priceLevel + 1)
+              : intent.filters.priceLevel;
+            if (priceThreshold) {
+              qb = qb.lte('price_level', priceThreshold);
+            }
           }
-          if (intent.filters?.michelinStar) {
+
+          if (intent.filters?.michelinStar && !options.relaxMichelin) {
             qb = qb.gte('michelin_stars', intent.filters.michelinStar);
           }
+
           if (intent.filters?.cuisine) {
-            qb = qb.contains('tags', [intent.filters.cuisine.toLowerCase()]);
+            const cuisine = intent.filters.cuisine.toLowerCase();
+            if (options.relaxCuisine) {
+              orConditions.push(
+                `search_text.ilike.%${cuisine}%`,
+                `description.ilike.%${cuisine}%`,
+                `content.ilike.%${cuisine}%`
+              );
+            } else {
+              qb = qb.contains('tags', [cuisine]);
+            }
           }
-          if (keywords.length > 0) {
-            const conditions = keywords
+
+          const keywordList = options.relaxKeywords ? keywords.slice(0, 1) : keywords;
+          if (keywordList.length > 0) {
+            const keywordConditions = keywordList
+              .map((keyword: string) => keyword.trim())
+              .filter(Boolean)
               .map((keyword: string) => [
                 `name.ilike.%${keyword}%`,
                 `description.ilike.%${keyword}%`,
@@ -480,12 +540,18 @@ export async function POST(request: NextRequest) {
                 `search_text.ilike.%${keyword}%`
               ])
               .flat();
-            qb = qb.or(conditions.join(','));
+            orConditions.push(...keywordConditions);
           }
+
+          if (orConditions.length > 0) {
+            qb = qb.or(orConditions.join(','));
+          }
+
           return qb;
         };
 
-        const buildFallbackQuery = (omitRankingColumns = false) => {
+        const executeFallbackAttempt = async (options: FallbackOptions) => {
+          const omitRankingColumns = options.omitRankingColumns ?? false;
           const selectColumns = omitRankingColumns
             ? 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, tags'
             : 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags';
@@ -499,32 +565,90 @@ export async function POST(request: NextRequest) {
             ? qb.order('rating', { ascending: false })
             : qb.order('rank_score', { ascending: false });
 
-          return applyFilters(qb);
+          const { data, error } = await applyFilters(qb, options);
+
+          if (error && error.code === '42703' && !omitRankingColumns) {
+            console.warn('[AI Chat] rank_score not available, retrying fallback without ranking columns');
+            return executeFallbackAttempt({ ...options, omitRankingColumns: true });
+          }
+
+          return { data, error, omitRankingColumns: omitRankingColumns || (error?.code === '42703') };
         };
 
-        let fallbackUsedMinimal = false;
-        let { data: fallbackResults, error: fallbackError } = await buildFallbackQuery(false);
+        const fallbackAttempts: FallbackOptions[] = [
+          {},
+          { omitRankingColumns: true },
+          { relaxCuisine: true },
+          { relaxCuisine: true, omitRankingColumns: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, omitRankingColumns: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, relaxCategory: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, relaxCategory: true, omitRankingColumns: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, relaxCategory: true, relaxCity: true },
+          {
+            relaxCuisine: true,
+            relaxRating: true,
+            relaxPrice: true,
+            relaxMichelin: true,
+            relaxCategory: true,
+            relaxCity: true,
+            omitRankingColumns: true,
+          },
+          {
+            relaxCuisine: true,
+            relaxRating: true,
+            relaxPrice: true,
+            relaxMichelin: true,
+            relaxCategory: true,
+            relaxCity: true,
+            relaxKeywords: true,
+          },
+          {
+            relaxCuisine: true,
+            relaxRating: true,
+            relaxPrice: true,
+            relaxMichelin: true,
+            relaxCategory: true,
+            relaxCity: true,
+            relaxKeywords: true,
+            omitRankingColumns: true,
+          },
+        ];
 
-        if (fallbackError && fallbackError.code === '42703') {
-          console.warn('[AI Chat] rank_score not available, retrying fallback without ranking columns');
-          const retryQuery = buildFallbackQuery(true);
-          const { data: minimalResults, error: minimalError } = await retryQuery;
-          fallbackResults = minimalResults;
-          fallbackError = minimalError;
-          fallbackUsedMinimal = !minimalError;
+        for (const attempt of fallbackAttempts) {
+          const { data: fallbackResults, error: fallbackError, omitRankingColumns } = await executeFallbackAttempt(attempt);
+
+          if (fallbackError) {
+            console.warn('[AI Chat] Full-text fallback attempt failed:', fallbackError);
+            continue;
+          }
+
+          if (Array.isArray(fallbackResults) && fallbackResults.length > 0) {
+            const relaxed: string[] = Object.entries(attempt)
+              .filter(([key, value]) => key.startsWith('relax') && value)
+              .map(([key]) => key.replace('relax', '').toLowerCase());
+
+            relaxedFiltersApplied = relaxed;
+            searchStrategy = relaxed.length > 0
+              ? `fallback-relaxed${omitRankingColumns ? '-rating' : ''}`
+              : (omitRankingColumns ? 'rating-fallback' : 'fulltext');
+
+            results = fallbackResults.map((d: any) => ({
+              ...d,
+              blended_rank: omitRankingColumns
+                ? (typeof d.rating === 'number' ? d.rating : 0)
+                : (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
+              vector_similarity: 0,
+              full_text_rank: 0
+            }));
+            break;
+          }
         }
 
-        if (!fallbackError && Array.isArray(fallbackResults)) {
-          results = fallbackResults.map((d: any) => ({
-            ...d,
-            blended_rank: fallbackUsedMinimal
-              ? (typeof d.rating === 'number' ? d.rating : 0)
-              : (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
-            vector_similarity: 0,
-            full_text_rank: 0
-          }));
-        } else if (fallbackError) {
-          console.error('[AI Chat] Full-text fallback error:', fallbackError);
+        if (results.length === 0) {
+          searchStrategy = searchStrategy.startsWith('vector')
+            ? `${searchStrategy}-fallback-empty`
+            : 'fallback-empty';
         }
       } catch (error) {
         console.error('[AI Chat] Full-text fallback exception:', error);
@@ -543,7 +667,7 @@ export async function POST(request: NextRequest) {
     // Frontend pagination will handle display limits
 
     // Generate conversational response powered by GPT-4.1 when available
-    let enhancedContent = generateResponse(results.length, intent.city, intent.category);
+    let enhancedContent = generateResponse(results.length, intent.city, intent.category, relaxedFiltersApplied);
 
     if (openai && results.length > 0) {
       try {
@@ -609,14 +733,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const responseIntent: any = {
+      ...intent,
+      resultCount: results.length,
+      hasResults: results.length > 0,
+      searchStrategy,
+      relaxedFilters: relaxedFiltersApplied,
+    };
+
     return NextResponse.json({
       content: enhancedContent,
       destinations: results,
-      intent: {
-        ...intent,
-        resultCount: results.length,
-        hasResults: results.length > 0
-      },
+      intent: responseIntent,
       enhancedIntent, // Include full enhanced intent
       intelligence: intelligenceInsights,
     });

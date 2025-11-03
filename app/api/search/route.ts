@@ -23,6 +23,17 @@ type MatchDestinationParams = {
   search_query?: string | null;
 };
 
+type FallbackOptions = {
+  omitRankingColumns?: boolean;
+  relaxCuisine?: boolean;
+  relaxRating?: boolean;
+  relaxPrice?: boolean;
+  relaxMichelin?: boolean;
+  relaxCategory?: boolean;
+  relaxCity?: boolean;
+  relaxKeywords?: boolean;
+};
+
 async function callMatchDestinations(params: MatchDestinationParams) {
   const { data, error } = await supabase.rpc('match_destinations', params);
 
@@ -318,6 +329,7 @@ export async function POST(request: NextRequest) {
 
     let results: any[] = [];
     let searchTier = 'basic';
+    let relaxedFiltersApplied: string[] = [];
 
     if (queryEmbedding) {
       try {
@@ -339,9 +351,11 @@ export async function POST(request: NextRequest) {
           searchTier = 'vector';
         } else if (vectorError) {
           console.warn('[Search API] Vector search error:', vectorError);
+          searchTier = 'vector-error';
         }
       } catch (error) {
         console.error('[Search API] Vector search exception:', error);
+        searchTier = 'vector-exception';
       }
     }
 
@@ -351,26 +365,49 @@ export async function POST(request: NextRequest) {
           ? intent.keywords
           : query.split(/\s+/).filter((w: string) => w.length > 2);
 
-        const applyFilters = (queryBuilder: any) => {
+        const applyFilters = (queryBuilder: any, options: FallbackOptions) => {
           let qb = queryBuilder;
-          if (intent.city || filters.city) {
-            const cityFilter = intent.city || filters.city;
+          const orConditions: string[] = [];
+
+          const cityFilter = (intent.city || filters.city) && !options.relaxCity ? (intent.city || filters.city) : null;
+          if (cityFilter) {
             qb = qb.ilike('city', `%${cityFilter}%`);
           }
-          if (intent.country || filters.country) {
-            const countryFilter = intent.country || filters.country;
+
+          const countryFilter = intent.country || filters.country;
+          if (countryFilter) {
             qb = qb.ilike('country', `%${countryFilter}%`);
           }
-          if (intent.category || filters.category) {
-            const categoryFilter = intent.category || filters.category;
+
+          const categoryFilter = (intent.category || filters.category) && !options.relaxCategory
+            ? (intent.category || filters.category)
+            : null;
+          if (categoryFilter) {
             qb = qb.ilike('category', `%${categoryFilter}%`);
           }
-          if (intent.filters?.cuisine || filters.cuisine) {
-            const cuisineFilter = intent.filters?.cuisine || filters.cuisine;
-            qb = qb.contains('tags', [cuisineFilter.toLowerCase()]);
+
+          const cuisineFilter = intent.filters?.cuisine || filters.cuisine;
+          if (cuisineFilter) {
+            const loweredCuisine = String(cuisineFilter).toLowerCase();
+            if (options.relaxCuisine) {
+              orConditions.push(
+                `search_text.ilike.%${loweredCuisine}%`,
+                `description.ilike.%${loweredCuisine}%`,
+                `content.ilike.%${loweredCuisine}%`
+              );
+            } else {
+              qb = qb.contains('tags', [loweredCuisine]);
+            }
           }
-          if (keywords.length > 0) {
-            const conditions = keywords
+
+          const keywordSource = Array.isArray(filters.keywords) && filters.keywords.length > 0
+            ? filters.keywords
+            : keywords;
+          const keywordList = options.relaxKeywords ? keywordSource.slice(0, 1) : keywordSource;
+          if (keywordList.length > 0) {
+            const keywordConditions = keywordList
+              .map((keyword: string) => keyword.trim())
+              .filter(Boolean)
               .map((keyword: string) => [
                 `name.ilike.%${keyword}%`,
                 `description.ilike.%${keyword}%`,
@@ -378,21 +415,43 @@ export async function POST(request: NextRequest) {
                 `search_text.ilike.%${keyword}%`
               ])
               .flat();
-            qb = qb.or(conditions.join(','));
+            orConditions.push(...keywordConditions);
           }
-          if (intent.filters?.rating || filters.rating) {
-            qb = qb.gte('rating', intent.filters?.rating || filters.rating);
+
+          const ratingFilter = intent.filters?.rating || filters.rating;
+          if (ratingFilter) {
+            const ratingThreshold = options.relaxRating
+              ? Math.max(3, ratingFilter - 0.5)
+              : ratingFilter;
+            if (ratingThreshold) {
+              qb = qb.gte('rating', ratingThreshold);
+            }
           }
-          if (intent.filters?.priceLevel || filters.priceLevel) {
-            qb = qb.lte('price_level', intent.filters?.priceLevel || filters.priceLevel);
+
+          const priceFilter = intent.filters?.priceLevel || filters.priceLevel;
+          if (priceFilter) {
+            const priceThreshold = options.relaxPrice
+              ? Math.min(4, priceFilter + 1)
+              : priceFilter;
+            if (priceThreshold) {
+              qb = qb.lte('price_level', priceThreshold);
+            }
           }
-          if (intent.filters?.michelinStar || filters.michelinStar) {
-            qb = qb.gte('michelin_stars', intent.filters?.michelinStar || filters.michelinStar);
+
+          const michelinFilter = intent.filters?.michelinStar || filters.michelinStar;
+          if (michelinFilter && !options.relaxMichelin) {
+            qb = qb.gte('michelin_stars', michelinFilter);
           }
+
+          if (orConditions.length > 0) {
+            qb = qb.or(orConditions.join(','));
+          }
+
           return qb;
         };
 
-        const buildFallbackQuery = (omitRankingColumns = false) => {
+        const executeFallbackAttempt = async (options: FallbackOptions) => {
+          const omitRankingColumns = options.omitRankingColumns ?? false;
           const selectColumns = omitRankingColumns
             ? 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, tags'
             : 'id, slug, name, city, country, category, description, content, image, michelin_stars, crown, rating, price_level, rank_score, trending_score, tags';
@@ -406,33 +465,93 @@ export async function POST(request: NextRequest) {
             ? qb.order('rating', { ascending: false })
             : qb.order('rank_score', { ascending: false });
 
-          return applyFilters(qb);
+          const { data, error } = await applyFilters(qb, options);
+
+          if (error && error.code === '42703' && !omitRankingColumns) {
+            console.warn('[Search API] rank_score not available, retrying fallback without ranking columns');
+            return executeFallbackAttempt({ ...options, omitRankingColumns: true });
+          }
+
+          return { data, error, omitRankingColumns: omitRankingColumns || (error?.code === '42703') };
         };
 
-        let fallbackUsedMinimal = false;
-        let { data: fallbackResults, error: fallbackError } = await buildFallbackQuery(false);
+        const fallbackAttempts: FallbackOptions[] = [
+          {},
+          { omitRankingColumns: true },
+          { relaxCuisine: true },
+          { relaxCuisine: true, omitRankingColumns: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, omitRankingColumns: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, relaxCategory: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, relaxCategory: true, omitRankingColumns: true },
+          { relaxCuisine: true, relaxRating: true, relaxPrice: true, relaxMichelin: true, relaxCategory: true, relaxCity: true },
+          {
+            relaxCuisine: true,
+            relaxRating: true,
+            relaxPrice: true,
+            relaxMichelin: true,
+            relaxCategory: true,
+            relaxCity: true,
+            omitRankingColumns: true,
+          },
+          {
+            relaxCuisine: true,
+            relaxRating: true,
+            relaxPrice: true,
+            relaxMichelin: true,
+            relaxCategory: true,
+            relaxCity: true,
+            relaxKeywords: true,
+          },
+          {
+            relaxCuisine: true,
+            relaxRating: true,
+            relaxPrice: true,
+            relaxMichelin: true,
+            relaxCategory: true,
+            relaxCity: true,
+            relaxKeywords: true,
+            omitRankingColumns: true,
+          },
+        ];
 
-        if (fallbackError && fallbackError.code === '42703') {
-          console.warn('[Search API] rank_score not available, retrying fallback without ranking columns');
-          const retryQuery = buildFallbackQuery(true);
-          const { data: minimalResults, error: minimalError } = await retryQuery;
-          fallbackResults = minimalResults;
-          fallbackError = minimalError;
-          fallbackUsedMinimal = !minimalError;
+        for (const attempt of fallbackAttempts) {
+          const { data: fallbackResults, error: fallbackError, omitRankingColumns } = await executeFallbackAttempt(attempt);
+
+          if (fallbackError) {
+            console.warn('[Search API] Full-text fallback attempt failed:', fallbackError);
+            continue;
+          }
+
+          if (Array.isArray(fallbackResults) && fallbackResults.length > 0) {
+            const relaxed: string[] = Object.entries(attempt)
+              .filter(([key, value]) => key.startsWith('relax') && value)
+              .map(([key]) => key.replace('relax', '').toLowerCase());
+
+            if (relaxed.length > 0) {
+              searchTier = omitRankingColumns ? 'fallback-relaxed-rating' : 'fallback-relaxed';
+            } else {
+              searchTier = omitRankingColumns ? 'rating-fallback' : 'fulltext';
+            }
+
+            relaxedFiltersApplied = relaxed;
+
+            results = fallbackResults.map((d: any) => ({
+              ...d,
+              blended_rank: omitRankingColumns
+                ? (typeof d.rating === 'number' ? d.rating : 0)
+                : (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
+              vector_similarity: 0,
+              full_text_rank: 0
+            }));
+            break;
+          }
         }
 
-        if (!fallbackError && Array.isArray(fallbackResults)) {
-          results = fallbackResults.map((d: any) => ({
-            ...d,
-            blended_rank: fallbackUsedMinimal
-              ? (typeof d.rating === 'number' ? d.rating : 0)
-              : (d.rank_score || 0) * 0.7 + (d.trending_score || 0) * 0.3,
-            vector_similarity: 0,
-            full_text_rank: 0
-          }));
-          searchTier = fallbackUsedMinimal ? 'rating-fallback' : 'fulltext';
-        } else if (fallbackError) {
-          console.error('[Search API] Full-text fallback error:', fallbackError);
+        if (results.length === 0) {
+          searchTier = searchTier.startsWith('vector')
+            ? `${searchTier}-fallback-empty`
+            : 'fallback-empty';
         }
       } catch (error) {
         console.error('[Search API] Full-text fallback exception:', error);
@@ -532,12 +651,19 @@ export async function POST(request: NextRequest) {
       aiInsightBanner = `Tailored for ${contextParts.join(', ')}`;
     }
 
+    const responseIntent: any = {
+      ...intent,
+      resultCount: rankedResults.length,
+      searchStrategy: searchTier,
+      relaxedFilters: relaxedFiltersApplied,
+    };
+
     return NextResponse.json({
       results: rankedResults,
       searchTier: searchTier,
       conversationContext: conversationContext || undefined,
       aiInsightBanner: aiInsightBanner || undefined,
-      intent,
+      intent: responseIntent,
       suggestions: suggestions.length > 0 ? suggestions : undefined,
     });
 
