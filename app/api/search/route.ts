@@ -154,10 +154,12 @@ function parseQueryFallback(query: string): {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query, pageSize = 50, filters = {}, userId } = body;
+    const { query, pageSize = 50, filters = {}, userId, session_token } = body;
     
     // Try to get userId from cookies/auth if not provided
     let authenticatedUserId = userId;
+    let conversationContext: any = null;
+
     if (!authenticatedUserId) {
       try {
         const { createServerClient } = await import('@/lib/supabase-server');
@@ -169,6 +171,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Get conversation context if available
+    try {
+      const { getOrCreateSession } = await import('@/app/api/conversation/utils/contextHandler');
+      const session = await getOrCreateSession(authenticatedUserId, session_token);
+      if (session) {
+        conversationContext = session.context;
+      }
+    } catch {
+      // Context is optional
+    }
+
     if (!query || query.trim().length < 2) {
       return NextResponse.json({ 
         results: [], 
@@ -177,8 +190,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Extract structured filters using AI
+    // Extract structured filters using AI (with conversation context)
     const intent = await understandQuery(query);
+    
+    // Enhance intent with conversation context if available
+    if (conversationContext) {
+      if (conversationContext.city && !intent.city) intent.city = conversationContext.city;
+      if (conversationContext.category && !intent.category) intent.category = conversationContext.category;
+      if (conversationContext.mood) {
+        intent.filters = intent.filters || {};
+        // Map mood to search filters (could enhance further)
+      }
+    }
     
     // Map category synonyms to database categories
     const categorySynonyms: Record<string, string> = {
@@ -481,9 +504,21 @@ export async function POST(request: NextRequest) {
       suggestions.push(`Try "best ${intent.category}s in Paris"`);
     }
 
+    // Generate AI insight banner if conversation context exists
+    let aiInsightBanner: string | null = null;
+    if (conversationContext && (conversationContext.city || conversationContext.category)) {
+      const contextParts: string[] = [];
+      if (conversationContext.city) contextParts.push(conversationContext.city);
+      if (conversationContext.category) contextParts.push(conversationContext.category);
+      if (conversationContext.mood) contextParts.push(conversationContext.mood);
+      aiInsightBanner = `Tailored for ${contextParts.join(', ')}`;
+    }
+
     return NextResponse.json({
       results: rankedResults,
       searchTier: searchTier,
+      conversationContext: conversationContext || undefined,
+      aiInsightBanner: aiInsightBanner || undefined,
       intent,
       suggestions: suggestions.length > 0 ? suggestions : undefined,
     });
