@@ -3,6 +3,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -84,11 +85,13 @@ export default function RootLayout({
       <body className="antialiased">
         <SplashScreen />
         <AuthProvider>
-          <Header />
-          <main className="min-h-screen page-transition">
-            {children}
-          </main>
-          <Footer />
+          <ItineraryProvider>
+            <Header />
+            <main className="min-h-screen page-transition">
+              {children}
+            </main>
+            <Footer />
+          </ItineraryProvider>
         </AuthProvider>
         <Analytics />
         <SpeedInsights />

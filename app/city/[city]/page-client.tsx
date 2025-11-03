@@ -112,8 +112,8 @@ export default function CityPageClient() {
     }
     
     setFilteredDestinations(filtered);
-    // Reset displayed count when filters change
-    setDisplayedCount(7);
+    // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   useEffect(() => {

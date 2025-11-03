@@ -186,8 +186,8 @@ export default function CitiesPage() {
             </div>
           </div>
 
-          {/* Grid - Right below filter lists */}
-          <div className="mt-8 pb-8 px-8">
+        {/* Grid - Right below filter lists */}
+        <div className="mt-8 pb-8 px-8">
             <div className="max-w-[1800px] mx-auto">
               {filteredCities.length === 0 ? (
                 <div className="text-center py-16">
@@ -201,59 +201,59 @@ export default function CitiesPage() {
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedCities = filteredCities.slice(startIndex, endIndex);
                   return paginatedCities.map(({ city, country, count, featuredImage }) => (
-              <button
-                key={city}
-                onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
-                className={`${CARD_WRAPPER} cursor-pointer text-left`}
-              >
-                {/* Image Container */}
-                <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
-                  {featuredImage ? (
-                    <Image
-                      src={featuredImage}
-                      alt={capitalizeCity(city)}
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      quality={80}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                      <MapPin className="h-12 w-12 opacity-20" />
-                    </div>
-                  )}
-                  
-                  {/* City count badge */}
-                  <div className="absolute bottom-2 right-2 bg-black/70 dark:bg-white/70 backdrop-blur-sm text-white dark:text-black px-2 py-1 rounded text-xs font-medium">
-                    {count}
-                  </div>
-                  
-                  {/* Follow button */}
-                  <div className="absolute top-2 right-2">
-                    <FollowCityButton 
-                      citySlug={city}
-                      cityName={capitalizeCity(city)}
-                      variant="compact"
-                      showLabel={false}
-                    />
-                  </div>
-                </div>
+                    <button
+                      key={city}
+                      onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
+                      className={`${CARD_WRAPPER} cursor-pointer text-left`}
+                    >
+                      {/* Image Container */}
+                      <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
+                        {featuredImage ? (
+                          <Image
+                            src={featuredImage}
+                            alt={capitalizeCity(city)}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            quality={80}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                            <MapPin className="h-12 w-12 opacity-20" />
+                          </div>
+                        )}
+                        
+                        {/* City count badge */}
+                        <div className="absolute bottom-2 right-2 bg-black/70 dark:bg-white/70 backdrop-blur-sm text-white dark:text-black px-2 py-1 rounded text-xs font-medium">
+                          {count}
+                        </div>
+                        
+                        {/* Follow button */}
+                        <div className="absolute top-2 right-2">
+                          <FollowCityButton 
+                            citySlug={city}
+                            cityName={capitalizeCity(city)}
+                            variant="compact"
+                            showLabel={false}
+                          />
+                        </div>
+                      </div>
 
-                {/* Info */}
-                <div className="space-y-0.5">
-                  <h3 className={`${CARD_TITLE}`}>
-                    {capitalizeCity(city)}
-                  </h3>
+                      {/* Info */}
+                      <div className="space-y-0.5">
+                        <h3 className={`${CARD_TITLE}`}>
+                          {capitalizeCity(city)}
+                        </h3>
 
-                  <div className={`${CARD_META}`}>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {country}
-                    </span>
-                  </div>
-                </div>
-              </button>
-                  ))}
+                        <div className={`${CARD_META}`}>
+                          <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {country}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ));
                   })()}
                   </div>
 
@@ -319,7 +319,6 @@ export default function CitiesPage() {
               )}
             </div>
           </div>
-        </div>
       </section>
     </main>
   );

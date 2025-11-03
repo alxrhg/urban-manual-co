@@ -9,11 +9,9 @@ import { DiscoveryPrompt, DiscoveryPromptResponse } from '@/types/discovery';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  throw new Error('Missing Supabase configuration');
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = (SUPABASE_URL && SUPABASE_KEY) 
+  ? createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 
 export class DiscoveryPromptService {
   /**
@@ -24,6 +22,11 @@ export class DiscoveryPromptService {
     city: string,
     date: Date = new Date()
   ): Promise<DiscoveryPrompt[]> {
+    if (!supabase) {
+      console.warn('Supabase not configured, returning empty prompts');
+      return [];
+    }
+
     const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
     const { data, error } = await supabase.rpc('get_active_prompts_for_city', {
@@ -46,6 +49,11 @@ export class DiscoveryPromptService {
     destinationSlug: string,
     date: Date = new Date()
   ): Promise<DiscoveryPrompt[]> {
+    if (!supabase) {
+      console.warn('Supabase not configured, returning empty prompts');
+      return [];
+    }
+
     const dateStr = date.toISOString().split('T')[0];
 
     const { data, error } = await supabase.rpc('get_active_prompts_for_destination', {
@@ -98,6 +106,11 @@ export class DiscoveryPromptService {
     city: string,
     days: number = 30
   ): Promise<DiscoveryPrompt[]> {
+    if (!supabase) {
+      console.warn('Supabase not configured, returning empty prompts');
+      return [];
+    }
+
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + days);
 

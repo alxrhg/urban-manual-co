@@ -221,7 +221,7 @@ export default function Home() {
       setSearching(false);
       // Show all destinations when no search (with filters if set)
       filterDestinations();
-      setDisplayedCount(24);
+      setCurrentPage(1);
     }
   }, [searchTerm]); // ONLY depend on searchTerm
 
