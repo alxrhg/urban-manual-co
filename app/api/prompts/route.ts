@@ -29,14 +29,16 @@ export async function GET(request: NextRequest) {
     // Apply interest_score weighting from forecasting_data
     let weighted = data || [];
     if (city) {
-      const { data: forecast } = await supabase
-        .from('forecasting_data')
-        .select('city, interest_score')
-        .ilike('city', `%${city}%`)
-        .order('last_forecast', { ascending: false })
-        .limit(1);
-      const interest = forecast?.[0]?.interest_score || 1.0;
-      weighted = weighted.map((p: any) => ({ ...p, weight: (p.weight || 1) * interest }));
+      // If city-level forecasting is available, use latest interest_score from discovery prompts' city mapping
+      try {
+        const { data: forecast } = await supabase
+          .from('forecasting_data')
+          .select('interest_score, last_forecast')
+          .order('last_forecast', { ascending: false })
+          .limit(1);
+        const interest = forecast?.[0]?.interest_score || 1.0;
+        weighted = weighted.map((p: any) => ({ ...p, weight: (p.weight || 1) * interest }));
+      } catch (_) {}
     }
 
     // Choose up to 2 prompts with A/B variant
