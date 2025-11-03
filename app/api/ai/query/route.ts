@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateJSON } from '@/lib/llm';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
+import { semanticBlendSearch } from '@/lib/search/semanticSearch';
 import { getLocation, getWeather } from '@/lib/ai/contextLocation';
 
 const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
@@ -33,6 +34,18 @@ export async function POST(req: NextRequest) {
     const { data, error } = await q;
     if (error) throw error;
 
+    // Run hybrid semantic + rank search using vector embeddings
+    let hybridResults: any[] = [];
+    try {
+      hybridResults = await semanticBlendSearch(query, {
+        city: parsed?.city || undefined,
+        category: parsed?.category || undefined,
+        open_now: parsed?.openNow === true ? true : undefined,
+      });
+    } catch {}
+
+    const finalResults = (hybridResults && hybridResults.length > 0) ? hybridResults : (data || []);
+
     // Editorial insight banner (only when any search/filter applied)
     let insight: string | null = null;
     const hasFilters = Boolean(query) || Boolean(parsed?.city) || Boolean(parsed?.category) || parsed?.openNow === true;
@@ -40,7 +53,7 @@ export async function POST(req: NextRequest) {
       try {
         // Collect top tags from results
         const tagsCount: Record<string, number> = {};
-        (data || []).slice(0, 30).forEach((d: any) => {
+        (finalResults || []).slice(0, 30).forEach((d: any) => {
           const tags: string[] = Array.isArray(d.tags) ? d.tags : [];
           tags.forEach((t: string) => {
             const key = String(t || '').trim().toLowerCase();
@@ -125,7 +138,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ intent: parsed || null, insight, results: data || [] });
+    return NextResponse.json({ intent: parsed || null, insight, results: finalResults });
   } catch (e: any) {
     return NextResponse.json({ error: 'AI query failed', details: e.message }, { status: 500 });
   }
