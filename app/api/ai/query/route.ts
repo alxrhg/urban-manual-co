@@ -60,11 +60,13 @@ export async function POST(req: NextRequest) {
         if (loc?.timezone) {
           try { localTime = new Date().toLocaleTimeString('en-US', { timeZone: loc.timezone, hour: '2-digit', minute: '2-digit' }); } catch {}
         }
-        const weather = await getWeather(loc?.latitude, loc?.longitude);
+        const weather = await getWeather(loc?.city);
         if (loc?.city) {
-          if (localTime) greeting = `Context: ${localTime} in ${loc.city}.`;
-          else greeting = `Context: ${loc.city}.`;
-          if (weather?.temperature_c !== undefined) greeting += ` ${Math.round(weather.temperature_c)}°C.`;
+          greeting = localTime ? `Context: ${localTime} in ${loc.city}.` : `Context: ${loc.city}.`;
+          if (weather?.temperature_c !== undefined) {
+            greeting += ` ${Math.round(weather.temperature_c)}°C`;
+            if (weather.is_raining) greeting += ', raining';
+          }
         }
 
         const systemPrompt = 'Urban Manual Editorial Intelligence';
