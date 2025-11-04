@@ -19,9 +19,15 @@ interface RerankOptions {
     cuisine?: string;
     mood?: string;
     price_level?: number;
+    weather_preference?: 'indoor' | 'outdoor' | null; // New: weather-aware ranking
+    event_context?: boolean; // New: boost places near events
   };
   userId?: string;
   boostPersonalized?: boolean;
+  enrichedContext?: {
+    currentWeather?: any;
+    nearbyEvents?: any[];
+  };
 }
 
 interface DestinationWithScore {
@@ -40,6 +46,74 @@ interface DestinationWithScore {
   saves_count?: number;
   is_open_now?: boolean;
   [key: string]: any;
+}
+
+/**
+ * Calculate enriched data boost (weather, events, routes)
+ */
+function calculateEnrichmentBoost(
+  destination: DestinationWithScore,
+  options: RerankOptions
+): number {
+  let boost = 0;
+
+  // Weather-aware boosting
+  if (options.enrichedContext?.currentWeather) {
+    const weather = options.enrichedContext.currentWeather;
+    const weatherCode = weather.weatherCode;
+
+    // Boost indoor options if it's raining/snowing
+    if (options.queryIntent?.weather_preference === 'indoor' || 
+        (weatherCode >= 61 && weatherCode <= 86)) {
+      // Check if destination has indoor seating (heuristic: hotels, cafes, restaurants)
+      if (destination.category?.toLowerCase().includes('hotel') ||
+          destination.category?.toLowerCase().includes('cafe') ||
+          destination.category?.toLowerCase().includes('dining')) {
+        boost += 0.1;
+      }
+    }
+
+    // Boost outdoor options if weather is clear
+    if (options.queryIntent?.weather_preference === 'outdoor' ||
+        (weatherCode === 0 || weatherCode === 1)) {
+      // Boost places with outdoor seating (heuristic: check tags or description)
+      if (destination.tags?.some((tag: string) => 
+        tag.toLowerCase().includes('outdoor') || 
+        tag.toLowerCase().includes('terrace') ||
+        tag.toLowerCase().includes('rooftop'))) {
+        boost += 0.1;
+      }
+    }
+  }
+
+  // Event proximity boost
+  if (options.enrichedContext?.nearbyEvents && 
+      options.enrichedContext.nearbyEvents.length > 0) {
+    // Boost destinations near events
+    if (destination.nearbyEvents && destination.nearbyEvents.length > 0) {
+      boost += 0.05 * Math.min(destination.nearbyEvents.length, 3);
+    }
+  }
+
+  // Walking distance boost (closer = better)
+  if (destination.walkingTimeFromCenter) {
+    const walkingMinutes = destination.walkingTimeFromCenter;
+    if (walkingMinutes <= 5) {
+      boost += 0.15; // Very close
+    } else if (walkingMinutes <= 15) {
+      boost += 0.1; // Convenient
+    } else if (walkingMinutes <= 30) {
+      boost += 0.05; // Accessible
+    }
+  }
+
+  // Photo availability boost (more photos = more trustworthy)
+  if (destination.photos && Array.isArray(destination.photos)) {
+    const photoCount = destination.photos.length;
+    boost += Math.min(photoCount * 0.01, 0.1); // Max 0.1 boost
+  }
+
+  return boost;
 }
 
 /**
@@ -188,6 +262,7 @@ export function rerankDestinations(
     const engagementScore = calculateEngagementScore(dest) * 0.20;
     const qualityScore = calculateEditorialQuality(dest) * 0.10;
     const intentBoost = calculateIntentMatchBoost(dest, options.queryIntent) * 0.05;
+    const enrichmentBoost = calculateEnrichmentBoost(dest, options); // New: weather/events/routes boost
 
     // Personalization boost (if user has saved/visited similar places)
     let personalizationBoost = 0;
@@ -197,14 +272,15 @@ export function rerankDestinations(
       personalizationBoost = normTrending * 0.05;
     }
 
-    // Final score
+    // Final score (enrichment boost is additive, max 0.15)
     const finalScore =
       baseSimilarity +
       intelligenceScore +
       engagementScore +
       qualityScore +
       intentBoost +
-      personalizationBoost;
+      personalizationBoost +
+      Math.min(enrichmentBoost, 0.15); // Cap enrichment boost
 
     return {
       ...dest,
@@ -216,6 +292,7 @@ export function rerankDestinations(
         quality: qualityScore,
         intent: intentBoost,
         personalized: personalizationBoost,
+        enrichment: Math.min(enrichmentBoost, 0.15), // Track enrichment boost
       },
     };
   });

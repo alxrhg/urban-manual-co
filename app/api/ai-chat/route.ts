@@ -133,6 +133,8 @@ Guidelines:
 - Use "more", "another", "similar" to expand on previous queries
 - If query is ambiguous (e.g., just "hotels" without city), set clarifications with helpful questions
 - Extract descriptive modifiers: romantic, cozy, luxury, budget, hidden, trendy, etc. as keywords
+- Detect weather-related queries: "rainy day", "outdoor", "indoor", "weather" → suggest weather-aware recommendations
+- Detect event-related queries: "events", "happening", "festival", "concert" → boost places near events
 - Confidence should reflect how clear the query intent is
 - For relative queries ("more", "another", "different"), infer intent from conversation history
 
@@ -243,6 +245,122 @@ function parseQueryFallback(query: string): {
 }
 
 // Generate natural language response
+// Generate intelligent response leveraging enriched data
+async function generateIntelligentResponse(
+  results: any[],
+  query: string,
+  intent: any,
+  enhancedIntent: any,
+  userId?: string
+): Promise<string> {
+  if (results.length === 0) {
+    return "I couldn't find any places matching your search. Try adjusting your filters or search terms.";
+  }
+
+  // Get contextual information from enriched data
+  const topResults = results.slice(0, 5);
+  const hasWeather = topResults.some((r: any) => r.currentWeather);
+  const hasEvents = topResults.some((r: any) => r.nearbyEvents && r.nearbyEvents.length > 0);
+  const hasRoutes = topResults.some((r: any) => r.routeFromCityCenter);
+  const hasPhotos = topResults.some((r: any) => r.photos && r.photos.length > 0);
+
+  // Build context string for AI
+  let contextInfo = '';
+  
+  if (hasWeather && topResults[0]?.currentWeather) {
+    const weather = topResults[0].currentWeather;
+    contextInfo += `\nCurrent weather: ${weather.temperature}°C, ${weather.weatherDescription}`;
+    
+    // Weather-aware suggestions
+    if (weather.weatherCode >= 61 && weather.weatherCode <= 86) {
+      // Rainy/snowy weather
+      contextInfo += '\n💡 Weather note: It\'s raining/snowing - consider indoor options or places with covered outdoor seating.';
+    } else if (weather.weatherCode === 0 || weather.weatherCode === 1) {
+      // Clear weather
+      contextInfo += '\n💡 Weather note: Perfect weather for outdoor dining or rooftop experiences!';
+    }
+  }
+
+  if (hasEvents && topResults[0]?.nearbyEvents) {
+    const events = topResults[0].nearbyEvents;
+    const upcomingEvents = events.slice(0, 3);
+    if (upcomingEvents.length > 0) {
+      contextInfo += `\n🎭 Nearby events: ${upcomingEvents.map((e: any) => e.name).join(', ')}`;
+    }
+  }
+
+  if (hasRoutes && topResults[0]?.walkingTimeFromCenter) {
+    const walkingTime = topResults[0].walkingTimeFromCenter;
+    contextInfo += `\n🚶 Walking time from city center: ~${walkingTime} minutes`;
+  }
+
+  // Generate response using OpenAI if available
+  if (openai) {
+    try {
+      const systemPrompt = `You are Urban Manual's intelligent travel assistant. You help users discover amazing places with rich, contextual insights.
+
+AVAILABLE DATA FOR EACH DESTINATION:
+- Photos: High-quality images from Google Places
+- Weather: Current conditions + 7-day forecast (temperature, conditions, humidity)
+- Events: Nearby upcoming events (concerts, exhibitions, festivals)
+- Routes: Walking/driving times from city center
+- Currency: Local currency and exchange rates
+
+GUIDELINES:
+- Mention weather context when relevant (e.g., "perfect for outdoor dining" or "great indoor option for rainy days")
+- Highlight nearby events if they align with the search
+- Note walking distances when helpful
+- Use photos to describe ambiance/style
+- Be concise but informative (2-3 sentences max)
+- Match the user's tone (casual queries get casual responses)
+
+${contextInfo}`;
+
+      const userPrompt = `User searched: "${query}"
+Found ${results.length} results.
+
+Top results:
+${topResults.slice(0, 5).map((r: any, i: number) => {
+  let info = `${i + 1}. ${r.name} (${r.city})`;
+  if (r.category) info += ` - ${r.category}`;
+  if (r.rating) info += ` ⭐ ${r.rating}`;
+  if (r.currentWeather) {
+    info += ` | Weather: ${r.currentWeather.temperature}°C, ${r.currentWeather.weatherDescription}`;
+  }
+  if (r.walkingTimeFromCenter) {
+    info += ` | ${r.walkingTimeFromCenter} min walk from center`;
+  }
+  if (r.nearbyEvents && r.nearbyEvents.length > 0) {
+    info += ` | ${r.nearbyEvents.length} nearby events`;
+  }
+  return info;
+}).join('\n')}
+
+Generate a natural, helpful response that incorporates relevant context (weather, events, walking distance) when it adds value. Be conversational and concise.`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+      });
+
+      const aiResponse = response.choices?.[0]?.message?.content || '';
+      if (aiResponse) {
+        return aiResponse.trim();
+      }
+    } catch (error) {
+      console.error('[AI Chat] Error generating intelligent response:', error);
+    }
+  }
+
+  // Fallback to simple response
+  return generateResponse(results.length, intent.city, intent.category);
+}
+
 function generateResponse(count: number, city?: string, category?: string): string {
   const location = city ? ` in ${city}` : '';
   const categoryText = category ? ` ${category}` : ' place';
@@ -422,8 +540,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-                // Apply enhanced re-ranking to results
-                const rerankedResults = rerankDestinations(results, {
+                // Enrich results with additional data (photos, weather, routes, events) BEFORE reranking
+                const enrichedResults = await Promise.all(
+                  results.slice(0, 100).map(async (dest: any) => {
+                    try {
+                      // Fetch enriched data from database
+                      const { data: enriched } = await supabase
+                        .from('destinations')
+                        .select('photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url, currency_code, exchange_rate_to_usd')
+                        .eq('slug', dest.slug)
+                        .single();
+
+                      if (enriched) {
+                        return {
+                          ...dest,
+                          photos: enriched.photos_json ? JSON.parse(enriched.photos_json) : null,
+                          currentWeather: enriched.current_weather_json ? JSON.parse(enriched.current_weather_json) : null,
+                          weatherForecast: enriched.weather_forecast_json ? JSON.parse(enriched.weather_forecast_json) : null,
+                          nearbyEvents: enriched.nearby_events_json ? JSON.parse(enriched.nearby_events_json) : null,
+                          routeFromCityCenter: enriched.route_from_city_center_json ? JSON.parse(enriched.route_from_city_center_json) : null,
+                          walkingTimeFromCenter: enriched.walking_time_from_center_minutes,
+                          staticMapUrl: enriched.static_map_url,
+                          currencyCode: enriched.currency_code,
+                          exchangeRateToUSD: enriched.exchange_rate_to_usd,
+                        };
+                      }
+                    } catch (error) {
+                      // Silently fail - enrichment is optional
+                    }
+                    return dest;
+                  })
+                );
+
+                // Apply enhanced re-ranking to results with enriched context
+                const topResultForContext = enrichedResults[0];
+                const enrichedContext = topResultForContext ? {
+                  currentWeather: topResultForContext.currentWeather || null,
+                  nearbyEvents: topResultForContext.nearbyEvents || null,
+                } : null;
+
+                const rerankedResults = rerankDestinations(enrichedResults, {
                   query,
                   queryIntent: {
                     city: intent.city,
@@ -432,22 +588,33 @@ export async function POST(request: NextRequest) {
                     cuisine: (enhancedIntent as any)?.cuisine,
                     mood: (enhancedIntent as any)?.mood,
                     price_level: intent.filters?.priceLevel,
+                    // Infer weather preference from query
+                    weather_preference: query.toLowerCase().includes('outdoor') ? 'outdoor' :
+                                      query.toLowerCase().includes('indoor') ? 'indoor' : null,
+                    event_context: query.toLowerCase().includes('event') || query.toLowerCase().includes('happening'),
                   },
                   userId: userId,
                   boostPersonalized: !!userId,
+                  enrichedContext: enrichedContext || undefined,
                 });
 
                 // Remove limit - return all results
                 const limitedResults = rerankedResults;
 
-                // Generate natural language response
-                const response = generateResponse(limitedResults.length, intent.city, intent.category);
+                // Generate intelligent response with enriched context
+                const response = await generateIntelligentResponse(
+                  limitedResults,
+                  query,
+                  intent,
+                  enhancedIntent,
+                  userId
+                );
 
-    // Generate enhanced response with context if needed
-    let enhancedContent = response;
-    if (intent.clarifications && intent.clarifications.length > 0 && results.length === 0) {
-      enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
-    }
+                // Generate enhanced response with context if needed
+                let enhancedContent = response;
+                if (intent.clarifications && intent.clarifications.length > 0 && limitedResults.length === 0) {
+                  enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
+                }
 
     // Get intelligence insights if city detected
     let intelligenceInsights = null;
@@ -482,6 +649,16 @@ export async function POST(request: NextRequest) {
                   });
                 } catch {}
 
+                // Include enriched metadata in response
+                const enrichedMetadata = {
+                  hasWeather: limitedResults.some((r: any) => r.currentWeather),
+                  hasEvents: limitedResults.some((r: any) => r.nearbyEvents && r.nearbyEvents.length > 0),
+                  hasRoutes: limitedResults.some((r: any) => r.routeFromCityCenter),
+                  hasPhotos: limitedResults.some((r: any) => r.photos && r.photos.length > 0),
+                  totalPhotos: limitedResults.reduce((sum: number, r: any) => sum + (r.photos?.length || 0), 0),
+                  totalEvents: limitedResults.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
+                };
+
                 return NextResponse.json({
                   content: enhancedContent,
                   destinations: limitedResults,
@@ -492,6 +669,7 @@ export async function POST(request: NextRequest) {
                   },
                   enhancedIntent, // Include full enhanced intent
                   intelligence: intelligenceInsights,
+                  enriched: enrichedMetadata, // Include enrichment metadata
                 });
 
   } catch (error: any) {

@@ -13,7 +13,11 @@
     "backfill-embeddings": "tsx scripts/backfill-embeddings.ts",
     "test-nlu": "tsx tests/nlu-test-queries.ts",
     "test:google-places": "tsx scripts/test-google-places.ts",
-    "fetch:all-place-data": "tsx scripts/fetch-all-place-data.ts"
+    "fetch:all-place-data": "tsx scripts/fetch-all-place-data.ts",
+    "enrich:all-places-data": "tsx scripts/enrich-all-places-data.ts",
+    "retry:tate-modern": "tsx scripts/retry-tate-modern.ts",
+    "enrich:comprehensive": "tsx scripts/enrich-comprehensive.ts",
+    "migrate:026": "tsx scripts/run-migration-026.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.3",
