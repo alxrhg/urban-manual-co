@@ -178,6 +178,9 @@ function SearchPageContent() {
 
       <div className="mb-4 text-sm text-neutral-500">
         Showing {searchState.filteredResults.length}
+        {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
+          <span> of {searchState.allResults.length}</span>
+        )}
         {searchState.refinements.length > 0 && (
           <span> (filtered by: {searchState.refinements.join(', ')})</span>
         )}
