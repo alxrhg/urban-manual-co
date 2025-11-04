@@ -30,6 +30,7 @@ import GreetingHero from '@/src/features/search/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { ForYouSection } from '@/components/ForYouSection';
 import { TrendingSection } from '@/components/TrendingSection';
+import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
@@ -795,12 +796,17 @@ export default function Home() {
                 availableCategories={categories}
               />
             </div>
-            
+
+            {/* Recently Viewed - Show when no active search */}
+            {!searchTerm.trim() && !selectedCity && !selectedCategory && (
+              <RecentlyViewed />
+            )}
+
             {/* For You Section - Show only when user is logged in and no active search */}
             {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
               <ForYouSection />
             )}
-            
+
             {/* Trending Section - Show when no active search */}
             {!searchTerm.trim() && (
               <TrendingSection />
