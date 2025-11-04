@@ -53,10 +53,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithApple = async () => {
+    // Use the current origin for the callback URL
+    // This will be: http://localhost:3000/auth/callback (dev)
+    // or https://www.urbanmanual.co/auth/callback (production)
+    const callbackUrl = `${window.location.origin}/auth/callback`;
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
+        // Ensure we get redirected back to the root after auth
+        queryParams: {
+          redirect_to: window.location.origin,
+        },
       },
     });
     if (error) throw error;

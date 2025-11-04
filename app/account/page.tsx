@@ -194,7 +194,10 @@ export default function Account() {
     await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          redirect_to: window.location.origin,
+        },
       }
     });
   };
