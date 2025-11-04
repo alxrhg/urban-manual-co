@@ -899,9 +899,9 @@ export default function Home() {
           {(() => {
             const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
             if (totalPages <= 1) return null;
-            
+
             return (
-              <div className="mt-8 flex items-center justify-center gap-2">
+              <div className="mt-8 w-full flex items-center justify-center gap-2">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
