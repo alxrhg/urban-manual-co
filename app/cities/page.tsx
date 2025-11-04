@@ -9,6 +9,7 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/Ca
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
 import Image from 'next/image';
+import { InFeedAd } from '@/components/GoogleAd';
 
 interface CityStats {
   city: string;
@@ -200,7 +201,29 @@ export default function CitiesPage() {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedCities = filteredCities.slice(startIndex, endIndex);
-                  return paginatedCities.map(({ city, country, count, featuredImage }) => (
+
+                  // Inject ads every 14 items
+                  const withAds: Array<{ type: 'city' | 'ad'; data: any; index: number }> = [];
+                  paginatedCities.forEach((cityData, index) => {
+                    withAds.push({ type: 'city', data: cityData, index });
+                    // Add ad after every 14th item (but not at the very end)
+                    if ((index + 1) % 14 === 0 && index < paginatedCities.length - 1) {
+                      withAds.push({ type: 'ad', data: { slot: '1234567890' }, index: index + 0.5 });
+                    }
+                  });
+
+                  return withAds.map((item) => {
+                    if (item.type === 'ad') {
+                      return (
+                        <InFeedAd
+                          key={`ad-${item.index}`}
+                          slot={item.data.slot}
+                        />
+                      );
+                    }
+
+                    const { city, country, count, featuredImage } = item.data;
+                    return (
                     <button
                       key={city}
                       onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
@@ -253,8 +276,9 @@ export default function CitiesPage() {
                         </div>
                       </div>
                     </button>
-                  ));
-                  })()}
+                    );
+                  });
+                })()}
                   </div>
 
                   {/* Pagination */}
