@@ -46,7 +46,7 @@ export function IntelligentSearchFeedback({
   return (
     <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
       {/* Main Feedback Card */}
-      <div className={`p-4 rounded-lg border transition-all ${
+      <div className={`p-4 rounded-2xl border transition-all ${
         isLowConfidence
           ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900'
           : 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900'
@@ -86,13 +86,13 @@ export function IntelligentSearchFeedback({
             {hasFilters && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {intent.city && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
                     <MapPin className="h-3 w-3" />
                     {intent.city}
                   </span>
                 )}
                 {intent.category && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
                     <Filter className="h-3 w-3" />
                     {intent.category}
                   </span>
@@ -101,19 +101,19 @@ export function IntelligentSearchFeedback({
                   intent.keywords.slice(0, 3).map((keyword, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700"
                     >
                       {keyword}
                     </span>
                   ))
                 )}
                 {intent.filters?.michelinStar && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
                     ⭐ {intent.filters.michelinStar} Michelin
                   </span>
                 )}
                 {intent.filters?.rating && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
                     ⭐ {intent.filters.rating}+ rating
                   </span>
                 )}
@@ -158,7 +158,7 @@ export function IntelligentSearchFeedback({
 
       {/* Seasonal Intelligence */}
       {seasonalContext && seasonalContext.event && (
-        <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg border border-purple-200 dark:border-purple-900">
+        <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl border border-purple-200 dark:border-purple-900">
           <div className="flex items-start gap-2">
             <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
@@ -182,7 +182,7 @@ export function IntelligentSearchFeedback({
 
       {/* Quick Refinement Suggestions */}
       {intent.hasResults && intent.resultCount && intent.resultCount > 0 && (
-        <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
+        <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
           <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
             Refine your search:
           </p>

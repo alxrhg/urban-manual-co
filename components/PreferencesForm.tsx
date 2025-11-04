@@ -118,7 +118,7 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
             <button
               key={style}
               onClick={() => setPreferences(prev => ({ ...prev, travelStyle: prev.travelStyle === style ? null : style }))}
-              className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+              className={`px-4 py-2 rounded-2xl text-sm border transition-colors ${
                 preferences.travelStyle === style
                   ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                   : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
@@ -138,7 +138,7 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
             <button
               key={interest}
               onClick={() => toggleInterest(interest)}
-              className={`px-4 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-2xl text-sm border transition-colors flex items-center gap-2 ${
                 preferences.interests.includes(interest)
                   ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                   : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
@@ -159,7 +159,7 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
             <button
               key={pref}
               onClick={() => toggleDietary(pref)}
-              className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+              className={`px-4 py-2 rounded-2xl text-sm border transition-colors ${
                 preferences.dietaryPreferences.includes(pref)
                   ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                   : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
@@ -179,7 +179,7 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
             <button
               key={level}
               onClick={() => setPreferences(prev => ({ ...prev, pricePreference: prev.pricePreference === level ? null : level }))}
-              className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+              className={`px-4 py-2 rounded-2xl text-sm border transition-colors ${
                 preferences.pricePreference === level
                   ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                   : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
@@ -196,7 +196,7 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
         data-save-preferences
         onClick={savePreferences}
         disabled={saving}
-        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 flex items-center gap-2"
+        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 flex items-center gap-2"
       >
         {saving ? (
           <>

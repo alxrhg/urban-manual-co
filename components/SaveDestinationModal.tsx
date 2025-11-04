@@ -131,7 +131,7 @@ export function SaveDestinationModal({
           <h2 className="text-xl font-semibold">Save to Collection</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -149,14 +149,14 @@ export function SaveDestinationModal({
             <button
               onClick={handleUnsave}
               disabled={saving}
-              className="flex-1 px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30 rounded-lg disabled:opacity-50 transition-colors"
+              className="flex-1 px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30 rounded-2xl disabled:opacity-50 transition-colors"
             >
               {saving ? 'Removing...' : 'Remove from Saved'}
             </button>
           )}
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
           >
             Cancel
           </button>

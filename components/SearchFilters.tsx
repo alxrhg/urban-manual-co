@@ -119,7 +119,7 @@ export function SearchFiltersComponent({
                   <select
                     value={filters.city || ''}
                     onChange={(e) => updateFilter('city', e.target.value || undefined)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <option value="">All Cities</option>
                     {availableCities.map(city => (
@@ -134,7 +134,7 @@ export function SearchFiltersComponent({
                   <select
                     value={filters.category || ''}
                     onChange={(e) => updateFilter('category', e.target.value || undefined)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <option value="">All Categories</option>
                     {availableCategories.map(category => (
@@ -206,7 +206,7 @@ export function SearchFiltersComponent({
                     <select
                       value={filters.minPrice || ''}
                       onChange={(e) => updateFilter('minPrice', e.target.value ? parseInt(e.target.value) : undefined)}
-                      className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <option value="">Min</option>
                       {[1, 2, 3, 4].map(level => (
@@ -216,7 +216,7 @@ export function SearchFiltersComponent({
                     <select
                       value={filters.maxPrice || ''}
                       onChange={(e) => updateFilter('maxPrice', e.target.value ? parseInt(e.target.value) : undefined)}
-                      className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <option value="">Max</option>
                       {[1, 2, 3, 4].map(level => (
@@ -232,7 +232,7 @@ export function SearchFiltersComponent({
                   <select
                     value={filters.minRating || ''}
                     onChange={(e) => updateFilter('minRating', e.target.value ? parseFloat(e.target.value) : undefined)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <option value="">Any</option>
                     <option value="4.5">4.5+ ⭐</option>

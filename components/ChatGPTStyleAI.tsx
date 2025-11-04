@@ -168,7 +168,7 @@ export function ChatGPTStyleAI() {
                               window.location.href = `/destination/${dest.slug}`;
                             }}
                           >
-                            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+                            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2">
                               {dest.image ? (
                                 <img
                                   src={dest.image}
@@ -255,7 +255,7 @@ export function ChatGPTStyleAI() {
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="p-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="p-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="h-5 w-5" />
               </button>
@@ -265,7 +265,7 @@ export function ChatGPTStyleAI() {
                   setIsOpen(false);
                   setMessages([]);
                 }}
-                className="p-2 bg-gray-100 dark:bg-gray-800 text-black dark:text-white rounded-lg hover:scale-105 transition-transform"
+                className="p-2 bg-gray-100 dark:bg-gray-800 text-black dark:text-white rounded-2xl hover:scale-105 transition-transform"
               >
                 {messages.length > 0 ? <Minimize2 className="h-5 w-5" /> : <X className="h-5 w-5" />}
               </button>

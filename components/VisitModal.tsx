@@ -98,7 +98,7 @@ export default function VisitModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Share your experience, tips, or memories..."
               rows={4}
-              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
             />
           </div>
         </div>
@@ -106,13 +106,13 @@ export default function VisitModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleCancel}
-            className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
+            className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
+            className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
           >
             {isCurrentlyVisited ? 'Update' : 'Mark as Visited'}
           </button>

@@ -368,7 +368,7 @@ function DestinationForm({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
+            className={`relative border-2 border-dashed rounded-2xl p-6 transition-colors ${
               isDragging
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                 : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50'
@@ -390,7 +390,7 @@ function DestinationForm({
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg mb-3"
+                    className="w-full h-48 object-cover rounded-2xl mb-3"
                   />
                   <button
                     type="button"
@@ -467,7 +467,7 @@ function DestinationForm({
               <img
                 src={imagePreview}
                 alt="Preview"
-                className="w-full h-64 object-cover rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm"
+                className="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
                 onError={() => setImagePreview(null)}
               />
             </div>
@@ -925,20 +925,20 @@ export default function AdminPage() {
             <CardContent>
               {enrichmentStats ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
                     <div className="text-2xl font-bold">{enrichmentStats.enriched}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Enriched</div>
                     <div className="text-xs text-gray-500 mt-1">{enrichmentStats.percentage}% of {enrichmentStats.total}</div>
                   </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
                     <div className="text-2xl font-bold">{enrichmentStats.needsEnrichment}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Needs Enrichment</div>
                   </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
                     <div className="text-2xl font-bold">{enrichmentStats.withAddress}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Have Address</div>
                   </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
                     <div className="text-2xl font-bold">{enrichmentStats.withRating}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Have Rating</div>
                   </div>
@@ -1032,7 +1032,7 @@ export default function AdminPage() {
                     return (
                       <div
                         key={dest.slug}
-                        className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900"
+                        className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -1285,7 +1285,7 @@ export default function AdminPage() {
 
               {enrichResult && (
                 <div className="mt-4">
-                  <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-auto max-h-[40vh] border border-gray-200 dark:border-gray-800">
+                  <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded-2xl overflow-auto max-h-[40vh] border border-gray-200 dark:border-gray-800">
                     {JSON.stringify(enrichResult, null, 2)}
                   </pre>
                 </div>
@@ -1408,7 +1408,7 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
-                  <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-auto max-h-[40vh] border border-gray-200 dark:border-gray-800">
+                  <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded-2xl overflow-auto max-h-[40vh] border border-gray-200 dark:border-gray-800">
                     {JSON.stringify(regenerateResult, null, 2)}
                   </pre>
                 </div>

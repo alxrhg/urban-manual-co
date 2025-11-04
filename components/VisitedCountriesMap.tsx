@@ -102,7 +102,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
 
   if (visitedCountries.length === 0) {
     return (
-      <div className="w-full h-64 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center">
+      <div className="w-full h-64 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 flex items-center justify-center">
         <div className="text-center">
           <span className="text-4xl mb-2 block">🗺️</span>
           <span className="text-gray-600 dark:text-gray-400 text-sm">
@@ -130,7 +130,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
       </div>
 
       {/* Visual map representation */}
-      <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 relative overflow-hidden">
+      <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 relative overflow-hidden">
         {/* Grid pattern background */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -151,7 +151,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
               return (
                 <div
                   key={country}
-                  className="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-gray-200 dark:border-gray-700"
+                  className="flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl p-2 shadow-sm border border-gray-200 dark:border-gray-700"
                   style={{
                     animation: `fadeIn 0.3s ease-out ${idx * 0.05}s both`
                   }}
@@ -183,7 +183,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
           return (
             <div
               key={country}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <span className="text-lg">{flag}</span>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate flex-1">

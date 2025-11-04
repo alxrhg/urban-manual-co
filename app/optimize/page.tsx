@@ -326,7 +326,7 @@ export default function RouteOptimizerPage() {
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 />
               </div>
 
@@ -353,7 +353,7 @@ export default function RouteOptimizerPage() {
                             <img
                               src={place.image}
                               alt={place.name}
-                              className="w-12 h-12 rounded-lg object-cover"
+                              className="w-12 h-12 rounded-2xl object-cover"
                             />
                           )}
                           <div className="flex-1">
@@ -396,7 +396,7 @@ export default function RouteOptimizerPage() {
                 {optimizedRoute.length > 0 && (
                   <button
                     onClick={exportToGoogleMaps}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-colors text-sm font-medium"
                   >
                     <Download className="h-4 w-4" />
                     <span>Export to Maps</span>

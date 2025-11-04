@@ -159,7 +159,7 @@ export function PersonalizedRecommendations({
 
               {/* AI Reason (tooltip on hover) */}
               {rec && rec.reason && (
-                <div className="absolute inset-0 bg-black/80 dark:bg-gray-900/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-4 z-30">
+                <div className="absolute inset-0 bg-black/80 dark:bg-gray-900/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center p-4 z-30">
                   <p className="text-white text-xs text-center font-medium">{rec.reason}</p>
                 </div>
               )}

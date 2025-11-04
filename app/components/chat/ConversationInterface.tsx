@@ -151,7 +151,7 @@ export function ConversationInterface({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors"
             >
               <X className="h-4 w-4 text-gray-500" />
             </button>
