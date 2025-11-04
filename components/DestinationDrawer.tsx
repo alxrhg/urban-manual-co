@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -143,6 +144,7 @@ function parseTime(timeStr: string): number {
 
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -664,12 +666,28 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-bold">Destination</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {destination?.slug && (
+              <button
+                onClick={() => {
+                  onClose();
+                  router.push(`/destination/${destination.slug}`);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                title="Open in new page"
+                aria-label="Open destination in new page"
+              >
+                <ExternalLink className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              aria-label="Close drawer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -1013,14 +1031,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="flex flex-wrap gap-3">
                 {destination.google_maps_url && (
                   <a
-                    href={destination.google_maps_url}
+                    href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="pill-button"
                   >
                     <span>📍</span>
                     <span className="pill-separator">•</span>
-                    <span>Google Maps</span>
+                    <span>Apple Maps</span>
                   </a>
                 )}
                 {(enrichedData?.website || destination.website) && (
@@ -1092,20 +1110,27 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
 
-          {/* Map Section (Google Maps) */}
+          {/* Map Section (Apple Maps) */}
           <div className="mb-8">
             <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Location</h3>
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-              <iframe
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                allowFullScreen
-                referrerPolicy="no-referrer-when-downgrade"
-                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ''}&q=${encodeURIComponent(destination.name + ', ' + destination.city)}&zoom=15`}
-                title={`Map showing location of ${destination.name}`}
-              />
+              <a
+                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full h-full relative group"
+              >
+                <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-2 mx-auto group-hover:bg-gray-300 dark:group-hover:bg-gray-600 transition-colors">
+                      <MapPin className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{destination.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">{capitalizeCity(destination.city)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-600 mt-2">Tap to open in Apple Maps</p>
+                  </div>
+                </div>
+              </a>
             </div>
           </div>
 
