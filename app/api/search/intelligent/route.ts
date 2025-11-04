@@ -123,35 +123,56 @@ export async function GET(request: NextRequest) {
     const limited = (rerankedResults || []).slice(0, 1000);
     const userLocation = await getUserLocation(request);
     
-    // Enhance context with location expansion info
-    let contextResponse = await generateSearchResponseContext({
-      query,
-      results: limited,
-      filters: { openNow },
-      userLocation: userLocation || undefined,
-    });
-    
-    // Add nearby locations context if applicable
-    if (expandedLocations.length > 0 && limited.length > 0) {
-      const locationContext = locationName ? await getLocationContext(locationName) : null;
-      if (locationContext) {
-        const walkingTimes = expandedLocations
-          .map(loc => {
-            const time = locationContext.walking_time[loc];
-            return time ? `${loc} (${time} min walk)` : loc;
-          })
-          .slice(0, 3); // Limit to 3 nearby mentions
-        
-        if (walkingTimes.length > 0) {
-          const originalCount = (results || []).length;
-          const additionalCount = limited.length - originalCount;
-          if (additionalCount > 0) {
-            contextResponse += ` Found ${additionalCount} more in nearby ${walkingTimes.join(', ')}.`;
+    // Generate context response (always ensure it's a string)
+    let contextResponse: string = '';
+    try {
+      contextResponse = await generateSearchResponseContext({
+        query,
+        results: limited,
+        filters: { openNow },
+        userLocation: userLocation || undefined,
+      }) || '';
+      
+      // Add nearby locations context if applicable
+      if (expandedLocations.length > 0 && limited.length > 0) {
+        const locationContext = locationName ? await getLocationContext(locationName) : null;
+        if (locationContext) {
+          const walkingTimes = expandedLocations
+            .map(loc => {
+              const time = locationContext.walking_time[loc];
+              return time ? `${loc} (${time} min walk)` : loc;
+            })
+            .slice(0, 3); // Limit to 3 nearby mentions
+          
+          if (walkingTimes.length > 0) {
+            const originalCount = (results || []).length;
+            const additionalCount = limited.length - originalCount;
+            if (additionalCount > 0) {
+              contextResponse += ` Found ${additionalCount} more in nearby ${walkingTimes.join(', ')}.`;
+            }
           }
         }
       }
+    } catch (error) {
+      console.error('Error generating context response:', error);
+      // Fallback to simple message
+      contextResponse = `Found ${limited.length} ${limited.length === 1 ? 'place' : 'places'}.`;
     }
-    const suggestions = await generateSuggestions({ query, results: limited, filters: { openNow } });
+    
+    // Generate suggestions (always ensure it's an array)
+    let suggestions: Array<{ label: string; refinement: string }> = [];
+    try {
+      suggestions = await generateSuggestions({ 
+        query, 
+        results: limited, 
+        filters: { openNow },
+        refinements: [],
+      }) || [];
+    } catch (error) {
+      console.error('Error generating suggestions:', error);
+      // Fallback to empty array
+      suggestions = [];
+    }
 
     // Log search interaction (best-effort)
     try {
@@ -188,7 +209,13 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Search error:', error);
     return NextResponse.json(
-      { error: 'Search failed', details: error.message },
+      { 
+        error: 'Search failed', 
+        details: error.message,
+        results: [],
+        contextResponse: 'Sorry, there was an error processing your search. Please try again.',
+        suggestions: [],
+      },
       { status: 500 }
     );
   }
