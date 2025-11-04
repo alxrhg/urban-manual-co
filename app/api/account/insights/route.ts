@@ -81,31 +81,59 @@ export async function GET(request: NextRequest) {
     const userInterests = profile?.interests || [];
     const visitedTags: Record<string, number> = {};
     
-    // Note: RPC function returns full destination data, but tags might not be included
-    // If tags are needed, we'd need to query destinations separately or update RPC function
-    // For now, skip tags analysis since tags aren't in the RPC return type
-    // visited.forEach((v: any) => {
-    //   const tags = v.tags || [];
-    //   tags.forEach((tag: string) => {
-    //     visitedTags[tag.toLowerCase()] = (visitedTags[tag.toLowerCase()] || 0) + 1;
-    //   });
-    // });
+    // Collect tags from visited destinations
+    visited.forEach((v: any) => {
+      const tags = v.tags || [];
+      tags.forEach((tag: string) => {
+        const tagLower = tag.toLowerCase();
+        visitedTags[tagLower] = (visitedTags[tagLower] || 0) + 1;
+      });
+    });
+
+    // Also collect tags from saved destinations for broader analysis
+    const savedTags: Record<string, number> = {};
+    saved.forEach((s: any) => {
+      const tags = s.tags || [];
+      tags.forEach((tag: string) => {
+        const tagLower = tag.toLowerCase();
+        savedTags[tagLower] = (savedTags[tagLower] || 0) + 1;
+      });
+    });
+
+    // Combine tags for taste alignment analysis
+    const allTags = { ...visitedTags, ...savedTags };
 
     const tasteAlignment: Array<{ interest: string; percentage: number }> = [];
     userInterests.forEach((interest: string) => {
-      const matchingTags = Object.keys(visitedTags).filter(tag => 
+      const matchingTags = Object.keys(allTags).filter(tag => 
         tag.includes(interest.toLowerCase()) || interest.toLowerCase().includes(tag)
       );
-      const matchCount = matchingTags.reduce((sum, tag) => sum + visitedTags[tag], 0);
-      const percentage = visited.length > 0 ? Math.round((matchCount / visited.length) * 100) : 0;
+      const matchCount = matchingTags.reduce((sum, tag) => sum + allTags[tag], 0);
+      const totalDestinations = visited.length + saved.length;
+      const percentage = totalDestinations > 0 ? Math.round((matchCount / totalDestinations) * 100) : 0;
       tasteAlignment.push({ interest, percentage });
     });
+
+    // Calculate top tags from all destinations
+    const allTagCounts: Record<string, number> = {};
+    [...saved, ...visited].forEach((item: any) => {
+      const tags = item.tags || [];
+      tags.forEach((tag: string) => {
+        allTagCounts[tag] = (allTagCounts[tag] || 0) + 1;
+      });
+    });
+    
+    const topTags = Object.entries(allTagCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([tag, count]) => ({ tag, count }));
 
     return NextResponse.json({
       upcomingPeakWindows: upcomingPeakWindows.slice(0, 5),
       visitedByCategory,
       savedByCategory,
       tasteAlignment,
+      topTags,
       stats: {
         totalSaved: saved.length,
         totalVisited: visited.length,

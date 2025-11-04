@@ -31,6 +31,7 @@ export interface UserSavedDestination {
   rating: number | null;
   price_level: number | null;
   michelin_stars: number | null;
+  tags: string[] | null;
   saved_at: string;
   user_notes: string | null;
   user_tags: string[] | null;
@@ -47,6 +48,7 @@ export interface UserVisitedDestination {
   rating: number | null;
   price_level: number | null;
   michelin_stars: number | null;
+  tags: string[] | null;
   visited_at: string;
   user_rating: number | null;
   user_notes: string | null;
