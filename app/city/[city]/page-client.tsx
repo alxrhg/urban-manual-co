@@ -16,6 +16,7 @@ import { FollowCityButton } from '@/components/FollowCityButton';
 import DynamicPrompt from '@/components/DynamicPrompt';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
+import { TrendingSection } from '@/components/TrendingSection';
 
 const DestinationDrawer = dynamic(
   () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -288,6 +289,8 @@ export default function CityPageClient() {
           </div>
 
           <DynamicPrompt city={cityDisplayName} category={selectedCategory} className="mb-2" />
+
+          <TrendingSection city={citySlug} />
 
           {user && filteredDestinations.length > 0 && (
             <PersonalizedRecommendations

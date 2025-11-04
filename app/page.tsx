@@ -779,18 +779,14 @@ export default function Home() {
               />
             </div>
             
-            {/* Personalized Recommendations - Show only when user is logged in and no active search */}
+            {/* For You Section - Show only when user is logged in and no active search */}
             {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
-              <PersonalizedRecommendations
-                limit={12}
-                title="For You"
-                showTitle={true}
-                onDestinationClick={(destination) => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
-                }}
-                className="mb-12"
-              />
+              <ForYouSection />
+            )}
+            
+            {/* Trending Section - Show when no active search */}
+            {!searchTerm.trim() && (
+              <TrendingSection />
             )}
 
             {/* Destination Grid - Original design */}

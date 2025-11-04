@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
+import { trackEvent } from '@/lib/analytics/track';
+import { useRouter } from 'next/navigation';
 
 interface Destination {
   id: number;
@@ -19,6 +21,7 @@ interface Destination {
 }
 
 export function TrendingSection({ city }: { city?: string }) {
+  const router = useRouter();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,10 +55,22 @@ export function TrendingSection({ city }: { city?: string }) {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
         {destinations.map((dest) => (
-          <a
+          <button
             key={dest.id}
-            href={`/destination/${dest.slug}`}
-            className={CARD_WRAPPER}
+            onClick={() => {
+              trackEvent({
+                event_type: 'click',
+                destination_id: dest.id,
+                destination_slug: dest.slug,
+                metadata: {
+                  category: dest.category,
+                  city: dest.city,
+                  source: 'trending_section',
+                },
+              });
+              router.push(`/destination/${dest.slug}`);
+            }}
+            className={`${CARD_WRAPPER} text-left`}
           >
             <div className={CARD_MEDIA}>
               {dest.image ? (
@@ -94,7 +109,7 @@ export function TrendingSection({ city }: { city?: string }) {
                 )}
               </div>
             </div>
-          </a>
+          </button>
         ))}
       </div>
     </section>

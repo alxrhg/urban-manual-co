@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
+import { trackEvent } from '@/lib/analytics/track';
+import { useRouter } from 'next/navigation';
 
 interface Destination {
   id: number;
@@ -19,6 +21,7 @@ interface Destination {
 }
 
 export function ForYouSection() {
+  const router = useRouter();
   const { user } = useAuth();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,10 +57,22 @@ export function ForYouSection() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
         {destinations.slice(0, 6).map((dest) => (
-          <a
+          <button
             key={dest.id}
-            href={`/destination/${dest.slug}`}
-            className={CARD_WRAPPER}
+            onClick={() => {
+              trackEvent({
+                event_type: 'click',
+                destination_id: dest.id,
+                destination_slug: dest.slug,
+                metadata: {
+                  category: dest.category,
+                  city: dest.city,
+                  source: 'for_you_section',
+                },
+              });
+              router.push(`/destination/${dest.slug}`);
+            }}
+            className={`${CARD_WRAPPER} text-left`}
           >
             <div className={CARD_MEDIA}>
               {dest.image ? (
@@ -91,7 +106,7 @@ export function ForYouSection() {
                 )}
               </div>
             </div>
-          </a>
+          </button>
         ))}
       </div>
     </section>
