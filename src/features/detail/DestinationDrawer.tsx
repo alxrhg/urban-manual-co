@@ -736,6 +736,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 src={destination.image}
                 alt={destination.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Silently handle broken images
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             </div>
           )}
