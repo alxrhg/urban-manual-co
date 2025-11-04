@@ -120,14 +120,19 @@ export const aiRouter = router({
         } else if (searchError) {
           console.error('Hybrid search error:', searchError);
           // Fallback: Use existing match_destinations if hybrid search not available
-          const { data: fallbackResults } = await supabase.rpc('match_destinations', {
-            query_embedding: embedding,
-            match_threshold: 0.6,
-            match_count: 10,
-            filter_city: filters.city || null,
-            filter_category: filters.category || null,
-          }).catch(() => ({ data: null }));
-          results = fallbackResults || [];
+          try {
+            const fallbackResult = await supabase.rpc('match_destinations', {
+              query_embedding: embedding,
+              match_threshold: 0.6,
+              match_count: 10,
+              filter_city: filters.city || null,
+              filter_category: filters.category || null,
+            });
+            results = fallbackResult.data || [];
+          } catch (fallbackError) {
+            console.error('Fallback search error:', fallbackError);
+            results = [];
+          }
         }
       } catch (error) {
         console.error('Search error:', error);
