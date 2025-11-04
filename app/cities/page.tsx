@@ -263,11 +263,11 @@ export default function CitiesPage() {
                     if (totalPages <= 1) return null;
                     
                     return (
-                      <div className="mt-8 flex items-center justify-center gap-2">
+                      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                         <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Previous
                         </button>
@@ -289,7 +289,7 @@ export default function CitiesPage() {
                               <button
                                 key={pageNum}
                                 onClick={() => setCurrentPage(pageNum)}
-                                className={`px-3 py-2 text-xs rounded-2xl transition-colors ${
+                                className={`px-2.5 sm:px-3 py-2 text-xs rounded-2xl transition-colors ${
                                   currentPage === pageNum
                                     ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
                                     : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
@@ -304,12 +304,12 @@ export default function CitiesPage() {
                         <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Next
                         </button>
-                        
-                        <span className="ml-4 text-sm text-gray-600 dark:text-gray-400">
+
+                        <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
                           Page {currentPage} of {totalPages}
                         </span>
                       </div>
