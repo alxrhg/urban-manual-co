@@ -1,43 +1,51 @@
 import { NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 
 export async function GET() {
-  const mapkitKey = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY;
-  const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID;
+  const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || process.env.MAPKIT_TEAM_ID;
   const keyId = process.env.MAPKIT_KEY_ID;
   const privateKey = process.env.MAPKIT_PRIVATE_KEY;
 
-  if (!mapkitKey || !teamId) {
+  // Check for required credentials
+  if (!teamId || !keyId || !privateKey) {
     return NextResponse.json(
-      { error: 'MapKit credentials not configured' },
+      { 
+        error: 'MapKit credentials not configured. Required: MAPKIT_TEAM_ID, MAPKIT_KEY_ID, MAPKIT_PRIVATE_KEY' 
+      },
       { status: 500 }
     );
   }
 
-  // If we have a private key, generate a JWT token
-  // Otherwise, return the key directly (for development/testing)
-  if (keyId && privateKey) {
-    try {
-      // Generate JWT token for MapKit JS
-      // This is a simplified version - in production, use a proper JWT library
-      const token = await generateMapKitToken(teamId, keyId, privateKey);
-      return NextResponse.json({ token });
-    } catch (error: any) {
-      console.error('Error generating MapKit token:', error);
-      return NextResponse.json(
-        { error: 'Failed to generate token' },
-        { status: 500 }
-      );
-    }
+  try {
+    // Generate JWT token for MapKit JS
+    // According to Apple's documentation, the token must include:
+    // - iss (issuer): Your Team ID
+    // - iat (issued at): Current timestamp
+    // - exp (expiration): Token expiration (recommended: 1 hour)
+    const now = Math.floor(Date.now() / 1000);
+    const token = jwt.sign(
+      {
+        iss: teamId,
+        iat: now,
+        exp: now + 3600, // 1 hour expiration
+      },
+      privateKey,
+      {
+        algorithm: 'ES256',
+        keyid: keyId,
+      }
+    );
+
+    return NextResponse.json({ token });
+  } catch (error: any) {
+    console.error('Error generating MapKit token:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to generate token',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
+      { status: 500 }
+    );
   }
-
-  // Fallback: return the key (MapKit JS might accept this for some use cases)
-  return NextResponse.json({ token: mapkitKey });
-}
-
-async function generateMapKitToken(teamId: string, keyId: string, privateKey: string): Promise<string> {
-  // This is a placeholder - you'll need to implement proper JWT generation
-  // using a library like 'jsonwebtoken' or 'jose'
-  // For now, return the key as a fallback
-  return privateKey;
 }
 

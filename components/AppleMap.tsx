@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MapPin } from 'lucide-react';
 
 interface AppleMapProps {
   query?: string;
@@ -9,6 +8,12 @@ interface AppleMapProps {
   longitude?: number;
   height?: string;
   className?: string;
+}
+
+declare global {
+  interface Window {
+    mapkit?: any;
+  }
 }
 
 export default function AppleMap({ 
@@ -23,140 +28,184 @@ export default function AppleMap({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Build Apple Maps URL for fallback
-  const buildAppleMapsUrl = () => {
-    if (latitude && longitude) {
-      return `https://maps.apple.com/?ll=${latitude},${longitude}&z=15`;
-    }
-    if (query) {
-      return `https://maps.apple.com/?q=${encodeURIComponent(query)}`;
-    }
-    return 'https://maps.apple.com/';
-  };
-
-  const appleMapsUrl = buildAppleMapsUrl();
+  const mapkitKey = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
+  const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || '';
 
   useEffect(() => {
-    // Try to load Leaflet for real map
-    if (typeof window === 'undefined') return;
+    // Check if MapKit is already loaded
+    if (window.mapkit && window.mapkit.loaded) {
+      setLoaded(true);
+      return;
+    }
 
-    const loadLeaflet = async () => {
+    // Load MapKit JS
+    const script = document.createElement('script');
+    script.src = 'https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js';
+    script.async = true;
+    
+    script.addEventListener('load', () => {
+      if (!window.mapkit) {
+        setError('MapKit JS failed to load');
+        return;
+      }
+
       try {
-        // Dynamically import Leaflet
-        const L = await import('leaflet');
-        
-        // Load Leaflet CSS dynamically
-        if (!document.querySelector('link[href*="leaflet.css"]')) {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-          link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
-          link.crossOrigin = '';
-          document.head.appendChild(link);
-        }
-        
-        if (!mapRef.current || mapInstanceRef.current) return;
-
-        // Fix default marker icon issue
-        delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-        L.default.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        // Initialize MapKit with authorization callback
+        window.mapkit.init({
+          authorizationCallback: (done: (token: string) => void) => {
+            // Fetch token from our API endpoint
+            fetch('/api/mapkit-token')
+              .then(res => {
+                if (!res.ok) {
+                  throw new Error(`Token request failed: ${res.status}`);
+                }
+                return res.json();
+              })
+              .then(data => {
+                if (data.token) {
+                  done(data.token);
+                } else {
+                  throw new Error('No token in response');
+                }
+              })
+              .catch((err: Error) => {
+                console.error('MapKit authorization error:', err);
+                setError(`Map authentication failed: ${err.message}`);
+                // Still try to initialize without token (may have limitations)
+                done('');
+              });
+          },
         });
 
-        // Initialize map
-        const map = L.default.map(mapRef.current, {
-          center: latitude && longitude ? [latitude, longitude] : [0, 0],
-          zoom: latitude && longitude ? 15 : 2,
-          zoomControl: true,
-          scrollWheelZoom: false,
-        });
+        // Wait for MapKit to be ready
+        if (window.mapkit.loaded) {
+          setLoaded(true);
+        } else {
+          // MapKit might take a moment to initialize
+          const checkLoaded = setInterval(() => {
+            if (window.mapkit && window.mapkit.loaded) {
+              clearInterval(checkLoaded);
+              setLoaded(true);
+            }
+          }, 100);
 
-        // Use OpenStreetMap tiles
-        L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors',
-          maxZoom: 19,
-        }).addTo(map);
-
-        // Add marker if we have coordinates
-        if (latitude && longitude) {
-          const marker = L.default.marker([latitude, longitude]).addTo(map);
-          marker.bindPopup(query || 'Location').openPopup();
-        } else if (query) {
-          // Geocode the query using Nominatim (OpenStreetMap geocoding)
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
-            .then(res => res.json())
-            .then(data => {
-              if (data && data.length > 0) {
-                const lat = parseFloat(data[0].lat);
-                const lon = parseFloat(data[0].lon);
-                map.setView([lat, lon], 15);
-                
-                const marker = L.default.marker([lat, lon]).addTo(map);
-                marker.bindPopup(data[0].display_name || query).openPopup();
-              } else {
-                setError('Location not found');
-              }
-            })
-            .catch(err => {
-              console.error('Geocoding error:', err);
-              setError('Failed to find location');
-            });
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            clearInterval(checkLoaded);
+            if (!window.mapkit?.loaded) {
+              setError('MapKit initialization timeout');
+            }
+          }, 5000);
         }
-
-        mapInstanceRef.current = map;
-        setLoaded(true);
       } catch (err: any) {
-        console.error('Failed to load Leaflet:', err);
-        setError('Map unavailable');
-        setLoaded(true); // Set loaded to show fallback
+        console.error('MapKit initialization error:', err);
+        setError(`Failed to initialize MapKit: ${err.message}`);
+      }
+    });
+
+    script.addEventListener('error', () => {
+      setError('Failed to load MapKit JS. Please check your network connection.');
+    });
+
+    document.head.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
       }
     };
+  }, [mapkitKey, teamId]);
 
-    loadLeaflet();
-  }, [latitude, longitude, query]);
+  // Initialize map once MapKit is loaded
+  useEffect(() => {
+    if (!loaded || !mapRef.current || mapInstanceRef.current || !window.mapkit) return;
 
-  // Fallback: Clickable Apple Maps link
-  if (error || !loaded) {
+    try {
+      // Create map region if we have coordinates
+      let region;
+      if (latitude && longitude) {
+        region = new window.mapkit.CoordinateRegion(
+          new window.mapkit.Coordinate(latitude, longitude),
+          new window.mapkit.CoordinateSpan(0.01, 0.01)
+        );
+      }
+
+      // Initialize the map
+      const map = new window.mapkit.Map(mapRef.current, {
+        region: region,
+      });
+
+      mapInstanceRef.current = map;
+
+      // Add annotation if we have coordinates
+      if (latitude && longitude) {
+        const annotation = new window.mapkit.MarkerAnnotation(
+          new window.mapkit.Coordinate(latitude, longitude),
+          {
+            title: query || 'Location',
+          }
+        );
+        map.addAnnotation(annotation);
+      } else if (query) {
+        // Search for the location if we only have a query
+        const geocoder = new window.mapkit.Geocoder();
+        geocoder.lookup(query, (results: any[], error: any) => {
+          if (error) {
+            console.error('Geocoding error:', error);
+            setError('Failed to find location');
+            return;
+          }
+          if (results && results.length > 0) {
+            const result = results[0];
+            const coordinate = result.coordinate;
+            map.region = new window.mapkit.CoordinateRegion(
+              coordinate,
+              new window.mapkit.CoordinateSpan(0.01, 0.01)
+            );
+            const annotation = new window.mapkit.MarkerAnnotation(
+              coordinate,
+              {
+                title: result.name || query,
+              }
+            );
+            map.addAnnotation(annotation);
+          } else {
+            setError('Location not found');
+          }
+        });
+      }
+    } catch (err: any) {
+      console.error('Map initialization error:', err);
+      setError(`Failed to initialize map: ${err.message}`);
+    }
+  }, [loaded, latitude, longitude, query]);
+
+  if (error) {
     return (
-      <a
-        href={appleMapsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`block w-full ${height} rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 relative group ${className}`}
-        style={{ minHeight: height }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-          <div className="relative z-10 text-center">
-            <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center mb-3 mx-auto shadow-lg group-hover:scale-110 transition-transform">
-              <MapPin className="h-6 w-6 text-gray-900 dark:text-gray-100" />
-            </div>
-            {query && (
-              <div className="px-4">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 line-clamp-1">
-                  {query.split(',')[0]}
-                </p>
-                {query.includes(',') && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {query.split(',').slice(1).join(',').trim()}
-                  </p>
-                )}
-              </div>
-            )}
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
-              Tap to open in Apple Maps
-            </p>
-          </div>
+      <div className={`w-full ${height} flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 ${className}`}>
+        <div className="text-center">
+          <p className="text-sm text-red-600 dark:text-red-400 mb-1">Map unavailable</p>
+          <p className="text-xs text-gray-500 dark:text-gray-500">{error}</p>
         </div>
-      </a>
+      </div>
+    );
+  }
+
+  if (!loaded) {
+    return (
+      <div className={`w-full ${height} flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Loading map...</span>
+        </div>
+      </div>
     );
   }
 
   return (
     <div
       ref={mapRef}
-      className={`w-full ${height} rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 ${className}`}
+      className={`w-full ${height} rounded-lg overflow-hidden ${className}`}
       style={{ minHeight: height }}
     />
   );
