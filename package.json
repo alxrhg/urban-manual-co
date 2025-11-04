@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test:intelligence": "tsx scripts/test-intelligence-endpoints.ts",
+    "sync:asimov": "tsx scripts/sync-destinations-to-asimov.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

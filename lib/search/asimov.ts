@@ -28,6 +28,7 @@ interface AsimovSearchResult {
   url?: string;
   score?: number;
   metadata?: Record<string, any>;
+  params?: Record<string, any>; // For backward compatibility
 }
 
 /**
@@ -93,22 +94,34 @@ export function mapAsimovResultsToDestinations(
     return [];
   }
 
-  // Try to match Asimov results to existing destinations by name/slug
+  // Try to match Asimov results to existing destinations by ID (from metadata)
   const matched: any[] = [];
   const unmatched: AsimovSearchResult[] = [];
 
   for (const result of asimovResults) {
+    const asimovId = result.metadata?.id;
     const title = result.title || result.content || '';
     const slug = result.metadata?.slug || 
                  title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     
-    // Try to find matching destination
-    const match = existingDestinations.find(dest => 
-      dest.name?.toLowerCase() === title.toLowerCase() ||
-      dest.slug === slug ||
-      dest.name?.toLowerCase().includes(title.toLowerCase()) ||
-      title.toLowerCase().includes(dest.name?.toLowerCase())
-    );
+    // Try to find matching destination by ID first (most reliable)
+    let match = null;
+    if (asimovId) {
+      match = existingDestinations.find(dest => 
+        dest.id === asimovId || 
+        String(dest.id) === String(asimovId)
+      );
+    }
+    
+    // Fallback to name/slug matching if ID match failed
+    if (!match) {
+      match = existingDestinations.find(dest => 
+        dest.name?.toLowerCase() === title.toLowerCase() ||
+        dest.slug === slug ||
+        dest.name?.toLowerCase().includes(title.toLowerCase()) ||
+        title.toLowerCase().includes(dest.name?.toLowerCase())
+      );
+    }
 
     if (match) {
       // Enhance existing destination with Asimov score
@@ -138,4 +151,5 @@ export function mapAsimovResultsToDestinations(
 
   return [...matched, ...synthetic];
 }
+
 
