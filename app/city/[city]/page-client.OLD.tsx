@@ -3,14 +3,20 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
-import { MapPin, ArrowLeft } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { MapPin } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_META, CARD_TITLE } from '@/components/CardStyles';
+import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
+import { FollowCityButton } from '@/components/FollowCityButton';
+import DynamicPrompt from '@/components/DynamicPrompt';
+import { PageIntro } from '@/components/PageIntro';
+import { PageContainer } from '@/components/PageContainer';
+import { TrendingSection } from '@/components/TrendingSection';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -36,7 +42,6 @@ function capitalizeCategory(category: string): string {
 
 export default function CityPageClient() {
   const { user } = useAuth();
-  const router = useRouter();
   const params = useParams();
   const citySlug = decodeURIComponent(params.city as string);
 
@@ -47,6 +52,9 @@ export default function CityPageClient() {
   const [advancedFilters, setAdvancedFilters] = useState<{
     michelin?: boolean;
     crown?: boolean;
+    openNow?: boolean;
+    minRating?: number;
+    category?: string;
   }>({});
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
@@ -54,7 +62,7 @@ export default function CityPageClient() {
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = 28;
+  const itemsPerPage = 21;
 
   useEffect(() => {
     setLoading(true);
@@ -116,6 +124,13 @@ export default function CityPageClient() {
     if (filters.crown) {
       filtered = filtered.filter(d => d.crown);
     }
+    if (filters.openNow) {
+      filtered = filtered.filter(d => d.opening_hours?.open_now);
+    }
+    if (typeof filters.minRating === 'number') {
+      const threshold = filters.minRating;
+      filtered = filtered.filter(d => (d.rating ?? 0) >= threshold);
+    }
 
     setFilteredDestinations(filtered);
     setCurrentPage(1);
@@ -141,16 +156,22 @@ export default function CityPageClient() {
 
   if (loading) {
     return (
-      <main className="px-8 py-20">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
-        </div>
-      </main>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+      </div>
     );
   }
 
   const cityDisplayName = capitalizeCity(citySlug);
-  const country = cityCountryMap[citySlug] || '';
+  const country = cityCountryMap[citySlug] || 'Unknown';
+  const introDescription = [
+    country !== 'Unknown' ? country : undefined,
+    `${filteredDestinations.length || destinations.length} destination${
+      (filteredDestinations.length || destinations.length) === 1 ? '' : 's'
+    }`,
+  ]
+    .filter(Boolean)
+    .join(' • ');
 
   const handleCategorySelect = (category: string) => {
     const nextCategory = category === selectedCategory ? '' : category;
@@ -168,88 +189,126 @@ export default function CityPageClient() {
 
   return (
     <>
-      <main className="px-8 py-20 min-h-screen">
-        <div className="max-w-[1800px] mx-auto space-y-12">
-          {/* Header */}
-          <div>
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-2 text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors mb-6"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              Back
-            </button>
+      <main className="pb-16">
+        <PageIntro
+          eyebrow={`${cityDisplayName}'s Manual`}
+          title={`Discover ${cityDisplayName}`}
+          description={introDescription}
+          actions={
+            user ? (
+              <FollowCityButton citySlug={citySlug} cityName={cityDisplayName} variant="default" showLabel />
+            ) : undefined
+          }
+        />
 
-            <div className="space-y-2">
-              {country && <p className="text-xs text-gray-500">{country}</p>}
-              <h1 className="text-3xl sm:text-4xl font-light">{cityDisplayName}</h1>
-              <p className="text-xs text-gray-500">
-                {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
-              </p>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="space-y-6">
-            {/* Categories */}
-            {categories.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                <button
-                  onClick={() => handleCategorySelect('')}
-                  className={`transition-all ${
-                    !selectedCategory
-                      ? 'font-medium text-black dark:text-white'
-                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {categories.map(category => (
+        <PageContainer className="space-y-10">
+          {categories.length > 0 && (
+            <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-6 py-6 shadow-sm">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <h2 className="text-sm font-semibold uppercase tracking-[1.5px] text-gray-600 dark:text-gray-400">
+                    Categories
+                  </h2>
                   <button
-                    key={category}
-                    onClick={() => handleCategorySelect(category)}
-                    className={`transition-all ${
-                      selectedCategory === category
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                    onClick={() => {
+                      setSelectedCategory('');
+                      setAdvancedFilters(prev => ({ ...prev, category: undefined }));
+                    }}
+                    className={`px-3 py-1.5 rounded-full border text-xs transition-all ${
+                      !selectedCategory
+                        ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                        : 'border-gray-300 text-gray-700 dark:text-gray-300 hover:border-black'
                     }`}
                   >
-                    {capitalizeCategory(category)}
+                    View All
                   </button>
-                ))}
-              </div>
-            )}
+                </div>
 
-            {/* Advanced Filters */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-              <button
-                onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
-                className={`flex items-center gap-1.5 transition-all ${
-                  advancedFilters.michelin
-                    ? 'font-medium text-black dark:text-white'
-                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                }`}
-              >
-                ⭐ Michelin
-              </button>
-              <button
-                onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
-                className={`flex items-center gap-1.5 transition-all ${
-                  advancedFilters.crown
-                    ? 'font-medium text-black dark:text-white'
-                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                }`}
-              >
-                👑 Crown
-              </button>
+                <div className="flex flex-wrap gap-2.5">
+                  {categories.map(category => (
+                    <button
+                      key={category}
+                      onClick={() => handleCategorySelect(category)}
+                      className={`px-3 py-1.5 rounded-full border text-xs transition-all ${
+                        selectedCategory === category
+                          ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                          : 'border-gray-300 text-gray-700 dark:text-gray-300 hover:border-black'
+                      }`}
+                    >
+                      {capitalizeCategory(category)}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
+          )}
+
+          <div className="flex flex-wrap gap-3 text-xs">
+            <button
+              onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
+              className={`px-3 py-1.5 rounded-full border transition-all ${
+                advancedFilters.michelin
+                  ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                  : 'border-gray-300 text-gray-700 dark:text-gray-300 hover:border-black'
+              }`}
+            >
+              Michelin
+            </button>
+            <button
+              onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
+              className={`px-3 py-1.5 rounded-full border transition-all ${
+                advancedFilters.crown
+                  ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                  : 'border-gray-300 text-gray-700 dark:text-gray-300 hover:border-black'
+              }`}
+            >
+              Crowned
+            </button>
+            <button
+              onClick={() => setAdvancedFilters(prev => ({ ...prev, openNow: !prev.openNow }))}
+              className={`px-3 py-1.5 rounded-full border transition-all ${
+                advancedFilters.openNow
+                  ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                  : 'border-gray-300 text-gray-700 dark:text-gray-300 hover:border-black'
+              }`}
+            >
+              Open now
+            </button>
+            <button
+              onClick={() =>
+                setAdvancedFilters(prev => ({ ...prev, minRating: prev.minRating ? undefined : 4.5 }))
+              }
+              className={`px-3 py-1.5 rounded-full border transition-all ${
+                advancedFilters.minRating
+                  ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                  : 'border-gray-300 text-gray-700 dark:text-gray-300 hover:border-black'
+              }`}
+            >
+              Rating 4.5+
+            </button>
           </div>
 
-          {/* Destinations Grid */}
+          <DynamicPrompt city={cityDisplayName} category={selectedCategory} className="mb-2" />
+
+          <TrendingSection city={citySlug} />
+
+          {user && filteredDestinations.length > 0 && (
+            <PersonalizedRecommendations
+              limit={6}
+              title={`Recommended in ${cityDisplayName}`}
+              showTitle
+              filterCity={citySlug}
+              onDestinationClick={destination => {
+                setSelectedDestination(destination);
+                setIsDrawerOpen(true);
+              }}
+              className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/70 px-4 py-4"
+            />
+          )}
+
           {filteredDestinations.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-4xl mb-4">🔍</div>
-              <p className="text-sm text-gray-500">No destinations found in {cityDisplayName}</p>
+            <div className="rounded-[32px] border border-dashed border-gray-300 dark:border-gray-700 px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+              No destinations found in {cityDisplayName}.
             </div>
           ) : (
             <div className="space-y-8">
@@ -264,8 +323,8 @@ export default function CityPageClient() {
                         setSelectedDestination(destination);
                         setIsDrawerOpen(true);
                       }}
-                      className={`${CARD_WRAPPER} cursor-pointer text-left ${
-                        isVisited ? 'opacity-50' : ''
+                      className={`${CARD_WRAPPER} cursor-pointer text-left transition-transform duration-300 hover:-translate-y-1 ${
+                        isVisited ? 'opacity-70' : ''
                       }`}
                     >
                       <div className={`${CARD_MEDIA} mb-2 relative`}>
@@ -275,51 +334,62 @@ export default function CityPageClient() {
                             alt={destination.name}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className={`object-cover group-hover:scale-105 transition-transform duration-300 ${
+                            className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
                               isVisited ? 'grayscale' : ''
                             }`}
                             quality={80}
                             loading={index < 6 ? 'eager' : 'lazy'}
+                            fetchPriority={index === 0 ? 'high' : 'auto'}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                            <MapPin className="h-10 w-10 opacity-20" />
+                            <MapPin className="h-12 w-12 opacity-20" />
                           </div>
                         )}
 
                         {destination.michelin_stars && destination.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
-                            ⭐ {destination.michelin_stars}
-                          </div>
-                        )}
-
-                        {destination.crown && (
-                          <div className="absolute top-2 right-2 bg-white dark:bg-gray-900 p-1 rounded-full">
-                            <span className="text-sm">👑</span>
+                          <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
+                            <Image
+                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                              alt="Michelin star"
+                              width={12}
+                              height={12}
+                              className="h-3 w-3"
+                            />
+                            <span>{destination.michelin_stars}</span>
                           </div>
                         )}
                       </div>
 
-                      <div>
-                        <h3 className={CARD_TITLE}>
+                      <div className="space-y-1">
+                        <div className={CARD_TITLE} role="heading" aria-level={3}>
                           {destination.name}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {destination.category && capitalizeCategory(destination.category)}
-                        </p>
+                        </div>
+                        <div className={CARD_META}>
+                          <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                            {capitalizeCity(destination.city)}
+                          </span>
+                          {destination.category && (
+                            <>
+                              <span className="text-gray-300 dark:text-gray-700">•</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
+                                {destination.category}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="w-full flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
@@ -342,10 +412,10 @@ export default function CityPageClient() {
                         <button
                           key={pageNumber}
                           onClick={() => setCurrentPage(pageNumber)}
-                          className={`px-3 py-2 text-xs rounded-2xl transition-all ${
+                          className={`px-3 py-2 text-sm rounded-full transition-all ${
                             currentPage === pageNumber
                               ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
-                              : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                              : 'border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                           }`}
                         >
                           {pageNumber}
@@ -357,15 +427,19 @@ export default function CityPageClient() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
+
+                  <span className="ml-4 text-sm text-gray-600 dark:text-gray-400">
+                    Page {currentPage} of {totalPages}
+                  </span>
                 </div>
               )}
             </div>
           )}
-        </div>
+        </PageContainer>
       </main>
 
       <DestinationDrawer
