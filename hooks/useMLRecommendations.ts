@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useSupabase } from '@/hooks/useSupabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MLRecommendation {
   destination_id: number;
@@ -54,7 +54,7 @@ export function useMLRecommendations(
     fallbackToExisting = true
   } = options;
 
-  const { user } = useSupabase();
+  const { user } = useAuth();
   const [recommendations, setRecommendations] = useState<MLRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
