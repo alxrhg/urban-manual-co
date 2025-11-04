@@ -211,13 +211,17 @@ export const aiRouter = router({
       }
 
       // Get user's saved cities
-      const { data: savedPlaces } = await supabase
-        .rpc('get_user_saved_destinations', { target_user_id: userId })
-        .catch(() => ({ data: null }));
+      let savedPlaces: any = { data: null };
+      try {
+        const result = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
+        savedPlaces = result;
+      } catch (error) {
+        console.error('Error fetching saved places:', error);
+      }
 
       const cities = [
         ...new Set(
-          (savedPlaces?.data || [])
+          ((savedPlaces?.data || []) as any[])
             .map((p: any) => p.city)
             .filter(Boolean)
         )
