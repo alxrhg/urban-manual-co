@@ -47,7 +47,7 @@ If you truly cannot access the Site URL field:
 2. The code will handle the redirect properly once the URL is whitelisted
 3. Supabase should respect the absolute URL in `redirectTo` if it's in the whitelist
 
-### 3. Test the Flow
+### 4. Test the Flow
 
 After updating Supabase configuration:
 1. Sign in with Apple
