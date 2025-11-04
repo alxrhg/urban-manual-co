@@ -1,17 +1,5 @@
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
-
-const CityPageClient = dynamic(() => import('./page-client'), { ssr: false });
-
-export default function CityPage() {
-  return (
-    <Suspense fallback={<SearchGridSkeleton />}>
-      <CityPageClient />
-    </Suspense>
-  );
-}
-
 import { Metadata } from 'next';
 import { generateCityMetadata } from '@/lib/metadata';
 import CityPageClient from './page-client';
@@ -20,14 +8,18 @@ import CityPageClient from './page-client';
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ city: string }>;
+  params: { city: string };
 }): Promise<Metadata> {
-  const { city } = await params;
+  const { city } = params;
   return generateCityMetadata(city);
 }
 
 // Server component wrapper
 export default function CityPage() {
-  return <CityPageClient />;
+  return (
+    <Suspense fallback={<SearchGridSkeleton />}>
+      <CityPageClient />
+    </Suspense>
+  );
 }
 
