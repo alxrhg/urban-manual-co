@@ -11,7 +11,7 @@ import { SearchFiltersComponent, SearchFilters } from '@/components/SearchFilter
 import dynamic from 'next/dynamic';
 
 const DestinationDrawer = dynamic(
-  () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
+  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   { ssr: false, loading: () => null }
 );
 

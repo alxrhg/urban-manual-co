@@ -6,7 +6,7 @@ import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
 // Lazy load drawer (only when opened)
 const DestinationDrawer = dynamic(
-  () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
+  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   { 
     ssr: false,
     loading: () => null
@@ -26,7 +26,7 @@ import {
   trackFilterChange,
   getSessionId,
 } from '@/lib/tracking';
-import GreetingHero from '@/components/GreetingHero';
+import GreetingHero from '@/src/features/search/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { ForYouSection } from '@/components/ForYouSection';
 import { TrendingSection } from '@/components/TrendingSection';

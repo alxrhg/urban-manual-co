@@ -19,7 +19,7 @@ import { PageContainer } from '@/components/PageContainer';
 import { TrendingSection } from '@/components/TrendingSection';
 
 const DestinationDrawer = dynamic(
-  () => import('@/components/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
+  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   {
     ssr: false,
     loading: () => null,

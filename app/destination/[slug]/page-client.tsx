@@ -11,7 +11,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
 import { CARD_MEDIA, CARD_META, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
-import { RelatedDestinations } from '@/components/RelatedDestinations';
+import { RelatedDestinations } from '@/src/features/detail/RelatedDestinations';
 import { trackEvent } from '@/lib/analytics/track';
 
 interface Recommendation {
