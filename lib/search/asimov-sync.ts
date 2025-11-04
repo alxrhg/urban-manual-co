@@ -2,6 +2,9 @@
  * Asimov Content Sync
  * 
  * Functions to sync Urban Manual destinations to Asimov for indexing
+ * 
+ * Based on Asimov API: https://asimov.mov/
+ * Endpoint: POST /api/content or /api/sources (depending on plan)
  */
 
 const ASIMOV_API_URL = 'https://asimov.mov/api';
@@ -26,7 +29,8 @@ export async function addContentToAsimov(content: {
   }
 
   try {
-    const response = await fetch(`${ASIMOV_API_URL}/content`, {
+    // Try standard content endpoint first
+    let response = await fetch(`${ASIMOV_API_URL}/content`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,6 +38,20 @@ export async function addContentToAsimov(content: {
       },
       body: JSON.stringify(content),
     });
+
+    // If that fails, try sources endpoint (some plans use this)
+    if (!response.ok && response.status === 404) {
+      response = await fetch(`${ASIMOV_API_URL}/sources`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          items: [content],
+        }),
+      });
+    }
 
     if (!response.ok) {
       const error = await response.text();
