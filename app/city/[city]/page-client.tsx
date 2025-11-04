@@ -11,7 +11,7 @@ import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_META, CARD_TITLE } from '@/components/CardStyles';
-import { InFeedAd } from '@/components/GoogleAd';
+import { MultiplexAd } from '@/components/GoogleAd';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -269,7 +269,7 @@ export default function CityPageClient() {
                   return withAds.map((item) => {
                     if (item.type === 'ad') {
                       return (
-                        <InFeedAd
+                        <MultiplexAd
                           key={`ad-${item.index}`}
                           slot={item.data.slot}
                         />

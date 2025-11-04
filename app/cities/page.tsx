@@ -9,7 +9,7 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/Ca
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
 import Image from 'next/image';
-import { InFeedAd } from '@/components/GoogleAd';
+import { MultiplexAd } from '@/components/GoogleAd';
 
 interface CityStats {
   city: string;
@@ -215,7 +215,7 @@ export default function CitiesPage() {
                   return withAds.map((item) => {
                     if (item.type === 'ad') {
                       return (
-                        <InFeedAd
+                        <MultiplexAd
                           key={`ad-${item.index}`}
                           slot={item.data.slot}
                         />
