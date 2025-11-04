@@ -99,8 +99,44 @@ function SearchPageContent() {
   }
 
   async function handleFollowUp(message: string): Promise<string> {
-    await handleRefinement(message);
-    return '';
+    try {
+      const res = await fetch('/api/search/follow-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalQuery: searchState.originalQuery,
+          followUpMessage: message,
+          conversationHistory: searchState.conversationHistory,
+          currentResults: searchState.filteredResults.map((r) => ({ id: r.id })),
+          refinements: searchState.refinements,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Follow-up search failed');
+      }
+
+      const data = await res.json();
+      const results: Destination[] = data.results || [];
+
+      setSearchState((prev) => ({
+        ...prev,
+        refinements: [...prev.refinements, message],
+        filteredResults: results,
+        allResults: results.length > prev.allResults.length ? results : prev.allResults,
+        conversationHistory: [
+          ...prev.conversationHistory,
+          { role: 'user' as const, content: message },
+          ...(data.contextResponse ? [{ role: 'assistant' as const, content: data.contextResponse }] : []),
+        ] as Message[],
+        suggestions: data.suggestions || prev.suggestions,
+      }));
+
+      return data.contextResponse || '';
+    } catch (error) {
+      console.error('Follow-up error:', error);
+      return 'Sorry, I encountered an error processing your request. Please try again.';
+    }
   }
 
   function handleChipClick(chipRefinement: string) {
