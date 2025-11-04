@@ -32,49 +32,7 @@ async function understandQuery(query: string): Promise<{
     michelinStar?: number;
   };
 }> {
-  if (!GOOGLE_API_KEY) {
-    return parseQueryFallback(query);
-  }
-
-  try {
-    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-
-    const prompt = `Analyze this travel/dining search query and extract structured information. Return ONLY valid JSON with this exact structure:
-{
-  "keywords": ["array", "of", "main", "keywords"],
-  "city": "city name or null",
-  "category": "category like restaurant/cafe/hotel or null",
-  "filters": {
-    "openNow": true/false/null,
-    "priceLevel": 1-4 or null,
-    "rating": 4-5 or null,
-    "michelinStar": 1-3 or null
-  }
-}
-
-Query: "${query}"
-
-Return only the JSON, no other text:`;
-
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        console.log('[AI Search] Parsed intent:', parsed);
-        return parsed;
-      } catch (parseError) {
-        console.error('Failed to parse AI response:', parseError);
-      }
-    }
-  } catch (error: any) {
-    console.error('Gemini API error:', error);
-  }
-
+  // For now, prefer lightweight, deterministic parsing to avoid external deps
   return parseQueryFallback(query);
 }
 
