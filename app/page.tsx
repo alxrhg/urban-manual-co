@@ -727,6 +727,22 @@ export default function Home() {
                         >
                           All Categories
                         </button>
+                        {/* Michelin right after All Categories */}
+                        <button
+                          onClick={() => {
+                            const newValue = !advancedFilters.michelin;
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                            trackFilterChange({ filterType: 'michelin', value: newValue });
+                          }}
+                          className={`transition-all ${
+                            advancedFilters.michelin
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          Michelin
+                        </button>
                         {categories.map((category) => (
                           <button
                             key={category}
@@ -745,22 +761,6 @@ export default function Home() {
                             {capitalizeCategory(category)}
                           </button>
                         ))}
-                        {/* Michelin as a special category */}
-                        <button
-                          onClick={() => {
-                            const newValue = !advancedFilters.michelin;
-                            setSelectedCategory("");
-                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
-                            trackFilterChange({ filterType: 'michelin', value: newValue });
-                          }}
-                          className={`flex items-center gap-1.5 transition-all ${
-                            advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          ⭐ Michelin
-                        </button>
                       </div>
                     )}
                   </div>
