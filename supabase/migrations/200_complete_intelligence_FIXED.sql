@@ -465,6 +465,7 @@ BEGIN
     AND column_name = 'embedding'
     AND udt_name = 'vector'
   ) THEN
+    EXECUTE '
     CREATE OR REPLACE FUNCTION search_destinations_intelligent(
       query_embedding vector(1536),
       user_id_param UUID DEFAULT NULL,
@@ -494,7 +495,7 @@ BEGIN
     ) 
     SECURITY DEFINER
     SET search_path = public
-    AS $$
+    AS $func$
     BEGIN
       RETURN QUERY
       SELECT 
@@ -529,13 +530,13 @@ BEGIN
       WHERE 
         d.embedding IS NOT NULL
         AND d.rating >= 4.0 -- Editorial quality threshold
-        AND (city_filter IS NULL OR d.city ILIKE '%' || city_filter || '%')
+        AND (city_filter IS NULL OR d.city ILIKE ''%'' || city_filter || ''%'')
         AND (category_filter IS NULL OR d.category = category_filter)
         AND (NOT open_now_filter OR d.is_open_now = true)
       ORDER BY final_score DESC
       LIMIT limit_count;
     END;
-    $$ LANGUAGE plpgsql;
+    $func$ LANGUAGE plpgsql';
   END IF;
 END $$;
 

@@ -58,9 +58,19 @@ CREATE INDEX IF NOT EXISTS idx_conv_sessions_token
   ON conversation_sessions(session_token, last_updated DESC)
   WHERE session_token IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_conv_sessions_active 
-  ON conversation_sessions(user_id, ended_at) 
-  WHERE ended_at IS NULL;
+-- Create active sessions index only if ended_at column exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'conversation_sessions' 
+    AND column_name = 'ended_at'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_conv_sessions_active 
+      ON conversation_sessions(user_id, ended_at) 
+      WHERE ended_at IS NULL;
+  END IF;
+END $$;
 
 -- ============================================================================
 -- CONVERSATION MESSAGES
