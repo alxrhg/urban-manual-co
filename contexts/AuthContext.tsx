@@ -57,18 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Must be absolute URL - Supabase will use this as-is
     const callbackUrl = `${window.location.origin}/auth/callback`;
     
-    // Clear any existing auth state to ensure clean PKCE flow
-    // This helps prevent code verifier conflicts
-    await supabase.auth.signOut();
-    
+    // Don't clear auth state - this can interfere with PKCE code verifier storage
+    // The code verifier needs to persist in localStorage for the callback
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
         redirectTo: callbackUrl,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
       },
     });
     if (error) throw error;
