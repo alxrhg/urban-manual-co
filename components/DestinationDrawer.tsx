@@ -625,6 +625,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       try {
         const response = await fetch(`/api/recommendations?slug=${destination.slug}&limit=6`);
+        
+        // If unauthorized, skip recommendations (user not signed in)
+        if (response.status === 401) {
+          setRecommendations([]);
+          return;
+        }
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch recommendations');
+        }
+        
         const data = await response.json();
 
         if (data.recommendations) {
@@ -632,6 +643,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         }
       } catch (error) {
         console.error('Error loading recommendations:', error);
+        // Silently fail - recommendations are optional
+        setRecommendations([]);
       } finally {
         setLoadingRecommendations(false);
       }
