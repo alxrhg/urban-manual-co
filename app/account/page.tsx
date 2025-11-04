@@ -10,6 +10,8 @@ import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 import { WorldMapVisualization } from "@/components/WorldMapVisualization";
 import { AchievementsDisplay } from "@/components/AchievementsDisplay";
+import { PageLoader } from "@/components/LoadingStates";
+import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -220,9 +222,7 @@ export default function Account() {
   if (!authChecked || isLoadingData) {
     return (
       <main className="px-8 py-20">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-500">Loading...</div>
-        </div>
+        <PageLoader />
       </main>
     );
   }
@@ -378,17 +378,7 @@ export default function Account() {
         {activeTab === 'collections' && (
           <div className="fade-in">
             {collections.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="text-4xl mb-4">📚</div>
-                <p className="text-sm text-gray-500">No collections yet</p>
-                <p className="text-xs text-gray-400 mt-2">Create lists to organize your places</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
-                >
-                  Create Collection
-                </button>
-              </div>
+              <NoCollectionsEmptyState onCreateCollection={() => setShowCreateModal(true)} />
             ) : (
               <>
                 <div className="flex justify-end mb-4">
