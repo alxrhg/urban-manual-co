@@ -7,7 +7,7 @@ import { Destination } from '@/types/destination';
 import { MapPin, SlidersHorizontal } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import Image from 'next/image';
-import { SearchFiltersComponent, SearchFilters } from '@/components/SearchFilters';
+import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
 import dynamic from 'next/dynamic';
 
 const DestinationDrawer = dynamic(

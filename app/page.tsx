@@ -30,7 +30,7 @@ import GreetingHero from '@/src/features/search/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { ForYouSection } from '@/components/ForYouSection';
 import { TrendingSection } from '@/components/TrendingSection';
-import { SearchFiltersComponent } from '@/components/SearchFilters';
+import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 
 // Dynamically import MapView to avoid SSR issues
