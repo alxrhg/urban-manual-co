@@ -34,8 +34,15 @@ export async function GET(request: Request) {
 
     // Derive allowed origin. Prefer request Origin header, fallback to configured site URL
     const originHeader = (request.headers.get('origin') || '').replace(/\/$/, '');
+    const refererHeader = request.headers.get('referer') || '';
+    let refererOrigin = '';
+    try {
+      if (refererHeader) {
+        refererOrigin = new URL(refererHeader).origin.replace(/\/$/, '');
+      }
+    } catch {}
     const fallbackOrigin = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
-    const origin = originHeader || fallbackOrigin;
+    const origin = originHeader || refererOrigin || fallbackOrigin;
 
     // Build JWT per Apple MapKit JS requirements
     // Required claims: iss (Team ID), iat, exp. Including origin is recommended to scope the token.

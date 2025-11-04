@@ -28,7 +28,7 @@ export default function AppleMap({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mapkitKey = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
+  const mapkit1Key = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
   const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || '';
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function AppleMap({
         window.mapkit.init({
           authorizationCallback: (done: (token: string) => void) => {
             // Fetch token from our API endpoint
-            fetch('/api/mapkit-token')
+            fetch('/api/mapkit-token', { credentials: 'same-origin' })
               .then(res => {
                 if (!res.ok) {
                   throw new Error(`Token request failed: ${res.status}`);
@@ -76,6 +76,12 @@ export default function AppleMap({
               });
           },
         });
+
+        // Basic configuration
+        try {
+          window.mapkit.language = navigator.language || 'en-US';
+          window.mapkit.showsPointsOfInterest = true;
+        } catch {}
 
         // Wait for MapKit to be ready
         if (window.mapkit.loaded) {
