@@ -1,14 +1,3 @@
-'use client';
-
-// We render the client page to handle data fetching on the client
-import dynamic from 'next/dynamic';
-
-const DestinationPageClient = dynamic(() => import('./page-client'), { ssr: false });
-
-export default function DestinationPage() {
-  return <DestinationPageClient />;
-}
-
 import { Metadata } from 'next';
 import { generateDestinationMetadata, generateDestinationSchema } from '@/lib/metadata';
 import { supabase } from '@/lib/supabase';
@@ -20,9 +9,9 @@ import { sanitizeHtml } from '@/lib/sanitize-html';
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug } = params;
   return generateDestinationMetadata(slug);
 }
 
@@ -30,9 +19,9 @@ export async function generateMetadata({
 export default async function DestinationPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const { slug } = await params;
+  const { slug } = params;
   
   // Fetch destination data on server for structured data
   let destination: Destination | null = null;
