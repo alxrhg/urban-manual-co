@@ -9,6 +9,7 @@ import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 import { WorldMapVisualization } from "@/components/WorldMapVisualization";
+import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ export default function Account() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements'>('profile');
 
   // Collection creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -268,7 +269,7 @@ export default function Account() {
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {['profile', 'visited', 'saved', 'collections'].map((tab) => (
+            {['profile', 'visited', 'saved', 'collections', 'achievements'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -421,6 +422,18 @@ export default function Account() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Achievements Tab */}
+        {activeTab === 'achievements' && (
+          <div className="fade-in">
+            <AchievementsDisplay
+              visitedPlaces={visitedPlaces}
+              savedPlaces={savedPlaces}
+              uniqueCities={stats.uniqueCities}
+              uniqueCountries={stats.uniqueCountries}
+            />
           </div>
         )}
       </div>
