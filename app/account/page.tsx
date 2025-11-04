@@ -190,11 +190,11 @@ export default function Account() {
     router.push("/");
   };
 
-  const handleSignInWithGoogle = async () => {
+  const handleSignInWithApple = async () => {
     await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: 'apple',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/`
       }
     });
   };
@@ -229,32 +229,62 @@ export default function Account() {
     );
   }
 
-  // Show coming soon screen if not authenticated
+  // Show sign in screen if not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <main className="px-6 md:px-10 py-12 dark:text-white">
-          <div className="max-w-md mx-auto">
-            <Card className="p-8">
-              <CardHeader>
-                <CardTitle className="text-2xl text-center mb-4">Account</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <span className="text-center text-gray-600 dark:text-gray-400 mb-6 block">
-                  User accounts are coming soon. You'll be able to save your favorite places, track visits, and plan trips.
-                </span>
-                <Button
-                  onClick={() => router.push('/')}
-                  className="w-full"
-                  variant="outline"
-                  size="lg"
-                >
-                  Browse Destinations
-                </Button>
-              </CardContent>
-            </Card>
+      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          {/* Title Section */}
+          <div className="mb-12">
+            <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-3 text-gray-900 dark:text-white">
+              Account
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-light tracking-wide uppercase">
+              Sign in to continue
+            </p>
           </div>
-        </main>
+
+          {/* Apple Sign In Button */}
+          <button
+            onClick={handleSignInWithApple}
+            className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-sm hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-3 mb-6"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            <span>Continue with Apple</span>
+          </button>
+
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3 bg-white dark:bg-gray-950 text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                Or
+              </span>
+            </div>
+          </div>
+
+          {/* Email Sign In Link */}
+          <button
+            onClick={() => router.push('/auth/login')}
+            className="w-full px-6 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-sm hover:opacity-90 transition-opacity font-medium text-sm uppercase tracking-wide"
+          >
+            Sign in with Email
+          </button>
+
+          {/* Browse Link */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => router.push('/')}
+              className="text-xs text-gray-500 dark:text-gray-400 hover:opacity-60 transition-opacity uppercase tracking-wide"
+            >
+              Continue browsing
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
