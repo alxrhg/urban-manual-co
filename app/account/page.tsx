@@ -7,6 +7,7 @@ import { MapPin, Heart, Check } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
+import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -327,44 +328,7 @@ export default function Account() {
         {/* Saved Tab */}
         {activeTab === 'saved' && (
           <div className="fade-in">
-            {savedPlaces.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="text-4xl mb-4">❤️</div>
-                <p className="text-sm text-gray-500">No saved places yet</p>
-                <p className="text-xs text-gray-400 mt-2">Save places you want to visit</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {savedPlaces.map((place) => (
-                  <button
-                    key={place.destination_slug}
-                    onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                    className="group relative text-left"
-                  >
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
-                      {place.destination.image && (
-                        <Image
-                          src={place.destination.image}
-                          alt={place.destination.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                        />
-                      )}
-                      <div className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                        <Heart className="w-3 h-3 text-white fill-white" />
-                      </div>
-                    </div>
-                    <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-1">
-                      {place.destination.name}
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      {capitalizeCity(place.destination.city)}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
+            <EnhancedSavedTab savedPlaces={savedPlaces} />
           </div>
         )}
 

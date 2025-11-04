@@ -66,58 +66,58 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-white dark:bg-gray-950 px-8 py-20">
+      <div className="w-full max-w-md mx-auto">
         {/* Back Button */}
         <button
           onClick={() => router.push('/')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:opacity-60 mb-12 transition-opacity group"
+          className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors mb-12"
         >
-          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Back</span>
+          <ArrowLeft className="h-3 w-3" />
+          <span>Back</span>
         </button>
 
-        {/* Title Section - Aesop-inspired minimalism */}
+        {/* Title Section - Matches homepage style */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-3 text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-light mb-2">
             {isSignUp ? 'Create Account' : 'Sign In'}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-light tracking-wide uppercase">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {isSignUp
               ? 'Begin your journey'
               : 'Welcome back'}
           </p>
         </div>
 
-        {/* Apple Sign In Button - Prominent, clean design */}
+        {/* Apple Sign In Button */}
         <button
           onClick={handleAppleSignIn}
           disabled={loading}
-          className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-sm hover:opacity-90 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mb-8 group"
+          className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-6"
         >
-          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
           </svg>
           <span>Continue with Apple</span>
         </button>
 
-        {/* Divider - Subtle */}
-        <div className="relative mb-8">
+        {/* Divider */}
+        <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-3 bg-white dark:bg-gray-950 text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+            <span className="px-3 bg-white dark:bg-gray-950 text-gray-400 dark:text-gray-500">
               Or
             </span>
           </div>
         </div>
 
-        {/* Email Form - Clean, minimal */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Email Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+            <label htmlFor="email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
               Email
             </label>
             <input
@@ -126,14 +126,14 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               placeholder="you@example.com"
             />
           </div>
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+            <label htmlFor="password" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
               Password
             </label>
             <input
@@ -143,7 +143,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               placeholder="••••••••"
             />
             {isSignUp && (
@@ -155,14 +155,14 @@ function LoginForm() {
 
           {/* Error Message */}
           {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-sm text-sm text-red-700 dark:text-red-400">
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-red-700 dark:text-red-400">
               {error}
             </div>
           )}
 
           {/* Success Message */}
           {success && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-sm text-sm text-green-700 dark:text-green-400">
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-green-700 dark:text-green-400">
               {success}
             </div>
           )}
@@ -171,13 +171,13 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-6 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-sm hover:opacity-90 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-wide"
+            className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
 
           {/* Toggle Sign Up/Sign In */}
-          <div className="text-center pt-4">
+          <div className="text-center pt-2">
             <button
               type="button"
               onClick={() => {
@@ -185,7 +185,7 @@ function LoginForm() {
                 setError('');
                 setSuccess('');
               }}
-              className="text-xs text-gray-500 dark:text-gray-400 hover:opacity-60 transition-opacity uppercase tracking-wide"
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
             >
               {isSignUp
                 ? 'Already have an account? Sign in'
@@ -194,11 +194,11 @@ function LoginForm() {
           </div>
         </form>
 
-        {/* Footer - Minimal */}
-        <div className="mt-16 text-center">
+        {/* Footer */}
+        <div className="mt-12 text-center">
           <p className="text-xs text-gray-400 dark:text-gray-500">
             By continuing, you agree to our{' '}
-            <a href="/privacy" className="underline hover:opacity-60">
+            <a href="/privacy" className="hover:text-black dark:hover:text-white transition-colors">
               Privacy Policy
             </a>
           </p>
