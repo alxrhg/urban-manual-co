@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
       try {
         const { data: aiFieldResults, error: aiFieldError } = await supabase.rpc('search_by_ai_fields', {
           search_term: query,
-          match_count: pageSize
+          match_count: PAGE_SIZE
         });
 
         if (!aiFieldError && aiFieldResults && aiFieldResults.length > 0) {
