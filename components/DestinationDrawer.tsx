@@ -9,6 +9,20 @@ import { supabase } from '@/lib/supabase';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
+import dynamic from 'next/dynamic';
+
+// Dynamically import AppleMap to avoid SSR issues
+const AppleMap = dynamic(() => import('@/components/AppleMap'), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
+        <span className="text-xs text-gray-600 dark:text-gray-400">Loading map...</span>
+      </div>
+    </div>
+  )
+});
 
 interface List {
   id: string;
@@ -1114,23 +1128,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <div className="mb-8">
             <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Location</h3>
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-              <a
-                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full h-full relative group"
-              >
-                <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-2 mx-auto group-hover:bg-gray-300 dark:group-hover:bg-gray-600 transition-colors">
-                      <MapPin className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{destination.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">{capitalizeCity(destination.city)}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-600 mt-2">Tap to open in Apple Maps</p>
-                  </div>
-                </div>
-              </a>
+              <AppleMap
+                query={`${destination.name}, ${destination.city}`}
+                height="256px"
+                className="rounded-lg"
+              />
             </div>
           </div>
 
