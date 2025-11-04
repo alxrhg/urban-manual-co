@@ -15,6 +15,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    // Use PKCE flow (code exchange) instead of implicit flow (hash fragments)
+    flowType: 'pkce',
   }
 });

@@ -195,9 +195,6 @@ export default function Account() {
       provider: 'apple',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          redirect_to: window.location.origin,
-        },
       }
     });
   };
