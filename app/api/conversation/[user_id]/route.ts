@@ -62,19 +62,23 @@ export async function POST(
     let userContext: any = {};
     if (userId && supabase) {
       try {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('favorite_cities, favorite_categories, travel_style')
           .eq('user_id', userId)
           .single();
-        if (profile) {
+        // Handle errors gracefully - user_profiles might not exist or RLS might block
+        if (!profileError && profile) {
           userContext = {
             favoriteCities: profile.favorite_cities,
             favoriteCategories: profile.favorite_categories,
             travelStyle: profile.travel_style,
           };
         }
-      } catch {}
+      } catch (error) {
+        // Silently fail - user context is optional
+        console.debug('User profile fetch failed (optional):', error);
+      }
     }
 
     const intent = await extractIntent(message, messages, userContext);
