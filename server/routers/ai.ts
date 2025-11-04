@@ -40,9 +40,13 @@ export const aiRouter = router({
       });
 
       // Get user's saved places for context
-      const { data: savedPlaces } = await supabase
-        .rpc('get_user_saved_destinations', { target_user_id: userId })
-        .catch(() => ({ data: null }));
+      let savedPlaces: any = { data: null };
+      try {
+        const result = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
+        savedPlaces = result;
+      } catch (error) {
+        console.error('Error fetching saved places:', error);
+      }
 
       // Pre-process query for fuzzy matching
       const budgetInference = inferPriceFromBudgetPhrase(input.message);
@@ -131,9 +135,13 @@ export const aiRouter = router({
 
       // Filter out visited places if requested
       if (filters.exclude_visited) {
-        const { data: visitedPlaces } = await supabase
-          .rpc('get_user_visited_destinations', { target_user_id: userId })
-          .catch(() => ({ data: null }));
+        let visitedPlaces: any = { data: null };
+        try {
+          const result = await supabase.rpc('get_user_visited_destinations', { target_user_id: userId });
+          visitedPlaces = result;
+        } catch (error) {
+          console.error('Error fetching visited places:', error);
+        }
         
         const visitedSlugs = new Set((visitedPlaces?.data || []).map((vp: any) => vp.slug));
         results = results.filter((r: any) => !visitedSlugs.has(r.slug));
