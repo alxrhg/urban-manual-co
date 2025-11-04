@@ -191,7 +191,8 @@ SELECT
   CASE 
     WHEN all_checks_pass THEN '✅ COMPLETE'
     ELSE '⚠️ INCOMPLETE'
-  END as status
+  END as status,
+  all_checks_pass
 FROM (
   SELECT 
     '019_audit_current_state' as migration_name,
@@ -287,7 +288,7 @@ FROM (
 ) migration_checks
 ORDER BY 
   CASE 
-    WHEN status = '✅ COMPLETE' THEN 1
+    WHEN all_checks_pass THEN 1
     ELSE 2
   END,
   migration_name;
