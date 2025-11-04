@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     const userLocation = await getUserLocation(request);
     
     // Generate contextual response
-    let contextResponse = generateSearchResponseContext({
+    let contextResponse = await generateSearchResponseContext({
       query: combinedQuery,
       results: limited,
       filters: {

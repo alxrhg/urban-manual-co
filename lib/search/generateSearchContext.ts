@@ -1,3 +1,5 @@
+import { extractLocation as extractLocationAsync } from './extractLocation';
+
 interface SearchContextInput {
   query: string;
   results: any[];
@@ -11,11 +13,11 @@ interface SearchContextInput {
   inferredCity?: string | null;
 }
 
-export function generateSearchResponseContext(input: SearchContextInput): string {
+export async function generateSearchResponseContext(input: SearchContextInput): Promise<string> {
   const { query, results, filters } = input;
   const count = results.length;
 
-  const intent = extractIntent(query);
+  const intent = await extractIntent(query);
   const timeGreeting = getTimeGreeting(input.userLocation?.timezone);
   const parts: string[] = [];
 
@@ -67,11 +69,12 @@ export function generateSearchResponseContext(input: SearchContextInput): string
   return parts.join(' ');
 }
 
-function extractIntent(query: string) {
+async function extractIntent(query: string) {
   const lower = query.toLowerCase();
+  const location = await extractLocationAsync(query);
   return {
     category: extractCategory(lower),
-    location: extractLocation(lower),
+    location,
     cuisine: extractCuisine(lower),
     priceSignal: extractPriceSignal(lower),
     occasion: extractOccasion(lower),
@@ -100,21 +103,6 @@ function extractCategory(query: string): string | null {
     art: 'Culture',
   };
   for (const [k, v] of Object.entries(categories)) if (query.includes(k)) return v;
-  return null;
-}
-
-function extractLocation(query: string): string | null {
-  // Expanded location list - includes neighborhoods and major cities
-  const locations = [
-    'tokyo', 'shibuya', 'shinjuku', 'ginza', 'aoyama', 'omotesando', 'harajuku', 'roppongi',
-    'paris', 'le marais', 'saint-germain', 'montmartre', 'bastille', 'latin quarter',
-    'london', 'soho', 'covent garden', 'mayfair', 'shoreditch', 'marylebone', 'notting hill',
-    'new york', 'soho', 'tribeca', 'west village', 'east village', 'chelsea', 'greenwich village',
-    'los angeles', 'hollywood', 'west hollywood', 'beverly hills', 'santa monica', 'venice',
-    'kyoto', 'osaka', 'singapore', 'hong kong', 'sydney', 'dubai', 'bangkok',
-    'berlin', 'amsterdam', 'rome', 'barcelona', 'lisbon', 'madrid', 'vienna', 'prague'
-  ];
-  for (const loc of locations) if (query.includes(loc)) return loc;
   return null;
 }
 

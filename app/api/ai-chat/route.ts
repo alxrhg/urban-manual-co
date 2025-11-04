@@ -435,8 +435,8 @@ export async function POST(request: NextRequest) {
                   boostPersonalized: !!userId,
                 });
 
-                // Limit to 10 results for UI consistency
-                const limitedResults = rerankedResults.slice(0, 10);
+                // Remove limit - return all results
+                const limitedResults = rerankedResults;
 
                 // Generate natural language response
                 const response = generateResponse(limitedResults.length, intent.city, intent.category);

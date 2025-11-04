@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     const userLocation = await getUserLocation(request);
     
     // Enhance context with location expansion info
-    let contextResponse = generateSearchResponseContext({
+    let contextResponse = await generateSearchResponseContext({
       query,
       results: limited,
       filters: { openNow },
