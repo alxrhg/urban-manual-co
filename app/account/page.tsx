@@ -265,16 +265,16 @@ export default function Account() {
               </div>
             </div>
 
-            {/* World Map - Placeholder for now */}
+            {/* World Map */}
             {(stats.uniqueCountries.size > 0 || stats.uniqueCities.size > 0) && (
               <div>
-                <h2 className="text-sm font-medium mb-4">Travel Map</h2>
-                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
+                <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Travel Map</h2>
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center bg-gray-50/50 dark:bg-gray-900/50">
                   <div className="text-4xl mb-4">🗺️</div>
-                  <p className="text-sm text-gray-500 mb-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
                     {stats.uniqueCountries.size} {stats.uniqueCountries.size === 1 ? 'country' : 'countries'} • {stats.uniqueCities.size} {stats.uniqueCities.size === 1 ? 'city' : 'cities'}
                   </p>
-                  <p className="text-xs text-gray-400">Interactive map coming soon</p>
+                  <p className="text-xs text-gray-400">Your travel footprint</p>
                 </div>
               </div>
             )}
@@ -282,7 +282,7 @@ export default function Account() {
             {/* Recent Visits */}
             {visitedPlaces.length > 0 && (
               <div>
-                <h2 className="text-sm font-medium mb-4">Recent Visits</h2>
+                <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Recent Visits</h2>
                 <div className="space-y-2">
                   {visitedPlaces.slice(0, 5).map((place) => (
                     <button
