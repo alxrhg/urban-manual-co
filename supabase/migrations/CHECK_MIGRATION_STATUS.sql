@@ -298,20 +298,25 @@ ORDER BY
 -- ============================================================================
 
 SELECT 
-  '⚠️ NEEDS TO RUN' as action,
-  string_agg(migration_name, ', ' ORDER BY migration_name) as missing_migrations
+  CASE 
+    WHEN COUNT(*) = 0 THEN '✅ ALL MIGRATIONS COMPLETE'
+    ELSE '⚠️ NEEDS TO RUN'
+  END as action,
+  CASE 
+    WHEN COUNT(*) = 0 THEN 'No migrations needed - all core migrations are complete!'
+    ELSE string_agg(migration_name, ', ' ORDER BY migration_name)
+  END as missing_migrations
 FROM (
   SELECT 
-    '019_audit_current_state' as migration_name,
-    TRUE as is_complete  -- Audit script (diagnostic only, run anytime)
-  UNION ALL
-  SELECT 
-    '020_consolidate_schema',
+    '020_consolidate_schema' as migration_name,
     EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'saved_places')
+      AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'visited_places')
+      as is_complete
   UNION ALL
   SELECT 
     '021_add_helper_functions',
     EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_name = 'get_user_saved_destinations')
+      AND EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_name = 'get_user_visited_destinations')
   UNION ALL
   SELECT 
     '022_add_tags_to_rpc',
