@@ -33,7 +33,7 @@ export default function CitiesPage() {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 21; // ~3 rows at 7 columns, fits in ~1vh
+  const itemsPerPage = 28; // 4 rows at 7 columns (2xl screens)
   const [advancedFilters, setAdvancedFilters] = useState<{
     city?: string;
     category?: string;

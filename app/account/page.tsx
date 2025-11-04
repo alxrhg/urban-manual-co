@@ -8,6 +8,7 @@ import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
+import { WorldMapVisualization } from "@/components/WorldMapVisualization";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -268,14 +269,13 @@ export default function Account() {
             {/* World Map */}
             {(stats.uniqueCountries.size > 0 || stats.uniqueCities.size > 0) && (
               <div>
-                <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Travel Map</h2>
-                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center bg-gray-50/50 dark:bg-gray-900/50">
-                  <div className="text-4xl mb-4">🗺️</div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Travel Map</h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {stats.uniqueCountries.size} {stats.uniqueCountries.size === 1 ? 'country' : 'countries'} • {stats.uniqueCities.size} {stats.uniqueCities.size === 1 ? 'city' : 'cities'}
                   </p>
-                  <p className="text-xs text-gray-400">Your travel footprint</p>
                 </div>
+                <WorldMapVisualization visitedCountries={stats.uniqueCountries} />
               </div>
             )}
 
