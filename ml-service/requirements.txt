@@ -1,0 +1,25 @@
+# Web Framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# Machine Learning
+lightfm==1.17
+prophet==1.1.6
+scikit-learn==1.5.2
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+
+# Database
+psycopg2-binary==2.9.10
+SQLAlchemy==2.0.36
+
+# HTTP Client
+httpx==0.28.1
+python-multipart==0.0.19
+
+# Utilities
+python-dotenv==1.0.1
+joblib==1.4.2
