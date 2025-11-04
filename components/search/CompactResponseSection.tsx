@@ -77,7 +77,7 @@ export function CompactResponseSection({
           ))}
 
           {isLoading && (
-            <p className="text-sm text-neutral-400">...</p>
+            <p className="text-sm text-neutral-400">with our in-house travel intelligence…</p>
           )}
         </div>
 

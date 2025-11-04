@@ -162,7 +162,7 @@ function SearchPageContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="px-6 md:px-10 py-10"><div className="h-4 w-48 bg-gray-200 rounded mb-6" /><div className="h-5 w-80 bg-gray-200 rounded mb-8" /><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+    <Suspense fallback={<div className="px-6 md:px-10 py-10"><div className="text-sm text-neutral-500 mb-4">with our in-house travel intelligence…</div><div className="h-4 w-48 bg-gray-200 rounded mb-6" /><div className="h-5 w-80 bg-gray-200 rounded mb-8" /><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
       {Array.from({ length: 10 }).map((_, i) => (
         <div key={i} className="aspect-square rounded-2xl bg-gray-200" />
       ))}
