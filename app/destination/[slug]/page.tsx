@@ -1,3 +1,14 @@
+'use client';
+
+// We render the client page to handle data fetching on the client
+import dynamic from 'next/dynamic';
+
+const DestinationPageClient = dynamic(() => import('./page-client'), { ssr: false });
+
+export default function DestinationPage() {
+  return <DestinationPageClient />;
+}
+
 import { Metadata } from 'next';
 import { generateDestinationMetadata, generateDestinationSchema } from '@/lib/metadata';
 import { supabase } from '@/lib/supabase';
