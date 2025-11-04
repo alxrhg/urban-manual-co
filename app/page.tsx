@@ -823,7 +823,7 @@ export default function Home() {
                     withAds.push({ type: 'destination', data: destination, index });
                     // Add ad after every 14th item (but not at the very end)
                     if ((index + 1) % 14 === 0 && index < paginatedDestinations.length - 1) {
-                      withAds.push({ type: 'ad', data: { slot: '1234567890' }, index: index + 0.5 });
+                      withAds.push({ type: 'ad', data: { slot: '3271683710' }, index: index + 0.5 });
                     }
                   });
 
