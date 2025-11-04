@@ -76,11 +76,11 @@ export default function SearchPage() {
       ...prev,
       refinements: newRefinements,
       filteredResults: data.filteredResults || [],
-      conversationHistory: [
+      conversationHistory: ([
         ...prev.conversationHistory,
-        { role: 'user', content: refinement },
-        ...(data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : []),
-      ],
+        { role: 'user' as const, content: refinement },
+        ...(data.contextResponse ? [{ role: 'assistant' as const, content: data.contextResponse }] : []),
+      ]) as Message[],
       // Keep initial suggestions for now; can evolve to state-driven
     }));
   }
@@ -99,10 +99,10 @@ export default function SearchPage() {
       ...prev,
       refinements: [],
       filteredResults: prev.allResults,
-      conversationHistory: [
+      conversationHistory: ([
         ...prev.conversationHistory,
-        { role: 'assistant', content: `Filters cleared. Showing all ${prev.allResults.length} results.` },
-      ],
+        { role: 'assistant' as const, content: `Filters cleared. Showing all ${prev.allResults.length} results.` },
+      ]) as Message[],
     }));
   }
 
