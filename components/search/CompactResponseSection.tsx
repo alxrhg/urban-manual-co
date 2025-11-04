@@ -2,32 +2,28 @@
 
 import { useState, useRef, useEffect } from 'react';
 
-interface Message {
+export interface Message {
   role: 'assistant' | 'user';
   content: string;
 }
 
 interface CompactResponseSectionProps {
   query: string;
-  contextResponse: string;
-  suggestions?: Array<{ 
-    label: string; 
-    action: () => void;
-  }>;
+  messages: Message[];
+  suggestions?: Array<{ label: string; refinement: string }>;
+  onChipClick: (refinement: string) => void;
   onFollowUp?: (message: string) => Promise<string>;
   className?: string;
 }
 
 export function CompactResponseSection({
   query,
-  contextResponse,
+  messages,
   suggestions = [],
+  onChipClick,
   onFollowUp,
   className = '',
 }: CompactResponseSectionProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: contextResponse },
-  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -38,11 +34,6 @@ export function CompactResponseSection({
     }
   }, [messages]);
 
-  useEffect(() => {
-    // Replace first assistant message when context updates
-    setMessages([{ role: 'assistant', content: contextResponse }]);
-  }, [contextResponse]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !onFollowUp || isLoading) return;
@@ -51,13 +42,8 @@ export function CompactResponseSection({
     setInput('');
     setIsLoading(true);
 
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-
     try {
       const response = await onFollowUp(userMessage);
-      if (response) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
-      }
     } catch (error) {
       console.error('Follow-up error:', error);
     } finally {
@@ -95,12 +81,12 @@ export function CompactResponseSection({
           )}
         </div>
 
-        {suggestions.length > 0 && messages.length === 1 && (
+        {suggestions.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4 pb-2">
             {suggestions.map((suggestion, i) => (
               <button
                 key={i}
-                onClick={suggestion.action}
+                onClick={() => onChipClick(suggestion.refinement)}
                 className="px-3 py-1 text-xs border border-neutral-300 rounded-full hover:border-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors duration-200"
               >
                 {suggestion.label}
