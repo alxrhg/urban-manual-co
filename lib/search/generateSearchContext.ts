@@ -44,8 +44,15 @@ export function generateSearchResponseContext(input: SearchContextInput): string
     if (insight) parts.push(insight);
   } else {
     parts.push(`Found ${count} places.`);
-    const variety = analyzeVariety(results);
-    if (variety) parts.push(variety);
+    // Always try to generate category insight first
+    const insight = generateCategoryInsight(intent.category, results);
+    if (insight) {
+      parts.push(insight);
+    } else {
+      // Fallback to variety analysis if no category insight
+      const variety = analyzeVariety(results);
+      if (variety) parts.push(variety);
+    }
   }
 
   if (count > 0) {
@@ -77,16 +84,36 @@ function extractCategory(query: string): string | null {
     hotels: 'hotels',
     restaurant: 'restaurants',
     restaurants: 'restaurants',
+    dining: 'restaurants',
     cafe: 'cafés',
+    cafes: 'cafés',
+    cafés: 'cafés',
     coffee: 'coffee shops',
+    'coffee shop': 'coffee shops',
+    'coffee shops': 'coffee shops',
     bar: 'bars',
+    bars: 'bars',
+    museum: 'Culture',
+    museums: 'Culture',
+    gallery: 'Culture',
+    galleries: 'Culture',
+    art: 'Culture',
   };
   for (const [k, v] of Object.entries(categories)) if (query.includes(k)) return v;
   return null;
 }
 
 function extractLocation(query: string): string | null {
-  const locations = ['tokyo', 'shibuya', 'shinjuku', 'ginza', 'aoyama', 'omotesando', 'paris', 'london', 'new york', 'kyoto', 'osaka'];
+  // Expanded location list - includes neighborhoods and major cities
+  const locations = [
+    'tokyo', 'shibuya', 'shinjuku', 'ginza', 'aoyama', 'omotesando', 'harajuku', 'roppongi',
+    'paris', 'le marais', 'saint-germain', 'montmartre', 'bastille', 'latin quarter',
+    'london', 'soho', 'covent garden', 'mayfair', 'shoreditch', 'marylebone', 'notting hill',
+    'new york', 'soho', 'tribeca', 'west village', 'east village', 'chelsea', 'greenwich village',
+    'los angeles', 'hollywood', 'west hollywood', 'beverly hills', 'santa monica', 'venice',
+    'kyoto', 'osaka', 'singapore', 'hong kong', 'sydney', 'dubai', 'bangkok',
+    'berlin', 'amsterdam', 'rome', 'barcelona', 'lisbon', 'madrid', 'vienna', 'prague'
+  ];
   for (const loc of locations) if (query.includes(loc)) return loc;
   return null;
 }
@@ -127,16 +154,34 @@ function getTimeGreeting(timezone?: string): string {
 
 function generateCategoryInsight(category: string | null, results: any[]): string | null {
   if (category === 'hotels') {
-    const hasDesign = results.some((r: any) => r.description?.toLowerCase().includes('design') || r.description?.toLowerCase().includes('boutique'));
-    const hasLuxury = results.some((r: any) => (r.price_level ?? 0) >= 4);
+    const hasDesign = results.some((r: any) => 
+      r.description?.toLowerCase().includes('design') || 
+      r.description?.toLowerCase().includes('boutique') ||
+      r.style_tags?.some((tag: string) => tag?.toLowerCase().includes('design') || tag?.toLowerCase().includes('boutique'))
+    );
+    const hasLuxury = results.some((r: any) => 
+      (r.price_level ?? 0) >= 4 ||
+      r.description?.toLowerCase().includes('luxury') ||
+      r.tags?.some((tag: string) => tag?.toLowerCase().includes('luxury'))
+    );
     if (hasDesign && hasLuxury) return 'Mix of design-led boutiques and established luxury.';
     if (hasDesign) return 'Mostly design-focused boutiques.';
+    if (hasLuxury) return 'Established luxury properties.';
   }
   if (category === 'restaurants') {
-    const michelin = results.filter((r: any) => r.michelin_stars).length;
+    const michelin = results.filter((r: any) => r.michelin_stars && r.michelin_stars > 0).length;
     if (michelin >= 3) return `${michelin} Michelin-recognized among them.`;
+    if (michelin > 0) return `${michelin} Michelin-recognized.`;
     const styles = analyzeRestaurantStyles(results);
     return styles;
+  }
+  if (category === 'cafés' || category === 'coffee shops') {
+    const hasSpecialty = results.some((r: any) => 
+      r.description?.toLowerCase().includes('specialty') ||
+      r.description?.toLowerCase().includes('third wave') ||
+      r.tags?.some((tag: string) => tag?.toLowerCase().includes('specialty'))
+    );
+    if (hasSpecialty) return 'Mix of specialty coffee and classic cafés.';
   }
   return null;
 }
