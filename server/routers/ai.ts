@@ -157,7 +157,7 @@ export const aiRouter = router({
       let responseText: string;
 
       // If needs clarification
-      if (intent.needsClarification && intent.clarifyingQuestions?.length > 0) {
+      if (intent.needsClarification && intent.clarifyingQuestions && intent.clarifyingQuestions.length > 0) {
         responseText = `I found some options, but I'd love to narrow it down. ${intent.clarifyingQuestions[0]}`;
       }
       // If no results but had interpretation
