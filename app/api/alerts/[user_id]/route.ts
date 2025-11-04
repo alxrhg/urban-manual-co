@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
-const supabase = createClient(url, key);
+import { createServerClient } from '@/lib/supabase-server';
 
 export async function GET(
   _req: NextRequest,
@@ -11,17 +7,66 @@ export async function GET(
 ) {
   try {
     const { user_id } = await context.params;
-    const { data, error } = await supabase
+    const supabase = await createServerClient();
+
+    const { data: alerts, error } = await supabase
       .from('opportunity_alerts')
-      .select('*')
+      .select(`
+        *,
+        destinations (
+          id, slug, name, city, image
+        )
+      `)
       .eq('user_id', user_id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .eq('read', false)
+      .order('triggered_at', { ascending: false })
+      .limit(10);
+
     if (error) throw error;
-    return NextResponse.json({ items: data || [] });
+
+    return NextResponse.json({
+      alerts: (alerts || []).map((a: any) => ({
+        id: a.id,
+        type: a.alert_type,
+        severity: a.severity,
+        destination: a.destinations,
+        message: a.message,
+        triggered_at: a.triggered_at,
+      })),
+    });
   } catch (e: any) {
-    return NextResponse.json({ error: 'Failed to load alerts', details: e.message }, { status: 500 });
+    console.error('Alerts error:', e);
+    return NextResponse.json(
+      { error: 'Failed to load alerts', details: e.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ user_id: string }> }
+) {
+  try {
+    const { user_id } = await context.params;
+    const { alertId } = await request.json();
+    const supabase = await createServerClient();
+
+    const { error } = await supabase
+      .from('opportunity_alerts')
+      .update({ read: true })
+      .eq('id', alertId)
+      .eq('user_id', user_id);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    console.error('Mark alert read error:', e);
+    return NextResponse.json(
+      { error: 'Failed to update alert', details: e.message },
+      { status: 500 }
+    );
   }
 }
 

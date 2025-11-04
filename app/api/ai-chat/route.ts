@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
+import { embedText } from '@/lib/llm';
 import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
 import { forecastingService } from '@/services/intelligence/forecasting';
 import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -34,34 +34,15 @@ const CATEGORY_SYNONYMS: Record<string, string> = {
   'gallery': 'Culture'
 };
 
-// Generate embedding using Google's text-embedding-004 model
+// Generate embedding using OpenAI
 async function generateEmbedding(text: string): Promise<number[] | null> {
-  if (!GOOGLE_API_KEY) {
-    console.error('[AI Chat] No Google API key available');
+  if (!openai) {
+    console.error('[AI Chat] No OpenAI client available');
     return null;
   }
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'models/text-embedding-004',
-          content: { parts: [{ text }] }
-        })
-      }
-    );
-
-    const data = await response.json();
-    
-    if (data.embedding?.values) {
-      return data.embedding.values;
-    }
-    
-    console.error('[AI Chat] Unexpected embedding response format:', data);
-    return null;
+    return await embedText(text);
   } catch (error) {
     console.error('[AI Chat] Error generating embedding:', error);
     return null;
@@ -87,14 +68,11 @@ async function understandQuery(
   confidence?: number; // 0-1 confidence score
   clarifications?: string[]; // Questions to clarify ambiguous queries
 }> {
-  if (!GOOGLE_API_KEY) {
+  if (!openai) {
     return parseQueryFallback(query);
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     // Build conversation context string
     const conversationContext = conversationHistory.length > 0
       ? `\n\nConversation History:\n${conversationHistory.slice(-6).map(msg => `${msg.role}: ${msg.content}`).join('\n')}`
@@ -130,7 +108,7 @@ async function understandQuery(
       }
     }
 
-    const prompt = `Analyze this travel/dining search query with full context. Extract structured information and understand the user's intent deeply. Return ONLY valid JSON with this exact structure:
+    const systemPrompt = `You are a travel search intent analyzer. Extract structured information from travel/dining queries with full context. Return ONLY valid JSON with this exact structure:
 {
   "keywords": ["array", "of", "main", "keywords"],
   "city": "city name or null",
@@ -146,8 +124,6 @@ async function understandQuery(
   "clarifications": ["array", "of", "suggested", "questions", "if", "query", "is", "ambiguous"]
 }
 
-Query: "${query}"${conversationContext}${userContext}
-
 Guidelines:
 - Use conversation history to resolve pronouns and references (e.g., "show me more like this" refers to previous results)
 - Use "more", "another", "similar" to expand on previous queries
@@ -156,16 +132,25 @@ Guidelines:
 - Confidence should reflect how clear the query intent is
 - For relative queries ("more", "another", "different"), infer intent from conversation history
 
-Return only the JSON, no other text:`;
+Return only the JSON, no other text.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const userPrompt = `Query: "${query}"${conversationContext}${userContext}`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.2,
+      response_format: { type: 'json_object' },
+    });
+
+    const text = response.choices?.[0]?.message?.content || '';
     
-    if (jsonMatch) {
+    if (text) {
       try {
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(text);
         console.log('[AI Chat] Enhanced parsed intent:', parsed);
         
         // If query contains relative terms, enhance intent from conversation
@@ -180,7 +165,7 @@ Return only the JSON, no other text:`;
               const cityMatch = lastContent.match(/in ([a-z\s]+?)(?:\.|,|$)/);
               if (cityMatch) parsed.city = cityMatch[1].trim();
             }
-            if (!parsed.category && lastContent.includes('place') || lastContent.includes('restaurant') || lastContent.includes('hotel')) {
+            if (!parsed.category && (lastContent.includes('place') || lastContent.includes('restaurant') || lastContent.includes('hotel'))) {
               if (lastContent.includes('restaurant')) parsed.category = 'Dining';
               else if (lastContent.includes('hotel')) parsed.category = 'Hotel';
               else if (lastContent.includes('cafe')) parsed.category = 'Cafe';

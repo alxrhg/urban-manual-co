@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
+import { trackEvent } from '@/lib/analytics/track';
 
 interface List {
   id: string;
@@ -356,6 +357,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             user_id: user.id,
             destination_slug: destination.slug,
           });
+        
+        // Track save event
+        trackEvent({
+          event_type: 'save',
+          destination_id: destination.id,
+          destination_slug: destination.slug,
+          metadata: {
+            category: destination.category,
+            city: destination.city,
+            source: 'destination_drawer',
+          },
+        });
       }
     } catch (error) {
       // Revert on error
@@ -403,6 +416,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             rating: rating || null,
             notes: notes || null,
           });
+        
+        // Track visit event (similar to save, but for visits)
+        trackEvent({
+          event_type: 'save', // Visited is also a form of engagement
+          destination_id: destination.id,
+          destination_slug: destination.slug,
+          metadata: {
+            category: destination.category,
+            city: destination.city,
+            source: 'destination_drawer',
+            action: 'visited',
+            rating: rating || null,
+          },
+        });
       }
     } catch (error) {
       // Revert on error

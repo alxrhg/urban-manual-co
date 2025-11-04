@@ -11,6 +11,8 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
 import { CARD_MEDIA, CARD_META, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
+import { RelatedDestinations } from '@/components/RelatedDestinations';
+import { trackEvent } from '@/lib/analytics/track';
 
 interface Recommendation {
   slug: string;
@@ -50,6 +52,21 @@ export default function DestinationPageClient() {
   useEffect(() => {
     fetchDestination();
   }, [slug]);
+
+  // Track destination view
+  useEffect(() => {
+    if (destination?.id) {
+      trackEvent({
+        event_type: 'view',
+        destination_id: destination.id,
+        destination_slug: destination.slug,
+        metadata: {
+          category: destination.category,
+          city: destination.city,
+        },
+      });
+    }
+  }, [destination]);
 
   useEffect(() => {
     if (destination) {
@@ -301,7 +318,18 @@ export default function DestinationPageClient() {
                 {recommendations.map(rec => (
                   <button
                     key={rec.slug}
-                    onClick={() => router.push(`/destination/${rec.slug}`)}
+                    onClick={() => {
+                      trackEvent({
+                        event_type: 'click',
+                        destination_slug: rec.slug,
+                        metadata: {
+                          source: 'destination_detail_recommendations',
+                          category: rec.category,
+                          city: rec.city,
+                        },
+                      });
+                      router.push(`/destination/${rec.slug}`);
+                    }}
                     className={`${CARD_WRAPPER} text-left transition-transform duration-300 hover:-translate-y-1`}
                   >
                     <div className={`${CARD_MEDIA} mb-2`}>
@@ -358,6 +386,11 @@ export default function DestinationPageClient() {
               </div>
             )}
           </section>
+        )}
+
+        {/* Related Destinations (Similar Vibe & Pair With) */}
+        {destination?.id && (
+          <RelatedDestinations destinationId={String(destination.id)} />
         )}
 
         <div className="flex flex-wrap gap-3 pt-4">

@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/compute-intelligence",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
+

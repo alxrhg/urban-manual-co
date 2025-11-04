@@ -1,32 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase-server';
 
-const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
-const supabase = createClient(url, key);
-
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const city = searchParams.get('city') || undefined;
-    const limit = parseInt(searchParams.get('limit') || '50', 10);
-    const openNow = searchParams.get('open_now');
+    const { searchParams } = new URL(request.url);
+    const city = searchParams.get('city');
+    const category = searchParams.get('category');
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
 
-    let q = supabase
+    const supabase = await createServerClient();
+
+    let query = supabase
       .from('destinations')
-      .select('slug, name, city, category, image, rating, price_level, rank_score')
-      .order('rank_score', { ascending: false })
+      .select('*')
+      .gt('trending_score', 0)
+      .gte('rating', 4.0);
+
+    if (city) query = query.eq('city', city);
+    if (category) query = query.eq('category', category);
+
+    const { data: trending, error } = await query
+      .order('trending_score', { ascending: false })
       .limit(limit);
 
-    if (city) q = q.ilike('city', `%${city}%`);
-    if (openNow === 'true') q = q.eq('is_open_now', true);
-
-    const { data, error } = await q;
     if (error) throw error;
 
-    return NextResponse.json({ items: data || [], count: data?.length || 0 });
+    return NextResponse.json({
+      trending: trending || [],
+      meta: {
+        filters: { city, category },
+        count: trending?.length || 0,
+        period: 'Past 14 days',
+      },
+    });
   } catch (e: any) {
-    return NextResponse.json({ error: 'Failed to load trending', details: e.message }, { status: 500 });
+    console.error('Trending error:', e);
+    return NextResponse.json(
+      { error: 'Failed to load trending', details: e.message },
+      { status: 500 }
+    );
   }
 }
 

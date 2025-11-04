@@ -814,6 +814,23 @@ export default function Home() {
                         position: index,
                         source: 'grid',
                       });
+                      
+                      // Also track with new analytics system
+                      if (destination.id) {
+                        import('@/lib/analytics/track').then(({ trackEvent }) => {
+                          trackEvent({
+                            event_type: 'click',
+                            destination_id: destination.id,
+                            destination_slug: destination.slug,
+                            metadata: {
+                              category: destination.category,
+                              city: destination.city,
+                              source: 'homepage_grid',
+                              position: index,
+                            },
+                          });
+                        });
+                      }
                     }}
                     className={`${CARD_WRAPPER} cursor-pointer text-left ${isVisited ? 'opacity-60' : ''}`}
                   >
