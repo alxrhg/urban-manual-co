@@ -6,6 +6,7 @@ import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
 import { forecastingService } from '@/services/intelligence/forecasting';
 import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
 import { rerankDestinations } from '@/lib/search/reranker';
+import { searchAsimov, mapAsimovResultsToDestinations } from '@/lib/search/asimov';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -318,9 +319,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Strategy 2: Fallback to filtered search if vector search returns no results
+    // Strategy 2: Asimov fallback (semantic search service)
     if (results.length === 0) {
       try {
+        console.log('[AI Chat] Trying Asimov fallback...');
+        const asimovResults = await searchAsimov({
+          query,
+          limit: 50,
+          params: {
+            category: intent.category || undefined,
+            city: intent.city || undefined,
+            language: 'en',
+          },
+          recall: 100,
+        });
+
+        if (asimovResults && asimovResults.length > 0) {
+          // Get all destinations from DB to match against Asimov results
+          const { data: allDestinations } = await supabase
+            .from('destinations')
+            .select('*')
+            .limit(1000);
+
+          const mapped = mapAsimovResultsToDestinations(asimovResults, allDestinations || []);
+          
+          if (mapped.length > 0) {
+            results = mapped;
+            console.log('[AI Chat] Asimov fallback found', results.length, 'results');
+          }
+        }
+      } catch (error: any) {
+        console.error('[AI Chat] Asimov fallback exception:', error);
+      }
+    }
+
+    // Strategy 3: Basic keyword search fallback (last resort)
+    if (results.length === 0) {
+      try {
+        console.log('[AI Chat] Trying basic keyword search fallback...');
         let fallbackQuery = supabase
           .from('destinations')
           .select('*')
@@ -347,14 +383,21 @@ export async function POST(request: NextRequest) {
           fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
         }
 
+        // Try full-text search on search_text if available
+        const keywords = query.split(/\s+/).filter(w => w.length > 2);
+        if (keywords.length > 0) {
+          const searchTerm = keywords.join(' | ');
+          fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
+        }
+
         const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
 
         if (!fallbackError && fallbackResults) {
           results = fallbackResults;
-          console.log('[AI Chat] Fallback search found', results.length, 'results');
+          console.log('[AI Chat] Basic keyword fallback found', results.length, 'results');
         }
       } catch (error: any) {
-        console.error('[AI Chat] Fallback search exception:', error);
+        console.error('[AI Chat] Basic keyword fallback exception:', error);
       }
     }
 
