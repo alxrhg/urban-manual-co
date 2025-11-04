@@ -41,15 +41,24 @@ async function backfillEmbeddings(batchSize = 50) {
   let processed = 0;
   let errors = 0;
 
-  console.log('Starting embedding backfill...');
+  // First, check how many destinations need embeddings
+  const { count: totalWithoutEmbeddings } = await supabase
+    .from('destinations')
+    .select('*', { count: 'exact', head: true })
+    .is('embedding', null);
+  
+  console.log(`Starting embedding backfill...`);
+  console.log(`Total destinations without embeddings: ${totalWithoutEmbeddings}`);
   console.log(`Using batch size: ${batchSize}`);
+  console.log('');
 
   while (true) {
     const { data: destinations, error: fetchError } = await supabase
       .from('destinations')
       .select('*')
       .is('embedding', null)
-      .range(offset, offset + batchSize - 1);
+      .order('id', { ascending: true }) // Order for consistent pagination
+      .range(offset, offset + batchSize - 1); // range() already sets the limit
 
     if (fetchError) {
       console.error('Error fetching destinations:', fetchError);
@@ -57,11 +66,11 @@ async function backfillEmbeddings(batchSize = 50) {
     }
 
     if (!destinations || destinations.length === 0) {
-      console.log('No more destinations to process');
+      console.log('\nNo more destinations to process');
       break;
     }
 
-    console.log(`\nProcessing batch ${Math.floor(offset / batchSize) + 1} (${destinations.length} destinations)...`);
+    console.log(`\nProcessing batch ${Math.floor(offset / batchSize) + 1} (${destinations.length} destinations, offset: ${offset})...`);
 
     for (const dest of destinations) {
       try {
@@ -97,7 +106,7 @@ async function backfillEmbeddings(batchSize = 50) {
         } else {
           processed++;
           if (processed % 10 === 0) {
-            process.stdout.write(`\r✓ Processed: ${processed} | Errors: ${errors}`);
+            process.stdout.write(`\r✓ Processed: ${processed} | Errors: ${errors} | Remaining: ${totalWithoutEmbeddings! - processed}`);
           }
         }
 
@@ -110,9 +119,22 @@ async function backfillEmbeddings(batchSize = 50) {
     }
 
     offset += batchSize;
+    
+    // Safety check: if we've processed more than the total, break
+    if (processed >= (totalWithoutEmbeddings || 0)) {
+      break;
+    }
   }
 
   console.log(`\n\n✅ Complete! Processed ${processed} destinations with ${errors} errors.`);
+  
+  // Final check
+  const { count: remaining } = await supabase
+    .from('destinations')
+    .select('*', { count: 'exact', head: true })
+    .is('embedding', null);
+  
+  console.log(`Remaining destinations without embeddings: ${remaining}`);
 }
 
 backfillEmbeddings().catch(console.error);
