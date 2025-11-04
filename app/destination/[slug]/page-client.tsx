@@ -10,6 +10,7 @@ import { Destination } from '@/types/destination';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
 import { trackEvent } from '@/lib/analytics/track';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 interface Recommendation {
   slug: string;
@@ -40,6 +41,7 @@ export default function DestinationPageClient() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
+  const { addToRecentlyViewed } = useRecentlyViewed();
 
   const [destination, setDestination] = useState<Destination | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,8 +64,17 @@ export default function DestinationPageClient() {
           city: destination.city,
         },
       });
+
+      // Add to recently viewed
+      addToRecentlyViewed({
+        slug: destination.slug,
+        name: destination.name,
+        city: destination.city,
+        image: destination.image || '',
+        category: destination.category
+      });
     }
-  }, [destination]);
+  }, [destination, addToRecentlyViewed]);
 
   useEffect(() => {
     if (destination) {
