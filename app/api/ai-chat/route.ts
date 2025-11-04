@@ -84,13 +84,14 @@ async function understandQuery(
     let userContext = '';
     if (userId) {
       try {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('favorite_cities, favorite_categories, travel_style, interests')
           .eq('user_id', userId)
           .single();
         
-        if (profile) {
+        // Handle errors gracefully - user_profiles might not exist or RLS might block
+        if (!profileError && profile) {
           const contextParts = [];
           if (profile.favorite_cities?.length > 0) {
             contextParts.push(`Favorite cities: ${profile.favorite_cities.join(', ')}`);
@@ -107,6 +108,7 @@ async function understandQuery(
         }
       } catch (error) {
         // Silently fail - user context is optional
+        console.debug('User profile fetch failed (optional):', error);
       }
     }
 

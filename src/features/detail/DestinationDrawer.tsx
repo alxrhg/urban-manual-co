@@ -226,7 +226,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             user_ratings_total,
             price_level,
             opening_hours_json,
-            business_status,
             editorial_summary,
             google_name,
             place_types_json,
@@ -780,15 +779,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <span className="text-gray-500 dark:text-gray-400">Price Level</span>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Business Status */}
-            {enrichedData?.business_status && enrichedData.business_status !== 'OPERATIONAL' && (
-              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <span className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Status:</strong> {enrichedData.business_status.replace(/_/g, ' ')}
-                </span>
               </div>
             )}
 

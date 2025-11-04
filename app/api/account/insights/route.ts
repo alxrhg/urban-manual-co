@@ -26,9 +26,10 @@ export async function GET(request: NextRequest) {
         .single(),
     ]);
 
-    const saved = savedResult.data || [];
-    const visited = visitedResult.data || [];
-    const profile = profileResult.data;
+    // Handle errors gracefully - tables might not exist or RLS might block
+    const saved = savedResult.error ? [] : (savedResult.data || []);
+    const visited = visitedResult.error ? [] : (visitedResult.data || []);
+    const profile = profileResult.error ? null : profileResult.data;
 
     // Get favorite cities
     const favoriteCities = profile?.favorite_cities || [];
