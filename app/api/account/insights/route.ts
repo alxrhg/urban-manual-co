@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     const savedByCategory: Record<string, number> = {};
 
     visited.forEach((v: any) => {
-      const category = v.destination?.category || 'Other';
+      const category = v.category || 'Other';
       visitedByCategory[category] = (visitedByCategory[category] || 0) + 1;
     });
 
@@ -83,13 +83,13 @@ export async function GET(request: NextRequest) {
     
     // Note: RPC function returns full destination data, but tags might not be included
     // If tags are needed, we'd need to query destinations separately or update RPC function
-    visited.forEach((v: any) => {
-      // For now, skip tags since they're not in the RPC return
-      // const tags = v.tags || [];
-      tags.forEach((tag: string) => {
-        visitedTags[tag.toLowerCase()] = (visitedTags[tag.toLowerCase()] || 0) + 1;
-      });
-    });
+    // For now, skip tags analysis since tags aren't in the RPC return type
+    // visited.forEach((v: any) => {
+    //   const tags = v.tags || [];
+    //   tags.forEach((tag: string) => {
+    //     visitedTags[tag.toLowerCase()] = (visitedTags[tag.toLowerCase()] || 0) + 1;
+    //   });
+    // });
 
     const tasteAlignment: Array<{ interest: string; percentage: number }> = [];
     userInterests.forEach((interest: string) => {
