@@ -23,7 +23,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="dark light" />
-        
+        <meta name="google-adsense-account" content="ca-pub-3052286230434362" />
+
         {/* Preconnect hints for faster resource loading */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
@@ -35,6 +36,13 @@ export default function RootLayout({
         {/* DNS Prefetch for additional domains */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://guide.michelin.com" />
+
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3052286230434362"
+          crossOrigin="anonymous"
+        />
         
         {/* Critical inline CSS for above-the-fold content */}
         {/* Safe: Static CSS from codebase, no user input */}
