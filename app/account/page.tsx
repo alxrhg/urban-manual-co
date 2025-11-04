@@ -3,15 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import {
-  MapPin, Heart, CheckCircle2, Map, Loader2, User
-} from "lucide-react";
-import VisitedCountriesMap from "@/components/VisitedCountriesMap";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { MapPin, Heart, Check } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
+import Image from "next/image";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -29,13 +23,11 @@ export default function Account() {
   const [user, setUser] = useState<any>(null);
   const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
   const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [birthday, setBirthday] = useState("");
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections'>('profile');
 
   // Check authentication
   useEffect(() => {
@@ -43,14 +35,13 @@ export default function Account() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        // Show sign in options if not authenticated
         setAuthChecked(true);
         setIsLoadingData(false);
         return;
       }
 
       setUser(session.user);
-      const role = (session.user.app_metadata as Record<string, any> | null)?.role;
+      const role = (session.user.app_metadata as Record<string, any> | undefined)?.role;
       setIsAdmin(role === 'admin');
       setAuthChecked(true);
     }
@@ -58,7 +49,7 @@ export default function Account() {
     checkAuth();
   }, []);
 
-  // Load user data and places
+  // Load user data
   useEffect(() => {
     async function loadUserData() {
       if (!user) {
@@ -69,13 +60,8 @@ export default function Account() {
       try {
         setIsLoadingData(true);
 
-        // Load user profile, saved and visited places in parallel
-        const [profileResult, savedResult, visitedResult] = await Promise.all([
-          supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .single(),
+        // Load saved, visited, and collections
+        const [savedResult, visitedResult, collectionsResult] = await Promise.all([
           supabase
             .from('saved_places')
             .select('destination_slug')
@@ -84,14 +70,13 @@ export default function Account() {
             .from('visited_places')
             .select('destination_slug, visited_at, rating, notes')
             .eq('user_id', user.id)
-            .order('visited_at', { ascending: false })
+            .order('visited_at', { ascending: false }),
+          supabase
+            .from('collections')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
         ]);
-
-        // Set user profile
-        if (profileResult.data) {
-          setUserProfile(profileResult.data);
-          setBirthday(profileResult.data.birthday || "");
-        }
 
         // Collect all unique slugs
         const allSlugs = new Set<string>();
@@ -102,7 +87,7 @@ export default function Account() {
           visitedResult.data.forEach(item => allSlugs.add(item.destination_slug));
         }
 
-        // Fetch all destinations in one query
+        // Fetch destinations
         if (allSlugs.size > 0) {
           const { data: destData } = await supabase
             .from('destinations')
@@ -146,6 +131,11 @@ export default function Account() {
             }
           }
         }
+
+        // Set collections
+        if (collectionsResult.data) {
+          setCollections(collectionsResult.data);
+        }
       } catch (error) {
         console.error('Error loading user data:', error);
       } finally {
@@ -156,50 +146,12 @@ export default function Account() {
     loadUserData();
   }, [user?.id]);
 
-  const handleSaveProfile = async () => {
-    if (!user) return;
-
-    setIsSavingProfile(true);
-    try {
-      const profileData = {
-        user_id: user.id,
-        birthday,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase
-        .from('user_profiles')
-        .upsert(profileData, {
-          onConflict: 'user_id'
-        });
-
-      if (error) throw error;
-
-      setUserProfile(profileData);
-      setIsEditingProfile(false);
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      alert('Failed to save profile. Please try again.');
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push("/");
   };
 
-  const handleSignInWithApple = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      }
-    });
-  };
-
-  // Memoize statistics
+  // Calculate stats
   const stats = useMemo(() => {
     const uniqueCities = new Set([
       ...savedPlaces.map(p => p.destination?.city).filter(Boolean),
@@ -212,407 +164,285 @@ export default function Account() {
 
     return {
       uniqueCities,
-      uniqueCountries
+      uniqueCountries,
+      visitedCount: visitedPlaces.length,
+      savedCount: savedPlaces.length,
+      collectionsCount: collections.length
     };
-  }, [savedPlaces, visitedPlaces]);
+  }, [savedPlaces, visitedPlaces, collections]);
 
-  // Show loading state
+  // Show loading
   if (!authChecked || isLoadingData) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <main className="px-6 md:px-10 py-12">
-          <div className="max-w-7xl mx-auto flex items-center justify-center h-[50vh]">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        </main>
-      </div>
+      <main className="px-8 py-20">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-sm text-gray-500">Loading...</div>
+        </div>
+      </main>
     );
   }
 
-  // Show sign in screen if not authenticated
+  // Show sign in screen
   if (!user) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          {/* Title Section */}
-          <div className="mb-12">
-            <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-3 text-gray-900 dark:text-white">
-              Account
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-light tracking-wide uppercase">
-              Sign in to continue
+      <main className="px-8 py-20">
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="w-full max-w-sm">
+            <h1 className="text-2xl font-light mb-8">Account</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+              Sign in to save places, track visits, and create collections
             </p>
-          </div>
-
-          {/* Apple Sign In Button */}
-          <button
-            onClick={handleSignInWithApple}
-            className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-sm hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-3 mb-6"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-            </svg>
-            <span>Continue with Apple</span>
-          </button>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-white dark:bg-gray-950 text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                Or
-              </span>
-            </div>
-          </div>
-
-          {/* Email Sign In Link */}
-          <button
-            onClick={() => router.push('/auth/login')}
-            className="w-full px-6 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-sm hover:opacity-90 transition-opacity font-medium text-sm uppercase tracking-wide"
-          >
-            Sign in with Email
-          </button>
-
-          {/* Browse Link */}
-          <div className="mt-8 text-center">
             <button
-              onClick={() => router.push('/')}
-              className="text-xs text-gray-500 dark:text-gray-400 hover:opacity-60 transition-opacity uppercase tracking-wide"
+              onClick={() => router.push('/auth/login')}
+              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-sm hover:opacity-80 transition-opacity"
             >
-              Continue browsing
+              Sign In
             </button>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
-      <main className="px-6 md:px-10 py-12 dark:text-white">
-        <div className="max-w-7xl mx-auto">
-          {/* Page Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Account</h1>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-600 dark:text-gray-400">
-                  {user.email}
-                </span>
-                {isAdmin && (
-                  <>
-                    <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs">Admin</Badge>
-                    <Button onClick={() => router.push('/admin')} variant="outline" size="sm">
-                      Admin Dashboard
-                    </Button>
-                  </>
-                )}
+    <main className="px-8 py-20 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        {/* Header - Matches homepage spacing and style */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-light">Account</h1>
+            <button
+              onClick={handleSignOut}
+              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+        </div>
+
+        {/* Tab Navigation - Minimal, matches homepage city/category style */}
+        <div className="mb-12">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            {['profile', 'visited', 'saved', 'collections'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`transition-all ${
+                  activeTab === tab
+                    ? "font-medium text-black dark:text-white"
+                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <div className="space-y-12 fade-in">
+            {/* Stats Grid - Minimal, like homepage cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
+                <div className="text-xs text-gray-500">Visited</div>
+              </div>
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
+                <div className="text-xs text-gray-500">Saved</div>
+              </div>
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
+                <div className="text-xs text-gray-500">Cities</div>
+              </div>
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
+                <div className="text-xs text-gray-500">Countries</div>
               </div>
             </div>
-            <Button onClick={handleSignOut} variant="outline">
-              Sign Out
-            </Button>
-          </div>
 
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="saved">Saved</TabsTrigger>
-              <TabsTrigger value="visited">Visited</TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Places Visited</CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{visitedPlaces.length}</div>
-                    <span className="text-xs text-muted-foreground mt-1 block">
-                      Across {stats.uniqueCities.size} cities
-                    </span>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Saved</CardTitle>
-                    <Heart className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{savedPlaces.length}</div>
-                    <span className="text-xs text-muted-foreground mt-1 block">
-                      Wishlist items
-                    </span>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Cities</CardTitle>
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.uniqueCities.size}</div>
-                    <span className="text-xs text-muted-foreground mt-1 block">
-                      Explored
-                    </span>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Countries</CardTitle>
-                    <Map className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.uniqueCountries.size}</div>
-                    <span className="text-xs text-muted-foreground mt-1 block">
-                      Visited
-                    </span>
-                  </CardContent>
-                </Card>
+            {/* World Map - Placeholder for now */}
+            {(stats.uniqueCountries.size > 0 || stats.uniqueCities.size > 0) && (
+              <div>
+                <h2 className="text-sm font-medium mb-4">Travel Map</h2>
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
+                  <div className="text-4xl mb-4">🗺️</div>
+                  <p className="text-sm text-gray-500 mb-2">
+                    {stats.uniqueCountries.size} {stats.uniqueCountries.size === 1 ? 'country' : 'countries'} • {stats.uniqueCities.size} {stats.uniqueCities.size === 1 ? 'city' : 'cities'}
+                  </p>
+                  <p className="text-xs text-gray-400">Interactive map coming soon</p>
+                </div>
               </div>
+            )}
 
-              {/* World Map */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Travel Map</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <VisitedCountriesMap 
-                    visitedPlaces={visitedPlaces}
-                    savedPlaces={savedPlaces}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Recent Activity */}
-              {visitedPlaces.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Visits</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {visitedPlaces.slice(0, 5).map((place) => (
-                        <div
-                          key={place.destination_slug}
-                          className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors"
-                          onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                        >
-                          {place.destination.image && (
-                            <img
-                              src={place.destination.image}
-                              alt={place.destination.name}
-                              className="w-16 h-16 object-cover rounded"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{place.destination.name}</h3>
-                            <span className="text-sm text-gray-600 dark:text-gray-400 block">
-                              {capitalizeCity(place.destination.city)} • {place.destination.category}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-500 mt-1 block">
-                              {new Date(place.visited_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            {/* Profile Tab */}
-            <TabsContent value="profile" className="space-y-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Profile Information</CardTitle>
-                    <span className="text-sm text-gray-500 dark:text-gray-400 mt-1 block">
-                      Manage your personal information
-                    </span>
-                  </div>
-                  {!isEditingProfile && (
-                    <Button
-                      onClick={() => setIsEditingProfile(true)}
-                      variant="outline"
-                      size="sm"
+            {/* Recent Visits */}
+            {visitedPlaces.length > 0 && (
+              <div>
+                <h2 className="text-sm font-medium mb-4">Recent Visits</h2>
+                <div className="space-y-2">
+                  {visitedPlaces.slice(0, 5).map((place) => (
+                    <button
+                      key={place.destination_slug}
+                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-2xl transition-colors text-left"
                     >
-                      Edit Profile
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-2">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={user.email || ""}
-                      disabled
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400"
-                    />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
-                      Email cannot be changed
-                    </span>
-                  </div>
-
-                  <div>
-                    <label htmlFor="birthday" className="block text-sm font-medium mb-2">
-                      Birthday
-                    </label>
-                    <input
-                      id="birthday"
-                      type="date"
-                      value={birthday}
-                      onChange={(e) => setBirthday(e.target.value)}
-                      disabled={!isEditingProfile}
-                      max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white disabled:bg-gray-50 dark:disabled:bg-gray-900 disabled:text-gray-500 dark:disabled:text-gray-400"
-                    />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
-                      Your birthday helps us personalize your experience
-                    </span>
-                  </div>
-
-                  {isEditingProfile && (
-                    <div className="flex gap-3 pt-4">
-                      <Button
-                        onClick={handleSaveProfile}
-                        disabled={isSavingProfile}
-                        className="flex-1"
-                      >
-                        {isSavingProfile ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          'Save Changes'
-                        )}
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setIsEditingProfile(false);
-                          setBirthday(userProfile?.birthday || "");
-                        }}
-                        variant="outline"
-                        disabled={isSavingProfile}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Saved Tab */}
-            <TabsContent value="saved" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Saved Places ({savedPlaces.length})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {savedPlaces.length === 0 ? (
-                    <span className="text-center py-8 text-gray-500 dark:text-gray-400 block">
-                      No saved places yet. Start exploring and save your favorites!
-                    </span>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {savedPlaces.map((place) => (
-                        <div
-                          key={place.destination_slug}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-black dark:hover:border-white transition-colors cursor-pointer"
-                          onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                        >
-                          {place.destination.image && (
-                            <img
-                              src={place.destination.image}
-                              alt={place.destination.name}
-                              className="w-full h-40 object-cover"
-                            />
-                          )}
-                          <div className="p-4">
-                            <h3 className="font-semibold mb-1">{place.destination.name}</h3>
-                            <span className="text-sm text-gray-600 dark:text-gray-400 block">
-                              {capitalizeCity(place.destination.city)}
-                            </span>
-                            <Badge variant="secondary" className="mt-2">
-                              {place.destination.category}
-                            </Badge>
-                          </div>
+                      {place.destination.image && (
+                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          <Image
+                            src={place.destination.image}
+                            alt={place.destination.name}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Visited Tab */}
-            <TabsContent value="visited" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Visited Places ({visitedPlaces.length})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {visitedPlaces.length === 0 ? (
-                    <span className="text-center py-8 text-gray-500 dark:text-gray-400 block">
-                      No visited places yet. Mark places you've been to!
-                    </span>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {visitedPlaces.map((place) => (
-                        <div
-                          key={place.destination_slug}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-black dark:hover:border-white transition-colors cursor-pointer"
-                          onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                        >
-                          {place.destination.image && (
-                            <img
-                              src={place.destination.image}
-                              alt={place.destination.name}
-                              className="w-full h-40 object-cover"
-                            />
-                          )}
-                          <div className="p-4">
-                            <h3 className="font-semibold mb-1">{place.destination.name}</h3>
-                            <span className="text-sm text-gray-600 dark:text-gray-400 block">
-                              {capitalizeCity(place.destination.city)}
-                            </span>
-                            <div className="flex items-center justify-between mt-2">
-                              <Badge variant="secondary">
-                                {place.destination.category}
-                              </Badge>
-                              <span className="text-xs text-gray-500 dark:text-gray-500">
-                                {new Date(place.visited_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{place.destination.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {capitalizeCity(place.destination.city)} • {place.destination.category}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          {new Date(place.visited_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-    </div>
+        {/* Visited Tab */}
+        {activeTab === 'visited' && (
+          <div className="fade-in">
+            {visitedPlaces.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="text-4xl mb-4">📍</div>
+                <p className="text-sm text-gray-500">No visited places yet</p>
+                <p className="text-xs text-gray-400 mt-2">Mark places you've been to</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {visitedPlaces.map((place) => (
+                  <button
+                    key={place.destination_slug}
+                    onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                    className="group relative text-left"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
+                      {place.destination.image && (
+                        <Image
+                          src={place.destination.image}
+                          alt={place.destination.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                        />
+                      )}
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    </div>
+                    <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-1">
+                      {place.destination.name}
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      {capitalizeCity(place.destination.city)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(place.visited_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Saved Tab */}
+        {activeTab === 'saved' && (
+          <div className="fade-in">
+            {savedPlaces.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="text-4xl mb-4">❤️</div>
+                <p className="text-sm text-gray-500">No saved places yet</p>
+                <p className="text-xs text-gray-400 mt-2">Save places you want to visit</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {savedPlaces.map((place) => (
+                  <button
+                    key={place.destination_slug}
+                    onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                    className="group relative text-left"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
+                      {place.destination.image && (
+                        <Image
+                          src={place.destination.image}
+                          alt={place.destination.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                        />
+                      )}
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                        <Heart className="w-3 h-3 text-white fill-white" />
+                      </div>
+                    </div>
+                    <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-1">
+                      {place.destination.name}
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      {capitalizeCity(place.destination.city)}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Collections Tab */}
+        {activeTab === 'collections' && (
+          <div className="fade-in">
+            {collections.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="text-4xl mb-4">📚</div>
+                <p className="text-sm text-gray-500">No collections yet</p>
+                <p className="text-xs text-gray-400 mt-2">Create lists to organize your places</p>
+                <button
+                  className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-sm hover:opacity-80 transition-opacity"
+                >
+                  Create Collection
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {collections.map((collection) => (
+                  <button
+                    key={collection.id}
+                    className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  >
+                    <h3 className="font-medium text-sm mb-1">{collection.name}</h3>
+                    {collection.description && (
+                      <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span>0 places</span>
+                      {collection.is_public && <span>• Public</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
