@@ -384,7 +384,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Try full-text search on search_text if available
-        const keywords = query.split(/\s+/).filter(w => w.length > 2);
+        const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
         if (keywords.length > 0) {
           const searchTerm = keywords.join(' | ');
           fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
