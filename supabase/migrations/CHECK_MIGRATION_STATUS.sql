@@ -196,7 +196,7 @@ SELECT
 FROM (
   SELECT 
     '019_audit_current_state' as migration_name,
-    TRUE as all_checks_pass  -- Schema audit, always passes
+    TRUE as all_checks_pass  -- Schema audit script (diagnostic only, no DB changes)
   UNION ALL
   SELECT 
     '020_consolidate_schema',
@@ -303,7 +303,7 @@ SELECT
 FROM (
   SELECT 
     '019_audit_current_state' as migration_name,
-    FALSE as is_complete  -- Always run audit
+    TRUE as is_complete  -- Audit script (diagnostic only, run anytime)
   UNION ALL
   SELECT 
     '020_consolidate_schema',
