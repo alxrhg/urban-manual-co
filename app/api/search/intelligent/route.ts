@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
         }
       }
     }
-    const suggestions = generateSuggestions({ query, results: limited, filters: { openNow } });
+    const suggestions = await generateSuggestions({ query, results: limited, filters: { openNow } });
 
     // Log search interaction (best-effort)
     try {

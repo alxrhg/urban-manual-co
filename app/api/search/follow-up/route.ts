@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const suggestions = generateSuggestions({
+    const suggestions = await generateSuggestions({
       query: combinedQuery,
       results: limited,
       filters: {

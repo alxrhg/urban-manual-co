@@ -48,15 +48,22 @@ function SearchPageContent() {
 
   // Recompute suggestions whenever filtered results or refinements change
   useEffect(() => {
-    setSearchState((prev) => ({
-      ...prev,
-      suggestions: generateSuggestions({
-        query: prev.originalQuery,
-        results: prev.filteredResults,
+    async function updateSuggestions() {
+      const newSuggestions = await generateSuggestions({
+        query: searchState.originalQuery,
+        results: searchState.filteredResults,
+        refinements: searchState.refinements,
         filters: { /* could pass openNow/price if present */ },
-      }),
-    }));
-  }, [searchState.filteredResults, searchState.refinements]);
+      });
+      setSearchState((prev) => ({
+        ...prev,
+        suggestions: newSuggestions,
+      }));
+    }
+    if (searchState.filteredResults.length > 0) {
+      updateSuggestions();
+    }
+  }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
 
   async function performInitialSearch(searchQuery: string) {
     const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
