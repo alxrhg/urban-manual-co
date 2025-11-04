@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
+import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
+import { generateSuggestions } from '@/lib/search/generateSuggestions';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -55,6 +57,12 @@ export async function GET(request: NextRequest) {
     });
 
     const limited = (rerankedResults || []).slice(0, 10);
+    const contextResponse = generateSearchResponseContext({
+      query,
+      results: limited,
+      filters: { openNow },
+    });
+    const suggestions = generateSuggestions({ query, results: limited, filters: { openNow } });
 
     // Log search interaction (best-effort)
     try {
@@ -73,6 +81,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       results: limited,
+      contextResponse,
+      suggestions,
       meta: {
         query,
         filters: { city, category, openNow },
