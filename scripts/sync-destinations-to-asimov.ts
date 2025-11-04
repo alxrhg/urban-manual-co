@@ -57,11 +57,10 @@ async function main() {
 
   for (let i = 0; i < destinations.length; i++) {
     const dest = destinations[i];
-    const content = buildDestinationContent(dest);
 
     process.stdout.write(`[${i + 1}/${destinations.length}] ${dest.name}... `);
 
-    const success = await addContentToAsimov(content);
+    const success = await syncDestinationToAsimov(dest);
 
     if (success) {
       successCount++;
