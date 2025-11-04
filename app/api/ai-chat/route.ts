@@ -5,6 +5,7 @@ import { embedText } from '@/lib/llm';
 import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
 import { forecastingService } from '@/services/intelligence/forecasting';
 import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
+import { rerankDestinations } from '@/lib/search/reranker';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -376,11 +377,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Return all results (no artificial limit)
-    // Frontend pagination will handle display limits
+                // Apply enhanced re-ranking to results
+                const rerankedResults = rerankDestinations(results, {
+                  query,
+                  queryIntent: {
+                    city: intent.city,
+                    category: intent.category,
+                    meal: enhancedIntent?.meal,
+                    cuisine: enhancedIntent?.cuisine,
+                    mood: enhancedIntent?.mood,
+                    price_level: intent.filters?.priceLevel,
+                  },
+                  userId: userId,
+                  boostPersonalized: !!userId,
+                });
 
-    // Generate natural language response
-    const response = generateResponse(results.length, intent.city, intent.category);
+                // Return all results (no artificial limit)
+                // Frontend pagination will handle display limits
+
+                // Generate natural language response
+                const response = generateResponse(rerankedResults.length, intent.city, intent.category);
 
     // Generate enhanced response with context if needed
     let enhancedContent = response;
@@ -406,17 +422,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      content: enhancedContent,
-      destinations: results,
-      intent: {
-        ...intent,
-        resultCount: results.length,
-        hasResults: results.length > 0
-      },
-      enhancedIntent, // Include full enhanced intent
-      intelligence: intelligenceInsights,
-    });
+                return NextResponse.json({
+                  content: enhancedContent,
+                  destinations: rerankedResults,
+                  intent: {
+                    ...intent,
+                    resultCount: rerankedResults.length,
+                    hasResults: rerankedResults.length > 0
+                  },
+                  enhancedIntent, // Include full enhanced intent
+                  intelligence: intelligenceInsights,
+                });
 
   } catch (error: any) {
     console.error('AI Chat API error:', error);

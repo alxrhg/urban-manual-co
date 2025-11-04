@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { embedText } from '@/lib/llm';
+import { rerankDestinations } from '@/lib/search/reranker';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -42,12 +43,24 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
+    // Apply enhanced re-ranking
+    const rerankedResults = rerankDestinations(results || [], {
+      query,
+      queryIntent: {
+        city: city || undefined,
+        category: category || undefined,
+      },
+      userId: session?.user?.id,
+      boostPersonalized: !!session?.user?.id,
+    });
+
     return NextResponse.json({
-      results: results || [],
+      results: rerankedResults,
       meta: {
         query,
         filters: { city, category, openNow },
-        count: results?.length || 0,
+        count: rerankedResults.length,
+        reranked: true,
       },
     });
   } catch (error: any) {
