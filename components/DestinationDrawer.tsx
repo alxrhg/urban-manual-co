@@ -659,35 +659,35 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
       />
 
-      {/* Drawer */}
+      {/* Slideover - Ultra Simple Design with Nav Dropdown Shadow */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-y-auto pb-24`}
+        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] bg-white dark:bg-gray-900 z-50 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 transform transition-all duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0 opacity-100' : 'translate-x-[calc(100%+1rem)] opacity-0'
+        } overflow-y-auto overflow-x-hidden`}
       >
-        {/* Image - Full width, edge-to-edge */}
+        {/* Image - Rounded top corners to match container */}
         {destination.image && (
-          <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+          <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-t-2xl overflow-hidden">
             <Image
               src={destination.image}
               alt={destination.name}
               fill
               className="object-cover"
-              sizes="(max-width: 640px) 100vw, 480px"
+              sizes="(max-width: 640px) 100vw, 440px"
               priority={false}
               quality={90}
             />
-            {/* Floating close button */}
+            {/* Floating close button - Minimalist style */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity shadow-lg"
-              aria-label="Close drawer"
+              className="absolute top-3 right-3 p-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-full hover:scale-105 transition-all shadow-lg ring-1 ring-black/5"
+              aria-label="Close"
             >
               <X className="h-4 w-4" />
             </button>
@@ -697,9 +697,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   onClose();
                   router.push(`/destination/${destination.slug}`);
                 }}
-                className="absolute top-4 right-16 p-2.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity shadow-lg"
+                className="absolute top-3 right-14 p-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-full hover:scale-105 transition-all shadow-lg ring-1 ring-black/5"
                 title="Open in new page"
-                aria-label="Open destination in new page"
+                aria-label="Open in new page"
               >
                 <ExternalLink className="h-4 w-4" />
               </button>
@@ -708,39 +708,37 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         )}
 
         {/* Content */}
-        <div className="px-6 pt-6">
+        <div className="px-6 pt-6 pb-24">
 
-          {/* Title */}
+          {/* Title - Ultra Simple */}
           <div className="mb-6">
-            <div className="flex items-start gap-3 mb-3">
-              <h1 className="text-2xl font-light flex-1">
-                {destination.name}
-              </h1>
-            </div>
+            <h1 className="text-2xl font-light mb-2">
+              {destination.name}
+            </h1>
 
-            {/* Meta Info */}
-            <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-3 w-3" />
-                <span>{capitalizeCity(destination.city)}</span>
-              </div>
+            {/* Meta Info - Minimal */}
+            <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+              <span>{capitalizeCity(destination.city)}</span>
 
               {destination.category && (
-                <div className="flex items-center gap-1.5">
-                  <Tag className="h-3 w-3" />
+                <>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
                   <span className="capitalize">{destination.category}</span>
-                </div>
+                </>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-3 w-3"
-                  />
-                  <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
-                </div>
+                <>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
+                  <div className="flex items-center gap-1">
+                    <img
+                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                      alt="Michelin star"
+                      className="h-3 w-3"
+                    />
+                    <span>{destination.michelin_stars} Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
+                  </div>
+                </>
               )}
             </div>
 
@@ -784,10 +782,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {/* Editorial Summary */}
             {enrichedData?.editorial_summary && (
               <div className="mt-4">
-                <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
-                <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <h3 className="text-xs font-medium mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {stripHtmlTags(enrichedData.editorial_summary)}
-                </span>
+                </p>
               </div>
             )}
 
@@ -910,9 +908,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {destination.content && (
             <div className="mb-8">
               <h3 className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-400">About</h3>
-              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {stripHtmlTags(destination.content)}
-              </div>
+              </p>
             </div>
           )}
 
@@ -1130,9 +1128,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         </div>
 
-        {/* Sticky Bottom Action Bar */}
+        {/* Sticky Bottom Action Bar - Rounded for slideover */}
         {user ? (
-          <div className="fixed bottom-0 left-0 right-0 sm:left-auto sm:w-[480px] bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-6 py-4 z-20">
+          <div className="sticky bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-6 py-4 rounded-b-2xl">
             <div className="flex gap-2">
               <button
                 onClick={handleSave}
@@ -1170,7 +1168,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           </div>
         ) : (
-          <div className="fixed bottom-0 left-0 right-0 sm:left-auto sm:w-[480px] bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-6 py-4 z-20">
+          <div className="sticky bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-6 py-4 rounded-b-2xl">
             <button
               onClick={() => router.push('/auth/login')}
               className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
@@ -1184,11 +1182,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       {/* Lists Modal */}
       {showListsModal && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
           onClick={() => setShowListsModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -1254,11 +1252,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       {/* Create List Modal */}
       {showCreateListModal && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
           onClick={() => setShowCreateListModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
+            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 p-6 w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
