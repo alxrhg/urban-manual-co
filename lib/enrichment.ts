@@ -3,7 +3,7 @@
  * Uses Google Places API (New) + Gemini AI to enrich destination data
  */
 
-const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 export interface PlacesEnrichmentData {
   place_id: string | null;
