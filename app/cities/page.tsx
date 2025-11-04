@@ -202,27 +202,8 @@ export default function CitiesPage() {
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedCities = filteredCities.slice(startIndex, endIndex);
 
-                  // Inject ads every 14 items
-                  const withAds: Array<{ type: 'city' | 'ad'; data: any; index: number }> = [];
-                  paginatedCities.forEach((cityData, index) => {
-                    withAds.push({ type: 'city', data: cityData, index });
-                    // Add ad after every 14th item (but not at the very end)
-                    if ((index + 1) % 14 === 0 && index < paginatedCities.length - 1) {
-                      withAds.push({ type: 'ad', data: { slot: '3271683710' }, index: index + 0.5 });
-                    }
-                  });
-
-                  return withAds.map((item) => {
-                    if (item.type === 'ad') {
-                      return (
-                        <MultiplexAd
-                          key={`ad-${item.index}`}
-                          slot={item.data.slot}
-                        />
-                      );
-                    }
-
-                    const { city, country, count, featuredImage } = item.data;
+                  return paginatedCities.map((cityData) => {
+                    const { city, country, count, featuredImage } = cityData;
                     return (
                     <button
                       key={city}
@@ -339,6 +320,23 @@ export default function CitiesPage() {
                       </div>
                     );
                   })()}
+
+                  {/* Horizontal Ad below pagination */}
+                  {filteredCities.length > 0 && (
+                    <div className="mt-8 w-full">
+                      <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
+                        <div className="text-xs text-gray-400 mb-2 text-center">Sponsored</div>
+                        <ins
+                          className="adsbygoogle"
+                          style={{ display: 'block', height: '90px' }}
+                          data-ad-client="ca-pub-3052286230434362"
+                          data-ad-slot="3271683710"
+                          data-ad-format="horizontal"
+                          data-full-width-responsive="false"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

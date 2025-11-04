@@ -667,33 +667,33 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-y-auto`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold">Destination</h2>
-          <div className="flex items-center gap-1 sm:gap-2">
+        <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-sm font-medium">Destination</h2>
+          <div className="flex items-center gap-2">
             {destination?.slug && (
               <button
                 onClick={() => {
                   onClose();
                   router.push(`/destination/${destination.slug}`);
                 }}
-                className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
+                className="p-2 hover:opacity-60 transition-opacity"
                 title="Open in new page"
                 aria-label="Open destination in new page"
               >
-                <ExternalLink className="h-5 w-5" />
+                <ExternalLink className="h-4 w-4" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
+              className="p-2 hover:opacity-60 transition-opacity"
               aria-label="Close drawer"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -702,7 +702,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="p-4 sm:p-6">
           {/* Image */}
           {destination.image && (
-            <div className="relative aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
+            <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800">
               <Image
                 src={destination.image}
                 alt={destination.name}
@@ -717,33 +717,32 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Title */}
           <div className="mb-6">
-            <div className="flex items-start gap-3 mb-4">
-              <h1 className="text-3xl font-bold flex-1">
+            <div className="flex items-start gap-3 mb-3">
+              <h1 className="text-2xl font-light flex-1">
                 {destination.name}
               </h1>
-              {/* Crown hidden for now */}
             </div>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+            <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-3 w-3" />
                 <span>{capitalizeCity(destination.city)}</span>
               </div>
 
               {destination.category && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
+                <div className="flex items-center gap-1.5">
+                  <Tag className="h-3 w-3" />
                   <span className="capitalize">{destination.category}</span>
                 </div>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
-                    className="h-4 w-4"
+                    className="h-3 w-3"
                   />
                   <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
                 </div>
@@ -913,18 +912,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Action Buttons */}
           {user && (
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-2 mb-6">
               <div className="flex-1 flex gap-2">
                 <button
                   onClick={handleSave}
                   disabled={loading}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 ${
                     isSaved
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-red-500 text-white hover:opacity-80'
+                      : 'bg-gray-100 dark:bg-gray-800 hover:opacity-80'
                   } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
                 >
-                  <Heart className={`h-5 w-5 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
+                  <Heart className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
                   <span className={`${heartAnimating && isSaved ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
                     {isSaved ? 'Saved' : 'Save'}
                   </span>
@@ -947,25 +946,25 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <button
                   onClick={openListsModal}
                   disabled={loading}
-                  className="px-3 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="px-3 py-2.5 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-2xl transition-opacity"
                   title="Add to list"
                 >
-                  <ChevronDown className="h-5 w-5" />
+                  <ChevronDown className="h-4 w-4" />
                 </button>
               </div>
 
               <button
                 onClick={handleVisitClick}
                 disabled={loading}
-                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 ${
                   isVisited
-                    ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'bg-green-500 text-white hover:opacity-80'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:opacity-80'
                 } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
               >
-                <Check className={`h-5 w-5 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
+                <Check className={`h-4 w-4 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
                 <span className={`${checkAnimating && isVisited ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                  {isVisited ? 'Visited' : 'Mark as Visited'}
+                  {isVisited ? 'Visited' : 'Visit'}
                 </span>
                 {checkAnimating && isVisited && (
                   <style jsx>{`
@@ -987,9 +986,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Sign in prompt */}
           {!user && (
-            <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                <a href="/auth/login" className="font-medium hover:opacity-60">Sign in</a> to save destinations and track your visits
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-center">
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                <a href="/auth/login" className="font-medium hover:text-black dark:hover:text-white transition-colors">Sign in</a> to save destinations and track your visits
               </span>
             </div>
           )}
@@ -997,8 +996,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Description */}
           {destination.content && (
             <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">About</h3>
-              <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+              <h3 className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-400">About</h3>
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {stripHtmlTags(destination.content)}
               </div>
             </div>
@@ -1085,10 +1084,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
-              <div className="space-y-4">
+              <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
+              <div className="space-y-3">
                 {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                  <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                  <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <span className="font-medium text-sm">{review.author_name}</span>
@@ -1115,8 +1114,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Map Section (Apple Maps) */}
           <div className="mb-8">
-            <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Location</h3>
-            <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+            <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Location</h3>
+            <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <AppleMap
                 query={`${destination.name}, ${destination.city}`}
                 latitude={enrichedData?.latitude}
@@ -1133,9 +1132,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-lg"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:opacity-80 transition-opacity rounded-2xl"
             >
-              <Navigation className="h-4 w-4" />
+              <Navigation className="h-3 w-3" />
               <span>Get Directions</span>
             </a>
           </div>
@@ -1147,8 +1146,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {(loadingRecommendations || recommendations.length > 0) && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
+                <Sparkles className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
               </div>
@@ -1157,7 +1156,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex-shrink-0 w-40">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
+                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 animate-pulse" />
                       <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
                       <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
                     </div>
@@ -1174,7 +1173,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       }}
                       className="flex-shrink-0 w-40 group text-left"
                     >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (
                           <img
                             src={rec.image}
@@ -1229,9 +1228,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <div className="flex justify-center">
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-lg font-medium"
+              className="flex items-center gap-2 px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-2xl text-sm font-medium"
             >
-              <Share2 className="h-4 w-4" />
+              <Share2 className="h-3 w-3" />
               <span>{copied ? 'Link Copied!' : 'Share'}</span>
             </button>
           </div>
@@ -1249,12 +1248,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Add to List</h2>
+              <h2 className="text-xl font-light">Add to List</h2>
               <button
                 onClick={() => setShowListsModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                className="p-2 hover:opacity-60 transition-opacity"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -1264,13 +1263,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             ) : userLists.length === 0 ? (
               <div className="text-center py-8">
-                <span className="text-gray-500 mb-4">You don't have any lists yet</span>
+                <p className="text-sm text-gray-500 mb-4">You don't have any lists yet</p>
                 <button
                   onClick={() => {
                     setShowListsModal(false);
                     setShowCreateListModal(true);
                   }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
+                  className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
                 >
                   Create Your First List
                 </button>
@@ -1282,11 +1281,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <button
                       key={list.id}
                       onClick={() => toggleDestinationInList(list.id)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                      className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors text-sm"
                     >
                       <span className="font-medium">{list.name}</span>
                       {listsWithDestination.has(list.id) && (
-                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                       )}
                     </button>
                   ))}
@@ -1297,9 +1296,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     setShowListsModal(false);
                     setShowCreateListModal(true);
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-2xl transition-opacity text-sm font-medium"
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-4 w-4" />
                   <span>Create New List</span>
                 </button>
               </>
@@ -1319,36 +1318,36 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Create New List</h2>
+              <h2 className="text-xl font-light">Create New List</h2>
               <button
                 onClick={() => setShowCreateListModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                className="p-2 hover:opacity-60 transition-opacity"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">List Name *</label>
+                <label className="block text-xs font-medium mb-2">List Name *</label>
                 <input
                   type="text"
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
+                <label className="block text-xs font-medium mb-2">Description</label>
                 <textarea
                   value={newListDescription}
                   onChange={(e) => setNewListDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
                 />
               </div>
 
@@ -1360,15 +1359,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   onChange={(e) => setNewListPublic(e.target.checked)}
                   className="rounded"
                 />
-                <label htmlFor="new-list-public" className="text-sm">
+                <label htmlFor="new-list-public" className="text-xs">
                   Make this list public
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setShowCreateListModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
                   disabled={creatingList}
                 >
                   Cancel
@@ -1376,7 +1375,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <button
                   onClick={createNewList}
                   disabled={!newListName.trim() || creatingList}
-                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >
                   {creatingList ? 'Creating...' : 'Create List'}
                 </button>

@@ -817,42 +817,21 @@ export default function Home() {
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedDestinations = filteredDestinations.slice(startIndex, endIndex);
 
-                  // Inject ads every 14 items
-                  const withAds: Array<{ type: 'destination' | 'ad'; data: any; index: number }> = [];
-                  paginatedDestinations.forEach((destination, index) => {
-                    withAds.push({ type: 'destination', data: destination, index });
-                    // Add ad after every 14th item (but not at the very end)
-                    if ((index + 1) % 14 === 0 && index < paginatedDestinations.length - 1) {
-                      withAds.push({ type: 'ad', data: { slot: '3271683710' }, index: index + 0.5 });
-                    }
-                  });
+                  return paginatedDestinations.map((destination, index) => {
+                    const isVisited = user && visitedSlugs.has(destination.slug);
+                    return (
+                      <button
+                        key={destination.slug}
+                        onClick={() => {
+                          setSelectedDestination(destination);
+                          setIsDrawerOpen(true);
 
-                  return withAds.map((item) => {
-                    if (item.type === 'ad') {
-                      return (
-                        <MultiplexAd
-                          key={`ad-${item.index}`}
-                          slot={item.data.slot}
-                        />
-                      );
-                    }
-
-                    const destination = item.data;
-                    const index = item.index;
-                  const isVisited = user && visitedSlugs.has(destination.slug);
-                  return (
-                  <button
-                    key={destination.slug}
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setIsDrawerOpen(true);
-
-                      // Track destination click
-                      trackDestinationClick({
-                        destinationSlug: destination.slug,
-                        position: index,
-                        source: 'grid',
-                      });
+                          // Track destination click
+                          trackDestinationClick({
+                            destinationSlug: destination.slug,
+                            position: index,
+                            source: 'grid',
+                          });
                       
                       // Also track with new analytics system
                       if (destination.id) {
@@ -994,6 +973,23 @@ export default function Home() {
               </div>
             );
           })()}
+
+          {/* Horizontal Ad below pagination */}
+          {filteredDestinations.length > 0 && (
+            <div className="mt-8 w-full">
+              <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
+                <div className="text-xs text-gray-400 mb-2 text-center">Sponsored</div>
+                <ins
+                  className="adsbygoogle"
+                  style={{ display: 'block', height: '90px' }}
+                  data-ad-client="ca-pub-3052286230434362"
+                  data-ad-slot="3271683710"
+                  data-ad-format="horizontal"
+                  data-full-width-responsive="false"
+                />
+              </div>
+            </div>
+          )}
           </>
         )}
           </div>
