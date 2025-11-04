@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
@@ -15,6 +15,7 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
   const isHome = pathname === '/';
 
   // Fetch user profile and avatar
@@ -74,6 +75,38 @@ export function Header() {
     }
     fetchBuildVersion();
   }, [isAdmin]);
+
+  // Initialize dark mode from localStorage or system preference
+  useEffect(() => {
+    const stored = localStorage.getItem('darkMode');
+    if (stored !== null) {
+      const dark = stored === 'true';
+      setIsDark(dark);
+      if (dark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } else {
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDark(prefersDark);
+      if (prefersDark) {
+        document.documentElement.classList.add('dark');
+      }
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDark = !isDark;
+    setIsDark(newDark);
+    localStorage.setItem('darkMode', String(newDark));
+    if (newDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   const navigate = (path: string) => {
     router.push(path);
@@ -176,6 +209,23 @@ export function Header() {
               ) : (
                 <button onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Sign In</button>
               )}
+              <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
+              <button
+                onClick={toggleDarkMode}
+                className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation flex items-center gap-2"
+              >
+                {isDark ? (
+                  <>
+                    <Sun className="h-4 w-4" />
+                    <span>Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4" />
+                    <span>Dark Mode</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </>
