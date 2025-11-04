@@ -1,0 +1,4603 @@
+{
+  "total": 919,
+  "success": 918,
+  "failed": 1,
+  "results": [
+    {
+      "slug": "1-hotel-hanalei-bay",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "1-hotel-mayfair",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "1-place-vendôme",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "11-howard",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "21-carpenter",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "21c-museum-hotel-chicago",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "4-charles-prime-rib",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "45-park-lane",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "8-spruce",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "a-canto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "about-life-coffee-brewers-hcm",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "academy-museum-of-motion-pictures",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ace-hotel-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ace-hotel-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ace-hotel-sydney",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "acme",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "acne-studios-greene-street",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "addiction-aquatic-development",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-avenue-des-ternes",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-cherry-creek",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-collins-street",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-daan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-hiroshima",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-marylebone",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-montana-avenue",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-regent-street",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aesop-wall-street",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "after-rain",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aimé-leon-dore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "airelles-saint-tropez-château-de-la-messardière",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "airelles-saint-tropez-pan-dei-palais",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aj-grill",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "akira-back-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aksorn",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "alain-ducasse-at-the-dorchester",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "alain-ducasse-baccarat",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "allard",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "almanac-barcelona",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "alsace-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "altis-belém-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "amâlia",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aman-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aman-le-melezin",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aman-nai-lert-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aman-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aman-spa-at-the-connaught",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aman-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aman-venice",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "amanpuri",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "amant",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ambra",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ana-intercontinental-beppu-resort",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "anantara-chiang-mai-resort",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "andaz-5th-avenue",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "andaz-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "andaz-tokyo-toranomon-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "andy-coffee",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ao",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ap-café-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apāto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apothéose",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-carnegie-library",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-fifth-avenue",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-miami-worldcenter",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-michigan-avenue",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-myeongdong",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-piazza-liberty",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-puerta-del-sol",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-tower-theatre",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "apple-xinyi-a13",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "arabica-kyoto-arashiyama",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "armani-hotel-milano",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "arpège",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "art-gallery-of-nsw",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aru-restaurant",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "arva-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "aska",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "atomix",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "august",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "azabudai-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "b-bar-roppongi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "b-bar-umeda",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "baan-tepa",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "baccarat-hotel-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bad-roman",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ban-bo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bangkok-citycity-gallery",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bao-battersea",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bao-city",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bao-soho",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "barbuto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bbva-méxico-tower",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "beaverbrook-town-house",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "beige-alain-ducasse",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bellavita",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bellustar-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bemelmans-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bencotto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "benkoff",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "benoit",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "benoit-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "benoit-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "benoit-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "beverly-wilshire",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bicena",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bills-gangnam",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bills-ginza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bills-omotesando",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bills-suijo-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bkk-social-club",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-bottle-coffee-daikanyama-cafe",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-bottle-coffee-jamsil-cafe",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-bottle-coffee-kobe-hankyu-cafe",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-bottle-coffee-kobe-hankyu-shop",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-bottle-coffee-myeongdong-cafe",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-bottle-coffee-roppongi-cafe",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-bottle-coffee-samseong-cafe",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-box-café-by-daniel-boulud",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "blue-by-alain-ducasse",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bon-broth",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bon-nu",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bonami",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "borgo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "born",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bourke-street-bakery-nyc",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bourse-de-commerce-pinault-collection",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "brasserie-1930",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bridges",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "broadwick-soho",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "brooklands-by-claude-bosi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "burnt-ends",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bvlgari-hotel-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bvlgari-hotel-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "bvlgari-il-ristorante-niko-romito-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "c-hotel-spa",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "café-boulud",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "café-carlyle",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "café-carmellini",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cafe-zaffri",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "campo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "candeo-hotels-tokyo-roppongi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "capella-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "capella-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "capella-sydney",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "capella-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "capi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "casa-brera",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "casa-cipriani-milano",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "casa-cipriani-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "casa-faena-miami-beach",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "caviar-kaspia-at-the-mark",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cé-la-vi-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cecchi-s",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "centre-pompidou",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "chambers",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "chan-chi-hot-pot-lab-dunnan-branch",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "charles-h",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "charlotte-street-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "chef-s-table-by-katsuhito-inoue",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cheval-blanc-courchevel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cheval-blanc-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cheval-blanc-st-tropez",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "chez-fifi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "chiayi-art-museum",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "chiayi-experimental-timber-workshop",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "chishuru",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cipriani-beverly-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cipriani-dolci",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "claridge-s",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "claridge-s-artspace-café",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "claud",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "clemente-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "clover-saint-germain",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cmp-park2",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "coast",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "coffee-stopover-black",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "como-point-yamu",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "conrad-los-angeles",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "core",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "corinthia-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "côte",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "côte-by-mauro-colagreco",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cozinha-das-flores",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "crispin",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "crown-shy",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "curio-at-faena-bazaar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cycene",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "cycle",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dadong-arts-center",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "daiwa-roynet-hotel-shimbashi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "daniel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dassai-bar-kaohsiung",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "david-zwirner-los-angeles",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "david-zwirner-new-york-19th-street",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "david-zwirner-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "decimo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "depth-brianza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "deux-doux-to-go",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dior-geneva",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dior-paris-saint-honoré",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dolce-tacubo-caffe",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "don-angie",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "donatella-boutique-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "double-chicken-please",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dover-street-market-ginza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dover-street-market-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dowling-s",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "downtown-l-a-proper-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "draft-land",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "draft-land-sg",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "draft-land-xinyi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "dreamin-man",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "earnestos",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "east-end",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "eika",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "eleven-madison-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "eleven-taylor-river-lodge",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ember-28",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ensui",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "episode-daan-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "er-dien-xinyi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "es",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "eslite-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "eslite-spectrum-songyan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "eslite-spectrum-tokyo-nihonbashi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "esora",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "esprit-c-kei-ginza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "est",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "esterre",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "et-nunc-daikanyama",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "etna",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "experimental-marais",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fabula",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "faena-hotel-miami-beach",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fairmont-ambassador-seoul",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fairmont-century-plaza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fanny-s",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fiamma",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fika-fika-shiu-xiang",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "flôr",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fondation-louis-vuitton",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fondazione-prada",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "forest-gate-daikanyama",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fouquet-s-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-at-the-surf-club",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-bangkok-at-chao-phraya-river",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-des-bergues-geneva",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-george-v",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-madrid",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-milan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-new-york-downtown",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-seoul",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-tokyo-at-marunouchi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-hotel-tokyo-at-otemachi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-resort-chiang-mai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-seasons-resort-hualalai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "four-twenty-five",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fourninetine-bakery",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "frassi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "frenchie-frenchie",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "frevo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fubon-art-museum",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fufu-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fujin-tree",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fujin-tree-coredo-muromachi-terrace",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "fujin-tree-taipei-101",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "galerie-nathalie-obadia-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "garrya-nijo-castle-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "geranium",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ginza-hotel-by-granbell",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "gloria-manor",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "gold-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "goto-retreat",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grand-hotel-du-palais-royal",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grand-hyatt-jakarta",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grand-hyatt-melbourne",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grand-hyatt-seoul",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grand-hyatt-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grand-hyatt-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grand-hyatt-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "grandcœur",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "graph-phuket",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "gravity-seoul-pangyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "gucci-osteria-da-massimo-bottura-beverly-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "gucci-osteria-da-massimo-bottura-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "guggenheim-bilbao",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "habita",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hachi-restaurant",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "haili",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hajime",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hakuba",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "halekulani",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hanabi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hanagatami",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "harry-cipriani",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hauser-wirth",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hauser-wirth-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hauser-wirth-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hélène-darroze-at-the-connaught",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hellbender",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "here-tainan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "héritage-by-kei-kobayashi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hermès-gion-mise",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hiboru",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hide",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "himi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hoshinoya-guguan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hoshinoya-karuizawa",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hoshinoya-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-850-svb",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-arts-barcelona",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-at-the-moore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hôtel-balzac",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-casa-del-mar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hôtel-de-crillon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-dùa-kaohsiung",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-greystone",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hôtel-hana",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-higashiyama-by-kyoto-tokyu",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-il-palazzo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-josef",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-kinsley",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-les-trois-rois",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hôtel-lou-pinet-saint-tropez",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-nikko-kaohsiung",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-nikko-saigon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-okura-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-oriental-express-fukuoka-nakasukawabata",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-proverbs-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-royal-classic-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-sanders",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hôtel-sezz-saint-tropez",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-the-mitsui-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hotel-toranomon-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hudson-yards",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "human-made-cafe-by-blue-bottle-coffee",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "humble-chicken",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "humble-house-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "hyde-melbourne-place",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "i-m-donut-nakameguro",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "i-sodi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ikoyi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "inita",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "inness",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "intercontinental-danang-sun-peninsula-resort",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "intercontinental-kaohsiung",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "intercontinental-singapore-robertson-quay",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "intercontinental-sydney",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "intercontinental-taichung",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "invitation-only",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "iode",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "izakaya-uchiyama",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jaan-by-kirk-westaway",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jag",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jam-lisbon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jane-s-carousel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "janu-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jardin-tropezina",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jay-pritzker-pavilion",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jean-george-at-the-shinmonzen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jean-georges",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jean-georges-at-the-connaught",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jean-georges-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jeffrey-s-grocery",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jeju-noodle-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jl-studio",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jojo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "josun-palace",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jungsik",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "jw-marriott-singapore-south-beach",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "k5",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kadeau",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kai-beppu",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kai-nagato",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kaishijia",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kamaro-an-house",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kanazawa-tokyu-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kanpai-classic-soho",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kanpai-classic-xinyi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kaohsiung-music-center",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kasmin-gallery",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kato",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kei-collection-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "keio-plaza-hotel-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kimpton-da-an",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kimpton-la-peer-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kimpton-maa-lai-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kimpton-st-honoré-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kimpton-vividora-barcelona",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "king",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kith-manhattan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kkl-luzern",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kodō-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kohaku",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "komboi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "konlamoh",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kricket",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kunsthaus-zürich",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kurochodo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kyocera-museum-of-art",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "kyoyamato",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "l-abeille",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "l-atelier-de-joël-robuchon-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "l-atelier-de-joël-robuchon-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "l-atelier-par-yao",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "l-idiot",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "l-oiseau-blanc",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "l-osier",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-baie",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-cime",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-fantaisie",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-maison-champs-élysées",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-maison-de-win",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-môme-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-samaritaine",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "la-tête-d-or",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "laforet-hakone-gora-yunosumika",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "laïzé-marais",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "laïzé-palais-royal",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "langosteria",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-bernardin",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-bristol-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-café-v-midosuji",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-côté-lm",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-coucou",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-dalí",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-du",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-du-kaan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-grand-café",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-grand-restaurant-jean-françois-piège",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-jardinier",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-méridien-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-meurice",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-meurice-alain-ducasse",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-pavillon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-pristine-antwerp",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-pristine-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-restaurant-blanc",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-rock",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "le-tout-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "li-lin-li",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "li-nu",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "lido-restaurant-miami",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "liquide-ambré",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "little-bear-wine-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "little-island",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "locanda-verde-hudson-yards",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "locatelli",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "logy",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "lon-lon-local-diner",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "los-angeles-county-museum-of-art",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "lost-and-found",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "lot-roasters",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "louis-vuitton-maison-seoul",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "louis-vuitton-tokyo-ginza-namikidori",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "loulou-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "luca",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "m-o-bar-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "maadae-slow-fish-kitchen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "macam-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "madison-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "maiiam-contemporary-art-museum",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "maison-by-sota-atsumi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "maji-treats-kintetsu-abeno-harukasu-ten",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-barcelona",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-geneva",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-hyde-park-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-lago-di-como",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-mayfair-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-milan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-ritz-madrid",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-savoy-zurich",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mandarin-oriental-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "manhatta",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "manly-pacific-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "marea",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "marea-beverly-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "margaux",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "marguerite",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mark-s-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "market-cafe-by-khao",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "marriott-osaka-miyako",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "marsan-par-hélène-darroz",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "matador-room",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "matsuhisa-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mauro-colagreco",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mien-saigon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "miên-saigon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mimosa",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "minimal",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mitsui-cuisine-m",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mitsui-garden-hotel-ginza-gochome",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mitsui-garden-hotel-jingugaien-tokyo-premier",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mitsui-garden-hotel-kyoto-sanjo-premier",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mitsui-garden-hotel-nihonbashi-premier",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mitsukoshi-xinyi-place",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "miyako-hotel-hakata",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "moana-surfrider",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "moments",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "moonrock",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mosuke-par-mory-sacko",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mott-32-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "mountain-and-sea-house",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "muji-hotel-ginza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "muni-alain-ducasse",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "muni-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "musashi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "muse",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "muse-santa-monica",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "museo-delle-culture-di-milano",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "museo-jumex",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "museu-d-art-contemporani-de-barcelona",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "museu-de-arte-contemporânea-armando-martins",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "myoujyaku",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nakanoshima-museum-of-art-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nakatani",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "national-gallery-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "national-kaohsiung-center-for-the-arts",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "national-museum-of-modern-and-contemporary-art-korea",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "national-taichung-theater",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "national-taiwan-museum-railway-department-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "neiwei-arts-center",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nephele",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "new-museum",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nicolas-rouzaud-at-the-connaught",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nihombashi-takashimaya-s-c",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nkụ",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nobis-hotel-copenhagen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "noborioji-hotel-nara",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nohga-hotel-akihabara-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nonos-comestibles",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "noon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nordstrom-nyc",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nubeluz",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nuo-fu-migao",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "nusara",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oakwood-suites-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oasis-coffee-roasting-lab",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ochre-grill-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "odette",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ogata-at-the-shinmonzen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ojo-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "omotesando-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oncore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "one-hyde-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "one-nimman",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "one-park-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "onibus-coffee-nakameguro",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oriental-hotel-hiroshima",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oro",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oroya",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oryz-saigon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "osaka-excel-hotel-tokyu",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "osaka-marriott-miyako-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ōtani-sansō",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "overstory",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "oyamel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pace-gallery-geneva",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pace-gallery-los-angeles",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pace-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "palace-hotel-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "palmier-by-guillaume-galliot",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pao-by-paul-qui",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "paper-st-coffee-company",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "papi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "paramount-house-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "parc-1",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-bangkok",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-chicago",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-jakarta",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-milano",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-paris-vendôme",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-saigon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-seoul",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-sydney",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-hyatt-zurich",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-lane-copenhagen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "park-lees-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "parkhuus",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "passalacqua",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "patina-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pavyllon-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pavyllon-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "peak",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pellico-3-milano",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pendry-manhattan-west",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pendry-washington-dc-the-wharf",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "people-s",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "per-se",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pic-au-beau-rivage-palace",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "piopiko",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pizza-marumo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "plénitude",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "plume",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "portale",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "potong",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "powder-coffee-roasters",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "prahran-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "printemps-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "provintia-hotel-tainan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pujol",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "punch-room-barcelona",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "punch-room-madrid",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "punch-room-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "pur-jean-françois-rouquette",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "qt-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rachamankha-hotel-chiang-mai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "raf-s",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "raffles-london-at-the-owo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "raffles-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "randazzo-s-clam-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rasik-local-kitchen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "raw-sugar-roast",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "remm-hibiya",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "restaura-l-aube",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "restaurant-a",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rh-guesthouse-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rokusho-saigon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rolling-dough",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ron-company",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ron-xinyi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rong-ju",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "room-mate-collection-giulia",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "roppongi-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "roppongi-kappou-ukai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosetta",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosewood-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosewood-miyakojima",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosewood-phuket",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosewood-vienna",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosewood-villa-magna",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosewood-washington-d-c",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rosslyn-coffee-london-wall",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "row-on-5",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "rufous-coffee-roasters-2",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ryokan-otozure",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "saawaan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "saawaan-bistro",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "saga",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sailor",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "saint-laurent-babylone",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "saint-louis-bar-by-kei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "saint-pierre",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "saison-by-mauro-colagreco",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "samrub-samrub-thai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "san-laurel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "san-sabino",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sandbourne-santa-monica",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "santa-clara-1728",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "santi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sartoria-by-paulo-airaudo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "scarpetta-madrid",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "scarpetta-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "scoopy-hill",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "seasons-by-olivier-e",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "seikado-bunko-art-museum",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "seminary-hill-orchard-cidery",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "senato-hotel-milano",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "septime",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sequence-miyashita-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sevenly-heart",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sézanne",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "shangri-la-far-eastern-tainan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "shangri-la-the-shard-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sheraton-grand-london-park-lane",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sheraton-grand-sydney-hyde-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "shibuya-stream-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "shinsegae-namsan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "shisui-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sho",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "shutters-on-the-beach",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sidoli-radio",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "silks-club",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sinae",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sir-prague",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "six-senses-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sketch-the-gallery",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sketch-the-lecture-room-and-library",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "smithereens",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "so-vienna",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sofitel-mexico-city-reforma",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "soigné",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "soil-nagatoyumoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "solbam",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sophie-at-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sotetsu-fresa-inn-tokyo-roppongi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sōzai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "st-john",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "st-martins-lane-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sta-azabudai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "staff-only-club",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sticks-n-sushi-oxford",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "straf",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sublime-lisboa",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "suimontei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "summer-pavilion",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sung-taipei-daan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sunnyhills-minami-aoyama",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "sushi-park-paris",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "suto-barcelona",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "swiio-hotel-daan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "swissôtel-nankai-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "swissôtel-the-stamford-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "t-market",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "t-t",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "table-by-bruno-verjus",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tacubo-shirokanedai",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taichung-broadcasting-bureau",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taichung-green-corridor",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taichung-green-museumbrary",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tainan-art-museum-ii",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taipei-101",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taipei-city-hall-station-tower",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taipei-fine-art-museum",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taipei-marriott-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taipei-metro-zhongshan-linear-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taipei-nanshan-plaza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taipei-performing-art-center",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taïrroir",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "taka-an",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tan",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tate-modern",
+      "ok": false,
+      "error": "new row for relation \"destinations\" violates check constraint \"chk_price_level_range\"",
+      "reason": "update_failed"
+    },
+    {
+      "slug": "tatiana-by-kwame-onwuachi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tea-shop-parvati",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "teruko",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "thai-diner",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-amnis",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-aster",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-aubrey",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-bank",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-barcelona-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-beaudry-room",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-berkeley",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-berkeley-bar-terrace",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-betsy-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-beverly-hills-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-blossom-hibiya",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-blue-by-just-inn",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-blue-room",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-broad",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-carlyle",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-celestine-ginza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-celestine-kyoto-gion",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-chancery-rosewood",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-clocktower",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-clove-club",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-commons-saladaeng",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-commons-thonglor",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-connaught",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-connaught-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-connaught-grill",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-corner-store",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-dorchester",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-emory",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-fifth-avenue-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-flow",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-four-horsemen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-frick-collection",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-fullerton-hotel-sydney",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-fulton",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-georgian",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-goodtime-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-grill",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-guest-house",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hari",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-high-line",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hiramatsu-hotels-resorts-atami",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hiramatsu-hotels-resorts-ginoza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hiramatsu-karuizawa-miyota",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hiramatsu-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hotel-lucerne",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hotel-seiryu-kyoto-kiyomizu",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hoxton-downtown-la",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hoxton-holborn",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hoxton-southwark",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-hyundai-seoul",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-jade-room",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-kissaten",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-langham",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-langham-chicago",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-largo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-london-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-lowell-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-madrid-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-mandarin-cake-shop-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-manner",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-mark",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-marlton",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-maybourne-beverly-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-miami-beach-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-modern",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-moderne",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-museum-of-modern-art",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-musket-room",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-naka-phuket",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-national-art-center-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ned-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ned-nomad",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-new-york-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-nickel-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-okura-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-oxford-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-pinch",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-pizza-bar-on-38th",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-place-taichung",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-polo-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-portrait-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-prince-akatoki-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-prince-gallery-tokyo-kioicho",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-prince-karuizawa",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-prince-park-tower-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-rebello",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-red-room",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-bachelor-gulch",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-club-vail",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-fort-lauderdale",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-fukuoka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-koh-samui",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-melbourne",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-mexico-city",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-millenia-singapore",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-new-york-nomad",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-o-ahu-turtle-bay",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ritz-carlton-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-rome-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-royal-hawaiian",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-royal-park-hotel-iconic-kyoto",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-savoy",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-sg-club",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-shilla-seoul",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-shinmonzen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-singapore-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-sky-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-slate",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-social",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-standard-bangkok-mahanakhon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-standard-london",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-standard-mahanakhon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-surf-club-restaurant",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-surin-phuket",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-surrey",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-tavernist",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-tokyo-edition-ginza",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-tokyo-edition-toranomon",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-twenty-two",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-twenty-two-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-ukai-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-venice-venice-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-west-hollywood-edition",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-westin-bonaventure",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-westin-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "the-westin-tokyo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "thompson-denver",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "thompson-miami-beach",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "thompson-washington-d-c",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tokyo-garden-terrace-kioicho",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tokyo-midtown-hibiya",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "tokyo-prince-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "toranomon-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "toranomon-yokocho",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "torre-agbar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "torrisi",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "trinity",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "troutbeck",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "trunk(hotel)-yoyogi-park",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ukai-tei-kaohsiung",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ukai-tei-omotesando",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "umbral",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "uts-dr-chau-chak-wing-building",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "very-nice-bar",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "viceroy-santa-monica",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "vila-foz-hotel-spa",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "virens",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "voco-melbourne-central",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "volkshaus-basel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "w-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "w-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "w-verbier",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "waddington-custot",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "waldorf-astoria-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "walt-disney-concert-hall",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "wandering-walls",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "washington-square-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "wat-chifeng",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "watchhouse-5th-ave",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "watchhouse-cabot-place",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "westmoreland",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "white-1921-saint-tropez",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "white-cube-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "whitestone-gallery",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "whitestone-gallery-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "whitney-museum-of-american-art",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "wildflower-farms",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "wildwood-live-fire-cuisine",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "woobar-taipei",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "wythe-hotel",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "xiang-se",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "ya-ge",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "yamamotoyama-fujie-sabo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "yasaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "yen",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "yms",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "yonshin-fudopia",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "yonshin-milktea-mansion",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "yoroniku-tokyo-azabudai-hills",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "zaytinya-new-york",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "zentis-osaka",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "zest",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "zimmi-s",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    },
+    {
+      "slug": "zyuu-tsubo",
+      "ok": true,
+      "note": "enriched_with_basic_fields_only"
+    }
+  ]
+}

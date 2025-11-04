@@ -8,9 +8,9 @@ import CityPageClient from './page-client';
 export async function generateMetadata({
   params,
 }: {
-  params: { city: string };
+  params: Promise<{ city: string }>;
 }): Promise<Metadata> {
-  const { city } = params;
+  const { city } = await params;
   return generateCityMetadata(city);
 }
 

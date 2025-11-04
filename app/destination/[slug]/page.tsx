@@ -11,9 +11,9 @@ import { sanitizeHtml } from '@/lib/sanitize-html';
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   return generateDestinationMetadata(slug);
 }
 
@@ -21,9 +21,9 @@ export async function generateMetadata({
 export default async function DestinationPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
   
   // Fetch destination data on server for structured data
   let destination: Destination | null = null;
