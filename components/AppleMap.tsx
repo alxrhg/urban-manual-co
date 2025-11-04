@@ -120,7 +120,7 @@ export default function AppleMap({
         script.parentNode.removeChild(script);
       }
     };
-  }, [mapkitKey, teamId]);
+  }, [mapkit1Key, teamId]);
 
   // Initialize map once MapKit is loaded
   useEffect(() => {
