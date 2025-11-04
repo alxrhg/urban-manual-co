@@ -10,6 +10,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 // Dynamically import AppleMap to avoid SSR issues
 const AppleMap = dynamic(() => import('@/components/AppleMap'), { 
@@ -671,16 +672,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         } overflow-y-auto`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-bold">Destination</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {destination?.slug && (
               <button
                 onClick={() => {
                   onClose();
                   router.push(`/destination/${destination.slug}`);
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
                 title="Open in new page"
                 aria-label="Open destination in new page"
               >
@@ -689,7 +690,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
               aria-label="Close drawer"
             >
               <X className="h-5 w-5" />
@@ -698,18 +699,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Image */}
           {destination.image && (
-            <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
-              <img
+            <div className="relative aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
+              <Image
                 src={destination.image}
                 alt={destination.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Silently handle broken images
-                  e.currentTarget.style.display = 'none';
-                }}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 480px"
+                priority={false}
+                quality={85}
               />
             </div>
           )}
@@ -1118,7 +1119,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <AppleMap
                 query={`${destination.name}, ${destination.city}`}
-                height="256px"
+                latitude={enrichedData?.latitude}
+                longitude={enrichedData?.longitude}
+                height={256}
                 className="rounded-lg"
               />
             </div>

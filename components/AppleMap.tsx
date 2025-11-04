@@ -6,7 +6,7 @@ interface AppleMapProps {
   query?: string;
   latitude?: number;
   longitude?: number;
-  height?: string;
+  height?: number; // Changed to number for proper style handling
   className?: string;
 }
 
@@ -16,17 +16,18 @@ declare global {
   }
 }
 
-export default function AppleMap({ 
-  query, 
-  latitude, 
-  longitude, 
-  height = '256px',
+export default function AppleMap({
+  query,
+  latitude,
+  longitude,
+  height = 256,
   className = ''
 }: AppleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const mapkit1Key = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
   const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || '';
@@ -53,27 +54,41 @@ export default function AppleMap({
         // Initialize MapKit with authorization callback
         window.mapkit.init({
           authorizationCallback: (done: (token: string) => void) => {
-            // Fetch token from our API endpoint
-            fetch('/api/mapkit-token', { credentials: 'same-origin' })
-              .then(res => {
+            // Fetch token with retry logic
+            const fetchToken = async (attempt: number = 0): Promise<void> => {
+              try {
+                const res = await fetch('/api/mapkit-token', {
+                  credentials: 'same-origin',
+                  headers: { 'Accept': 'application/json' }
+                });
+
                 if (!res.ok) {
                   throw new Error(`Token request failed: ${res.status}`);
                 }
-                return res.json();
-              })
-              .then(data => {
+
+                const data = await res.json();
+
                 if (data.token) {
                   done(data.token);
                 } else {
                   throw new Error('No token in response');
                 }
-              })
-              .catch((err: Error) => {
-                console.error('MapKit authorization error:', err);
-                setError(`Map authentication failed: ${err.message}`);
-                // Still try to initialize without token (may have limitations)
-                done('');
-              });
+              } catch (err: any) {
+                console.error(`MapKit token fetch error (attempt ${attempt + 1}):`, err);
+
+                // Retry up to 3 times with exponential backoff
+                if (attempt < 2) {
+                  const delay = Math.pow(2, attempt) * 1000; // 1s, 2s
+                  setTimeout(() => fetchToken(attempt + 1), delay);
+                  setRetryCount(attempt + 1);
+                } else {
+                  setError(`Map authentication failed after ${attempt + 1} attempts`);
+                  done(''); // Try without token as last resort
+                }
+              }
+            };
+
+            fetchToken();
           },
         });
 
@@ -129,7 +144,7 @@ export default function AppleMap({
     try {
       // Create map region if we have coordinates
       let region;
-      if (latitude && longitude) {
+      if (latitude !== undefined && longitude !== undefined) {
         region = new window.mapkit.CoordinateRegion(
           new window.mapkit.Coordinate(latitude, longitude),
           new window.mapkit.CoordinateSpan(0.01, 0.01)
@@ -139,16 +154,20 @@ export default function AppleMap({
       // Initialize the map
       const map = new window.mapkit.Map(mapRef.current, {
         region: region,
+        showsMapTypeControl: false,
+        showsZoomControl: true,
+        showsUserLocationControl: false,
       });
 
       mapInstanceRef.current = map;
 
       // Add annotation if we have coordinates
-      if (latitude && longitude) {
+      if (latitude !== undefined && longitude !== undefined) {
         const annotation = new window.mapkit.MarkerAnnotation(
           new window.mapkit.Coordinate(latitude, longitude),
           {
             title: query || 'Location',
+            color: '#007AFF',
           }
         );
         map.addAnnotation(annotation);
@@ -172,6 +191,7 @@ export default function AppleMap({
               coordinate,
               {
                 title: result.name || query,
+                color: '#007AFF',
               }
             );
             map.addAnnotation(annotation);
@@ -184,14 +204,34 @@ export default function AppleMap({
       console.error('Map initialization error:', err);
       setError(`Failed to initialize map: ${err.message}`);
     }
+
+    // Cleanup function
+    return () => {
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.destroy();
+        } catch (e) {
+          console.error('Error destroying map:', e);
+        }
+        mapInstanceRef.current = null;
+      }
+    };
   }, [loaded, latitude, longitude, query]);
 
   if (error) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 ${className}`}>
+      <div
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 ${className}`}
+        style={{ height: `${height}px` }}
+      >
         <div className="text-center">
           <p className="text-sm text-red-600 dark:text-red-400 mb-1">Map unavailable</p>
           <p className="text-xs text-gray-500 dark:text-gray-500">{error}</p>
+          {retryCount > 0 && (
+            <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+              Retry attempt {retryCount}/3
+            </p>
+          )}
         </div>
       </div>
     );
@@ -199,10 +239,16 @@ export default function AppleMap({
 
   if (!loaded) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}>
+      <div
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}
+        style={{ height: `${height}px` }}
+      >
         <div className="text-center">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
-          <span className="text-xs text-gray-600 dark:text-gray-400">Loading map...</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">
+            Loading map...
+            {retryCount > 0 && ` (retry ${retryCount})`}
+          </span>
         </div>
       </div>
     );
@@ -211,8 +257,8 @@ export default function AppleMap({
   return (
     <div
       ref={mapRef}
-      className={`w-full ${height} rounded-lg overflow-hidden ${className}`}
-      style={{ minHeight: height }}
+      className={`w-full rounded-lg overflow-hidden ${className}`}
+      style={{ height: `${height}px`, minHeight: `${height}px` }}
     />
   );
 }

@@ -105,21 +105,21 @@ export function Header() {
               {user ? (
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2 -m-2 touch-manipulation"
                   aria-label="Toggle menu"
                 >
                   {avatarUrl ? (
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
                       <Image
                         src={avatarUrl}
                         alt={user.email || 'Profile'}
                         fill
                         className="object-cover"
-                        sizes="32px"
+                        sizes="40px"
                       />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
                       {user.email?.[0]?.toUpperCase() || 'U'}
                     </div>
                   )}
@@ -130,7 +130,7 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal"
+                  className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-3 px-2 -m-2 touch-manipulation"
                   aria-label="Toggle menu"
                 >
                   Menu
@@ -159,29 +159,29 @@ export function Header() {
             {/* Arrow/caret */}
             <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" />
             <div className="py-2">
-              <button onClick={() => { navigate('/cities'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Cities</button>
+              <button onClick={() => { navigate('/cities'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Cities</button>
               <div className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categories</div>
-              <button onClick={() => { navigate('/category/hotels'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8">Hotels</button>
-              <button onClick={() => { navigate('/category/restaurants'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8">Restaurants</button>
-              <button onClick={() => { navigate('/category/cafes'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8">Cafes</button>
-              <button onClick={() => { navigate('/category/bars'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8">Bars</button>
-              <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Map</button>
-              <button onClick={() => { navigate('/explore'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Explore</button>
-              <button onClick={() => { navigate('/feed'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Feed</button>
+              <button onClick={() => { navigate('/category/hotels'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8 touch-manipulation">Hotels</button>
+              <button onClick={() => { navigate('/category/restaurants'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8 touch-manipulation">Restaurants</button>
+              <button onClick={() => { navigate('/category/cafes'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8 touch-manipulation">Cafes</button>
+              <button onClick={() => { navigate('/category/bars'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8 touch-manipulation">Bars</button>
+              <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Map</button>
+              <button onClick={() => { navigate('/explore'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Explore</button>
+              <button onClick={() => { navigate('/feed'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Feed</button>
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
               {user ? (
                 <>
-                  <button onClick={() => { navigate('/account'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Account</button>
+                  <button onClick={() => { navigate('/account'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Account</button>
                   {isAdmin && (
                     <>
-                      <button onClick={() => { navigate('/admin'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium">Admin Tools</button>
-                      <button onClick={() => { navigate('/admin/analytics'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8">Analytics</button>
+                      <button onClick={() => { navigate('/admin'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium touch-manipulation">Admin Tools</button>
+                      <button onClick={() => { navigate('/admin/analytics'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 pl-8 touch-manipulation">Analytics</button>
                     </>
                   )}
-                  <button onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Sign Out</button>
+                  <button onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Sign Out</button>
                 </>
               ) : (
-                <button onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">Sign In</button>
+                <button onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Sign In</button>
               )}
             </div>
           </div>
