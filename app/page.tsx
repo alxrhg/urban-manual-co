@@ -746,6 +746,24 @@ export default function Home() {
                         ))}
                       </div>
                     )}
+
+                    {/* Michelin Filter - Separate from categories */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs pt-2">
+                      <button
+                        onClick={() => {
+                          const newValue = !advancedFilters.michelin;
+                          setAdvancedFilters(prev => ({ ...prev, michelin: newValue || undefined }));
+                          trackFilterChange({ filterType: 'michelin', value: newValue });
+                        }}
+                        className={`flex items-center gap-1.5 transition-all ${
+                          advancedFilters.michelin
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                        }`}
+                      >
+                        ⭐ Michelin
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
