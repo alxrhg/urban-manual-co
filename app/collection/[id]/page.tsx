@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock } from 'lucide-react';
 import Image from 'next/image';
+import { PageLoader } from '@/components/LoadingStates';
+import { EmptyState } from '@/components/EmptyStates';
 
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {
@@ -178,9 +180,7 @@ export default function CollectionDetailPage() {
   if (loading) {
     return (
       <main className="px-8 py-20">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-500">Loading...</div>
-        </div>
+        <PageLoader />
       </main>
     );
   }
@@ -188,9 +188,13 @@ export default function CollectionDetailPage() {
   if (!collection) {
     return (
       <main className="px-8 py-20">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-500">Collection not found</div>
-        </div>
+        <EmptyState
+          icon="❓"
+          title="Collection not found"
+          description="This collection may have been deleted"
+          actionLabel="Back to Account"
+          actionHref="/account"
+        />
       </main>
     );
   }
@@ -259,17 +263,13 @@ export default function CollectionDetailPage() {
 
         {/* Destinations Grid */}
         {destinations.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-4xl mb-4">🏞️</div>
-            <p className="text-sm text-gray-500">No places in this collection yet</p>
-            <p className="text-xs text-gray-400 mt-2">Browse destinations and add them to this collection</p>
-            <button
-              onClick={() => router.push('/')}
-              className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
-            >
-              Browse Destinations
-            </button>
-          </div>
+          <EmptyState
+            icon="🏞️"
+            title="No places in this collection yet"
+            description="Browse destinations and add them to this collection"
+            actionLabel="Browse Destinations"
+            actionHref="/"
+          />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
             {destinations.map((destination) => (

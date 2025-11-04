@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Heart, Grid3x3, List } from 'lucide-react';
+import { NoSavedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
 
 interface SavedPlace {
   destination_slug: string;
@@ -71,13 +72,7 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
   }, [savedPlaces, filterCity, filterCategory, sortBy]);
 
   if (savedPlaces.length === 0) {
-    return (
-      <div className="text-center py-20">
-        <div className="text-4xl mb-4">❤️</div>
-        <p className="text-sm text-gray-500">No saved places yet</p>
-        <p className="text-xs text-gray-400 mt-2">Save places you want to visit</p>
-      </div>
-    );
+    return <NoSavedPlacesEmptyState />;
   }
 
   return (
@@ -189,8 +184,13 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
         </div>
       )}
 
+      {/* No results after filtering */}
+      {filteredPlaces.length === 0 && (
+        <NoResultsEmptyState />
+      )}
+
       {/* Grid View */}
-      {viewMode === 'grid' && (
+      {viewMode === 'grid' && filteredPlaces.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredPlaces.map((place) => (
             <button
@@ -224,7 +224,7 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
       )}
 
       {/* List View */}
-      {viewMode === 'list' && (
+      {viewMode === 'list' && filteredPlaces.length > 0 && (
         <div className="space-y-2">
           {filteredPlaces.map((place) => (
             <button
