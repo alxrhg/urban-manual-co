@@ -2,48 +2,18 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { embedText } from '@/lib/llm';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Generate embedding for a query using Google's text-embedding-004 model
+// Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
-  if (!GOOGLE_API_KEY) {
-    return null;
-  }
-
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'models/text-embedding-004',
-          content: { parts: [{ text: query }] }
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Search API] Embedding API error:', response.status, errorText);
-      return null;
-    }
-
-    const data = await response.json();
-    
-    // text-embedding-004 returns embedding in data.embedding.values
-    if (data.embedding?.values) {
-      return data.embedding.values;
-    }
-    
-    console.error('[Search API] Unexpected embedding response format:', data);
-    return null;
+    const embedding = await embedText(query);
+    return embedding || null;
   } catch (error) {
     console.error('[Search API] Error generating embedding:', error);
     return null;
