@@ -55,7 +55,7 @@ export default function InsightsDashboard({ userId, className = '' }: InsightsDa
             {insights.upcomingPeakWindows.map((window: any, index: number) => (
               <div
                 key={index}
-                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3"
+                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3"
               >
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />

@@ -115,7 +115,7 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
           <h2 className="text-lg font-semibold">AI Search</h2>
           <button
             onClick={onClose}
-            className="ml-auto p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="ml-auto p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors"
             aria-label="Close search"
           >
             <X className="h-5 w-5" />
@@ -152,14 +152,14 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
         >
           {/* Error State */}
           {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
               <span className="text-red-600 dark:text-red-400 text-sm">{error}</span>
             </div>
           )}
 
           {/* Streaming AI Response */}
           {streamingResponse && (
-            <div className="mb-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+            <div className="mb-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl">
               <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {streamingResponse}
               </span>
@@ -177,7 +177,7 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
                   <a
                     key={destination.slug}
                     href={`/destination/${destination.slug}`}
-                    className="block p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:shadow-md transition-all"
+                    className="block p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl hover:shadow-md transition-all"
                   >
                     <h4 className="font-medium text-sm mb-1">{destination.name}</h4>
                     <span className="text-xs text-gray-600 dark:text-gray-400">

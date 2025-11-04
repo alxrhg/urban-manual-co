@@ -229,7 +229,7 @@ export default function AppleMap({
   if (error) {
     return (
       <div
-        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 ${className}`}
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 ${className}`}
         style={{ height: getHeightStyle() }}
       >
         <div className="text-center">
@@ -248,7 +248,7 @@ export default function AppleMap({
   if (!loaded) {
     return (
       <div
-        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl ${className}`}
         style={{ height: getHeightStyle() }}
       >
         <div className="text-center">
@@ -265,7 +265,7 @@ export default function AppleMap({
   return (
     <div
       ref={mapRef}
-      className={`w-full rounded-lg overflow-hidden ${className}`}
+      className={`w-full rounded-2xl overflow-hidden ${className}`}
       style={{ height: getHeightStyle(), minHeight: getHeightStyle() }}
     />
   );

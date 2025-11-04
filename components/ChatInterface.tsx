@@ -23,7 +23,7 @@ export function ChatInterface({ onSendMessage, placeholder = "Ask about restaura
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -51,12 +51,12 @@ export function ChatInterface({ onSendMessage, placeholder = "Ask about restaura
                 }
               }}
               placeholder={placeholder}
-              className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-800 text-black dark:text-white"
+              className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-800 text-black dark:text-white"
             />
             <button
               onClick={handleSend}
               disabled={!message.trim()}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
             </button>

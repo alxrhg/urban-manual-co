@@ -205,7 +205,7 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
 
   if (visitedCountries.size === 0) {
     return (
-      <div className="w-full h-64 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center">
+      <div className="w-full h-64 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 flex items-center justify-center">
         <div className="text-center">
           <span className="text-4xl mb-2 block">🗺️</span>
           <span className="text-gray-600 dark:text-gray-400 text-sm">
@@ -233,11 +233,11 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
       </div>
 
       {/* Map - amCharts world map */}
-      <div className="w-full h-96 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+      <div className="w-full h-96 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
         <div ref={mapRef} className="w-full h-full" />
         
         {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+        <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-2xl px-3 py-2 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-gray-500 rounded"></div>
@@ -257,7 +257,7 @@ export default function TravelMap({ visitedPlaces, savedPlaces = [] }: TravelMap
           return (
             <div
               key={country}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
+              className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800"
             >
               <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate flex-1">

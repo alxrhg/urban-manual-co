@@ -130,7 +130,7 @@ export default function AnalyticsPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm text-gray-600 dark:text-gray-400">Total Views</div>
               <Eye className="h-5 w-5 text-gray-400" />
@@ -138,7 +138,7 @@ export default function AnalyticsPage() {
             <div className="text-3xl font-bold">{stats.totalViews.toLocaleString()}</div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm text-gray-600 dark:text-gray-400">Total Searches</div>
               <Search className="h-5 w-5 text-gray-400" />
@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
             <div className="text-3xl font-bold">{stats.totalSearches.toLocaleString()}</div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm text-gray-600 dark:text-gray-400">Total Saves</div>
               <MousePointerClick className="h-5 w-5 text-gray-400" />
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
             <div className="text-3xl font-bold">{stats.totalSaves.toLocaleString()}</div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm text-gray-600 dark:text-gray-400">Total Users</div>
               <Users className="h-5 w-5 text-gray-400" />
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Top Searches */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Top Search Queries
@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
           ) : (
             <div className="space-y-2">
               {stats.topSearches.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl">
                   <span className="font-medium">{item.query}</span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">{item.count} searches</span>
                 </div>

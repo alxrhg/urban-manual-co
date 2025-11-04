@@ -59,7 +59,7 @@ export default function ItineraryPage() {
       <div className="min-h-screen px-6 md:px-10 py-20">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-semibold mb-8">My Itinerary</h1>
-          <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
+          <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400 mb-2">Your itinerary is empty</p>
             <p className="text-sm text-gray-400 dark:text-gray-500">
@@ -67,7 +67,7 @@ export default function ItineraryPage() {
             </p>
             <Link
               href="/"
-              className="mt-6 inline-block px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity"
+              className="mt-6 inline-block px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity"
             >
               Browse Destinations
             </Link>
@@ -99,7 +99,7 @@ export default function ItineraryPage() {
             return (
               <div
                 key={`${item.listingId}-${index}`}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex gap-4"
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex gap-4"
               >
                 {/* Image */}
                 <div className="relative w-24 h-24 flex-shrink-0 rounded overflow-hidden">
@@ -176,7 +176,7 @@ export default function ItineraryPage() {
         </div>
 
         {/* Future: Add itinerary optimization button */}
-        <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
+        <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             <strong>Coming soon:</strong> Smart itinerary optimization will arrange these places by location and suggest the best visiting order.
           </p>

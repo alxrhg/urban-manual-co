@@ -106,7 +106,7 @@ export function FollowCityButton({
 
   const buttonClass = variant === 'compact'
     ? `p-1.5 rounded-full ${isFollowing ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'} hover:opacity-80 transition-opacity`
-    : `px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
+    : `px-3 py-1.5 rounded-2xl text-sm font-medium flex items-center gap-2 transition-colors ${
         isFollowing
           ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'

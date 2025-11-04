@@ -405,7 +405,7 @@ export default function Account() {
                       {visitedPlaces.slice(0, 5).map((place) => (
                         <div
                           key={place.destination_slug}
-                          className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors"
+                          className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl cursor-pointer transition-colors"
                           onClick={() => router.push(`/destination/${place.destination_slug}`)}
                         >
                           {place.destination.image && (
@@ -462,7 +462,7 @@ export default function Account() {
                       type="email"
                       value={user.email || ""}
                       disabled
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400"
                     />
                     <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
                       Email cannot be changed
@@ -480,7 +480,7 @@ export default function Account() {
                       onChange={(e) => setBirthday(e.target.value)}
                       disabled={!isEditingProfile}
                       max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white disabled:bg-gray-50 dark:disabled:bg-gray-900 disabled:text-gray-500 dark:disabled:text-gray-400"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white disabled:bg-gray-50 dark:disabled:bg-gray-900 disabled:text-gray-500 dark:disabled:text-gray-400"
                     />
                     <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
                       Your birthday helps us personalize your experience
@@ -535,7 +535,7 @@ export default function Account() {
                       {savedPlaces.map((place) => (
                         <div
                           key={place.destination_slug}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-black dark:hover:border-white transition-colors cursor-pointer"
+                          className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden hover:border-black dark:hover:border-white transition-colors cursor-pointer"
                           onClick={() => router.push(`/destination/${place.destination_slug}`)}
                         >
                           {place.destination.image && (
@@ -578,7 +578,7 @@ export default function Account() {
                       {visitedPlaces.map((place) => (
                         <div
                           key={place.destination_slug}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-black dark:hover:border-white transition-colors cursor-pointer"
+                          className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden hover:border-black dark:hover:border-white transition-colors cursor-pointer"
                           onClick={() => router.push(`/destination/${place.destination_slug}`)}
                         >
                           {place.destination.image && (
