@@ -193,9 +193,8 @@ export function WorldMapVisualization({ visitedCountries }: WorldMapVisualizatio
                     ? 'text-black dark:text-white transition-colors'
                     : 'text-gray-200 dark:text-gray-800 transition-colors'
                 }
-                stroke="currentColor"
+                stroke="#e5e7eb"
                 strokeWidth="0.5"
-                strokeClassName="text-gray-300 dark:text-gray-700"
               >
                 <title>{COUNTRY_DISPLAY[country] || country}</title>
               </path>
