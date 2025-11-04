@@ -22,6 +22,12 @@ function LoginForm() {
     if (redirect) {
       setReturnTo(redirect);
     }
+    
+    // Check for OAuth errors from callback
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
