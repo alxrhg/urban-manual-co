@@ -128,7 +128,7 @@ export default function CitiesPage() {
   return (
     <main className="relative min-h-screen">
       {/* Hero Section - Matching homepage design */}
-      <section className="min-h-[70vh] flex flex-col px-8 py-20">
+      <section className="min-h-[70vh] flex flex-col px-6 md:px-10 py-20">
         <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -188,7 +188,7 @@ export default function CitiesPage() {
           </div>
 
         {/* Grid - Right below filter lists */}
-        <div className="mt-8 pb-8 px-8">
+        <div className="mt-8 pb-8 px-6 md:px-10">
             <div className="max-w-[1800px] mx-auto">
               {filteredCities.length === 0 ? (
                 <div className="text-center py-16">
