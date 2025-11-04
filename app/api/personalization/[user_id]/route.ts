@@ -78,15 +78,14 @@ export async function GET(
       .order('similarity_score', { ascending: false })
       .limit(20);
 
-    // Extract unique destinations
-    const uniqueDestinations = Array.from(
-      new Map(
-        (recommendations || []).map((r: any) => [
-          r.destinations?.id,
-          r.destinations,
-        ]).filter(([id]) => id)
-      ).values()
-    );
+                // Extract unique destinations
+                const destinationMap = new Map<number, any>();
+                (recommendations || []).forEach((r: any) => {
+                  if (r.destinations?.id) {
+                    destinationMap.set(r.destinations.id, r.destinations);
+                  }
+                });
+                const uniqueDestinations = Array.from(destinationMap.values());
 
     // Cache for 1 hour
     await supabase

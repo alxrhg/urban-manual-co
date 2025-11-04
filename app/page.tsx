@@ -28,6 +28,8 @@ import {
 } from '@/lib/tracking';
 import GreetingHero from '@/components/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
+import { ForYouSection } from '@/components/ForYouSection';
+import { TrendingSection } from '@/components/TrendingSection';
 import { SearchFiltersComponent } from '@/components/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 
