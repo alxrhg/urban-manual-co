@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const supabase = await createClient();
+    const supabase = await createServerClient();
 
     const { data: destinations, error } = await supabase
       .from('destinations')
