@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/components/search/CompactResponseSection';
 import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
@@ -26,7 +26,7 @@ interface SearchState {
   suggestions: Array<{ label: string; refinement: string }>;
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
@@ -144,6 +144,18 @@ export default function SearchPage() {
         </button>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="px-6 md:px-10 py-10"><div className="h-4 w-48 bg-gray-200 rounded mb-6" /><div className="h-5 w-80 bg-gray-200 rounded mb-8" /><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <div key={i} className="aspect-square rounded-2xl bg-gray-200" />
+      ))}
+    </div></div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
 
