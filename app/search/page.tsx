@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/components/search/CompactResponseSection';
+import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
 
 interface Destination {
@@ -44,6 +45,18 @@ function SearchPageContent() {
     if (query) performInitialSearch(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  // Recompute suggestions whenever filtered results or refinements change
+  useEffect(() => {
+    setSearchState((prev) => ({
+      ...prev,
+      suggestions: generateSuggestions({
+        query: prev.originalQuery,
+        results: prev.filteredResults,
+        filters: { /* could pass openNow/price if present */ },
+      }),
+    }));
+  }, [searchState.filteredResults, searchState.refinements]);
 
   async function performInitialSearch(searchQuery: string) {
     const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
