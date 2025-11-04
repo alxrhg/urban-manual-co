@@ -267,11 +267,11 @@ export default function CitiesPage() {
                         <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Previous
                         </button>
-                        
+
                         <div className="flex items-center gap-1">
                           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                             let pageNum;
@@ -284,15 +284,15 @@ export default function CitiesPage() {
                             } else {
                               pageNum = currentPage - 2 + i;
                             }
-                            
+
                             return (
                               <button
                                 key={pageNum}
                                 onClick={() => setCurrentPage(pageNum)}
-                                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                                className={`px-3 py-2 text-xs rounded-2xl transition-colors ${
                                   currentPage === pageNum
                                     ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
-                                    : 'border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                    : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
                                 }`}
                               >
                                 {pageNum}
@@ -300,11 +300,11 @@ export default function CitiesPage() {
                             );
                           })}
                         </div>
-                        
+
                         <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Next
                         </button>
