@@ -32,6 +32,13 @@ export default function Account() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections'>('profile');
 
+  // Collection creation state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [newCollectionDescription, setNewCollectionDescription] = useState('');
+  const [newCollectionPublic, setNewCollectionPublic] = useState(true);
+  const [creatingCollection, setCreatingCollection] = useState(false);
+
   // Check authentication
   useEffect(() => {
     async function checkAuth() {
@@ -152,6 +159,40 @@ export default function Account() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push("/");
+  };
+
+  const handleCreateCollection = async () => {
+    if (!user || !newCollectionName.trim()) return;
+
+    setCreatingCollection(true);
+    try {
+      const { data, error } = await supabase
+        .from('collections')
+        .insert([{
+          user_id: user.id,
+          name: newCollectionName.trim(),
+          description: newCollectionDescription.trim() || null,
+          is_public: newCollectionPublic,
+          emoji: '📚',
+          color: '#3B82F6',
+          destination_count: 0
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCollections([data, ...collections]);
+      setNewCollectionName('');
+      setNewCollectionDescription('');
+      setNewCollectionPublic(true);
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      alert('Failed to create collection');
+    } finally {
+      setCreatingCollection(false);
+    }
   };
 
   // Calculate stats
@@ -341,33 +382,128 @@ export default function Account() {
                 <p className="text-sm text-gray-500">No collections yet</p>
                 <p className="text-xs text-gray-400 mt-2">Create lists to organize your places</p>
                 <button
-                  className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-sm hover:opacity-80 transition-opacity"
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
                 >
                   Create Collection
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {collections.map((collection) => (
+              <>
+                <div className="flex justify-end mb-4">
                   <button
-                    key={collection.id}
-                    className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                    onClick={() => setShowCreateModal(true)}
+                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
                   >
-                    <h3 className="font-medium text-sm mb-1">{collection.name}</h3>
-                    {collection.description && (
-                      <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
-                    )}
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <span>0 places</span>
-                      {collection.is_public && <span>• Public</span>}
-                    </div>
+                    + New Collection
                   </button>
-                ))}
-              </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {collections.map((collection) => (
+                    <button
+                      key={collection.id}
+                      onClick={() => router.push(`/collection/${collection.id}`)}
+                      className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">{collection.emoji || '📚'}</span>
+                        <h3 className="font-medium text-sm flex-1">{collection.name}</h3>
+                      </div>
+                      {collection.description && (
+                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <span>{collection.destination_count || 0} places</span>
+                        {collection.is_public && <span>• Public</span>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
       </div>
+
+      {/* Create Collection Modal */}
+      {showCreateModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-light">Create Collection</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 hover:opacity-60 transition-opacity"
+              >
+                <span className="text-lg">×</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium mb-2">Collection Name *</label>
+                <input
+                  type="text"
+                  value={newCollectionName}
+                  onChange={(e) => setNewCollectionName(e.target.value)}
+                  placeholder="e.g., Tokyo Favorites"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                  autoFocus
+                  maxLength={50}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-2">Description</label>
+                <textarea
+                  value={newCollectionDescription}
+                  onChange={(e) => setNewCollectionDescription(e.target.value)}
+                  placeholder="Optional description..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+                  maxLength={200}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="collection-public"
+                  checked={newCollectionPublic}
+                  onChange={(e) => setNewCollectionPublic(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="collection-public" className="text-xs">
+                  Make this collection public
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                  disabled={creatingCollection}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateCollection}
+                  disabled={!newCollectionName.trim() || creatingCollection}
+                  className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  {creatingCollection ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
