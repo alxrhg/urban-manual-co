@@ -32,6 +32,7 @@ import { ForYouSection } from '@/components/ForYouSection';
 import { TrendingSection } from '@/components/TrendingSection';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
+import { InFeedAd } from '@/components/GoogleAd';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -815,7 +816,29 @@ export default function Home() {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedDestinations = filteredDestinations.slice(startIndex, endIndex);
-                  return paginatedDestinations.map((destination, index) => {
+
+                  // Inject ads every 14 items
+                  const withAds: Array<{ type: 'destination' | 'ad'; data: any; index: number }> = [];
+                  paginatedDestinations.forEach((destination, index) => {
+                    withAds.push({ type: 'destination', data: destination, index });
+                    // Add ad after every 14th item (but not at the very end)
+                    if ((index + 1) % 14 === 0 && index < paginatedDestinations.length - 1) {
+                      withAds.push({ type: 'ad', data: { slot: '1234567890' }, index: index + 0.5 });
+                    }
+                  });
+
+                  return withAds.map((item) => {
+                    if (item.type === 'ad') {
+                      return (
+                        <InFeedAd
+                          key={`ad-${item.index}`}
+                          slot={item.data.slot}
+                        />
+                      );
+                    }
+
+                    const destination = item.data;
+                    const index = item.index;
                   const isVisited = user && visitedSlugs.has(destination.slug);
                   return (
                   <button

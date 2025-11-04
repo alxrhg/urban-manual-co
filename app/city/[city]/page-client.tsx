@@ -11,6 +11,7 @@ import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_META, CARD_TITLE } from '@/components/CardStyles';
+import { InFeedAd } from '@/components/GoogleAd';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -254,10 +255,32 @@ export default function CityPageClient() {
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-                {paginatedDestinations.map((destination, index) => {
-                  const isVisited = user && visitedSlugs.has(destination.slug);
+                {(() => {
+                  // Inject ads every 14 items
+                  const withAds: Array<{ type: 'destination' | 'ad'; data: any; index: number }> = [];
+                  paginatedDestinations.forEach((destination, index) => {
+                    withAds.push({ type: 'destination', data: destination, index });
+                    // Add ad after every 14th item (but not at the very end)
+                    if ((index + 1) % 14 === 0 && index < paginatedDestinations.length - 1) {
+                      withAds.push({ type: 'ad', data: { slot: '1234567890' }, index: index + 0.5 });
+                    }
+                  });
 
-                  return (
+                  return withAds.map((item) => {
+                    if (item.type === 'ad') {
+                      return (
+                        <InFeedAd
+                          key={`ad-${item.index}`}
+                          slot={item.data.slot}
+                        />
+                      );
+                    }
+
+                    const destination = item.data;
+                    const index = item.index;
+                    const isVisited = user && visitedSlugs.has(destination.slug);
+
+                    return (
                     <button
                       key={destination.slug}
                       onClick={() => {
@@ -309,8 +332,9 @@ export default function CityPageClient() {
                         </p>
                       </div>
                     </button>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
 
               {/* Pagination */}
