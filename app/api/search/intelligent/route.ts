@@ -4,6 +4,7 @@ import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { getUserLocation } from '@/lib/location/getUserLocation';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -57,10 +58,12 @@ export async function GET(request: NextRequest) {
     });
 
     const limited = (rerankedResults || []).slice(0, 10);
+    const userLocation = await getUserLocation(request);
     const contextResponse = generateSearchResponseContext({
       query,
       results: limited,
       filters: { openNow },
+      userLocation: userLocation || undefined,
     });
     const suggestions = generateSuggestions({ query, results: limited, filters: { openNow } });
 
@@ -89,6 +92,12 @@ export async function GET(request: NextRequest) {
         count: limited.length,
         reranked: true,
       },
+      userLocation: userLocation
+        ? {
+            city: userLocation.city,
+            timezone: userLocation.timezone,
+          }
+        : undefined,
     });
   } catch (error: any) {
     console.error('Search error:', error);

@@ -7,6 +7,8 @@ interface SearchContextInput {
     priceMax?: number;
     priceMin?: number;
   };
+  userLocation?: { city: string; country: string; timezone: string };
+  inferredCity?: string | null;
 }
 
 export function generateSearchResponseContext(input: SearchContextInput): string {
@@ -14,11 +16,16 @@ export function generateSearchResponseContext(input: SearchContextInput): string
   const count = results.length;
 
   const intent = extractIntent(query);
-  const timeGreeting = getTimeGreeting();
+  const timeGreeting = getTimeGreeting(input.userLocation?.timezone);
   const parts: string[] = [];
 
   if (intent.category && intent.location) {
     parts.push(`${capitalize(intent.category)} in ${capitalize(intent.location)} — ${timeGreeting}.`);
+  }
+
+  // If user location is known and query didn't specify a location, acknowledge
+  if (!intent.location && input.userLocation?.city && intent.category) {
+    parts.push(`${capitalize(intent.category)} in ${capitalize(input.userLocation.city)} — ${timeGreeting}.`);
   }
 
   if (count === 0) {
@@ -103,11 +110,19 @@ function extractOccasion(query: string): string | null {
   return null;
 }
 
-function getTimeGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'good morning';
-  if (hour < 18) return 'good afternoon';
-  return 'good evening';
+function getTimeGreeting(timezone?: string): string {
+  try {
+    const hourStr = new Date().toLocaleString('en-US', { timeZone: timezone || 'UTC', hour: '2-digit', hour12: false });
+    const hour = parseInt(hourStr, 10);
+    if (hour < 12) return 'good morning';
+    if (hour < 18) return 'good afternoon';
+    return 'good evening';
+  } catch {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'good morning';
+    if (hour < 18) return 'good afternoon';
+    return 'good evening';
+  }
 }
 
 function generateCategoryInsight(category: string | null, results: any[]): string | null {
