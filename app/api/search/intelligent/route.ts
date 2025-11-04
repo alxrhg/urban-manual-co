@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         city_filter: city,
         category_filter: category,
         open_now_filter: openNow,
-        limit_count: 20,
+        limit_count: 10,
       }
     );
 
@@ -54,12 +54,13 @@ export async function GET(request: NextRequest) {
       boostPersonalized: !!session?.user?.id,
     });
 
+    const limited = (rerankedResults || []).slice(0, 10);
     return NextResponse.json({
-      results: rerankedResults,
+      results: limited,
       meta: {
         query,
         filters: { city, category, openNow },
-        count: rerankedResults.length,
+        count: limited.length,
         reranked: true,
       },
     });

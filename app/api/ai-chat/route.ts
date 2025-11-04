@@ -435,11 +435,11 @@ export async function POST(request: NextRequest) {
                   boostPersonalized: !!userId,
                 });
 
-                // Return all results (no artificial limit)
-                // Frontend pagination will handle display limits
+                // Limit to 10 results for UI consistency
+                const limitedResults = rerankedResults.slice(0, 10);
 
                 // Generate natural language response
-                const response = generateResponse(rerankedResults.length, intent.city, intent.category);
+                const response = generateResponse(limitedResults.length, intent.city, intent.category);
 
     // Generate enhanced response with context if needed
     let enhancedContent = response;
@@ -467,11 +467,11 @@ export async function POST(request: NextRequest) {
 
                 return NextResponse.json({
                   content: enhancedContent,
-                  destinations: rerankedResults,
+                  destinations: limitedResults,
                   intent: {
                     ...intent,
-                    resultCount: rerankedResults.length,
-                    hasResults: rerankedResults.length > 0
+                    resultCount: limitedResults.length,
+                    hasResults: limitedResults.length > 0
                   },
                   enhancedIntent, // Include full enhanced intent
                   intelligence: intelligenceInsights,

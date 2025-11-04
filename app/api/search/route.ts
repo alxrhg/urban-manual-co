@@ -154,7 +154,8 @@ function parseQueryFallback(query: string): {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query, pageSize = 50, filters = {}, userId, session_token } = body;
+    const { query, filters = {}, userId, session_token } = body;
+    const PAGE_SIZE = 10;
     
     // Try to get userId from cookies/auth if not provided
     let authenticatedUserId = userId;
@@ -248,7 +249,7 @@ export async function POST(request: NextRequest) {
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
           query_embedding: queryEmbedding,
           match_threshold: 0.7, // Cosine similarity threshold
-          match_count: pageSize,
+          match_count: PAGE_SIZE,
           filter_city: intent.city || filters.city || null,
           filter_category: intent.category || filters.category || null,
           filter_michelin_stars: intent.filters?.michelinStar || filters.michelinStar || null,
@@ -286,7 +287,7 @@ export async function POST(request: NextRequest) {
         let fullTextQuery = supabase
           .from('destinations')
           .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
-          .limit(pageSize);
+          .limit(PAGE_SIZE);
 
         // Full-text search - use ILIKE on search_text as fallback (textSearch requires tsvector column)
         // If search_text column exists but no tsvector, use pattern matching
@@ -344,7 +345,7 @@ export async function POST(request: NextRequest) {
             .from('destinations')
             .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
             .in('slug', slugs)
-            .limit(pageSize);
+            .limit(PAGE_SIZE);
 
           if (fullData) {
             // Preserve similarity order from AI field search
@@ -379,7 +380,7 @@ export async function POST(request: NextRequest) {
       let fallbackQuery = supabase
         .from('destinations')
         .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
-        .limit(pageSize);
+        .limit(PAGE_SIZE);
 
       // Apply filters
       if (intent.city || filters.city) {
@@ -490,7 +491,7 @@ export async function POST(request: NextRequest) {
         return { ...dest, _score: score };
       })
       .sort((a: any, b: any) => b._score - a._score)
-      .slice(0, pageSize)
+      .slice(0, PAGE_SIZE)
       .map(({ _score, similarity, rank, ...rest }: any) => rest);
 
     // Generate suggestions
