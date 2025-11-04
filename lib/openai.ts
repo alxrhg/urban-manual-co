@@ -5,13 +5,49 @@ try {
   if (typeof require !== 'undefined') {
     OpenAILib = require('openai');
   }
-} catch (_) {
-  // Package not available - will be null
+} catch (error) {
+  console.error('Failed to load OpenAI library:', error);
 }
 
-const apiKey = process.env.OPENAI_API_KEY;
+let _apiKey: string | undefined = process.env.OPENAI_API_KEY;
+let _openai: any = null;
 
-export const openai = apiKey && OpenAILib ? new OpenAILib({ apiKey }) : null;
+// Function to initialize/reinitialize OpenAI client
+export function initOpenAI() {
+  _apiKey = process.env.OPENAI_API_KEY;
+  _openai = _apiKey && OpenAILib ? new OpenAILib({ apiKey: _apiKey }) : null;
+  return _openai;
+}
+
+// Initialize on first load
+_initOpenAI();
+
+function _initOpenAI() {
+  _openai = initOpenAI();
+}
+
+export const openai = {
+  get embeddings() {
+    if (!_openai) {
+      _openai = initOpenAI();
+    }
+    return _openai?.embeddings || null;
+  },
+  get chat() {
+    if (!_openai) {
+      _openai = initOpenAI();
+    }
+    return _openai?.chat || null;
+  }
+};
+
+// Also export direct access for compatibility
+export const getOpenAI = () => {
+  if (!_openai) {
+    _openai = initOpenAI();
+  }
+  return _openai;
+};
 
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';

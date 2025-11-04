@@ -1,13 +1,38 @@
+// Load environment variables FIRST before importing anything else
+import * as dotenv from 'dotenv';
+import { resolve } from 'path';
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+
 import { createClient } from '@supabase/supabase-js';
 import { generateDestinationEmbedding } from '../lib/embeddings/generate';
+import { initOpenAI } from '../lib/openai';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Reinitialize OpenAI after dotenv loads
+initOpenAI();
+
+// Verify OpenAI API key is loaded
+if (!process.env.OPENAI_API_KEY) {
+  console.error('ERROR: OPENAI_API_KEY not found in environment variables');
+  console.error('Please ensure .env.local contains: OPENAI_API_KEY=sk-...');
+  process.exit(1);
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase environment variables');
+  console.error('Required: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL');
+  console.error('Required: SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  console.error('Please ensure these are set in .env.local');
   process.exit(1);
 }
+
+console.log('Environment check:');
+console.log(`- OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✓ Set' : '✗ Missing'}`);
+console.log(`- Supabase URL: ${supabaseUrl ? '✓ Set' : '✗ Missing'}`);
+console.log(`- Supabase Key: ${supabaseKey ? '✓ Set' : '✗ Missing'}`);
+console.log('');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -49,6 +74,12 @@ async function backfillEmbeddings(batchSize = 50) {
           tags: dest.tags || []
         });
 
+        if (!embedding) {
+          console.error(`\n✗ Failed ${dest.slug}: No embedding returned`);
+          errors++;
+          continue;
+        }
+
         // Update destination with embedding
         // Supabase/PostgreSQL vector type expects array format
         const { error: updateError } = await supabase
@@ -73,7 +104,7 @@ async function backfillEmbeddings(batchSize = 50) {
         // Rate limiting: wait 25ms between requests
         await new Promise(r => setTimeout(r, 25));
       } catch (err: any) {
-        console.error(`\n✗ Failed ${dest.slug}:`, err.message);
+        console.error(`\n✗ Failed ${dest.slug}:`, err.message || err);
         errors++;
       }
     }
