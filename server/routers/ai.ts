@@ -140,10 +140,33 @@ export const aiRouter = router({
       }
 
 
-      // Generate response text
-      const responseText = results && results.length > 0
-        ? `Found ${results.length} place${results.length === 1 ? '' : 's'} matching "${input.message}"`
-        : "I can help you find places. Try asking about a specific city or category.";
+      // Generate response text with intelligent context
+      let responseText: string;
+
+      // If needs clarification
+      if (intent.needsClarification && intent.clarifyingQuestions?.length > 0) {
+        responseText = `I found some options, but I'd love to narrow it down. ${intent.clarifyingQuestions[0]}`;
+      }
+      // If no results but had interpretation
+      else if (!results?.length && intent.interpretations?.[0]) {
+        const filterCity = filters.city ? ` in ${filters.city}` : '';
+        const alternatives = intent.alternativeInterpretations?.slice(0, 3).map(alt => `• ${alt}`).join('\n') || 
+          '• Being more specific about location or type\n• Adjusting your criteria';
+        responseText = `I couldn't find exact matches for "${input.message}"${filterCity}. Try:\n${alternatives}`;
+      }
+      // Success with results
+      else if (results?.length) {
+        responseText = `Found ${results.length} place${results.length === 1 ? '' : 's'} matching "${input.message}".`;
+        
+        // Add interpretation reasoning
+        if (intent.reasoning) {
+          responseText += `\n\n💡 ${intent.reasoning}`;
+        }
+      }
+      // Fallback
+      else {
+        responseText = "I can help you find places. Try asking about a specific city, vibe, or occasion.";
+      }
 
       // Save assistant message
       await supabase.from('conversation_messages').insert({
