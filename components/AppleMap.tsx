@@ -6,7 +6,7 @@ interface AppleMapProps {
   query?: string;
   latitude?: number;
   longitude?: number;
-  height?: number; // Changed to number for proper style handling
+  height?: number | string; // Accepts both number (pixels) and string (%, vh, etc)
   className?: string;
 }
 
@@ -20,7 +20,7 @@ export default function AppleMap({
   query,
   latitude,
   longitude,
-  height = 256,
+  height = 256, // Default to 256px
   className = ''
 }: AppleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -218,11 +218,19 @@ export default function AppleMap({
     };
   }, [loaded, latitude, longitude, query]);
 
+  // Helper to format height value
+  const getHeightStyle = () => {
+    if (typeof height === 'number') {
+      return `${height}px`;
+    }
+    return height; // Already a string like "100%", "50vh", etc.
+  };
+
   if (error) {
     return (
       <div
         className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 ${className}`}
-        style={{ height: `${height}px` }}
+        style={{ height: getHeightStyle() }}
       >
         <div className="text-center">
           <p className="text-sm text-red-600 dark:text-red-400 mb-1">Map unavailable</p>
@@ -241,7 +249,7 @@ export default function AppleMap({
     return (
       <div
         className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}
-        style={{ height: `${height}px` }}
+        style={{ height: getHeightStyle() }}
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
@@ -258,7 +266,7 @@ export default function AppleMap({
     <div
       ref={mapRef}
       className={`w-full rounded-lg overflow-hidden ${className}`}
-      style={{ height: `${height}px`, minHeight: `${height}px` }}
+      style={{ height: getHeightStyle(), minHeight: getHeightStyle() }}
     />
   );
 }
