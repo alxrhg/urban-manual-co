@@ -1,4 +1,6 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
+import DetailSkeleton from '@/src/features/detail/DetailSkeleton';
 import { generateDestinationMetadata, generateDestinationSchema } from '@/lib/metadata';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -56,7 +58,9 @@ export default async function DestinationPage({
       )}
       
       {/* Render client component */}
-      <DestinationPageClient />
+      <Suspense fallback={<DetailSkeleton />}>
+        <DestinationPageClient />
+      </Suspense>
     </>
   );
 }
