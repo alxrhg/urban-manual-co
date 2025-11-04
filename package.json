@@ -12,7 +12,8 @@
     "enrich:google": "tsx scripts/enrich-with-google.ts",
     "backfill-embeddings": "tsx scripts/backfill-embeddings.ts",
     "test-nlu": "tsx tests/nlu-test-queries.ts",
-    "test:google-places": "tsx scripts/test-google-places.ts"
+    "test:google-places": "tsx scripts/test-google-places.ts",
+    "fetch:all-place-data": "tsx scripts/fetch-all-place-data.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.3",
