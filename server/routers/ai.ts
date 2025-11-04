@@ -75,7 +75,7 @@ export const aiRouter = router({
           tags: sp.tags || sp.destination?.tags || [],
         })),
         recentVisits: [],
-        tasteProfile: null,
+        tasteProfile: undefined,
         comparisonBase,
         budgetInference,
         groupSizeInference,
