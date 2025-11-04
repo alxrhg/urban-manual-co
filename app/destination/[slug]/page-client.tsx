@@ -101,51 +101,61 @@ export default function DestinationPageClient() {
     try {
       let response = await fetch(`/api/recommendations?limit=6`);
 
-      if (response.status === 401) {
-        response = await fetch(`/api/related-destinations?slug=${destination.slug}&limit=6`);
-
-        if (response.ok) {
-          const data = await response.json();
-          setRecommendations(
-            (data.related || []).map((dest: any) => ({
-              slug: dest.slug,
-              name: dest.name,
-              city: dest.city,
-              category: dest.category,
-              image: dest.image,
-              michelin_stars: dest.michelin_stars,
-              crown: dest.crown,
-              rating: dest.rating,
-            }))
-          );
-          return;
+      // Handle 401/403 gracefully - user not authenticated
+      if (response.status === 401 || response.status === 403) {
+        // Try fallback to related destinations
+        try {
+          const relatedResponse = await fetch(`/api/related-destinations?slug=${destination.slug}&limit=6`);
+          if (relatedResponse.ok) {
+            const data = await relatedResponse.json();
+            setRecommendations(
+              (data.related || []).map((dest: any) => ({
+                slug: dest.slug,
+                name: dest.name,
+                city: dest.city,
+                category: dest.category,
+                image: dest.image,
+                michelin_stars: dest.michelin_stars,
+                crown: dest.crown,
+                rating: dest.rating,
+              }))
+            );
+          } else {
+            setRecommendations([]);
+          }
+        } catch {
+          setRecommendations([]);
         }
-
-        response = await fetch(`/api/recommendations?slug=${destination.slug}&limit=6`);
-      }
-
-      if (!response.ok && response.status === 404) {
-        const relatedResponse = await fetch(`/api/related-destinations?slug=${destination.slug}&limit=6`);
-        if (relatedResponse.ok) {
-          const data = await relatedResponse.json();
-          setRecommendations(
-            (data.related || []).map((dest: any) => ({
-              slug: dest.slug,
-              name: dest.name,
-              city: dest.city,
-              category: dest.category,
-              image: dest.image,
-              michelin_stars: dest.michelin_stars,
-              crown: dest.crown,
-              rating: dest.rating,
-            }))
-          );
-        }
+        setLoadingRecommendations(false);
         return;
       }
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        // Try fallback to related destinations for any error
+        try {
+          const relatedResponse = await fetch(`/api/related-destinations?slug=${destination.slug}&limit=6`);
+          if (relatedResponse.ok) {
+            const data = await relatedResponse.json();
+            setRecommendations(
+              (data.related || []).map((dest: any) => ({
+                slug: dest.slug,
+                name: dest.name,
+                city: dest.city,
+                category: dest.category,
+                image: dest.image,
+                michelin_stars: dest.michelin_stars,
+                crown: dest.crown,
+                rating: dest.rating,
+              }))
+            );
+          } else {
+            setRecommendations([]);
+          }
+        } catch {
+          setRecommendations([]);
+        }
+        setLoadingRecommendations(false);
+        return;
       }
 
       const data = await response.json();
@@ -163,7 +173,7 @@ export default function DestinationPageClient() {
         setRecommendations([]);
       }
     } catch (err) {
-      console.log('Recommendations not available:', err);
+      // Silently fail - recommendations are optional
       setRecommendations([]);
     } finally {
       setLoadingRecommendations(false);

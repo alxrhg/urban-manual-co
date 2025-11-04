@@ -626,22 +626,52 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         const response = await fetch(`/api/recommendations?slug=${destination.slug}&limit=6`);
         
         // If unauthorized, skip recommendations (user not signed in)
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
           setRecommendations([]);
+          setLoadingRecommendations(false);
           return;
         }
         
         if (!response.ok) {
-          throw new Error('Failed to fetch recommendations');
+          // Try fallback to related destinations
+          try {
+            const relatedResponse = await fetch(`/api/related-destinations?slug=${destination.slug}&limit=6`);
+            if (relatedResponse.ok) {
+              const relatedData = await relatedResponse.json();
+              if (relatedData.related) {
+                setRecommendations(
+                  relatedData.related.map((dest: any) => ({
+                    slug: dest.slug,
+                    name: dest.name,
+                    city: dest.city,
+                    category: dest.category,
+                    image: dest.image,
+                    michelin_stars: dest.michelin_stars,
+                    crown: dest.crown,
+                    rating: dest.rating,
+                  }))
+                );
+              }
+            }
+          } catch {
+            // Silently fail - recommendations are optional
+          }
+          setLoadingRecommendations(false);
+          return;
         }
         
         const data = await response.json();
 
-        if (data.recommendations) {
-          setRecommendations(data.recommendations);
+        if (data.recommendations && Array.isArray(data.recommendations)) {
+          setRecommendations(
+            data.recommendations
+              .map((rec: any) => rec.destination || rec)
+              .filter(Boolean)
+          );
+        } else {
+          setRecommendations([]);
         }
       } catch (error) {
-        console.error('Error loading recommendations:', error);
         // Silently fail - recommendations are optional
         setRecommendations([]);
       } finally {
