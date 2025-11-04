@@ -426,9 +426,9 @@ export async function POST(request: NextRequest) {
                   queryIntent: {
                     city: intent.city,
                     category: intent.category,
-                    meal: enhancedIntent?.meal,
-                    cuisine: enhancedIntent?.cuisine,
-                    mood: enhancedIntent?.mood,
+                    meal: (enhancedIntent as any)?.meal,
+                    cuisine: (enhancedIntent as any)?.cuisine,
+                    mood: (enhancedIntent as any)?.mood,
                     price_level: intent.filters?.priceLevel,
                   },
                   userId: userId,
