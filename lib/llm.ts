@@ -36,26 +36,74 @@ export async function generateJSON(system: string, user: string): Promise<any | 
   return null;
 }
 
-export async function embedText(input: string): Promise<number[] | null> {
-  // Prefer OpenAI embeddings
+/**
+ * Generate embedding with caching, retry logic, and exponential backoff
+ * Uses OpenAI text-embedding-3-large with 1536 dimensions
+ */
+export async function embedText(input: string, maxRetries: number = 3, useCache: boolean = true): Promise<number[] | null> {
+  // Check cache first
+  if (useCache) {
+    try {
+      const { getCachedEmbedding, setCachedEmbedding } = await import('@/lib/travel-intelligence/cache');
+      const cached = getCachedEmbedding(input);
+      if (cached) {
+        return cached;
+      }
+    } catch {
+      // Cache not available, continue without it
+    }
+  }
+
   const openai = getOpenAI();
-  if (openai) {
+  if (!openai) {
+    console.error('[embedText] OpenAI client not initialized. Check OPENAI_API_KEY environment variable.');
+    return null;
+  }
+
+  let lastError: any;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       // text-embedding-3-large default is 3072 dimensions, but we need 1536
       // Explicitly specify dimensions to match our database schema
-      const emb = await openai.embeddings.create({ 
-        model: OPENAI_EMBEDDING_MODEL, 
+      const emb = await openai.embeddings.create({
+        model: OPENAI_EMBEDDING_MODEL,
         input,
         dimensions: 1536  // Explicitly set to 1536 to match database schema
       });
-      return emb.data?.[0]?.embedding || null;
+
+      const embedding = emb.data?.[0]?.embedding || null;
+
+      // Cache the result
+      if (embedding && useCache) {
+        try {
+          const { setCachedEmbedding } = await import('@/lib/travel-intelligence/cache');
+          setCachedEmbedding(input, embedding);
+        } catch {
+          // Cache not available, continue without it
+        }
+      }
+
+      return embedding;
     } catch (error: any) {
-      console.error('[embedText] OpenAI error:', error.message || error);
-      throw error; // Re-throw to see actual error
+      lastError = error;
+      const isRateLimitError = error.status === 429 || error.message?.includes('rate limit');
+      const isRetryable = isRateLimitError || error.status >= 500;
+
+      if (!isRetryable || attempt === maxRetries - 1) {
+        console.error(`[embedText] OpenAI error (attempt ${attempt + 1}/${maxRetries}):`, error.message || error);
+        break;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const backoffMs = Math.pow(2, attempt) * 1000;
+      console.warn(`[embedText] Retry attempt ${attempt + 1}/${maxRetries} after ${backoffMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
     }
   }
-  // Optional: add Gemini embeddings if needed in future
-  throw new Error('OpenAI client not initialized. Check OPENAI_API_KEY environment variable.');
+
+  console.error('[embedText] All retry attempts failed:', lastError?.message || lastError);
+  return null;
 }
 
 

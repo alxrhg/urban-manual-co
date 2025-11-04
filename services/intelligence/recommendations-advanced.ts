@@ -358,20 +358,57 @@ export class AdvancedRecommendationEngine {
   }
 
   /**
-   * AI-based personalization scores
+   * AI-based personalization scores using user embeddings
    */
   private async getAIPersonalizationScores(
     userId: string,
     options?: { city?: string; category?: string }
   ): Promise<Map<string, number>> {
-    // For now, return empty map - can be enhanced with Gemini embeddings
-    // In production, use text-embedding-004 to create user and destination embeddings
-    // Then compute cosine similarity
-    return new Map();
+    try {
+      // Import dynamically to avoid circular dependencies
+      const { fetchUserProfile, computePersonalizedScores } = await import('@/lib/travel-intelligence/user-embeddings');
+
+      // Fetch user profile
+      const profile = await fetchUserProfile(userId);
+      if (!profile) {
+        console.warn('[AI Personalization] No user profile found');
+        return new Map();
+      }
+
+      // Get candidate destinations with embeddings
+      if (!this.supabase) return new Map();
+
+      let query = this.supabase
+        .from('destinations')
+        .select('id, vector_embedding')
+        .not('vector_embedding', 'is', null);
+
+      if (options?.city) {
+        query = query.ilike('city', `%${options.city}%`);
+      }
+      if (options?.category) {
+        query = query.ilike('category', `%${options.category}%`);
+      }
+
+      const { data: destinations } = await query.limit(200);
+
+      if (!destinations || destinations.length === 0) {
+        return new Map();
+      }
+
+      // Compute personalized scores
+      const scores = await computePersonalizedScores(userId, profile, destinations);
+      console.log(`[AI Personalization] Generated ${scores.size} personalized scores`);
+
+      return scores;
+    } catch (error) {
+      console.error('[AI Personalization] Error:', error);
+      return new Map();
+    }
   }
 
   /**
-   * Combine all scores with weights
+   * Combine all scores with weights from Travel Intelligence config
    */
   private combineScores(
     collaborative: Map<string, number>,
@@ -380,11 +417,12 @@ export class AdvancedRecommendationEngine {
     ai: Map<string, number>,
     userId: string
   ): RecommendationResult[] {
+    // Use weights from config for consistency
     const weights = {
-      collaborative: 0.3,
-      content: 0.25,
-      popularity: 0.25,
-      personalization: 0.2, // AI-based
+      collaborative: 0.30,
+      content: 0.30,
+      popularity: 0.15,
+      personalization: 0.25, // AI-based
     };
 
     const allDestinationIds = new Set([
