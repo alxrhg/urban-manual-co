@@ -5,7 +5,6 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics/track';
-import { useRouter } from 'next/navigation';
 
 interface Destination {
   id: number;
@@ -22,7 +21,6 @@ interface Destination {
 }
 
 export function RelatedDestinations({ destinationId }: { destinationId: string }) {
-  const router = useRouter();
   const [similar, setSimilar] = useState<Destination[]>([]);
   const [complementary, setComplementary] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,10 +49,11 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
             {similar.map((dest) => (
-              <button
+              <a
                 key={dest.id}
-                onClick={(e) => {
-                  e.preventDefault();
+                href={`/destination/${dest.slug}`}
+                className={CARD_WRAPPER}
+                onClick={() => {
                   trackEvent({
                     event_type: 'click',
                     destination_id: dest.id,
@@ -67,9 +66,7 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
                       match_score: dest.match_score,
                     },
                   });
-                  router.push(`/destination/${dest.slug}`);
                 }}
-                className={`${CARD_WRAPPER} text-left`}
               >
                 <div className={CARD_MEDIA}>
                   {dest.image ? (
