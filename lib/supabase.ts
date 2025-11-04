@@ -18,5 +18,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     // Use PKCE flow (code exchange) instead of implicit flow (hash fragments)
     flowType: 'pkce',
+    // Ensure storage is available for code verifier
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'sb-auth-token',
   }
 });
