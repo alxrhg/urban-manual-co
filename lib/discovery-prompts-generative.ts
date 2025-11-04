@@ -72,9 +72,10 @@ export async function generatePersonalizedPrompt(
     if (context.userId && supabase) {
       // Get saved destinations
       const { data: saved } = await supabase
-        .from('saved_destinations')
+        .from('saved_places')
         .select(`
-          destination:destinations (
+          destination_slug,
+          destination:destinations!inner (
             name,
             city,
             category
@@ -82,7 +83,6 @@ export async function generatePersonalizedPrompt(
           notes
         `)
         .eq('user_id', context.userId)
-        .eq('visited', false)
         .limit(10);
 
       if (saved) {
@@ -199,15 +199,14 @@ export async function generateCrossCityCorrelations(
   try {
     // Get user's visited/saved destinations
     const { data: saved } = await supabase
-      .from('saved_destinations')
+      .from('saved_places')
       .select(`
-        destination:destinations (
+        destination_slug,
+        destination:destinations!inner (
           name,
           city,
           category
-        ),
-        visited,
-        visit_date
+        )
       `)
       .eq('user_id', userId);
 

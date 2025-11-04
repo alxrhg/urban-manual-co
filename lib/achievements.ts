@@ -119,7 +119,7 @@ async function getUserStats(userId: string) {
 
     // Get saved destinations count
     const { count: savedCount } = await supabase
-      .from('saved_destinations')
+      .from('saved_places')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 

@@ -32,29 +32,24 @@ export async function getAllDestinationPopularity(): Promise<Map<string, Destina
 
     // Get saves count per destination
     const { data: savesData, error: savesError } = await supabaseAdmin
-      .from('saved_destinations')
-      .select('destination_id, destination:destinations(slug)');
+      .from('saved_places')
+      .select('destination_slug');
 
     if (!savesError && savesData) {
-      const savesCount: Record<number, number> = {};
       savesData.forEach((item: any) => {
-        const destId = item.destination_id;
-        if (destId) {
-          savesCount[destId] = (savesCount[destId] || 0) + 1;
-          const slug = item.destination?.slug;
-          if (slug) {
-            if (!popularityMap.has(slug)) {
-              popularityMap.set(slug, {
-                destination_slug: slug,
-                saves_count: 0,
-                views_count: 0,
-                visits_count: 0,
-                popularity_score: 0,
-              });
-            }
-            const pop = popularityMap.get(slug)!;
-            pop.saves_count = (pop.saves_count || 0) + 1;
+        const slug = item.destination_slug;
+        if (slug) {
+          if (!popularityMap.has(slug)) {
+            popularityMap.set(slug, {
+              destination_slug: slug,
+              saves_count: 0,
+              views_count: 0,
+              visits_count: 0,
+              popularity_score: 0,
+            });
           }
+          const pop = popularityMap.get(slug)!;
+          pop.saves_count = (pop.saves_count || 0) + 1;
         }
       });
     }
@@ -186,14 +181,14 @@ export async function getDestinationsPopularity(
 
     // Get saves count
     const { data: savesData } = await supabaseAdmin
-      .from('saved_destinations')
-      .select('destination_id, destination:destinations(slug)')
-      .in('destination_id', destinationIds);
+      .from('saved_places')
+      .select('destination_slug')
+      .in('destination_slug', slugs);
 
     if (savesData) {
       const savesBySlug: Record<string, number> = {};
       savesData.forEach((item: any) => {
-        const slug = item.destination?.slug;
+        const slug = item.destination_slug;
         if (slug && popularityMap.has(slug)) {
           savesBySlug[slug] = (savesBySlug[slug] || 0) + 1;
           const pop = popularityMap.get(slug)!;

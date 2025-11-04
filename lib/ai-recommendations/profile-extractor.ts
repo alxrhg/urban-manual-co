@@ -73,19 +73,20 @@ export async function extractUserProfile(userId: string): Promise<UserBehaviorPr
   
   // 4. Get saved destinations
   const { data: saved } = await supabase
-    .from('saved_destinations')
+    .from('saved_places')
     .select(`
-      destination_id,
+      destination_slug,
       saved_at,
-      visited,
-      rating,
-      destination:destinations(id, name, city, category, price_level, rating, michelin_stars)
+      notes,
+      tags,
+      destination:destinations!inner(id, name, city, category, price_level, rating, michelin_stars)
     `)
     .eq('user_id', userId);
   
   // 5. Analyze patterns
   const visitedDests = visits?.map((v: any) => v.destination).filter(Boolean) || [];
   const savedDests = saved?.map((s: any) => s.destination).filter(Boolean) || [];
+  // Note: saved_places doesn't have 'visited' field - use visited_places for visited status
   const allDests = [...visitedDests, ...savedDests];
   
   // City frequency

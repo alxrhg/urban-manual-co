@@ -10,12 +10,19 @@ export async function selectCandidates(
   const supabase = await createServerClient();
   
   // Get already saved/visited destinations to exclude
-  const { data: savedIds } = await supabase
-    .from('saved_destinations')
-    .select('destination_id')
+  const { data: savedSlugs } = await supabase
+    .from('saved_places')
+    .select('destination_slug')
     .eq('user_id', userId);
   
-  const excludeIds = savedIds?.map(s => s.destination_id) || [];
+  // Get destination IDs from slugs to exclude
+  const slugs = savedSlugs?.map(s => s.destination_slug).filter(Boolean) || [];
+  const { data: savedDests } = slugs.length > 0 ? await supabase
+    .from('destinations')
+    .select('id')
+    .in('slug', slugs) : { data: null };
+  
+  const excludeIds = savedDests?.map(d => d.id) || [];
   
   // Build query with smart filtering
   let query = supabase

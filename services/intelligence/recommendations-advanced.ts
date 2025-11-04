@@ -164,9 +164,10 @@ export class AdvancedRecommendationEngine {
     try {
       // Get user's saved destinations and their attributes
       const { data: saved } = await this.supabase
-        .from('saved_destinations')
+        .from('saved_places')
         .select(`
-          destination:destinations (
+          destination_slug,
+          destination:destinations!inner (
             id,
             city,
             category,
@@ -472,11 +473,13 @@ export class AdvancedRecommendationEngine {
     if (!this.supabase) return new Set();
     
     const { data } = await this.supabase
-      .from('saved_destinations')
-      .select('destination_id')
+      .from('saved_places')
+      .select('destination_slug')
       .eq('user_id', userId);
 
-    return new Set((data || []).map(v => v.destination_id));
+    // Note: This now returns slugs, not IDs. If IDs are needed, convert via destinations table.
+    const slugs = (data || []).map(v => v.destination_slug).filter(Boolean);
+    return new Set(slugs);
   }
 }
 

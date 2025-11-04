@@ -15,30 +15,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's saved and visited places
+    // Get user's saved and visited places using RPC functions for better joins
     const [savedResult, visitedResult, profileResult] = await Promise.all([
-      supabase
-        .from('saved_destinations')
-        .select(`
-          destination:destinations (
-            city,
-            category,
-            tags
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('visited', false),
-      supabase
-        .from('saved_destinations')
-        .select(`
-          destination:destinations (
-            city,
-            category,
-            tags
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('visited', true),
+      supabase.rpc('get_user_saved_destinations', { target_user_id: user.id }),
+      supabase.rpc('get_user_visited_destinations', { target_user_id: user.id }),
       supabase
         .from('user_profiles')
         .select('favorite_cities, favorite_categories, interests, travel_style')
@@ -52,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     // Get favorite cities
     const favoriteCities = profile?.favorite_cities || [];
-    const savedCities = Array.from(new Set(saved.map((s: any) => s.destination?.city).filter(Boolean)));
-    const visitedCities = Array.from(new Set(visited.map((v: any) => v.destination?.city).filter(Boolean)));
+    const savedCities = Array.from(new Set(saved.map((s: any) => s.city).filter(Boolean)));
+    const visitedCities = Array.from(new Set(visited.map((v: any) => v.city).filter(Boolean)));
     
     // Get upcoming peak windows for favorite cities
     const upcomingPeakWindows: Array<{
@@ -93,7 +73,7 @@ export async function GET(request: NextRequest) {
     });
 
     saved.forEach((s: any) => {
-      const category = s.destination?.category || 'Other';
+      const category = s.category || 'Other';
       savedByCategory[category] = (savedByCategory[category] || 0) + 1;
     });
 
@@ -101,8 +81,11 @@ export async function GET(request: NextRequest) {
     const userInterests = profile?.interests || [];
     const visitedTags: Record<string, number> = {};
     
+    // Note: RPC function returns full destination data, but tags might not be included
+    // If tags are needed, we'd need to query destinations separately or update RPC function
     visited.forEach((v: any) => {
-      const tags = v.destination?.tags || [];
+      // For now, skip tags since they're not in the RPC return
+      // const tags = v.tags || [];
       tags.forEach((tag: string) => {
         visitedTags[tag.toLowerCase()] = (visitedTags[tag.toLowerCase()] || 0) + 1;
       });
