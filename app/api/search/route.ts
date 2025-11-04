@@ -515,6 +515,24 @@ export async function POST(request: NextRequest) {
       aiInsightBanner = `Tailored for ${contextParts.join(', ')}`;
     }
 
+    // Log search interaction (best-effort)
+    try {
+      const { createServerClient } = await import('@/lib/supabase-server');
+      const sb = await createServerClient();
+      const { data: { user } } = await sb.auth.getUser();
+      await sb.from('user_interactions').insert({
+        interaction_type: 'search',
+        user_id: user?.id || null,
+        destination_id: null,
+        metadata: {
+          query,
+          intent,
+          count: rankedResults.length,
+          source: 'api/search',
+        }
+      });
+    } catch {}
+
     return NextResponse.json({
       results: rankedResults,
       searchTier: searchTier,

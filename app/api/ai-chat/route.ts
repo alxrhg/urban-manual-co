@@ -465,6 +465,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+                // Log search/chat interaction (best-effort)
+                try {
+                  await supabase.from('user_interactions').insert({
+                    interaction_type: 'search',
+                    user_id: userId || null,
+                    destination_id: null,
+                    metadata: {
+                      query,
+                      intent,
+                      count: limitedResults.length,
+                      source: 'api/ai-chat',
+                    }
+                  });
+                } catch {}
+
                 return NextResponse.json({
                   content: enhancedContent,
                   destinations: limitedResults,

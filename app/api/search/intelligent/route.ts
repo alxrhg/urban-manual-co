@@ -55,6 +55,22 @@ export async function GET(request: NextRequest) {
     });
 
     const limited = (rerankedResults || []).slice(0, 10);
+
+    // Log search interaction (best-effort)
+    try {
+      await supabase.from('user_interactions').insert({
+        interaction_type: 'search',
+        user_id: session?.user?.id || null,
+        destination_id: null,
+        metadata: {
+          query,
+          filters: { city, category, openNow },
+          count: limited.length,
+          source: 'api/search/intelligent',
+        }
+      });
+    } catch {}
+
     return NextResponse.json({
       results: limited,
       meta: {
