@@ -63,6 +63,40 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
 }
 
 /**
+ * Multiplex ad - Grid of native ads matching your card layout
+ * Perfect for insertion between rows in destination grids
+ */
+export function MultiplexAd({ slot, className = '' }: { slot: string; className?: string }) {
+  const adRef = useRef<HTMLModElement>(null);
+
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (err) {
+      console.error('AdSense error:', err);
+    }
+  }, []);
+
+  return (
+    <div className={`col-span-full ${className}`}>
+      <div className="w-full border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
+        <div className="text-xs text-gray-400 mb-3 text-center">Sponsored</div>
+        <ins
+          ref={adRef}
+          className="adsbygoogle"
+          style={{ display: 'block' }}
+          data-ad-client="ca-pub-3052286230434362"
+          data-ad-slot={slot}
+          data-ad-format="autorelaxed"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * @deprecated Use MultiplexAd instead for better grid integration
  * In-feed ad that matches the destination card style
  */
 export function InFeedAd({ slot }: { slot: string }) {

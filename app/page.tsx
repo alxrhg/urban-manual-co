@@ -32,7 +32,7 @@ import { ForYouSection } from '@/components/ForYouSection';
 import { TrendingSection } from '@/components/TrendingSection';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
-import { InFeedAd } from '@/components/GoogleAd';
+import { MultiplexAd } from '@/components/GoogleAd';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -830,7 +830,7 @@ export default function Home() {
                   return withAds.map((item) => {
                     if (item.type === 'ad') {
                       return (
-                        <InFeedAd
+                        <MultiplexAd
                           key={`ad-${item.index}`}
                           slot={item.data.slot}
                         />
