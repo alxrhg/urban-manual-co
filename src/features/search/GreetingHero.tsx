@@ -137,9 +137,24 @@ export default function GreetingHero({
     return () => clearInterval(interval);
   }, [searchQuery, isAIEnabled]);
 
+  // Keyboard shortcut: Press '/' to focus search
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only trigger if not already focused on an input
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       setShowSuggestions(false);
+      inputRef.current?.blur();
     }
   };
 
