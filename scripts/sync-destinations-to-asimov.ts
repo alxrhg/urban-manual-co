@@ -9,16 +9,14 @@
 
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { syncDestinationToAsimov } from '../lib/search/asimov-sync';
 
 dotenv.config();
-
-const ASIMOV_API_KEY = process.env.ASIMOV_API_KEY;
-const ASIMOV_API_URL = 'https://asimov.mov/api';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!ASIMOV_API_KEY) {
+if (!process.env.ASIMOV_API_KEY) {
   console.error('❌ ASIMOV_API_KEY not set in environment variables');
   process.exit(1);
 }
@@ -29,86 +27,6 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/**
- * Add content to Asimov
- */
-async function addContentToAsimov(content: {
-  title: string;
-  content: string;
-  metadata?: Record<string, any>;
-  url?: string;
-}): Promise<boolean> {
-  try {
-    const response = await fetch(`${ASIMOV_API_URL}/content`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ASIMOV_API_KEY}`,
-      },
-      body: JSON.stringify(content),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error(`   ❌ Failed: ${response.status} - ${error}`);
-      return false;
-    }
-
-    return true;
-  } catch (error: any) {
-    console.error(`   ❌ Exception: ${error.message}`);
-    return false;
-  }
-}
-
-/**
- * Build searchable content from destination
- */
-function buildDestinationContent(dest: any): {
-  title: string;
-  content: string;
-  metadata: Record<string, any>;
-  url: string;
-} {
-  // Combine all searchable text
-  const contentParts = [
-    dest.name,
-    dest.description,
-    dest.content,
-    dest.city,
-    dest.category,
-    dest.country,
-    dest.neighborhood,
-    dest.architect,
-    dest.brand,
-    ...(dest.tags || []),
-    ...(dest.ai_keywords || []),
-    ...(dest.ai_vibe_tags || []),
-    dest.ai_short_summary,
-    dest.editorial_summary,
-  ].filter(Boolean);
-
-  const fullContent = contentParts.join(' ');
-
-  return {
-    title: dest.name,
-    content: fullContent,
-    metadata: {
-      id: dest.id,
-      slug: dest.slug,
-      city: dest.city,
-      category: dest.category,
-      country: dest.country,
-      rating: dest.rating,
-      michelin_stars: dest.michelin_stars,
-      price_level: dest.price_level,
-      neighborhood: dest.neighborhood,
-      tags: dest.tags || [],
-    },
-    url: `https://urbanmanual.co/destination/${dest.slug}`,
-  };
-}
 
 async function main() {
   console.log('🚀 Starting Asimov sync...\n');
