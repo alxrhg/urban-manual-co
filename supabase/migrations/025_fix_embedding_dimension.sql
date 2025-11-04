@@ -24,7 +24,13 @@ BEGIN
   RAISE NOTICE 'Updated embedding column to vector(1536)';
 END $$;
 
--- Also update search_destinations_intelligent function to match
+-- Drop existing function first to allow changing return type
+DROP FUNCTION IF EXISTS search_destinations_intelligent(vector, uuid, text, text, boolean, integer);
+DROP FUNCTION IF EXISTS search_destinations_intelligent(vector(768), uuid, text, text, boolean, integer);
+DROP FUNCTION IF EXISTS search_destinations_intelligent(vector(1536), uuid, text, text, boolean, integer);
+DROP FUNCTION IF EXISTS search_destinations_intelligent(vector(3072), uuid, text, text, boolean, integer);
+
+-- Create search_destinations_intelligent function with correct dimension
 CREATE OR REPLACE FUNCTION search_destinations_intelligent(
   query_embedding vector(1536),
   user_id_param UUID DEFAULT NULL,
