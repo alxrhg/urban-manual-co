@@ -710,17 +710,17 @@ export default function Home() {
                       )}
                     </div>
                     
-                    {/* Category List */}
+                    {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
                       <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                         <button
                           onClick={() => {
                             setSelectedCategory("");
-                            setAdvancedFilters(prev => ({ ...prev, category: undefined }));
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
                           className={`transition-all ${
-                            !selectedCategory
+                            !selectedCategory && !advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
@@ -733,11 +733,11 @@ export default function Home() {
                             onClick={() => {
                               const newCategory = category === selectedCategory ? "" : category;
                               setSelectedCategory(newCategory);
-                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined }));
+                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
                               trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                             }}
                             className={`transition-all ${
-                              selectedCategory === category
+                              selectedCategory === category && !advancedFilters.michelin
                                 ? "font-medium text-black dark:text-white"
                                 : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                             }`}
@@ -745,26 +745,24 @@ export default function Home() {
                             {capitalizeCategory(category)}
                           </button>
                         ))}
+                        {/* Michelin as a special category */}
+                        <button
+                          onClick={() => {
+                            const newValue = !advancedFilters.michelin;
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                            trackFilterChange({ filterType: 'michelin', value: newValue });
+                          }}
+                          className={`flex items-center gap-1.5 transition-all ${
+                            advancedFilters.michelin
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          ⭐ Michelin
+                        </button>
                       </div>
                     )}
-
-                    {/* Michelin Filter - Separate from categories */}
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs pt-2">
-                      <button
-                        onClick={() => {
-                          const newValue = !advancedFilters.michelin;
-                          setAdvancedFilters(prev => ({ ...prev, michelin: newValue || undefined }));
-                          trackFilterChange({ filterType: 'michelin', value: newValue });
-                        }}
-                        className={`flex items-center gap-1.5 transition-all ${
-                          advancedFilters.michelin
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                        }`}
-                      >
-                        ⭐ Michelin
-                      </button>
-                    </div>
                   </div>
                 </div>
               )}

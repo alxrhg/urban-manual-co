@@ -176,7 +176,7 @@ export default function DestinationPageClient() {
 
   if (loading) {
     return (
-      <main className="px-8 py-20">
+      <main className="px-6 md:px-10 py-20">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
         </div>
@@ -186,7 +186,7 @@ export default function DestinationPageClient() {
 
   if (!destination) {
     return (
-      <main className="px-8 py-20">
+      <main className="px-6 md:px-10 py-20">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl font-light mb-4">Destination not found</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
@@ -206,7 +206,7 @@ export default function DestinationPageClient() {
   const cityName = capitalizeCity(destination.city);
 
   return (
-    <main className="px-8 py-20 min-h-screen">
+    <main className="px-6 md:px-10 py-20 min-h-screen">
       <div className="max-w-5xl mx-auto space-y-12">
         {/* Header */}
         <div>
