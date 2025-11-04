@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         city_filter: searchCity,
         category_filter: category,
         open_now_filter: isOpenNowRefinement(followUpMessage),
-        limit_count: 10,
+        limit_count: 1000,
       }
     );
 
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
               city_filter: nearbyLoc,
               category_filter: category,
               open_now_filter: isOpenNowRefinement(followUpMessage),
-              limit_count: 10,
+              limit_count: 1000,
             }
           );
           
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       boostPersonalized: !!session?.user?.id,
     });
 
-    const limited = (rerankedResults || []).slice(0, 10);
+    const limited = (rerankedResults || []).slice(0, 1000);
     const userLocation = await getUserLocation(request);
     
     // Generate contextual response

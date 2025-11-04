@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
         city_filter: searchCity,
         category_filter: category,
         open_now_filter: openNow,
-        limit_count: 10,
+        limit_count: 1000,
       }
     );
 
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
               city_filter: nearbyLoc,
               category_filter: category,
               open_now_filter: openNow,
-              limit_count: 10,
+              limit_count: 1000,
             }
           );
           
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       boostPersonalized: !!session?.user?.id,
     });
 
-    const limited = (rerankedResults || []).slice(0, 10);
+    const limited = (rerankedResults || []).slice(0, 1000);
     const userLocation = await getUserLocation(request);
     
     // Enhance context with location expansion info
