@@ -306,7 +306,7 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
             tags: dest.tags || [],
           };
         })
-        .filter(Boolean);
+        .filter((item): item is NonNullable<typeof item> => item !== null);
     }
 
     // Process visited places
@@ -322,7 +322,7 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
             category: dest.category,
           };
         })
-        .filter(Boolean);
+        .filter((item): item is NonNullable<typeof item> => item !== null);
     }
 
     // Process preferences
@@ -346,7 +346,7 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
             timestamp: new Date(item.created_at),
           };
         })
-        .filter(Boolean);
+        .filter((item): item is NonNullable<typeof item> => item !== null);
     }
 
     return profile;
