@@ -669,51 +669,46 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       <div
         className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-y-auto`}
+        } overflow-y-auto pb-24`}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-sm font-medium">Destination</h2>
-          <div className="flex items-center gap-2">
+        {/* Image - Full width, edge-to-edge */}
+        {destination.image && (
+          <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+            <Image
+              src={destination.image}
+              alt={destination.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, 480px"
+              priority={false}
+              quality={90}
+            />
+            {/* Floating close button */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 p-2.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity shadow-lg"
+              aria-label="Close drawer"
+            >
+              <X className="h-4 w-4" />
+            </button>
             {destination?.slug && (
               <button
                 onClick={() => {
                   onClose();
                   router.push(`/destination/${destination.slug}`);
                 }}
-                className="p-2 hover:opacity-60 transition-opacity"
+                className="absolute top-4 right-16 p-2.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity shadow-lg"
                 title="Open in new page"
                 aria-label="Open destination in new page"
               >
                 <ExternalLink className="h-4 w-4" />
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="p-2 hover:opacity-60 transition-opacity"
-              aria-label="Close drawer"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
-        </div>
+        )}
 
         {/* Content */}
-        <div className="p-4 sm:p-6">
-          {/* Image */}
-          {destination.image && (
-            <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800">
-              <Image
-                src={destination.image}
-                alt={destination.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, 480px"
-                priority={false}
-                quality={85}
-              />
-            </div>
-          )}
+        <div className="px-6 pt-6">
 
           {/* Title */}
           <div className="mb-6">
@@ -910,88 +905,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             })()}
           </div>
 
-          {/* Action Buttons */}
-          {user && (
-            <div className="flex gap-2 mb-6">
-              <div className="flex-1 flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 ${
-                    isSaved
-                      ? 'bg-red-500 text-white hover:opacity-80'
-                      : 'bg-gray-100 dark:bg-gray-800 hover:opacity-80'
-                  } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
-                >
-                  <Heart className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
-                  <span className={`${heartAnimating && isSaved ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                    {isSaved ? 'Saved' : 'Save'}
-                  </span>
-                  {heartAnimating && isSaved && (
-                    <style jsx>{`
-                      @keyframes heartBeat {
-                        0%, 100% { transform: scale(1); }
-                        15% { transform: scale(1.3); }
-                        30% { transform: scale(1.1); }
-                        45% { transform: scale(1.25); }
-                        60% { transform: scale(1.05); }
-                      }
-                      @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                      }
-                    `}</style>
-                  )}
-                </button>
-                <button
-                  onClick={openListsModal}
-                  disabled={loading}
-                  className="px-3 py-2.5 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-2xl transition-opacity"
-                  title="Add to list"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-              </div>
-
-              <button
-                onClick={handleVisitClick}
-                disabled={loading}
-                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 ${
-                  isVisited
-                    ? 'bg-green-500 text-white hover:opacity-80'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:opacity-80'
-                } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
-              >
-                <Check className={`h-4 w-4 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
-                <span className={`${checkAnimating && isVisited ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                  {isVisited ? 'Visited' : 'Visit'}
-                </span>
-                {checkAnimating && isVisited && (
-                  <style jsx>{`
-                    @keyframes checkPop {
-                      0%, 100% { transform: scale(1) rotate(0deg); }
-                      25% { transform: scale(1.3) rotate(-10deg); }
-                      50% { transform: scale(1.1) rotate(5deg); }
-                      75% { transform: scale(1.2) rotate(-5deg); }
-                    }
-                    @keyframes fadeIn {
-                      from { opacity: 0; }
-                      to { opacity: 1; }
-                    }
-                  `}</style>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Sign in prompt */}
-          {!user && (
-            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-center">
-              <span className="text-xs text-gray-600 dark:text-gray-400">
-                <a href="/auth/login" className="font-medium hover:text-black dark:hover:text-white transition-colors">Sign in</a> to save destinations and track your visits
-              </span>
-            </div>
-          )}
 
           {/* Description */}
           {destination.content && (
@@ -1109,9 +1022,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
-
           {/* Map Section (Apple Maps) */}
           <div className="mb-8">
             <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Location</h3>
@@ -1138,9 +1048,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <span>Get Directions</span>
             </a>
           </div>
-
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
@@ -1221,20 +1128,57 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
+        </div>
 
-          {/* Share Button */}
-          <div className="flex justify-center">
+        {/* Sticky Bottom Action Bar */}
+        {user ? (
+          <div className="fixed bottom-0 left-0 right-0 sm:left-auto sm:w-[480px] bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-6 py-4 z-20">
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                disabled={loading}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
+                  isSaved
+                    ? 'bg-black dark:bg-white text-white dark:text-black'
+                    : 'bg-gray-100 dark:bg-gray-800'
+                } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
+              >
+                <Heart className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current' : ''}`} />
+                <span>{isSaved ? 'Saved' : 'Save'}</span>
+              </button>
+
+              <button
+                onClick={handleVisitClick}
+                disabled={loading}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
+                  isVisited
+                    ? 'bg-black dark:bg-white text-white dark:text-black'
+                    : 'bg-gray-100 dark:bg-gray-800'
+                } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
+              >
+                <Check className={`h-4 w-4 transition-all duration-300 ${isVisited ? '' : ''}`} />
+                <span>{isVisited ? 'Visited' : 'Visit'}</span>
+              </button>
+
+              <button
+                onClick={handleShare}
+                className="px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-full transition-opacity"
+                title="Share"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="fixed bottom-0 left-0 right-0 sm:left-auto sm:w-[480px] bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-6 py-4 z-20">
             <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-2xl text-sm font-medium"
+              onClick={() => router.push('/auth/login')}
+              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
             >
-              <Share2 className="h-3 w-3" />
-              <span>{copied ? 'Link Copied!' : 'Share'}</span>
+              Sign in to Save & Track Visits
             </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Lists Modal */}
