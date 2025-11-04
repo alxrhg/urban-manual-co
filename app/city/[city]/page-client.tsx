@@ -315,11 +315,11 @@ export default function CityPageClient() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="w-full flex items-center justify-center gap-2">
+                <div className="w-full flex flex-wrap items-center justify-center gap-2">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
@@ -342,7 +342,7 @@ export default function CityPageClient() {
                         <button
                           key={pageNumber}
                           onClick={() => setCurrentPage(pageNumber)}
-                          className={`px-3 py-2 text-xs rounded-2xl transition-all ${
+                          className={`px-2.5 sm:px-3 py-2 text-xs rounded-2xl transition-all ${
                             currentPage === pageNumber
                               ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
                               : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
@@ -357,7 +357,7 @@ export default function CityPageClient() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
