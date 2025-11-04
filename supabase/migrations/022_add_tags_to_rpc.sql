@@ -2,6 +2,10 @@
 
 BEGIN;
 
+-- Drop existing functions first to allow changing return type
+DROP FUNCTION IF EXISTS get_user_saved_destinations(uuid);
+DROP FUNCTION IF EXISTS get_user_visited_destinations(uuid);
+
 -- Update get_user_saved_destinations to include tags
 CREATE OR REPLACE FUNCTION get_user_saved_destinations(
   target_user_id UUID
