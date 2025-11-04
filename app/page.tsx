@@ -579,7 +579,7 @@ export default function Home() {
     <ErrorBoundary>
       <main className="relative min-h-screen dark:text-white">
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[70vh] flex flex-col px-8 py-20">
+        <section className="min-h-[70vh] flex flex-col px-6 md:px-10 py-20">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -773,7 +773,7 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="px-8 pb-20">
+              <div className="px-6 md:px-10 pb-20">
                 <div className="max-w-[1800px] mx-auto">
                   {/* Filter - Top right of grid section */}
                   <div className="flex justify-end mb-6 relative">
