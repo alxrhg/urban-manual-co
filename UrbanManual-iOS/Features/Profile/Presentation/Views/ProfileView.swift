@@ -9,7 +9,12 @@ import SwiftUI
 
 /// User profile view
 struct ProfileView: View {
-    @State private var user: User?
+    @Environment(AuthenticationManager.self) private var authManager
+    @State private var showSignOutConfirmation = false
+
+    private var user: User? {
+        authManager.currentUser
+    }
 
     var body: some View {
         NavigationStack {
@@ -55,7 +60,20 @@ struct ProfileView: View {
                         menuItem(icon: .collections, title: "Collections")
                         menuItem(icon: .settings, title: "Settings")
                         menuItem(icon: .info, title: "About")
-                        menuItem(icon: .logout, title: "Sign Out", destructive: true)
+                        Button(action: { showSignOutConfirmation = true }) {
+                            menuItemContent(icon: .logout, title: "Sign Out", destructive: true)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .confirmationDialog(
+                        "Are you sure you want to sign out?",
+                        isPresented: $showSignOutConfirmation,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Sign Out", role: .destructive) {
+                            signOut()
+                        }
+                        Button("Cancel", role: .cancel) {}
                     }
                 }
             }
@@ -79,26 +97,36 @@ struct ProfileView: View {
 
     private func menuItem(icon: UrbanIcon, title: String, destructive: Bool = false) -> some View {
         Button(action: {}) {
-            HStack(spacing: Spacing.md) {
-                icon.image()
-                    .foregroundColor(destructive ? .statusError : .textSecondary)
-
-                Text(title)
-                    .font(.urbanBodyMedium)
-                    .foregroundColor(destructive ? .statusError : .textPrimary)
-
-                Spacer()
-
-                if !destructive {
-                    UrbanIcon.chevronRight.image()
-                        .font(.urbanBodySmall)
-                        .foregroundColor(.textTertiary)
-                }
-            }
-            .padding(.horizontal, Spacing.screenPadding)
-            .padding(.vertical, Spacing.md)
+            menuItemContent(icon: icon, title: title, destructive: destructive)
         }
         .buttonStyle(.plain)
+    }
+
+    private func menuItemContent(icon: UrbanIcon, title: String, destructive: Bool = false) -> some View {
+        HStack(spacing: Spacing.md) {
+            icon.image()
+                .foregroundColor(destructive ? .statusError : .textSecondary)
+
+            Text(title)
+                .font(.urbanBodyMedium)
+                .foregroundColor(destructive ? .statusError : .textPrimary)
+
+            Spacer()
+
+            if !destructive {
+                UrbanIcon.chevronRight.image()
+                    .font(.urbanBodySmall)
+                    .foregroundColor(.textTertiary)
+            }
+        }
+        .padding(.horizontal, Spacing.screenPadding)
+        .padding(.vertical, Spacing.md)
+    }
+
+    private func signOut() {
+        Task {
+            try? await authManager.signOut()
+        }
     }
 }
 
