@@ -19,7 +19,16 @@ export async function GET(request: Request) {
   const keyId = process.env.MAPKIT_KEY_ID;
   const privateKeyRaw = process.env.MAPKIT_PRIVATE_KEY;
 
+  console.log('[MapKit Token API] Credentials check:', {
+    hasTeamId: !!teamId,
+    hasKeyId: !!keyId,
+    hasPrivateKey: !!privateKeyRaw,
+    teamId: teamId?.substring(0, 4) + '***',
+    keyId: keyId?.substring(0, 4) + '***',
+  });
+
   if (!teamId || !keyId || !privateKeyRaw) {
+    console.error('[MapKit Token API] Missing credentials!');
     return NextResponse.json(
       {
         error: 'MapKit credentials not configured. Required: MAPKIT_TEAM_ID, MAPKIT_KEY_ID, MAPKIT_PRIVATE_KEY'
@@ -58,6 +67,12 @@ export async function GET(request: Request) {
     const token = jwt.sign(payload, privateKey, {
       algorithm: 'ES256',
       keyid: keyId,
+    });
+
+    console.log('[MapKit Token API] Token generated successfully', {
+      payload,
+      tokenLength: token.length,
+      tokenPreview: token.substring(0, 20) + '...',
     });
 
     const res = NextResponse.json({ token });
