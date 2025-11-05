@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Clock } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
@@ -29,10 +29,10 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
   return (
     <div className="mb-12">
       <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-4 w-4 text-gray-400" />
-        <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+        <h2 className="text-sm tracking-wide uppercase text-neutral-500">
           Recently Viewed
         </h2>
+        <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
@@ -48,7 +48,7 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
             }}
             className={`${CARD_WRAPPER} text-left`}
           >
-            <div className={`${CARD_MEDIA} mb-2`}>
+            <div className={CARD_MEDIA}>
               {item.image && (
                 <Image
                   src={item.image}
@@ -70,18 +70,13 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
               )}
             </div>
             <div className="space-y-0.5">
-              <h3 className={CARD_TITLE}>{item.name}</h3>
+              <div className={CARD_TITLE}>{item.name}</div>
               <div className={CARD_META}>
-                <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-                  {capitalizeCity(item.city)}
-                </span>
-                {item.category && (
-                  <>
-                    <span className="text-gray-300 dark:text-gray-700">•</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
-                      {item.category}
-                    </span>
-                  </>
+                {item.city && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {capitalizeCity(item.city)}
+                  </span>
                 )}
               </div>
             </div>
