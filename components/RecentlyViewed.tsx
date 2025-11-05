@@ -7,6 +7,13 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 
+function capitalizeCity(city: string): string {
+  return city
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 interface RecentlyViewedProps {
   onCardClick?: (destination: Destination) => void;
 }
@@ -42,18 +49,14 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
             className={`${CARD_WRAPPER} text-left`}
           >
             <div className={CARD_MEDIA}>
-              {item.image ? (
+              {item.image && (
                 <Image
                   src={item.image}
                   alt={item.name}
                   fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, (max-width: 1536px) 16vw, 14vw"
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                  <MapPin className="h-8 w-8 opacity-20" />
-                </div>
               )}
               {item.michelin_stars && item.michelin_stars > 0 && (
                 <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
@@ -72,7 +75,7 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
                 {item.city && (
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {item.city}
+                    {capitalizeCity(item.city)}
                   </span>
                 )}
               </div>
