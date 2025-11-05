@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
+import { VisitedModal } from '@/components/VisitedModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -157,6 +158,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -347,6 +349,58 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         console.error('Failed to copy link', err);
       }
     }
+  };
+
+  const handleVisitToggle = async () => {
+    if (!user || !destination) return;
+
+    try {
+      if (isVisited) {
+        // Remove visit
+        const { error } = await supabase
+          .from('visited_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug);
+
+        if (error) throw error;
+
+        setIsVisited(false);
+        if (onVisitToggle) onVisitToggle(destination.slug, false);
+      } else {
+        // Add visit with current date
+        const { error } = await supabase
+          .from('visited_places')
+          .insert({
+            user_id: user.id,
+            destination_slug: destination.slug,
+            visited_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+
+        setIsVisited(true);
+        if (onVisitToggle) onVisitToggle(destination.slug, true);
+      }
+    } catch (error) {
+      console.error('Error toggling visit:', error);
+      alert('Failed to update visit status. Please try again.');
+    }
+  };
+
+  const handleVisitedModalUpdate = async () => {
+    // Reload visited status after modal updates
+    if (!user || !destination) return;
+
+    const { data: visitedData } = await supabase
+      .from('visited_places')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('destination_slug', destination.slug)
+      .single();
+
+    setIsVisited(!!visitedData);
+    if (onVisitToggle && visitedData) onVisitToggle(destination.slug, true);
   };
 
 
@@ -725,11 +779,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Action Buttons */}
           {user && destination?.id && (
-            <div className="mb-6">
+            <div className="mb-6 flex gap-2">
               <button
                 onClick={() => setShowSaveModal(true)}
-                className={`w-full px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                  isSaved || isVisited
+                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                  isSaved
                     ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                     : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
                 }`}
@@ -737,6 +791,30 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
                 {isSaved ? 'Saved' : 'Save'}
               </button>
+              <button
+                onClick={handleVisitToggle}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  if (isVisited) setShowVisitedModal(true);
+                }}
+                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                  isVisited
+                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                }`}
+              >
+                <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                {isVisited ? 'Visited' : 'Mark as Visited'}
+              </button>
+              {isVisited && (
+                <button
+                  onClick={() => setShowVisitedModal(true)}
+                  className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  title="Add visit details"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              )}
             </div>
           )}
 
@@ -975,10 +1053,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             setIsSaved(true);
             if (onSaveToggle) onSaveToggle(destination.slug, true);
           }}
-          onVisit={(visited) => {
-            setIsVisited(visited);
-            if (onVisitToggle) onVisitToggle(destination.slug, visited);
-          }}
+        />
+      )}
+
+      {/* Visited Modal */}
+      {destination && (
+        <VisitedModal
+          destinationSlug={destination.slug}
+          destinationName={destination.name}
+          isOpen={showVisitedModal}
+          onClose={() => setShowVisitedModal(false)}
+          onUpdate={handleVisitedModalUpdate}
         />
       )}
     </>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Collection } from '@/types/personalization';
 import { CollectionsManager } from './CollectionsManager';
-import { X, ChevronDown, Check, Star } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface SaveDestinationModalProps {
   destinationId: number;
@@ -12,7 +12,6 @@ interface SaveDestinationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: (collectionId: string | null) => void;
-  onVisit?: (visited: boolean) => void;
 }
 
 export function SaveDestinationModal({
@@ -21,19 +20,13 @@ export function SaveDestinationModal({
   isOpen,
   onClose,
   onSave,
-  onVisit,
 }: SaveDestinationModalProps) {
   const [currentCollectionId, setCurrentCollectionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [showVisitedOptions, setShowVisitedOptions] = useState(false);
-  const [isVisited, setIsVisited] = useState(false);
-  const [visitRating, setVisitRating] = useState<number | null>(null);
-  const [visitNotes, setVisitNotes] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       loadCurrentSave();
-      loadVisitedStatus();
     }
   }, [isOpen, destinationId]);
 
@@ -55,35 +48,6 @@ export function SaveDestinationModal({
     } catch (error) {
       // Not saved yet
       setCurrentCollectionId(null);
-    }
-  }
-
-  async function loadVisitedStatus() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('visited_places')
-        .select('rating, notes')
-        .eq('user_id', user.id)
-        .eq('destination_slug', destinationSlug)
-        .single();
-
-      if (data) {
-        setIsVisited(true);
-        setVisitRating(data.rating || null);
-        setVisitNotes(data.notes || '');
-      } else {
-        setIsVisited(false);
-        setVisitRating(null);
-        setVisitNotes('');
-      }
-    } catch (error) {
-      // Not visited yet
-      setIsVisited(false);
-      setVisitRating(null);
-      setVisitNotes('');
     }
   }
 
@@ -158,52 +122,6 @@ export function SaveDestinationModal({
     }
   }
 
-  async function handleVisitToggle() {
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      if (isVisited) {
-        // Remove visit
-        const { error } = await supabase
-          .from('visited_places')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('destination_slug', destinationSlug);
-
-        if (error) throw error;
-
-        setIsVisited(false);
-        setVisitRating(null);
-        setVisitNotes('');
-        setShowVisitedOptions(false);
-        if (onVisit) onVisit(false);
-      } else {
-        // Add visit
-        const { error } = await supabase
-          .from('visited_places')
-          .insert({
-            user_id: user.id,
-            destination_slug: destinationSlug,
-            visited_at: new Date().toISOString(),
-            rating: visitRating,
-            notes: visitNotes || null,
-          });
-
-        if (error) throw error;
-
-        setIsVisited(true);
-        if (onVisit) onVisit(true);
-      }
-    } catch (error) {
-      console.error('Error toggling visit:', error);
-      alert('Failed to update visit status. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (!isOpen) return null;
 
   return (
@@ -224,76 +142,6 @@ export function SaveDestinationModal({
             destinationId={destinationId}
             onCollectionSelect={handleSave}
           />
-
-          {/* Visited Section */}
-          <div className="px-4 pb-4">
-            <button
-              onClick={() => setShowVisitedOptions(!showVisitedOptions)}
-              className="w-full flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Check className={`h-5 w-5 ${isVisited ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
-                <span className="font-medium">{isVisited ? 'Visited' : 'Mark as Visited'}</span>
-              </div>
-              <ChevronDown
-                className={`h-4 w-4 text-gray-400 transition-transform ${
-                  showVisitedOptions ? 'transform rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {showVisitedOptions && (
-              <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl space-y-4">
-                {/* Rating */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Rating (Optional)</label>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setVisitRating(visitRating === star ? null : star)}
-                        className="transition-transform hover:scale-110"
-                      >
-                        <Star
-                          className={`h-6 w-6 ${
-                            visitRating && star <= visitRating
-                              ? 'fill-gray-900 dark:fill-white text-gray-900 dark:text-white'
-                              : 'text-gray-300 dark:text-gray-600'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Notes (Optional)</label>
-                  <textarea
-                    value={visitNotes}
-                    onChange={(e) => setVisitNotes(e.target.value)}
-                    placeholder="Share your experience, tips, or memories..."
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 resize-none text-sm"
-                  />
-                </div>
-
-                {/* Visit Action Button */}
-                <button
-                  onClick={handleVisitToggle}
-                  disabled={saving}
-                  className={`w-full px-4 py-2 rounded-2xl font-medium transition-colors disabled:opacity-50 ${
-                    isVisited
-                      ? 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                      : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-80'
-                  }`}
-                >
-                  {saving ? 'Updating...' : isVisited ? 'Remove Visit' : 'Mark as Visited'}
-                </button>
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">

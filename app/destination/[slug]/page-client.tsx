@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Bookmark } from 'lucide-react';
+import { ArrowLeft, MapPin, Bookmark, Check, Plus } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -12,6 +12,7 @@ import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
 import { trackEvent } from '@/lib/analytics/track';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
+import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Recommendation {
@@ -51,6 +52,7 @@ export default function DestinationPageClient() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
 
@@ -133,6 +135,55 @@ export default function DestinationPageClient() {
 
     checkIfVisited();
   }, [user, destination]);
+
+  const handleVisitToggle = async () => {
+    if (!user || !destination) return;
+
+    try {
+      if (isVisited) {
+        // Remove visit
+        const { error } = await supabase
+          .from('visited_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug);
+
+        if (error) throw error;
+
+        setIsVisited(false);
+      } else {
+        // Add visit with current date
+        const { error } = await supabase
+          .from('visited_places')
+          .insert({
+            user_id: user.id,
+            destination_slug: destination.slug,
+            visited_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+
+        setIsVisited(true);
+      }
+    } catch (error) {
+      console.error('Error toggling visit:', error);
+      alert('Failed to update visit status. Please try again.');
+    }
+  };
+
+  const handleVisitedModalUpdate = async () => {
+    // Reload visited status after modal updates
+    if (!user || !destination) return;
+
+    const { data: visitedData } = await supabase
+      .from('visited_places')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('destination_slug', destination.slug)
+      .single();
+
+    setIsVisited(!!visitedData);
+  };
 
   const fetchDestination = async () => {
     try {
@@ -291,23 +342,45 @@ export default function DestinationPageClient() {
               </a>
             </div>
 
-            {/* Title and Save Button */}
+            {/* Title and Action Buttons */}
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-3xl sm:text-4xl font-light leading-tight flex-1">
                 {destination.name}
               </h1>
               {user && (
-                <button
-                  onClick={() => setShowSaveModal(true)}
-                  className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
-                    isSaved || isVisited
-                      ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                      : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
-                  }`}
-                >
-                  <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
-                  {isSaved ? 'Saved' : 'Save'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowSaveModal(true)}
+                    className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
+                      isSaved
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    }`}
+                  >
+                    <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleVisitToggle}
+                    className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
+                      isVisited
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    }`}
+                  >
+                    <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
+                    {isVisited ? 'Visited' : 'Mark as Visited'}
+                  </button>
+                  {isVisited && (
+                    <button
+                      onClick={() => setShowVisitedModal(true)}
+                      className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      title="Add visit details"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
@@ -481,9 +554,17 @@ export default function DestinationPageClient() {
             setIsSaved(true);
             setShowSaveModal(false);
           }}
-          onVisit={(visited) => {
-            setIsVisited(visited);
-          }}
+        />
+      )}
+
+      {/* Visited Modal */}
+      {destination && (
+        <VisitedModal
+          destinationSlug={destination.slug}
+          destinationName={destination.name}
+          isOpen={showVisitedModal}
+          onClose={() => setShowVisitedModal(false)}
+          onUpdate={handleVisitedModalUpdate}
         />
       )}
     </main>
