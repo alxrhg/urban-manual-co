@@ -696,6 +696,8 @@ export default function Home() {
                     <div className="mt-6">
                       <EnrichedSearchResponse
                         resultCount={filteredDestinations.length}
+                        city={searchIntent?.city}
+                        category={searchIntent?.category}
                         weather={filteredDestinations[0]?.currentWeather}
                         opportunities={searchIntent?.opportunities}
                         enriched={{

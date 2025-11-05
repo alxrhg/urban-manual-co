@@ -38,6 +38,8 @@ export interface EnrichedMetadata {
 
 interface EnrichedSearchResponseProps {
   resultCount: number;
+  city?: string;
+  category?: string;
   weather?: WeatherData | null;
   opportunities?: OpportunityData[];
   eventsNearby?: EventData[];
@@ -48,6 +50,8 @@ interface EnrichedSearchResponseProps {
 
 export function EnrichedSearchResponse({
   resultCount,
+  city,
+  category,
   weather,
   opportunities,
   eventsNearby,
@@ -55,63 +59,81 @@ export function EnrichedSearchResponse({
   enriched,
   className = '',
 }: EnrichedSearchResponseProps) {
-  // Build a natural text response
+  // Build a conversational response like a helpful travel assistant
   const buildResponse = (): string => {
     const parts: string[] = [];
 
-    // Main result count
+    // No results case
     if (resultCount === 0) {
       parts.push('No results found. Try refining your search or adjusting your filters.');
       return parts.join(' ');
     }
 
-    // Result count with weather
-    let mainText = `I found ${resultCount} ${resultCount === 1 ? 'result' : 'results'}`;
-    if (weather) {
-      mainText += ` at ${weather.temperature}°C, ${weather.weatherDescription.toLowerCase()}`;
+    // Main opener - mention city if known
+    const cityName = city ? city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : null;
+    let opener = `I found ${resultCount} ${resultCount === 1 ? 'spot' : 'spots'}`;
+    if (cityName) {
+      opener += ` in ${cityName}`;
     }
-    mainText += '.';
-    parts.push(mainText);
+    parts.push(opener + '.');
 
-    // Weather insight
+    // Weather description - conversational
     if (weather) {
+      const temp = weather.temperature;
       const code = weather.weatherCode;
+
+      let weatherText = 'The weather ';
+
+      // Temperature feel
+      if (temp < 5) {
+        weatherText += 'is quite chilly';
+      } else if (temp < 12) {
+        weatherText += 'is a bit cool';
+      } else if (temp < 20) {
+        weatherText += 'looks pleasant';
+      } else if (temp < 28) {
+        weatherText += 'looks great';
+      } else {
+        weatherText += 'is quite warm';
+      }
+
+      weatherText += ` at ${temp}°C`;
+
+      // Weather conditions
       if (code === 0 || code === 1) {
-        parts.push('Perfect weather for outdoor dining or rooftop experiences!');
+        weatherText += ' with clear skies - perfect for outdoor spots!';
       } else if (code === 2 || code === 3) {
-        parts.push('Pleasant conditions - good for exploring.');
+        weatherText += ' with some clouds, still nice for exploring.';
       } else if (code >= 61 && code <= 86) {
-        parts.push('Consider indoor options or places with covered seating.');
+        weatherText += ' but it might rain, so indoor options could be safer.';
+      } else {
+        weatherText += '.';
       }
+
+      parts.push(weatherText);
     }
 
-    // Trending opportunities
-    if (opportunities && opportunities.length > 0) {
-      const trendingText = opportunities.slice(0, 3).map(opp => {
-        if (opp.reason) {
-          return `${opp.name} (${opp.reason})`;
-        }
-        return opp.name;
-      }).join(', ');
-      parts.push(`Trending this week: ${trendingText}.`);
-    }
-
-    // Nearby events
+    // Events - conversational
     if (enriched?.totalEvents && enriched.totalEvents > 0) {
-      parts.push(`${enriched.totalEvents} ${enriched.totalEvents === 1 ? 'destination has' : 'destinations have'} nearby upcoming events.`);
+      parts.push(`Also, there ${enriched.totalEvents === 1 ? 'is a nearby event' : `are ${enriched.totalEvents} nearby events`} happening if you're into that!`);
     }
 
-    // Forecast insight
-    if (forecast && forecast.trend) {
-      if (forecast.trend === 'increasing') {
-        parts.push('These spots are getting more popular - book ahead!');
-      } else if (forecast.trend === 'decreasing') {
-        parts.push('Good timing - these spots are less busy than usual.');
-      }
+    // Trending spots
+    if (opportunities && opportunities.length > 0) {
+      const firstSpot = opportunities[0];
+      parts.push(`${firstSpot.name} is trending right now${firstSpot.reason ? ` (${firstSpot.reason.toLowerCase()})` : ''}.`);
+    }
 
-      if (forecast.peakTimes && forecast.peakTimes.length > 0) {
-        parts.push(`Peak times: ${forecast.peakTimes.join(', ')}.`);
-      }
+    // Follow-up questions based on category
+    if (category === 'Dining' || category === 'restaurant') {
+      parts.push('Are you looking for anything specific? French, Japanese, Italian?');
+    } else if (category === 'Hotel') {
+      parts.push('Looking for luxury, boutique, or budget-friendly?');
+    } else if (category === 'Cafe') {
+      parts.push('Coffee, brunch, or something cozy to work from?');
+    } else if (!category && cityName) {
+      // No specific category - suggest options
+      parts.push('Looking for dining, hotels, or just exploring?');
     }
 
     return parts.join(' ');
