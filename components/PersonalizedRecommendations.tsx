@@ -138,7 +138,7 @@ export function PersonalizedRecommendations({
 
               {/* Info */}
               <div className="space-y-0.5">
-                <div className={CARD_TITLE} role="heading" aria-level={3}>{destination.name}</div>
+                <h3 className={CARD_TITLE}>{destination.name}</h3>
                 <div className={CARD_META}>
                   <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
                     {destination.city
