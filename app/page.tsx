@@ -34,6 +34,8 @@ import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
+import { SocialProofBadge } from '@/components/SocialProofBadge';
+import { DistanceBadge } from '@/components/DistanceBadge';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -190,7 +192,12 @@ export default function Home() {
     maxPrice?: number;
     minRating?: number;
     openNow?: boolean;
+    nearMe?: boolean;
+    nearMeRadius?: number;
   }>({});
+  // Near Me state
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
 
   useEffect(() => {
     fetchDestinations();
@@ -396,6 +403,28 @@ export default function Home() {
       setSeasonalContext(null);
     } finally {
       setSearching(false);
+    }
+  };
+
+  // Handle location changes from Near Me filter
+  const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {
+    if (!lat || !lng) {
+      setUserLocation(null);
+      setNearbyDestinations([]);
+      return;
+    }
+
+    setUserLocation({ lat, lng });
+
+    try {
+      const response = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&radius=${radius}&limit=100`);
+      const data = await response.json();
+
+      if (data.destinations) {
+        setNearbyDestinations(data.destinations);
+      }
+    } catch (error) {
+      console.error('Error fetching nearby destinations:', error);
     }
   };
 
@@ -835,6 +864,7 @@ export default function Home() {
                 }}
                 availableCities={cities}
                 availableCategories={categories}
+                onLocationChange={handleLocationChange}
               />
             </div>
 
@@ -882,13 +912,21 @@ export default function Home() {
             )}
 
             {/* Destination Grid - Original design */}
-            {filteredDestinations.length > 0 && (
+            {(() => {
+              // Determine which destinations to show
+              const displayDestinations = advancedFilters.nearMe && nearbyDestinations.length > 0
+                ? nearbyDestinations
+                : filteredDestinations;
+
+              if (displayDestinations.length === 0) return null;
+
+              return (
               <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                 {(() => {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
-                  const paginatedDestinations = filteredDestinations.slice(startIndex, endIndex);
+                  const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
                   return paginatedDestinations.map((destination, index) => {
                     const isVisited = user && visitedSlugs.has(destination.slug);
@@ -981,6 +1019,18 @@ export default function Home() {
                           </>
                         )}
                       </div>
+
+                      {/* Social Proof + Distance Badges */}
+                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                        {destination.distance_km && (
+                          <DistanceBadge distanceKm={destination.distance_km} compact />
+                        )}
+                        <SocialProofBadge
+                          savesCount={destination.saves_count}
+                          visitsCount={destination.visits_count}
+                          compact
+                        />
+                      </div>
                     </div>
                   </button>
                   );
@@ -990,7 +1040,7 @@ export default function Home() {
 
           {/* Pagination */}
           {(() => {
-            const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
+            const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
             if (totalPages <= 1) return null;
 
             return (
@@ -1048,7 +1098,7 @@ export default function Home() {
           })()}
 
           {/* Horizontal Ad below pagination */}
-          {filteredDestinations.length > 0 && (
+          {displayDestinations.length > 0 && (
             <div className="mt-8 w-full">
               <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
                 <div className="text-xs text-gray-400 mb-2 text-center">Sponsored</div>
@@ -1064,7 +1114,8 @@ export default function Home() {
             </div>
           )}
           </>
-        )}
+              );
+            })()}
           </div>
 
           {/* Destination Drawer */}
