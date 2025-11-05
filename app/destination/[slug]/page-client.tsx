@@ -80,7 +80,8 @@ export default function DestinationPageClient() {
         name: destination.name,
         city: destination.city,
         image: destination.image || '',
-        category: destination.category
+        category: destination.category,
+        michelin_stars: destination.michelin_stars
       });
     }
   }, [destination, addToRecentlyViewed]);

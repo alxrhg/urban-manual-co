@@ -755,6 +755,7 @@ export default function Home() {
                       <button
                         onClick={() => {
                           setSelectedCity("");
+                          setCurrentPage(1);
                           trackFilterChange({ filterType: 'city', value: 'all' });
                         }}
                         className={`transition-all ${
@@ -771,6 +772,7 @@ export default function Home() {
                           onClick={() => {
                             const newCity = city === selectedCity ? "" : city;
                             setSelectedCity(newCity);
+                            setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                           }}
                           className={`transition-all ${
@@ -799,6 +801,7 @@ export default function Home() {
                           onClick={() => {
                             setSelectedCategory("");
                             setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+                            setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
                           className={`transition-all ${
@@ -815,6 +818,7 @@ export default function Home() {
                             const newValue = !advancedFilters.michelin;
                             setSelectedCategory("");
                             setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                            setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
                           className={`transition-all ${
@@ -832,6 +836,7 @@ export default function Home() {
                               const newCategory = category === selectedCategory ? "" : category;
                               setSelectedCategory(newCategory);
                               setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                              setCurrentPage(1);
                               trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                             }}
                             className={`transition-all ${
