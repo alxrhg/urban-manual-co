@@ -192,10 +192,31 @@ export function Header() {
             {/* Arrow/caret */}
             <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" />
             <div className="py-2">
+              {/* Discover Section */}
+              <div className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-600 font-medium">Discover</div>
+              <button onClick={() => { navigate('/'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Home</button>
+              <button onClick={() => { navigate('/feed'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation flex items-center gap-2">
+                <span>Feed</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded font-medium">NEW</span>
+              </button>
+              <button onClick={() => { navigate('/search'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Search</button>
               <button onClick={() => { navigate('/cities'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Cities</button>
               <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Map</button>
-              <button onClick={() => { navigate('/discover'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Discover Collections</button>
+              <button onClick={() => { navigate('/discover'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Collections</button>
+
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
+
+              {/* Plan Section */}
+              {user && (
+                <>
+                  <div className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-600 font-medium">Plan</div>
+                  <button onClick={() => { navigate('/trips'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">My Trips</button>
+                  <button onClick={() => { navigate('/lists'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">My Lists</button>
+                  <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
+                </>
+              )}
+
+              {/* Account Section */}
               {user ? (
                 <>
                   <button onClick={() => { navigate('/account'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Account</button>
@@ -207,7 +228,10 @@ export function Header() {
               ) : (
                 <button onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Sign In</button>
               )}
+
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
+
+              {/* Settings */}
               <button
                 onClick={toggleDarkMode}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation flex items-center gap-2"
