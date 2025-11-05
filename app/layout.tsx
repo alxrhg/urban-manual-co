@@ -8,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { TRPCProvider } from "@/lib/trpc/provider";
+import { CookieConsent } from "@/components/CookieConsent";
 
 export const metadata: Metadata = {
   title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
@@ -115,6 +116,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
+              <CookieConsent />
             </ItineraryProvider>
           </AuthProvider>
         </TRPCProvider>

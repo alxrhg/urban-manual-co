@@ -694,12 +694,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {destination?.slug && (
               <button
                 onClick={() => {
+                  // Close drawer first for smooth transition
                   onClose();
-                  router.push(`/destination/${destination.slug}`);
+                  // Small delay to ensure drawer closes before navigation
+                  setTimeout(() => {
+                    try {
+                      router.push(`/destination/${destination.slug}`);
+                    } catch (error) {
+                      console.error('Navigation error:', error);
+                      // Fallback to window.location if router fails
+                      window.location.href = `/destination/${destination.slug}`;
+                    }
+                  }, 150);
                 }}
                 className="absolute top-4 right-16 p-2.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity shadow-lg"
-                title="Open in new page"
-                aria-label="Open destination in new page"
+                title="View full page"
+                aria-label="View full page"
               >
                 <ExternalLink className="h-4 w-4" />
               </button>
