@@ -91,9 +91,19 @@ CREATE TABLE IF NOT EXISTS conversation_messages (
 CREATE INDEX IF NOT EXISTS idx_conv_messages_session 
   ON conversation_messages(session_id, created_at);
 
-CREATE INDEX IF NOT EXISTS idx_conv_messages_user 
-  ON conversation_messages(user_id, created_at DESC)
-  WHERE user_id IS NOT NULL;
+-- Create user index only if user_id column exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'conversation_messages' 
+    AND column_name = 'user_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_conv_messages_user 
+      ON conversation_messages(user_id, created_at DESC)
+      WHERE user_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Index for embedding similarity search (only if pgvector is available)
 DO $$
