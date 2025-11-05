@@ -695,50 +695,49 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Drawer */}
+      {/* Slideover */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-y-auto`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold">Destination</h2>
-          <div className="flex items-center gap-1 sm:gap-2">
+        <div className="sticky top-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-end z-10">
+          <div className="flex items-center gap-2">
             {destination?.slug && (
               <a
                 href={`/destination/${destination.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 title="Open in new tab"
                 aria-label="Open destination in new tab"
               >
-                <ExternalLink className="h-5 w-5" />
+                <ExternalLink className="h-4 w-4" />
               </a>
             )}
             <button
               onClick={onClose}
-              className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
-              aria-label="Close drawer"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              aria-label="Close"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6">
+        <div className="p-6">
           {/* Image */}
           {destination.image && (
-            <div className="relative aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
+            <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
                 alt={destination.name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 640px) 100vw, 480px"
+                sizes="(max-width: 640px) 100vw, 420px"
                 priority={false}
                 quality={85}
               />
@@ -746,36 +745,26 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Title */}
-          <div className="mb-6">
-            <div className="flex items-start gap-3 mb-4">
-              <h1 className="text-3xl font-bold flex-1">
-                {destination.name}
-              </h1>
-              {/* Crown hidden for now */}
-            </div>
+          <div className="mb-8">
+            <h1 className="text-3xl font-light leading-tight mb-4">
+              {destination.name}
+            </h1>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+            <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-3 w-3" />
                 <span>{capitalizeCity(destination.city)}</span>
               </div>
 
               {destination.category && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
-                  <span className="capitalize">{destination.category}</span>
-                </div>
+                <span className="capitalize">{destination.category}</span>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div className="flex items-center gap-2">
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-4 w-4"
-                  />
-                  <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
+                <div className="flex items-center gap-1.5">
+                  <span>⭐</span>
+                  <span>{destination.michelin_stars} Michelin</span>
                 </div>
               )}
             </div>
@@ -820,7 +809,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {/* Editorial Summary */}
             {enrichedData?.editorial_summary && (
               <div className="mt-4">
-                <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
+                <h3 className="text-xs font-medium mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
                 <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {stripHtmlTags(enrichedData.editorial_summary)}
                 </span>
@@ -1027,7 +1016,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Description */}
           {destination.content && (
             <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">About</h3>
+              <h3 className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-400">About</h3>
               <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {stripHtmlTags(destination.content)}
               </div>
@@ -1115,7 +1104,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
+              <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
               <div className="space-y-4">
                 {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
                   <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
@@ -1145,7 +1134,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Map Section (Apple Maps) */}
           <div className="mb-8">
-            <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Location</h3>
+            <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Location</h3>
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <AppleMap
                 query={`${destination.name}, ${destination.city}`}
@@ -1176,7 +1165,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
               </div>
