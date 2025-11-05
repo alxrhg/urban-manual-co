@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Bookmark } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -11,6 +11,8 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
 import { trackEvent } from '@/lib/analytics/track';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { SaveDestinationModal } from '@/components/SaveDestinationModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Recommendation {
   slug: string;
@@ -42,11 +44,14 @@ export default function DestinationPageClient() {
   const params = useParams();
   const slug = params.slug as string;
   const { addToRecentlyViewed } = useRecentlyViewed();
+  const { user } = useAuth();
 
   const [destination, setDestination] = useState<Destination | null>(null);
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     fetchDestination();
@@ -83,6 +88,28 @@ export default function DestinationPageClient() {
       setRecommendations([]);
     }
   }, [destination]);
+
+  // Check if destination is saved
+  useEffect(() => {
+    async function checkIfSaved() {
+      if (!user || !destination?.id) return;
+
+      try {
+        const { data } = await supabase
+          .from('saved_destinations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('destination_id', destination.id)
+          .single();
+
+        setIsSaved(!!data);
+      } catch (error) {
+        setIsSaved(false);
+      }
+    }
+
+    checkIfSaved();
+  }, [user, destination]);
 
   const fetchDestination = async () => {
     try {
@@ -235,10 +262,25 @@ export default function DestinationPageClient() {
               {destination.country ? `${cityName}, ${destination.country}` : cityName}
             </p>
 
-            {/* Title */}
-            <h1 className="text-3xl sm:text-4xl font-light leading-tight">
-              {destination.name}
-            </h1>
+            {/* Title and Save Button */}
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl sm:text-4xl font-light leading-tight flex-1">
+                {destination.name}
+              </h1>
+              {user && (
+                <button
+                  onClick={() => setShowSaveModal(true)}
+                  className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
+                    isSaved
+                      ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                      : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                  }`}
+                >
+                  <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                  {isSaved ? 'Saved' : 'Save'}
+                </button>
+              )}
+            </div>
 
             {/* Meta badges */}
             <div className="flex flex-wrap gap-2 text-xs">
@@ -385,6 +427,20 @@ export default function DestinationPageClient() {
           </button>
         </div>
       </div>
+
+      {/* Save to Collection Modal */}
+      {destination && (
+        <SaveDestinationModal
+          destinationId={destination.id}
+          destinationSlug={destination.slug}
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={(collectionId) => {
+            setIsSaved(true);
+            setShowSaveModal(false);
+          }}
+        />
+      )}
     </main>
   );
 }
