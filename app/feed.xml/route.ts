@@ -3,11 +3,11 @@ import { Destination } from '@/types/destination';
 
 export async function GET() {
   try {
-    // Fetch recent destinations (limit to 50 most recent)
+    // Fetch recent destinations (limit to 50)
     const { data: destinations, error } = await supabase
       .from('destinations')
-      .select('slug, name, city, category, description, content, image, created_at')
-      .order('created_at', { ascending: false })
+      .select('slug, name, city, category, description, content, image')
+      .order('name', { ascending: true })
       .limit(50);
 
     if (error) {
@@ -44,7 +44,7 @@ ${(destinations || []).map((dest: Destination) => {
 
   const title = `${dest.name} - ${dest.category} in ${cityName}`;
   const link = `${baseUrl}/destination/${dest.slug}`;
-  const pubDate = dest.created_at ? new Date(dest.created_at).toUTCString() : buildDate;
+  const pubDate = buildDate; // Use build date for all items
 
   // Clean description
   let description = '';
