@@ -182,15 +182,15 @@ export function Header() {
       {/* Burger Menu Dropdown (all breakpoints) */}
       {isMenuOpen && (
         <>
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => setIsMenuOpen(false)} />
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={() => setIsMenuOpen(false)} />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed right-4 top-16 z-50 w-72 rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed right-4 top-16 z-50 w-72 rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
             role="menu"
             aria-label="Main menu"
           >
             {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-t border-l border-white/20 dark:border-gray-700/30" />
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-l border-white/20 dark:border-gray-700/30" />
             <div className="py-2">
               <button onClick={() => { navigate('/cities'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Cities</button>
               <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Map</button>

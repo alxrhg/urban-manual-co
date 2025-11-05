@@ -121,7 +121,7 @@ export function SearchFiltersComponent({
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full right-0 mt-2 w-80 bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute top-full right-0 mt-2 w-80 bg-white/90 dark:bg-black/90 backdrop-blur-md border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-2xl z-50 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 dark:border-gray-700/30">
               <div className="text-sm font-medium">Filters</div>

@@ -488,12 +488,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Slideover Card */}
       <div
-        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl z-50 shadow-2xl ring-1 ring-white/20 dark:ring-gray-700/30 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-gray-950/95 backdrop-blur-md z-50 shadow-2xl ring-1 ring-white/20 dark:ring-gray-700/30 rounded-2xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
-        <div className="flex-shrink-0 bg-white/50 dark:bg-gray-950/50 backdrop-blur-md border-b border-white/20 dark:border-gray-700/30 px-6 py-4 flex items-center justify-end">
+        <div className="flex-shrink-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-white/20 dark:border-gray-700/30 px-6 py-4 flex items-center justify-end">
           <div className="flex items-center gap-2">
             {destination?.slug && (
               <a
