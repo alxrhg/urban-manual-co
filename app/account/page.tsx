@@ -251,7 +251,7 @@ export default function Account() {
 
   return (
     <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1800px] mx-auto">
         {/* Header - Matches homepage spacing and style */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">

@@ -201,7 +201,7 @@ export default function CollectionDetailPage() {
 
   return (
     <main className="px-6 md:px-10 py-20">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="mb-12">
           <button
