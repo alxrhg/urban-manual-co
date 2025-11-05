@@ -38,7 +38,7 @@ const CATEGORY_SYNONYMS: Record<string, string> = {
 
 // Generate embedding using OpenAI
 async function generateEmbedding(text: string): Promise<number[] | null> {
-  if (!openai) {
+  if (!openai?.embeddings) {
     console.error('[AI Chat] No OpenAI client available');
     return null;
   }
@@ -70,7 +70,7 @@ async function understandQuery(
   confidence?: number; // 0-1 confidence score
   clarifications?: string[]; // Questions to clarify ambiguous queries
 }> {
-  if (!openai) {
+  if (!openai?.chat) {
     return parseQueryFallback(query);
   }
 
@@ -295,7 +295,7 @@ async function generateIntelligentResponse(
   }
 
   // Generate response using OpenAI if available
-  if (openai) {
+  if (openai?.chat) {
     try {
       const systemPrompt = `You are Urban Manual's intelligent travel assistant. You help users discover amazing places with rich, contextual insights.
 

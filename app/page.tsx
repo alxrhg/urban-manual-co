@@ -159,8 +159,8 @@ export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
   
-  // Check if AI is enabled (client-side check via API)
-  const [isAIEnabled, setIsAIEnabled] = useState(false);
+  // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
+  const [isAIEnabled, setIsAIEnabled] = useState(true);
   
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
