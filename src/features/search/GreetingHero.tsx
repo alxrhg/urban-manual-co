@@ -105,7 +105,8 @@ export default function GreetingHero({
       }
     };
 
-    const timer = setTimeout(fetchSuggestions, 300);
+    // Increased debounce from 300ms to 500ms for better performance
+    const timer = setTimeout(fetchSuggestions, 500);
     return () => clearTimeout(timer);
   }, [searchQuery, isAIEnabled]);
 

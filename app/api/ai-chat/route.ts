@@ -541,8 +541,9 @@ export async function POST(request: NextRequest) {
     }
 
                 // Enrich results with additional data (photos, weather, routes, events) BEFORE reranking
+                // Reduced from 100 to 10 for better performance - only enrich top results
                 const enrichedResults = await Promise.all(
-                  results.slice(0, 100).map(async (dest: any) => {
+                  results.slice(0, 10).map(async (dest: any) => {
                     try {
                       // Fetch enriched data from database
                       const { data: enriched } = await supabase
@@ -598,8 +599,10 @@ export async function POST(request: NextRequest) {
                   enrichedContext: enrichedContext || undefined,
                 });
 
-                // Remove limit - return all results
-                const limitedResults = rerankedResults;
+                // Combine reranked enriched results with remaining unenriched results
+                // This maintains performance while still showing all results
+                const remainingResults = results.slice(10);
+                const limitedResults = [...rerankedResults, ...remainingResults];
 
                 // Generate intelligent response with enriched context
                 const response = await generateIntelligentResponse(
