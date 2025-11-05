@@ -622,9 +622,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
+                    className="inline-flex items-center px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs capitalize"
                   >
-                    ✨ {tag}
+                    #{tag}
                   </span>
                 ))}
               </div>
