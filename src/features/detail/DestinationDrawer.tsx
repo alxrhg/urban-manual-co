@@ -751,10 +751,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </div>
                   {hours.weekday_text && (
                     <details className="text-sm">
-                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-xs">
                         View all hours
                       </summary>
-                      <div className="mt-2 space-y-1 pl-6">
+                      <div className="mt-2 space-y-1">
                         {hours.weekday_text.map((day: string, index: number) => {
                           const [dayName, hoursText] = day.split(': ');
                           const dayOfWeek = now.getDay();
@@ -762,37 +762,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           const isToday = index === googleDayIndex;
 
                           return (
-                            <div key={index} className={`flex justify-between ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                            <div key={index} className={`flex justify-between text-xs ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                               <span>{dayName}</span>
                               <span>{hoursText}</span>
                             </div>
                           );
                         })}
                       </div>
-                      {hours.weekday_text && (
-                        <details className="text-sm">
-                          <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-xs">
-                            View all hours
-                          </summary>
-                          <div className="mt-2 space-y-1">
-                            {hours.weekday_text.map((day: string, index: number) => {
-                              const [dayName, hoursText] = day.split(': ');
-                              const dayOfWeek = now.getDay();
-                              const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                              const isToday = index === googleDayIndex;
-
-                              return (
-                                <div key={index} className={`flex justify-between text-xs ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-                                  <span>{dayName}</span>
-                                  <span>{hoursText}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </details>
-                      )}
-                    </div>
-                  </div>
+                    </details>
+                  )}
                 </div>
               );
             })()}
