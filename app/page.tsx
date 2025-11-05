@@ -32,8 +32,9 @@ import { ForYouSection } from '@/components/ForYouSection';
 import { TrendingSection } from '@/components/TrendingSection';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
-import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
+import { EnrichedSearchResponse } from '@/components/EnrichedSearchResponse';
+import { EnrichedDestinationBadges } from '@/components/EnrichedDestinationBadges';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -690,17 +691,22 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Simple "I found x results" message */}
-                  {searchTerm && !searching && filteredDestinations.length > 0 && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <span>I found {filteredDestinations.length} {filteredDestinations.length === 1 ? 'result' : 'results'}.</span>
-                    </div>
-                  )}
-
-                  {/* No results message */}
-                  {searchTerm && !searching && filteredDestinations.length === 0 && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <span>No results found. Try refining your search.</span>
+                  {/* Enriched search response with intelligence data */}
+                  {searchTerm && !searching && (
+                    <div className="mt-6">
+                      <EnrichedSearchResponse
+                        resultCount={filteredDestinations.length}
+                        weather={filteredDestinations[0]?.currentWeather}
+                        opportunities={searchIntent?.opportunities}
+                        enriched={{
+                          hasWeather: filteredDestinations.some((r: any) => r.currentWeather),
+                          hasEvents: filteredDestinations.some((r: any) => r.nearbyEvents && r.nearbyEvents.length > 0),
+                          hasRoutes: filteredDestinations.some((r: any) => r.routeFromCityCenter || r.walkingTimeFromCenter),
+                          hasPhotos: filteredDestinations.some((r: any) => r.photos && r.photos.length > 0),
+                          totalPhotos: filteredDestinations.reduce((sum: number, r: any) => sum + (r.photos?.length || 0), 0),
+                          totalEvents: filteredDestinations.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
+                        }}
+                      />
                     </div>
                   )}
                 </div>
@@ -981,6 +987,14 @@ export default function Home() {
                           </>
                         )}
                       </div>
+
+                      {/* Enrichment badges (walking time, weather, events, trending) */}
+                      <EnrichedDestinationBadges
+                        walkingTime={(destination as any).walkingTimeFromCenter}
+                        weather={(destination as any).currentWeather}
+                        hasEvents={(destination as any).nearbyEvents && (destination as any).nearbyEvents.length > 0}
+                        eventCount={(destination as any).nearbyEvents?.length || 0}
+                      />
                     </div>
                   </button>
                   );
