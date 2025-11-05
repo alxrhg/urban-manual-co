@@ -45,7 +45,7 @@ export function ForYouSectionML() {
           For You
           {isMLPowered && (
             <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium"
+              className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
               title="Powered by machine learning"
             >
               <Sparkles className="h-3 w-3" />
@@ -54,7 +54,7 @@ export function ForYouSectionML() {
           )}
           {isFallback && (
             <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs"
+              className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
               title="Using standard recommendations"
             >
               Standard

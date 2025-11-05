@@ -69,7 +69,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick }: Lo
 
       {/* Michelin Stars Badge (if any) */}
       {destination.michelin_stars && destination.michelin_stars > 0 && (
-        <div className="absolute top-2 right-2 bg-white/90 dark:bg-gray-900/90 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 shadow-lg z-20">
+        <div className="absolute top-2 right-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5 z-20">
           <span>⭐</span>
           <span>{destination.michelin_stars}</span>
         </div>
