@@ -840,7 +840,35 @@ export default function Home() {
 
             {/* Recently Viewed - Show when no active search */}
             {!searchTerm.trim() && !selectedCity && !selectedCategory && (
-              <RecentlyViewed />
+              <RecentlyViewed
+                onCardClick={(destination) => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+
+                  // Track destination click
+                  trackDestinationClick({
+                    destinationSlug: destination.slug,
+                    position: 0,
+                    source: 'recently_viewed',
+                  });
+
+                  // Also track with new analytics system
+                  if (destination.id) {
+                    import('@/lib/analytics/track').then(({ trackEvent }) => {
+                      trackEvent({
+                        event_type: 'click',
+                        destination_id: destination.id,
+                        destination_slug: destination.slug,
+                        metadata: {
+                          category: destination.category,
+                          city: destination.city,
+                          source: 'recently_viewed',
+                        },
+                      });
+                    });
+                  }
+                }}
+              />
             )}
 
             {/* For You Section - Show only when user is logged in and no active search */}
