@@ -34,7 +34,6 @@ import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
-import { SocialProofBadge } from '@/components/SocialProofBadge';
 import { DistanceBadge } from '@/components/DistanceBadge';
 
 // Dynamically import MapView to avoid SSR issues
@@ -1020,17 +1019,12 @@ export default function Home() {
                         )}
                       </div>
 
-                      {/* Social Proof + Distance Badges */}
-                      <div className="mt-2 flex flex-wrap items-center gap-1">
-                        {destination.distance_km && (
+                      {/* Distance Badge - Only shows when Near Me is active */}
+                      {destination.distance_km && (
+                        <div className="mt-2">
                           <DistanceBadge distanceKm={destination.distance_km} compact />
-                        )}
-                        <SocialProofBadge
-                          savesCount={destination.saves_count}
-                          visitsCount={destination.visits_count}
-                          compact
-                        />
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </button>
                   );
