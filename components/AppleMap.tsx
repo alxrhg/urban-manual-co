@@ -28,13 +28,22 @@ export default function AppleMap({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const mapkit1Key = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
   const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || '';
 
   useEffect(() => {
+    // Set a timeout to show error if map doesn't load within 15 seconds
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (!loaded && !error) {
+        setError('Map loading timeout - please check MapKit configuration');
+      }
+    }, 15000);
+
     // Check if MapKit is already loaded
     if (window.mapkit && window.mapkit.loaded) {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
       setLoaded(true);
       return;
     }
@@ -46,6 +55,7 @@ export default function AppleMap({
     
     script.addEventListener('load', () => {
       if (!window.mapkit) {
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
         setError('MapKit JS failed to load');
         return;
       }
@@ -82,8 +92,10 @@ export default function AppleMap({
                   setTimeout(() => fetchToken(attempt + 1), delay);
                   setRetryCount(attempt + 1);
                 } else {
-                  setError(`Map authentication failed after ${attempt + 1} attempts`);
-                  done(''); // Try without token as last resort
+                  // After all retries fail, show error - don't try with empty token
+                  setError('MapKit credentials not configured. Please contact support.');
+                  setLoaded(false);
+                  // Don't call done() - this prevents MapKit from hanging with invalid auth
                 }
               }
             };
@@ -100,12 +112,14 @@ export default function AppleMap({
 
         // Wait for MapKit to be ready
         if (window.mapkit.loaded) {
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
           setLoaded(true);
         } else {
           // MapKit might take a moment to initialize
           const checkLoaded = setInterval(() => {
             if (window.mapkit && window.mapkit.loaded) {
               clearInterval(checkLoaded);
+              if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
               setLoaded(true);
             }
           }, 100);
@@ -114,23 +128,27 @@ export default function AppleMap({
           setTimeout(() => {
             clearInterval(checkLoaded);
             if (!window.mapkit?.loaded) {
+              if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
               setError('MapKit initialization timeout');
             }
           }, 5000);
         }
       } catch (err: any) {
         console.error('MapKit initialization error:', err);
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
         setError(`Failed to initialize MapKit: ${err.message}`);
       }
     });
 
     script.addEventListener('error', () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
       setError('Failed to load MapKit JS. Please check your network connection.');
     });
 
     document.head.appendChild(script);
 
     return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
@@ -227,19 +245,33 @@ export default function AppleMap({
   };
 
   if (error) {
+    // Create a fallback link to Apple Maps
+    const mapUrl = latitude && longitude
+      ? `https://maps.apple.com/?ll=${latitude},${longitude}&q=${encodeURIComponent(query || 'Location')}`
+      : query
+      ? `https://maps.apple.com/?q=${encodeURIComponent(query)}`
+      : 'https://maps.apple.com/';
+
     return (
       <div
-        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 ${className}`}
+        className={`w-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 ${className}`}
         style={{ height: getHeightStyle() }}
       >
-        <div className="text-center">
-          <p className="text-sm text-red-600 dark:text-red-400 mb-1">Map unavailable</p>
-          <p className="text-xs text-gray-500 dark:text-gray-500">{error}</p>
-          {retryCount > 0 && (
-            <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
-              Retry attempt {retryCount}/3
-            </p>
-          )}
+        <div className="text-center max-w-sm">
+          <div className="text-4xl mb-3">🗺️</div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Map preview unavailable</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+            MapKit configuration needed
+          </p>
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <span>📍</span>
+            <span>View in Apple Maps</span>
+          </a>
         </div>
       </div>
     );
