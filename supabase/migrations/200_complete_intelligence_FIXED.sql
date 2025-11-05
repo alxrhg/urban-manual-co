@@ -465,8 +465,17 @@ BEGIN
     AND column_name = 'embedding'
     AND udt_name = 'vector'
   ) THEN
+    -- Drop existing function first to avoid return type conflicts
+    EXECUTE 'DROP FUNCTION IF EXISTS search_destinations_intelligent(vector,uuid,text,text,boolean,integer)';
+    EXECUTE 'DROP FUNCTION IF EXISTS search_destinations_intelligent(vector,text,text,boolean,integer)';
+    EXECUTE 'DROP FUNCTION IF EXISTS search_destinations_intelligent(vector,text,text,boolean)';
+    EXECUTE 'DROP FUNCTION IF EXISTS search_destinations_intelligent(vector,text,text)';
+    EXECUTE 'DROP FUNCTION IF EXISTS search_destinations_intelligent(vector,text)';
+    EXECUTE 'DROP FUNCTION IF EXISTS search_destinations_intelligent(vector)';
+    
+    -- Now create the new function
     EXECUTE '
-    CREATE OR REPLACE FUNCTION search_destinations_intelligent(
+    CREATE FUNCTION search_destinations_intelligent(
       query_embedding vector(1536),
       user_id_param UUID DEFAULT NULL,
       city_filter TEXT DEFAULT NULL,
