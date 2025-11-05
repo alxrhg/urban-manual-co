@@ -6,6 +6,19 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Haversine formula to calculate distance between two points
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,21 +37,60 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Call database function
-    const { data: destinations, error } = await supabase
-      .rpc('destinations_nearby', {
-        user_lat: lat,
-        user_lng: lng,
-        radius_km: radius,
-        result_limit: limit
-      });
+    // Try using the database function first (if migration has been run)
+    let destinations: any[] = [];
+    let usesFallback = false;
 
-    if (error) {
-      console.error('Error fetching nearby destinations:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch nearby destinations', details: error.message },
-        { status: 500 }
-      );
+    try {
+      const { data, error } = await supabase
+        .rpc('destinations_nearby', {
+          user_lat: lat,
+          user_lng: lng,
+          radius_km: radius,
+          result_limit: limit
+        });
+
+      if (error) {
+        // Function doesn't exist, use fallback
+        console.log('Database function not found, using fallback method');
+        usesFallback = true;
+      } else {
+        destinations = data || [];
+      }
+    } catch (error) {
+      // Function doesn't exist, use fallback
+      console.log('Database function error, using fallback method');
+      usesFallback = true;
+    }
+
+    // Fallback: Fetch all destinations and calculate distance client-side
+    if (usesFallback) {
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('slug, name, city, category, description, content, image, michelin_stars, crown, latitude, longitude');
+
+      if (error) {
+        console.error('Error fetching destinations:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch destinations', details: error.message },
+          { status: 500 }
+        );
+      }
+
+      // Calculate distances for destinations that have coordinates
+      destinations = (data || [])
+        .filter((d: any) => d.latitude && d.longitude)
+        .map((d: any) => {
+          const distance = calculateDistance(lat, lng, d.latitude, d.longitude);
+          return {
+            ...d,
+            distance_km: distance,
+            distance_miles: distance * 0.621371
+          };
+        })
+        .filter((d: any) => d.distance_km <= radius)
+        .sort((a: any, b: any) => a.distance_km - b.distance_km)
+        .slice(0, limit);
     }
 
     // Apply additional filters if provided
@@ -57,6 +109,7 @@ export async function GET(request: NextRequest) {
       userLocation: { lat, lng },
       radius,
       count: filtered.length,
+      usesFallback,
     });
   } catch (error: any) {
     console.error('Error in nearby API:', error);

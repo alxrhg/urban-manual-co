@@ -416,14 +416,26 @@ export default function Home() {
     setUserLocation({ lat, lng });
 
     try {
+      console.log(`[Near Me] Fetching destinations within ${radius}km of ${lat}, ${lng}`);
       const response = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&radius=${radius}&limit=100`);
       const data = await response.json();
 
+      if (data.error) {
+        console.error('[Near Me] API error:', data.error, data.details);
+        setNearbyDestinations([]);
+        return;
+      }
+
+      console.log(`[Near Me] Found ${data.count} destinations`, data.usesFallback ? '(using fallback)' : '(using database function)');
+
       if (data.destinations) {
         setNearbyDestinations(data.destinations);
+      } else {
+        setNearbyDestinations([]);
       }
     } catch (error) {
-      console.error('Error fetching nearby destinations:', error);
+      console.error('[Near Me] Error fetching nearby destinations:', error);
+      setNearbyDestinations([]);
     }
   };
 
@@ -910,6 +922,24 @@ export default function Home() {
               <TrendingSection />
             )}
 
+            {/* Near Me - No Results Message */}
+            {advancedFilters.nearMe && userLocation && nearbyDestinations.length === 0 && (
+              <div className="text-center py-12 px-4">
+                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  No destinations found nearby
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">
+                  We couldn't find any destinations within {advancedFilters.nearMeRadius || 5}km of your location.
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 max-w-md mx-auto">
+                  This feature requires destination coordinates to be populated.
+                  <br />
+                  See <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">/DEPLOYMENT_GUIDE.md</code> for setup instructions.
+                </p>
+              </div>
+            )}
+
             {/* Destination Grid - Original design */}
             {(() => {
               // Determine which destinations to show
@@ -917,7 +947,8 @@ export default function Home() {
                 ? nearbyDestinations
                 : filteredDestinations;
 
-              if (displayDestinations.length === 0) return null;
+              if (displayDestinations.length === 0 && !advancedFilters.nearMe) return null;
+              if (displayDestinations.length === 0 && advancedFilters.nearMe) return null; // Message shown above
 
               return (
               <>
