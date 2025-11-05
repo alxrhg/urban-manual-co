@@ -675,7 +675,48 @@ export default function Home() {
 
   return (
     <ErrorBoundary>
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Organization',
+                '@id': 'https://www.urbanmanual.co/#organization',
+                name: 'The Urban Manual',
+                url: 'https://www.urbanmanual.co',
+                description: 'Curated guide to world\'s best hotels, restaurants & travel destinations',
+                logo: {
+                  '@type': 'ImageObject',
+                  url: 'https://www.urbanmanual.co/logo.png',
+                },
+              },
+              {
+                '@type': 'WebSite',
+                '@id': 'https://www.urbanmanual.co/#website',
+                url: 'https://www.urbanmanual.co',
+                name: 'The Urban Manual',
+                publisher: {
+                  '@id': 'https://www.urbanmanual.co/#organization',
+                },
+                potentialAction: {
+                  '@type': 'SearchAction',
+                  target: {
+                    '@type': 'EntryPoint',
+                    urlTemplate: 'https://www.urbanmanual.co/search?q={search_term_string}',
+                  },
+                  'query-input': 'required name=search_term_string',
+                },
+              },
+            ],
+          }),
+        }}
+      />
       <main className="relative min-h-screen dark:text-white">
+        {/* SEO H1 - Visually hidden but accessible to search engines */}
+        <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
         <section className="min-h-[70vh] flex flex-col px-6 md:px-10 py-20">
           <div className="w-full flex md:justify-start flex-1 items-center">
@@ -901,7 +942,35 @@ export default function Home() {
 
             {/* Recently Viewed - Show when no active search */}
             {!searchTerm.trim() && !selectedCity && !selectedCategory && (
-              <RecentlyViewed />
+              <RecentlyViewed
+                onCardClick={(destination) => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+
+                  // Track destination click
+                  trackDestinationClick({
+                    destinationSlug: destination.slug,
+                    position: 0,
+                    source: 'recently_viewed',
+                  });
+
+                  // Also track with new analytics system
+                  if (destination.id) {
+                    import('@/lib/analytics/track').then(({ trackEvent }) => {
+                      trackEvent({
+                        event_type: 'click',
+                        destination_id: destination.id,
+                        destination_slug: destination.slug,
+                        metadata: {
+                          category: destination.category,
+                          city: destination.city,
+                          source: 'recently_viewed',
+                        },
+                      });
+                    });
+                  }
+                }}
+              />
             )}
 
             {/* For You Section - Show only when user is logged in and no active search */}
@@ -997,9 +1066,9 @@ export default function Home() {
 
                     {/* Info */}
                     <div className="space-y-0.5">
-                      <div className={`${CARD_TITLE}`} role="heading" aria-level={3}>
+                      <h3 className={`${CARD_TITLE}`}>
                         {destination.name}
-                      </div>
+                      </h3>
 
                       <div className={`${CARD_META}`}>
                         <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">

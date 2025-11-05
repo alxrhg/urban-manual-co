@@ -1,7 +1,12 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import DetailSkeleton from '@/src/features/detail/DetailSkeleton';
-import { generateDestinationMetadata, generateDestinationSchema } from '@/lib/metadata';
+import {
+  generateDestinationMetadata,
+  generateDestinationSchema,
+  generateDestinationBreadcrumb,
+  generateDestinationFAQ
+} from '@/lib/metadata';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import DestinationPageClient from './page-client';
@@ -23,7 +28,7 @@ export default async function DestinationPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  
+
   // Fetch destination data on server for structured data
   let destination: Destination | null = null;
   try {
@@ -40,8 +45,10 @@ export default async function DestinationPage({
     console.error('Error fetching destination for schema:', error);
   }
 
-  // Generate structured data schema
+  // Generate structured data schemas
   const schema = destination ? generateDestinationSchema(destination) : null;
+  const breadcrumb = destination ? generateDestinationBreadcrumb(destination) : null;
+  const faq = destination ? generateDestinationFAQ(destination) : null;
 
   return (
     <>
@@ -55,7 +62,27 @@ export default async function DestinationPage({
           }}
         />
       )}
-      
+
+      {/* Breadcrumb Schema */}
+      {breadcrumb && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumb),
+          }}
+        />
+      )}
+
+      {/* FAQ Schema */}
+      {faq && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faq),
+          }}
+        />
+      )}
+
       {/* Render client component */}
       <Suspense fallback={<DetailSkeleton />}>
         <DestinationPageClient />

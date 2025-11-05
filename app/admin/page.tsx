@@ -4,9 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Plus, Edit, Search, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 
@@ -299,23 +296,21 @@ function DestinationForm({
                 className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
                 types="establishment"
               />
-              <Button
+              <button
                 type="button"
                 onClick={fetchFromGoogle}
                 disabled={fetchingGoogle || !formData.name.trim()}
-                variant="outline"
-                size="sm"
-                className="whitespace-nowrap"
+                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 {fetchingGoogle ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    <Loader2 className="h-4 w-4 animate-spin mr-1 inline" />
                     Fetching...
                   </>
                 ) : (
                   '🔍 Fetch Details'
                 )}
-              </Button>
+              </button>
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               💡 Type to see Google Places suggestions, or click "Fetch Details" to auto-fill all fields
@@ -533,7 +528,7 @@ function DestinationForm({
               className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
             <label htmlFor="crown-checkbox" className="text-sm font-medium cursor-pointer">
-              ⭐ Crown (Featured)
+              Crown (Featured)
             </label>
           </div>
         </div>
@@ -541,13 +536,22 @@ function DestinationForm({
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="button" onClick={onCancel} variant="outline" disabled={isSaving}>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSaving}
+          className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Cancel
-        </Button>
-        <Button type="submit" disabled={isSaving} className="min-w-[100px]">
+        </button>
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="min-w-[100px] px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+        >
           {isSaving ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="h-4 w-4 animate-spin mr-2 inline" />
               Saving...
             </>
           ) : destination ? (
@@ -555,7 +559,7 @@ function DestinationForm({
           ) : (
             'Create Place'
           )}
-        </Button>
+        </button>
       </div>
     </form>
   );
@@ -592,6 +596,21 @@ export default function AdminPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches'>('destinations');
+
+  // Analytics state
+  const [analyticsStats, setAnalyticsStats] = useState({
+    totalViews: 0,
+    totalSearches: 0,
+    totalSaves: 0,
+    totalUsers: 0,
+    topSearches: [] as { query: string; count: number }[],
+  });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  // Searches state
+  const [searchLogs, setSearchLogs] = useState<any[]>([]);
+  const [loadingSearches, setLoadingSearches] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -629,6 +648,17 @@ export default function AdminPage() {
       loadDestinationList();
     }
   }, [isAdmin, authChecked, listOffset, listSearchQuery]);
+
+  // Load data when tab changes
+  useEffect(() => {
+    if (!isAdmin || !authChecked) return;
+
+    if (activeTab === 'analytics' && analyticsStats.totalUsers === 0) {
+      loadAnalytics();
+    } else if (activeTab === 'searches' && searchLogs.length === 0) {
+      loadSearchLogs();
+    }
+  }, [activeTab, isAdmin, authChecked]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -709,14 +739,14 @@ export default function AdminPage() {
         .from('destinations')
         .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating')
         .order('slug', { ascending: true });
-      
+
       // Apply search filter if present
       if (listSearchQuery.trim()) {
         query = query.or(`name.ilike.%${listSearchQuery}%,city.ilike.%${listSearchQuery}%,slug.ilike.%${listSearchQuery}%,category.ilike.%${listSearchQuery}%`);
       }
-      
+
       const { data, error } = await query.range(listOffset, listOffset + 19);
-      
+
       if (error) {
         console.error('Supabase error:', error);
         setDestinationList([]);
@@ -728,6 +758,74 @@ export default function AdminPage() {
       setDestinationList([]);
     } finally {
       setIsLoadingList(false);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      // Get user interactions stats
+      const { data: interactions } = await supabase
+        .from('user_interactions')
+        .select('interaction_type');
+
+      // Get visit history stats
+      const { data: visits } = await supabase
+        .from('visit_history')
+        .select('destination_id, search_query');
+
+      // Get user count
+      const { count: userCount } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Aggregate stats
+      const views = interactions?.filter(i => i.interaction_type === 'view').length || 0;
+      const searches = visits?.filter(v => v.search_query).length || 0;
+      const saves = interactions?.filter(i => i.interaction_type === 'save').length || 0;
+
+      // Top searches
+      const searchQueries = visits?.map(v => v.search_query).filter(Boolean) || [];
+      const searchCounts: Record<string, number> = {};
+      searchQueries.forEach((q: string) => {
+        searchCounts[q] = (searchCounts[q] || 0) + 1;
+      });
+      const topSearches = Object.entries(searchCounts)
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      setAnalyticsStats({
+        totalViews: views,
+        totalSearches: searches,
+        totalSaves: saves,
+        totalUsers: userCount || 0,
+        topSearches,
+      });
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const loadSearchLogs = async () => {
+    setLoadingSearches(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_interactions')
+        .select('id, created_at, interaction_type, user_id, metadata')
+        .eq('interaction_type', 'search')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) throw error;
+      setSearchLogs(data || []);
+    } catch (error) {
+      console.error('Error loading search logs:', error);
+      setSearchLogs([]);
+    } finally {
+      setLoadingSearches(false);
     }
   };
 
@@ -753,13 +851,11 @@ export default function AdminPage() {
   // Show loading state
   if (!authChecked) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <main className="px-6 md:px-10 py-12">
-          <div className="max-w-7xl mx-auto flex items-center justify-center h-[50vh]">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        </main>
-      </div>
+      <main className="px-6 md:px-10 py-20">
+        <div className="max-w-[1800px] mx-auto flex items-center justify-center h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      </main>
     );
   }
 
@@ -768,207 +864,64 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
-      <main className="px-6 md:px-10 py-12 dark:text-white">
-        <div className="max-w-7xl mx-auto">
-          {/* Page Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-600 dark:text-gray-400">
-                  {user?.email}
-                </span>
-                <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs">Admin</Badge>
-              </div>
-            </div>
-            <Button onClick={() => router.push('/account')} variant="outline">
+    <main className="px-6 md:px-10 py-20 min-h-screen">
+      <div className="max-w-[1800px] mx-auto">
+        {/* Header - Matches account page spacing and style */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-light">Admin</h1>
+            <button
+              onClick={() => router.push('/account')}
+              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+            >
               Back to Account
-            </Button>
+            </button>
           </div>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+            <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">Admin</span>
+          </div>
+        </div>
 
-          {/* Enrichment Statistics */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Enrichment Status</CardTitle>
-                <div className="flex gap-2">
-                  {enrichmentStats && enrichmentStats.needsEnrichment > 0 && (
-                    <Button
-                      onClick={async () => {
-                        if (!user?.email || bulkEnriching) return;
-                        setBulkEnriching(true);
-                        setBulkProgress({ current: 0, total: enrichmentStats.needsEnrichment });
-                        
-                        try {
-                          // Get all destinations that need enrichment
-                          const { data: needsEnrichment } = await supabase
-                            .from('destinations')
-                            .select('slug')
-                            .or('google_place_id.is.null,formatted_address.is.null,international_phone_number.is.null,website.is.null')
-                            .order('slug', { ascending: true });
-                          
-                      if (!needsEnrichment || needsEnrichment.length === 0) {
-                        alert('No destinations need enrichment');
-                        return;
-                      }
-                      
-                      const { data: { session } } = await supabase.auth.getSession();
-                      const token = session?.access_token;
-                      if (!token) {
-                        throw new Error('Not authenticated');
-                      }
-                      
-                      let processed = 0;
-                      let failed = 0;
-                      const failures: Array<{ slug: string; reason: string }> = [];
-                      const batchSize = 10; // Process 10 at a time
-                          
-                          for (let i = 0; i < needsEnrichment.length; i += batchSize) {
-                            const batch = needsEnrichment.slice(i, i + batchSize);
-                            
-                            await Promise.all(
-                              batch.map(async (dest: any) => {
-                                try {
-                                  const res = await fetch('/api/enrich-google', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                    body: JSON.stringify({ slug: dest.slug, limit: 1, offset: 0 })
-                                  });
-                                  const result = await res.json();
-                                  if (result.results?.[0]?.ok) {
-                                    processed++;
-                                  } else {
-                                    failed++;
-                                    const reason = result.results?.[0]?.reason || result.results?.[0]?.error || 'unknown';
-                                    failures.push({ slug: dest.slug, reason });
-                                  }
-                                } catch (e: any) {
-                                  failed++;
-                                  failures.push({ slug: dest.slug, reason: e?.message || 'network_error' });
-                                  console.error(`Error enriching ${dest.slug}:`, e);
-                                }
-                                setBulkProgress({ current: processed + failed, total: needsEnrichment.length });
-                              })
-                            );
-                            
-                            // Small delay between batches to avoid rate limiting
-                            if (i + batchSize < needsEnrichment.length) {
-                              await new Promise(resolve => setTimeout(resolve, 1000));
-                            }
-                          }
-                          
-                          // Show detailed results
-                          const reasonCounts: Record<string, number> = {};
-                          failures.forEach(f => {
-                            reasonCounts[f.reason] = (reasonCounts[f.reason] || 0) + 1;
-                          });
-                          
-                          const reasonSummary = Object.entries(reasonCounts)
-                            .map(([reason, count]) => `  • ${reason}: ${count}`)
-                            .join('\n');
-                          
-                          const message = `Bulk enrichment complete!\n\n` +
-                            `✅ Enriched: ${processed}\n` +
-                            `❌ Failed: ${failed}\n\n` +
-                            `Failure reasons:\n${reasonSummary || '  (none)'}\n\n` +
-                            `Most common issue: ${Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}`;
-                          
-                          alert(message);
-                          
-                          // Log detailed failures to console
-                          if (failures.length > 0) {
-                            console.group('Failed Enrichments');
-                            failures.slice(0, 50).forEach(f => {
-                              console.log(`${f.slug}: ${f.reason}`);
-                            });
-                            if (failures.length > 50) {
-                              console.log(`... and ${failures.length - 50} more`);
-                            }
-                            console.groupEnd();
-                          }
-                          // Refresh stats
-                          await loadEnrichmentStats();
-                          await loadDestinationList();
-                        } catch (e: any) {
-                          console.error('Bulk enrichment error:', e);
-                          alert(`Error during bulk enrichment: ${e.message}`);
-                        } finally {
-                          setBulkEnriching(false);
-                          setBulkProgress({ current: 0, total: 0 });
-                        }
-                      }}
-                      variant="default"
-                      size="sm"
-                      disabled={bulkEnriching || !user?.email}
-                    >
-                      {bulkEnriching ? (
-                        <>
-                          Enriching... ({bulkProgress.current}/{bulkProgress.total})
-                        </>
-                      ) : (
-                        `Enrich All (${enrichmentStats.needsEnrichment})`
-                      )}
-                    </Button>
-                  )}
-                  <Button 
-                    onClick={loadEnrichmentStats} 
-                    variant="outline" 
-                    size="sm"
-                    disabled={isLoadingStats}
-                  >
-                    {isLoadingStats ? 'Loading...' : 'Refresh'}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {enrichmentStats ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
-                    <div className="text-2xl font-bold">{enrichmentStats.enriched}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Enriched</div>
-                    <div className="text-xs text-gray-500 mt-1">{enrichmentStats.percentage}% of {enrichmentStats.total}</div>
-                  </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
-                    <div className="text-2xl font-bold">{enrichmentStats.needsEnrichment}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Needs Enrichment</div>
-                  </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
-                    <div className="text-2xl font-bold">{enrichmentStats.withAddress}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Have Address</div>
-                  </div>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl">
-                    <div className="text-2xl font-bold">{enrichmentStats.withRating}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Have Rating</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Tab Navigation - Matches account page style */}
+        <div className="mb-12">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            {['destinations', 'analytics', 'searches'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`transition-all ${
+                  activeTab === tab
+                    ? "font-medium text-black dark:text-white"
+                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {/* Destination List with Enrichment Status */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between mb-4">
-                <CardTitle>Destinations</CardTitle>
-                <Button
-                  onClick={() => {
-                    setEditingDestination(null);
-                    setShowCreateModal(true);
-                  }}
-                  variant="default"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Place
-                </Button>
-              </div>
+        {/* Destinations Tab */}
+        {activeTab === 'destinations' && (
+          <div className="fade-in space-y-12">
+
+        {/* Destination List */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Destinations</h2>
+            <button
+              onClick={() => {
+                setEditingDestination(null);
+                setShowCreateModal(true);
+              }}
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Place
+            </button>
+          </div>
+          <div className="mb-4">
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -990,433 +943,278 @@ export default function AdminPage() {
                       <X className="h-4 w-4" />
                     </button>
                   )}
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => {
-                      setListOffset(Math.max(0, listOffset - 20));
-                    }}
-                    variant="outline"
-                    size="sm"
-                    disabled={listOffset === 0 || isLoadingList}
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      setListOffset(listOffset + 20);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    disabled={isLoadingList || destinationList.length < 20}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isLoadingList ? (
-                <div className="text-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
-                </div>
-              ) : destinationList.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">No destinations found</div>
-              ) : (
-                <div className="space-y-2">
-                  {destinationList.map((dest: any) => {
-                    const isEnriched = !!dest.google_place_id;
-                    const hasAddress = !!dest.formatted_address;
-                    const hasRating = !!dest.rating;
-                    
-                    return (
-                      <div
-                        key={dest.slug}
-                        className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{dest.name}</span>
-                            <span className="text-xs text-gray-500">{dest.city}</span>
-                            {isEnriched ? (
-                              <Badge variant="default" className="text-xs">Enriched</Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">Not Enriched</Badge>
-                            )}
-                          </div>
-                          <div className="flex gap-3 mt-1 text-xs text-gray-500">
-                            {hasAddress && <span className="text-green-600 dark:text-green-400">✓ Address</span>}
-                            {hasRating && <span className="text-green-600 dark:text-green-400">✓ Rating: {dest.rating}</span>}
-                            <span className="text-xs">Slug: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{dest.slug}</code></span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => {
-                              setEditingDestination(dest);
-                              setShowCreateModal(true);
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-1"
-                          >
-                            <Edit className="h-3 w-3" />
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setEnrichSlug(dest.slug);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Enrich
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Create/Edit Drawer */}
-          {showCreateModal && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+            </div>
+            <div className="flex gap-2">
+              <button
                 onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingDestination(null);
+                  setListOffset(Math.max(0, listOffset - 20));
                 }}
-              />
-              
-              {/* Drawer */}
-              <div
-                className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-                  showCreateModal ? 'translate-x-0' : 'translate-x-full'
-                } overflow-y-auto`}
+                disabled={listOffset === 0 || isLoadingList}
+                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {/* Header */}
-                <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-                  <h2 className="text-xl font-bold">
-                    {editingDestination ? 'Edit Destination' : 'Create New Destination'}
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setEditingDestination(null);
-                    }}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                Previous
+              </button>
+              <button
+                onClick={() => {
+                  setListOffset(listOffset + 20);
+                }}
+                disabled={isLoadingList || destinationList.length < 20}
+                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+        <div>
+          {isLoadingList ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+            </div>
+          ) : destinationList.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No destinations found</div>
+          ) : (
+            <div className="space-y-2">
+              {destinationList.map((dest: any) => {
+                const isEnriched = !!dest.google_place_id;
+                const hasAddress = !!dest.formatted_address;
+                const hasRating = !!dest.rating;
+
+                return (
+                  <div
+                    key={dest.slug}
+                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                   >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <DestinationForm
-                    destination={editingDestination}
-                    onSave={async (data) => {
-                      setIsSaving(true);
-                      try {
-                        if (editingDestination) {
-                          // Update existing
-                          const { error } = await supabase
-                            .from('destinations')
-                            .update(data)
-                            .eq('slug', editingDestination.slug);
-                          
-                          if (error) throw error;
-                        } else {
-                          // Create new - generate slug if not provided
-                          if (!data.slug && data.name) {
-                            data.slug = data.name.toLowerCase()
-                              .replace(/[^a-z0-9]+/g, '-')
-                              .replace(/(^-|-$)/g, '');
-                          }
-                          
-                          const { error } = await supabase
-                            .from('destinations')
-                            .insert([data]);
-                          
-                          if (error) throw error;
-                        }
-                        
-                        setShowCreateModal(false);
-                        setEditingDestination(null);
-                        await loadDestinationList();
-                        await loadEnrichmentStats();
-                      } catch (e: any) {
-                        alert(`Error: ${e.message}`);
-                      } finally {
-                        setIsSaving(false);
-                      }
-                    }}
-                    onCancel={() => {
-                      setShowCreateModal(false);
-                      setEditingDestination(null);
-                    }}
-                    isSaving={isSaving}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Google Enrichment Tools */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Google Enrichment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <span className="text-sm text-gray-600 dark:text-gray-400 mb-4 block">
-                Enrich destinations with Google Places API data. 
-                <br />
-                <strong>Tip:</strong> If batch returns 0 results, all destinations may already be enriched. Try a specific slug to test or re-enrich a destination.
-              </span>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                <input
-                  type="text"
-                  value={enrichSlug}
-                  onChange={(e) => setEnrichSlug(e.target.value)}
-                  placeholder="Destination slug (optional, recommended)"
-                  className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none"
-                />
-                <input
-                  type="number"
-                  value={enrichLimit}
-                  onChange={(e) => setEnrichLimit(Number(e.target.value))}
-                  placeholder="Limit (default: 100)"
-                  className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none"
-                />
-                <input
-                  type="number"
-                  value={enrichOffset}
-                  onChange={(e) => setEnrichOffset(Number(e.target.value))}
-                  placeholder="Offset (default: 0)"
-                  className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none"
-                />
-              </div>
-              
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                <strong>Batch mode:</strong> Finds destinations missing any enrichment data (google_place_id, formatted_address, phone, or website). 
-                If you get 0 results, try enriching a specific destination by slug.
-              </div>
-
-              {/* Search for slugs */}
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 mt-4">
-                <span className="text-sm font-medium mb-2">Find Destination Slug</span>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearchDestinations();
-                      }
-                    }}
-                    placeholder="Search by name or city (e.g., 'tokyo', 'central park')"
-                    className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none"
-                  />
-                  <Button
-                    onClick={handleSearchDestinations}
-                    disabled={isSearching || !searchQuery.trim()}
-                    variant="outline"
-                    size="sm"
-                  >
-                    {isSearching ? 'Searching...' : 'Search'}
-                  </Button>
-                </div>
-                {searchResults.length > 0 && (
-                  <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
-                    {searchResults.map((d: any) => (
-                      <button
-                        key={d.slug}
-                        onClick={() => {
-                          setEnrichSlug(d.slug);
-                          setSearchResults([]);
-                          setSearchQuery('');
-                        }}
-                        className="block w-full text-left px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-800"
-                      >
-                        <div className="font-medium">{d.name}</div>
-                        <div className="text-gray-500">Slug: <code className="text-xs">{d.slug}</code> | City: {d.city}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Button
-                onClick={async () => {
-                  if (!user?.email) return;
-                  setEnrichRunning(true);
-                  setEnrichResult(null);
-                  try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const token = session?.access_token;
-                    if (!token) {
-                      throw new Error('Not authenticated');
-                    }
-                    const res = await fetch('/api/enrich-google', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                      body: JSON.stringify({ slug: enrichSlug || undefined, limit: enrichLimit, offset: enrichOffset })
-                    });
-                    const j = await res.json();
-                    setEnrichResult(j);
-                  } catch (e: any) {
-                    setEnrichResult({ error: e?.message || 'Failed to run enrichment' });
-                  } finally {
-                    setEnrichRunning(false);
-                  }
-                }}
-                disabled={enrichRunning || !user?.email}
-                className="w-full sm:w-auto"
-              >
-                {enrichRunning ? 'Running...' : 'Run Enrichment'}
-              </Button>
-
-              {enrichResult && (
-                <div className="mt-4">
-                  <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded-2xl overflow-auto max-h-[40vh] border border-gray-200 dark:border-gray-800">
-                    {JSON.stringify(enrichResult, null, 2)}
-                  </pre>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Regenerate Content with AI */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Regenerate Content with AI</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                Regenerate the "About" section for destinations using AI (Gemini) and all available Google Places API data.
-                The AI will create engaging, informative descriptions using ratings, reviews, opening hours, and other enriched data.
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">Slug (optional - leave empty for batch)</label>
-                <input
-                  type="text"
-                  value={regenerateSlug}
-                  onChange={(e) => setRegenerateSlug(e.target.value)}
-                  placeholder="e.g., palace-hotel-tokyo"
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
-                />
-              </div>
-
-              {!regenerateSlug && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Limit</label>
-                      <input
-                        type="number"
-                        value={regenerateLimit}
-                        onChange={(e) => setRegenerateLimit(Number(e.target.value))}
-                        min="1"
-                        max="50"
-                        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Offset</label>
-                      <input
-                        type="number"
-                        value={regenerateOffset}
-                        onChange={(e) => setRegenerateOffset(Number(e.target.value))}
-                        min="0"
-                        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
-                      />
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Processing {regenerateLimit} destinations starting from offset {regenerateOffset}. 
-                    Rate limited to 1 per second to avoid API limits.
-                  </div>
-                </>
-              )}
-
-              <Button
-                onClick={async () => {
-                  if (!user?.email) return;
-                  setRegenerateRunning(true);
-                  setRegenerateResult(null);
-                  try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const token = session?.access_token;
-                    if (!token) {
-                      throw new Error('Not authenticated');
-                    }
-                    
-                    const res = await fetch('/api/regenerate-content', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({ 
-                        slug: regenerateSlug || undefined,
-                        limit: regenerateLimit,
-                        offset: regenerateOffset
-                      })
-                    });
-                    const j = await res.json();
-                    setRegenerateResult(j);
-                  } catch (e: any) {
-                    setRegenerateResult({ error: e?.message || 'Failed to regenerate content' });
-                  } finally {
-                    setRegenerateRunning(false);
-                  }
-                }}
-                disabled={regenerateRunning || !user?.email}
-                className="w-full sm:w-auto"
-              >
-                {regenerateRunning ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Regenerating...
-                  </>
-                ) : (
-                  `Regenerate Content ${regenerateSlug ? `(${regenerateSlug})` : `(${regenerateLimit} places)`}`
-                )}
-              </Button>
-
-              {regenerateResult && (
-                <div className="mt-4">
-                  <div className="mb-2 text-sm font-medium">
-                    {regenerateResult.success !== undefined && (
-                      <div className="mb-2">
-                        <span className="text-green-600 dark:text-green-400">
-                          ✅ Success: {regenerateResult.success}
-                        </span>
-                        {regenerateResult.failures > 0 && (
-                          <span className="text-red-600 dark:text-red-400 ml-4">
-                            ❌ Failures: {regenerateResult.failures}
-                          </span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{dest.name}</span>
+                        <span className="text-xs text-gray-500">{dest.city}</span>
+                        {isEnriched ? (
+                          <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">Enriched</span>
+                        ) : (
+                          <span className="text-xs bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">Not Enriched</span>
                         )}
                       </div>
-                    )}
+                      <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                        {hasAddress && <span className="text-green-600 dark:text-green-400">✓ Address</span>}
+                        {hasRating && <span className="text-green-600 dark:text-green-400">✓ Rating: {dest.rating}</span>}
+                        <span className="text-xs">Slug: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{dest.slug}</code></span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingDestination(dest);
+                          setShowCreateModal(true);
+                        }}
+                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium flex items-center gap-1"
+                      >
+                        <Edit className="h-3 w-3" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEnrichSlug(dest.slug);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium"
+                      >
+                        Enrich
+                      </button>
+                    </div>
                   </div>
-                  <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded-2xl overflow-auto max-h-[40vh] border border-gray-200 dark:border-gray-800">
-                    {JSON.stringify(regenerateResult, null, 2)}
-                  </pre>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </main>
-    </div>
+        </div>
+        </div>
+        )}
+
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="fade-in space-y-12">
+            {loadingAnalytics ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+              </div>
+            ) : (
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Views</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Searches</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Saves</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Users</div>
+                  </div>
+                </div>
+
+                {/* Top Searches */}
+                {analyticsStats.topSearches.length > 0 && (
+                  <div>
+                    <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
+                    <div className="space-y-2">
+                      {analyticsStats.topSearches.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                          <span className="text-sm font-medium">{item.query}</span>
+                          <span className="text-xs text-gray-500">{item.count} searches</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Searches Tab */}
+        {activeTab === 'searches' && (
+          <div className="fade-in">
+            {loadingSearches ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+              </div>
+            ) : searchLogs.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">No search logs available</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-left border-b border-gray-200 dark:border-gray-800">
+                      <th className="py-2 pr-4 font-medium text-gray-500">Time</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">User</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Query</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">City</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Category</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Count</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchLogs.map((log) => {
+                      const q = log.metadata?.query || '';
+                      const intent = log.metadata?.intent || {};
+                      const filters = log.metadata?.filters || {};
+                      const count = log.metadata?.count ?? '';
+                      const source = log.metadata?.source || '';
+                      return (
+                        <tr key={log.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                          <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="py-2 pr-4">{log.user_id ? log.user_id.substring(0, 8) : 'anon'}</td>
+                          <td className="py-2 pr-4 max-w-[360px] truncate" title={q}>{q}</td>
+                          <td className="py-2 pr-4">{intent.city || filters.city || ''}</td>
+                          <td className="py-2 pr-4">{intent.category || filters.category || ''}</td>
+                          <td className="py-2 pr-4">{count}</td>
+                          <td className="py-2 pr-4">{source}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Create/Edit Drawer - Outside tabs, always available */}
+        {showCreateModal && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+              onClick={() => {
+                setShowCreateModal(false);
+                setEditingDestination(null);
+              }}
+            />
+
+            {/* Drawer */}
+            <div
+              className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+                showCreateModal ? 'translate-x-0' : 'translate-x-full'
+              } overflow-y-auto`}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-bold">
+                  {editingDestination ? 'Edit Destination' : 'Create New Destination'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingDestination(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <DestinationForm
+                  destination={editingDestination}
+                  onSave={async (data) => {
+                    setIsSaving(true);
+                    try {
+                      if (editingDestination) {
+                        // Update existing
+                        const { error } = await supabase
+                          .from('destinations')
+                          .update(data)
+                          .eq('slug', editingDestination.slug);
+
+                        if (error) throw error;
+                      } else {
+                        // Create new - generate slug if not provided
+                        if (!data.slug && data.name) {
+                          data.slug = data.name.toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/(^-|-$)/g, '');
+                        }
+
+                        const { error } = await supabase
+                          .from('destinations')
+                          .insert([data]);
+
+                        if (error) throw error;
+                      }
+
+                      setShowCreateModal(false);
+                      setEditingDestination(null);
+                      await loadDestinationList();
+                      await loadEnrichmentStats();
+                    } catch (e: any) {
+                      alert(`Error: ${e.message}`);
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }}
+                  onCancel={() => {
+                    setShowCreateModal(false);
+                    setEditingDestination(null);
+                  }}
+                  isSaving={isSaving}
+                />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </main>
   );
 }

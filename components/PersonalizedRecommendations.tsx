@@ -97,7 +97,7 @@ export function PersonalizedRecommendations({
             >
               {/* AI Match Badge */}
               {rec && rec.score > 0.7 && (
-                <div className="absolute top-2 right-2 bg-purple-600 dark:bg-purple-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-20 flex items-center gap-1">
+                <div className="absolute top-2 right-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm z-20 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3" />
                   <span>Match</span>
                 </div>
@@ -123,7 +123,7 @@ export function PersonalizedRecommendations({
 
                 {/* Michelin Stars */}
                 {destination.michelin_stars && destination.michelin_stars > 0 && (
-                  <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 shadow-lg z-10">
+                  <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5 z-10">
                     <Image
                       src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                       alt="Michelin star"
@@ -138,7 +138,7 @@ export function PersonalizedRecommendations({
 
               {/* Info */}
               <div className="space-y-0.5">
-                <div className={CARD_TITLE} role="heading" aria-level={3}>{destination.name}</div>
+                <h3 className={CARD_TITLE}>{destination.name}</h3>
                 <div className={CARD_META}>
                   <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
                     {destination.city

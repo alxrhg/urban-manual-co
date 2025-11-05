@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Clock } from 'lucide-react';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { Destination } from '@/types/destination';
 
 function capitalizeCity(city: string): string {
   return city
@@ -12,7 +13,11 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
-export function RecentlyViewed() {
+interface RecentlyViewedProps {
+  onCardClick?: (destination: Destination) => void;
+}
+
+export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
   const router = useRouter();
   const { recentlyViewed } = useRecentlyViewed();
 
@@ -33,7 +38,13 @@ export function RecentlyViewed() {
         {recentlyViewed.map((item) => (
           <button
             key={item.slug}
-            onClick={() => router.push(`/destination/${item.slug}`)}
+            onClick={() => {
+              if (onCardClick) {
+                onCardClick(item as Destination);
+              } else {
+                router.push(`/destination/${item.slug}`);
+              }
+            }}
             className="group text-left"
           >
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-2">

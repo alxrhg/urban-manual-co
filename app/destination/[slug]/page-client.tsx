@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Bookmark, Check, Plus } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -11,6 +11,9 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
 import { trackEvent } from '@/lib/analytics/track';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { SaveDestinationModal } from '@/components/SaveDestinationModal';
+import { VisitedModal } from '@/components/VisitedModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Recommendation {
   slug: string;
@@ -42,11 +45,17 @@ export default function DestinationPageClient() {
   const params = useParams();
   const slug = params.slug as string;
   const { addToRecentlyViewed } = useRecentlyViewed();
+  const { user } = useAuth();
 
   const [destination, setDestination] = useState<Destination | null>(null);
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showVisitedModal, setShowVisitedModal] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isVisited, setIsVisited] = useState(false);
+  const [enrichedData, setEnrichedData] = useState<any>(null);
 
   useEffect(() => {
     fetchDestination();
@@ -84,16 +93,167 @@ export default function DestinationPageClient() {
     }
   }, [destination]);
 
+  // Check if destination is saved
+  useEffect(() => {
+    async function checkIfSaved() {
+      if (!user || !destination?.id) return;
+
+      try {
+        const { data } = await supabase
+          .from('saved_destinations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('destination_id', destination.id)
+          .single();
+
+        setIsSaved(!!data);
+      } catch (error) {
+        setIsSaved(false);
+      }
+    }
+
+    checkIfSaved();
+  }, [user, destination]);
+
+  // Check if destination is visited
+  useEffect(() => {
+    async function checkIfVisited() {
+      if (!user || !destination?.slug) return;
+
+      try {
+        const { data } = await supabase
+          .from('visited_places')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug)
+          .single();
+
+        setIsVisited(!!data);
+      } catch (error) {
+        setIsVisited(false);
+      }
+    }
+
+    checkIfVisited();
+  }, [user, destination]);
+
+  const handleVisitToggle = async () => {
+    if (!user || !destination) return;
+
+    try {
+      if (isVisited) {
+        // Remove visit
+        const { error } = await supabase
+          .from('visited_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug);
+
+        if (error) throw error;
+
+        setIsVisited(false);
+      } else {
+        // Add visit with current date
+        const { error } = await supabase
+          .from('visited_places')
+          .insert({
+            user_id: user.id,
+            destination_slug: destination.slug,
+            visited_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+
+        setIsVisited(true);
+      }
+    } catch (error) {
+      console.error('Error toggling visit:', error);
+      alert('Failed to update visit status. Please try again.');
+    }
+  };
+
+  const handleVisitedModalUpdate = async () => {
+    // Reload visited status after modal updates
+    if (!user || !destination) return;
+
+    const { data: visitedData } = await supabase
+      .from('visited_places')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('destination_slug', destination.slug)
+      .single();
+
+    setIsVisited(!!visitedData);
+  };
+
   const fetchDestination = async () => {
     try {
       const { data, error } = await supabase
         .from('destinations')
-        .select('*')
+        .select(`
+          *,
+          formatted_address,
+          international_phone_number,
+          website,
+          rating,
+          user_ratings_total,
+          price_level,
+          opening_hours_json,
+          editorial_summary,
+          google_name,
+          place_types_json,
+          utc_offset,
+          vicinity,
+          reviews_json,
+          timezone_id,
+          latitude,
+          longitude,
+          photos_json,
+          primary_photo_url,
+          photo_count
+        `)
         .eq('slug', slug)
         .single();
 
       if (error) throw error;
       setDestination(data);
+
+      // Parse enriched JSON fields
+      if (data) {
+        const enriched: any = { ...data };
+
+        if (data.opening_hours_json) {
+          try {
+            enriched.opening_hours = typeof data.opening_hours_json === 'string'
+              ? JSON.parse(data.opening_hours_json)
+              : data.opening_hours_json;
+          } catch (e) {
+            console.error('Error parsing opening_hours_json:', e);
+          }
+        }
+
+        if (data.reviews_json) {
+          try {
+            enriched.reviews = typeof data.reviews_json === 'string'
+              ? JSON.parse(data.reviews_json)
+              : data.reviews_json;
+          } catch (e) {
+            console.error('Error parsing reviews_json:', e);
+          }
+        }
+
+        if (data.photos_json) {
+          try {
+            enriched.photos = typeof data.photos_json === 'string'
+              ? JSON.parse(data.photos_json)
+              : data.photos_json;
+          } catch (e) {
+            console.error('Error parsing photos_json:', e);
+          }
+        }
+
+        setEnrichedData(enriched);
+      }
     } catch (err) {
       console.error('Error fetching destination:', err);
       setDestination(null);
@@ -218,7 +378,7 @@ export default function DestinationPageClient() {
 
   return (
     <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="max-w-5xl mx-auto space-y-12">
+      <div className="max-w-[1800px] mx-auto space-y-12">
         {/* Header */}
         <div>
           <button
@@ -231,14 +391,57 @@ export default function DestinationPageClient() {
 
           <div className="space-y-3">
             {/* Location */}
-            <p className="text-xs text-gray-500">
-              {destination.country ? `${cityName}, ${destination.country}` : cityName}
-            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/city/${destination.city}`}
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
+              >
+                <MapPin className="h-3 w-3" />
+                {destination.country ? `${cityName}, ${destination.country}` : cityName}
+              </a>
+            </div>
 
-            {/* Title */}
-            <h1 className="text-3xl sm:text-4xl font-light leading-tight">
-              {destination.name}
-            </h1>
+            {/* Title and Action Buttons */}
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl sm:text-4xl font-light leading-tight flex-1">
+                {destination.name}
+              </h1>
+              {user && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowSaveModal(true)}
+                    className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
+                      isSaved
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    }`}
+                  >
+                    <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleVisitToggle}
+                    className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
+                      isVisited
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    }`}
+                  >
+                    <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
+                    {isVisited ? 'Visited' : 'Mark as Visited'}
+                  </button>
+                  {isVisited && (
+                    <button
+                      onClick={() => setShowVisitedModal(true)}
+                      className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      title="Add visit details"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Meta badges */}
             <div className="flex flex-wrap gap-2 text-xs">
@@ -249,18 +452,33 @@ export default function DestinationPageClient() {
               )}
               {destination.michelin_stars && destination.michelin_stars > 0 && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <span>⭐</span>
+                  <Image
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    width={12}
+                    height={12}
+                    className="h-3 w-3"
+                  />
                   {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
                 </span>
               )}
               {destination.crown && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  👑 Crown
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                  Crown
                 </span>
               )}
-              {destination.rating && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
-                  {Number(destination.rating).toFixed(1)} ★
+              {(enrichedData?.rating || destination.rating) && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  {(enrichedData?.rating || destination.rating).toFixed(1)}
+                  {enrichedData?.user_ratings_total && (
+                    <span className="text-gray-400">({enrichedData.user_ratings_total.toLocaleString()})</span>
+                  )}
                 </span>
               )}
             </div>
@@ -288,6 +506,54 @@ export default function DestinationPageClient() {
             <h2 className="text-sm font-medium mb-4">About</h2>
             <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
               {stripHtmlTags(destination.content)}
+            </div>
+          </div>
+        )}
+
+        {/* Opening Hours */}
+        {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <h2 className="text-sm font-medium mb-4">Opening Hours</h2>
+            <div className="space-y-2 text-sm">
+              {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
+                const [dayName, hoursText] = day.split(': ');
+                return (
+                  <div key={index} className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">{dayName}</span>
+                    <span className="text-gray-900 dark:text-white font-medium">{hoursText}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Reviews */}
+        {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <h2 className="text-sm font-medium mb-4">Top Reviews</h2>
+            <div className="space-y-4">
+              {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
+                <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <span className="font-medium text-sm">{review.author_name}</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-yellow-500">⭐</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
+                        {review.relative_time_description && (
+                          <span className="text-xs text-gray-500">· {review.relative_time_description}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {review.text && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 leading-relaxed">
+                      {review.text}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -348,8 +614,15 @@ export default function DestinationPageClient() {
                       )}
 
                       {rec.michelin_stars && rec.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
-                          ⭐ {rec.michelin_stars}
+                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            width={12}
+                            height={12}
+                            className="h-3 w-3"
+                          />
+                          {rec.michelin_stars}
                         </div>
                       )}
                     </div>
@@ -385,6 +658,31 @@ export default function DestinationPageClient() {
           </button>
         </div>
       </div>
+
+      {/* Save to Collection Modal */}
+      {destination && destination.id && (
+        <SaveDestinationModal
+          destinationId={destination.id}
+          destinationSlug={destination.slug}
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={(collectionId) => {
+            setIsSaved(true);
+            setShowSaveModal(false);
+          }}
+        />
+      )}
+
+      {/* Visited Modal */}
+      {destination && (
+        <VisitedModal
+          destinationSlug={destination.slug}
+          destinationName={destination.name}
+          isOpen={showVisitedModal}
+          onClose={() => setShowVisitedModal(false)}
+          onUpdate={handleVisitedModalUpdate}
+        />
+      )}
     </main>
   );
 }

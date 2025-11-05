@@ -109,7 +109,12 @@ export function IntelligentSearchFeedback({
                 )}
                 {intent.filters?.michelinStar && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                    ⭐ {intent.filters.michelinStar} Michelin
+                    <img
+                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                      alt="Michelin star"
+                      className="h-3 w-3"
+                    />
+                    {intent.filters.michelinStar} Michelin
                   </span>
                 )}
                 {intent.filters?.rating && (

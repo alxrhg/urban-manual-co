@@ -87,13 +87,17 @@ export function TrendingSection({ city }: { city?: string }) {
                 </div>
               )}
               {dest.is_open_now && (
-                <span className="absolute top-2 right-2 inline-flex items-center px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-200 rounded">
+                <span className="absolute top-2 right-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm">
                   OPEN NOW
                 </span>
               )}
               {dest.michelin_stars && dest.michelin_stars > 0 && (
-                <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                  <span>⭐</span>
+                <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                  />
                   <span>{dest.michelin_stars}</span>
                 </div>
               )}

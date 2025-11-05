@@ -215,7 +215,7 @@ export function EnhancedVisitedTab({ visitedPlaces }: EnhancedVisitedTabProps) {
                   <Check className="w-3 h-3" />
                 </div>
                 {place.rating && (
-                  <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
+                  <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
                     ⭐ {place.rating}
                   </div>
                 )}

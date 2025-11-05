@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
-import VisitModal from '@/components/VisitModal';
+import { SaveDestinationModal } from '@/components/SaveDestinationModal';
+import { VisitedModal } from '@/components/VisitedModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -24,12 +25,6 @@ const AppleMap = dynamic(() => import('@/components/AppleMap'), {
     </div>
   )
 });
-
-interface List {
-  id: string;
-  name: string;
-  is_public: boolean;
-}
 
 interface Recommendation {
   slug: string;
@@ -162,24 +157,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
-  const [heartAnimating, setHeartAnimating] = useState(false);
-  const [checkAnimating, setCheckAnimating] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
 
-  // List management state
-  const [showListsModal, setShowListsModal] = useState(false);
-  const [userLists, setUserLists] = useState<List[]>([]);
-  const [listsWithDestination, setListsWithDestination] = useState<Set<string>>(new Set());
-  const [loadingLists, setLoadingLists] = useState(false);
-  const [showCreateListModal, setShowCreateListModal] = useState(false);
-  const [newListName, setNewListName] = useState('');
-  const [newListDescription, setNewListDescription] = useState('');
-  const [newListPublic, setNewListPublic] = useState(true);
-  const [creatingList, setCreatingList] = useState(false);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -303,14 +287,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         return;
       }
 
-      const { data: savedData } = await supabase
-        .from('saved_places')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('destination_slug', destination.slug)
-        .single();
+      if (destination.id) {
+        const { data: savedData } = await supabase
+          .from('saved_destinations')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('destination_id', destination.id)
+          .single();
 
-      setIsSaved(!!savedData);
+        setIsSaved(!!savedData);
+      }
 
       const { data: visitedData } = await supabase
         .from('visited_places')
@@ -325,128 +311,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     loadDestinationData();
   }, [user, destination]);
 
-  const handleSave = async () => {
-    if (!user || !destination) return;
-
-    setLoading(true);
-    const previousState = isSaved;
-    const newState = !isSaved;
-
-    // Trigger animation
-    setHeartAnimating(true);
-    setTimeout(() => setHeartAnimating(false), 600);
-
-    // Optimistic update
-    setIsSaved(newState);
-    onSaveToggle?.(destination.slug, newState);
-
-    try {
-      if (previousState) {
-        await supabase
-          .from('saved_places')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('destination_slug', destination.slug);
-      } else {
-        await supabase
-          .from('saved_places')
-          .insert({
-            user_id: user.id,
-            destination_slug: destination.slug,
-          });
-        
-        // Track save event
-        trackEvent({
-          event_type: 'save',
-          destination_id: destination.id,
-          destination_slug: destination.slug,
-          metadata: {
-            category: destination.category,
-            city: destination.city,
-            source: 'destination_drawer',
-          },
-        });
-      }
-    } catch (error) {
-      // Revert on error
-      setIsSaved(previousState);
-      onSaveToggle?.(destination.slug, previousState);
-      console.error('Error toggling save:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const [showVisitModal, setShowVisitModal] = useState(false);
-
-  const handleVisit = async (rating: number | null = null, notes: string = '') => {
-    if (!user || !destination) return;
-
-    setLoading(true);
-    const previousState = isVisited;
-    const newState = !isVisited;
-
-    // Trigger animation
-    setCheckAnimating(true);
-    setTimeout(() => setCheckAnimating(false), 600);
-
-    // Optimistic update
-    setIsVisited(newState);
-    onVisitToggle?.(destination.slug, newState);
-
-    try {
-      if (previousState) {
-        // Remove visit
-        await supabase
-          .from('visited_places')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('destination_slug', destination.slug);
-      } else {
-        // Add visit with optional rating and notes
-        await supabase
-          .from('visited_places')
-          .insert({
-            user_id: user.id,
-            destination_slug: destination.slug,
-            visited_at: new Date().toISOString(),
-            rating: rating || null,
-            notes: notes || null,
-          });
-        
-        // Track visit event (similar to save, but for visits)
-        trackEvent({
-          event_type: 'save', // Visited is also a form of engagement
-          destination_id: destination.id,
-          destination_slug: destination.slug,
-          metadata: {
-            category: destination.category,
-            city: destination.city,
-            source: 'destination_drawer',
-            action: 'visited',
-            rating: rating || null,
-          },
-        });
-      }
-    } catch (error) {
-      // Revert on error
-      setIsVisited(previousState);
-      onVisitToggle?.(destination.slug, previousState);
-      console.error('Error toggling visit:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVisitClick = () => {
-    if (isVisited) {
-      // If already visited, toggle off immediately
-      handleVisit();
-    } else {
-      // If not visited, show modal to add rating/notes
-      setShowVisitModal(true);
-    }
-  };
 
   const handleShare = async () => {
     if (!destination) return;
@@ -487,131 +351,58 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     }
   };
 
-  // Fetch user lists and check which ones contain this destination
-  const fetchUserLists = async () => {
+  const handleVisitToggle = async () => {
     if (!user || !destination) return;
 
-    setLoadingLists(true);
     try {
-      // Fetch user's lists
-      const { data: lists, error: listsError } = await supabase
-        .from('lists')
-        .select('id, name, is_public')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+      if (isVisited) {
+        // Remove visit
+        const { error } = await supabase
+          .from('visited_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug);
 
-      if (listsError) throw listsError;
-      setUserLists(lists || []);
+        if (error) throw error;
 
-      // Fetch which lists contain this destination
-      const { data: listItems, error: itemsError } = await supabase
-        .from('list_items')
-        .select('list_id')
-        .eq('destination_slug', destination.slug);
+        setIsVisited(false);
+        if (onVisitToggle) onVisitToggle(destination.slug, false);
+      } else {
+        // Add visit with current date
+        const { error } = await supabase
+          .from('visited_places')
+          .insert({
+            user_id: user.id,
+            destination_slug: destination.slug,
+            visited_at: new Date().toISOString(),
+          });
 
-      if (itemsError) throw itemsError;
-      const listIds = new Set((listItems || []).map(item => item.list_id));
-      setListsWithDestination(listIds);
+        if (error) throw error;
+
+        setIsVisited(true);
+        if (onVisitToggle) onVisitToggle(destination.slug, true);
+      }
     } catch (error) {
-      console.error('Error fetching lists:', error);
-    } finally {
-      setLoadingLists(false);
+      console.error('Error toggling visit:', error);
+      alert('Failed to update visit status. Please try again.');
     }
   };
 
-  // Toggle destination in a list
-  const toggleDestinationInList = async (listId: string) => {
+  const handleVisitedModalUpdate = async () => {
+    // Reload visited status after modal updates
     if (!user || !destination) return;
 
-    const isInList = listsWithDestination.has(listId);
-    const newListsWithDestination = new Set(listsWithDestination);
+    const { data: visitedData } = await supabase
+      .from('visited_places')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('destination_slug', destination.slug)
+      .single();
 
-    if (isInList) {
-      // Remove from list
-      newListsWithDestination.delete(listId);
-      setListsWithDestination(newListsWithDestination);
-
-      const { error } = await supabase
-        .from('list_items')
-        .delete()
-        .eq('list_id', listId)
-        .eq('destination_slug', destination.slug);
-
-      if (error) {
-        // Revert on error
-        setListsWithDestination(new Set([...newListsWithDestination, listId]));
-        console.error('Error removing from list:', error);
-      }
-    } else {
-      // Add to list
-      newListsWithDestination.add(listId);
-      setListsWithDestination(newListsWithDestination);
-
-      const { error } = await supabase
-        .from('list_items')
-        .insert({
-          list_id: listId,
-          destination_slug: destination.slug,
-        });
-
-      if (error) {
-        // Revert on error
-        newListsWithDestination.delete(listId);
-        setListsWithDestination(newListsWithDestination);
-        console.error('Error adding to list:', error);
-      }
-    }
+    setIsVisited(!!visitedData);
+    if (onVisitToggle && visitedData) onVisitToggle(destination.slug, true);
   };
 
-  // Create a new list and optionally add current destination
-  const createNewList = async () => {
-    if (!user || !newListName.trim()) return;
-
-    setCreatingList(true);
-    try {
-      const { data, error } = await supabase
-        .from('lists')
-        .insert([{
-          user_id: user.id,
-          name: newListName.trim(),
-          description: newListDescription.trim() || null,
-          is_public: newListPublic,
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Add the new list to the state
-      setUserLists([data, ...userLists]);
-
-      // Add current destination to the new list
-      if (destination) {
-        await supabase.from('list_items').insert({
-          list_id: data.id,
-          destination_slug: destination.slug,
-        });
-        setListsWithDestination(new Set([...listsWithDestination, data.id]));
-      }
-
-      // Reset form and close create modal
-      setNewListName('');
-      setNewListDescription('');
-      setNewListPublic(true);
-      setShowCreateListModal(false);
-    } catch (error) {
-      console.error('Error creating list:', error);
-      alert('Failed to create list');
-    } finally {
-      setCreatingList(false);
-    }
-  };
-
-  // Open lists modal and fetch lists
-  const openListsModal = () => {
-    setShowListsModal(true);
-    fetchUserLists();
-  };
 
   // Load AI recommendations
   useEffect(() => {
@@ -695,23 +486,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Slide-in Panel */}
+      {/* Slideover Card */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 z-50 shadow-2xl ring-1 ring-black/5 transform transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
-        <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Destination</h2>
-          <div className="flex items-center gap-1">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-end">
+          <div className="flex items-center gap-2">
             {destination?.slug && (
               <a
                 href={`/destination/${destination.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 title="Open in new tab"
                 aria-label="Open destination in new tab"
               >
@@ -720,8 +510,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              aria-label="Close window"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              aria-label="Close"
             >
               <X className="h-4 w-4" />
             </button>
@@ -729,16 +519,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Image */}
           {destination.image && (
-            <div className="relative aspect-[16/10] rounded-lg overflow-hidden mb-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
                 alt={destination.name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 640px) 95vw, 600px"
+                sizes="(max-width: 640px) 100vw, 420px"
                 priority={false}
                 quality={85}
               />
@@ -746,41 +536,84 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Title */}
-          <div className="mb-4">
-            <h1 className="text-2xl font-bold mb-3">
+          <div className="mb-8 space-y-3">
+            {/* Location - above title */}
+            <div className="flex items-center gap-2">
+              <a
+                href={`/city/${destination.city}`}
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/city/${destination.city}`);
+                }}
+              >
+                <MapPin className="h-3 w-3" />
+                {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
+              </a>
+            </div>
+
+            {/* Title */}
+            <h1 className="text-3xl font-light leading-tight">
               {destination.name}
             </h1>
 
-            {/* Meta Info */}
-            <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" />
-                <span>{capitalizeCity(destination.city)}</span>
-              </div>
-
+            {/* Meta badges and action buttons - below title */}
+            <div className="flex flex-wrap gap-2 text-xs">
               {destination.category && (
-                <>
-                  <span className="text-gray-300 dark:text-gray-700">•</span>
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="h-4 w-4" />
-                    <span className="capitalize">{destination.category}</span>
-                  </div>
-                </>
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 capitalize">
+                  {destination.category}
+                </span>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <>
-                  <span className="text-gray-300 dark:text-gray-700">•</span>
-                  <div className="flex items-center gap-1.5">
-                    <img
-                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                      alt="Michelin star"
-                      className="h-4 w-4"
-                    />
-                    <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
-                  </div>
-                </>
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                  />
+                  {destination.michelin_stars} Michelin
+                </span>
               )}
+
+              {destination.crown && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                  Crown
+                </span>
+              )}
+
+              {/* Google Rating */}
+              {(enrichedData?.rating || destination.rating) && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  {(enrichedData?.rating || destination.rating).toFixed(1)}
+                </span>
+              )}
+
+              {/* Directions Button */}
+              <a
+                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+              >
+                <Navigation className="h-3 w-3" />
+                Directions
+              </a>
+
+              {/* Share Button */}
+              <button
+                onClick={handleShare}
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+              >
+                <Share2 className="h-3 w-3" />
+                {copied ? 'Copied!' : 'Share'}
+              </button>
             </div>
 
             {/* AI-Generated Tags */}
@@ -789,7 +622,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                    className="inline-flex items-center px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
                   >
                     ✨ {tag}
                   </span>
@@ -802,7 +635,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="mt-3 flex items-center gap-3 text-sm">
                 {(enrichedData?.rating || destination.rating) && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-yellow-500">⭐</span>
+                    <span>⭐</span>
                     <span className="font-semibold">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
                     <span className="text-gray-500 dark:text-gray-400">
                       {enrichedData?.user_ratings_total ? `(${enrichedData.user_ratings_total.toLocaleString()})` : ''}
@@ -811,7 +644,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
                 {(enrichedData?.price_level || destination.price_level) && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-green-600 dark:text-green-400 font-semibold">
+                    <span className="font-semibold">
                       {'$'.repeat(enrichedData?.price_level || destination.price_level)}
                     </span>
                   </div>
@@ -821,9 +654,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Editorial Summary */}
             {enrichedData?.editorial_summary && (
-              <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <h3 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-2">From Google</h3>
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              <div className="mt-4">
+                <h3 className="text-xs font-medium mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
+                <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {stripHtmlTags(enrichedData.editorial_summary)}
                 </p>
               </div>
@@ -850,12 +683,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {/* Place Types */}
             {enrichedData?.place_types && Array.isArray(enrichedData.place_types) && enrichedData.place_types.length > 0 && (
               <div className="mt-4">
-                <span className="text-xs text-gray-500 dark:text-gray-400 mb-2">Types</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Types</span>
                 <div className="flex flex-wrap gap-2">
                   {enrichedData.place_types.slice(0, 5).map((type: string, idx: number) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                      className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
                     >
                       {type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                     </span>
@@ -898,21 +731,43 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               
               return (
                 <div className="mt-4">
-                  <div className="flex items-start gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Hours</div>
-                        {openStatus.todayHours && (
-                          <>
-                            <span className={`text-xs font-semibold ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                              {openStatus.isOpen ? 'Open' : 'Closed'}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              · {openStatus.todayHours}
-                            </span>
-                          </>
-                        )}
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    {openStatus.todayHours && (
+                      <span className="text-sm font-semibold">
+                        {openStatus.isOpen ? 'Open now' : 'Closed'}
+                      </span>
+                    )}
+                    {openStatus.todayHours && (
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        · {openStatus.todayHours}
+                      </span>
+                    )}
+                    {enrichedData?.timezone_id && (
+                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                        ({enrichedData.timezone_id.replace('_', ' ')})
+                      </span>
+                    )}
+                  </div>
+                  {hours.weekday_text && (
+                    <details className="text-sm">
+                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                        View all hours
+                      </summary>
+                      <div className="mt-2 space-y-1 pl-6">
+                        {hours.weekday_text.map((day: string, index: number) => {
+                          const [dayName, hoursText] = day.split(': ');
+                          const dayOfWeek = now.getDay();
+                          const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                          const isToday = index === googleDayIndex;
+
+                          return (
+                            <div key={index} className={`flex justify-between ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                              <span>{dayName}</span>
+                              <span>{hoursText}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                       {hours.weekday_text && (
                         <details className="text-sm">
@@ -944,46 +799,43 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
 
           {/* Action Buttons */}
-          {user && (
-            <div className="flex gap-2 mb-4">
+          {user && destination?.id && (
+            <div className="mb-6 flex gap-2">
               <button
-                onClick={handleSave}
-                disabled={loading}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                onClick={() => setShowSaveModal(true)}
+                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
                   isSaved
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
+                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                }`}
               >
-                <Heart className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current' : ''}`} />
-                <span className="text-sm">
-                  {isSaved ? 'Saved' : 'Save'}
-                </span>
+                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                {isSaved ? 'Saved' : 'Save'}
               </button>
-
               <button
-                onClick={handleVisitClick}
-                disabled={loading}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                onClick={handleVisitToggle}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  if (isVisited) setShowVisitedModal(true);
+                }}
+                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
                   isVisited
-                    ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
+                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                }`}
               >
-                <Check className={`h-4 w-4 transition-all duration-300`} />
-                <span className="text-sm">
-                  {isVisited ? 'Visited' : 'Visit'}
-                </span>
+                <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                {isVisited ? 'Visited' : 'Mark as Visited'}
               </button>
-
-              <button
-                onClick={openListsModal}
-                disabled={loading}
-                className="px-3 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Add to list"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+              {isVisited && (
+                <button
+                  onClick={() => setShowVisitedModal(true)}
+                  className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  title="Add visit details"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              )}
             </div>
           )}
 
@@ -997,11 +849,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Description */}
-          {destination.content && (
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold uppercase mb-2 text-gray-500 dark:text-gray-400">About</h3>
-              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {stripHtmlTags(destination.content)}
+          {destination.description && (
+            <div className="mb-8">
+              <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                {stripHtmlTags(destination.description)}
               </div>
             </div>
           )}
@@ -1087,16 +938,21 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold uppercase mb-2 text-gray-500 dark:text-gray-400">Top Reviews</h3>
-              <div className="space-y-3">
-                {enrichedData.reviews.slice(0, 2).map((review: any, idx: number) => (
-                  <div key={idx} className="pb-3 border-b border-gray-200 dark:border-gray-800 last:border-0 last:pb-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <span className="font-medium text-sm">{review.author_name}</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-500 text-xs">⭐</span>
-                        <span className="text-xs font-semibold">{review.rating}</span>
+            <div className="mb-8">
+              <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
+              <div className="space-y-4">
+                {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
+                  <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <span className="font-medium text-sm">{review.author_name}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span>⭐</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
+                          {review.relative_time_description && (
+                            <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     {review.text && (
@@ -1115,20 +971,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <div className="border-t border-gray-200 dark:border-gray-800 my-4" />
 
           {/* Map Section (Apple Maps) */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Location</h3>
-              <a
-                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-              >
-                <Navigation className="h-3 w-3" />
-                <span>Directions</span>
-              </a>
-            </div>
-            <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+          <div className="mb-8">
+            <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Location</h3>
+            <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <AppleMap
                 query={`${destination.name}, ${destination.city}`}
                 height="192px"
@@ -1142,9 +987,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
               </div>
@@ -1194,7 +1040,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           </div>
                         )}
                         {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-1.5 left-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-1.5 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-0.5 border border-red-200 dark:border-red-800">
+                          <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
                             <img
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"
@@ -1217,178 +1063,33 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-4" />
-
-          {/* Share Button */}
-          <div className="flex justify-center">
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-lg font-medium text-sm"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>{copied ? 'Copied!' : 'Share'}</span>
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Lists Modal */}
-      {showListsModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowListsModal(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Add to List</h2>
-              <button
-                onClick={() => setShowListsModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {loadingLists ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
-            ) : userLists.length === 0 ? (
-              <div className="text-center py-8">
-                <span className="text-gray-500 mb-4">You don't have any lists yet</span>
-                <button
-                  onClick={() => {
-                    setShowListsModal(false);
-                    setShowCreateListModal(true);
-                  }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
-                >
-                  Create Your First List
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex-1 overflow-y-auto mb-4 space-y-2">
-                  {userLists.map((list) => (
-                    <button
-                      key={list.id}
-                      onClick={() => toggleDestinationInList(list.id)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      <span className="font-medium">{list.name}</span>
-                      {listsWithDestination.has(list.id) && (
-                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowListsModal(false);
-                    setShowCreateListModal(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
-                >
-                  <Plus className="h-5 w-5" />
-                  <span>Create New List</span>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+      {/* Save Destination Modal */}
+      {destination?.id && (
+        <SaveDestinationModal
+          destinationId={destination.id}
+          destinationSlug={destination.slug}
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={(collectionId) => {
+            setIsSaved(true);
+            if (onSaveToggle) onSaveToggle(destination.slug, true);
+          }}
+        />
       )}
 
-      {/* Create List Modal */}
-      {showCreateListModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowCreateListModal(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Create New List</h2>
-              <button
-                onClick={() => setShowCreateListModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">List Name *</label>
-                <input
-                  type="text"
-                  value={newListName}
-                  onChange={(e) => setNewListName(e.target.value)}
-                  placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
-                <textarea
-                  value={newListDescription}
-                  onChange={(e) => setNewListDescription(e.target.value)}
-                  placeholder="Optional description..."
-                  rows={3}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="new-list-public"
-                  checked={newListPublic}
-                  onChange={(e) => setNewListPublic(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="new-list-public" className="text-sm">
-                  Make this list public
-                </label>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setShowCreateListModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  disabled={creatingList}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createNewList}
-                  disabled={!newListName.trim() || creatingList}
-                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                >
-                  {creatingList ? 'Creating...' : 'Create List'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Visited Modal */}
+      {destination && (
+        <VisitedModal
+          destinationSlug={destination.slug}
+          destinationName={destination.name}
+          isOpen={showVisitedModal}
+          onClose={() => setShowVisitedModal(false)}
+          onUpdate={handleVisitedModalUpdate}
+        />
       )}
-
-      {/* Visit Modal */}
-      <VisitModal
-        isOpen={showVisitModal}
-        onClose={() => setShowVisitModal(false)}
-        onConfirm={(rating, notes) => handleVisit(rating, notes)}
-        destinationName={destination?.name || ''}
-        isCurrentlyVisited={isVisited}
-      />
     </>
   );
 }

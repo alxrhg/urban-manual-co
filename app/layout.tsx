@@ -12,6 +12,11 @@ import { TRPCProvider } from "@/lib/trpc/provider";
 export const metadata: Metadata = {
   title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
   description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 export default function RootLayout({
@@ -23,6 +28,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="dark light" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
         <meta name="google-adsense-account" content="ca-pub-3052286230434362" />
 
         {/* Preconnect hints for faster resource loading */}
@@ -36,6 +43,14 @@ export default function RootLayout({
         {/* DNS Prefetch for additional domains */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://guide.michelin.com" />
+
+        {/* RSS Feed */}
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="The Urban Manual RSS Feed"
+          href="https://www.urbanmanual.co/feed.xml"
+        />
 
         {/* Google AdSense */}
         <script
