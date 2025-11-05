@@ -990,10 +990,8 @@ export default function Home() {
                         )}
                       </div>
 
-                      {/* Enrichment badges (walking time, weather, events, trending) */}
+                      {/* Enrichment badges (events only) */}
                       <EnrichedDestinationBadges
-                        walkingTime={destination.walkingTimeFromCenter}
-                        weather={destination.currentWeather}
                         hasEvents={!!destination.nearbyEvents && destination.nearbyEvents.length > 0}
                         eventCount={destination.nearbyEvents?.length || 0}
                       />

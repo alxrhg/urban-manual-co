@@ -77,7 +77,7 @@ export function EnrichedSearchResponse({
     }
     parts.push(opener + '.');
 
-    // Weather description - conversational
+    // Weather description - conversational with insights
     if (weather) {
       const temp = weather.temperature;
       const code = weather.weatherCode;
@@ -99,13 +99,13 @@ export function EnrichedSearchResponse({
 
       weatherText += ` at ${temp}°C`;
 
-      // Weather conditions
+      // Weather conditions with helpful insights
       if (code === 0 || code === 1) {
-        weatherText += ' with clear skies - perfect for outdoor spots!';
+        weatherText += ' with clear skies. ☀️ Perfect weather for outdoor dining or rooftop experiences!';
       } else if (code === 2 || code === 3) {
-        weatherText += ' with some clouds, still nice for exploring.';
+        weatherText += ' with some clouds. ⛅ Still nice for exploring and outdoor spots.';
       } else if (code >= 61 && code <= 86) {
-        weatherText += ' but it might rain, so indoor options could be safer.';
+        weatherText += ' but it might rain. 🌧️ Consider indoor options or places with covered seating.';
       } else {
         weatherText += '.';
       }
