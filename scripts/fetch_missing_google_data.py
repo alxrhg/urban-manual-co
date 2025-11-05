@@ -14,7 +14,9 @@ import os
 load_dotenv('.env.local')
 
 # Configuration
-GOOGLE_API_KEY = "AIzaSyBCqnkX0925QNgsqThHyb1xu1bTC-XcGfM"
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("NEXT_PUBLIC_GOOGLE_API_KEY")
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY environment variable is required")
 SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
