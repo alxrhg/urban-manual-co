@@ -1019,7 +1019,7 @@ export default function Home() {
                         });
                       }
                     }}
-                    className={`${CARD_WRAPPER} cursor-pointer text-left ${isVisited ? 'opacity-60' : ''}`}
+                    className={`${CARD_WRAPPER} cursor-pointer text-left`}
                   >
                     {/* Image Container */}
                     <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
@@ -1029,7 +1029,7 @@ export default function Home() {
                           alt={destination.name}
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isVisited ? 'grayscale' : ''}`}
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                           quality={80}
                           loading={index < 6 ? 'eager' : 'lazy'}
                           fetchPriority={index === 0 ? 'high' : 'auto'}
