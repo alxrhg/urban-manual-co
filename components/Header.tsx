@@ -231,6 +231,13 @@ export function Header() {
               >
                 Map
               </button>
+              <button
+                onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
+                className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                role="menuitem"
+              >
+                Discover Collections
+              </button>
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               {user ? (
                 <>
