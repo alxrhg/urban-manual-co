@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
-import VisitModal from '@/components/VisitModal';
+import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -24,12 +24,6 @@ const AppleMap = dynamic(() => import('@/components/AppleMap'), {
     </div>
   )
 });
-
-interface List {
-  id: string;
-  name: string;
-  is_public: boolean;
-}
 
 interface Recommendation {
   slug: string;
@@ -162,24 +156,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
-  const [heartAnimating, setHeartAnimating] = useState(false);
-  const [checkAnimating, setCheckAnimating] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
 
-  // List management state
-  const [showListsModal, setShowListsModal] = useState(false);
-  const [userLists, setUserLists] = useState<List[]>([]);
-  const [listsWithDestination, setListsWithDestination] = useState<Set<string>>(new Set());
-  const [loadingLists, setLoadingLists] = useState(false);
-  const [showCreateListModal, setShowCreateListModal] = useState(false);
-  const [newListName, setNewListName] = useState('');
-  const [newListDescription, setNewListDescription] = useState('');
-  const [newListPublic, setNewListPublic] = useState(true);
-  const [creatingList, setCreatingList] = useState(false);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -303,14 +285,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         return;
       }
 
-      const { data: savedData } = await supabase
-        .from('saved_places')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('destination_slug', destination.slug)
-        .single();
+      if (destination.id) {
+        const { data: savedData } = await supabase
+          .from('saved_destinations')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('destination_id', destination.id)
+          .single();
 
-      setIsSaved(!!savedData);
+        setIsSaved(!!savedData);
+      }
 
       const { data: visitedData } = await supabase
         .from('visited_places')
@@ -325,128 +309,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     loadDestinationData();
   }, [user, destination]);
 
-  const handleSave = async () => {
-    if (!user || !destination) return;
-
-    setLoading(true);
-    const previousState = isSaved;
-    const newState = !isSaved;
-
-    // Trigger animation
-    setHeartAnimating(true);
-    setTimeout(() => setHeartAnimating(false), 600);
-
-    // Optimistic update
-    setIsSaved(newState);
-    onSaveToggle?.(destination.slug, newState);
-
-    try {
-      if (previousState) {
-        await supabase
-          .from('saved_places')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('destination_slug', destination.slug);
-      } else {
-        await supabase
-          .from('saved_places')
-          .insert({
-            user_id: user.id,
-            destination_slug: destination.slug,
-          });
-        
-        // Track save event
-        trackEvent({
-          event_type: 'save',
-          destination_id: destination.id,
-          destination_slug: destination.slug,
-          metadata: {
-            category: destination.category,
-            city: destination.city,
-            source: 'destination_drawer',
-          },
-        });
-      }
-    } catch (error) {
-      // Revert on error
-      setIsSaved(previousState);
-      onSaveToggle?.(destination.slug, previousState);
-      console.error('Error toggling save:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const [showVisitModal, setShowVisitModal] = useState(false);
-
-  const handleVisit = async (rating: number | null = null, notes: string = '') => {
-    if (!user || !destination) return;
-
-    setLoading(true);
-    const previousState = isVisited;
-    const newState = !isVisited;
-
-    // Trigger animation
-    setCheckAnimating(true);
-    setTimeout(() => setCheckAnimating(false), 600);
-
-    // Optimistic update
-    setIsVisited(newState);
-    onVisitToggle?.(destination.slug, newState);
-
-    try {
-      if (previousState) {
-        // Remove visit
-        await supabase
-          .from('visited_places')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('destination_slug', destination.slug);
-      } else {
-        // Add visit with optional rating and notes
-        await supabase
-          .from('visited_places')
-          .insert({
-            user_id: user.id,
-            destination_slug: destination.slug,
-            visited_at: new Date().toISOString(),
-            rating: rating || null,
-            notes: notes || null,
-          });
-        
-        // Track visit event (similar to save, but for visits)
-        trackEvent({
-          event_type: 'save', // Visited is also a form of engagement
-          destination_id: destination.id,
-          destination_slug: destination.slug,
-          metadata: {
-            category: destination.category,
-            city: destination.city,
-            source: 'destination_drawer',
-            action: 'visited',
-            rating: rating || null,
-          },
-        });
-      }
-    } catch (error) {
-      // Revert on error
-      setIsVisited(previousState);
-      onVisitToggle?.(destination.slug, previousState);
-      console.error('Error toggling visit:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVisitClick = () => {
-    if (isVisited) {
-      // If already visited, toggle off immediately
-      handleVisit();
-    } else {
-      // If not visited, show modal to add rating/notes
-      setShowVisitModal(true);
-    }
-  };
 
   const handleShare = async () => {
     if (!destination) return;
@@ -487,131 +349,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     }
   };
 
-  // Fetch user lists and check which ones contain this destination
-  const fetchUserLists = async () => {
-    if (!user || !destination) return;
-
-    setLoadingLists(true);
-    try {
-      // Fetch user's lists
-      const { data: lists, error: listsError } = await supabase
-        .from('lists')
-        .select('id, name, is_public')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
-
-      if (listsError) throw listsError;
-      setUserLists(lists || []);
-
-      // Fetch which lists contain this destination
-      const { data: listItems, error: itemsError } = await supabase
-        .from('list_items')
-        .select('list_id')
-        .eq('destination_slug', destination.slug);
-
-      if (itemsError) throw itemsError;
-      const listIds = new Set((listItems || []).map(item => item.list_id));
-      setListsWithDestination(listIds);
-    } catch (error) {
-      console.error('Error fetching lists:', error);
-    } finally {
-      setLoadingLists(false);
-    }
-  };
-
-  // Toggle destination in a list
-  const toggleDestinationInList = async (listId: string) => {
-    if (!user || !destination) return;
-
-    const isInList = listsWithDestination.has(listId);
-    const newListsWithDestination = new Set(listsWithDestination);
-
-    if (isInList) {
-      // Remove from list
-      newListsWithDestination.delete(listId);
-      setListsWithDestination(newListsWithDestination);
-
-      const { error } = await supabase
-        .from('list_items')
-        .delete()
-        .eq('list_id', listId)
-        .eq('destination_slug', destination.slug);
-
-      if (error) {
-        // Revert on error
-        setListsWithDestination(new Set([...newListsWithDestination, listId]));
-        console.error('Error removing from list:', error);
-      }
-    } else {
-      // Add to list
-      newListsWithDestination.add(listId);
-      setListsWithDestination(newListsWithDestination);
-
-      const { error } = await supabase
-        .from('list_items')
-        .insert({
-          list_id: listId,
-          destination_slug: destination.slug,
-        });
-
-      if (error) {
-        // Revert on error
-        newListsWithDestination.delete(listId);
-        setListsWithDestination(newListsWithDestination);
-        console.error('Error adding to list:', error);
-      }
-    }
-  };
-
-  // Create a new list and optionally add current destination
-  const createNewList = async () => {
-    if (!user || !newListName.trim()) return;
-
-    setCreatingList(true);
-    try {
-      const { data, error } = await supabase
-        .from('lists')
-        .insert([{
-          user_id: user.id,
-          name: newListName.trim(),
-          description: newListDescription.trim() || null,
-          is_public: newListPublic,
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Add the new list to the state
-      setUserLists([data, ...userLists]);
-
-      // Add current destination to the new list
-      if (destination) {
-        await supabase.from('list_items').insert({
-          list_id: data.id,
-          destination_slug: destination.slug,
-        });
-        setListsWithDestination(new Set([...listsWithDestination, data.id]));
-      }
-
-      // Reset form and close create modal
-      setNewListName('');
-      setNewListDescription('');
-      setNewListPublic(true);
-      setShowCreateListModal(false);
-    } catch (error) {
-      console.error('Error creating list:', error);
-      alert('Failed to create list');
-    } finally {
-      setCreatingList(false);
-    }
-  };
-
-  // Open lists modal and fetch lists
-  const openListsModal = () => {
-    setShowListsModal(true);
-    fetchUserLists();
-  };
 
   // Load AI recommendations
   useEffect(() => {
@@ -775,7 +512,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2.5 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full border border-purple-200 dark:border-purple-800"
+                    className="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-700"
                   >
                     ✨ {tag}
                   </span>
@@ -788,7 +525,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="mt-4 flex items-center gap-4 text-sm">
                 {(enrichedData?.rating || destination.rating) && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-yellow-500">⭐</span>
+                    <span>⭐</span>
                     <span className="font-semibold">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
                     <span className="text-gray-500 dark:text-gray-400">
                       Google Rating{enrichedData?.user_ratings_total ? ` (${enrichedData.user_ratings_total.toLocaleString()} reviews)` : ''}
@@ -797,7 +534,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
                 {(enrichedData?.price_level || destination.price_level) && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-green-600 dark:text-green-400 font-semibold">
+                    <span className="font-semibold">
                       {'$'.repeat(enrichedData?.price_level || destination.price_level)}
                     </span>
                     <span className="text-gray-500 dark:text-gray-400">Price Level</span>
@@ -888,7 +625,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     {openStatus.todayHours && (
-                      <span className={`text-sm font-semibold ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      <span className="text-sm font-semibold">
                         {openStatus.isOpen ? 'Open now' : 'Closed'}
                       </span>
                     )}
@@ -931,75 +668,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
 
           {/* Action Buttons */}
-          {user && (
-            <div className="flex gap-3 mb-6">
-              <div className="flex-1 flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                    isSaved
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
-                >
-                  <Heart className={`h-5 w-5 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
-                  <span className={`${heartAnimating && isSaved ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                    {isSaved ? 'Saved' : 'Save'}
-                  </span>
-                  {heartAnimating && isSaved && (
-                    <style jsx>{`
-                      @keyframes heartBeat {
-                        0%, 100% { transform: scale(1); }
-                        15% { transform: scale(1.3); }
-                        30% { transform: scale(1.1); }
-                        45% { transform: scale(1.25); }
-                        60% { transform: scale(1.05); }
-                      }
-                      @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                      }
-                    `}</style>
-                  )}
-                </button>
-                <button
-                  onClick={openListsModal}
-                  disabled={loading}
-                  className="px-3 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  title="Add to list"
-                >
-                  <ChevronDown className="h-5 w-5" />
-                </button>
-              </div>
-
+          {user && destination?.id && (
+            <div className="mb-6">
               <button
-                onClick={handleVisitClick}
-                disabled={loading}
-                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                  isVisited
-                    ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
+                onClick={() => setShowSaveModal(true)}
+                className={`w-full px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                  isSaved || isVisited
+                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                }`}
               >
-                <Check className={`h-5 w-5 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
-                <span className={`${checkAnimating && isVisited ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                  {isVisited ? 'Visited' : 'Mark as Visited'}
-                </span>
-                {checkAnimating && isVisited && (
-                  <style jsx>{`
-                    @keyframes checkPop {
-                      0%, 100% { transform: scale(1) rotate(0deg); }
-                      25% { transform: scale(1.3) rotate(-10deg); }
-                      50% { transform: scale(1.1) rotate(5deg); }
-                      75% { transform: scale(1.2) rotate(-5deg); }
-                    }
-                    @keyframes fadeIn {
-                      from { opacity: 0; }
-                      to { opacity: 1; }
-                    }
-                  `}</style>
-                )}
+                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                {isSaved ? 'Saved' : 'Save'}
               </button>
             </div>
           )}
@@ -1112,7 +792,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       <div>
                         <span className="font-medium text-sm">{review.author_name}</span>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-yellow-500">⭐</span>
+                          <span>⭐</span>
                           <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
                           {review.relative_time_description && (
                             <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
@@ -1164,7 +844,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {(loadingRecommendations || recommendations.length > 0) && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
@@ -1255,162 +935,23 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
       </div>
 
-      {/* Lists Modal */}
-      {showListsModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowListsModal(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Add to List</h2>
-              <button
-                onClick={() => setShowListsModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {loadingLists ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
-            ) : userLists.length === 0 ? (
-              <div className="text-center py-8">
-                <span className="text-gray-500 mb-4">You don't have any lists yet</span>
-                <button
-                  onClick={() => {
-                    setShowListsModal(false);
-                    setShowCreateListModal(true);
-                  }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
-                >
-                  Create Your First List
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex-1 overflow-y-auto mb-4 space-y-2">
-                  {userLists.map((list) => (
-                    <button
-                      key={list.id}
-                      onClick={() => toggleDestinationInList(list.id)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      <span className="font-medium">{list.name}</span>
-                      {listsWithDestination.has(list.id) && (
-                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowListsModal(false);
-                    setShowCreateListModal(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
-                >
-                  <Plus className="h-5 w-5" />
-                  <span>Create New List</span>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+      {/* Save Destination Modal */}
+      {destination?.id && (
+        <SaveDestinationModal
+          destinationId={destination.id}
+          destinationSlug={destination.slug}
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={(collectionId) => {
+            setIsSaved(true);
+            if (onSaveToggle) onSaveToggle(destination.slug, true);
+          }}
+          onVisit={(visited) => {
+            setIsVisited(visited);
+            if (onVisitToggle) onVisitToggle(destination.slug, visited);
+          }}
+        />
       )}
-
-      {/* Create List Modal */}
-      {showCreateListModal && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowCreateListModal(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Create New List</h2>
-              <button
-                onClick={() => setShowCreateListModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">List Name *</label>
-                <input
-                  type="text"
-                  value={newListName}
-                  onChange={(e) => setNewListName(e.target.value)}
-                  placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
-                <textarea
-                  value={newListDescription}
-                  onChange={(e) => setNewListDescription(e.target.value)}
-                  placeholder="Optional description..."
-                  rows={3}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="new-list-public"
-                  checked={newListPublic}
-                  onChange={(e) => setNewListPublic(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="new-list-public" className="text-sm">
-                  Make this list public
-                </label>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setShowCreateListModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  disabled={creatingList}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createNewList}
-                  disabled={!newListName.trim() || creatingList}
-                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                >
-                  {creatingList ? 'Creating...' : 'Create List'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Visit Modal */}
-      <VisitModal
-        isOpen={showVisitModal}
-        onClose={() => setShowVisitModal(false)}
-        onConfirm={(rating, notes) => handleVisit(rating, notes)}
-        destinationName={destination?.name || ''}
-        isCurrentlyVisited={isVisited}
-      />
     </>
   );
 }

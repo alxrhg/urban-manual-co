@@ -20,20 +20,8 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [newCollectionEmoji, setNewCollectionEmoji] = useState('📍');
-  const [newCollectionColor, setNewCollectionColor] = useState('#3B82F6');
   const [creating, setCreating] = useState(false);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
-
-  const colors = [
-    '#3B82F6', // Blue
-    '#EF4444', // Red
-    '#10B981', // Green
-    '#F59E0B', // Amber
-    '#8B5CF6', // Purple
-    '#EC4899', // Pink
-    '#06B6D4', // Cyan
-    '#6366F1', // Indigo
-  ];
 
   useEffect(() => {
     if (user) {
@@ -92,7 +80,6 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
           name: newCollectionName.trim(),
           description: newCollectionDescription.trim() || null,
           emoji: newCollectionEmoji,
-          color: newCollectionColor,
         })
         .select()
         .single();
@@ -103,7 +90,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
       setNewCollectionName('');
       setNewCollectionDescription('');
       setShowCreateForm(false);
-      
+
       // Automatically select the new collection
       if (onCollectionSelect) {
         onCollectionSelect(data.id);
@@ -229,42 +216,22 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
             />
           </div>
 
-          <div className="flex items-center gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Emoji</label>
-              <input
-                type="text"
-                value={newCollectionEmoji}
-                onChange={(e) => setNewCollectionEmoji(e.target.value)}
-                maxLength={2}
-                className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Color</label>
-              <div className="flex gap-2">
-                {colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setNewCollectionColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${
-                      newCollectionColor === color
-                        ? 'border-gray-900 dark:border-white scale-110'
-                        : 'border-gray-300 dark:border-gray-600 hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Emoji</label>
+            <input
+              type="text"
+              value={newCollectionEmoji}
+              onChange={(e) => setNewCollectionEmoji(e.target.value)}
+              maxLength={2}
+              className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+            />
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={createCollection}
               disabled={creating || !newCollectionName.trim()}
-              className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {creating ? 'Creating...' : 'Create'}
             </button>
@@ -287,7 +254,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
           onClick={() => selectCollection(null)}
           className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${
             selectedCollectionId === null
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+              ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
               : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
           }`}
         >
@@ -301,13 +268,12 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
             onClick={() => selectCollection(collection.id)}
             className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all group ${
               selectedCollectionId === collection.id
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
             }`}
           >
             <div
-              className="w-8 h-8 rounded-2xl flex items-center justify-center text-lg"
-              style={{ backgroundColor: `${collection.color}20`, color: collection.color }}
+              className="w-8 h-8 rounded-2xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center text-lg"
             >
               {collection.emoji}
             </div>
@@ -324,9 +290,9 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
             </div>
             <button
               onClick={(e) => deleteCollection(collection.id, e)}
-              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
             >
-              <Trash2 className="h-4 w-4 text-red-500" />
+              <Trash2 className="h-4 w-4 text-gray-500" />
             </button>
           </button>
         ))}
