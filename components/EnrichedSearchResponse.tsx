@@ -46,6 +46,7 @@ interface EnrichedSearchResponseProps {
   forecast?: ForecastData | null;
   enriched?: EnrichedMetadata;
   className?: string;
+  onFollowUp?: (query: string) => void;
 }
 
 export function EnrichedSearchResponse({
@@ -58,15 +59,19 @@ export function EnrichedSearchResponse({
   forecast,
   enriched,
   className = '',
+  onFollowUp,
 }: EnrichedSearchResponseProps) {
   // Build a conversational response like a helpful travel assistant
-  const buildResponse = (): string => {
+  const buildResponse = (): { text: string; followUpHint: string | null } => {
     const parts: string[] = [];
+    let followUpHint: string | null = null;
 
     // No results case
     if (resultCount === 0) {
-      parts.push('No results found. Try refining your search or adjusting your filters.');
-      return parts.join(' ');
+      return {
+        text: 'No results found. Try refining your search or adjusting your filters.',
+        followUpHint: 'Try another search...',
+      };
     }
 
     // Main opener - mention city if known
@@ -124,24 +129,62 @@ export function EnrichedSearchResponse({
       parts.push(`${firstSpot.name} is trending right now${firstSpot.reason ? ` (${firstSpot.reason.toLowerCase()})` : ''}.`);
     }
 
-    // Follow-up questions based on category
+    // Follow-up hint based on category (used as placeholder)
     if (category === 'Dining' || category === 'restaurant') {
-      parts.push('Are you looking for anything specific? French, Japanese, Italian?');
+      followUpHint = 'Anything specific? French, Japanese, Italian...';
     } else if (category === 'Hotel') {
-      parts.push('Looking for luxury, boutique, or budget-friendly?');
+      followUpHint = 'Looking for luxury, boutique, or budget-friendly?';
     } else if (category === 'Cafe') {
-      parts.push('Coffee, brunch, or something cozy to work from?');
+      followUpHint = 'Coffee, brunch, or cozy workspace?';
     } else if (!category && cityName) {
-      // No specific category - suggest options
-      parts.push('Looking for dining, hotels, or just exploring?');
+      followUpHint = 'Looking for dining, hotels, or just exploring?';
+    } else {
+      followUpHint = 'Tell me more about what you\'re looking for...';
     }
 
-    return parts.join(' ');
+    return { text: parts.join(' '), followUpHint };
+  };
+
+  const { text, followUpHint } = buildResponse();
+
+  const handleSend = (input: HTMLInputElement) => {
+    const query = input.value.trim();
+    if (query && onFollowUp) {
+      onFollowUp(query);
+      input.value = '';
+    }
   };
 
   return (
-    <div className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${className}`}>
-      {buildResponse()}
+    <div className={className}>
+      <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+        {text}
+      </div>
+
+      {/* Follow-up input box */}
+      {followUpHint && onFollowUp && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder={followUpHint}
+            className="flex-1 px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-colors"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSend(e.currentTarget);
+              }
+            }}
+          />
+          <button
+            onClick={(e) => {
+              const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+              if (input) handleSend(input);
+            }}
+            className="px-4 py-2.5 text-sm bg-black dark:bg-white text-white dark:text-black rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors font-medium"
+          >
+            Send
+          </button>
+        </div>
+      )}
     </div>
   );
 }

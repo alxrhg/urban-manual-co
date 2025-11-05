@@ -708,6 +708,10 @@ export default function Home() {
                           totalPhotos: filteredDestinations.reduce((sum, r) => sum + (r.photos?.length || 0), 0),
                           totalEvents: filteredDestinations.reduce((sum, r) => sum + (r.nearbyEvents?.length || 0), 0),
                         }}
+                        onFollowUp={(query) => {
+                          setSearchTerm(query);
+                          performAISearch(query);
+                        }}
                       />
                     </div>
                   )}
