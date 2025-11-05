@@ -7,6 +7,13 @@ import { forecastingService } from '@/services/intelligence/forecasting';
 import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { searchAsimov, mapAsimovResultsToDestinations } from '@/lib/search/asimov';
+import {
+  getOrCreateSession,
+  getConversationMessages,
+  saveMessage,
+  updateContext,
+  type ConversationMessage
+} from '@/app/api/conversation/utils/contextHandler';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -379,25 +386,45 @@ function generateResponse(count: number, city?: string, category?: string): stri
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query, userId, conversationHistory = [] } = body;
+    const { query, userId, sessionToken } = body;
 
     if (!query || query.trim().length < 2) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         content: 'Please enter a search query.',
-        destinations: []
+        destinations: [],
+        sessionId: null,
+        sessionToken: sessionToken || null
       });
     }
+
+    // Get or create conversation session
+    const session = await getOrCreateSession(userId, sessionToken);
+    if (!session) {
+      console.error('[AI Chat] Failed to create session');
+      // Continue without session (graceful degradation)
+    }
+
+    // Load conversation history from database
+    const conversationHistory: ConversationMessage[] = session
+      ? await getConversationMessages(session.sessionId, 20)
+      : [];
+
+    // Convert to format expected by understandQuery
+    const formattedHistory = conversationHistory.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
 
     // Use enhanced intent analysis for deeper understanding
     const enhancedIntent = await intentAnalysisService.analyzeIntent(
       query,
-      conversationHistory,
+      formattedHistory,
       userId
     );
 
     // Also get basic intent for backward compatibility
-    const intent = await understandQuery(query, conversationHistory, userId);
-    
+    const intent = await understandQuery(query, formattedHistory, userId);
+
     // Normalize category using synonyms
     if (intent.category) {
       const normalized = CATEGORY_SYNONYMS[intent.category.toLowerCase()];
@@ -405,8 +432,30 @@ export async function POST(request: NextRequest) {
         intent.category = normalized;
       }
     }
-    
+
     console.log('[AI Chat] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
+
+    // Save user message to conversation history
+    if (session) {
+      await saveMessage(session.sessionId, {
+        role: 'user',
+        content: query,
+        intent_data: intent,
+      });
+
+      // Update session context based on extracted intent
+      const contextUpdates: any = {};
+      if (intent.city) contextUpdates.city = intent.city;
+      if (intent.category) contextUpdates.category = intent.category;
+      if ((enhancedIntent as any)?.meal) contextUpdates.meal = (enhancedIntent as any).meal;
+      if ((enhancedIntent as any)?.cuisine) contextUpdates.cuisine = (enhancedIntent as any).cuisine;
+      if ((enhancedIntent as any)?.mood) contextUpdates.mood = (enhancedIntent as any).mood;
+      if (intent.filters?.priceLevel) contextUpdates.price_level = intent.filters.priceLevel.toString();
+
+      if (Object.keys(contextUpdates).length > 0) {
+        await updateContext(session.sessionId, contextUpdates);
+      }
+    }
 
     // Generate embedding for vector search
     const queryEmbedding = await generateEmbedding(query);
@@ -659,6 +708,18 @@ export async function POST(request: NextRequest) {
                   totalEvents: limitedResults.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
                 };
 
+                // Save assistant response to conversation history
+                if (session) {
+                  await saveMessage(session.sessionId, {
+                    role: 'assistant',
+                    content: enhancedContent,
+                    destinations: limitedResults.slice(0, 10), // Save top 10 destinations to avoid huge payloads
+                  });
+                }
+
+                // Generate session token for anonymous users if not provided
+                const returnSessionToken = sessionToken || (session && !userId ? `anon_${session.sessionId}` : null);
+
                 return NextResponse.json({
                   content: enhancedContent,
                   destinations: limitedResults,
@@ -670,13 +731,66 @@ export async function POST(request: NextRequest) {
                   enhancedIntent, // Include full enhanced intent
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
+                  sessionId: session?.sessionId || null, // Return sessionId for frontend
+                  sessionToken: returnSessionToken, // Return sessionToken for anonymous users
                 });
 
   } catch (error: any) {
     console.error('AI Chat API error:', error);
     return NextResponse.json({
       content: 'Sorry, I encountered an error. Please try again.',
-      destinations: []
+      destinations: [],
+      sessionId: null,
+      sessionToken: null
+    }, { status: 500 });
+  }
+}
+
+/**
+ * GET endpoint to load conversation history
+ * Supports both authenticated users (via userId) and anonymous users (via sessionToken)
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const sessionToken = searchParams.get('sessionToken');
+    const userId = searchParams.get('userId');
+
+    // Need at least one identifier
+    if (!sessionToken && !userId) {
+      return NextResponse.json({
+        messages: [],
+        sessionId: null,
+        context: {},
+      });
+    }
+
+    // Get or create session
+    const session = await getOrCreateSession(userId || undefined, sessionToken || undefined);
+    if (!session) {
+      return NextResponse.json({
+        messages: [],
+        sessionId: null,
+        context: {},
+      });
+    }
+
+    // Load conversation history
+    const messages = await getConversationMessages(session.sessionId, 20);
+
+    return NextResponse.json({
+      messages,
+      sessionId: session.sessionId,
+      context: session.context,
+      sessionToken: sessionToken || (session && !userId ? `anon_${session.sessionId}` : null),
+    });
+  } catch (error: any) {
+    console.error('Error loading conversation history:', error);
+    return NextResponse.json({
+      messages: [],
+      sessionId: null,
+      context: {},
+      error: 'Failed to load conversation history',
     }, { status: 500 });
   }
 }
