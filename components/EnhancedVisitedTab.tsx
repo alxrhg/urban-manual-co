@@ -114,27 +114,26 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
 
       {/* Sort Controls - Separate row */}
       <div className="flex items-center gap-3 text-xs">
-          <button
-            onClick={() => setSortBy('recent')}
-            className={`transition-all ${
-              sortBy === 'recent'
-                ? 'font-medium text-black dark:text-white'
-                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-            }`}
-          >
-            Recent
-          </button>
-          <button
-            onClick={() => setSortBy('name')}
-            className={`transition-all ${
-              sortBy === 'name'
-                ? 'font-medium text-black dark:text-white'
-                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-            }`}
-          >
-            A-Z
-          </button>
-        </div>
+        <button
+          onClick={() => setSortBy('recent')}
+          className={`transition-all ${
+            sortBy === 'recent'
+              ? 'font-medium text-black dark:text-white'
+              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+          }`}
+        >
+          Recent
+        </button>
+        <button
+          onClick={() => setSortBy('name')}
+          className={`transition-all ${
+            sortBy === 'name'
+              ? 'font-medium text-black dark:text-white'
+              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+          }`}
+        >
+          A-Z
+        </button>
       </div>
 
       {/* City Filter - Matches homepage style exactly */}
