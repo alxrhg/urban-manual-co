@@ -21,9 +21,15 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
   const handleGenerateImage = async () => {
     setIsGenerating(true);
     try {
-      // Dynamically import html2canvas
-      const html2canvas = (await import('html2canvas')).default;
+      // Try to dynamically import html2canvas
+      const html2canvasModule = await import('html2canvas').catch(() => null);
 
+      if (!html2canvasModule) {
+        alert('Image generation feature requires html2canvas package. Install with: npm install html2canvas');
+        return;
+      }
+
+      const html2canvas = html2canvasModule.default;
       const element = document.getElementById('sharing-card-content');
       if (!element) return;
 
@@ -40,7 +46,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
       link.click();
     } catch (error) {
       console.error('Error generating image:', error);
-      alert('Failed to generate image. Make sure to install html2canvas package.');
+      alert('Failed to generate image.');
     } finally {
       setIsGenerating(false);
     }
