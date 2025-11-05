@@ -173,21 +173,318 @@ export class OpportunityDetectionService {
   }
 
   /**
-   * Detect price drops (placeholder - would need pricing data)
+   * Detect price drops and budget-friendly opportunities
    */
   private async detectPriceDrops(userId?: string, city?: string): Promise<Opportunity[]> {
-    // This would require integration with pricing APIs or historical price data
-    // For now, return empty array
-    return [];
+    if (!this.supabase) return [];
+
+    try {
+      const opportunities: Opportunity[] = [];
+
+      // Find destinations with lower price levels that are highly rated
+      // This helps users find good value options
+      let query = this.supabase
+        .from('destinations')
+        .select('id, name, city, category, price_level, rating, user_ratings_total')
+        .gte('rating', 4.0)  // Only high-rated places
+        .lte('price_level', 2) // Budget-friendly (price level 1-2)
+        .gte('user_ratings_total', 50); // Enough reviews to be trusted
+
+      if (city) {
+        query = query.eq('city', city);
+      }
+
+      const { data: budgetGems, error } = await query.limit(10);
+
+      if (error) {
+        console.error('Error detecting price opportunities:', error);
+        return [];
+      }
+
+      if (budgetGems && budgetGems.length > 0) {
+        budgetGems.forEach(dest => {
+          // Calculate value score (high rating, low price)
+          const valueScore = (dest.rating || 0) / (dest.price_level || 1);
+
+          if (valueScore >= 2.0) { // Good value threshold
+            const priceLabel = dest.price_level === 1 ? 'budget-friendly' : 'affordable';
+
+            opportunities.push({
+              opportunity_type: 'price_drop',
+              destination_id: dest.id.toString(),
+              city: dest.city,
+              category: dest.category,
+              title: `${priceLabel.charAt(0).toUpperCase() + priceLabel.slice(1)} gem: ${dest.name}`,
+              description: `Highly rated (${dest.rating}★) ${priceLabel} ${dest.category?.toLowerCase() || 'destination'} with ${dest.user_ratings_total}+ reviews`,
+              opportunity_data: {
+                price_change: -(4 - (dest.price_level || 1)), // Savings compared to expensive options
+              },
+              urgency: valueScore >= 3.0 ? 'high' : 'medium',
+            });
+          }
+        });
+      }
+
+      // If user is logged in, find price-conscious recommendations based on their history
+      if (userId) {
+        const { data: userInteractions } = await this.supabase
+          .from('user_interactions')
+          .select('destination_id, created_at')
+          .eq('user_id', userId)
+          .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+          .limit(20);
+
+        if (userInteractions && userInteractions.length > 0) {
+          // Get average price level user prefers
+          const destIds = userInteractions.map(i => i.destination_id);
+          const { data: userDestinations } = await this.supabase
+            .from('destinations')
+            .select('price_level')
+            .in('id', destIds);
+
+          if (userDestinations && userDestinations.length > 0) {
+            const priceLevels = userDestinations
+              .map(d => d.price_level)
+              .filter(p => p != null);
+
+            const avgPriceLevel = priceLevels.length > 0
+              ? priceLevels.reduce((a, b) => a + b, 0) / priceLevels.length
+              : 2;
+
+            // Find similar quality destinations at lower price points
+            if (avgPriceLevel > 1) {
+              const { data: betterDeals } = await this.supabase
+                .from('destinations')
+                .select('id, name, city, category, price_level, rating')
+                .lt('price_level', Math.ceil(avgPriceLevel))
+                .gte('rating', 4.0)
+                .limit(5);
+
+              if (betterDeals && betterDeals.length > 0) {
+                betterDeals.forEach(dest => {
+                  opportunities.push({
+                    opportunity_type: 'price_drop',
+                    destination_id: dest.id.toString(),
+                    city: dest.city,
+                    category: dest.category,
+                    title: `Save on ${dest.name}`,
+                    description: `Similar quality to your preferences but more budget-friendly`,
+                    opportunity_data: {
+                      price_change: -(avgPriceLevel - (dest.price_level || 1)),
+                    },
+                    urgency: 'low',
+                  });
+                });
+              }
+            }
+          }
+        }
+      }
+
+      return opportunities;
+    } catch (error) {
+      console.error('Error detecting price drops:', error);
+      return [];
+    }
   }
 
   /**
-   * Detect availability windows
+   * Detect availability windows and off-peak opportunities
    */
   private async detectAvailabilityWindows(city?: string): Promise<Opportunity[]> {
-    // This would require real-time availability data
-    // For now, return empty array
-    return [];
+    if (!this.supabase) return [];
+
+    try {
+      const opportunities: Opportunity[] = [];
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
+      const currentHour = now.getHours();
+
+      // Find destinations that are currently open or opening soon
+      let query = this.supabase
+        .from('destinations')
+        .select('id, name, city, category, opening_hours_json, rating')
+        .not('opening_hours_json', 'is', null)
+        .gte('rating', 3.5);
+
+      if (city) {
+        query = query.eq('city', city);
+      }
+
+      const { data: destinations, error } = await query.limit(50);
+
+      if (error) {
+        console.error('Error detecting availability windows:', error);
+        return [];
+      }
+
+      if (destinations && destinations.length > 0) {
+        destinations.forEach(dest => {
+          try {
+            const openingHours = dest.opening_hours_json as any;
+
+            // Check if destination has periods (Google Places API format)
+            if (openingHours?.periods && Array.isArray(openingHours.periods)) {
+              const isOpenNow = this.isCurrentlyOpen(openingHours.periods, currentDay, currentHour);
+              const opensWithinHour = this.opensWithinNextHour(openingHours.periods, currentDay, currentHour);
+              const closesWithinHour = this.closesWithinNextHour(openingHours.periods, currentDay, currentHour);
+
+              // Alert if opening soon
+              if (!isOpenNow && opensWithinHour) {
+                opportunities.push({
+                  opportunity_type: 'availability',
+                  destination_id: dest.id.toString(),
+                  city: dest.city,
+                  category: dest.category,
+                  title: `${dest.name} opens soon`,
+                  description: `This ${dest.category?.toLowerCase() || 'destination'} will be opening within the next hour`,
+                  opportunity_data: {
+                    availability_window: {
+                      start: opensWithinHour,
+                      end: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(), // Estimate 8 hours
+                    },
+                  },
+                  urgency: 'medium',
+                });
+              }
+
+              // Alert if closing soon (last call)
+              if (isOpenNow && closesWithinHour) {
+                opportunities.push({
+                  opportunity_type: 'availability',
+                  destination_id: dest.id.toString(),
+                  city: dest.city,
+                  category: dest.category,
+                  title: `Last chance: ${dest.name} closes soon`,
+                  description: `Visit now - this ${dest.category?.toLowerCase() || 'destination'} closes within the next hour`,
+                  opportunity_data: {
+                    availability_window: {
+                      start: new Date().toISOString(),
+                      end: closesWithinHour,
+                    },
+                  },
+                  urgency: 'high',
+                });
+              }
+
+              // Detect off-peak hours (less crowded times)
+              const isOffPeak = this.isOffPeakTime(currentDay, currentHour);
+              if (isOpenNow && isOffPeak && dest.rating && dest.rating >= 4.0) {
+                opportunities.push({
+                  opportunity_type: 'availability',
+                  destination_id: dest.id.toString(),
+                  city: dest.city,
+                  category: dest.category,
+                  title: `Off-peak visit: ${dest.name}`,
+                  description: `Visit now during quieter hours at this popular ${dest.category?.toLowerCase() || 'destination'}`,
+                  opportunity_data: {
+                    availability_window: {
+                      start: new Date().toISOString(),
+                      end: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+                    },
+                  },
+                  urgency: 'low',
+                });
+              }
+            }
+          } catch (parseError) {
+            // Skip destinations with malformed opening hours data
+            console.warn(`Error parsing opening hours for destination ${dest.id}:`, parseError);
+          }
+        });
+      }
+
+      // Limit to avoid overwhelming users
+      return opportunities.slice(0, 5);
+    } catch (error) {
+      console.error('Error detecting availability windows:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Check if a destination is currently open
+   */
+  private isCurrentlyOpen(periods: any[], day: number, hour: number): boolean {
+    const currentMinutes = hour * 60;
+
+    for (const period of periods) {
+      if (period.open && period.open.day === day) {
+        const openMinutes = (period.open.hours || 0) * 60 + (period.open.minutes || 0);
+        const closeMinutes = period.close
+          ? (period.close.hours || 0) * 60 + (period.close.minutes || 0)
+          : 24 * 60;
+
+        if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if destination opens within the next hour
+   */
+  private opensWithinNextHour(periods: any[], day: number, hour: number): string | null {
+    const currentMinutes = hour * 60;
+    const nextHourMinutes = currentMinutes + 60;
+
+    for (const period of periods) {
+      if (period.open && period.open.day === day) {
+        const openMinutes = (period.open.hours || 0) * 60 + (period.open.minutes || 0);
+
+        if (openMinutes > currentMinutes && openMinutes <= nextHourMinutes) {
+          const openTime = new Date();
+          openTime.setHours(period.open.hours || 0, period.open.minutes || 0, 0, 0);
+          return openTime.toISOString();
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if destination closes within the next hour
+   */
+  private closesWithinNextHour(periods: any[], day: number, hour: number): string | null {
+    const currentMinutes = hour * 60;
+    const nextHourMinutes = currentMinutes + 60;
+
+    for (const period of periods) {
+      if (period.open && period.open.day === day && period.close) {
+        const openMinutes = (period.open.hours || 0) * 60 + (period.open.minutes || 0);
+        const closeMinutes = (period.close.hours || 0) * 60 + (period.close.minutes || 0);
+
+        if (currentMinutes >= openMinutes && closeMinutes > currentMinutes && closeMinutes <= nextHourMinutes) {
+          const closeTime = new Date();
+          closeTime.setHours(period.close.hours || 0, period.close.minutes || 0, 0, 0);
+          return closeTime.toISOString();
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Determine if current time is off-peak (less crowded)
+   */
+  private isOffPeakTime(day: number, hour: number): boolean {
+    // Weekend peak hours: 11 AM - 8 PM
+    // Weekday peak hours: 12 PM - 2 PM and 6 PM - 9 PM
+
+    const isWeekend = day === 0 || day === 6;
+
+    if (isWeekend) {
+      // Off-peak on weekends: before 11 AM or after 8 PM
+      return hour < 11 || hour >= 20;
+    } else {
+      // Off-peak on weekdays: not lunch (12-2) or dinner (6-9)
+      return !(hour >= 12 && hour < 14) && !(hour >= 18 && hour < 21);
+    }
   }
 
   /**
