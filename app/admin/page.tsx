@@ -1184,7 +1184,7 @@ export default function AdminPage() {
               })}
             </div>
           )}
-          </div>
+        </div>
         </div>
         )}
 
@@ -1435,7 +1435,6 @@ export default function AdminPage() {
             )}
           </div>
         </div>
-          </div>
         )}
 
         {/* Analytics Tab */}
