@@ -34,6 +34,7 @@ export default function Account() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements'>('profile');
+  const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -60,6 +61,21 @@ export default function Account() {
     }
 
     checkAuth();
+  }, []);
+
+  // Fetch total destinations count
+  useEffect(() => {
+    async function fetchTotalDestinations() {
+      try {
+        const { count } = await supabase
+          .from('destinations')
+          .select('*', { count: 'exact', head: true });
+        setTotalDestinations(count || 0);
+      } catch (error) {
+        console.error('Error fetching total destinations:', error);
+      }
+    }
+    fetchTotalDestinations();
   }, []);
 
   // Load user data
@@ -209,14 +225,19 @@ export default function Account() {
       Array.from(uniqueCities).map(city => cityCountryMap[city] || 'Other')
     );
 
+    const curationCompletionPercentage = totalDestinations > 0
+      ? Math.round((visitedPlaces.length / totalDestinations) * 100)
+      : 0;
+
     return {
       uniqueCities,
       uniqueCountries,
       visitedCount: visitedPlaces.length,
       savedCount: savedPlaces.length,
-      collectionsCount: collections.length
+      collectionsCount: collections.length,
+      curationCompletionPercentage
     };
-  }, [savedPlaces, visitedPlaces, collections]);
+  }, [savedPlaces, visitedPlaces, collections, totalDestinations]);
 
   // Show loading
   if (!authChecked || isLoadingData) {
@@ -288,6 +309,44 @@ export default function Account() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-12 fade-in">
+            {/* Curation Completion - Prominent gamification stat */}
+            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
+                  <div className="text-xs text-gray-500">of curation explored</div>
+                </div>
+                <div className="text-right text-xs text-gray-400">
+                  {stats.visitedCount} / {totalDestinations} places
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
+                  style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
+                />
+              </div>
+              {stats.curationCompletionPercentage < 100 && (
+                <p className="text-xs text-gray-400 mt-3">
+                  {stats.curationCompletionPercentage < 10
+                    ? "Just getting started! Keep exploring."
+                    : stats.curationCompletionPercentage < 25
+                    ? "Great start! Many more places to discover."
+                    : stats.curationCompletionPercentage < 50
+                    ? "Halfway there! You're doing amazing."
+                    : stats.curationCompletionPercentage < 75
+                    ? "Impressive! You're a seasoned explorer."
+                    : "Almost there! You've explored most of our curation."}
+                </p>
+              )}
+              {stats.curationCompletionPercentage === 100 && (
+                <p className="text-xs text-gray-400 mt-3">
+                  🎉 Incredible! You've visited every place in our curation!
+                </p>
+              )}
+            </div>
+
             {/* Stats Grid - Minimal, like homepage cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
