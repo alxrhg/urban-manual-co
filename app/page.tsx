@@ -661,7 +661,7 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[70vh] flex flex-col px-6 md:px-10 py-20">
+        <section className="min-h-[60vh] flex flex-col px-6 md:px-10 py-20">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
