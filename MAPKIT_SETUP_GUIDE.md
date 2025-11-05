@@ -66,17 +66,64 @@ pnpm dev
 
 ## Troubleshooting
 
-### Map shows "Map preview unavailable"
-- Check that all three env vars are set: `MAPKIT_TEAM_ID`, `MAPKIT_KEY_ID`, `MAPKIT_PRIVATE_KEY`
-- Verify the private key includes the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` headers
-- Check browser console for specific error messages
+### 🔍 Verify Your Credentials
 
-### Map loads but shows error
+**Test your configuration:**
+```bash
+curl http://localhost:3000/api/mapkit-verify
+```
+
+This will check:
+- ✅ All three env vars are present
+- ✅ Team ID is exactly 10 characters
+- ✅ Key ID is exactly 10 characters
+- ✅ Private key has proper BEGIN/END markers
+
+**Example response (valid):**
+```json
+{
+  "status": "valid",
+  "allValid": true,
+  "checks": {
+    "teamId": { "valid": true, "length": 10 },
+    "keyId": { "valid": true, "length": 10 },
+    "privateKey": { "valid": true }
+  },
+  "issues": []
+}
+```
+
+**Example response (invalid):**
+```json
+{
+  "status": "invalid",
+  "allValid": false,
+  "issues": [
+    "MAPKIT_TEAM_ID should be 10 characters, got 8"
+  ]
+}
+```
+
+### Common Issues
+
+#### Map shows "MapKit credentials invalid"
+- Your credentials are configured but wrong
+- Run `/api/mapkit-verify` to check format
+- Verify Team ID and Key ID from Apple Developer portal
+- Ensure you downloaded the correct `.p8` file
+- Check that the Key has MapKit JS enabled
+
+#### Map shows "Map preview unavailable"
+- Credentials are missing entirely
+- Add all three env vars to `.env.local`
+- Restart your dev server after adding
+
+#### Map loads but shows error
 - Verify your Team ID and Key ID are correct (10 characters each)
 - Ensure the MapKit JS service is enabled for your key in Apple Developer portal
-- Check that the `.p8` file contents are copied correctly
+- Check that the `.p8` file contents are copied correctly without modification
 
-### Token authentication fails
+#### Token authentication fails
 - Check the API route logs: `app/api/mapkit-token/route.ts`
 - Verify the `NEXT_PUBLIC_SITE_URL` matches your actual domain
 - For local development, http://localhost should work automatically

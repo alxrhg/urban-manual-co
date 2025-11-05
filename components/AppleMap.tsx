@@ -148,22 +148,22 @@ export default function AppleMap({
                     }
                   }, 100);
 
-                  // Timeout after 10 seconds
+                  // Timeout after 3 seconds - if MapKit doesn't load by then, credentials are likely invalid
                   checkReadyTimeoutRef.current = setTimeout(() => {
                     if (checkReadyIntervalRef.current) clearInterval(checkReadyIntervalRef.current);
                     if (!window.mapkit?.loaded) {
-                      console.error('[AppleMap] MapKit failed to load after 10 seconds');
+                      console.error('[AppleMap] MapKit failed to initialize after 3 seconds');
+                      console.error('[AppleMap] This usually means invalid MapKit credentials (Team ID, Key ID, or Private Key)');
                       console.error('[AppleMap] Final mapkit state:', {
                         exists: !!window.mapkit,
                         loaded: window.mapkit?.loaded,
                         build: window.mapkit?.build,
                         version: window.mapkit?.version,
                       });
-                      console.error('[AppleMap] Check browser console for MapKit errors');
                       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-                      setError('MapKit authentication may have failed - check credentials');
+                      setError('invalid-credentials');
                     }
-                  }, 10000);
+                  }, 3000);
                 } else {
                   throw new Error('No token in response');
                 }
@@ -318,6 +318,15 @@ export default function AppleMap({
       ? `https://maps.apple.com/?q=${encodeURIComponent(query)}`
       : 'https://maps.apple.com/';
 
+    // Determine the error message based on error type
+    const isCredentialError = error === 'invalid-credentials';
+    const errorMessage = isCredentialError
+      ? 'MapKit credentials invalid'
+      : 'Map preview unavailable';
+    const errorDetail = isCredentialError
+      ? 'Check Team ID, Key ID, and Private Key in .env.local'
+      : 'See MAPKIT_SETUP_GUIDE.md for setup';
+
     return (
       <div
         className={`w-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 ${className}`}
@@ -325,9 +334,9 @@ export default function AppleMap({
       >
         <div className="text-center max-w-sm">
           <div className="text-4xl mb-3">🗺️</div>
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Map preview unavailable</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">{errorMessage}</p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-            MapKit configuration needed
+            {errorDetail}
           </p>
           <a
             href={mapUrl}
@@ -336,7 +345,7 @@ export default function AppleMap({
             className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
           >
             <span>📍</span>
-            <span>View in Apple Maps</span>
+            <span>Open in Apple Maps</span>
           </a>
         </div>
       </div>
