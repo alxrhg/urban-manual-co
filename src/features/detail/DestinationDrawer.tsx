@@ -658,7 +658,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <h3 className="text-xs font-medium mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
                 <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {stripHtmlTags(enrichedData.editorial_summary)}
-                </p>
+                </span>
               </div>
             )}
 
