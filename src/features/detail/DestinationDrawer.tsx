@@ -488,21 +488,40 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </h1>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
-              <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap gap-2 text-xs">
+              <a
+                href={`/city/${destination.city}`}
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/city/${destination.city}`);
+                }}
+              >
                 <MapPin className="h-3 w-3" />
-                <span>{capitalizeCity(destination.city)}</span>
-              </div>
+                {capitalizeCity(destination.city)}
+              </a>
 
               {destination.category && (
-                <span className="capitalize">{destination.category}</span>
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 capitalize">
+                  {destination.category}
+                </span>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <span>⭐</span>
-                  <span>{destination.michelin_stars} Michelin</span>
-                </div>
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                  />
+                  {destination.michelin_stars} Michelin
+                </span>
+              )}
+
+              {destination.crown && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                  Crown
+                </span>
               )}
             </div>
 

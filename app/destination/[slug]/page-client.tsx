@@ -281,9 +281,15 @@ export default function DestinationPageClient() {
 
           <div className="space-y-3">
             {/* Location */}
-            <p className="text-xs text-gray-500">
-              {destination.country ? `${cityName}, ${destination.country}` : cityName}
-            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/city/${destination.city}`}
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
+              >
+                <MapPin className="h-3 w-3" />
+                {destination.country ? `${cityName}, ${destination.country}` : cityName}
+              </a>
+            </div>
 
             {/* Title and Save Button */}
             <div className="flex items-start justify-between gap-4">
@@ -314,13 +320,19 @@ export default function DestinationPageClient() {
               )}
               {destination.michelin_stars && destination.michelin_stars > 0 && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <span>⭐</span>
+                  <Image
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    width={12}
+                    height={12}
+                    className="h-3 w-3"
+                  />
                   {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
                 </span>
               )}
               {destination.crown && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  👑 Crown
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                  Crown
                 </span>
               )}
               {destination.rating && (
@@ -413,8 +425,15 @@ export default function DestinationPageClient() {
                       )}
 
                       {rec.michelin_stars && rec.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
-                          ⭐ {rec.michelin_stars}
+                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            width={12}
+                            height={12}
+                            className="h-3 w-3"
+                          />
+                          {rec.michelin_stars}
                         </div>
                       )}
                     </div>
