@@ -695,10 +695,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Floating Window */}
+      {/* Slide-in Panel */}
       <div
-        className={`fixed top-1/2 left-1/2 -translate-x-1/2 w-[95vw] sm:w-[600px] max-h-[90vh] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 z-50 rounded-2xl shadow-2xl ring-1 ring-black/5 transform transition-all duration-300 ease-out ${
-          isOpen ? '-translate-y-1/2 opacity-100 scale-100' : '-translate-y-1/2 opacity-0 scale-95 pointer-events-none'
+        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 z-50 shadow-2xl ring-1 ring-black/5 transform transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
