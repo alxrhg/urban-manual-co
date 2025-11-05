@@ -44,6 +44,14 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://guide.michelin.com" />
 
+        {/* RSS Feed */}
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="The Urban Manual RSS Feed"
+          href="https://www.urbanmanual.co/feed.xml"
+        />
+
         {/* Google AdSense */}
         <script
           async

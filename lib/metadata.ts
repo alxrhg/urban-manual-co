@@ -197,3 +197,137 @@ export function generateDestinationSchema(destination: Destination) {
   }
 }
 
+/**
+ * Generate breadcrumb schema for destination pages
+ */
+export function generateDestinationBreadcrumb(destination: Destination) {
+  // Format city name for display
+  const cityName = destination.city
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: cityName,
+        item: `https://www.urbanmanual.co/city/${destination.city}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: destination.name,
+        item: `https://www.urbanmanual.co/destination/${destination.slug}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Generate breadcrumb schema for city pages
+ */
+export function generateCityBreadcrumb(city: string) {
+  // Format city name for display
+  const cityName = decodeURIComponent(city)
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: cityName,
+        item: `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Generate FAQ schema for destination pages
+ */
+export function generateDestinationFAQ(destination: Destination) {
+  const category = destination.category?.toLowerCase() || '';
+  const cityName = destination.city
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  const faqs: Array<{ question: string; answer: string }> = [];
+
+  // Generic FAQs based on category
+  if (category === 'hotel') {
+    faqs.push({
+      question: `Where is ${destination.name} located?`,
+      answer: `${destination.name} is located in ${cityName}${destination.country ? `, ${destination.country}` : ''}.`,
+    });
+
+    if (destination.price_level) {
+      const priceDesc = destination.price_level === 1 ? 'budget-friendly' :
+                        destination.price_level === 2 ? 'mid-range' :
+                        destination.price_level === 3 ? 'upscale' : 'luxury';
+      faqs.push({
+        question: `What is the price range of ${destination.name}?`,
+        answer: `${destination.name} is a ${priceDesc} hotel with a price level of ${'$'.repeat(destination.price_level)}.`,
+      });
+    }
+  } else if (['restaurant', 'dining', 'cafe', 'bar'].includes(category)) {
+    faqs.push({
+      question: `Where is ${destination.name} located?`,
+      answer: `${destination.name} is a ${destination.category} located in ${cityName}${destination.country ? `, ${destination.country}` : ''}.`,
+    });
+
+    if (destination.michelin_stars && destination.michelin_stars > 0) {
+      faqs.push({
+        question: `Does ${destination.name} have Michelin stars?`,
+        answer: `Yes, ${destination.name} has ${destination.michelin_stars} Michelin star${destination.michelin_stars > 1 ? 's' : ''}.`,
+      });
+    }
+
+    if (destination.tags && destination.tags.length > 0) {
+      faqs.push({
+        question: `What type of cuisine does ${destination.name} serve?`,
+        answer: `${destination.name} serves ${destination.tags.join(', ')} cuisine.`,
+      });
+    }
+  }
+
+  // Only return FAQ schema if we have questions
+  if (faqs.length === 0) {
+    return null;
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(faq => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
