@@ -12,6 +12,7 @@ import { WorldMapVisualization } from "@/components/WorldMapVisualization";
 import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
+import { ProfileEditor } from "@/components/ProfileEditor";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ export default function Account() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>('profile');
   const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state
@@ -291,7 +292,7 @@ export default function Account() {
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {['profile', 'visited', 'saved', 'collections', 'achievements'].map((tab) => (
+            {['profile', 'visited', 'saved', 'collections', 'achievements', 'settings'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -486,6 +487,19 @@ export default function Account() {
               savedPlaces={savedPlaces}
               uniqueCities={stats.uniqueCities}
               uniqueCountries={stats.uniqueCountries}
+            />
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && user && (
+          <div className="fade-in">
+            <ProfileEditor
+              userId={user.id}
+              onSaveComplete={() => {
+                // Optionally reload user data or show success message
+                alert('Profile updated successfully!');
+              }}
             />
           </div>
         )}
