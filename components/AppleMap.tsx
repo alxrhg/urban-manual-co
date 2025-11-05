@@ -33,13 +33,23 @@ export default function AppleMap({
   const mapkit1Key = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
   const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || '';
 
+  // Debug logging
   useEffect(() => {
-    // Set a timeout to show error if map doesn't load within 15 seconds
+    console.log('[AppleMap] Component mounted', { query, latitude, longitude, loaded, error });
+  }, []);
+
+  useEffect(() => {
+    console.log('[AppleMap] State changed:', { loaded, error, retryCount });
+  }, [loaded, error, retryCount]);
+
+  useEffect(() => {
+    // Set a timeout to show error if map doesn't load within 8 seconds
     loadingTimeoutRef.current = setTimeout(() => {
       if (!loaded && !error) {
+        console.log('[AppleMap] Loading timeout reached, showing error UI');
         setError('Map loading timeout - please check MapKit configuration');
       }
-    }, 15000);
+    }, 8000);
 
     // Check if MapKit is already loaded
     if (window.mapkit && window.mapkit.loaded) {
@@ -67,16 +77,22 @@ export default function AppleMap({
             // Fetch token with retry logic
             const fetchToken = async (attempt: number = 0): Promise<void> => {
               try {
+                console.log(`[AppleMap] Fetching MapKit token (attempt ${attempt + 1})`);
                 const res = await fetch('/api/mapkit-token', {
                   credentials: 'same-origin',
                   headers: { 'Accept': 'application/json' }
                 });
 
+                console.log(`[AppleMap] Token response status: ${res.status}`);
+
                 if (!res.ok) {
+                  const errorData = await res.json().catch(() => ({}));
+                  console.error('[AppleMap] Token request failed:', errorData);
                   throw new Error(`Token request failed: ${res.status}`);
                 }
 
                 const data = await res.json();
+                console.log('[AppleMap] Token received:', data.token ? 'YES' : 'NO');
 
                 if (data.token) {
                   done(data.token);
@@ -84,15 +100,17 @@ export default function AppleMap({
                   throw new Error('No token in response');
                 }
               } catch (err: any) {
-                console.error(`MapKit token fetch error (attempt ${attempt + 1}):`, err);
+                console.error(`[AppleMap] Token fetch error (attempt ${attempt + 1}):`, err);
 
                 // Retry up to 3 times with exponential backoff
                 if (attempt < 2) {
                   const delay = Math.pow(2, attempt) * 1000; // 1s, 2s
+                  console.log(`[AppleMap] Retrying in ${delay}ms...`);
                   setTimeout(() => fetchToken(attempt + 1), delay);
                   setRetryCount(attempt + 1);
                 } else {
                   // After all retries fail, show error - don't try with empty token
+                  console.error('[AppleMap] All token fetch attempts failed, showing error UI');
                   setError('MapKit credentials not configured. Please contact support.');
                   setLoaded(false);
                   // Don't call done() - this prevents MapKit from hanging with invalid auth
