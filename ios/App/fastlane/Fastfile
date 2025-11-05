@@ -1,0 +1,102 @@
+# Fastfile for iOS Build Automation
+
+default_platform(:ios)
+
+platform :ios do
+
+  # Build Configuration
+  before_all do
+    ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "180"
+    ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "6"
+  end
+
+  desc "Build the iOS app"
+  lane :build do
+    # Increment build number based on timestamp
+    increment_build_number(
+      xcodeproj: "App.xcodeproj",
+      build_number: latest_testflight_build_number(
+        initial_build_number: 1,
+        version: get_version_number(xcodeproj: "App.xcodeproj")
+      ) + 1
+    )
+
+    # Build the app
+    gym(
+      scheme: "App",
+      workspace: "App.xcworkspace",
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "TravelGuide.ipa",
+      clean: true,
+      include_bitcode: false,
+      export_options: {
+        provisioningProfiles: {
+          "com.travelguide.app" => "match AppStore com.travelguide.app"
+        }
+      }
+    )
+  end
+
+  desc "Upload to TestFlight"
+  lane :beta do
+    # First build the app
+    build
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV["APPLE_ID"],
+      app_identifier: "com.travelguide.app",
+      ipa: "./build/TravelGuide.ipa"
+    )
+
+    # Notify on success
+    notification(
+      title: "iOS Build Complete",
+      message: "Successfully uploaded to TestFlight"
+    )
+  end
+
+  desc "Setup code signing with Match"
+  lane :setup_signing do
+    match(
+      type: "appstore",
+      app_identifier: "com.travelguide.app",
+      readonly: true
+    )
+  end
+
+  desc "Register new device for development"
+  lane :register_device do |options|
+    device_name = options[:name]
+    device_udid = options[:udid]
+
+    register_devices(
+      devices: {
+        device_name => device_udid
+      }
+    )
+
+    match(
+      type: "development",
+      force_for_new_devices: true
+    )
+  end
+
+  desc "Increment version number"
+  lane :bump_version do |options|
+    increment_version_number(
+      xcodeproj: "App.xcodeproj",
+      bump_type: options[:type] || "patch" # major, minor, or patch
+    )
+  end
+
+  # Error handling
+  error do |lane, exception|
+    notification(
+      title: "iOS Build Failed",
+      message: "Error in lane '#{lane}': #{exception.message}"
+    )
+  end
+end

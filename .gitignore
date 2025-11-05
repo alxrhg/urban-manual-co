@@ -115,3 +115,24 @@ temp/
 # Environment variables
 .env
 .env.local
+
+# iOS / Fastlane
+ios/App/build/
+ios/App/*.ipa
+ios/App/*.dSYM.zip
+ios/App/*.xcarchive
+ios/App/Pods/
+ios/App/fastlane/report.xml
+ios/App/fastlane/Preview.html
+ios/App/fastlane/screenshots
+ios/App/fastlane/test_output
+ios/App/fastlane/.env
+ios/App/Gemfile.lock
+*.mobileprovision
+*.certSigningRequest
+*.p12
+*.cer
+
+# Capacitor
+ios/App/App/public/
+ios/App/App/config.json
