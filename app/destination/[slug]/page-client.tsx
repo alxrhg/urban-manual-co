@@ -52,6 +52,7 @@ export default function DestinationPageClient() {
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isVisited, setIsVisited] = useState(false);
 
   useEffect(() => {
     fetchDestination();
@@ -109,6 +110,28 @@ export default function DestinationPageClient() {
     }
 
     checkIfSaved();
+  }, [user, destination]);
+
+  // Check if destination is visited
+  useEffect(() => {
+    async function checkIfVisited() {
+      if (!user || !destination?.slug) return;
+
+      try {
+        const { data } = await supabase
+          .from('visited_places')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug)
+          .single();
+
+        setIsVisited(!!data);
+      } catch (error) {
+        setIsVisited(false);
+      }
+    }
+
+    checkIfVisited();
   }, [user, destination]);
 
   const fetchDestination = async () => {
@@ -271,7 +294,7 @@ export default function DestinationPageClient() {
                 <button
                   onClick={() => setShowSaveModal(true)}
                   className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
-                    isSaved
+                    isSaved || isVisited
                       ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                       : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
                   }`}
@@ -438,6 +461,9 @@ export default function DestinationPageClient() {
           onSave={(collectionId) => {
             setIsSaved(true);
             setShowSaveModal(false);
+          }}
+          onVisit={(visited) => {
+            setIsVisited(visited);
           }}
         />
       )}
