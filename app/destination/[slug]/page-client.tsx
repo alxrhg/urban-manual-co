@@ -429,7 +429,7 @@ export default function DestinationPageClient() {
       </div>
 
       {/* Save to Collection Modal */}
-      {destination && (
+      {destination && destination.id && (
         <SaveDestinationModal
           destinationId={destination.id}
           destinationSlug={destination.slug}
