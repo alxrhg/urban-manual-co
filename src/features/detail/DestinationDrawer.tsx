@@ -648,7 +648,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     alt="Michelin star"
                     className="h-3 w-3"
                   />
-                  {destination.michelin_stars} Michelin
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
                 </span>
               )}
 

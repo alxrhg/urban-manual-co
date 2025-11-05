@@ -755,6 +755,7 @@ export default function Home() {
                       <button
                         onClick={() => {
                           setSelectedCity("");
+                          setCurrentPage(1);
                           trackFilterChange({ filterType: 'city', value: 'all' });
                         }}
                         className={`transition-all ${
@@ -771,6 +772,7 @@ export default function Home() {
                           onClick={() => {
                             const newCity = city === selectedCity ? "" : city;
                             setSelectedCity(newCity);
+                            setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                           }}
                           className={`transition-all ${
@@ -799,6 +801,7 @@ export default function Home() {
                           onClick={() => {
                             setSelectedCategory("");
                             setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+                            setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
                           className={`transition-all ${
@@ -815,6 +818,7 @@ export default function Home() {
                             const newValue = !advancedFilters.michelin;
                             setSelectedCategory("");
                             setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                            setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
                           className={`transition-all ${
@@ -832,6 +836,7 @@ export default function Home() {
                               const newCategory = category === selectedCategory ? "" : category;
                               setSelectedCategory(newCategory);
                               setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                              setCurrentPage(1);
                               trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                             }}
                             className={`transition-all ${
@@ -1019,7 +1024,7 @@ export default function Home() {
                         });
                       }
                     }}
-                    className={`${CARD_WRAPPER} cursor-pointer text-left ${isVisited ? 'opacity-60' : ''}`}
+                    className={`${CARD_WRAPPER} cursor-pointer text-left`}
                   >
                     {/* Image Container */}
                     <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
@@ -1029,7 +1034,7 @@ export default function Home() {
                           alt={destination.name}
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          className={`object-cover group-hover:scale-105 transition-transform duration-300 ${isVisited ? 'grayscale' : ''}`}
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                           quality={80}
                           loading={index < 6 ? 'eager' : 'lazy'}
                           fetchPriority={index === 0 ? 'high' : 'auto'}
@@ -1045,12 +1050,10 @@ export default function Home() {
 
                       {/* Michelin Stars */}
                       {destination.michelin_stars && destination.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 shadow-lg z-10">
-                          <Image
+                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5 z-10">
+                          <img
                             src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                             alt="Michelin star"
-                            width={12}
-                            height={12}
                             className="h-3 w-3"
                           />
                           <span>{destination.michelin_stars}</span>
