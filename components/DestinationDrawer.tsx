@@ -11,6 +11,10 @@ import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { BestTimeToVisit } from './BestTimeToVisit';
+import { BookingLinks } from './BookingLinks';
+import { SocialProofBadge } from './SocialProofBadge';
+import { DistanceBadge } from './DistanceBadge';
 
 // Dynamically import AppleMap to avoid SSR issues
 const AppleMap = dynamic(() => import('@/components/AppleMap'), { 
@@ -923,6 +927,26 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {stripHtmlTags(destination.content)}
               </div>
+            </div>
+          )}
+
+          {/* Best Time to Visit */}
+          {destination.id && (
+            <div className="mb-8">
+              <BestTimeToVisit destinationId={destination.id} />
+            </div>
+          )}
+
+          {/* Booking Links */}
+          {destination.id && (
+            <div className="mb-8">
+              <BookingLinks
+                googleMapsUrl={destination.google_maps_url}
+                website={enrichedData?.website || destination.website}
+                phoneNumber={enrichedData?.international_phone_number || destination.phone_number}
+                opentableUrl={destination.opentable_url}
+                resyUrl={destination.resy_url}
+              />
             </div>
           )}
 
