@@ -54,8 +54,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {message.destinations.slice(0, 6).map((destination) => (
                 <Link
-                  key={destination.slug}
-                  href={`/destination/${destination.slug}`}
+                  key={destination.slug || destination.id}
+                  href={`/destination/${destination.slug || destination.id}`}
                   className="group block border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-all hover:shadow-lg"
                 >
                   {/* Image */}

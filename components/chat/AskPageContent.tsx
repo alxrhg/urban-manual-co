@@ -114,17 +114,19 @@ export function AskPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black flex flex-col">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 px-4 py-4">
+    <div className="h-screen bg-white dark:bg-black flex flex-col overflow-hidden">
+      {/* Header - Minimal, matching homepage */}
+      <header className="flex-shrink-0 px-4 py-6">
         <div className="max-w-3xl mx-auto flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-          <h1 className="text-lg font-semibold">Urban Manual AI</h1>
+          <Sparkles className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+          <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+            Travel Intelligence
+          </h1>
         </div>
       </header>
 
-      {/* Messages */}
-      <main className="flex-1 overflow-y-auto px-4 py-8">
+      {/* Messages - Fixed height with overflow */}
+      <main className="flex-1 overflow-y-auto px-4 pb-4">
         <div className="max-w-3xl mx-auto space-y-8">
           {messages.length === 0 ? (
             <div className="text-center py-20">
@@ -152,10 +154,15 @@ export function AskPageContent() {
         </div>
       </main>
 
-      {/* Input */}
-      <footer className="border-t border-gray-200 dark:border-gray-800 px-4 py-4">
+      {/* Input - Borderless, matching homepage */}
+      <footer className="flex-shrink-0 border-t border-gray-100 dark:border-gray-900 px-4 py-6">
         <div className="max-w-3xl mx-auto">
-          <div className="flex gap-2">
+          <div className="relative">
+            {isLoading && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
+            )}
             <input
               ref={inputRef}
               type="text"
@@ -164,21 +171,13 @@ export function AskPageContent() {
               onKeyDown={handleKeyDown}
               placeholder="Ask about restaurants, hotels, or cities..."
               disabled={isLoading}
-              className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-gray-400 dark:focus:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:opacity-50 transition-colors"
+              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+              style={{
+                paddingLeft: isLoading ? '32px' : '0',
+              }}
             />
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isLoading}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </button>
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-2 text-center">
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-4 text-center">
             Powered by AI. Information may not always be accurate.
           </p>
         </div>
