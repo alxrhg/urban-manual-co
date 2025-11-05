@@ -23,4 +23,18 @@ export interface Destination {
   tags?: string[] | null;
   last_enriched_at?: string | null;
   save_count?: number;
+  // Geolocation fields
+  latitude?: number | null;
+  longitude?: number | null;
+  distance_km?: number; // Added by nearby query
+  distance_miles?: number; // Added by nearby query
+  // Engagement fields
+  views_count?: number;
+  saves_count?: number;
+  visits_count?: number;
+  // Booking fields
+  opentable_url?: string | null;
+  resy_url?: string | null;
+  booking_url?: string | null;
+  reservation_phone?: string | null;
 }
