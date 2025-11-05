@@ -512,7 +512,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-700"
+                    className="inline-flex items-center px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
                   >
                     ✨ {tag}
                   </span>
@@ -574,12 +574,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {/* Place Types */}
             {enrichedData?.place_types && Array.isArray(enrichedData.place_types) && enrichedData.place_types.length > 0 && (
               <div className="mt-4">
-                <span className="text-xs text-gray-500 dark:text-gray-400 mb-2">Types</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Types</span>
                 <div className="flex flex-wrap gap-2">
                   {enrichedData.place_types.slice(0, 5).map((type: string, idx: number) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                      className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
                     >
                       {type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                     </span>
@@ -896,7 +896,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                         )}
                         {/* Crown hidden for now */}
                         {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
+                          <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
                             <img
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"
