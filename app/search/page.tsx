@@ -41,6 +41,8 @@ function SearchPageContent() {
     suggestions: [],
   });
 
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+
   useEffect(() => {
     if (query) performInitialSearch(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,6 +164,15 @@ function SearchPageContent() {
     }));
   }
 
+  // Local search filter (filters the already filtered results)
+  const displayedResults = localSearchTerm
+    ? searchState.filteredResults.filter((d) =>
+        d.name.toLowerCase().includes(localSearchTerm.toLowerCase()) ||
+        d.city?.toLowerCase().includes(localSearchTerm.toLowerCase()) ||
+        d.category?.toLowerCase().includes(localSearchTerm.toLowerCase())
+      )
+    : searchState.filteredResults;
+
   return (
     <div className="px-6 md:px-10 py-10">
       <p className="text-xs tracking-widest text-neutral-400 mb-8">
@@ -177,8 +188,8 @@ function SearchPageContent() {
       />
 
       <div className="mb-4 text-sm text-neutral-500">
-        Showing {searchState.filteredResults.length}
-        {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
+        Showing {displayedResults.length}
+        {searchState.allResults.length > 0 && displayedResults.length !== searchState.allResults.length && (
           <span> of {searchState.allResults.length}</span>
         )}
         {searchState.refinements.length > 0 && (
@@ -186,8 +197,48 @@ function SearchPageContent() {
         )}
       </div>
 
+      {/* Search bar and filter header */}
+      <div className="mb-6 flex items-center justify-between gap-4">
+        {/* Search bar - left side */}
+        <div className="flex-1 max-w-md">
+          <input
+            type="text"
+            value={localSearchTerm}
+            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            placeholder="SEARCH RESULTS..."
+            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+          />
+        </div>
+
+        {/* Filter icon - right side */}
+        <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-gray-600 dark:text-gray-400"
+          >
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+        </button>
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-        {searchState.filteredResults.map((d, idx) => (
+        {displayedResults.map((d, idx) => (
           <LovablyDestinationCard
             key={d.id}
             destination={d as any}
