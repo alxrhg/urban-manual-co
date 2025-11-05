@@ -97,7 +97,11 @@ export default function AIChatMessages({ messages, searching = false }: AIChatMe
                       )}
                       {dest.michelin_stars && dest.michelin_stars > 0 && (
                         <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                          <span>⭐</span>
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            className="h-3 w-3"
+                          />
                           <span>{dest.michelin_stars}</span>
                         </div>
                       )}

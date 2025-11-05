@@ -528,7 +528,7 @@ function DestinationForm({
               className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
             <label htmlFor="crown-checkbox" className="text-sm font-medium cursor-pointer">
-              ⭐ Crown (Featured)
+              Crown (Featured)
             </label>
           </div>
         </div>
