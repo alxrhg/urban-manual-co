@@ -78,11 +78,11 @@ export function CookieConsent() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-2 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-t sm:border border-gray-200 dark:border-gray-800 sm:rounded-2xl shadow-2xl p-3 sm:p-6">
+        <div className="bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl border-t sm:border border-white/20 dark:border-gray-700/30 sm:rounded-2xl shadow-2xl p-3 sm:p-6">
           <div className="flex items-start gap-2 sm:gap-4">
             {/* Icon - Hidden on mobile */}
             <div className="flex-shrink-0 hidden sm:block">
-              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
+              <div className="p-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-full border border-white/30 dark:border-gray-700/30">
                 <Cookie className="h-5 w-5 text-gray-900 dark:text-white" />
               </div>
             </div>
