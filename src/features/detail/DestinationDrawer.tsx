@@ -689,7 +689,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -697,18 +697,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Floating Window */}
       <div
-        className={`fixed top-1/2 left-1/2 -translate-x-1/2 w-[95vw] sm:w-[600px] max-h-[90vh] bg-white dark:bg-gray-950 z-50 rounded-2xl shadow-2xl transform transition-all duration-300 ease-out ${
+        className={`fixed top-1/2 left-1/2 -translate-x-1/2 w-[95vw] sm:w-[600px] max-h-[90vh] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 z-50 rounded-2xl shadow-2xl ring-1 ring-black/5 transform transition-all duration-300 ease-out ${
           isOpen ? '-translate-y-1/2 opacity-100 scale-100' : '-translate-y-1/2 opacity-0 scale-95 pointer-events-none'
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
-        <div className="flex-shrink-0 bg-gradient-to-b from-white to-white/95 dark:from-gray-950 dark:to-gray-950/95 border-b border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <MapPin className="h-5 w-5 text-white" />
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Destination Details</h2>
-          </div>
+        <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Destination</h2>
           <div className="flex items-center gap-1">
             {destination?.slug && (
               <a
@@ -737,7 +732,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {/* Image */}
           {destination.image && (
-            <div className="relative aspect-[21/9] rounded-xl overflow-hidden mb-5 bg-gray-100 dark:bg-gray-800 shadow-lg">
+            <div className="relative aspect-[16/10] rounded-lg overflow-hidden mb-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
               <Image
                 src={destination.image}
                 alt={destination.name}
@@ -745,41 +740,46 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 className="object-cover"
                 sizes="(max-width: 640px) 95vw, 600px"
                 priority={false}
-                quality={90}
+                quality={85}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             </div>
           )}
 
           {/* Title */}
-          <div className="mb-5">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-3">
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold mb-3">
               {destination.name}
             </h1>
 
-            {/* Meta Info Cards */}
-            <div className="flex flex-wrap gap-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{capitalizeCity(destination.city)}</span>
+            {/* Meta Info */}
+            <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" />
+                <span>{capitalizeCity(destination.city)}</span>
               </div>
 
               {destination.category && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                  <Tag className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300 capitalize">{destination.category}</span>
-                </div>
+                <>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <Tag className="h-4 w-4" />
+                    <span className="capitalize">{destination.category}</span>
+                  </div>
+                </>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-4 w-4"
-                  />
-                  <span className="text-sm font-medium text-red-700 dark:text-red-300">{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
-                </div>
+                <>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <img
+                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                      alt="Michelin star"
+                      className="h-4 w-4"
+                    />
+                    <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
+                  </div>
+                </>
               )}
             </div>
 
@@ -789,7 +789,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2.5 py-1 bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full border border-purple-200 dark:border-purple-800"
+                    className="inline-flex items-center px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full"
                   >
                     ✨ {tag}
                   </span>
@@ -799,24 +799,21 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Rating & Price Level */}
             {((enrichedData?.rating || enrichedData?.price_level) || (destination.rating || destination.price_level)) && (
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-3 flex items-center gap-3 text-sm">
                 {(enrichedData?.rating || destination.rating) && (
-                  <div className="flex flex-col gap-1 p-3 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-yellow-500">⭐</span>
-                      <span className="font-bold text-lg">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
-                    </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">
-                      {enrichedData?.user_ratings_total ? `${enrichedData.user_ratings_total.toLocaleString()} reviews` : 'Rating'}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-yellow-500">⭐</span>
+                    <span className="font-semibold">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {enrichedData?.user_ratings_total ? `(${enrichedData.user_ratings_total.toLocaleString()})` : ''}
                     </span>
                   </div>
                 )}
                 {(enrichedData?.price_level || destination.price_level) && (
-                  <div className="flex flex-col gap-1 p-3 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-lg">
-                    <span className="text-green-600 dark:text-green-400 font-bold text-lg">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-green-600 dark:text-green-400 font-semibold">
                       {'$'.repeat(enrichedData?.price_level || destination.price_level)}
                     </span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">Price Level</span>
                   </div>
                 )}
               </div>
@@ -824,11 +821,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Editorial Summary */}
             {enrichedData?.editorial_summary && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                  <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">From Google</h3>
-                </div>
+              <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <h3 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-2">From Google</h3>
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {stripHtmlTags(enrichedData.editorial_summary)}
                 </p>
@@ -837,15 +831,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Formatted Address */}
             {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                  </div>
+              <div className="mt-4">
+                <div className="flex items-start gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Address</div>
+                    <div className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Address</div>
                     {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</div>
+                      <div className="text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</div>
                     )}
                     {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
                       <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
@@ -905,35 +897,29 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               }
               
               return (
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${openStatus.isOpen ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-                      <Clock className={`h-4 w-4 ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
-                    </div>
+                <div className="mt-4">
+                  <div className="flex items-start gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5" />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
+                        <div className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Hours</div>
                         {openStatus.todayHours && (
-                          <span className={`text-sm font-bold ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {openStatus.isOpen ? 'Open now' : 'Closed'}
-                          </span>
-                        )}
-                        {openStatus.todayHours && (
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            · {openStatus.todayHours}
-                          </span>
+                          <>
+                            <span className={`text-xs font-semibold ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                              {openStatus.isOpen ? 'Open' : 'Closed'}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              · {openStatus.todayHours}
+                            </span>
+                          </>
                         )}
                       </div>
-                      {enrichedData?.timezone_id && (
-                        <div className="text-xs text-gray-400 dark:text-gray-500 mb-2">
-                          {enrichedData.timezone_id.replace('_', ' ')}
-                        </div>
-                      )}
                       {hours.weekday_text && (
                         <details className="text-sm">
-                          <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
+                          <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-xs">
                             View all hours
                           </summary>
-                          <div className="mt-3 space-y-1.5">
+                          <div className="mt-2 space-y-1">
                             {hours.weekday_text.map((day: string, index: number) => {
                               const [dayName, hoursText] = day.split(': ');
                               const dayOfWeek = now.getDay();
@@ -941,7 +927,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               const isToday = index === googleDayIndex;
 
                               return (
-                                <div key={index} className={`flex justify-between text-xs ${isToday ? 'font-bold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                                <div key={index} className={`flex justify-between text-xs ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                                   <span>{dayName}</span>
                                   <span>{hoursText}</span>
                                 </div>
@@ -959,125 +945,90 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Action Buttons */}
           {user && (
-            <div className="grid grid-cols-2 gap-2 mb-5">
+            <div className="flex gap-2 mb-4">
               <button
                 onClick={handleSave}
                 disabled={loading}
-                className={`relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
                   isSaved
-                    ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                 } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
               >
-                <Heart className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
-                <span className={`text-sm ${heartAnimating && isSaved ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
+                <Heart className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current' : ''}`} />
+                <span className="text-sm">
                   {isSaved ? 'Saved' : 'Save'}
                 </span>
-                {heartAnimating && isSaved && (
-                  <style jsx>{`
-                    @keyframes heartBeat {
-                      0%, 100% { transform: scale(1); }
-                      15% { transform: scale(1.3); }
-                      30% { transform: scale(1.1); }
-                      45% { transform: scale(1.25); }
-                      60% { transform: scale(1.05); }
-                    }
-                    @keyframes fadeIn {
-                      from { opacity: 0; }
-                      to { opacity: 1; }
-                    }
-                  `}</style>
-                )}
               </button>
 
               <button
                 onClick={handleVisitClick}
                 disabled={loading}
-                className={`relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
                   isVisited
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                    ? 'bg-green-500 text-white hover:bg-green-600'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                 } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
               >
-                <Check className={`h-4 w-4 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
-                <span className={`text-sm ${checkAnimating && isVisited ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                  {isVisited ? 'Visited' : 'Visited'}
+                <Check className={`h-4 w-4 transition-all duration-300`} />
+                <span className="text-sm">
+                  {isVisited ? 'Visited' : 'Visit'}
                 </span>
-                {checkAnimating && isVisited && (
-                  <style jsx>{`
-                    @keyframes checkPop {
-                      0%, 100% { transform: scale(1) rotate(0deg); }
-                      25% { transform: scale(1.3) rotate(-10deg); }
-                      50% { transform: scale(1.1) rotate(5deg); }
-                      75% { transform: scale(1.2) rotate(-5deg); }
-                    }
-                    @keyframes fadeIn {
-                      from { opacity: 0; }
-                      to { opacity: 1; }
-                    }
-                  `}</style>
-                )}
               </button>
 
               <button
                 onClick={openListsModal}
                 disabled={loading}
-                className="col-span-2 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors"
+                className="px-3 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Add to list"
               >
                 <Plus className="h-4 w-4" />
-                <span className="text-sm font-medium">Add to List</span>
               </button>
             </div>
           )}
 
           {/* Sign in prompt */}
           {!user && (
-            <div className="mb-5 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800 rounded-xl text-center">
+            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                <a href="/auth/login" className="font-bold text-purple-600 dark:text-purple-400 hover:opacity-70 transition-opacity">Sign in</a> to save destinations and track your visits
+                <a href="/auth/login" className="font-semibold hover:opacity-70 transition-opacity">Sign in</a> to save and track visits
               </span>
             </div>
           )}
 
           {/* Description */}
           {destination.content && (
-            <div className="mb-6">
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
-                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                  <Tag className="h-3.5 w-3.5" />
-                  About
-                </h3>
-                <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                  {stripHtmlTags(destination.content)}
-                </div>
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold uppercase mb-2 text-gray-500 dark:text-gray-400">About</h3>
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {stripHtmlTags(destination.content)}
               </div>
             </div>
           )}
 
           {/* Contact & Links Section */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
-            <div className="mb-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Quick Actions</h3>
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold uppercase mb-2 text-gray-500 dark:text-gray-400">Quick Actions</h3>
               <style jsx>{`
                 .pill-button {
                   display: inline-flex;
                   align-items: center;
                   gap: 6px;
-                  padding: 8px 14px;
-                  background: rgba(0, 0, 0, 0.7);
+                  padding: 6px 12px;
+                  background: rgba(0, 0, 0, 0.75);
                   backdrop-filter: blur(10px);
                   color: white;
                   font-size: 13px;
                   font-weight: 500;
-                  border-radius: 12px;
-                  border: 1px solid rgba(255, 255, 255, 0.15);
+                  border-radius: 9999px;
+                  border: 1px solid rgba(255, 255, 255, 0.1);
                   cursor: pointer;
                   transition: all 0.2s ease;
                   text-decoration: none;
                 }
                 .pill-button:hover {
                   background: rgba(0, 0, 0, 0.85);
-                  transform: translateY(-1px);
                 }
                 .pill-separator {
                   color: rgba(255, 255, 255, 0.5);
@@ -1136,25 +1087,23 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Top Reviews</h3>
-              <div className="space-y-2">
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold uppercase mb-2 text-gray-500 dark:text-gray-400">Top Reviews</h3>
+              <div className="space-y-3">
                 {enrichedData.reviews.slice(0, 2).map((review: any, idx: number) => (
-                  <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-sm block truncate">{review.author_name}</span>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <span className="text-yellow-500 text-sm">⭐</span>
-                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{review.rating}</span>
-                          {review.relative_time_description && (
-                            <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
-                          )}
-                        </div>
+                  <div key={idx} className="pb-3 border-b border-gray-200 dark:border-gray-800 last:border-0 last:pb-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <span className="font-medium text-sm">{review.author_name}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-500 text-xs">⭐</span>
+                        <span className="text-xs font-semibold">{review.rating}</span>
                       </div>
                     </div>
                     {review.text && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mt-2">{review.text}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{review.text}</p>
+                    )}
+                    {review.relative_time_description && (
+                      <span className="text-xs text-gray-500 dark:text-gray-500 mt-1 block">{review.relative_time_description}</span>
                     )}
                   </div>
                 ))}
@@ -1163,40 +1112,39 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-4" />
 
           {/* Map Section (Apple Maps) */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Location</h3>
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Location</h3>
               <a
                 href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors rounded-lg border border-blue-200 dark:border-blue-800"
+                className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 <Navigation className="h-3 w-3" />
                 <span>Directions</span>
               </a>
             </div>
-            <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 shadow-md">
+            <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
               <AppleMap
                 query={`${destination.name}, ${destination.city}`}
                 height="192px"
-                className="rounded-xl"
+                className="rounded-lg"
               />
             </div>
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-4" />
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
               </div>
@@ -1222,7 +1170,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       }}
                       className="flex-shrink-0 w-32 group text-left"
                     >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden mb-2 shadow-sm border border-gray-200 dark:border-gray-700">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-700">
                         {rec.image ? (
                           <img
                             src={rec.image}
@@ -1270,16 +1218,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-4" />
 
           {/* Share Button */}
-          <div className="flex justify-center pb-2">
+          <div className="flex justify-center">
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-100 text-white dark:text-black hover:from-black hover:to-gray-800 dark:hover:from-gray-100 dark:hover:to-white transition-all rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="flex items-center gap-2 px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-lg font-medium text-sm"
             >
               <Share2 className="h-4 w-4" />
-              <span className="text-sm">{copied ? 'Link Copied!' : 'Share Destination'}</span>
+              <span>{copied ? 'Copied!' : 'Share'}</span>
             </button>
           </div>
         </div>
