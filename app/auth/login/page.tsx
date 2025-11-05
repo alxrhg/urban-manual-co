@@ -44,6 +44,22 @@ function LoginForm() {
         setPassword('');
       } else {
         await signIn(email, password);
+
+        // Check if user needs onboarding
+        try {
+          const onboardingResponse = await fetch('/api/onboarding/complete');
+          if (onboardingResponse.ok) {
+            const { completed } = await onboardingResponse.json();
+
+            if (!completed && !returnTo.includes('/onboarding')) {
+              router.push('/onboarding');
+              return;
+            }
+          }
+        } catch (err) {
+          console.log('Failed to check onboarding status:', err);
+        }
+
         router.push(returnTo);
       }
     } catch (err: any) {

@@ -39,13 +39,30 @@ function AuthCallbackContent() {
       // Wait for Supabase to process the URL and detect the session
       let attempts = 0;
       const maxAttempts = 10;
-      
+
       while (attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (session) {
+          // Check if user needs onboarding
+          try {
+            const onboardingResponse = await fetch('/api/onboarding/complete');
+            if (onboardingResponse.ok) {
+              const { completed } = await onboardingResponse.json();
+
+              // If user hasn't completed onboarding and not already going there
+              if (!completed && !next.includes('/onboarding')) {
+                router.push('/onboarding');
+                return;
+              }
+            }
+          } catch (err) {
+            console.log('Failed to check onboarding status:', err);
+            // Continue with normal redirect on error
+          }
+
           // Successfully authenticated
           router.push(next);
           return;
@@ -81,6 +98,21 @@ function AuthCallbackContent() {
           }
 
           if (data?.session) {
+            // Check if user needs onboarding
+            try {
+              const onboardingResponse = await fetch('/api/onboarding/complete');
+              if (onboardingResponse.ok) {
+                const { completed } = await onboardingResponse.json();
+
+                if (!completed && !next.includes('/onboarding')) {
+                  router.push('/onboarding');
+                  return;
+                }
+              }
+            } catch (err) {
+              console.log('Failed to check onboarding status:', err);
+            }
+
             router.push(next);
             return;
           }
@@ -94,8 +126,23 @@ function AuthCallbackContent() {
       // Final check - wait one more time for Supabase auto-detection
       await new Promise(resolve => setTimeout(resolve, 500));
       const { data: { session: finalSession } } = await supabase.auth.getSession();
-      
+
       if (finalSession) {
+        // Check if user needs onboarding
+        try {
+          const onboardingResponse = await fetch('/api/onboarding/complete');
+          if (onboardingResponse.ok) {
+            const { completed } = await onboardingResponse.json();
+
+            if (!completed && !next.includes('/onboarding')) {
+              router.push('/onboarding');
+              return;
+            }
+          }
+        } catch (err) {
+          console.log('Failed to check onboarding status:', err);
+        }
+
         router.push(next);
         return;
       }

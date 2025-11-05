@@ -35,6 +35,7 @@ import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
+import { OnboardingWelcome } from '@/components/OnboardingWelcome';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -657,6 +658,10 @@ export default function Home() {
           }),
         }}
       />
+
+      {/* Onboarding Welcome Message */}
+      <OnboardingWelcome />
+
       <main className="relative min-h-screen dark:text-white">
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
