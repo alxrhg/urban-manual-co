@@ -161,28 +161,19 @@ export function EnrichedSearchResponse({
         {text}
       </div>
 
-      {/* Follow-up input box */}
+      {/* Follow-up input box - minimal borderless style matching main search */}
       {followUpHint && onFollowUp && (
-        <div className="flex gap-2">
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-900">
           <input
             type="text"
             placeholder={followUpHint}
-            className="flex-1 px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-colors"
+            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 handleSend(e.currentTarget);
               }
             }}
           />
-          <button
-            onClick={(e) => {
-              const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-              if (input) handleSend(input);
-            }}
-            className="px-4 py-2.5 text-sm bg-black dark:bg-white text-white dark:text-black rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors font-medium"
-          >
-            Send
-          </button>
         </div>
       )}
     </div>
