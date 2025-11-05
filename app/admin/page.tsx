@@ -7,6 +7,7 @@ import { Loader2, Plus, Edit, Search, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 
@@ -787,8 +788,17 @@ export default function AdminPage() {
             </Button>
           </div>
 
-          {/* Enrichment Statistics */}
-          <Card className="mb-6">
+          <Tabs defaultValue="destinations" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+              <TabsTrigger value="destinations">Destinations</TabsTrigger>
+              <TabsTrigger value="enrichment">Enrichment</TabsTrigger>
+              <TabsTrigger value="content">Content</TabsTrigger>
+            </TabsList>
+
+            {/* Destinations Tab */}
+            <TabsContent value="destinations" className="space-y-6">
+              {/* Enrichment Statistics */}
+              <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Enrichment Status</CardTitle>
@@ -1167,11 +1177,15 @@ export default function AdminPage() {
             </>
           )}
 
-          {/* Google Enrichment Tools */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Google Enrichment</CardTitle>
-            </CardHeader>
+            </TabsContent>
+
+            {/* Enrichment Tab */}
+            <TabsContent value="enrichment" className="space-y-6">
+              {/* Google Enrichment Tools */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Google Enrichment</CardTitle>
+                </CardHeader>
             <CardContent className="space-y-4">
               <span className="text-sm text-gray-600 dark:text-gray-400 mb-4 block">
                 Enrich destinations with Google Places API data. 
@@ -1293,11 +1307,15 @@ export default function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Regenerate Content with AI */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Regenerate Content with AI</CardTitle>
-            </CardHeader>
+            </TabsContent>
+
+            {/* Content Tab */}
+            <TabsContent value="content" className="space-y-6">
+              {/* Regenerate Content with AI */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Regenerate Content with AI</CardTitle>
+                </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Regenerate the "About" section for destinations using AI (Gemini) and all available Google Places API data.
@@ -1415,6 +1433,8 @@ export default function AdminPage() {
               )}
             </CardContent>
           </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
