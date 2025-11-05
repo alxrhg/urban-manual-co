@@ -205,7 +205,7 @@ function SearchPageContent() {
             type="text"
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
-            placeholder="SEARCH RESULTS..."
+            placeholder="SEARCH"
             className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
           />
         </div>
