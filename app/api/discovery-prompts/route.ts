@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DiscoveryPromptService } from '@/lib/discovery-prompts';
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 /**
  * GET /api/discovery-prompts
@@ -53,21 +54,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Add admin authentication check
+    // Require admin authentication
+    const { serviceClient } = await requireAdmin(request);
     const body = await request.json();
-
-    const { createClient } = await import('@supabase/supabase-js');
-    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-      return NextResponse.json(
-        { error: 'Supabase configuration missing' },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Validate required fields
     const requiredFields = ['city', 'title', 'prompt_text', 'prompt_type', 'start_date', 'end_date'];
@@ -114,7 +103,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await serviceClient
       .from('discovery_prompts')
       .insert(insertData)
       .select()
@@ -130,6 +119,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, prompt: data }, { status: 201 });
   } catch (error: any) {
+    // Handle authentication/authorization errors
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+
     console.error('Error creating discovery prompt:', error);
     return NextResponse.json(
       {
