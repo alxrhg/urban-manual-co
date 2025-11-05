@@ -23,4 +23,23 @@ export interface Destination {
   tags?: string[] | null;
   last_enriched_at?: string | null;
   save_count?: number;
+  // Advanced enrichment fields (added by AI Chat API)
+  photos?: any[] | null;
+  currentWeather?: {
+    temperature: number;
+    weatherDescription: string;
+    weatherCode: number;
+    humidity?: number;
+  } | null;
+  weatherForecast?: any[] | null;
+  nearbyEvents?: Array<{
+    name: string;
+    date?: string;
+    venue?: string;
+  }> | null;
+  routeFromCityCenter?: any | null;
+  walkingTimeFromCenter?: number | null;
+  staticMapUrl?: string | null;
+  currencyCode?: string | null;
+  exchangeRateToUSD?: number | null;
 }

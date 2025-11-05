@@ -699,12 +699,12 @@ export default function Home() {
                         weather={filteredDestinations[0]?.currentWeather}
                         opportunities={searchIntent?.opportunities}
                         enriched={{
-                          hasWeather: filteredDestinations.some((r: any) => r.currentWeather),
-                          hasEvents: filteredDestinations.some((r: any) => r.nearbyEvents && r.nearbyEvents.length > 0),
-                          hasRoutes: filteredDestinations.some((r: any) => r.routeFromCityCenter || r.walkingTimeFromCenter),
-                          hasPhotos: filteredDestinations.some((r: any) => r.photos && r.photos.length > 0),
-                          totalPhotos: filteredDestinations.reduce((sum: number, r: any) => sum + (r.photos?.length || 0), 0),
-                          totalEvents: filteredDestinations.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
+                          hasWeather: filteredDestinations.some(r => r.currentWeather),
+                          hasEvents: filteredDestinations.some(r => r.nearbyEvents && r.nearbyEvents.length > 0),
+                          hasRoutes: filteredDestinations.some(r => r.routeFromCityCenter || r.walkingTimeFromCenter),
+                          hasPhotos: filteredDestinations.some(r => r.photos && r.photos.length > 0),
+                          totalPhotos: filteredDestinations.reduce((sum, r) => sum + (r.photos?.length || 0), 0),
+                          totalEvents: filteredDestinations.reduce((sum, r) => sum + (r.nearbyEvents?.length || 0), 0),
                         }}
                       />
                     </div>
@@ -990,10 +990,10 @@ export default function Home() {
 
                       {/* Enrichment badges (walking time, weather, events, trending) */}
                       <EnrichedDestinationBadges
-                        walkingTime={(destination as any).walkingTimeFromCenter}
-                        weather={(destination as any).currentWeather}
-                        hasEvents={(destination as any).nearbyEvents && (destination as any).nearbyEvents.length > 0}
-                        eventCount={(destination as any).nearbyEvents?.length || 0}
+                        walkingTime={destination.walkingTimeFromCenter}
+                        weather={destination.currentWeather}
+                        hasEvents={!!destination.nearbyEvents && destination.nearbyEvents.length > 0}
+                        eventCount={destination.nearbyEvents?.length || 0}
                       />
                     </div>
                   </button>
