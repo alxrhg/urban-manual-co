@@ -557,6 +557,66 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {destination.name}
             </h1>
 
+            {/* Action Buttons - Prominent position right after title */}
+            <div className="flex gap-2 mb-4">
+              {user && destination?.id ? (
+                <>
+                  <button
+                    onClick={() => setShowSaveModal(true)}
+                    className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                      isSaved
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    }`}
+                  >
+                    <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleVisitToggle}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if (isVisited) setShowVisitedModal(true);
+                    }}
+                    className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                      isVisited
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    }`}
+                  >
+                    <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                    {isVisited ? 'Visited' : 'Mark as Visited'}
+                  </button>
+                  {isVisited && (
+                    <button
+                      onClick={() => setShowVisitedModal(true)}
+                      className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      title="Add visit details"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => router.push('/auth/login')}
+                    className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  >
+                    <Bookmark className="h-4 w-4" />
+                    Save
+                  </button>
+                  <button
+                    onClick={() => router.push('/auth/login')}
+                    className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  >
+                    <Check className="h-4 w-4" />
+                    Mark as Visited
+                  </button>
+                </>
+              )}
+            </div>
+
             {/* Meta badges and action buttons - below title */}
             <div className="flex flex-wrap gap-2 text-xs">
               {destination.category && (
@@ -777,55 +837,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             })()}
           </div>
 
-          {/* Action Buttons */}
-          {user && destination?.id && (
-            <div className="mb-6 flex gap-2">
-              <button
-                onClick={() => setShowSaveModal(true)}
-                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                  isSaved
-                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
-                }`}
-              >
-                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                {isSaved ? 'Saved' : 'Save'}
-              </button>
-              <button
-                onClick={handleVisitToggle}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  if (isVisited) setShowVisitedModal(true);
-                }}
-                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                  isVisited
-                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
-                }`}
-              >
-                <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
-                {isVisited ? 'Visited' : 'Mark as Visited'}
-              </button>
-              {isVisited && (
-                <button
-                  onClick={() => setShowVisitedModal(true)}
-                  className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                  title="Add visit details"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Sign in prompt */}
-          {!user && (
-            <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                <a href="/auth/login" className="font-medium hover:opacity-60">Sign in</a> to save destinations and track your visits
-              </span>
-            </div>
-          )}
 
           {/* Description */}
           {destination.description && (
