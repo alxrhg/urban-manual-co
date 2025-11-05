@@ -97,14 +97,14 @@ export default function DestinationPageClient() {
   // Check if destination is saved
   useEffect(() => {
     async function checkIfSaved() {
-      if (!user || !destination?.id) return;
+      if (!user || !destination?.slug) return;
 
       try {
         const { data } = await supabase
-          .from('saved_destinations')
+          .from('saved_places')
           .select('id')
           .eq('user_id', user.id)
-          .eq('destination_id', destination.id)
+          .eq('destination_slug', destination.slug)
           .single();
 
         setIsSaved(!!data);

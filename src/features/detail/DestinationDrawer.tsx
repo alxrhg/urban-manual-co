@@ -287,12 +287,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         return;
       }
 
-      if (destination.id) {
+      if (destination.slug) {
         const { data: savedData } = await supabase
-          .from('saved_destinations')
+          .from('saved_places')
           .select('*')
           .eq('user_id', user.id)
-          .eq('destination_id', destination.id)
+          .eq('destination_slug', destination.slug)
           .single();
 
         setIsSaved(!!savedData);
