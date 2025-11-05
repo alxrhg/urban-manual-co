@@ -34,6 +34,7 @@ import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
+import { ConversationPanel } from '@/components/ConversationPanel';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -210,6 +211,33 @@ export default function Home() {
     initializeConversationSession();
   }, []);
 
+  // Clear conversation and reset session
+  const clearConversation = async () => {
+    // Clear local state
+    setConversationHistory([]);
+    setConversationContext({});
+    setChatResponse('');
+    setSearchIntent(null);
+    setSeasonalContext(null);
+
+    // Generate new session token
+    if (!user?.id) {
+      const newToken = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem('urban_manual_session_token', newToken);
+      setSessionToken(newToken);
+    }
+
+    // Reset session ID to trigger new session on next search
+    setSessionId(null);
+  };
+
+  // Handle suggestion click from conversation panel
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchTerm(suggestion);
+    // Trigger search
+    performAISearch(suggestion);
+  };
+
   // Initialize or retrieve session token for conversation persistence
   const initializeConversationSession = async () => {
     try {
@@ -229,6 +257,10 @@ export default function Home() {
                 destinations: msg.destinations || undefined
               }));
               setConversationHistory(formattedHistory);
+            }
+            // Load conversation context
+            if (data.context) {
+              setConversationContext(data.context);
             }
           }
         }
@@ -256,6 +288,10 @@ export default function Home() {
                 destinations: msg.destinations || undefined
               }));
               setConversationHistory(formattedHistory);
+            }
+            // Load conversation context
+            if (data.context) {
+              setConversationContext(data.context);
             }
           }
         }
@@ -382,6 +418,7 @@ export default function Home() {
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
   const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
+  const [conversationContext, setConversationContext] = useState<any>({}); // Store conversation context from API
 
   // AI Chat-only search with conversation persistence
   // Conversations are now stored in database, not React state
@@ -425,6 +462,18 @@ export default function Home() {
         if (!user?.id) {
           localStorage.setItem('urban_manual_session_token', data.sessionToken);
         }
+      }
+
+      // Update conversation context from API response
+      if (data.intent) {
+        const newContext: any = {};
+        if (data.intent.city) newContext.city = data.intent.city;
+        if (data.intent.category) newContext.category = data.intent.category;
+        if (data.enhancedIntent?.meal) newContext.meal = data.enhancedIntent.meal;
+        if (data.enhancedIntent?.cuisine) newContext.cuisine = data.enhancedIntent.cuisine;
+        if (data.enhancedIntent?.mood) newContext.mood = data.enhancedIntent.mood;
+        if (data.intent.filters?.priceLevel) newContext.price_level = data.intent.filters.priceLevel.toString();
+        setConversationContext(newContext);
       }
 
       // Update conversation history for API context (not displayed)
@@ -1083,6 +1132,16 @@ export default function Home() {
             }}
           />
         </div>
+
+        {/* Conversation Panel - Fixed bottom right */}
+        <ConversationPanel
+          conversationHistory={conversationHistory}
+          context={conversationContext}
+          sessionId={sessionId}
+          onClearConversation={clearConversation}
+          onSuggestionClick={handleSuggestionClick}
+          isVisible={true}
+        />
       </main>
     </ErrorBoundary>
   );
