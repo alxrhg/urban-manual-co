@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Default: Get trending or top-rated places
-    query = query.order('rating', { ascending: false, nullsLast: true });
+    query = query.order('rating', { ascending: false, nullsFirst: false });
 
     const { data: recommendations, error } = await query;
 
