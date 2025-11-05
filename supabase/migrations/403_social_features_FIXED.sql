@@ -423,20 +423,23 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'saved_places') THEN
+    -- Use EXECUTE to avoid nested $$ delimiter conflict
+    EXECUTE '
     CREATE OR REPLACE FUNCTION create_save_activity()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $func$
     BEGIN
       INSERT INTO activities (user_id, type, destination_slug)
-      VALUES (NEW.user_id, 'saved', NEW.destination_slug);
+      VALUES (NEW.user_id, ''saved'', NEW.destination_slug);
       RETURN NEW;
     END;
-    $$ LANGUAGE plpgsql;
+    $func$ LANGUAGE plpgsql';
 
     -- Drop trigger if exists, then recreate
     DROP TRIGGER IF EXISTS create_save_activity_trigger ON saved_places;
+    EXECUTE '
     CREATE TRIGGER create_save_activity_trigger
     AFTER INSERT ON saved_places
-    FOR EACH ROW EXECUTE FUNCTION create_save_activity();
+    FOR EACH ROW EXECUTE FUNCTION create_save_activity()';
   END IF;
 END $$;
 
