@@ -29,6 +29,8 @@ export default function AppleMap({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const checkReadyIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const checkReadyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const mapkit1Key = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
   const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || '';
@@ -43,13 +45,14 @@ export default function AppleMap({
   }, [loaded, error, retryCount]);
 
   useEffect(() => {
-    // Set a timeout to show error if map doesn't load within 8 seconds
+    // Set a timeout to show error if map doesn't load within 20 seconds
+    // This accounts for: token fetch (1-2s) + MapKit init (2-5s) + network latency
     loadingTimeoutRef.current = setTimeout(() => {
       if (!loaded && !error) {
-        console.log('[AppleMap] Loading timeout reached, showing error UI');
+        console.log('[AppleMap] Loading timeout reached (20s), showing error UI');
         setError('Map loading timeout - please check MapKit configuration');
       }
-    }, 8000);
+    }, 20000);
 
     // Check if MapKit is already loaded
     if (window.mapkit && window.mapkit.loaded) {
@@ -95,7 +98,30 @@ export default function AppleMap({
                 console.log('[AppleMap] Token received:', data.token ? 'YES' : 'NO');
 
                 if (data.token) {
+                  console.log('[AppleMap] Calling done() with token');
                   done(data.token);
+
+                  // Wait for MapKit to become ready after authentication
+                  console.log('[AppleMap] Waiting for MapKit to initialize...');
+                  checkReadyIntervalRef.current = setInterval(() => {
+                    if (window.mapkit && window.mapkit.loaded) {
+                      console.log('[AppleMap] MapKit is now ready!');
+                      if (checkReadyIntervalRef.current) clearInterval(checkReadyIntervalRef.current);
+                      if (checkReadyTimeoutRef.current) clearTimeout(checkReadyTimeoutRef.current);
+                      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+                      setLoaded(true);
+                    }
+                  }, 100);
+
+                  // Timeout after 10 seconds
+                  checkReadyTimeoutRef.current = setTimeout(() => {
+                    if (checkReadyIntervalRef.current) clearInterval(checkReadyIntervalRef.current);
+                    if (!window.mapkit?.loaded) {
+                      console.error('[AppleMap] MapKit failed to load after authentication');
+                      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+                      setError('MapKit failed to initialize');
+                    }
+                  }, 10000);
                 } else {
                   throw new Error('No token in response');
                 }
@@ -109,11 +135,10 @@ export default function AppleMap({
                   setTimeout(() => fetchToken(attempt + 1), delay);
                   setRetryCount(attempt + 1);
                 } else {
-                  // After all retries fail, show error - don't try with empty token
-                  console.error('[AppleMap] All token fetch attempts failed, showing error UI');
-                  setError('MapKit credentials not configured. Please contact support.');
-                  setLoaded(false);
-                  // Don't call done() - this prevents MapKit from hanging with invalid auth
+                  // After all retries fail, show error
+                  console.error('[AppleMap] All token fetch attempts failed');
+                  if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+                  setError('Failed to authenticate with MapKit');
                 }
               }
             };
@@ -128,29 +153,8 @@ export default function AppleMap({
           window.mapkit.showsPointsOfInterest = true;
         } catch {}
 
-        // Wait for MapKit to be ready
-        if (window.mapkit.loaded) {
-          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-          setLoaded(true);
-        } else {
-          // MapKit might take a moment to initialize
-          const checkLoaded = setInterval(() => {
-            if (window.mapkit && window.mapkit.loaded) {
-              clearInterval(checkLoaded);
-              if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-              setLoaded(true);
-            }
-          }, 100);
-
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            clearInterval(checkLoaded);
-            if (!window.mapkit?.loaded) {
-              if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-              setError('MapKit initialization timeout');
-            }
-          }, 5000);
-        }
+        // Don't check for loaded here - wait for auth callback to complete
+        console.log('[AppleMap] MapKit.init() called, waiting for authorization...');
       } catch (err: any) {
         console.error('MapKit initialization error:', err);
         if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
@@ -167,6 +171,8 @@ export default function AppleMap({
 
     return () => {
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+      if (checkReadyIntervalRef.current) clearInterval(checkReadyIntervalRef.current);
+      if (checkReadyTimeoutRef.current) clearTimeout(checkReadyTimeoutRef.current);
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
