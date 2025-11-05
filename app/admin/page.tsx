@@ -596,6 +596,21 @@ export default function AdminPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'destinations' | 'enrichment' | 'analytics' | 'searches'>('destinations');
+
+  // Analytics state
+  const [analyticsStats, setAnalyticsStats] = useState({
+    totalViews: 0,
+    totalSearches: 0,
+    totalSaves: 0,
+    totalUsers: 0,
+    topSearches: [] as { query: string; count: number }[],
+  });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  // Searches state
+  const [searchLogs, setSearchLogs] = useState<any[]>([]);
+  const [loadingSearches, setLoadingSearches] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -633,6 +648,17 @@ export default function AdminPage() {
       loadDestinationList();
     }
   }, [isAdmin, authChecked, listOffset, listSearchQuery]);
+
+  // Load data when tab changes
+  useEffect(() => {
+    if (!isAdmin || !authChecked) return;
+
+    if (activeTab === 'analytics' && analyticsStats.totalUsers === 0) {
+      loadAnalytics();
+    } else if (activeTab === 'searches' && searchLogs.length === 0) {
+      loadSearchLogs();
+    }
+  }, [activeTab, isAdmin, authChecked]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -713,14 +739,14 @@ export default function AdminPage() {
         .from('destinations')
         .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating')
         .order('slug', { ascending: true });
-      
+
       // Apply search filter if present
       if (listSearchQuery.trim()) {
         query = query.or(`name.ilike.%${listSearchQuery}%,city.ilike.%${listSearchQuery}%,slug.ilike.%${listSearchQuery}%,category.ilike.%${listSearchQuery}%`);
       }
-      
+
       const { data, error } = await query.range(listOffset, listOffset + 19);
-      
+
       if (error) {
         console.error('Supabase error:', error);
         setDestinationList([]);
@@ -732,6 +758,74 @@ export default function AdminPage() {
       setDestinationList([]);
     } finally {
       setIsLoadingList(false);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      // Get user interactions stats
+      const { data: interactions } = await supabase
+        .from('user_interactions')
+        .select('interaction_type');
+
+      // Get visit history stats
+      const { data: visits } = await supabase
+        .from('visit_history')
+        .select('destination_id, search_query');
+
+      // Get user count
+      const { count: userCount } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Aggregate stats
+      const views = interactions?.filter(i => i.interaction_type === 'view').length || 0;
+      const searches = visits?.filter(v => v.search_query).length || 0;
+      const saves = interactions?.filter(i => i.interaction_type === 'save').length || 0;
+
+      // Top searches
+      const searchQueries = visits?.map(v => v.search_query).filter(Boolean) || [];
+      const searchCounts: Record<string, number> = {};
+      searchQueries.forEach((q: string) => {
+        searchCounts[q] = (searchCounts[q] || 0) + 1;
+      });
+      const topSearches = Object.entries(searchCounts)
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      setAnalyticsStats({
+        totalViews: views,
+        totalSearches: searches,
+        totalSaves: saves,
+        totalUsers: userCount || 0,
+        topSearches,
+      });
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const loadSearchLogs = async () => {
+    setLoadingSearches(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_interactions')
+        .select('id, created_at, interaction_type, user_id, metadata')
+        .eq('interaction_type', 'search')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) throw error;
+      setSearchLogs(data || []);
+    } catch (error) {
+      console.error('Error loading search logs:', error);
+      setSearchLogs([]);
+    } finally {
+      setLoadingSearches(false);
     }
   };
 
@@ -789,10 +883,32 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Enrichment Statistics */}
+        {/* Tab Navigation - Matches account page style */}
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Enrichment Status</h2>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            {['destinations', 'enrichment', 'analytics', 'searches'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`transition-all ${
+                  activeTab === tab
+                    ? "font-medium text-black dark:text-white"
+                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Destinations Tab */}
+        {activeTab === 'destinations' && (
+          <div className="fade-in space-y-12">
+            {/* Enrichment Statistics */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Enrichment Status</h2>
             <div className="flex gap-2">
               {enrichmentStats && enrichmentStats.needsEnrichment > 0 && (
                 <button
@@ -1068,93 +1184,13 @@ export default function AdminPage() {
               })}
             </div>
           )}
+          </div>
         </div>
-      </div>
+        )}
 
-          {/* Create/Edit Drawer */}
-          {showCreateModal && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 bg-black/50 z-40 transition-opacity"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingDestination(null);
-                }}
-              />
-              
-              {/* Drawer */}
-              <div
-                className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-                  showCreateModal ? 'translate-x-0' : 'translate-x-full'
-                } overflow-y-auto`}
-              >
-                {/* Header */}
-                <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-                  <h2 className="text-xl font-bold">
-                    {editingDestination ? 'Edit Destination' : 'Create New Destination'}
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      setEditingDestination(null);
-                    }}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <DestinationForm
-                    destination={editingDestination}
-                    onSave={async (data) => {
-                      setIsSaving(true);
-                      try {
-                        if (editingDestination) {
-                          // Update existing
-                          const { error } = await supabase
-                            .from('destinations')
-                            .update(data)
-                            .eq('slug', editingDestination.slug);
-                          
-                          if (error) throw error;
-                        } else {
-                          // Create new - generate slug if not provided
-                          if (!data.slug && data.name) {
-                            data.slug = data.name.toLowerCase()
-                              .replace(/[^a-z0-9]+/g, '-')
-                              .replace(/(^-|-$)/g, '');
-                          }
-                          
-                          const { error } = await supabase
-                            .from('destinations')
-                            .insert([data]);
-                          
-                          if (error) throw error;
-                        }
-                        
-                        setShowCreateModal(false);
-                        setEditingDestination(null);
-                        await loadDestinationList();
-                        await loadEnrichmentStats();
-                      } catch (e: any) {
-                        alert(`Error: ${e.message}`);
-                      } finally {
-                        setIsSaving(false);
-                      }
-                    }}
-                    onCancel={() => {
-                      setShowCreateModal(false);
-                      setEditingDestination(null);
-                    }}
-                    isSaving={isSaving}
-                  />
-                </div>
-              </div>
-            </>
-          )}
+        {/* Enrichment Tab */}
+        {activeTab === 'enrichment' && (
+          <div className="fade-in space-y-12">
 
         {/* Google Enrichment Tools */}
         <div className="mb-12">
@@ -1399,6 +1435,190 @@ export default function AdminPage() {
             )}
           </div>
         </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="fade-in space-y-12">
+            {loadingAnalytics ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+              </div>
+            ) : (
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Views</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Searches</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Saves</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                    <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Users</div>
+                  </div>
+                </div>
+
+                {/* Top Searches */}
+                {analyticsStats.topSearches.length > 0 && (
+                  <div>
+                    <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
+                    <div className="space-y-2">
+                      {analyticsStats.topSearches.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                          <span className="text-sm font-medium">{item.query}</span>
+                          <span className="text-xs text-gray-500">{item.count} searches</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Searches Tab */}
+        {activeTab === 'searches' && (
+          <div className="fade-in">
+            {loadingSearches ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+              </div>
+            ) : searchLogs.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">No search logs available</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-left border-b border-gray-200 dark:border-gray-800">
+                      <th className="py-2 pr-4 font-medium text-gray-500">Time</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">User</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Query</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">City</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Category</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Count</th>
+                      <th className="py-2 pr-4 font-medium text-gray-500">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchLogs.map((log) => {
+                      const q = log.metadata?.query || '';
+                      const intent = log.metadata?.intent || {};
+                      const filters = log.metadata?.filters || {};
+                      const count = log.metadata?.count ?? '';
+                      const source = log.metadata?.source || '';
+                      return (
+                        <tr key={log.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                          <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="py-2 pr-4">{log.user_id ? log.user_id.substring(0, 8) : 'anon'}</td>
+                          <td className="py-2 pr-4 max-w-[360px] truncate" title={q}>{q}</td>
+                          <td className="py-2 pr-4">{intent.city || filters.city || ''}</td>
+                          <td className="py-2 pr-4">{intent.category || filters.category || ''}</td>
+                          <td className="py-2 pr-4">{count}</td>
+                          <td className="py-2 pr-4">{source}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Create/Edit Drawer - Outside tabs, always available */}
+        {showCreateModal && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+              onClick={() => {
+                setShowCreateModal(false);
+                setEditingDestination(null);
+              }}
+            />
+
+            {/* Drawer */}
+            <div
+              className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+                showCreateModal ? 'translate-x-0' : 'translate-x-full'
+              } overflow-y-auto`}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-bold">
+                  {editingDestination ? 'Edit Destination' : 'Create New Destination'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingDestination(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <DestinationForm
+                  destination={editingDestination}
+                  onSave={async (data) => {
+                    setIsSaving(true);
+                    try {
+                      if (editingDestination) {
+                        // Update existing
+                        const { error } = await supabase
+                          .from('destinations')
+                          .update(data)
+                          .eq('slug', editingDestination.slug);
+
+                        if (error) throw error;
+                      } else {
+                        // Create new - generate slug if not provided
+                        if (!data.slug && data.name) {
+                          data.slug = data.name.toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/(^-|-$)/g, '');
+                        }
+
+                        const { error } = await supabase
+                          .from('destinations')
+                          .insert([data]);
+
+                        if (error) throw error;
+                      }
+
+                      setShowCreateModal(false);
+                      setEditingDestination(null);
+                      await loadDestinationList();
+                      await loadEnrichmentStats();
+                    } catch (e: any) {
+                      alert(`Error: ${e.message}`);
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }}
+                  onCancel={() => {
+                    setShowCreateModal(false);
+                    setEditingDestination(null);
+                  }}
+                  isSaving={isSaving}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );
