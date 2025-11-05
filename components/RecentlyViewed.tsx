@@ -7,6 +7,13 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 
+function capitalizeCity(city: string): string {
+  return city
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 interface RecentlyViewedProps {
   onCardClick?: (destination: Destination) => void;
 }
@@ -41,18 +48,18 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
             }}
             className={`${CARD_WRAPPER} text-left`}
           >
-            <div className={CARD_MEDIA}>
+            <div className={`${CARD_MEDIA} mb-2`}>
               {item.image ? (
                 <Image
                   src={item.image}
                   alt={item.name}
                   fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                  <MapPin className="h-8 w-8 opacity-20" />
+                  <MapPin className="h-12 w-12 opacity-20" />
                 </div>
               )}
               {item.michelin_stars && item.michelin_stars > 0 && (
@@ -67,13 +74,18 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
               )}
             </div>
             <div className="space-y-0.5">
-              <div className={CARD_TITLE}>{item.name}</div>
+              <h3 className={CARD_TITLE}>{item.name}</h3>
               <div className={CARD_META}>
-                {item.city && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {item.city}
-                  </span>
+                <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                  {capitalizeCity(item.city)}
+                </span>
+                {item.category && (
+                  <>
+                    <span className="text-gray-300 dark:text-gray-700">•</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
+                      {item.category}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
