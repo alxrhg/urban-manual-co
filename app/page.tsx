@@ -177,6 +177,11 @@ export default function Home() {
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+
+  // Session management for conversation persistence
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 28; // 4 rows at 7 columns (2xl screens)
@@ -200,11 +205,77 @@ export default function Home() {
 
     // Track homepage view
     trackPageView({ pageType: 'home' });
+
+    // Initialize conversation session token
+    initializeConversationSession();
   }, []);
+
+  // Initialize or retrieve session token for conversation persistence
+  const initializeConversationSession = async () => {
+    try {
+      // For authenticated users, use userId
+      if (user?.id) {
+        // Try to load existing conversation
+        const response = await fetch(`/api/ai-chat?userId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.sessionId) {
+            setSessionId(data.sessionId);
+            // Load conversation history if exists
+            if (data.messages && data.messages.length > 0) {
+              const formattedHistory = data.messages.map((msg: any) => ({
+                role: msg.role,
+                content: msg.content,
+                destinations: msg.destinations || undefined
+              }));
+              setConversationHistory(formattedHistory);
+            }
+          }
+        }
+      } else {
+        // For anonymous users, use session token
+        let token = localStorage.getItem('urban_manual_session_token');
+        if (!token) {
+          // Generate new token
+          token = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+          localStorage.setItem('urban_manual_session_token', token);
+        }
+        setSessionToken(token);
+
+        // Try to load existing conversation
+        const response = await fetch(`/api/ai-chat?sessionToken=${encodeURIComponent(token)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.sessionId) {
+            setSessionId(data.sessionId);
+            // Load conversation history if exists
+            if (data.messages && data.messages.length > 0) {
+              const formattedHistory = data.messages.map((msg: any) => ({
+                role: msg.role,
+                content: msg.content,
+                destinations: msg.destinations || undefined
+              }));
+              setConversationHistory(formattedHistory);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to initialize conversation session:', error);
+      // Generate token even if loading fails (for anonymous users)
+      if (!user?.id) {
+        const token = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+        localStorage.setItem('urban_manual_session_token', token);
+        setSessionToken(token);
+      }
+    }
+  };
 
   useEffect(() => {
     if (user) {
       fetchVisitedPlaces();
+      // Re-initialize conversation session when user logs in
+      initializeConversationSession();
     }
   }, [user]);
 
@@ -312,8 +383,8 @@ export default function Home() {
   const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
 
-  // AI Chat-only search - EXACTLY like chat component
-  // Accept ANY query (like chat component), API will validate
+  // AI Chat-only search with conversation persistence
+  // Conversations are now stored in database, not React state
   const performAISearch = async (query: string) => {
     // Match chat component: only check if empty or loading
     if (!query.trim() || searching) {
@@ -326,14 +397,8 @@ export default function Home() {
     setSearchSuggestions([]);
 
     try {
-      // Match chat component exactly - build history from existing conversation
-      // Chat component maps messages array (which doesn't include current query yet due to async state)
-      const historyForAPI = conversationHistory.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-
-      // ALL queries go through AI chat - no exceptions
+      // Send session token for conversation persistence
+      // Backend will load history from database
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: {
@@ -342,7 +407,7 @@ export default function Home() {
         body: JSON.stringify({
           query: query.trim(),
           userId: user?.id,
-          conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
+          sessionToken: sessionToken, // Send session token for persistence
         }),
       });
 
@@ -351,6 +416,16 @@ export default function Home() {
       }
 
       const data = await response.json();
+
+      // Update session info from response
+      if (data.sessionId) setSessionId(data.sessionId);
+      if (data.sessionToken) {
+        setSessionToken(data.sessionToken);
+        // Update localStorage for anonymous users
+        if (!user?.id) {
+          localStorage.setItem('urban_manual_session_token', data.sessionToken);
+        }
+      }
 
       // Update conversation history for API context (not displayed)
       const userMessage = { role: 'user' as const, content: query };

@@ -29,17 +29,62 @@ export function AIAssistant() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
 
+  // Session management for conversation persistence
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Focus input when chat opens
+  // Focus input and initialize session when chat opens
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
+      initializeSession();
     }
   }, [isOpen]);
+
+  // Initialize conversation session
+  const initializeSession = async () => {
+    try {
+      if (user?.id) {
+        // Authenticated user
+        const response = await fetch(`/api/ai-chat?userId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.sessionId) {
+            setSessionId(data.sessionId);
+            if (data.messages && data.messages.length > 0) {
+              setMessages(data.messages);
+            }
+          }
+        }
+      } else {
+        // Anonymous user
+        let token = localStorage.getItem('urban_manual_session_token');
+        if (!token) {
+          token = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+          localStorage.setItem('urban_manual_session_token', token);
+        }
+        setSessionToken(token);
+
+        const response = await fetch(`/api/ai-chat?sessionToken=${encodeURIComponent(token)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.sessionId) {
+            setSessionId(data.sessionId);
+            if (data.messages && data.messages.length > 0) {
+              setMessages(data.messages);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to initialize session:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,13 +96,7 @@ export function AIAssistant() {
     setIsLoading(true);
 
     try {
-      // Build conversation history from messages
-      const conversationHistory = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-
-      // Call the same /api/ai-chat endpoint as homepage
+      // Call /api/ai-chat with session token (backend loads history from DB)
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: {
@@ -66,7 +105,7 @@ export function AIAssistant() {
         body: JSON.stringify({
           query: userMessage.trim(),
           userId: user?.id,
-          conversationHistory: conversationHistory,
+          sessionToken: sessionToken,
         }),
       });
 
@@ -75,6 +114,15 @@ export function AIAssistant() {
       }
 
       const data = await response.json();
+
+      // Update session info from response
+      if (data.sessionId) setSessionId(data.sessionId);
+      if (data.sessionToken) {
+        setSessionToken(data.sessionToken);
+        if (!user?.id) {
+          localStorage.setItem('urban_manual_session_token', data.sessionToken);
+        }
+      }
 
       setMessages(prev => [...prev, {
         role: "assistant",
