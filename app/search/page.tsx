@@ -206,7 +206,7 @@ function SearchPageContent() {
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
             placeholder="SEARCH"
-            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-b border-gray-200 dark:border-gray-800 pb-2 text-black dark:text-white transition-all duration-300 placeholder:opacity-60 focus:border-gray-400 dark:focus:border-gray-600"
           />
         </div>
 
