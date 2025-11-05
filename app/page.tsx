@@ -34,7 +34,6 @@ import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
-import { ConversationPanel } from '@/components/ConversationPanel';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -213,33 +212,6 @@ export default function Home() {
     // Initialize conversation session token
     initializeConversationSession();
   }, [user]); // Re-initialize when user changes
-
-  // Clear conversation and reset session
-  const clearConversation = async () => {
-    // Clear local state
-    setConversationHistory([]);
-    setConversationContext({});
-    setChatResponse('');
-    setSearchIntent(null);
-    setSeasonalContext(null);
-
-    // Generate new session token
-    if (!user?.id) {
-      const newToken = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-      localStorage.setItem('urban_manual_session_token', newToken);
-      setSessionToken(newToken);
-    }
-
-    // Reset session ID to trigger new session on next search
-    setSessionId(null);
-  };
-
-  // Handle suggestion click from conversation panel
-  const handleSuggestionClick = (suggestion: string) => {
-    setSearchTerm(suggestion);
-    // Trigger search
-    performAISearch(suggestion);
-  };
 
   // Initialize or retrieve session token for conversation persistence
   const initializeConversationSession = async () => {
@@ -1132,16 +1104,6 @@ export default function Home() {
             }}
           />
         </div>
-
-        {/* Conversation Panel - Fixed bottom right */}
-        <ConversationPanel
-          conversationHistory={conversationHistory}
-          context={conversationContext}
-          sessionId={sessionId}
-          onClearConversation={clearConversation}
-          onSuggestionClick={handleSuggestionClick}
-          isVisible={true}
-        />
       </main>
     </ErrorBoundary>
   );
