@@ -977,7 +977,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Location</h3>
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <AppleMap
-                query={`${destination.name}, ${destination.city}`}
+                latitude={enrichedData?.latitude}
+                longitude={enrichedData?.longitude}
+                query={destination.name && destination.city ? `${destination.name}, ${destination.city}` : undefined}
                 height="256px"
                 className="rounded-lg"
               />
