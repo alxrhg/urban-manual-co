@@ -32,7 +32,6 @@ import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
-import { ChatInterface } from '@/components/ChatInterface';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
 
@@ -730,15 +729,15 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Simple "I found x results" message */}
-                  {searchTerm && !searching && filteredDestinations.length > 0 && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <span>I found {filteredDestinations.length} {filteredDestinations.length === 1 ? 'result' : 'results'}.</span>
+                  {/* AI conversational response */}
+                  {searchTerm && !searching && chatResponse && (
+                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left whitespace-pre-line">
+                      {chatResponse}
                     </div>
                   )}
 
                   {/* No results message */}
-                  {searchTerm && !searching && filteredDestinations.length === 0 && (
+                  {searchTerm && !searching && filteredDestinations.length === 0 && !chatResponse && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <span>No results found. Try refining your search.</span>
                     </div>
