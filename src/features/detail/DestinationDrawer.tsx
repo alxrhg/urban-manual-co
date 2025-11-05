@@ -559,7 +559,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Action Buttons - Prominent position right after title */}
             <div className="flex gap-2 mb-4">
-              {user && destination?.id ? (
+              {user && destination ? (
                 <>
                   <button
                     onClick={() => setShowSaveModal(true)}
