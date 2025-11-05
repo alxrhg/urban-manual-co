@@ -198,7 +198,8 @@ export default function Home() {
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
 
   useEffect(() => {
-    fetchDestinations();
+    // Don't fetch all destinations on page load - only fetch when needed for filtering
+    // This dramatically improves initial page load speed
 
     // Initialize session tracking
     initializeSession();
@@ -234,12 +235,18 @@ export default function Home() {
   }, [searchTerm]); // ONLY depend on searchTerm
 
   // Separate useEffect for filters (only when NO search term)
+  // Fetch destinations lazily when filters are applied
   useEffect(() => {
     if (!searchTerm.trim()) {
-      filterDestinations();
+      // Only fetch destinations if we haven't already or if we need to
+      if (destinations.length === 0) {
+        fetchDestinations();
+      } else {
+        filterDestinations();
+      }
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, advancedFilters, destinations, visitedSlugs]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs]); // Filters only apply when no search
 
   // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
   useEffect(() => {
