@@ -182,35 +182,35 @@ export function Header() {
       {/* Burger Menu Dropdown (all breakpoints) */}
       {isMenuOpen && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setIsMenuOpen(false)} />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => setIsMenuOpen(false)} />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed right-4 top-16 z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed right-4 top-16 z-50 w-72 rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
             role="menu"
             aria-label="Main menu"
           >
             {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" />
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-t border-l border-white/20 dark:border-gray-700/30" />
             <div className="py-2">
-              <button onClick={() => { navigate('/cities'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Cities</button>
-              <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Map</button>
-              <button onClick={() => { navigate('/discover'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Discover Collections</button>
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
+              <button onClick={() => { navigate('/cities'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Cities</button>
+              <button onClick={() => { navigate('/map'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Map</button>
+              <button onClick={() => { navigate('/discover'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Discover Collections</button>
+              <div className="my-2 border-t border-white/20 dark:border-gray-700/30" />
               {user ? (
                 <>
-                  <button onClick={() => { navigate('/account'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Account</button>
+                  <button onClick={() => { navigate('/account'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Account</button>
                   {isAdmin && (
-                    <button onClick={() => { navigate('/admin'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium touch-manipulation">Admin</button>
+                    <button onClick={() => { navigate('/admin'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 font-medium transition-colors touch-manipulation">Admin</button>
                   )}
-                  <button onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Sign Out</button>
+                  <button onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Sign Out</button>
                 </>
               ) : (
-                <button onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation">Sign In</button>
+                <button onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation">Sign In</button>
               )}
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
+              <div className="my-2 border-t border-white/20 dark:border-gray-700/30" />
               <button
                 onClick={toggleDarkMode}
-                className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation flex items-center gap-2"
+                className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation flex items-center gap-2"
               >
                 {isDark ? (
                   <>
