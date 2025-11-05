@@ -19,17 +19,15 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerateImage = async () => {
+    // Feature disabled - html2canvas not installed
+    // To enable: npm install html2canvas
+    alert('Image download feature coming soon! For now, use the Share Link button below.');
+    return;
+
+    /* Disabled until html2canvas is installed
     setIsGenerating(true);
     try {
-      // Try to dynamically import html2canvas
-      const html2canvasModule = await import('html2canvas').catch(() => null);
-
-      if (!html2canvasModule) {
-        alert('Image generation feature requires html2canvas package. Install with: npm install html2canvas');
-        return;
-      }
-
-      const html2canvas = html2canvasModule.default;
+      const html2canvas = (await import('html2canvas')).default;
       const element = document.getElementById('sharing-card-content');
       if (!element) return;
 
@@ -50,6 +48,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
     } finally {
       setIsGenerating(false);
     }
+    */
   };
 
   const handleShare = async () => {
