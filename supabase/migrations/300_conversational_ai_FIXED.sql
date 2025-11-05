@@ -88,6 +88,22 @@ CREATE TABLE IF NOT EXISTS conversation_messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Add user_id column if table exists but column is missing (from migration 025)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'conversation_messages'
+  ) THEN
+    -- Add missing columns if they don't exist
+    ALTER TABLE conversation_messages
+      ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+      ADD COLUMN IF NOT EXISTS embedding vector(1536),
+      ADD COLUMN IF NOT EXISTS intent_data JSONB,
+      ADD COLUMN IF NOT EXISTS destinations JSONB;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_conv_messages_session 
   ON conversation_messages(session_id, created_at);
 
