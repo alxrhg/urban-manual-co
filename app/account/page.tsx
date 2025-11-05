@@ -78,100 +78,101 @@ export default function Account() {
     fetchTotalDestinations();
   }, []);
 
-  // Load user data
-  useEffect(() => {
-    async function loadUserData() {
-      if (!user) {
-        setIsLoadingData(false);
-        return;
-      }
-
-      try {
-        setIsLoadingData(true);
-
-        // Load saved, visited, and collections
-        const [savedResult, visitedResult, collectionsResult] = await Promise.all([
-          supabase
-            .from('saved_places')
-            .select('destination_slug')
-            .eq('user_id', user.id),
-          supabase
-            .from('visited_places')
-            .select('destination_slug, visited_at, rating, notes')
-            .eq('user_id', user.id)
-            .order('visited_at', { ascending: false }),
-          supabase
-            .from('collections')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-        ]);
-
-        // Collect all unique slugs
-        const allSlugs = new Set<string>();
-        if (savedResult.data) {
-          savedResult.data.forEach(item => allSlugs.add(item.destination_slug));
-        }
-        if (visitedResult.data) {
-          visitedResult.data.forEach(item => allSlugs.add(item.destination_slug));
-        }
-
-        // Fetch destinations
-        if (allSlugs.size > 0) {
-          const { data: destData } = await supabase
-            .from('destinations')
-            .select('slug, name, city, category, image')
-            .in('slug', Array.from(allSlugs));
-
-          if (destData) {
-            // Map saved places
-            if (savedResult.data) {
-              setSavedPlaces(savedResult.data.map((item: any) => {
-                const dest = destData.find((d: any) => d.slug === item.destination_slug);
-                return dest ? {
-                  destination_slug: dest.slug,
-                  destination: {
-                    name: dest.name,
-                    city: dest.city,
-                    category: dest.category,
-                    image: dest.image
-                  }
-                } : null;
-              }).filter((item: any) => item !== null));
-            }
-
-            // Map visited places
-            if (visitedResult.data) {
-              setVisitedPlaces(visitedResult.data.map((item: any) => {
-                const dest = destData.find((d: any) => d.slug === item.destination_slug);
-                return dest ? {
-                  destination_slug: item.destination_slug,
-                  visited_at: item.visited_at,
-                  rating: item.rating,
-                  notes: item.notes,
-                  destination: {
-                    name: dest.name,
-                    city: dest.city,
-                    category: dest.category,
-                    image: dest.image
-                  }
-                } : null;
-              }).filter((item: any) => item !== null));
-            }
-          }
-        }
-
-        // Set collections
-        if (collectionsResult.data) {
-          setCollections(collectionsResult.data);
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error);
-      } finally {
-        setIsLoadingData(false);
-      }
+  // Load user data - extracted as a function to be callable
+  const loadUserData = async () => {
+    if (!user) {
+      setIsLoadingData(false);
+      return;
     }
 
+    try {
+      setIsLoadingData(true);
+
+      // Load saved, visited, and collections
+      const [savedResult, visitedResult, collectionsResult] = await Promise.all([
+        supabase
+          .from('saved_places')
+          .select('destination_slug')
+          .eq('user_id', user.id),
+        supabase
+          .from('visited_places')
+          .select('destination_slug, visited_at, rating, notes')
+          .eq('user_id', user.id)
+          .order('visited_at', { ascending: false }),
+        supabase
+          .from('collections')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
+
+      // Collect all unique slugs
+      const allSlugs = new Set<string>();
+      if (savedResult.data) {
+        savedResult.data.forEach(item => allSlugs.add(item.destination_slug));
+      }
+      if (visitedResult.data) {
+        visitedResult.data.forEach(item => allSlugs.add(item.destination_slug));
+      }
+
+      // Fetch destinations
+      if (allSlugs.size > 0) {
+        const { data: destData } = await supabase
+          .from('destinations')
+          .select('slug, name, city, category, image')
+          .in('slug', Array.from(allSlugs));
+
+        if (destData) {
+          // Map saved places
+          if (savedResult.data) {
+            setSavedPlaces(savedResult.data.map((item: any) => {
+              const dest = destData.find((d: any) => d.slug === item.destination_slug);
+              return dest ? {
+                destination_slug: dest.slug,
+                destination: {
+                  name: dest.name,
+                  city: dest.city,
+                  category: dest.category,
+                  image: dest.image
+                }
+              } : null;
+            }).filter((item: any) => item !== null));
+          }
+
+          // Map visited places
+          if (visitedResult.data) {
+            setVisitedPlaces(visitedResult.data.map((item: any) => {
+              const dest = destData.find((d: any) => d.slug === item.destination_slug);
+              return dest ? {
+                destination_slug: item.destination_slug,
+                visited_at: item.visited_at,
+                rating: item.rating,
+                notes: item.notes,
+                destination: {
+                  name: dest.name,
+                  city: dest.city,
+                  category: dest.category,
+                  image: dest.image
+                }
+              } : null;
+            }).filter((item: any) => item !== null));
+          }
+        }
+      }
+
+      // Set collections
+      if (collectionsResult.data) {
+        setCollections(collectionsResult.data);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Load data on mount
+  useEffect(() => {
     loadUserData();
   }, [user?.id]);
 
@@ -422,7 +423,10 @@ export default function Account() {
         {/* Visited Tab */}
         {activeTab === 'visited' && (
           <div className="fade-in">
-            <EnhancedVisitedTab visitedPlaces={visitedPlaces} />
+            <EnhancedVisitedTab
+              visitedPlaces={visitedPlaces}
+              onPlaceAdded={loadUserData}
+            />
           </div>
         )}
 
