@@ -206,10 +206,13 @@ export default function Home() {
 
     // Track homepage view
     trackPageView({ pageType: 'home' });
+  }, []);
 
+  // Separate effect for conversation session initialization
+  useEffect(() => {
     // Initialize conversation session token
     initializeConversationSession();
-  }, []);
+  }, [user]); // Re-initialize when user changes
 
   // Clear conversation and reset session
   const clearConversation = async () => {
@@ -310,8 +313,6 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       fetchVisitedPlaces();
-      // Re-initialize conversation session when user logs in
-      initializeConversationSession();
     }
   }, [user]);
 
@@ -324,10 +325,9 @@ export default function Home() {
       }, 500); // 500ms debounce for auto-trigger
       return () => clearTimeout(timer);
     } else {
-      // Clear everything when search is empty
+      // Clear only search results, not conversation history
       setFilteredDestinations([]);
       setChatResponse('');
-      setConversationHistory([]);
       setSearching(false);
       // Show all destinations when no search (with filters if set)
       filterDestinations();

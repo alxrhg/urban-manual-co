@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare, X, Trash2, ChevronDown, MapPin, Tag, Clock, DollarSign, Sparkles } from 'lucide-react';
+import { MessageSquare, X, Trash2, MapPin, Tag, Clock, DollarSign, Sparkles } from 'lucide-react';
 
 interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -86,7 +86,7 @@ export function ConversationPanel({
           </span>
           {hasContext && (
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full" />
             </div>
           )}
         </button>
@@ -123,49 +123,19 @@ export function ConversationPanel({
             </div>
           </div>
 
-          {/* Context Badges */}
+          {/* Context Info - Simple text list */}
           {hasContext && (
             <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
               <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">
                 Current Context
               </div>
-              <div className="flex flex-wrap gap-2">
-                {context.city && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">
-                    <MapPin className="h-3 w-3" />
-                    <span className="capitalize">{context.city}</span>
-                  </div>
-                )}
-                {context.category && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs">
-                    <Tag className="h-3 w-3" />
-                    <span className="capitalize">{context.category}</span>
-                  </div>
-                )}
-                {context.meal && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs">
-                    <Clock className="h-3 w-3" />
-                    <span className="capitalize">{context.meal}</span>
-                  </div>
-                )}
-                {context.cuisine && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs">
-                    <Sparkles className="h-3 w-3" />
-                    <span className="capitalize">{context.cuisine}</span>
-                  </div>
-                )}
-                {context.mood && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 rounded-full text-xs">
-                    <Sparkles className="h-3 w-3" />
-                    <span className="capitalize">{context.mood}</span>
-                  </div>
-                )}
-                {context.price_level && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-xs">
-                    <DollarSign className="h-3 w-3" />
-                    <span>{'$'.repeat(parseInt(context.price_level))}</span>
-                  </div>
-                )}
+              <div className="flex flex-wrap gap-2 text-xs text-gray-700 dark:text-gray-300">
+                {context.city && <span>📍 {context.city}</span>}
+                {context.category && <span>• {context.category}</span>}
+                {context.meal && <span>• {context.meal}</span>}
+                {context.cuisine && <span>• {context.cuisine}</span>}
+                {context.mood && <span>• {context.mood}</span>}
+                {context.price_level && <span>• {'$'.repeat(parseInt(context.price_level))}</span>}
               </div>
             </div>
           )}
