@@ -31,9 +31,6 @@ export default function GreetingHero({
   availableCities = [],
   availableCategories = [],
 }: GreetingHeroProps) {
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -76,54 +73,6 @@ export default function GreetingHero({
     hour12: false
   });
 
-  // Fetch AI suggestions as user types (lower threshold for AI chat mode)
-  useEffect(() => {
-    if (!isAIEnabled || !searchQuery.trim() || searchQuery.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    const fetchSuggestions = async () => {
-      setLoadingSuggestions(true);
-      try {
-        const response = await fetch('/api/autocomplete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: searchQuery }),
-        });
-        const data = await response.json();
-        
-        if (data.suggestions && Array.isArray(data.suggestions)) {
-          setSuggestions(data.suggestions.slice(0, 5));
-          setShowSuggestions(true);
-        }
-      } catch (error) {
-        console.error('Error fetching suggestions:', error);
-      } finally {
-        setLoadingSuggestions(false);
-      }
-    };
-
-    // Increased debounce from 300ms to 500ms for better performance
-    const timer = setTimeout(fetchSuggestions, 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery, isAIEnabled]);
-
-  const handleSuggestionClick = (suggestion: string) => {
-    // Remove emoji prefixes for cleaner search
-    const cleanSuggestion = suggestion
-      .replace(/^[📍🏛️🏷️]\s*/, '') // Remove emoji prefixes
-      .split(' - ')[0] // Take only the main part (remove city suffix for destinations)
-      .trim();
-    onSearchChange(cleanSuggestion);
-    setShowSuggestions(false);
-    inputRef.current?.focus();
-    // Auto-submit if onSubmit handler is provided
-    if (onSubmit && cleanSuggestion.trim()) {
-      onSubmit(cleanSuggestion.trim());
-    }
-  };
 
   // Rotate placeholder text every 3 seconds when input is empty
   useEffect(() => {
@@ -154,7 +103,6 @@ export default function GreetingHero({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
-      setShowSuggestions(false);
       inputRef.current?.blur();
     }
   };
@@ -183,11 +131,6 @@ export default function GreetingHero({
               value={searchQuery}
               onChange={(e) => {
                 onSearchChange(e.target.value);
-                if (e.target.value.trim().length >= 2) {
-                  setShowSuggestions(true);
-                } else {
-                  setShowSuggestions(false);
-                }
               }}
               onKeyDown={(e) => {
                 handleKeyDown(e);
@@ -197,11 +140,6 @@ export default function GreetingHero({
                   if (onSubmit && searchQuery.trim()) {
                     onSubmit(searchQuery.trim());
                   }
-                }
-              }}
-              onFocus={() => {
-                if (suggestions.length > 0 && searchQuery.trim().length >= 2) {
-                  setShowSuggestions(true);
                 }
               }}
               className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
@@ -218,33 +156,6 @@ export default function GreetingHero({
               </div>
             )}
           </div>
-          
-          {/* AI Suggestions Dropdown */}
-          {isAIEnabled && showSuggestions && (suggestions.length > 0 || loadingSuggestions) && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50 max-h-[300px] overflow-y-auto">
-              {loadingSuggestions ? (
-                <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Getting suggestions...</span>
-                </div>
-              ) : (
-                <>
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm text-black dark:text-white">{suggestion}</span>
-                      </div>
-                    </button>
-                  ))}
-                </>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>
