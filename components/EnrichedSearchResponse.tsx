@@ -1,7 +1,5 @@
 'use client';
 
-import { TrendingUp, Calendar, CloudSun, MapPin, Sparkles, AlertCircle } from 'lucide-react';
-
 export interface WeatherData {
   temperature: number;
   weatherDescription: string;
@@ -57,118 +55,71 @@ export function EnrichedSearchResponse({
   enriched,
   className = '',
 }: EnrichedSearchResponseProps) {
-  // Weather-aware messaging
-  const getWeatherInsight = (weather: WeatherData): string | null => {
-    const code = weather.weatherCode;
+  // Build a natural text response
+  const buildResponse = (): string => {
+    const parts: string[] = [];
 
-    // Clear weather (0-1)
-    if (code === 0 || code === 1) {
-      return '☀️ Perfect weather for outdoor dining or rooftop experiences!';
+    // Main result count
+    if (resultCount === 0) {
+      parts.push('No results found. Try refining your search or adjusting your filters.');
+      return parts.join(' ');
     }
 
-    // Partly cloudy (2-3)
-    if (code === 2 || code === 3) {
-      return '⛅ Pleasant conditions - good for exploring!';
+    // Result count with weather
+    let mainText = `I found ${resultCount} ${resultCount === 1 ? 'result' : 'results'}`;
+    if (weather) {
+      mainText += ` at ${weather.temperature}°C, ${weather.weatherDescription.toLowerCase()}`;
+    }
+    mainText += '.';
+    parts.push(mainText);
+
+    // Weather insight
+    if (weather) {
+      const code = weather.weatherCode;
+      if (code === 0 || code === 1) {
+        parts.push('Perfect weather for outdoor dining or rooftop experiences!');
+      } else if (code === 2 || code === 3) {
+        parts.push('Pleasant conditions - good for exploring.');
+      } else if (code >= 61 && code <= 86) {
+        parts.push('Consider indoor options or places with covered seating.');
+      }
     }
 
-    // Rainy/snowy (61-86)
-    if (code >= 61 && code <= 86) {
-      return '🌧️ Consider indoor options or places with covered seating.';
+    // Trending opportunities
+    if (opportunities && opportunities.length > 0) {
+      const trendingText = opportunities.slice(0, 3).map(opp => {
+        if (opp.reason) {
+          return `${opp.name} (${opp.reason})`;
+        }
+        return opp.name;
+      }).join(', ');
+      parts.push(`Trending this week: ${trendingText}.`);
     }
 
-    return null;
+    // Nearby events
+    if (enriched?.totalEvents && enriched.totalEvents > 0) {
+      parts.push(`${enriched.totalEvents} ${enriched.totalEvents === 1 ? 'destination has' : 'destinations have'} nearby upcoming events.`);
+    }
+
+    // Forecast insight
+    if (forecast && forecast.trend) {
+      if (forecast.trend === 'increasing') {
+        parts.push('These spots are getting more popular - book ahead!');
+      } else if (forecast.trend === 'decreasing') {
+        parts.push('Good timing - these spots are less busy than usual.');
+      }
+
+      if (forecast.peakTimes && forecast.peakTimes.length > 0) {
+        parts.push(`Peak times: ${forecast.peakTimes.join(', ')}.`);
+      }
+    }
+
+    return parts.join(' ');
   };
 
   return (
-    <div className={`space-y-3 ${className}`}>
-      {/* Main result count with context */}
-      <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-        <span className="font-medium">
-          {resultCount === 0 ? 'No results found' : `I found ${resultCount} ${resultCount === 1 ? 'result' : 'results'}`}
-        </span>
-        {resultCount > 0 && weather && (
-          <span className="ml-2">
-            at {weather.temperature}°C, {weather.weatherDescription.toLowerCase()}
-          </span>
-        )}
-      </div>
-
-      {/* Weather insight */}
-      {weather && (
-        <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg">
-          <CloudSun className="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>{getWeatherInsight(weather)}</span>
-        </div>
-      )}
-
-      {/* Trending opportunities */}
-      {opportunities && opportunities.length > 0 && (
-        <div className="bg-purple-50 dark:bg-purple-900/20 px-3 py-2 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-            <span className="text-xs font-medium text-purple-900 dark:text-purple-200">
-              Trending this week
-            </span>
-          </div>
-          <div className="space-y-1">
-            {opportunities.slice(0, 3).map((opp, index) => (
-              <div
-                key={opp.id || index}
-                className="text-xs text-purple-800 dark:text-purple-300 flex items-start gap-2"
-              >
-                <span className="opacity-50">•</span>
-                <span>
-                  <strong>{opp.name}</strong>
-                  {opp.reason && <span className="text-purple-600 dark:text-purple-400"> - {opp.reason}</span>}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Nearby events */}
-      {enriched?.totalEvents && enriched.totalEvents > 0 && (
-        <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg">
-          <Calendar className="h-4 w-4 mt-0.5 flex-shrink-0 text-orange-600 dark:text-orange-400" />
-          <span>
-            {enriched.totalEvents} {enriched.totalEvents === 1 ? 'destination near' : 'destinations near'} upcoming events
-          </span>
-        </div>
-      )}
-
-      {/* Walking distances available */}
-      {enriched?.hasRoutes && (
-        <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
-          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>Walking times from city center shown below</span>
-        </div>
-      )}
-
-      {/* Forecast insight */}
-      {forecast && forecast.trend && resultCount > 0 && (
-        <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-lg">
-          <Sparkles className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
-          <span>
-            {forecast.trend === 'increasing' && 'These spots are getting more popular - book ahead!'}
-            {forecast.trend === 'decreasing' && 'Good timing - these spots are less busy than usual.'}
-            {forecast.trend === 'stable' && 'Consistently popular destinations.'}
-            {forecast.peakTimes && forecast.peakTimes.length > 0 && (
-              <span className="block mt-1 text-gray-500 dark:text-gray-500">
-                Peak times: {forecast.peakTimes.join(', ')}
-              </span>
-            )}
-          </span>
-        </div>
-      )}
-
-      {/* No results messaging */}
-      {resultCount === 0 && (
-        <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-lg">
-          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>Try refining your search or adjusting your filters</span>
-        </div>
-      )}
+    <div className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${className}`}>
+      {buildResponse()}
     </div>
   );
 }
