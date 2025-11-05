@@ -432,14 +432,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Slideover */}
+      {/* Slideover Card */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-y-auto`}
+        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
+        } overflow-hidden flex flex-col`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-end z-10">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-end">
           <div className="flex items-center gap-2">
             {destination?.slug && (
               <a
@@ -465,7 +465,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Image */}
           {destination.image && (
             <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
@@ -482,25 +482,29 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Title */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-light leading-tight mb-4">
-              {destination.name}
-            </h1>
-
-            {/* Meta Info */}
-            <div className="flex flex-wrap gap-2 text-xs">
+          <div className="mb-8 space-y-3">
+            {/* Location - above title */}
+            <div className="flex items-center gap-2">
               <a
                 href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(`/city/${destination.city}`);
                 }}
               >
                 <MapPin className="h-3 w-3" />
-                {capitalizeCity(destination.city)}
+                {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
               </a>
+            </div>
 
+            {/* Title */}
+            <h1 className="text-3xl font-light leading-tight">
+              {destination.name}
+            </h1>
+
+            {/* Meta badges - below title */}
+            <div className="flex flex-wrap gap-2 text-xs">
               {destination.category && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 capitalize">
                   {destination.category}
@@ -713,11 +717,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Description */}
-          {destination.content && (
+          {destination.description && (
             <div className="mb-8">
-              <h3 className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-400">About</h3>
-              <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {stripHtmlTags(destination.content)}
+              <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                {stripHtmlTags(destination.description)}
               </div>
             </div>
           )}
