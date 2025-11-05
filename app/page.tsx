@@ -28,7 +28,7 @@ import {
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
-import { ForYouSection } from '@/components/ForYouSection';
+import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
@@ -912,9 +912,37 @@ export default function Home() {
               />
             )}
 
-            {/* For You Section - Show only when user is logged in and no active search */}
+            {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
-              <ForYouSection />
+              <SmartRecommendations
+                onCardClick={(destination) => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+
+                  // Track destination click
+                  trackDestinationClick({
+                    destinationSlug: destination.slug,
+                    position: 0,
+                    source: 'smart_recommendations',
+                  });
+
+                  // Also track with new analytics system
+                  if (destination.id) {
+                    import('@/lib/analytics/track').then(({ trackEvent }) => {
+                      trackEvent({
+                        event_type: 'click',
+                        destination_id: destination.id,
+                        destination_slug: destination.slug,
+                        metadata: {
+                          category: destination.category,
+                          city: destination.city,
+                          source: 'smart_recommendations',
+                        },
+                      });
+                    });
+                  }
+                }}
+              />
             )}
 
             {/* Trending Section - Show when no active search */}
