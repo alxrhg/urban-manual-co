@@ -557,6 +557,82 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {destination.name}
             </h1>
 
+            {/* Action Buttons - Prominent position right after title */}
+            <div className="flex gap-2 mb-4">
+              {user && destination?.id ? (
+                <>
+                  <button
+                    onClick={() => setShowSaveModal(true)}
+                    className={`group flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 ${
+                      isSaved
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-sm'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:scale-[1.02]'
+                    }`}
+                  >
+                    <Bookmark
+                      className={`h-4 w-4 transition-all duration-300 ${
+                        isSaved
+                          ? 'fill-current scale-110'
+                          : 'group-hover:scale-110'
+                      }`}
+                    />
+                    <span className={isSaved ? 'animate-in fade-in duration-200' : ''}>
+                      {isSaved ? 'Saved' : 'Save'}
+                    </span>
+                  </button>
+                  <button
+                    onClick={handleVisitToggle}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if (isVisited) setShowVisitedModal(true);
+                    }}
+                    className={`group flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 ${
+                      isVisited
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-sm'
+                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:scale-[1.02]'
+                    }`}
+                  >
+                    <Check
+                      className={`h-4 w-4 transition-all duration-300 ${
+                        isVisited
+                          ? 'stroke-[3] scale-110 animate-in zoom-in-50 duration-300'
+                          : 'group-hover:scale-110'
+                      }`}
+                    />
+                    <span className={isVisited ? 'animate-in fade-in duration-200' : ''}>
+                      {isVisited ? 'Visited' : 'Mark as Visited'}
+                    </span>
+                  </button>
+                  {isVisited && (
+                    <button
+                      onClick={() => setShowVisitedModal(true)}
+                      className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-105 active:scale-95 animate-in fade-in slide-in-from-right-2 duration-200"
+                      title="Add visit details"
+                    >
+                      <Plus className="h-4 w-4 transition-transform group-hover:rotate-90 duration-200" />
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => router.push('/auth/login')}
+                    className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
+                  >
+                    <Bookmark className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                    Save
+                  </button>
+                  <button
+                    onClick={() => router.push('/auth/login')}
+                    className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
+                  >
+                    <Check className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                    Mark as Visited
+                  </button>
+                </>
+              )}
+            </div>
+
             {/* Meta badges and action buttons - below title */}
             <div className="flex flex-wrap gap-2 text-xs">
               {destination.category && (
@@ -777,55 +853,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             })()}
           </div>
 
-          {/* Action Buttons */}
-          {user && destination?.id && (
-            <div className="mb-6 flex gap-2">
-              <button
-                onClick={() => setShowSaveModal(true)}
-                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                  isSaved
-                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
-                }`}
-              >
-                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                {isSaved ? 'Saved' : 'Save'}
-              </button>
-              <button
-                onClick={handleVisitToggle}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  if (isVisited) setShowVisitedModal(true);
-                }}
-                className={`flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                  isVisited
-                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
-                }`}
-              >
-                <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
-                {isVisited ? 'Visited' : 'Mark as Visited'}
-              </button>
-              {isVisited && (
-                <button
-                  onClick={() => setShowVisitedModal(true)}
-                  className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                  title="Add visit details"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Sign in prompt */}
-          {!user && (
-            <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                <a href="/auth/login" className="font-medium hover:opacity-60">Sign in</a> to save destinations and track your visits
-              </span>
-            </div>
-          )}
 
           {/* Description */}
           {destination.description && (

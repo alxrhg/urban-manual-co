@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Check, Grid3x3, List, Star } from 'lucide-react';
 import { NoVisitedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
+import { AddPlaceDropdown } from './AddPlaceDropdown';
 
 interface VisitedPlace {
   destination_slug: string;
@@ -21,6 +22,7 @@ interface VisitedPlace {
 
 interface EnhancedVisitedTabProps {
   visitedPlaces: VisitedPlace[];
+  onPlaceAdded?: () => void;
 }
 
 function capitalizeCity(city: string): string {
@@ -30,7 +32,7 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
-export function EnhancedVisitedTab({ visitedPlaces }: EnhancedVisitedTabProps) {
+export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisitedTabProps) {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterCity, setFilterCity] = useState<string>('');
@@ -80,7 +82,7 @@ export function EnhancedVisitedTab({ visitedPlaces }: EnhancedVisitedTabProps) {
 
   return (
     <div className="space-y-12">
-      {/* View Mode + Sort - Minimal inline controls */}
+      {/* View Mode + Sort + Add Button - Minimal inline controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 text-xs">
           <button
@@ -105,28 +107,33 @@ export function EnhancedVisitedTab({ visitedPlaces }: EnhancedVisitedTabProps) {
           </button>
         </div>
 
-        <div className="flex items-center gap-3 text-xs">
-          <button
-            onClick={() => setSortBy('recent')}
-            className={`transition-all ${
-              sortBy === 'recent'
-                ? 'font-medium text-black dark:text-white'
-                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-            }`}
-          >
-            Recent
-          </button>
-          <button
-            onClick={() => setSortBy('name')}
-            className={`transition-all ${
-              sortBy === 'name'
-                ? 'font-medium text-black dark:text-white'
-                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-            }`}
-          >
-            A-Z
-          </button>
+        <div className="flex items-center gap-3">
+          <AddPlaceDropdown onPlaceAdded={onPlaceAdded} />
         </div>
+      </div>
+
+      {/* Sort Controls - Separate row */}
+      <div className="flex items-center gap-3 text-xs">
+        <button
+          onClick={() => setSortBy('recent')}
+          className={`transition-all ${
+            sortBy === 'recent'
+              ? 'font-medium text-black dark:text-white'
+              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+          }`}
+        >
+          Recent
+        </button>
+        <button
+          onClick={() => setSortBy('name')}
+          className={`transition-all ${
+            sortBy === 'name'
+              ? 'font-medium text-black dark:text-white'
+              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+          }`}
+        >
+          A-Z
+        </button>
       </div>
 
       {/* City Filter - Matches homepage style exactly */}

@@ -34,6 +34,7 @@ export default function Account() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements'>('profile');
+  const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -62,100 +63,116 @@ export default function Account() {
     checkAuth();
   }, []);
 
-  // Load user data
+  // Fetch total destinations count
   useEffect(() => {
-    async function loadUserData() {
-      if (!user) {
-        setIsLoadingData(false);
-        return;
-      }
-
+    async function fetchTotalDestinations() {
       try {
-        setIsLoadingData(true);
-
-        // Load saved, visited, and collections
-        const [savedResult, visitedResult, collectionsResult] = await Promise.all([
-          supabase
-            .from('saved_places')
-            .select('destination_slug')
-            .eq('user_id', user.id),
-          supabase
-            .from('visited_places')
-            .select('destination_slug, visited_at, rating, notes')
-            .eq('user_id', user.id)
-            .order('visited_at', { ascending: false }),
-          supabase
-            .from('collections')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-        ]);
-
-        // Collect all unique slugs
-        const allSlugs = new Set<string>();
-        if (savedResult.data) {
-          savedResult.data.forEach(item => allSlugs.add(item.destination_slug));
-        }
-        if (visitedResult.data) {
-          visitedResult.data.forEach(item => allSlugs.add(item.destination_slug));
-        }
-
-        // Fetch destinations
-        if (allSlugs.size > 0) {
-          const { data: destData } = await supabase
-            .from('destinations')
-            .select('slug, name, city, category, image')
-            .in('slug', Array.from(allSlugs));
-
-          if (destData) {
-            // Map saved places
-            if (savedResult.data) {
-              setSavedPlaces(savedResult.data.map((item: any) => {
-                const dest = destData.find((d: any) => d.slug === item.destination_slug);
-                return dest ? {
-                  destination_slug: dest.slug,
-                  destination: {
-                    name: dest.name,
-                    city: dest.city,
-                    category: dest.category,
-                    image: dest.image
-                  }
-                } : null;
-              }).filter((item: any) => item !== null));
-            }
-
-            // Map visited places
-            if (visitedResult.data) {
-              setVisitedPlaces(visitedResult.data.map((item: any) => {
-                const dest = destData.find((d: any) => d.slug === item.destination_slug);
-                return dest ? {
-                  destination_slug: item.destination_slug,
-                  visited_at: item.visited_at,
-                  rating: item.rating,
-                  notes: item.notes,
-                  destination: {
-                    name: dest.name,
-                    city: dest.city,
-                    category: dest.category,
-                    image: dest.image
-                  }
-                } : null;
-              }).filter((item: any) => item !== null));
-            }
-          }
-        }
-
-        // Set collections
-        if (collectionsResult.data) {
-          setCollections(collectionsResult.data);
-        }
+        const { count } = await supabase
+          .from('destinations')
+          .select('*', { count: 'exact', head: true });
+        setTotalDestinations(count || 0);
       } catch (error) {
-        console.error('Error loading user data:', error);
-      } finally {
-        setIsLoadingData(false);
+        console.error('Error fetching total destinations:', error);
       }
     }
+    fetchTotalDestinations();
+  }, []);
 
+  // Load user data - extracted as a function to be callable
+  const loadUserData = async () => {
+    if (!user) {
+      setIsLoadingData(false);
+      return;
+    }
+
+    try {
+      setIsLoadingData(true);
+
+      // Load saved, visited, and collections
+      const [savedResult, visitedResult, collectionsResult] = await Promise.all([
+        supabase
+          .from('saved_places')
+          .select('destination_slug')
+          .eq('user_id', user.id),
+        supabase
+          .from('visited_places')
+          .select('destination_slug, visited_at, rating, notes')
+          .eq('user_id', user.id)
+          .order('visited_at', { ascending: false }),
+        supabase
+          .from('collections')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
+
+      // Collect all unique slugs
+      const allSlugs = new Set<string>();
+      if (savedResult.data) {
+        savedResult.data.forEach(item => allSlugs.add(item.destination_slug));
+      }
+      if (visitedResult.data) {
+        visitedResult.data.forEach(item => allSlugs.add(item.destination_slug));
+      }
+
+      // Fetch destinations
+      if (allSlugs.size > 0) {
+        const { data: destData } = await supabase
+          .from('destinations')
+          .select('slug, name, city, category, image')
+          .in('slug', Array.from(allSlugs));
+
+        if (destData) {
+          // Map saved places
+          if (savedResult.data) {
+            setSavedPlaces(savedResult.data.map((item: any) => {
+              const dest = destData.find((d: any) => d.slug === item.destination_slug);
+              return dest ? {
+                destination_slug: dest.slug,
+                destination: {
+                  name: dest.name,
+                  city: dest.city,
+                  category: dest.category,
+                  image: dest.image
+                }
+              } : null;
+            }).filter((item: any) => item !== null));
+          }
+
+          // Map visited places
+          if (visitedResult.data) {
+            setVisitedPlaces(visitedResult.data.map((item: any) => {
+              const dest = destData.find((d: any) => d.slug === item.destination_slug);
+              return dest ? {
+                destination_slug: item.destination_slug,
+                visited_at: item.visited_at,
+                rating: item.rating,
+                notes: item.notes,
+                destination: {
+                  name: dest.name,
+                  city: dest.city,
+                  category: dest.category,
+                  image: dest.image
+                }
+              } : null;
+            }).filter((item: any) => item !== null));
+          }
+        }
+      }
+
+      // Set collections
+      if (collectionsResult.data) {
+        setCollections(collectionsResult.data);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Load data on mount
+  useEffect(() => {
     loadUserData();
   }, [user?.id]);
 
@@ -209,14 +226,19 @@ export default function Account() {
       Array.from(uniqueCities).map(city => cityCountryMap[city] || 'Other')
     );
 
+    const curationCompletionPercentage = totalDestinations > 0
+      ? Math.round((visitedPlaces.length / totalDestinations) * 100)
+      : 0;
+
     return {
       uniqueCities,
       uniqueCountries,
       visitedCount: visitedPlaces.length,
       savedCount: savedPlaces.length,
-      collectionsCount: collections.length
+      collectionsCount: collections.length,
+      curationCompletionPercentage
     };
-  }, [savedPlaces, visitedPlaces, collections]);
+  }, [savedPlaces, visitedPlaces, collections, totalDestinations]);
 
   // Show loading
   if (!authChecked || isLoadingData) {
@@ -288,6 +310,44 @@ export default function Account() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-12 fade-in">
+            {/* Curation Completion - Prominent gamification stat */}
+            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
+                  <div className="text-xs text-gray-500">of curation explored</div>
+                </div>
+                <div className="text-right text-xs text-gray-400">
+                  {stats.visitedCount} / {totalDestinations} places
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
+                  style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
+                />
+              </div>
+              {stats.curationCompletionPercentage < 100 && (
+                <p className="text-xs text-gray-400 mt-3">
+                  {stats.curationCompletionPercentage < 10
+                    ? "Just getting started! Keep exploring."
+                    : stats.curationCompletionPercentage < 25
+                    ? "Great start! Many more places to discover."
+                    : stats.curationCompletionPercentage < 50
+                    ? "Halfway there! You're doing amazing."
+                    : stats.curationCompletionPercentage < 75
+                    ? "Impressive! You're a seasoned explorer."
+                    : "Almost there! You've explored most of our curation."}
+                </p>
+              )}
+              {stats.curationCompletionPercentage === 100 && (
+                <p className="text-xs text-gray-400 mt-3">
+                  🎉 Incredible! You've visited every place in our curation!
+                </p>
+              )}
+            </div>
+
             {/* Stats Grid - Minimal, like homepage cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
@@ -363,7 +423,10 @@ export default function Account() {
         {/* Visited Tab */}
         {activeTab === 'visited' && (
           <div className="fade-in">
-            <EnhancedVisitedTab visitedPlaces={visitedPlaces} />
+            <EnhancedVisitedTab
+              visitedPlaces={visitedPlaces}
+              onPlaceAdded={loadUserData}
+            />
           </div>
         )}
 
