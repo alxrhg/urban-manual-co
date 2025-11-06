@@ -2,11 +2,12 @@
 
 A modern, curated travel guide featuring 897 destinations across the world.
 
-> **⚠️ IMPORTANT**: This project is being migrated to Next.js 16. Please use the **`urban-manual-next/`** directory for active development.
+## Architecture
 
-## Active Development (Next.js 16)
+This is a **Next.js 16** application with optional microservices for enhanced features. The core app works fully standalone, with optional services for ML-powered recommendations, high-performance search, and AI-powered development tools.
 
-**Location**: `/urban-manual-next/`
+📖 **[Microservices Architecture Guide](./MICROSERVICES_ARCHITECTURE.md)** - Detailed explanation of why services are separate
+⚡ **[Quick Start: Optional Services](./QUICKSTART_OPTIONAL_SERVICES.md)** - Enable ML, Rust, and AI features in minutes
 
 ### Features
 
@@ -18,16 +19,22 @@ A modern, curated travel guide featuring 897 destinations across the world.
 - 🎨 **Urban Manual Inspired** - Clean, minimal, editorial design
 - 🌙 **Dark Mode** - Full dark mode support
 
-### Tech Stack (Next.js)
+### Tech Stack
 
+**Core Application:**
 - **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS
 - **Database**: Supabase (PostgreSQL) with direct client integration
 - **Authentication**: Supabase Auth with Google OAuth
 - **Deployment**: Vercel
 
+**Optional Microservices** (see [Quick Start](./QUICKSTART_OPTIONAL_SERVICES.md)):
+- **ML Service**: Python/FastAPI - Personalized recommendations & forecasting
+- **Rust Modules**: High-performance vector operations (50x faster search)
+- **AI Agents**: LangGraph-based code generation & automation
+
 ## Environment Variables
 
-Create a `.env.local` file in the `urban-manual-next/` directory with:
+Create a `.env.local` file in the root directory with:
 
 ```env
 # Supabase
@@ -39,6 +46,21 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 **Note**: Next.js requires the `NEXT_PUBLIC_` prefix for environment variables that need to be accessible in the browser.
+
+### Optional Service Configuration
+
+To enable optional microservices, add these to `.env.local`:
+
+```env
+# ML Service (Optional - for personalized recommendations)
+ML_SERVICE_URL=http://localhost:8000
+
+# Feature flags
+ENABLE_ML_RECOMMENDATIONS=true
+ENABLE_ML_FORECASTING=true
+```
+
+See **[Quick Start Guide](./QUICKSTART_OPTIONAL_SERVICES.md)** for setup instructions.
 
 ## Deployment to Vercel
 
@@ -74,12 +96,9 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
    - Site URL: `https://your-project.vercel.app`
    - Redirect URLs: `https://your-project.vercel.app/**`
 
-## Local Development (Next.js)
+## Local Development
 
 ```bash
-# Navigate to Next.js app
-cd urban-manual-next
-
 # Install dependencies
 npm install
 
@@ -93,7 +112,21 @@ npm run build
 npm start
 ```
 
-**Note**: The old Vite app in `/client/` is deprecated and should not be used.
+### Enable Optional Services (Local)
+
+```bash
+# Start ML service (terminal 1)
+cd ml-service
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Start Next.js app (terminal 2)
+cd ..
+npm run dev
+```
+
+See **[Quick Start Guide](./QUICKSTART_OPTIONAL_SERVICES.md)** for detailed setup.
 
 ## Database Setup
 
@@ -149,6 +182,22 @@ Inspired by Urban Manual and Little Places London:
 - Large, beautiful imagery
 - Story-led content
 - Clean, editorial layout
+
+## Documentation
+
+### Architecture & Services
+- 📖 **[Microservices Architecture Guide](./MICROSERVICES_ARCHITECTURE.md)** - Why services are separate and how they work
+- ⚡ **[Quick Start: Optional Services](./QUICKSTART_OPTIONAL_SERVICES.md)** - Enable ML, Rust, and AI features
+- 🚢 **[Deployment Guide](./DEPLOYMENT_RUST_AI.md)** - Deploy optional services to production
+- 🤖 **[ML Integration](./ML_INTEGRATION.md)** - ML service integration details
+
+### Service-Specific Docs
+- **[ML Service README](./ml-service/README.md)** - Python ML service documentation
+- **[Rust Modules README](./rust-modules/README.md)** - High-performance Rust modules
+- **[AI Agents README](./ai-agents/README.md)** - Code generation and automation
+
+### Development Guides
+Multiple planning and implementation documents available in the repository for specific features and enhancements.
 
 ## License
 
