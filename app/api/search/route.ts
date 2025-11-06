@@ -30,6 +30,7 @@ async function understandQuery(query: string): Promise<{
   keywords: string[];
   city?: string;
   category?: string;
+  brand?: string;
   filters?: {
     openNow?: boolean;
     priceLevel?: number;
@@ -46,6 +47,7 @@ function parseQueryFallback(query: string): {
   keywords: string[];
   city?: string;
   category?: string;
+  brand?: string;
   filters?: any;
 } {
   const lowerQuery = query.toLowerCase();
@@ -53,9 +55,19 @@ function parseQueryFallback(query: string): {
 
   const cities = ['tokyo', 'paris', 'new york', 'london', 'rome', 'barcelona', 'berlin', 'amsterdam', 'sydney', 'dubai'];
   const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'shop', 'museum', 'park', 'temple', 'shrine'];
-  
+
+  // Common hotel/restaurant brands
+  const brands = [
+    'aman', 'four seasons', 'ritz-carlton', 'ritz carlton', 'mandarin oriental',
+    'peninsula', 'park hyatt', 'rosewood', 'bulgari', 'belmond',
+    'six senses', 'one&only', 'shangri-la', 'st regis', 'raffles',
+    'como', 'w hotels', 'edition', 'soho house', 'ace hotel',
+    'marriott', 'hilton', 'hyatt', 'intercontinental', 'fairmont'
+  ];
+
   let city: string | undefined;
   let category: string | undefined;
+  let brand: string | undefined;
   const keywords: string[] = [];
 
   for (const cityName of cities) {
@@ -72,16 +84,24 @@ function parseQueryFallback(query: string): {
     }
   }
 
+  // Check for brand names in query
+  for (const brandName of brands) {
+    if (lowerQuery.includes(brandName)) {
+      brand = brandName;
+      break;
+    }
+  }
+
   for (const word of words) {
     const lowerWord = word.toLowerCase();
-    if (!city?.includes(lowerWord) && !category?.includes(lowerWord)) {
+    if (!city?.includes(lowerWord) && !category?.includes(lowerWord) && !brand?.includes(lowerWord)) {
       if (word.length > 2) {
         keywords.push(word);
       }
     }
   }
 
-  return { keywords, city, category };
+  return { keywords, city, category, brand };
 }
 
 export async function POST(request: NextRequest) {
@@ -145,6 +165,7 @@ export async function POST(request: NextRequest) {
     if (conversationContext) {
       if (conversationContext.city && !intent.city) intent.city = conversationContext.city;
       if (conversationContext.category && !intent.category) intent.category = conversationContext.category;
+      if (conversationContext.brand && !intent.brand) intent.brand = conversationContext.brand;
       if (conversationContext.mood) {
         intent.filters = intent.filters || {};
         // Map mood to search filters (could enhance further)
@@ -202,6 +223,7 @@ export async function POST(request: NextRequest) {
           filter_michelin_stars: intent.filters?.michelinStar || filters.michelinStar || null,
           filter_min_rating: intent.filters?.rating || filters.rating || null,
           filter_max_price_level: intent.filters?.priceLevel || filters.priceLevel || null,
+          filter_brand: intent.brand || filters.brand || null,
           search_query: query // For full-text search ranking boost
         });
 
@@ -233,7 +255,7 @@ export async function POST(request: NextRequest) {
       try {
         let fullTextQuery = supabase
           .from('destinations')
-          .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
+          .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, brand')
           .limit(PAGE_SIZE);
 
         // Full-text search - use ILIKE on search_text as fallback (textSearch requires tsvector column)
@@ -249,6 +271,11 @@ export async function POST(request: NextRequest) {
         if (intent.category || filters.category) {
           const categoryFilter = intent.category || filters.category;
           fullTextQuery = fullTextQuery.ilike('category', `%${categoryFilter}%`);
+        }
+
+        if (intent.brand || filters.brand) {
+          const brandFilter = intent.brand || filters.brand;
+          fullTextQuery = fullTextQuery.ilike('brand', `%${brandFilter}%`);
         }
 
         if (intent.filters?.rating || filters.rating) {
@@ -290,7 +317,7 @@ export async function POST(request: NextRequest) {
           const slugs = aiFieldResults.map((r: any) => r.slug);
           const { data: fullData } = await supabase
             .from('destinations')
-            .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
+            .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, brand')
             .in('slug', slugs)
             .limit(PAGE_SIZE);
 
@@ -326,7 +353,7 @@ export async function POST(request: NextRequest) {
     if (results.length === 0) {
       let fallbackQuery = supabase
         .from('destinations')
-        .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level')
+        .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, brand')
         .limit(PAGE_SIZE);
 
       // Apply filters
@@ -338,6 +365,11 @@ export async function POST(request: NextRequest) {
       if (intent.category || filters.category) {
         const categoryFilter = intent.category || filters.category;
         fallbackQuery = fallbackQuery.ilike('category', `%${categoryFilter}%`);
+      }
+
+      if (intent.brand || filters.brand) {
+        const brandFilter = intent.brand || filters.brand;
+        fallbackQuery = fallbackQuery.ilike('brand', `%${brandFilter}%`);
       }
 
       // Keyword matching
