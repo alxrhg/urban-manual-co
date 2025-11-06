@@ -21,8 +21,19 @@ interface GreetingHeroProps {
       category?: string;
       preferences?: string[];
       lastQuery?: string;
+      mood?: string;
+      price_level?: string;
     };
   } | null;
+  // Phase 2 & 3: Enriched context
+  enrichedContext?: {
+    journey?: any;
+    recentAchievements?: any[];
+    nextAchievement?: any;
+    weather?: any;
+    trendingCity?: string;
+    aiGreeting?: string;
+  };
   isAIEnabled?: boolean;
   isSearching?: boolean;
   filters?: any;
@@ -39,6 +50,7 @@ export default function GreetingHero({
   userName,
   userProfile,
   lastSession,
+  enrichedContext,
   isAIEnabled = false,
   isSearching = false,
   filters,
@@ -54,13 +66,20 @@ export default function GreetingHero({
   const currentHour = now.getHours();
   const currentDay = now.getDay();
 
-  // Generate contextual greeting
+  // Generate contextual greeting with Phase 2 & 3 enhancements
   const greetingContext: GreetingContext = {
     userName,
     userProfile,
     lastSession,
     currentHour,
     currentDay,
+    // Phase 2 & 3 context
+    journey: enrichedContext?.journey,
+    recentAchievements: enrichedContext?.recentAchievements,
+    nextAchievement: enrichedContext?.nextAchievement,
+    weather: enrichedContext?.weather,
+    trendingCity: enrichedContext?.trendingCity,
+    aiGreeting: enrichedContext?.aiGreeting,
   };
 
   const { greeting, subtext } = generateContextualGreeting(greetingContext);

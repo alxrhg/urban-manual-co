@@ -1,10 +1,18 @@
 /**
- * Context-Aware Greeting System
+ * Context-Aware Greeting System (Phase 2 & 3)
  * Generates personalized greetings based on user profile, session history, and context
+ *
+ * Features:
+ * - Phase 1: Time-based, returning user, favorite city, seasonal events
+ * - Phase 2: AI-generated greetings, budget/vibe continuity, weather integration
+ * - Phase 3: Multi-session journey tracking, achievements, trending, conversation history
  */
 
 import { getSeasonalContext } from '@/services/seasonality';
 import { UserProfile } from '@/types/personalization';
+import { JourneyInsights, getJourneyGreetingMessage } from './greetings/journey-tracker';
+import { RecentAchievement, getAchievementGreetingMessage, getProgressGreetingMessage } from './greetings/achievement-helper';
+import { GreetingWeatherData, getWeatherGreetingMessage } from './greetings/weather-helper';
 
 export interface GreetingContext {
   userName?: string;
@@ -17,16 +25,27 @@ export interface GreetingContext {
       category?: string;
       preferences?: string[];
       lastQuery?: string;
+      mood?: string; // Phase 2: vibe continuity
+      price_level?: string; // Phase 2: budget continuity
     };
   } | null;
   currentHour?: number;
   currentDay?: number; // 0-6 (Sunday-Saturday)
+  // Phase 2 & 3 enhancements
+  journey?: JourneyInsights | null; // Phase 3: multi-session tracking
+  recentAchievements?: RecentAchievement[]; // Phase 3: achievement system
+  nextAchievement?: { name: string; progress: number; target: number; emoji: string } | null;
+  weather?: GreetingWeatherData | null; // Phase 2: weather integration
+  trendingCity?: string | null; // Phase 3: trending integration
+  aiGreeting?: string | null; // Phase 2: AI-generated greeting
+  conversationCount?: number; // Phase 3: conversation history awareness
 }
 
 export interface GreetingResult {
   greeting: string;
   subtext?: string;
-  type: 'basic' | 'returning' | 'favorite_city' | 'seasonal' | 'time_activity' | 'day_of_week';
+  type: 'basic' | 'returning' | 'favorite_city' | 'seasonal' | 'time_activity' | 'day_of_week'
+        | 'ai_generated' | 'weather' | 'achievement' | 'journey' | 'trending' | 'vibe_continuity';
 }
 
 /**
@@ -93,7 +112,7 @@ function getTimeSinceVisit(lastActivity: string): string {
 }
 
 /**
- * Generate context-aware greeting
+ * Generate context-aware greeting with Phase 2 & 3 enhancements
  */
 export function generateContextualGreeting(context: GreetingContext): GreetingResult {
   const hour = context.currentHour ?? new Date().getHours();
@@ -101,9 +120,81 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
   const baseGreeting = getTimeGreeting(hour);
   const userNamePart = context.userName ? `, ${context.userName}` : '';
 
-  // Priority 1: Returning user recognition (sessions < 24h)
+  // PHASE 2 & 3: Priority 1 - AI-generated personalized greeting
+  if (context.aiGreeting) {
+    return {
+      greeting: `${baseGreeting}${userNamePart}`,
+      subtext: context.aiGreeting,
+      type: 'ai_generated',
+    };
+  }
+
+  // PHASE 3: Priority 2 - Recent achievement (within 48 hours)
+  if (context.recentAchievements && context.recentAchievements.length > 0) {
+    const achievementMessage = getAchievementGreetingMessage(context.recentAchievements);
+    if (achievementMessage) {
+      return {
+        greeting: `${baseGreeting}${userNamePart}`,
+        subtext: achievementMessage,
+        type: 'achievement',
+      };
+    }
+  }
+
+  // PHASE 3: Priority 3 - Close to unlocking achievement
+  if (context.nextAchievement) {
+    const progressMessage = getProgressGreetingMessage(context.nextAchievement);
+    if (progressMessage) {
+      return {
+        greeting: `${baseGreeting}${userNamePart}`,
+        subtext: progressMessage,
+        type: 'achievement',
+      };
+    }
+  }
+
+  // PHASE 3: Priority 4 - Journey pattern recognition (exploration streaks, patterns)
+  if (context.journey) {
+    const journeyMessage = getJourneyGreetingMessage(context.journey);
+    if (journeyMessage) {
+      return {
+        greeting: `${baseGreeting}${userNamePart}`,
+        subtext: journeyMessage,
+        type: 'journey',
+      };
+    }
+  }
+
+  // PHASE 2: Priority 5 - Vibe/mood continuity from last session
   if (context.lastSession && isRecentSession(context.lastSession.last_activity)) {
     const summary = context.lastSession.context_summary;
+
+    // Mood/vibe continuity
+    if (summary?.mood && summary.mood !== 'any') {
+      const city = summary.city || 'your next destination';
+      return {
+        greeting: `${baseGreeting}${userNamePart}`,
+        subtext: `Still looking for ${summary.mood} vibes in ${city}?`,
+        type: 'vibe_continuity',
+      };
+    }
+
+    // Budget continuity
+    if (summary?.price_level && summary.price_level !== '$') {
+      const budgetLabels: Record<string, string> = {
+        '$$': 'moderate',
+        '$$$': 'upscale',
+        '$$$$': 'luxury',
+      };
+      const budgetLabel = budgetLabels[summary.price_level];
+      if (budgetLabel) {
+        return {
+          greeting: `${baseGreeting}${userNamePart}`,
+          subtext: `Continuing the ${budgetLabel} search? I have more suggestions!`,
+          type: 'vibe_continuity',
+        };
+      }
+    }
 
     // If there's a specific last query
     if (summary?.lastQuery) {
@@ -135,7 +226,7 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
     }
   }
 
-  // Priority 2: Returning user after days
+  // Priority 6: Returning user after days
   if (context.lastSession && !isRecentSession(context.lastSession.last_activity)) {
     const timeSince = getTimeSinceVisit(context.lastSession.last_activity);
     return {
@@ -145,7 +236,20 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
     };
   }
 
-  // Priority 3: Seasonal event awareness (if user has favorite city)
+  // PHASE 2: Priority 7 - Weather integration (for favorite city or trending city)
+  if (context.weather) {
+    const city = context.userProfile?.favorite_cities?.[0] || context.weather.city || 'your city';
+    const weatherMessage = getWeatherGreetingMessage(context.weather, city);
+    if (weatherMessage) {
+      return {
+        greeting: `${baseGreeting}${userNamePart}`,
+        subtext: weatherMessage,
+        type: 'weather',
+      };
+    }
+  }
+
+  // Priority 8: Seasonal event awareness (if user has favorite city)
   if (context.userProfile?.favorite_cities && context.userProfile.favorite_cities.length > 0) {
     const favoriteCity = context.userProfile.favorite_cities[0];
     const seasonalInfo = getSeasonalContext(favoriteCity);
@@ -174,7 +278,7 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
       }
     }
 
-    // Priority 4: Favorite city greeting (no seasonal event)
+    // Priority 9: Favorite city greeting (no seasonal event)
     return {
       greeting: `${baseGreeting}${userNamePart}`,
       subtext: `Want to discover more hidden gems in ${favoriteCity}?`,
@@ -182,7 +286,16 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
     };
   }
 
-  // Priority 5: Time-appropriate activity suggestions
+  // PHASE 3: Priority 10 - Trending city suggestion
+  if (context.trendingCity) {
+    return {
+      greeting: `${baseGreeting}${userNamePart}`,
+      subtext: `${context.trendingCity} is trending right now. Curious to explore?`,
+      type: 'trending',
+    };
+  }
+
+  // Priority 11: Time-appropriate activity suggestions
   const timeActivity = getTimeActivity(hour);
   if (timeActivity) {
     return {
@@ -192,7 +305,7 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
     };
   }
 
-  // Priority 6: Day-of-week context
+  // Priority 12: Day-of-week context
   const dayContext = getDayContext(day);
   if (dayContext) {
     return {
@@ -211,10 +324,31 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
 }
 
 /**
- * Generate context-aware placeholder text for search input
+ * Generate context-aware placeholder text for search input (Phase 2 & 3 enhancements)
  */
 export function generateContextualPlaceholder(context: GreetingContext): string {
   const hour = context.currentHour ?? new Date().getHours();
+
+  // PHASE 3: Journey pattern-based placeholder
+  if (context.journey?.recentPattern) {
+    if (context.journey.recentPattern.startsWith('exploring-')) {
+      const city = context.journey.recentPattern.split('-')[1];
+      return `More hidden gems in ${city}...`;
+    }
+    if (context.journey.recentPattern.endsWith('-hunting')) {
+      const category = context.journey.recentPattern.split('-')[0];
+      return `Best ${category} spots in...`;
+    }
+    if (context.journey.recentPattern === 'city-hopping') {
+      return 'Compare destinations across cities...';
+    }
+  }
+
+  // PHASE 2: Mood/vibe continuity
+  if (context.lastSession?.context_summary?.mood && context.lastSession.context_summary.mood !== 'any') {
+    const mood = context.lastSession.context_summary.mood;
+    return `${mood} vibes in...`;
+  }
 
   // If returning user with context
   if (context.lastSession?.context_summary) {
@@ -233,6 +367,11 @@ export function generateContextualPlaceholder(context: GreetingContext): string 
     }
   }
 
+  // PHASE 3: Trending city
+  if (context.trendingCity) {
+    return `Trending now: discover ${context.trendingCity}...`;
+  }
+
   // If user has favorite city
   if (context.userProfile?.favorite_cities && context.userProfile.favorite_cities.length > 0) {
     const favoriteCity = context.userProfile.favorite_cities[0];
@@ -241,6 +380,12 @@ export function generateContextualPlaceholder(context: GreetingContext): string 
     const seasonalInfo = getSeasonalContext(favoriteCity);
     if (seasonalInfo) {
       return `${seasonalInfo.event} experiences in ${favoriteCity}...`;
+    }
+
+    // PHASE 2: Favorite category + favorite city combo
+    if (context.userProfile.favorite_categories && context.userProfile.favorite_categories.length > 0) {
+      const favoriteCategory = context.userProfile.favorite_categories[0];
+      return `${favoriteCategory} in ${favoriteCity}...`;
     }
 
     return `Hidden gems in ${favoriteCity}...`;
