@@ -9,6 +9,14 @@ import { useMoodRecommendations, useMoodLabel, useMoodColor } from '@/hooks/useM
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
+interface MoodFilteredRec {
+  destination_id: number
+  overall_score: number
+  mood_score: number
+  mood_breakdown: Record<string, number>
+  dimension_scores: Record<string, number>
+}
+
 interface MoodFilteredRecommendationsProps {
   moodKey: string | null
   limit?: number
@@ -160,14 +168,6 @@ export function MoodFilteredRecommendations({
 // ============================================
 // Mood Recommendation Card
 // ============================================
-
-interface MoodFilteredRec {
-  destination_id: number
-  overall_score: number
-  mood_score: number
-  mood_breakdown: Record<string, number>
-  dimension_scores: Record<string, number>
-}
 
 interface MoodRecommendationCardProps {
   recommendation: MoodFilteredRec
