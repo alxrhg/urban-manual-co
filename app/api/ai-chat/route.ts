@@ -17,8 +17,21 @@ interface CacheEntry {
 }
 
 const searchCache = new Map<string, CacheEntry>();
+const embeddingCache = new Map<string, { embedding: number[], timestamp: number }>();
+const intentCache = new Map<string, { intent: any, timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
+
+// Request deduplication map
+const pendingRequests = new Map<string, Promise<any>>();
+
+// Timeout helper
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T | typeof fallback> {
+  return Promise.race([
+    promise,
+    new Promise<T | typeof fallback>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
 
 function getCacheKey(query: string, intent: any): string {
   return `${query.toLowerCase()}_${intent.city || ''}_${intent.category || ''}`;
@@ -73,22 +86,45 @@ const CATEGORY_SYNONYMS: Record<string, string> = {
   'gallery': 'Culture'
 };
 
-// Generate embedding using OpenAI
+// Generate embedding using OpenAI with caching
 async function generateEmbedding(text: string): Promise<number[] | null> {
   if (!openai?.embeddings) {
     console.error('[AI Chat] No OpenAI client available');
     return null;
   }
 
+  // Check cache first
+  const cacheKey = text.toLowerCase().trim();
+  const cached = embeddingCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log('[AI Chat] Using cached embedding');
+    return cached.embedding;
+  }
+
   try {
-    return await embedText(text);
+    const embedding = await withTimeout(
+      embedText(text),
+      5000, // 5 second timeout
+      null
+    );
+
+    if (embedding) {
+      // Cache the embedding
+      if (embeddingCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = embeddingCache.keys().next().value;
+        if (firstKey) embeddingCache.delete(firstKey);
+      }
+      embeddingCache.set(cacheKey, { embedding, timestamp: Date.now() });
+    }
+
+    return embedding;
   } catch (error) {
     console.error('[AI Chat] Error generating embedding:', error);
     return null;
   }
 }
 
-// AI-powered query understanding with conversation context
+// AI-powered query understanding with conversation context and caching
 async function understandQuery(
   query: string,
   conversationHistory: Array<{role: string, content: string}> = [],
@@ -109,6 +145,16 @@ async function understandQuery(
 }> {
   if (!openai?.chat) {
     return parseQueryFallback(query);
+  }
+
+  // Check intent cache (only for queries without conversation history for consistency)
+  if (conversationHistory.length === 0) {
+    const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
+    const cached = intentCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log('[AI Chat] Using cached intent');
+      return cached.intent;
+    }
   }
 
   try {
@@ -179,15 +225,24 @@ Return only the JSON, no other text.`;
 
     const userPrompt = `Query: "${query}"${conversationContext}${userContext}`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-    });
+    const response = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+      }),
+      4000, // 4 second timeout for intent parsing
+      null
+    ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
+
+    if (!response) {
+      console.warn('[AI Chat] Intent parsing timed out, using fallback');
+      return parseQueryFallback(query);
+    }
 
     const text = response.choices?.[0]?.message?.content || '';
     
@@ -215,7 +270,17 @@ Return only the JSON, no other text.`;
             }
           }
         }
-        
+
+        // Cache the parsed intent (only for non-conversational queries)
+        if (conversationHistory.length === 0) {
+          const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
+          if (intentCache.size >= MAX_CACHE_SIZE) {
+            const firstKey = intentCache.keys().next().value;
+            if (firstKey) intentCache.delete(firstKey);
+          }
+          intentCache.set(cacheKey, { intent: parsed, timestamp: Date.now() });
+        }
+
         return parsed;
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
@@ -375,17 +440,21 @@ ${topResults.slice(0, 5).map((r: any, i: number) => {
 
 Generate a natural, helpful response that incorporates relevant context (weather, events, walking distance) when it adds value. Be conversational and concise.`;
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 150,
-      });
+      const response = await withTimeout(
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 150,
+        }),
+        5000, // 5 second timeout for response generation
+        null
+      ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
-      const aiResponse = response.choices?.[0]?.message?.content || '';
+      const aiResponse = response?.choices?.[0]?.message?.content || '';
       if (aiResponse) {
         return aiResponse.trim();
       }
@@ -419,14 +488,62 @@ export async function POST(request: NextRequest) {
     const { query, userId, conversationHistory = [] } = body;
 
     if (!query || query.trim().length < 2) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         content: 'Please enter a search query.',
         destinations: []
       });
     }
 
-    // Get intent for search - using basic intent analysis for better performance
-    const intent = await understandQuery(query, conversationHistory, userId);
+    // Request deduplication: prevent duplicate in-flight requests
+    const requestKey = `${query.toLowerCase().trim()}_${userId || 'anon'}_${conversationHistory.length}`;
+    const existingRequest = pendingRequests.get(requestKey);
+
+    if (existingRequest) {
+      console.log('[AI Chat] Deduplicating request:', query);
+      try {
+        return await existingRequest;
+      } catch (error) {
+        // If the existing request failed, continue with a new one
+        pendingRequests.delete(requestKey);
+      }
+    }
+
+    // Create a new request promise
+    const requestPromise = (async () => {
+      try {
+        return await processAIChatRequest(query, userId, conversationHistory);
+      } finally {
+        // Clean up after request completes
+        pendingRequests.delete(requestKey);
+      }
+    })();
+
+    // Store the promise for deduplication
+    pendingRequests.set(requestKey, requestPromise);
+
+    return await requestPromise;
+  } catch (error: any) {
+    console.error('AI Chat API error:', error);
+    return NextResponse.json({
+      content: 'Sorry, I encountered an error. Please try again.',
+      destinations: []
+    }, { status: 500 });
+  }
+}
+
+// Extract main logic into separate function for cleaner deduplication
+async function processAIChatRequest(
+  query: string,
+  userId: string | undefined,
+  conversationHistory: Array<{role: string, content: string}>
+) {
+  try {
+
+    // Parallelize intent understanding and embedding generation for better performance
+    const [intent, queryEmbedding] = await Promise.all([
+      understandQuery(query, conversationHistory, userId),
+      generateEmbedding(query)
+    ]);
 
     // Normalize category using synonyms
     if (intent.category) {
@@ -448,120 +565,96 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate embedding for vector search
-    const queryEmbedding = await generateEmbedding(query);
-
     let results: any[] = [];
+
+    // Parallel search strategies for better performance
+    const searchPromises: Promise<any>[] = [];
 
     // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
-      try {
-        const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
-          query_embedding: queryEmbedding,
-          match_threshold: 0.6, // Lower threshold for more results
-          match_count: 100, // Optimized for performance
-          filter_city: intent.city || null,
-          filter_category: intent.category || null,
-          filter_michelin_stars: intent.filters?.michelinStar || null,
-          filter_min_rating: intent.filters?.rating || null,
-          filter_max_price_level: intent.filters?.priceLevel || null,
-          search_query: query
-        });
-
-        if (!vectorError && vectorResults && vectorResults.length > 0) {
-          results = vectorResults;
-          console.log('[AI Chat] Vector search found', results.length, 'results');
-        } else if (vectorError) {
-          console.error('[AI Chat] Vector search error:', vectorError);
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] Vector search exception:', error);
-      }
-    }
-
-    // Strategy 2: Asimov fallback (semantic search service)
-    if (results.length === 0) {
-      try {
-        console.log('[AI Chat] Trying Asimov fallback...');
-        const asimovResults = await searchAsimov({
-          query,
-          limit: 50,
-          params: {
-            category: intent.category || undefined,
-            city: intent.city || undefined,
-            language: 'en',
-          },
-          recall: 100,
-        });
-
-        if (asimovResults && asimovResults.length > 0) {
-          // Get destinations from DB to match against Asimov results
-          const { data: allDestinations } = await supabase
-            .from('destinations')
-            .select('*')
-            .limit(100);
-
-          const mapped = mapAsimovResultsToDestinations(asimovResults, allDestinations || []);
-          
-          if (mapped.length > 0) {
-            results = mapped;
-            console.log('[AI Chat] Asimov fallback found', results.length, 'results');
+      searchPromises.push(
+        (async () => {
+          try {
+            const { data, error } = await supabase.rpc('match_destinations', {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.6,
+              match_count: 100,
+              filter_city: intent.city || null,
+              filter_category: intent.category || null,
+              filter_michelin_stars: intent.filters?.michelinStar || null,
+              filter_min_rating: intent.filters?.rating || null,
+              filter_max_price_level: intent.filters?.priceLevel || null,
+              search_query: query
+            });
+            return { type: 'vector', data: data || [], error };
+          } catch (error: any) {
+            return { type: 'vector', data: [], error };
           }
+        })()
+      );
+    }
+
+    // Strategy 2: Basic keyword search (run in parallel with vector search)
+    const buildKeywordQuery = () => {
+      let fallbackQuery = supabase
+        .from('destinations')
+        .select('*')
+        .limit(100);
+
+      if (intent.city) {
+        fallbackQuery = fallbackQuery.ilike('city', `%${intent.city}%`);
+      }
+
+      if (intent.category) {
+        fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
+      }
+
+      if (intent.filters?.rating) {
+        fallbackQuery = fallbackQuery.gte('rating', intent.filters.rating);
+      }
+
+      if (intent.filters?.priceLevel) {
+        fallbackQuery = fallbackQuery.lte('price_level', intent.filters.priceLevel);
+      }
+
+      if (intent.filters?.michelinStar) {
+        fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
+      }
+
+      const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
+      if (keywords.length > 0) {
+        fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
+      }
+
+      return fallbackQuery;
+    };
+
+    searchPromises.push(
+      (async () => {
+        try {
+          const { data, error } = await buildKeywordQuery();
+          return { type: 'keyword', data: data || [], error };
+        } catch (error: any) {
+          return { type: 'keyword', data: [], error };
         }
-      } catch (error: any) {
-        console.error('[AI Chat] Asimov fallback exception:', error);
+      })()
+    );
+
+    // Execute all search strategies in parallel
+    const searchResults = await Promise.all(searchPromises);
+
+    // Use the first successful result (prefer vector over keyword)
+    for (const result of searchResults) {
+      if (!result.error && result.data.length > 0) {
+        results = result.data;
+        console.log(`[AI Chat] ${result.type} search found ${results.length} results`);
+        break;
+      } else if (result.error) {
+        console.error(`[AI Chat] ${result.type} search error:`, result.error);
       }
     }
 
-    // Strategy 3: Basic keyword search fallback (last resort)
-    if (results.length === 0) {
-      try {
-        console.log('[AI Chat] Trying basic keyword search fallback...');
-        let fallbackQuery = supabase
-          .from('destinations')
-          .select('*')
-          .limit(100); // Optimized for performance
-
-        // Apply filters
-        if (intent.city) {
-          fallbackQuery = fallbackQuery.ilike('city', `%${intent.city}%`);
-        }
-
-        if (intent.category) {
-          fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
-        }
-
-        if (intent.filters?.rating) {
-          fallbackQuery = fallbackQuery.gte('rating', intent.filters.rating);
-        }
-
-        if (intent.filters?.priceLevel) {
-          fallbackQuery = fallbackQuery.lte('price_level', intent.filters.priceLevel);
-        }
-
-        if (intent.filters?.michelinStar) {
-          fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
-        }
-
-        // Try full-text search on search_text if available
-        const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
-        if (keywords.length > 0) {
-          const searchTerm = keywords.join(' | ');
-          fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
-        }
-
-        const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
-
-        if (!fallbackError && fallbackResults) {
-          results = fallbackResults;
-          console.log('[AI Chat] Basic keyword fallback found', results.length, 'results');
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] Basic keyword fallback exception:', error);
-      }
-    }
-
-    // Strategy 3: Last resort - show popular destinations in the city or globally
+    // Last resort - show popular destinations in the city
     if (results.length === 0 && intent.city) {
       try {
         const { data: cityResults } = await supabase
@@ -581,8 +674,8 @@ export async function POST(request: NextRequest) {
     }
 
                 // Enrich results with additional data (photos, weather, routes, events) BEFORE reranking
-                // Batch fetch enrichment data in a single query for better performance
-                const topResults = results.slice(0, 10);
+                // Optimized: Only enrich top 3 results for better performance
+                const topResults = results.slice(0, 3); // Reduced from 10 to 3
                 const slugsToEnrich = topResults.map((dest: any) => dest.slug);
 
                 let enrichmentDataMap = new Map();
@@ -648,7 +741,7 @@ export async function POST(request: NextRequest) {
 
                 // Combine reranked enriched results with remaining unenriched results
                 // This maintains performance while still showing all results
-                const remainingResults = results.slice(10);
+                const remainingResults = results.slice(3); // Updated from 10 to 3
                 const limitedResults = [...rerankedResults, ...remainingResults];
 
                 // Generate intelligent response with enriched context
@@ -731,7 +824,7 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json(responseData);
 
   } catch (error: any) {
-    console.error('AI Chat API error:', error);
+    console.error('AI Chat request processing error:', error);
     return NextResponse.json({
       content: 'Sorry, I encountered an error. Please try again.',
       destinations: []
