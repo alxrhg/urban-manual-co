@@ -250,11 +250,25 @@ export default function Home() {
 
   // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
   useEffect(() => {
-    setAdvancedFilters(prev => ({
-      ...prev,
-      city: selectedCity && selectedCity.trim() ? selectedCity : undefined,
-      category: selectedCategory && selectedCategory.trim() ? selectedCategory : undefined,
-    }));
+    setAdvancedFilters(prev => {
+      const newFilters = { ...prev };
+
+      // Only set city if it has a value, otherwise delete it
+      if (selectedCity && selectedCity.trim()) {
+        newFilters.city = selectedCity;
+      } else {
+        delete newFilters.city;
+      }
+
+      // Only set category if it has a value, otherwise delete it
+      if (selectedCategory && selectedCategory.trim()) {
+        newFilters.category = selectedCategory;
+      } else {
+        delete newFilters.category;
+      }
+
+      return newFilters;
+    });
   }, [selectedCity, selectedCategory]);
 
   const fetchDestinations = async () => {

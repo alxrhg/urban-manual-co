@@ -545,6 +545,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  onClose();
                   router.push(`/city/${destination.city}`);
                 }}
               >
@@ -617,14 +618,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               ) : (
                 <>
                   <button
-                    onClick={() => router.push('/auth/login')}
+                    onClick={() => {
+                      onClose();
+                      router.push('/auth/login');
+                    }}
                     className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
                   >
                     <Bookmark className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                     Save
                   </button>
                   <button
-                    onClick={() => router.push('/auth/login')}
+                    onClick={() => {
+                      onClose();
+                      router.push('/auth/login');
+                    }}
                     className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
                   >
                     <Check className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
@@ -1014,7 +1021,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <button
                       key={rec.slug}
                       onClick={() => {
-                        // Navigate to recommended destination
+                        // Close drawer and navigate to recommended destination
+                        onClose();
                         router.push(`/destination/${rec.slug}`);
                       }}
                       className="flex-shrink-0 w-40 group text-left"
