@@ -79,7 +79,7 @@ export async function fetchGreetingContext(
     context.recentAchievements = achievements;
     context.nextAchievement = nextAchievement;
     context.weather = weather;
-    context.trendingCity = trending;
+    context.trendingCity = trending ?? undefined; // Convert null to undefined
 
     return context;
   } catch (error) {
