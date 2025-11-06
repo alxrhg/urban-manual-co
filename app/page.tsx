@@ -35,6 +35,12 @@ import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
+import { ConversationStarters } from '@/components/ConversationStarters';
+import { SessionResume } from '@/components/SessionResume';
+import { ContextCards } from '@/components/ContextCards';
+import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
+import { DestinationBadges } from '@/components/DestinationBadges';
+import { type ExtractedIntent } from '@/app/api/intent/schema';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -247,8 +253,13 @@ export default function Home() {
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
-  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
+  const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
+
+  // Session and context state
+  const [lastSession, setLastSession] = useState<any>(null);
+  const [userContext, setUserContext] = useState<any>(null);
+  const [showSessionResume, setShowSessionResume] = useState(false);
 
   // Track submitted query for chat display
   const [submittedQuery, setSubmittedQuery] = useState<string>('');
@@ -277,8 +288,68 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       fetchVisitedPlaces();
+      fetchLastSession();
+      fetchUserProfile();
     }
   }, [user]);
+
+  // Fetch last conversation session
+  async function fetchLastSession() {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/conversation/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.session_id && data.messages && data.messages.length > 0) {
+          setLastSession({
+            id: data.session_id,
+            last_activity: data.last_activity || new Date().toISOString(),
+            context_summary: data.context,
+            message_count: data.messages.length,
+          });
+          // Show session resume if session is less than 24 hours old
+          const lastActivity = new Date(data.last_activity || Date.now());
+          const hoursSince = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60);
+          if (hoursSince < 24) {
+            setShowSessionResume(true);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching last session:', error);
+    }
+  }
+
+  // Fetch user profile for context
+  async function fetchUserProfile() {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!error && data) {
+        setUserContext({
+          favoriteCities: data.favorite_cities || [],
+          favoriteCategories: data.favorite_categories || [],
+          travelStyle: data.travel_style,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  }
+
+  function handleResumeSession(sessionId: string) {
+    // Load the session
+    setShowSessionResume(false);
+    // The session is already loaded from fetchLastSession
+    // Just scroll to the chat area or show a confirmation
+  }
 
   // CHAT MODE: Explicit Enter submit only (no auto-trigger)
   // Clear state when search is emptied
@@ -755,58 +826,92 @@ export default function Home() {
                 <div className="w-full">
                   {/* Show GreetingHero only when no active search */}
                   {!submittedQuery && (
-                    <GreetingHero
-                      searchQuery={searchTerm}
-                      onSearchChange={(value) => {
-                        setSearchTerm(value);
-                        // Clear conversation history only if search is cleared
-                        if (!value.trim()) {
-                          setConversationHistory([]);
-                          setSearchIntent(null);
-                          setSeasonalContext(null);
-                          setSearchTier(null);
-                          setChatResponse('');
-                          setFilteredDestinations([]);
-                          setSubmittedQuery('');
-                        }
-                      }}
-                      onSubmit={(query) => {
-                        // CHAT MODE: Explicit submit on Enter key (like chat component)
-                        if (query.trim() && !searching) {
-                          performAISearch(query);
-                        }
-                      }}
-                      userName={(function () {
-                        const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                        if (!raw) return undefined;
-                        return raw
-                          .split(/[\s._-]+/)
-                          .filter(Boolean)
-                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                          .join(' ');
-                      })()}
-                      isAIEnabled={isAIEnabled}
-                      isSearching={searching}
-                      filters={advancedFilters}
-                      onFiltersChange={(newFilters) => {
-                        setAdvancedFilters(newFilters);
-                        // Sync with legacy state for backward compatibility
-                        if (newFilters.city !== undefined) {
-                          setSelectedCity(newFilters.city || '');
-                        }
-                        if (newFilters.category !== undefined) {
-                          setSelectedCategory(newFilters.category || '');
-                        }
-                        // Track filter changes
-                        Object.entries(newFilters).forEach(([key, value]) => {
-                          if (value !== undefined && value !== null && value !== '') {
-                            trackFilterChange({ filterType: key, value });
+                    <>
+                      {/* Session Resume - Show if there's a recent session */}
+                      {showSessionResume && lastSession && (
+                        <div className="mb-6">
+                          <SessionResume
+                            session={lastSession}
+                            onResume={handleResumeSession}
+                            onDismiss={() => setShowSessionResume(false)}
+                          />
+                        </div>
+                      )}
+
+                      {/* Context Cards - Show user's saved preferences */}
+                      {userContext && user && !searchTerm && (
+                        <div className="mb-6">
+                          <ContextCards context={userContext} />
+                        </div>
+                      )}
+
+                      <GreetingHero
+                        searchQuery={searchTerm}
+                        onSearchChange={(value) => {
+                          setSearchTerm(value);
+                          // Clear conversation history only if search is cleared
+                          if (!value.trim()) {
+                            setConversationHistory([]);
+                            setSearchIntent(null);
+                            setSeasonalContext(null);
+                            setSearchTier(null);
+                            setChatResponse('');
+                            setFilteredDestinations([]);
+                            setSubmittedQuery('');
                           }
-                        });
-                      }}
-                      availableCities={cities}
-                      availableCategories={categories}
-                    />
+                        }}
+                        onSubmit={(query) => {
+                          // CHAT MODE: Explicit submit on Enter key (like chat component)
+                          if (query.trim() && !searching) {
+                            performAISearch(query);
+                          }
+                        }}
+                        userName={(function () {
+                          const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                          if (!raw) return undefined;
+                          return raw
+                            .split(/[\s._-]+/)
+                            .filter(Boolean)
+                            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                            .join(' ');
+                        })()}
+                        isAIEnabled={isAIEnabled}
+                        isSearching={searching}
+                        filters={advancedFilters}
+                        onFiltersChange={(newFilters) => {
+                          setAdvancedFilters(newFilters);
+                          // Sync with legacy state for backward compatibility
+                          if (newFilters.city !== undefined) {
+                            setSelectedCity(newFilters.city || '');
+                          }
+                          if (newFilters.category !== undefined) {
+                            setSelectedCategory(newFilters.category || '');
+                          }
+                          // Track filter changes
+                          Object.entries(newFilters).forEach(([key, value]) => {
+                            if (value !== undefined && value !== null && value !== '') {
+                              trackFilterChange({ filterType: key, value });
+                            }
+                          });
+                        }}
+                        availableCities={cities}
+                        availableCategories={categories}
+                      />
+
+                      {/* Conversation Starters - Show below search input */}
+                      {!searchTerm && (
+                        <div className="mt-8">
+                          <ConversationStarters
+                            onStarterClick={(query) => {
+                              setSearchTerm(query);
+                              performAISearch(query);
+                            }}
+                            city={selectedCity}
+                            category={selectedCategory}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Chat-like display when search is active */}
@@ -836,6 +941,22 @@ export default function Home() {
                           })()}
                         </h2>
                       </div>
+
+                      {/* Intent Confirmation Chips */}
+                      {searchIntent && !searching && (
+                        <div className="mb-6">
+                          <IntentConfirmationChips
+                            intent={searchIntent}
+                            onChipRemove={(chipType, value) => {
+                              // Modify the search based on what was removed
+                              setSearchTerm('');
+                              setSubmittedQuery('');
+                              setSearchIntent(null);
+                            }}
+                            editable={true}
+                          />
+                        </div>
+                      )}
 
                       {/* Scrollable chat history - Fixed height for about 2 message pairs */}
                       <div

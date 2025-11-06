@@ -5,6 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
+import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
+import { SmartEmptyState } from '@/components/SmartEmptyState';
+import { ContextualLoadingState } from '@/components/ContextualLoadingState';
+import { type ExtractedIntent } from '@/app/api/intent/schema';
 
 interface Destination {
   id: number;
@@ -25,6 +29,8 @@ interface SearchState {
   filteredResults: Destination[];
   conversationHistory: Message[];
   suggestions: Array<{ label: string; refinement: string }>;
+  intent?: ExtractedIntent;
+  isLoading?: boolean;
 }
 
 function SearchPageContent() {
@@ -66,17 +72,27 @@ function SearchPageContent() {
   }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
 
   async function performInitialSearch(searchQuery: string) {
-    const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
-    const data = await res.json();
-    const results: Destination[] = data.results || [];
-    setSearchState({
-      originalQuery: searchQuery,
-      refinements: [],
-      allResults: results,
-      filteredResults: results,
-      conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
-      suggestions: data.suggestions || [],
-    });
+    setSearchState(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      const results: Destination[] = data.results || [];
+
+      setSearchState({
+        originalQuery: searchQuery,
+        refinements: [],
+        allResults: results,
+        filteredResults: results,
+        conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
+        suggestions: data.suggestions || [],
+        intent: data.intent,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchState(prev => ({ ...prev, isLoading: false }));
+    }
   }
 
   async function handleRefinement(refinement: string) {
@@ -162,6 +178,25 @@ function SearchPageContent() {
     }));
   }
 
+  function handleIntentChipRemove(chipType: string, value: string) {
+    // When user removes an intent chip, perform a new search without that constraint
+    let newQuery = searchState.originalQuery;
+
+    if (chipType === 'city') {
+      newQuery = newQuery.replace(new RegExp(value, 'gi'), '').trim();
+    } else if (chipType === 'category') {
+      newQuery = newQuery.replace(new RegExp(value, 'gi'), '').trim();
+    }
+
+    if (newQuery && newQuery !== searchState.originalQuery) {
+      performInitialSearch(newQuery);
+    }
+  }
+
+  function handleAlternativeClick(alternative: string) {
+    performInitialSearch(alternative);
+  }
+
   return (
     <div className="px-6 md:px-10 py-10">
       <p className="text-xs tracking-widest text-neutral-400 mb-8">
@@ -176,31 +211,61 @@ function SearchPageContent() {
         onFollowUp={handleFollowUp}
       />
 
-      <div className="mb-4 text-sm text-neutral-500">
-        Showing {searchState.filteredResults.length}
-        {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
-          <span> of {searchState.allResults.length}</span>
-        )}
-        {searchState.refinements.length > 0 && (
-          <span> (filtered by: {searchState.refinements.join(', ')})</span>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-        {searchState.filteredResults.map((d, idx) => (
-          <LovablyDestinationCard
-            key={d.id}
-            destination={d as any}
-            borderColor={LOVABLY_BORDER_COLORS[idx % LOVABLY_BORDER_COLORS.length]}
-            onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+      {/* Intent Confirmation Chips */}
+      {searchState.intent && !searchState.isLoading && (
+        <div className="mb-6">
+          <IntentConfirmationChips
+            intent={searchState.intent}
+            onChipRemove={handleIntentChipRemove}
+            editable={true}
           />
-        ))}
-      </div>
+        </div>
+      )}
 
-      {searchState.refinements.length > 0 && (
-        <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
-          Clear all filters
-        </button>
+      {/* Loading State */}
+      {searchState.isLoading && (
+        <ContextualLoadingState intent={searchState.intent} query={searchState.originalQuery} />
+      )}
+
+      {/* Empty State */}
+      {!searchState.isLoading && searchState.filteredResults.length === 0 && searchState.originalQuery && (
+        <SmartEmptyState
+          query={searchState.originalQuery}
+          intent={searchState.intent}
+          onAlternativeClick={handleAlternativeClick}
+        />
+      )}
+
+      {/* Results */}
+      {!searchState.isLoading && searchState.filteredResults.length > 0 && (
+        <>
+          <div className="mb-4 text-sm text-neutral-500">
+            Showing {searchState.filteredResults.length}
+            {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
+              <span> of {searchState.allResults.length}</span>
+            )}
+            {searchState.refinements.length > 0 && (
+              <span> (filtered by: {searchState.refinements.join(', ')})</span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
+            {searchState.filteredResults.map((d, idx) => (
+              <LovablyDestinationCard
+                key={d.id}
+                destination={d as any}
+                borderColor={LOVABLY_BORDER_COLORS[idx % LOVABLY_BORDER_COLORS.length]}
+                onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+              />
+            ))}
+          </div>
+
+          {searchState.refinements.length > 0 && (
+            <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
+              Clear all filters
+            </button>
+          )}
+        </>
       )}
     </div>
   );
