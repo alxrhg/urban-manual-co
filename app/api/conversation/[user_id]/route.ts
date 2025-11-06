@@ -37,10 +37,10 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 
 // Timeout helper for AI calls
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T | typeof fallback> {
   return Promise.race([
     promise,
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+    new Promise<T | typeof fallback>((resolve) => setTimeout(() => resolve(fallback), ms))
   ]);
 }
 
@@ -184,7 +184,7 @@ export async function POST(
           }),
           5000, // 5 second timeout
           null
-        );
+        ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
         assistantResponse = response?.choices?.[0]?.message?.content || '';
         if (assistantResponse) {

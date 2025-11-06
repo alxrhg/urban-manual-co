@@ -26,10 +26,10 @@ const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
 const pendingRequests = new Map<string, Promise<any>>();
 
 // Timeout helper
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T | typeof fallback> {
   return Promise.race([
     promise,
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+    new Promise<T | typeof fallback>((resolve) => setTimeout(() => resolve(fallback), ms))
   ]);
 }
 
@@ -237,7 +237,7 @@ Return only the JSON, no other text.`;
       }),
       4000, // 4 second timeout for intent parsing
       null
-    );
+    ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
     if (!response) {
       console.warn('[AI Chat] Intent parsing timed out, using fallback');
@@ -452,7 +452,7 @@ Generate a natural, helpful response that incorporates relevant context (weather
         }),
         5000, // 5 second timeout for response generation
         null
-      );
+      ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
       const aiResponse = response?.choices?.[0]?.message?.content || '';
       if (aiResponse) {
