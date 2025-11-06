@@ -244,6 +244,25 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
 
+  // AI-powered chat using the chat API endpoint - only website content
+  const [chatResponse, setChatResponse] = useState<string>('');
+  const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
+  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
+  const [seasonalContext, setSeasonalContext] = useState<any>(null);
+
+  // Track submitted query for chat display
+  const [submittedQuery, setSubmittedQuery] = useState<string>('');
+  const [followUpInput, setFollowUpInput] = useState<string>('');
+
+  // Track visual chat messages for display
+  const [chatMessages, setChatMessages] = useState<Array<{
+    type: 'user' | 'assistant';
+    content: string;
+    contextPrompt?: string;
+  }>>([]);
+
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // Don't fetch all destinations on page load - only fetch when needed for filtering
     // This dramatically improves initial page load speed
@@ -368,25 +387,6 @@ export default function Home() {
       console.error('Error fetching visited places:', error);
     }
   };
-
-  // AI-powered chat using the chat API endpoint - only website content
-  const [chatResponse, setChatResponse] = useState<string>('');
-  const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
-  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
-  const [seasonalContext, setSeasonalContext] = useState<any>(null);
-
-  // Track submitted query for chat display
-  const [submittedQuery, setSubmittedQuery] = useState<string>('');
-  const [followUpInput, setFollowUpInput] = useState<string>('');
-
-  // Track visual chat messages for display
-  const [chatMessages, setChatMessages] = useState<Array<{
-    type: 'user' | 'assistant';
-    content: string;
-    contextPrompt?: string;
-  }>>([]);
-
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
