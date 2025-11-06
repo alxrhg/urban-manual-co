@@ -1,13 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { logger, logSecurityEvent, logError, startTimer } from '@/lib/logger';
 
 export async function GET(
   _req: NextRequest,
   context: { params: Promise<{ user_id: string }> }
 ) {
+  const timer = startTimer();
+
   try {
     const { user_id } = await context.params;
     const supabase = await createServerClient();
+
+    // ✅ SECURITY FIX: Verify authorization - users can only access their own personalization data
+    const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !currentUser) {
+      logSecurityEvent('personalization_unauthorized', {
+        resource: user_id,
+        success: false,
+        reason: 'Not authenticated',
+      });
+      return NextResponse.json(
+        { error: 'Unauthorized - authentication required' },
+        { status: 401 }
+      );
+    }
+
+    if (currentUser.id !== user_id) {
+      logSecurityEvent('personalization_forbidden', {
+        userId: currentUser.id,
+        resource: user_id,
+        success: false,
+        reason: 'Attempting to access another user\'s data',
+      });
+      return NextResponse.json(
+        { error: 'Forbidden - cannot access another user\'s personalization data' },
+        { status: 403 }
+      );
+    }
+
+    logger.debug({ userId: user_id }, 'Fetching personalization data');
 
     // Check cache first
     const { data: cached } = await supabase
@@ -19,6 +52,13 @@ export async function GET(
       .maybeSingle();
 
     if (cached?.cache && cached.cache.destinations) {
+      const duration = timer.done('Personalization from cache');
+      logger.info({
+        userId: user_id,
+        source: 'cache',
+        count: cached.cache.destinations.length,
+        duration,
+      }, 'Personalization served from cache');
       return NextResponse.json({
         results: cached.cache.destinations,
         source: 'cache',
@@ -99,14 +139,29 @@ export async function GET(
         onConflict: 'user_id,cache_key',
       });
 
+    const duration = timer.done('Personalization computed');
+    logger.info({
+      userId: user_id,
+      source: 'personalized',
+      count: uniqueDestinations.length,
+      duration,
+    }, 'Personalization computed successfully');
+
     return NextResponse.json({
       results: uniqueDestinations,
       source: 'personalized',
     });
   } catch (e: any) {
-    console.error('Personalization error:', e);
+    logError(e, {
+      operation: 'personalization',
+      userId: e.userId,
+    });
     return NextResponse.json(
-      { error: 'Failed to load personalization', details: e.message },
+      {
+        error: 'Failed to load personalization',
+        // Only expose error details in development
+        ...(process.env.NODE_ENV === 'development' && { details: e.message })
+      },
       { status: 500 }
     );
   }

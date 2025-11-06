@@ -66,12 +66,27 @@ export async function PUT(request: NextRequest) {
       is_public,
     } = body;
 
-    // Validate username if provided (alphanumeric, underscore, hyphen only)
-    if (username && !/^[a-zA-Z0-9_-]+$/.test(username)) {
-      return NextResponse.json(
-        { error: 'Username can only contain letters, numbers, underscores, and hyphens' },
-        { status: 400 }
-      );
+    // ✅ SECURITY FIX: Enhanced username validation with length limits
+    if (username) {
+      if (username.length < 3 || username.length > 30) {
+        return NextResponse.json(
+          { error: 'Username must be between 3 and 30 characters' },
+          { status: 400 }
+        );
+      }
+      if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        return NextResponse.json(
+          { error: 'Username can only contain letters, numbers, underscores, and hyphens' },
+          { status: 400 }
+        );
+      }
+      // Prevent username starting/ending with special characters
+      if (/^[-_]|[-_]$/.test(username)) {
+        return NextResponse.json(
+          { error: 'Username cannot start or end with - or _' },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate birthday format if provided (YYYY-MM-DD)

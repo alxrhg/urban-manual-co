@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { embedText } from '@/lib/llm';
-import {
-  searchRatelimit,
-  memorySearchRatelimit,
-  getIdentifier,
-  createRateLimitResponse,
-  isUpstashConfigured,
-} from '@/lib/rate-limit';
+import { applyRateLimit, getRateLimitHeaders, getRateLimitIdentifier, RATE_LIMITS } from '@/lib/rateLimit';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -113,21 +107,6 @@ export async function POST(request: NextRequest) {
     // Try to get userId from cookies/auth if not provided
     let authenticatedUserId = userId;
 
-    // Rate limiting: 20 requests per 10 seconds for search
-    const identifier = getIdentifier(request, authenticatedUserId);
-    const ratelimit = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
-    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
-
-    if (!success) {
-      return createRateLimitResponse(
-        'Too many search requests. Please wait a moment.',
-        limit,
-        remaining,
-        reset
-      );
-    }
-    let conversationContext: any = null;
-
     if (!authenticatedUserId) {
       try {
         const { createServerClient } = await import('@/lib/supabase-server');
@@ -137,6 +116,26 @@ export async function POST(request: NextRequest) {
       } catch {
         // Silently fail - userId is optional
       }
+    }
+
+    // ✅ SECURITY FIX: Apply rate limiting (search with embeddings is expensive)
+    const identifier = getRateLimitIdentifier(request, authenticatedUserId);
+    const { success, ...rateLimit } = await applyRateLimit(identifier, RATE_LIMITS.SEARCH);
+
+    let conversationContext: any = null;
+
+    if (!success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Please try again later.',
+          limit: rateLimit.limit,
+          reset: new Date(rateLimit.reset).toISOString(),
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit),
+        }
+      );
     }
 
     // Get conversation context if available
