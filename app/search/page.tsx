@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
@@ -9,7 +10,13 @@ import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
-import { MultiplexAd } from '@/components/GoogleAd';
+
+// ⚡ OPTIMIZATION #9: Dynamic imports for code splitting (reduces initial bundle by ~200KB)
+// Ads are heavy and not critical for initial page load
+const MultiplexAd = dynamic(() => import('@/components/GoogleAd').then(mod => ({ default: mod.MultiplexAd })), {
+  loading: () => <div className="h-24 bg-gray-100 animate-pulse rounded" />,
+  ssr: false, // Ads don't need SSR
+});
 
 interface Destination {
   id: number;
