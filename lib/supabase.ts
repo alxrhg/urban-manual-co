@@ -5,12 +5,14 @@ function getRequiredEnv(key: string, defaultValue?: string): string {
   const value = process.env[key];
 
   if (!value) {
-    // In production, throw error for missing required env vars
-    if (process.env.NODE_ENV === 'production') {
+    // In production, only throw on server-side if env vars are missing
+    // Client-side should use the inlined values from build time
+    const isServer = typeof window === 'undefined';
+    if (process.env.NODE_ENV === 'production' && isServer) {
       throw new Error(`Missing required environment variable: ${key}. Application cannot start without proper configuration.`);
     }
 
-    // In development, warn and use default
+    // In development or client-side, warn and use default
     if (typeof window !== 'undefined') {
       console.warn(`⚠️  Missing ${key}, using ${defaultValue ? 'placeholder' : 'undefined'}`);
     }
