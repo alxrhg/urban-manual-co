@@ -156,6 +156,53 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
+function getContextAwareLoadingMessage(searchTerm: string): string {
+  const query = searchTerm.toLowerCase();
+
+  // Restaurant/Dining related
+  if (query.match(/restaurant|dining|food|eat/)) {
+    return "French or Japanese? Date night or casual?";
+  }
+
+  // Coffee/Cafe related
+  if (query.match(/coffee|cafe|caf[eé]/)) {
+    return "Cozy hideaway or trendy spot?";
+  }
+
+  // Bar/Nightlife related
+  if (query.match(/bar|cocktail|drink|nightlife|pub/)) {
+    return "Cocktails or craft beer? Upbeat or intimate?";
+  }
+
+  // Hotel/Accommodation related
+  if (query.match(/hotel|stay|accommodation|lodging/)) {
+    return "Luxury or boutique? Business or leisure?";
+  }
+
+  // Shopping related
+  if (query.match(/shop|shopping|boutique|store/)) {
+    return "Designer or vintage? Mall or local markets?";
+  }
+
+  // Activities/Entertainment related
+  if (query.match(/museum|gallery|art|culture|theater|theatre/)) {
+    return "Classic or contemporary? Guided or self-paced?";
+  }
+
+  // Parks/Outdoor related
+  if (query.match(/park|outdoor|beach|hiking|nature/)) {
+    return "Active adventure or peaceful retreat?";
+  }
+
+  // Spa/Wellness related
+  if (query.match(/spa|wellness|massage|relax/)) {
+    return "Full day retreat or quick escape?";
+  }
+
+  // Generic/Default
+  return "Indoor or outdoor? Budget-friendly or splurge-worthy?";
+}
+
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
@@ -729,17 +776,25 @@ export default function Home() {
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <div className="flex items-center gap-2">
                         <span className="animate-pulse">✨</span>
-                        <span>Discovering hidden gems...</span>
+                        <span>Finding the perfect spots...</span>
                       </div>
                     </div>
                   )}
 
                   {/* AI conversational response */}
                   {searchTerm && !searching && chatResponse && (
-                    <MarkdownRenderer
-                      content={chatResponse}
-                      className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                    />
+                    <>
+                      <MarkdownRenderer
+                        content={chatResponse}
+                        className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                      />
+                      {/* Context-aware follow-up questions */}
+                      {filteredDestinations.length > 0 && (
+                        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                          {getContextAwareLoadingMessage(searchTerm)}
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* No results message */}
