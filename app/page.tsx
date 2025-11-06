@@ -729,7 +729,7 @@ export default function Home() {
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <div className="flex items-center gap-2">
                         <span className="animate-pulse">✨</span>
-                        <span>Analyzing your query with travel intelligence...</span>
+                        <span>Discovering hidden gems...</span>
                       </div>
                     </div>
                   )}
