@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
           .order('trending_score', { ascending: false })
           .limit(20);
 
+        // Don't cache personalized recommendations
         return NextResponse.json({
           recommendations: destinations || [],
           context
@@ -73,10 +74,17 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       recommendations: recommendations || [],
       context
     });
+
+    // Add cache headers for context-based recommendations (not personalized)
+    if (context !== 'personalized') {
+      response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    }
+
+    return response;
   } catch (error: any) {
     console.error('Smart recommendations error:', error);
     return NextResponse.json(

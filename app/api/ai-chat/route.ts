@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
-import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
-import { forecastingService } from '@/services/intelligence/forecasting';
-import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { searchAsimov, mapAsimovResultsToDestinations } from '@/lib/search/asimov';
 
@@ -12,6 +9,46 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABA
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Simple in-memory cache for search results
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+
+const searchCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
+
+function getCacheKey(query: string, intent: any): string {
+  return `${query.toLowerCase()}_${intent.city || ''}_${intent.category || ''}`;
+}
+
+function getFromCache(key: string): any | null {
+  const entry = searchCache.get(key);
+  if (!entry) return null;
+
+  // Check if cache entry is still valid
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    searchCache.delete(key);
+    return null;
+  }
+
+  return entry.data;
+}
+
+function setInCache(key: string, data: any): void {
+  // Implement simple LRU by removing oldest entry if cache is full
+  if (searchCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = searchCache.keys().next().value;
+    if (firstKey) searchCache.delete(firstKey);
+  }
+
+  searchCache.set(key, {
+    data,
+    timestamp: Date.now(),
+  });
+}
 
 // Category synonym mapping
 const CATEGORY_SYNONYMS: Record<string, string> = {
@@ -388,16 +425,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Use enhanced intent analysis for deeper understanding
-    const enhancedIntent = await intentAnalysisService.analyzeIntent(
-      query,
-      conversationHistory,
-      userId
-    );
-
-    // Also get basic intent for backward compatibility
+    // Get intent for search - using basic intent analysis for better performance
     const intent = await understandQuery(query, conversationHistory, userId);
-    
+
     // Normalize category using synonyms
     if (intent.category) {
       const normalized = CATEGORY_SYNONYMS[intent.category.toLowerCase()];
@@ -405,8 +435,18 @@ export async function POST(request: NextRequest) {
         intent.category = normalized;
       }
     }
-    
+
     console.log('[AI Chat] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
+
+    // Check cache for non-personalized searches
+    if (!userId) {
+      const cacheKey = getCacheKey(query, intent);
+      const cachedResult = getFromCache(cacheKey);
+      if (cachedResult) {
+        console.log('[AI Chat] Returning cached results for:', query);
+        return NextResponse.json(cachedResult);
+      }
+    }
 
     // Generate embedding for vector search
     const queryEmbedding = await generateEmbedding(query);
@@ -419,7 +459,7 @@ export async function POST(request: NextRequest) {
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
           query_embedding: queryEmbedding,
           match_threshold: 0.6, // Lower threshold for more results
-          match_count: 1000, // Increased from 100 to 1000 per request
+          match_count: 100, // Optimized for performance
           filter_city: intent.city || null,
           filter_category: intent.category || null,
           filter_michelin_stars: intent.filters?.michelinStar || null,
@@ -455,11 +495,11 @@ export async function POST(request: NextRequest) {
         });
 
         if (asimovResults && asimovResults.length > 0) {
-          // Get all destinations from DB to match against Asimov results
+          // Get destinations from DB to match against Asimov results
           const { data: allDestinations } = await supabase
             .from('destinations')
             .select('*')
-            .limit(1000);
+            .limit(100);
 
           const mapped = mapAsimovResultsToDestinations(asimovResults, allDestinations || []);
           
@@ -480,7 +520,7 @@ export async function POST(request: NextRequest) {
         let fallbackQuery = supabase
           .from('destinations')
           .select('*')
-          .limit(1000); // Increased from 100 to 1000
+          .limit(100); // Optimized for performance
 
         // Apply filters
         if (intent.city) {
@@ -541,37 +581,47 @@ export async function POST(request: NextRequest) {
     }
 
                 // Enrich results with additional data (photos, weather, routes, events) BEFORE reranking
-                // Reduced from 100 to 10 for better performance - only enrich top results
-                const enrichedResults = await Promise.all(
-                  results.slice(0, 10).map(async (dest: any) => {
-                    try {
-                      // Fetch enriched data from database
-                      const { data: enriched } = await supabase
-                        .from('destinations')
-                        .select('photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url, currency_code, exchange_rate_to_usd')
-                        .eq('slug', dest.slug)
-                        .single();
+                // Batch fetch enrichment data in a single query for better performance
+                const topResults = results.slice(0, 10);
+                const slugsToEnrich = topResults.map((dest: any) => dest.slug);
 
-                      if (enriched) {
-                        return {
-                          ...dest,
-                          photos: enriched.photos_json ? JSON.parse(enriched.photos_json) : null,
-                          currentWeather: enriched.current_weather_json ? JSON.parse(enriched.current_weather_json) : null,
-                          weatherForecast: enriched.weather_forecast_json ? JSON.parse(enriched.weather_forecast_json) : null,
-                          nearbyEvents: enriched.nearby_events_json ? JSON.parse(enriched.nearby_events_json) : null,
-                          routeFromCityCenter: enriched.route_from_city_center_json ? JSON.parse(enriched.route_from_city_center_json) : null,
-                          walkingTimeFromCenter: enriched.walking_time_from_center_minutes,
-                          staticMapUrl: enriched.static_map_url,
-                          currencyCode: enriched.currency_code,
-                          exchangeRateToUSD: enriched.exchange_rate_to_usd,
-                        };
-                      }
-                    } catch (error) {
-                      // Silently fail - enrichment is optional
+                let enrichmentDataMap = new Map();
+                if (slugsToEnrich.length > 0) {
+                  try {
+                    const { data: enrichmentData } = await supabase
+                      .from('destinations')
+                      .select('slug, photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url, currency_code, exchange_rate_to_usd')
+                      .in('slug', slugsToEnrich);
+
+                    if (enrichmentData) {
+                      enrichmentData.forEach((item: any) => {
+                        enrichmentDataMap.set(item.slug, item);
+                      });
                     }
-                    return dest;
-                  })
-                );
+                  } catch (error) {
+                    // Silently fail - enrichment is optional
+                    console.debug('Enrichment batch fetch failed:', error);
+                  }
+                }
+
+                const enrichedResults = topResults.map((dest: any) => {
+                  const enriched = enrichmentDataMap.get(dest.slug);
+                  if (enriched) {
+                    return {
+                      ...dest,
+                      photos: enriched.photos_json ? JSON.parse(enriched.photos_json) : null,
+                      currentWeather: enriched.current_weather_json ? JSON.parse(enriched.current_weather_json) : null,
+                      weatherForecast: enriched.weather_forecast_json ? JSON.parse(enriched.weather_forecast_json) : null,
+                      nearbyEvents: enriched.nearby_events_json ? JSON.parse(enriched.nearby_events_json) : null,
+                      routeFromCityCenter: enriched.route_from_city_center_json ? JSON.parse(enriched.route_from_city_center_json) : null,
+                      walkingTimeFromCenter: enriched.walking_time_from_center_minutes,
+                      staticMapUrl: enriched.static_map_url,
+                      currencyCode: enriched.currency_code,
+                      exchangeRateToUSD: enriched.exchange_rate_to_usd,
+                    };
+                  }
+                  return dest;
+                });
 
                 // Apply enhanced re-ranking to results with enriched context
                 const topResultForContext = enrichedResults[0];
@@ -585,9 +635,6 @@ export async function POST(request: NextRequest) {
                   queryIntent: {
                     city: intent.city,
                     category: intent.category,
-                    meal: (enhancedIntent as any)?.meal,
-                    cuisine: (enhancedIntent as any)?.cuisine,
-                    mood: (enhancedIntent as any)?.mood,
                     price_level: intent.filters?.priceLevel,
                     // Infer weather preference from query
                     weather_preference: query.toLowerCase().includes('outdoor') ? 'outdoor' :
@@ -609,7 +656,7 @@ export async function POST(request: NextRequest) {
                   limitedResults,
                   query,
                   intent,
-                  enhancedIntent,
+                  intent, // Pass intent twice for backward compatibility
                   userId
                 );
 
@@ -619,23 +666,24 @@ export async function POST(request: NextRequest) {
                   enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
                 }
 
-    // Get intelligence insights if city detected
+    // Get intelligence insights only if city detected and we have results (optional feature for performance)
+    // Disabled for better performance - can be re-enabled if needed
     let intelligenceInsights = null;
-    if (intent.city) {
-      try {
-        const [forecast, opportunities] = await Promise.all([
-          forecastingService.forecastDemand(intent.city, undefined, 30),
-          opportunityDetectionService.detectOpportunities(userId, intent.city, 3),
-        ]);
+    // if (intent.city && limitedResults.length > 0) {
+    //   try {
+    //     const [forecast, opportunities] = await Promise.all([
+    //       forecastingService.forecastDemand(intent.city, undefined, 30),
+    //       opportunityDetectionService.detectOpportunities(userId, intent.city, 3),
+    //     ]);
 
-        intelligenceInsights = {
-          forecast,
-          opportunities: opportunities.slice(0, 3),
-        };
-      } catch (error) {
-        // Silently fail - insights are optional
-      }
-    }
+    //     intelligenceInsights = {
+    //       forecast,
+    //       opportunities: opportunities.slice(0, 3),
+    //     };
+    //   } catch (error) {
+    //     // Silently fail - insights are optional
+    //   }
+    // }
 
                 // Log search/chat interaction (best-effort)
                 try {
@@ -662,7 +710,7 @@ export async function POST(request: NextRequest) {
                   totalEvents: limitedResults.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
                 };
 
-                return NextResponse.json({
+                const responseData = {
                   content: enhancedContent,
                   destinations: limitedResults,
                   intent: {
@@ -670,10 +718,17 @@ export async function POST(request: NextRequest) {
                     resultCount: limitedResults.length,
                     hasResults: limitedResults.length > 0
                   },
-                  enhancedIntent, // Include full enhanced intent
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
-                });
+                };
+
+                // Cache non-personalized results
+                if (!userId) {
+                  const cacheKey = getCacheKey(query, intent);
+                  setInCache(cacheKey, responseData);
+                }
+
+                return NextResponse.json(responseData);
 
   } catch (error: any) {
     console.error('AI Chat API error:', error);
