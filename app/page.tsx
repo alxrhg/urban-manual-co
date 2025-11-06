@@ -35,6 +35,7 @@ import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
+import { TripAwareBanner } from '@/components/TripAwareBanner';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -865,6 +866,11 @@ export default function Home() {
               {/* Content Section - Grid directly below hero */}
               <div className="px-6 md:px-10 pb-20">
                 <div className="max-w-[1800px] mx-auto">
+                  {/* Trip Aware Banner - Only show for logged in users when no active search */}
+                  {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
+                    <TripAwareBanner />
+                  )}
+
                   {/* Filter - Top right of grid section */}
                   <div className="flex justify-end mb-6 relative">
                     <SearchFiltersComponent
