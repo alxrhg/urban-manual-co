@@ -205,7 +205,6 @@ export function Header() {
         <>
           <div
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
-            className="fixed inset-0 bg-black/30 z-40"
             onClick={() => setIsMenuOpen(false)}
             aria-hidden="true"
           />
