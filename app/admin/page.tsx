@@ -9,6 +9,9 @@ import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { formatDistanceToNow } from 'date-fns';
+import { CohortAnalysis } from '@/components/analytics/CohortAnalysis';
+import { RetentionMetrics } from '@/components/analytics/RetentionMetrics';
+import { EngagementFunnel } from '@/components/analytics/EngagementFunnel';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -604,6 +607,7 @@ export default function AdminPage() {
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'logs'>('destinations');
+  const [analyticsSubTab, setAnalyticsSubTab] = useState<'overview' | 'retention' | 'cohorts' | 'funnel'>('overview');
 
   // Analytics state
   const [analyticsStats, setAnalyticsStats] = useState({
@@ -1180,48 +1184,94 @@ export default function AdminPage() {
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
-          <div className="fade-in space-y-12">
-            {loadingAnalytics ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : (
-              <>
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Views</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Searches</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Saves</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Users</div>
-                  </div>
-                </div>
+          <div className="fade-in space-y-6">
+            {/* Sub-tab Navigation */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-2">
+              {['overview', 'retention', 'cohorts', 'funnel'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setAnalyticsSubTab(tab as any)}
+                  className={`transition-all ${
+                    analyticsSubTab === tab
+                      ? "font-medium text-black dark:text-white"
+                      : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                  }`}
+                >
+                  {tab === 'overview' ? 'Overview' :
+                   tab === 'retention' ? 'Retention' :
+                   tab === 'cohorts' ? 'Cohort Analysis' :
+                   'Engagement Funnel'}
+                </button>
+              ))}
+            </div>
 
-                {/* Top Searches */}
-                {analyticsStats.topSearches.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
-                    <div className="space-y-2">
-                      {analyticsStats.topSearches.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                          <span className="text-sm font-medium">{item.query}</span>
-                          <span className="text-xs text-gray-500">{item.count} searches</span>
-                        </div>
-                      ))}
-                    </div>
+            {/* Overview Sub-tab */}
+            {analyticsSubTab === 'overview' && (
+              <div className="space-y-8">
+                {loadingAnalytics ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
                   </div>
+                ) : (
+                  <>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                        <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Total Views</div>
+                      </div>
+                      <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                        <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Total Searches</div>
+                      </div>
+                      <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                        <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Total Saves</div>
+                      </div>
+                      <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                        <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Total Users</div>
+                      </div>
+                    </div>
+
+                    {/* Top Searches */}
+                    {analyticsStats.topSearches.length > 0 && (
+                      <div>
+                        <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
+                        <div className="space-y-2">
+                          {analyticsStats.topSearches.map((item, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                              <span className="text-sm font-medium">{item.query}</span>
+                              <span className="text-xs text-gray-500">{item.count} searches</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
+              </div>
+            )}
+
+            {/* Retention Sub-tab */}
+            {analyticsSubTab === 'retention' && (
+              <div>
+                <RetentionMetrics />
+              </div>
+            )}
+
+            {/* Cohorts Sub-tab */}
+            {analyticsSubTab === 'cohorts' && (
+              <div>
+                <CohortAnalysis />
+              </div>
+            )}
+
+            {/* Funnel Sub-tab */}
+            {analyticsSubTab === 'funnel' && (
+              <div>
+                <EngagementFunnel />
+              </div>
             )}
           </div>
         )}
