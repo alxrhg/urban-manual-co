@@ -1,0 +1,98 @@
+[
+  {
+    "name": "The Ritz Paris",
+    "city": "Paris",
+    "country": "France",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/hotel/the-ritz-paris"
+  },
+  {
+    "name": "Four Seasons Hotel George V",
+    "city": "Paris",
+    "country": "France",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/hotel/four-seasons-hotel-george-v"
+  },
+  {
+    "name": "Le Bristol Paris",
+    "city": "Paris",
+    "country": "France",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/hotel/le-bristol-paris"
+  },
+  {
+    "name": "Hotel Plaza Athénée",
+    "city": "Paris",
+    "country": "France",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/hotel/hotel-plaza-athenee"
+  },
+  {
+    "name": "Aman Tokyo",
+    "city": "Tokyo",
+    "country": "Japan",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/tokyo/hotel/aman-tokyo"
+  },
+  {
+    "name": "The Peninsula Tokyo",
+    "city": "Tokyo",
+    "country": "Japan",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/tokyo/hotel/the-peninsula-tokyo"
+  },
+  {
+    "name": "Mandarin Oriental Tokyo",
+    "city": "Tokyo",
+    "country": "Japan",
+    "keys": 2,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/tokyo/hotel/mandarin-oriental-tokyo"
+  },
+  {
+    "name": "The Carlyle",
+    "city": "New York",
+    "country": "USA",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/new-york-state/new-york/hotel/the-carlyle"
+  },
+  {
+    "name": "The Mark Hotel",
+    "city": "New York",
+    "country": "USA",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/new-york-state/new-york/hotel/the-mark-hotel"
+  },
+  {
+    "name": "Claridge's",
+    "city": "London",
+    "country": "UK",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/england/london/hotel/claridges"
+  },
+  {
+    "name": "The Connaught",
+    "city": "London",
+    "country": "UK",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/england/london/hotel/the-connaught"
+  },
+  {
+    "name": "The Savoy",
+    "city": "London",
+    "country": "UK",
+    "keys": 3,
+    "category": "Hotels",
+    "michelin_guide_url": "https://guide.michelin.com/en/england/london/hotel/the-savoy"
+  }
+]

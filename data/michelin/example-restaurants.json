@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Alain Ducasse au Plaza Athénée",
+    "city": "Paris",
+    "country": "France",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/alain-ducasse-au-plaza-athenee"
+  },
+  {
+    "name": "L'Arpège",
+    "city": "Paris",
+    "country": "France",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/l-arpege"
+  },
+  {
+    "name": "Le Cinq",
+    "city": "Paris",
+    "country": "France",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/le-cinq"
+  },
+  {
+    "name": "Sukiyabashi Jiro",
+    "city": "Tokyo",
+    "country": "Japan",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/tokyo/restaurant/sukiyabashi-jiro"
+  },
+  {
+    "name": "Narisawa",
+    "city": "Tokyo",
+    "country": "Japan",
+    "stars": 2,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/tokyo/restaurant/narisawa"
+  },
+  {
+    "name": "The French Laundry",
+    "city": "Yountville",
+    "country": "USA",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/california/yountville/restaurant/the-french-laundry"
+  },
+  {
+    "name": "Eleven Madison Park",
+    "city": "New York",
+    "country": "USA",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/new-york-state/new-york/restaurant/eleven-madison-park"
+  },
+  {
+    "name": "Geranium",
+    "city": "Copenhagen",
+    "country": "Denmark",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/denmark/copenhagen/restaurant/geranium"
+  },
+  {
+    "name": "Noma",
+    "city": "Copenhagen",
+    "country": "Denmark",
+    "stars": 2,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/denmark/copenhagen/restaurant/noma"
+  },
+  {
+    "name": "Osteria Francescana",
+    "city": "Modena",
+    "country": "Italy",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/emilia-romagna/modena/restaurant/osteria-francescana"
+  },
+  {
+    "name": "El Celler de Can Roca",
+    "city": "Girona",
+    "country": "Spain",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/catalonia/girona/restaurant/el-celler-de-can-roca"
+  },
+  {
+    "name": "Restaurant de l'Hôtel de Ville",
+    "city": "Crissier",
+    "country": "Switzerland",
+    "stars": 3,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/vaud/crissier/restaurant/restaurant-de-l-hotel-de-ville"
+  }
+]

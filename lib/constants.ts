@@ -155,8 +155,19 @@ export const URLS = {
   GITHUB_ISSUES: 'https://github.com/urbanmanual/issues',
 } as const;
 
-// Michelin stars
+// Michelin stars and keys
 export const MICHELIN = {
+  STARS: {
+    MIN: 0,
+    MAX: 3,
+    ICON_URL: 'https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg',
+  },
+  KEYS: {
+    MIN: 1,
+    MAX: 3,
+    ICON_URL: 'https://guide.michelin.com/assets/images/icons/key-hotel.svg',
+  },
+  // Legacy support
   MIN: 0,
   MAX: 3,
   ICON_URL: 'https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg',

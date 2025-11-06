@@ -9,7 +9,10 @@ export interface Destination {
   content?: string;
   image?: string;
   michelin_stars?: number;
+  michelin_keys?: number; // Michelin Keys for hotels (1-3)
   crown?: boolean;
+  michelin_guide_url?: string | null;
+  michelin_updated_at?: string | null;
   // Enrichment fields
   place_id?: string | null;
   rating?: number | null;

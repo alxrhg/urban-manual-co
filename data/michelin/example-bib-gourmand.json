@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Au Passage",
+    "city": "Paris",
+    "country": "France",
+    "crown": true,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/au-passage"
+  },
+  {
+    "name": "Bistrot Paul Bert",
+    "city": "Paris",
+    "country": "France",
+    "crown": true,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/bistrot-paul-bert"
+  },
+  {
+    "name": "Afuri Ramen",
+    "city": "Tokyo",
+    "country": "Japan",
+    "crown": true,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/tokyo/restaurant/afuri"
+  },
+  {
+    "name": "Tsuta",
+    "city": "Tokyo",
+    "country": "Japan",
+    "crown": true,
+    "stars": 1,
+    "category": "Restaurants",
+    "michelin_guide_url": "https://guide.michelin.com/en/tokyo/restaurant/tsuta"
+  }
+]

@@ -17,7 +17,9 @@
     "enrich:all-places-data": "tsx scripts/enrich-all-places-data.ts",
     "retry:tate-modern": "tsx scripts/retry-tate-modern.ts",
     "enrich:comprehensive": "tsx scripts/enrich-comprehensive.ts",
-    "migrate:026": "tsx scripts/run-migration-026.ts"
+    "migrate:026": "tsx scripts/run-migration-026.ts",
+    "michelin:scrape": "tsx scripts/scrape-michelin-guide.ts",
+    "michelin:import": "tsx scripts/import-michelin-data.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.3",
@@ -48,6 +50,7 @@
     "lucide-react": "^0.548.0",
     "next": "^16.0.1",
     "openai": "^4.104.0",
+    "playwright": "^1.56.1",
     "react": "19.2.0",
     "react-day-picker": "^9.11.1",
     "react-dom": "19.2.0",
