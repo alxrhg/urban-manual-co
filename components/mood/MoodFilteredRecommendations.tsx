@@ -151,7 +151,7 @@ export function MoodFilteredRecommendations({
 
       {/* Recommendations */}
       <div className="grid grid-cols-1 gap-4">
-        {recommendations.map((rec, index) => (
+        {recommendations.map((rec: MoodFilteredRec, index: number) => (
           <MoodRecommendationCard
             key={rec.destination_id}
             recommendation={rec}
