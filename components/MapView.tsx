@@ -10,6 +10,12 @@ interface MapViewProps {
   zoom?: number;
 }
 
+declare global {
+  interface Window {
+    mapkit?: any;
+  }
+}
+
 export default function MapView({
   destinations,
   onMarkerClick,
@@ -17,37 +23,70 @@ export default function MapView({
   zoom = 12,
 }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
+  const mapInstanceRef = useRef<any>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Use only the canonical env var
-  const getApiKey = () => process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
-
-  // Load Google Maps script
+  // Load MapKit script
   useEffect(() => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError('Google Maps API key is not configured. Please add NEXT_PUBLIC_GOOGLE_API_KEY to your environment variables.');
-      console.error('Google Maps API key is not configured');
-      return;
-    }
-
-    // Check if script is already loaded
-    if (window.google && window.google.maps) {
+    // Check if MapKit is already loaded
+    if (window.mapkit && window.mapkit.loaded) {
       setLoaded(true);
       return;
     }
 
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.src = 'https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js';
     script.async = true;
     script.defer = true;
-    script.addEventListener('load', () => setLoaded(true));
-    script.addEventListener('error', () => {
-      setError('Failed to load Google Maps. Please check your API key and network connection.');
+
+    script.addEventListener('load', () => {
+      if (!window.mapkit) {
+        setError('MapKit JS failed to load');
+        return;
+      }
+
+      try {
+        window.mapkit.init({
+          authorizationCallback: (done: (token: string) => void) => {
+            fetch('/api/mapkit-token')
+              .then(res => res.json())
+              .then(data => done(data.token))
+              .catch(err => {
+                console.error('MapKit token fetch error:', err);
+                setError('Map authentication failed');
+              });
+          },
+        });
+
+        // Wait for MapKit to be ready
+        if (window.mapkit.loaded) {
+          setLoaded(true);
+        } else {
+          const checkLoaded = setInterval(() => {
+            if (window.mapkit && window.mapkit.loaded) {
+              clearInterval(checkLoaded);
+              setLoaded(true);
+            }
+          }, 100);
+
+          setTimeout(() => {
+            clearInterval(checkLoaded);
+            if (!window.mapkit?.loaded) {
+              setError('MapKit initialization timeout');
+            }
+          }, 5000);
+        }
+      } catch (err: any) {
+        console.error('MapKit initialization error:', err);
+        setError(`Failed to initialize MapKit: ${err.message}`);
+      }
     });
+
+    script.addEventListener('error', () => {
+      setError('Failed to load MapKit. Please check your network connection.');
+    });
+
     document.head.appendChild(script);
 
     return () => {
@@ -59,84 +98,77 @@ export default function MapView({
 
   // Initialize map
   useEffect(() => {
-    if (!loaded || !mapRef.current || mapInstanceRef.current) return;
+    if (!loaded || !mapRef.current || mapInstanceRef.current || !window.mapkit) return;
 
-    mapInstanceRef.current = new google.maps.Map(mapRef.current, {
-      center,
-      zoom,
-      styles: [
-        {
-          featureType: 'poi',
-          elementType: 'labels',
-          stylers: [{ visibility: 'off' }],
-        },
-      ],
-    });
-  }, [loaded, center, zoom]);
+    try {
+      const region = new window.mapkit.CoordinateRegion(
+        new window.mapkit.Coordinate(center.lat, center.lng),
+        new window.mapkit.CoordinateSpan(0.05, 0.05) // Zoom level equivalent
+      );
+
+      mapInstanceRef.current = new window.mapkit.Map(mapRef.current, {
+        region,
+        showsMapTypeControl: false,
+        showsZoomControl: true,
+        showsUserLocationControl: false,
+      });
+    } catch (err: any) {
+      console.error('Map initialization error:', err);
+      setError(`Failed to initialize map: ${err.message}`);
+    }
+  }, [loaded, center]);
 
   // Update markers when destinations change
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !window.mapkit) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
+    // Clear existing annotations
+    const annotations = mapInstanceRef.current.annotations || [];
+    mapInstanceRef.current.removeAnnotations(annotations);
 
-    // Create new markers
-    const bounds = new google.maps.LatLngBounds();
+    // Create new annotations
+    const newAnnotations: any[] = [];
 
     destinations.forEach(dest => {
-      if (!dest.place_id) return; // Skip destinations without location data
+      // Use coordinates if available
+      if (dest.latitude && dest.longitude) {
+        const coordinate = new window.mapkit.Coordinate(dest.latitude, dest.longitude);
+        const annotation = new window.mapkit.MarkerAnnotation(coordinate, {
+          title: dest.name,
+          subtitle: dest.city,
+          color: dest.crown ? '#FFB86B' : '#007AFF', // Apple blue or crown color
+          glyphText: dest.michelin_stars ? '★' : undefined,
+        });
 
-      // Use Google Places API to get place details including coordinates
-      const service = new google.maps.places.PlacesService(mapInstanceRef.current!);
-
-      service.getDetails(
-        {
-          placeId: dest.place_id,
-          fields: ['geometry', 'name'],
-        },
-        (place, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location) {
-            const marker = new google.maps.Marker({
-              position: place.geometry.location,
-              map: mapInstanceRef.current!,
-              title: dest.name,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: dest.crown ? '#fbbf24' : '#3b82f6',
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWeight: 2,
-              },
-            });
-
-            // Add click listener
-            marker.addListener('click', () => {
-              if (onMarkerClick) {
-                onMarkerClick(dest);
-              }
-            });
-
-            markersRef.current.push(marker);
-            bounds.extend(place.geometry.location);
-
-            // Fit map to show all markers
-            if (markersRef.current.length > 0) {
-              mapInstanceRef.current!.fitBounds(bounds);
-            }
+        // Add click listener
+        annotation.addEventListener('select', () => {
+          if (onMarkerClick) {
+            onMarkerClick(dest);
           }
-        }
-      );
+        });
+
+        newAnnotations.push(annotation);
+      }
     });
+
+    // Add all annotations to map
+    if (newAnnotations.length > 0) {
+      mapInstanceRef.current.addAnnotations(newAnnotations);
+
+      // Fit map to show all annotations
+      try {
+        mapInstanceRef.current.showItems(newAnnotations);
+      } catch (e) {
+        console.error('Error fitting bounds:', e);
+      }
+    }
   }, [destinations, onMarkerClick]);
 
   if (error) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-8">
         <div className="text-center max-w-md">
-          <span className="text-red-600 dark:text-red-400 mb-2 font-medium">Map Loading Failed</span>
+          <span className="text-red-600 dark:text-red-400 mb-2 font-medium">Map unavailable</span>
           <span className="text-sm text-gray-600 dark:text-gray-400">{error}</span>
         </div>
       </div>

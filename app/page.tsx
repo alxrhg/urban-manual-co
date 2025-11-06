@@ -1039,7 +1039,7 @@ export default function Home() {
                           alt={destination.name}
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="object-cover group-hover:scale-102 transition-transform duration-300"
                           quality={80}
                           loading={index < 6 ? 'eager' : 'lazy'}
                           fetchPriority={index === 0 ? 'high' : 'auto'}

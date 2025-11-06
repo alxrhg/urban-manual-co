@@ -41,7 +41,7 @@ export default function VisitModal({
       <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">
-            {isCurrentlyVisited ? 'Update Visit' : 'Mark as Visited'}
+            {isCurrentlyVisited ? 'Update Visit' : 'Been Here'}
           </h2>
           <button
             onClick={handleCancel}
@@ -114,7 +114,7 @@ export default function VisitModal({
             onClick={handleSubmit}
             className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
           >
-            {isCurrentlyVisited ? 'Update' : 'Mark as Visited'}
+            {isCurrentlyVisited ? 'Update' : 'Been Here'}
           </button>
         </div>
       </div>
