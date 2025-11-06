@@ -56,7 +56,7 @@ export function ForYouSection() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-        {destinations.slice(0, 6).map((dest) => (
+        {destinations.slice(0, 6).map((dest, index) => (
           <button
             key={dest.id}
             onClick={() => {
@@ -74,14 +74,17 @@ export function ForYouSection() {
             }}
             className={`${CARD_WRAPPER} text-left`}
           >
-            <div className={CARD_MEDIA}>
+            <div className={`${CARD_MEDIA} mb-3`}>
               {dest.image ? (
                 <Image
                   src={dest.image}
                   alt={dest.name}
                   fill
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                   sizes="(max-width: 768px) 50vw, 25vw"
+                  quality={80}
+                  loading={index < 6 ? 'eager' : 'lazy'}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
@@ -102,11 +105,16 @@ export function ForYouSection() {
             <div className="space-y-0.5">
               <div className={CARD_TITLE}>{dest.name}</div>
               <div className={CARD_META}>
-                {dest.city && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {dest.city}
-                  </span>
+                <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                  {dest.city}
+                </span>
+                {dest.category && (
+                  <>
+                    <span className="text-gray-300 dark:text-gray-700">•</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
+                      {dest.category}
+                    </span>
+                  </>
                 )}
               </div>
             </div>

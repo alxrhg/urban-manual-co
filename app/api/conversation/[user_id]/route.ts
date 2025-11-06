@@ -21,6 +21,13 @@ import {
 } from '../utils/contextHandler';
 import { extractIntent } from '@/app/api/intent/schema';
 import { logConversationMetrics } from '@/lib/metrics/conversationMetrics';
+import {
+  conversationRatelimit,
+  memoryConversationRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
@@ -29,18 +36,20 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 // Use GPT-5-turbo if available, otherwise fall back to OpenAI model or Gemini
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 
+// Timeout helper for AI calls
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T | typeof fallback> {
+  return Promise.race([
+    promise,
+    new Promise<T | typeof fallback>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
+
 export async function POST(
   request: NextRequest,
   context: any
 ) {
   try {
-    const { message, session_token } = await request.json();
-
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
-    }
-
-    // Get user context
+    // Get user context first for rate limiting
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     const paramsValue = context?.params && typeof context.params.then === 'function'
@@ -48,6 +57,26 @@ export async function POST(
       : context?.params;
     const { user_id } = paramsValue || {};
     const userId = user?.id || user_id || undefined;
+
+    // Rate limiting: 5 requests per 10 seconds for conversation
+    const identifier = getIdentifier(request, userId);
+    const ratelimit = isUpstashConfigured() ? conversationRatelimit : memoryConversationRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Too many conversation requests. Please wait a moment.',
+        limit,
+        remaining,
+        reset
+      );
+    }
+
+    const { message, session_token } = await request.json();
+
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    }
 
     // Get or create session
     const session = await getOrCreateSession(userId, session_token);
@@ -137,7 +166,7 @@ export async function POST(
         // Separate system from conversation messages for OpenAI
         const systemMsg = llmMessages.find(m => m.role === 'system');
         const conversationMsgs = llmMessages.filter(m => m.role !== 'system');
-        
+
         const openaiMessages = [
           ...(systemMsg ? [{ role: 'system' as const, content: systemMsg.content }] : []),
           ...conversationMsgs.map((msg) => ({
@@ -146,15 +175,21 @@ export async function POST(
           })),
         ];
 
-        const response = await openai.chat.completions.create({
-          model: CONVERSATION_MODEL,
-          messages: openaiMessages,
-          temperature: 0.8,
-          max_tokens: 150,
-        });
+        const response = await withTimeout(
+          openai.chat.completions.create({
+            model: CONVERSATION_MODEL,
+            messages: openaiMessages,
+            temperature: 0.8,
+            max_tokens: 150,
+          }),
+          5000, // 5 second timeout
+          null
+        ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
-        assistantResponse = response.choices?.[0]?.message?.content || '';
-        usedModel = CONVERSATION_MODEL;
+        assistantResponse = response?.choices?.[0]?.message?.content || '';
+        if (assistantResponse) {
+          usedModel = CONVERSATION_MODEL;
+        }
       } catch (error) {
         console.error('OpenAI error, falling back:', error);
       }
@@ -165,9 +200,15 @@ export async function POST(
       try {
         const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
         const prompt = llmMessages.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
-        const result = await model.generateContent(prompt);
-        assistantResponse = result.response.text();
-        usedModel = GEMINI_MODEL;
+        const result = await withTimeout(
+          model.generateContent(prompt),
+          5000, // 5 second timeout
+          null
+        );
+        if (result) {
+          assistantResponse = result.response.text();
+          usedModel = GEMINI_MODEL;
+        }
       } catch (error) {
         console.error('Gemini error:', error);
       }

@@ -1,0 +1,42 @@
+[workspace]
+members = [
+    "embedding-processor",
+    "vector-search",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Urban Manual Team"]
+
+[workspace.dependencies]
+# Python bindings
+pyo3 = { version = "0.22", features = ["extension-module"] }
+
+# Numerical computing
+ndarray = "0.16"
+rayon = "1.10"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Linear algebra and vector operations
+nalgebra = "0.33"
+
+# SIMD operations for faster vector math
+simsimd = "5.9"
+
+# Approximate nearest neighbor search
+hnsw = "0.12"
+
+# Performance profiling
+criterion = "0.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

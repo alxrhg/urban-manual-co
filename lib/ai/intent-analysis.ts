@@ -2,13 +2,14 @@ import { generateJSON } from '@/lib/llm';
 import { ADVANCED_NLU_SYSTEM_PROMPT } from './advanced-nlu-prompt';
 
 export interface UserContext {
-  savedPlaces: Array<{ name: string; city: string; category: string; tags?: string[] }>;
-  recentVisits: Array<{ name: string; city: string; category: string }>;
+  savedPlaces: Array<{ name: string; city: string; category: string; tags?: string[]; brand?: string | null }>;
+  recentVisits: Array<{ name: string; city: string; category: string; brand?: string | null }>;
   tasteProfile?: { taste_archetype?: string };
   currentLocation?: string;
   comparisonBase?: any;
   budgetInference?: any;
   groupSizeInference?: number | null;
+  brandAffinity?: Array<{ brand: string; score: number }>;
 }
 
 export interface NLUResult {
@@ -20,6 +21,7 @@ export interface NLUResult {
       city?: string | null;
       neighborhood?: string | null;
       category?: string | null;
+      brand?: string | null;
       cuisine?: string | null;
       style?: string | null;
       tags?: string[];
@@ -73,7 +75,8 @@ export async function analyzeIntent(
     .replace('{{currentTime}}', new Date().toISOString())
     .replace('{{comparisonBase}}', JSON.stringify(userContext.comparisonBase || null))
     .replace('{{budgetInference}}', JSON.stringify(userContext.budgetInference || null))
-    .replace('{{groupSizeInference}}', String(userContext.groupSizeInference || 'unknown'));
+    .replace('{{groupSizeInference}}', String(userContext.groupSizeInference || 'unknown'))
+    .replace('{{brandAffinity}}', JSON.stringify(userContext.brandAffinity?.slice(0, 5) || []));
 
   const userPrompt = `Analyze this query: "${message}"`;
 

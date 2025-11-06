@@ -260,32 +260,10 @@ export default function CityPageClient() {
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-                {(() => {
-                  // Inject ads every 14 items
-                  const withAds: Array<{ type: 'destination' | 'ad'; data: any; index: number }> = [];
-                  paginatedDestinations.forEach((destination, index) => {
-                    withAds.push({ type: 'destination', data: destination, index });
-                    // Add ad after every 14th item (but not at the very end)
-                    if ((index + 1) % 14 === 0 && index < paginatedDestinations.length - 1) {
-                      withAds.push({ type: 'ad', data: { slot: '3271683710' }, index: index + 0.5 });
-                    }
-                  });
+                {paginatedDestinations.map((destination, index) => {
+                  const isVisited = user && visitedSlugs.has(destination.slug);
 
-                  return withAds.map((item) => {
-                    if (item.type === 'ad') {
-                      return (
-                        <MultiplexAd
-                          key={`ad-${item.index}`}
-                          slot={item.data.slot}
-                        />
-                      );
-                    }
-
-                    const destination = item.data;
-                    const index = item.index;
-                    const isVisited = user && visitedSlugs.has(destination.slug);
-
-                    return (
+                  return (
                     <button
                       key={destination.slug}
                       onClick={() => {
@@ -342,9 +320,8 @@ export default function CityPageClient() {
                         </p>
                       </div>
                     </button>
-                    );
-                  });
-                })()}
+                  );
+                })}
               </div>
 
               {/* Pagination */}
@@ -397,6 +374,9 @@ export default function CityPageClient() {
                   </button>
                 </div>
               )}
+
+              {/* Ad after grid */}
+              <MultiplexAd slot="3271683710" />
             </div>
           )}
         </div>

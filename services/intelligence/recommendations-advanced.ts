@@ -15,6 +15,7 @@ interface RecommendationResult {
     content?: number;
     popularity?: number;
     personalization?: number;
+    relationship?: number;
   };
 }
 
@@ -51,11 +52,12 @@ export class AdvancedRecommendationEngine {
   ): Promise<RecommendationResult[]> {
     try {
       // Get all components
-      const [collaborativeScores, contentScores, popularityScores, aiScores] = await Promise.all([
+      const [collaborativeScores, contentScores, popularityScores, aiScores, relationshipScores] = await Promise.all([
         this.getCollaborativeScores(userId, options),
         this.getContentBasedScores(userId, options),
         this.getPopularityScores(options),
         this.getAIPersonalizationScores(userId, options),
+        this.getRelationshipBasedScores(userId, options),
       ]);
 
       // Combine scores with weights
@@ -64,6 +66,7 @@ export class AdvancedRecommendationEngine {
         contentScores,
         popularityScores,
         aiScores,
+        relationshipScores,
         userId
       );
 
@@ -371,6 +374,137 @@ export class AdvancedRecommendationEngine {
   }
 
   /**
+   * Relationship-based scores using destination_relationships table
+   * Uses relationship strength scores from the knowledge graph
+   */
+  private async getRelationshipBasedScores(
+    userId: string,
+    options?: { city?: string; category?: string }
+  ): Promise<Map<string, number>> {
+    if (!this.supabase) return new Map();
+
+    try {
+      // Get destinations the user has interacted with (saved, visited, or interacted)
+      const [savedData, visitedData, interactedData] = await Promise.all([
+        this.supabase
+          .from('saved_places')
+          .select('destination_slug')
+          .eq('user_id', userId),
+        this.supabase
+          .from('visit_history')
+          .select('destination_id')
+          .eq('user_id', userId),
+        this.supabase
+          .from('user_interactions')
+          .select('destination_id')
+          .eq('user_id', userId),
+      ]);
+
+      // Get destination IDs from slugs
+      const savedSlugs = (savedData.data || []).map(s => s.destination_slug);
+      let sourceDestinationIds: Set<string> = new Set();
+
+      if (savedSlugs.length > 0) {
+        const { data: destinations } = await this.supabase
+          .from('destinations')
+          .select('id')
+          .in('slug', savedSlugs);
+
+        if (destinations) {
+          destinations.forEach(d => sourceDestinationIds.add(d.id));
+        }
+      }
+
+      // Add visited and interacted destination IDs
+      (visitedData.data || []).forEach(v => sourceDestinationIds.add(v.destination_id));
+      (interactedData.data || []).forEach(i => sourceDestinationIds.add(i.destination_id));
+
+      if (sourceDestinationIds.size === 0) {
+        return new Map();
+      }
+
+      // Get related destinations from destination_relationships
+      // Weight by relationship strength score
+      const { data: relationships } = await this.supabase
+        .from('destination_relationships')
+        .select('source_destination_id, target_destination_id, relationship_type, strength, metadata')
+        .in('source_destination_id', Array.from(sourceDestinationIds))
+        .order('strength', { ascending: false });
+
+      if (!relationships || relationships.length === 0) {
+        return new Map();
+      }
+
+      // Apply city and category filters if specified
+      const targetIds = relationships.map(r => r.target_destination_id);
+      let query = this.supabase
+        .from('destinations')
+        .select('id, city, category')
+        .in('id', targetIds);
+
+      if (options?.city) {
+        query = query.ilike('city', `%${options.city}%`);
+      }
+      if (options?.category) {
+        query = query.ilike('category', `%${options.category}%`);
+      }
+
+      const { data: validDestinations } = await query;
+      const validDestinationIds = new Set((validDestinations || []).map(d => d.id));
+
+      // Calculate weighted scores based on relationship strength and type
+      const relationshipTypeWeights: Record<string, number> = {
+        'similar': 1.0,        // Strongest signal - user likes X, will like similar Y
+        'complementary': 0.8,  // Strong - pairs well together
+        'alternative': 0.7,    // Good - alternative option
+        'thematic': 0.6,       // Moderate - shares theme/vibe
+        'sequential': 0.5,     // Moderate - logical next step
+        'inspired_by': 0.4,    // Lower - indirect connection
+        'trendsetter': 0.3,    // Lower - trend-based
+        'nearby': 0.2,         // Lowest - just location-based
+      };
+
+      const scores = new Map<string, number>();
+      const destinationCounts = new Map<string, number>(); // Track how many sources recommend each destination
+
+      relationships.forEach(rel => {
+        // Only include destinations that passed filters
+        if (!validDestinationIds.has(rel.target_destination_id)) {
+          return;
+        }
+
+        const typeWeight = relationshipTypeWeights[rel.relationship_type] || 0.5;
+        const strengthScore = rel.strength || 0.5; // Use the relationship strength from DB
+
+        // Combined score: relationship type weight * strength score
+        const score = typeWeight * strengthScore;
+
+        // If multiple sources recommend the same destination, take the max score
+        const currentScore = scores.get(rel.target_destination_id) || 0;
+        scores.set(rel.target_destination_id, Math.max(currentScore, score));
+
+        // Count how many different sources recommend this destination
+        const count = destinationCounts.get(rel.target_destination_id) || 0;
+        destinationCounts.set(rel.target_destination_id, count + 1);
+      });
+
+      // Boost scores for destinations recommended by multiple sources
+      // This indicates stronger consensus
+      scores.forEach((score, destinationId) => {
+        const count = destinationCounts.get(destinationId) || 1;
+        // Boost by up to 30% for destinations recommended by multiple sources
+        const consensusBoost = Math.min(0.3, (count - 1) * 0.1);
+        scores.set(destinationId, Math.min(1.0, score * (1 + consensusBoost)));
+      });
+
+      return scores;
+    } catch (error) {
+      console.error('Error in relationship-based scoring:', error);
+      return new Map();
+    }
+  }
+
+  /**
    * Combine all scores with weights
    */
   private combineScores(
@@ -378,13 +512,15 @@ export class AdvancedRecommendationEngine {
     content: Map<string, number>,
     popularity: Map<string, number>,
     ai: Map<string, number>,
+    relationship: Map<string, number>,
     userId: string
   ): RecommendationResult[] {
     const weights = {
-      collaborative: 0.3,
-      content: 0.25,
-      popularity: 0.25,
-      personalization: 0.2, // AI-based
+      collaborative: 0.25,
+      content: 0.20,
+      popularity: 0.15,
+      personalization: 0.15, // AI-based
+      relationship: 0.25,     // NEW: Relationship strength from knowledge graph
     };
 
     const allDestinationIds = new Set([
@@ -392,6 +528,7 @@ export class AdvancedRecommendationEngine {
       ...content.keys(),
       ...popularity.keys(),
       ...ai.keys(),
+      ...relationship.keys(),
     ]);
 
     const results: RecommendationResult[] = [];
@@ -401,12 +538,14 @@ export class AdvancedRecommendationEngine {
       const contentScore = content.get(destinationId) || 0;
       const popScore = popularity.get(destinationId) || 0;
       const aiScore = ai.get(destinationId) || 0;
+      const relationshipScore = relationship.get(destinationId) || 0;
 
       const combinedScore =
         collabScore * weights.collaborative +
         contentScore * weights.content +
         popScore * weights.popularity +
-        aiScore * weights.personalization;
+        aiScore * weights.personalization +
+        relationshipScore * weights.relationship;
 
       // Generate reason
       const reason = this.generateReason(
@@ -414,6 +553,7 @@ export class AdvancedRecommendationEngine {
         contentScore,
         popScore,
         aiScore,
+        relationshipScore,
         weights
       );
 
@@ -426,6 +566,7 @@ export class AdvancedRecommendationEngine {
           content: contentScore,
           popularity: popScore,
           personalization: aiScore,
+          relationship: relationshipScore,
         },
       });
     });
@@ -438,11 +579,14 @@ export class AdvancedRecommendationEngine {
     content: number,
     pop: number,
     ai: number,
+    relationship: number,
     weights: any
   ): string {
     const reasons: string[] = [];
 
-    if (collab > 0.5) {
+    if (relationship > 0.6) {
+      reasons.push('Related to places you love');
+    } else if (collab > 0.5) {
       reasons.push('Users with similar tastes loved this');
     }
     if (content > 0.5) {

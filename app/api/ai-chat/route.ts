@@ -2,16 +2,67 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
-import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
-import { forecastingService } from '@/services/intelligence/forecasting';
-import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { searchAsimov, mapAsimovResultsToDestinations } from '@/lib/search/asimov';
+import { applyRateLimit, getRateLimitHeaders, getRateLimitIdentifier, RATE_LIMITS } from '@/lib/rateLimit';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Simple in-memory cache for search results
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+
+const searchCache = new Map<string, CacheEntry>();
+const embeddingCache = new Map<string, { embedding: number[], timestamp: number }>();
+const intentCache = new Map<string, { intent: any, timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
+
+// Request deduplication map
+const pendingRequests = new Map<string, Promise<any>>();
+
+// Timeout helper
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T | typeof fallback> {
+  return Promise.race([
+    promise,
+    new Promise<T | typeof fallback>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
+
+function getCacheKey(query: string, intent: any): string {
+  return `${query.toLowerCase()}_${intent.city || ''}_${intent.category || ''}`;
+}
+
+function getFromCache(key: string): any | null {
+  const entry = searchCache.get(key);
+  if (!entry) return null;
+
+  // Check if cache entry is still valid
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    searchCache.delete(key);
+    return null;
+  }
+
+  return entry.data;
+}
+
+function setInCache(key: string, data: any): void {
+  // Implement simple LRU by removing oldest entry if cache is full
+  if (searchCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = searchCache.keys().next().value;
+    if (firstKey) searchCache.delete(firstKey);
+  }
+
+  searchCache.set(key, {
+    data,
+    timestamp: Date.now(),
+  });
+}
 
 // Category synonym mapping
 const CATEGORY_SYNONYMS: Record<string, string> = {
@@ -36,22 +87,45 @@ const CATEGORY_SYNONYMS: Record<string, string> = {
   'gallery': 'Culture'
 };
 
-// Generate embedding using OpenAI
+// Generate embedding using OpenAI with caching
 async function generateEmbedding(text: string): Promise<number[] | null> {
-  if (!openai) {
+  if (!openai?.embeddings) {
     console.error('[AI Chat] No OpenAI client available');
     return null;
   }
 
+  // Check cache first
+  const cacheKey = text.toLowerCase().trim();
+  const cached = embeddingCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log('[AI Chat] Using cached embedding');
+    return cached.embedding;
+  }
+
   try {
-    return await embedText(text);
+    const embedding = await withTimeout(
+      embedText(text),
+      5000, // 5 second timeout
+      null
+    );
+
+    if (embedding) {
+      // Cache the embedding
+      if (embeddingCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = embeddingCache.keys().next().value;
+        if (firstKey) embeddingCache.delete(firstKey);
+      }
+      embeddingCache.set(cacheKey, { embedding, timestamp: Date.now() });
+    }
+
+    return embedding;
   } catch (error) {
     console.error('[AI Chat] Error generating embedding:', error);
     return null;
   }
 }
 
-// AI-powered query understanding with conversation context
+// AI-powered query understanding with conversation context and caching
 async function understandQuery(
   query: string,
   conversationHistory: Array<{role: string, content: string}> = [],
@@ -70,8 +144,18 @@ async function understandQuery(
   confidence?: number; // 0-1 confidence score
   clarifications?: string[]; // Questions to clarify ambiguous queries
 }> {
-  if (!openai) {
+  if (!openai?.chat) {
     return parseQueryFallback(query);
+  }
+
+  // Check intent cache (only for queries without conversation history for consistency)
+  if (conversationHistory.length === 0) {
+    const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
+    const cached = intentCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log('[AI Chat] Using cached intent');
+      return cached.intent;
+    }
   }
 
   try {
@@ -142,15 +226,24 @@ Return only the JSON, no other text.`;
 
     const userPrompt = `Query: "${query}"${conversationContext}${userContext}`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-    });
+    const response = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+      }),
+      4000, // 4 second timeout for intent parsing
+      null
+    ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
+
+    if (!response) {
+      console.warn('[AI Chat] Intent parsing timed out, using fallback');
+      return parseQueryFallback(query);
+    }
 
     const text = response.choices?.[0]?.message?.content || '';
     
@@ -178,7 +271,17 @@ Return only the JSON, no other text.`;
             }
           }
         }
-        
+
+        // Cache the parsed intent (only for non-conversational queries)
+        if (conversationHistory.length === 0) {
+          const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
+          if (intentCache.size >= MAX_CACHE_SIZE) {
+            const firstKey = intentCache.keys().next().value;
+            if (firstKey) intentCache.delete(firstKey);
+          }
+          intentCache.set(cacheKey, { intent: parsed, timestamp: Date.now() });
+        }
+
         return parsed;
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
@@ -295,7 +398,7 @@ async function generateIntelligentResponse(
   }
 
   // Generate response using OpenAI if available
-  if (openai) {
+  if (openai?.chat) {
     try {
       const systemPrompt = `You are Urban Manual's intelligent travel assistant. You help users discover amazing places with rich, contextual insights.
 
@@ -338,17 +441,21 @@ ${topResults.slice(0, 5).map((r: any, i: number) => {
 
 Generate a natural, helpful response that incorporates relevant context (weather, events, walking distance) when it adds value. Be conversational and concise.`;
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 150,
-      });
+      const response = await withTimeout(
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 150,
+        }),
+        5000, // 5 second timeout for response generation
+        null
+      ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
-      const aiResponse = response.choices?.[0]?.message?.content || '';
+      const aiResponse = response?.choices?.[0]?.message?.content || '';
       if (aiResponse) {
         return aiResponse.trim();
       }
@@ -381,23 +488,82 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { query, userId, conversationHistory = [] } = body;
 
+    // ✅ SECURITY FIX: Apply rate limiting (AI chat is expensive)
+    const identifier = getRateLimitIdentifier(request, userId);
+    const { success, ...rateLimit } = await applyRateLimit(identifier, RATE_LIMITS.AI_CHAT);
+
+    if (!success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Please try again later.',
+          limit: rateLimit.limit,
+          reset: new Date(rateLimit.reset).toISOString(),
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit),
+        }
+      );
+    }
+
     if (!query || query.trim().length < 2) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         content: 'Please enter a search query.',
         destinations: []
       });
     }
 
-    // Use enhanced intent analysis for deeper understanding
-    const enhancedIntent = await intentAnalysisService.analyzeIntent(
-      query,
-      conversationHistory,
-      userId
-    );
+    // Request deduplication: prevent duplicate in-flight requests
+    const requestKey = `${query.toLowerCase().trim()}_${userId || 'anon'}_${conversationHistory.length}`;
+    const existingRequest = pendingRequests.get(requestKey);
 
-    // Also get basic intent for backward compatibility
-    const intent = await understandQuery(query, conversationHistory, userId);
-    
+    if (existingRequest) {
+      console.log('[AI Chat] Deduplicating request:', query);
+      try {
+        return await existingRequest;
+      } catch (error) {
+        // If the existing request failed, continue with a new one
+        pendingRequests.delete(requestKey);
+      }
+    }
+
+    // Create a new request promise
+    const requestPromise = (async () => {
+      try {
+        return await processAIChatRequest(query, userId, conversationHistory);
+      } finally {
+        // Clean up after request completes
+        pendingRequests.delete(requestKey);
+      }
+    })();
+
+    // Store the promise for deduplication
+    pendingRequests.set(requestKey, requestPromise);
+
+    return await requestPromise;
+  } catch (error: any) {
+    console.error('AI Chat API error:', error);
+    return NextResponse.json({
+      content: 'Sorry, I encountered an error. Please try again.',
+      destinations: []
+    }, { status: 500 });
+  }
+}
+
+// Extract main logic into separate function for cleaner deduplication
+async function processAIChatRequest(
+  query: string,
+  userId: string | undefined,
+  conversationHistory: Array<{role: string, content: string}>
+) {
+  try {
+
+    // Parallelize intent understanding and embedding generation for better performance
+    const [intent, queryEmbedding] = await Promise.all([
+      understandQuery(query, conversationHistory, userId),
+      generateEmbedding(query)
+    ]);
+
     // Normalize category using synonyms
     if (intent.category) {
       const normalized = CATEGORY_SYNONYMS[intent.category.toLowerCase()];
@@ -405,123 +571,109 @@ export async function POST(request: NextRequest) {
         intent.category = normalized;
       }
     }
-    
+
     console.log('[AI Chat] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
 
-    // Generate embedding for vector search
-    const queryEmbedding = await generateEmbedding(query);
+    // Check cache for non-personalized searches
+    if (!userId) {
+      const cacheKey = getCacheKey(query, intent);
+      const cachedResult = getFromCache(cacheKey);
+      if (cachedResult) {
+        console.log('[AI Chat] Returning cached results for:', query);
+        return NextResponse.json(cachedResult);
+      }
+    }
 
     let results: any[] = [];
 
+    // Parallel search strategies for better performance
+    const searchPromises: Promise<any>[] = [];
+
     // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
-      try {
-        const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
-          query_embedding: queryEmbedding,
-          match_threshold: 0.6, // Lower threshold for more results
-          match_count: 1000, // Increased from 100 to 1000 per request
-          filter_city: intent.city || null,
-          filter_category: intent.category || null,
-          filter_michelin_stars: intent.filters?.michelinStar || null,
-          filter_min_rating: intent.filters?.rating || null,
-          filter_max_price_level: intent.filters?.priceLevel || null,
-          search_query: query
-        });
-
-        if (!vectorError && vectorResults && vectorResults.length > 0) {
-          results = vectorResults;
-          console.log('[AI Chat] Vector search found', results.length, 'results');
-        } else if (vectorError) {
-          console.error('[AI Chat] Vector search error:', vectorError);
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] Vector search exception:', error);
-      }
-    }
-
-    // Strategy 2: Asimov fallback (semantic search service)
-    if (results.length === 0) {
-      try {
-        console.log('[AI Chat] Trying Asimov fallback...');
-        const asimovResults = await searchAsimov({
-          query,
-          limit: 50,
-          params: {
-            category: intent.category || undefined,
-            city: intent.city || undefined,
-            language: 'en',
-          },
-          recall: 100,
-        });
-
-        if (asimovResults && asimovResults.length > 0) {
-          // Get all destinations from DB to match against Asimov results
-          const { data: allDestinations } = await supabase
-            .from('destinations')
-            .select('*')
-            .limit(1000);
-
-          const mapped = mapAsimovResultsToDestinations(asimovResults, allDestinations || []);
-          
-          if (mapped.length > 0) {
-            results = mapped;
-            console.log('[AI Chat] Asimov fallback found', results.length, 'results');
+      searchPromises.push(
+        (async () => {
+          try {
+            const { data, error } = await supabase.rpc('match_destinations', {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.6,
+              match_count: 100,
+              filter_city: intent.city || null,
+              filter_category: intent.category || null,
+              filter_michelin_stars: intent.filters?.michelinStar || null,
+              filter_min_rating: intent.filters?.rating || null,
+              filter_max_price_level: intent.filters?.priceLevel || null,
+              search_query: query
+            });
+            return { type: 'vector', data: data || [], error };
+          } catch (error: any) {
+            return { type: 'vector', data: [], error };
           }
+        })()
+      );
+    }
+
+    // Strategy 2: Basic keyword search (run in parallel with vector search)
+    const buildKeywordQuery = () => {
+      let fallbackQuery = supabase
+        .from('destinations')
+        .select('*')
+        .limit(100);
+
+      if (intent.city) {
+        fallbackQuery = fallbackQuery.ilike('city', `%${intent.city}%`);
+      }
+
+      if (intent.category) {
+        fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
+      }
+
+      if (intent.filters?.rating) {
+        fallbackQuery = fallbackQuery.gte('rating', intent.filters.rating);
+      }
+
+      if (intent.filters?.priceLevel) {
+        fallbackQuery = fallbackQuery.lte('price_level', intent.filters.priceLevel);
+      }
+
+      if (intent.filters?.michelinStar) {
+        fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
+      }
+
+      const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
+      if (keywords.length > 0) {
+        fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
+      }
+
+      return fallbackQuery;
+    };
+
+    searchPromises.push(
+      (async () => {
+        try {
+          const { data, error } = await buildKeywordQuery();
+          return { type: 'keyword', data: data || [], error };
+        } catch (error: any) {
+          return { type: 'keyword', data: [], error };
         }
-      } catch (error: any) {
-        console.error('[AI Chat] Asimov fallback exception:', error);
+      })()
+    );
+
+    // Execute all search strategies in parallel
+    const searchResults = await Promise.all(searchPromises);
+
+    // Use the first successful result (prefer vector over keyword)
+    for (const result of searchResults) {
+      if (!result.error && result.data.length > 0) {
+        results = result.data;
+        console.log(`[AI Chat] ${result.type} search found ${results.length} results`);
+        break;
+      } else if (result.error) {
+        console.error(`[AI Chat] ${result.type} search error:`, result.error);
       }
     }
 
-    // Strategy 3: Basic keyword search fallback (last resort)
-    if (results.length === 0) {
-      try {
-        console.log('[AI Chat] Trying basic keyword search fallback...');
-        let fallbackQuery = supabase
-          .from('destinations')
-          .select('*')
-          .limit(1000); // Increased from 100 to 1000
-
-        // Apply filters
-        if (intent.city) {
-          fallbackQuery = fallbackQuery.ilike('city', `%${intent.city}%`);
-        }
-
-        if (intent.category) {
-          fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
-        }
-
-        if (intent.filters?.rating) {
-          fallbackQuery = fallbackQuery.gte('rating', intent.filters.rating);
-        }
-
-        if (intent.filters?.priceLevel) {
-          fallbackQuery = fallbackQuery.lte('price_level', intent.filters.priceLevel);
-        }
-
-        if (intent.filters?.michelinStar) {
-          fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
-        }
-
-        // Try full-text search on search_text if available
-        const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
-        if (keywords.length > 0) {
-          const searchTerm = keywords.join(' | ');
-          fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
-        }
-
-        const { data: fallbackResults, error: fallbackError } = await fallbackQuery;
-
-        if (!fallbackError && fallbackResults) {
-          results = fallbackResults;
-          console.log('[AI Chat] Basic keyword fallback found', results.length, 'results');
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] Basic keyword fallback exception:', error);
-      }
-    }
-
-    // Strategy 3: Last resort - show popular destinations in the city or globally
+    // Last resort - show popular destinations in the city
     if (results.length === 0 && intent.city) {
       try {
         const { data: cityResults } = await supabase
@@ -541,36 +693,47 @@ export async function POST(request: NextRequest) {
     }
 
                 // Enrich results with additional data (photos, weather, routes, events) BEFORE reranking
-                const enrichedResults = await Promise.all(
-                  results.slice(0, 100).map(async (dest: any) => {
-                    try {
-                      // Fetch enriched data from database
-                      const { data: enriched } = await supabase
-                        .from('destinations')
-                        .select('photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url, currency_code, exchange_rate_to_usd')
-                        .eq('slug', dest.slug)
-                        .single();
+                // Optimized: Only enrich top 3 results for better performance
+                const topResults = results.slice(0, 3); // Reduced from 10 to 3
+                const slugsToEnrich = topResults.map((dest: any) => dest.slug);
 
-                      if (enriched) {
-                        return {
-                          ...dest,
-                          photos: enriched.photos_json ? JSON.parse(enriched.photos_json) : null,
-                          currentWeather: enriched.current_weather_json ? JSON.parse(enriched.current_weather_json) : null,
-                          weatherForecast: enriched.weather_forecast_json ? JSON.parse(enriched.weather_forecast_json) : null,
-                          nearbyEvents: enriched.nearby_events_json ? JSON.parse(enriched.nearby_events_json) : null,
-                          routeFromCityCenter: enriched.route_from_city_center_json ? JSON.parse(enriched.route_from_city_center_json) : null,
-                          walkingTimeFromCenter: enriched.walking_time_from_center_minutes,
-                          staticMapUrl: enriched.static_map_url,
-                          currencyCode: enriched.currency_code,
-                          exchangeRateToUSD: enriched.exchange_rate_to_usd,
-                        };
-                      }
-                    } catch (error) {
-                      // Silently fail - enrichment is optional
+                let enrichmentDataMap = new Map();
+                if (slugsToEnrich.length > 0) {
+                  try {
+                    const { data: enrichmentData } = await supabase
+                      .from('destinations')
+                      .select('slug, photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url, currency_code, exchange_rate_to_usd')
+                      .in('slug', slugsToEnrich);
+
+                    if (enrichmentData) {
+                      enrichmentData.forEach((item: any) => {
+                        enrichmentDataMap.set(item.slug, item);
+                      });
                     }
-                    return dest;
-                  })
-                );
+                  } catch (error) {
+                    // Silently fail - enrichment is optional
+                    console.debug('Enrichment batch fetch failed:', error);
+                  }
+                }
+
+                const enrichedResults = topResults.map((dest: any) => {
+                  const enriched = enrichmentDataMap.get(dest.slug);
+                  if (enriched) {
+                    return {
+                      ...dest,
+                      photos: enriched.photos_json ? JSON.parse(enriched.photos_json) : null,
+                      currentWeather: enriched.current_weather_json ? JSON.parse(enriched.current_weather_json) : null,
+                      weatherForecast: enriched.weather_forecast_json ? JSON.parse(enriched.weather_forecast_json) : null,
+                      nearbyEvents: enriched.nearby_events_json ? JSON.parse(enriched.nearby_events_json) : null,
+                      routeFromCityCenter: enriched.route_from_city_center_json ? JSON.parse(enriched.route_from_city_center_json) : null,
+                      walkingTimeFromCenter: enriched.walking_time_from_center_minutes,
+                      staticMapUrl: enriched.static_map_url,
+                      currencyCode: enriched.currency_code,
+                      exchangeRateToUSD: enriched.exchange_rate_to_usd,
+                    };
+                  }
+                  return dest;
+                });
 
                 // Apply enhanced re-ranking to results with enriched context
                 const topResultForContext = enrichedResults[0];
@@ -584,9 +747,6 @@ export async function POST(request: NextRequest) {
                   queryIntent: {
                     city: intent.city,
                     category: intent.category,
-                    meal: (enhancedIntent as any)?.meal,
-                    cuisine: (enhancedIntent as any)?.cuisine,
-                    mood: (enhancedIntent as any)?.mood,
                     price_level: intent.filters?.priceLevel,
                     // Infer weather preference from query
                     weather_preference: query.toLowerCase().includes('outdoor') ? 'outdoor' :
@@ -598,15 +758,17 @@ export async function POST(request: NextRequest) {
                   enrichedContext: enrichedContext || undefined,
                 });
 
-                // Remove limit - return all results
-                const limitedResults = rerankedResults;
+                // Combine reranked enriched results with remaining unenriched results
+                // This maintains performance while still showing all results
+                const remainingResults = results.slice(3); // Updated from 10 to 3
+                const limitedResults = [...rerankedResults, ...remainingResults];
 
                 // Generate intelligent response with enriched context
                 const response = await generateIntelligentResponse(
                   limitedResults,
                   query,
                   intent,
-                  enhancedIntent,
+                  intent, // Pass intent twice for backward compatibility
                   userId
                 );
 
@@ -616,23 +778,24 @@ export async function POST(request: NextRequest) {
                   enhancedContent = `${response}\n\n💡 ${intent.clarifications[0]}`;
                 }
 
-    // Get intelligence insights if city detected
+    // Get intelligence insights only if city detected and we have results (optional feature for performance)
+    // Disabled for better performance - can be re-enabled if needed
     let intelligenceInsights = null;
-    if (intent.city) {
-      try {
-        const [forecast, opportunities] = await Promise.all([
-          forecastingService.forecastDemand(intent.city, undefined, 30),
-          opportunityDetectionService.detectOpportunities(userId, intent.city, 3),
-        ]);
+    // if (intent.city && limitedResults.length > 0) {
+    //   try {
+    //     const [forecast, opportunities] = await Promise.all([
+    //       forecastingService.forecastDemand(intent.city, undefined, 30),
+    //       opportunityDetectionService.detectOpportunities(userId, intent.city, 3),
+    //     ]);
 
-        intelligenceInsights = {
-          forecast,
-          opportunities: opportunities.slice(0, 3),
-        };
-      } catch (error) {
-        // Silently fail - insights are optional
-      }
-    }
+    //     intelligenceInsights = {
+    //       forecast,
+    //       opportunities: opportunities.slice(0, 3),
+    //     };
+    //   } catch (error) {
+    //     // Silently fail - insights are optional
+    //   }
+    // }
 
                 // Log search/chat interaction (best-effort)
                 try {
@@ -659,7 +822,7 @@ export async function POST(request: NextRequest) {
                   totalEvents: limitedResults.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
                 };
 
-                return NextResponse.json({
+                const responseData = {
                   content: enhancedContent,
                   destinations: limitedResults,
                   intent: {
@@ -667,13 +830,20 @@ export async function POST(request: NextRequest) {
                     resultCount: limitedResults.length,
                     hasResults: limitedResults.length > 0
                   },
-                  enhancedIntent, // Include full enhanced intent
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
-                });
+                };
+
+                // Cache non-personalized results
+                if (!userId) {
+                  const cacheKey = getCacheKey(query, intent);
+                  setInCache(cacheKey, responseData);
+                }
+
+                return NextResponse.json(responseData);
 
   } catch (error: any) {
-    console.error('AI Chat API error:', error);
+    console.error('AI Chat request processing error:', error);
     return NextResponse.json({
       content: 'Sorry, I encountered an error. Please try again.',
       destinations: []

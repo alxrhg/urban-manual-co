@@ -114,15 +114,16 @@ export function Header() {
   };
 
   return (
-    <header className="mt-5">
+    <header className="mt-6 md:mt-8" role="banner">
       {/* Top Bar */}
-      <div className="px-6 md:px-10 pb-4">
-        <div className={`max-w-[1920px] mx-auto relative`}>
+      <div className="px-6 md:px-12 lg:px-16 pb-6 md:pb-8">
+        <nav className={`max-w-[1920px] mx-auto relative`} aria-label="Main navigation">
           {/* Logo - Top Left */}
           <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
             <button
               onClick={() => navigate("/")}
-              className="font-medium text-sm hover:opacity-70 transition-opacity"
+              className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg px-3 py-2 -m-2"
+              aria-label="Go to homepage"
             >
               Urban Manual®
             </button>
@@ -131,15 +132,21 @@ export function Header() {
           <div className={`absolute right-0 top-1/2 -translate-y-1/2`}>
             <div className="flex items-center gap-4">
               {isAdmin && buildVersion && (
-                <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded" title="Build version">
+                <span
+                  className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
+                  title="Build version"
+                  aria-label={`Build version ${buildVersion}`}
+                >
                   {buildVersion}
                 </span>
               )}
               {user ? (
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2 -m-2 touch-manipulation"
-                  aria-label="Toggle menu"
+                  className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-full"
+                  aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                  aria-expanded={isMenuOpen}
+                  aria-haspopup="true"
                 >
                   {avatarUrl ? (
                     <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
@@ -156,25 +163,39 @@ export function Header() {
                       {user.email?.[0]?.toUpperCase() || 'U'}
                     </div>
                   )}
-                  <svg className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               ) : (
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-3 px-2 -m-2 touch-manipulation"
-                  aria-label="Toggle menu"
+                  className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-3 px-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg"
+                  aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                  aria-expanded={isMenuOpen}
+                  aria-haspopup="true"
                 >
                   Menu
-                  <svg className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               )}
             </div>
           </div>
-        </div>
+        </nav>
       </div>
 
       {/* No full nav bar; all navigation via burger menu */}
@@ -184,6 +205,7 @@ export function Header() {
         <>
           <div
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/30 z-40"
             onClick={() => setIsMenuOpen(false)}
             aria-hidden="true"
           />
@@ -199,6 +221,11 @@ export function Header() {
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
+            <div className="py-2">
+              <button
+                onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Cities
@@ -206,6 +233,7 @@ export function Header() {
               <button
                 onClick={() => { navigate('/map'); setIsMenuOpen(false); }}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Map
@@ -213,16 +241,19 @@ export function Header() {
               <button
                 onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Discover Collections
               </button>
               <div className="my-2 border-t border-white/20 dark:border-gray-700/30" role="separator" />
+              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               {user ? (
                 <>
                   <button
                     onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
                     className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Account
@@ -231,6 +262,7 @@ export function Header() {
                     <button
                       onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
                       className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 font-medium transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+                      className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                       role="menuitem"
                     >
                       Admin
@@ -239,6 +271,7 @@ export function Header() {
                   <button
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
                     className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Sign Out
@@ -248,6 +281,7 @@ export function Header() {
                 <button
                   onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }}
                   className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+                  className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                   role="menuitem"
                 >
                   Sign In
@@ -257,17 +291,21 @@ export function Header() {
               <button
                 onClick={toggleDarkMode}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
+              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
+              <button
+                onClick={toggleDarkMode}
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDark ? (
                   <>
-                    <Sun className="h-4 w-4" />
+                    <Sun className="h-4 w-4" aria-hidden="true" />
                     <span>Light Mode</span>
                   </>
                 ) : (
                   <>
-                    <Moon className="h-4 w-4" />
+                    <Moon className="h-4 w-4" aria-hidden="true" />
                     <span>Dark Mode</span>
                   </>
                 )}

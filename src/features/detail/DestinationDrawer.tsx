@@ -287,12 +287,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         return;
       }
 
-      if (destination.id) {
+      if (destination.slug) {
         const { data: savedData } = await supabase
-          .from('saved_destinations')
+          .from('saved_places')
           .select('*')
           .eq('user_id', user.id)
-          .eq('destination_id', destination.id)
+          .eq('destination_slug', destination.slug)
           .single();
 
         setIsSaved(!!savedData);
@@ -543,6 +543,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 href={`/city/${destination.city}`}
                 className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   router.push(`/city/${destination.city}`);
                 }}
@@ -559,7 +560,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Action Buttons - Prominent position right after title */}
             <div className="flex gap-2 mb-4">
-              {user && destination?.id ? (
+              {user && destination ? (
                 <>
                   <button
                     onClick={() => setShowSaveModal(true)}
@@ -648,7 +649,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     alt="Michelin star"
                     className="h-3 w-3"
                   />
-                  {destination.michelin_stars} Michelin
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
                 </span>
               )}
 
@@ -1014,7 +1015,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       key={rec.slug}
                       onClick={() => {
                         // Navigate to recommended destination
-                        window.location.href = `/destination/${rec.slug}`;
+                        router.push(`/destination/${rec.slug}`);
                       }}
                       className="flex-shrink-0 w-40 group text-left"
                     >
@@ -1025,13 +1026,35 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                             alt={rec.name}
                             className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                             onError={(e) => {
-                              // Silently handle broken images
+                              // ✅ SECURITY FIX: Safe DOM manipulation instead of innerHTML
                               e.currentTarget.style.display = 'none';
                               const parent = e.currentTarget.parentElement;
                               if (parent && !parent.querySelector('.fallback-placeholder')) {
                                 const fallback = document.createElement('div');
                                 fallback.className = 'fallback-placeholder w-full h-full flex items-center justify-center';
-                                fallback.innerHTML = '<svg class="h-8 w-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>';
+
+                                // Create SVG element programmatically (XSS-safe)
+                                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                                svg.setAttribute('class', 'h-8 w-8 opacity-20');
+                                svg.setAttribute('fill', 'none');
+                                svg.setAttribute('viewBox', '0 0 24 24');
+                                svg.setAttribute('stroke', 'currentColor');
+
+                                const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                                path1.setAttribute('stroke-linecap', 'round');
+                                path1.setAttribute('stroke-linejoin', 'round');
+                                path1.setAttribute('stroke-width', '2');
+                                path1.setAttribute('d', 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z');
+
+                                const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                                path2.setAttribute('stroke-linecap', 'round');
+                                path2.setAttribute('stroke-linejoin', 'round');
+                                path2.setAttribute('stroke-width', '2');
+                                path2.setAttribute('d', 'M15 11a3 3 0 11-6 0 3 3 0 016 0z');
+
+                                svg.appendChild(path1);
+                                svg.appendChild(path2);
+                                fallback.appendChild(svg);
                                 parent.appendChild(fallback);
                               }
                             }}

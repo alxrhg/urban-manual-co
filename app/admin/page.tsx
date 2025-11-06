@@ -3,24 +3,29 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Plus, Edit, Search, X } from "lucide-react";
+import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
+import { useToast } from "@/hooks/useToast";
+import { formatDistanceToNow } from 'date-fns';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 // Destination Form Component
-function DestinationForm({ 
-  destination, 
-  onSave, 
-  onCancel, 
-  isSaving 
-}: { 
-  destination?: any; 
-  onSave: (data: any) => Promise<void>; 
-  onCancel: () => void; 
+function DestinationForm({
+  destination,
+  onSave,
+  onCancel,
+  isSaving,
+  toast
+}: {
+  destination?: any;
+  onSave: (data: any) => Promise<void>;
+  onCancel: () => void;
   isSaving: boolean;
+  toast: any;
 }) {
   const [formData, setFormData] = useState({
     slug: destination?.slug || '',
@@ -147,7 +152,7 @@ function DestinationForm({
       return data.url;
     } catch (error: any) {
       console.error('Upload error:', error);
-      alert(`Image upload failed: ${error.message}`);
+      toast.error(`Image upload failed: ${error.message}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -156,7 +161,7 @@ function DestinationForm({
 
   const fetchFromGoogle = async () => {
     if (!formData.name.trim()) {
-      alert('Please enter a name first');
+      toast.warning('Please enter a name first');
       return;
     }
 
@@ -204,10 +209,10 @@ function DestinationForm({
       }
 
       // Show success message
-      alert(`✅ Fetched data from Google Places!\n\nName: ${data.name}\nCity: ${data.city}\nCategory: ${data.category || 'Not found'}`);
+      toast.success(`Fetched data from Google Places! Name: ${data.name}, City: ${data.city}`);
     } catch (error: any) {
       console.error('Fetch Google error:', error);
-      alert(`Failed to fetch from Google: ${error.message}`);
+      toast.error(`Failed to fetch from Google: ${error.message}`);
     } finally {
       setFetchingGoogle(false);
     }
@@ -567,6 +572,8 @@ function DestinationForm({
 
 export default function AdminPage() {
   const router = useRouter();
+  const toast = useToast();
+  const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -596,7 +603,7 @@ export default function AdminPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches'>('destinations');
+  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'logs'>('destinations');
 
   // Analytics state
   const [analyticsStats, setAnalyticsStats] = useState({
@@ -611,6 +618,15 @@ export default function AdminPage() {
   // Searches state
   const [searchLogs, setSearchLogs] = useState<any[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(false);
+
+  // Logs state
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logsStats, setLogsStats] = useState<any>(null);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [selectedLogLevel, setSelectedLogLevel] = useState<string>('all');
+  const [selectedLogType, setSelectedLogType] = useState<string>('all');
+  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [autoRefreshLogs, setAutoRefreshLogs] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -657,8 +673,29 @@ export default function AdminPage() {
       loadAnalytics();
     } else if (activeTab === 'searches' && searchLogs.length === 0) {
       loadSearchLogs();
+    } else if (activeTab === 'logs' && logs.length === 0) {
+      loadSystemLogs();
     }
   }, [activeTab, isAdmin, authChecked]);
+
+  // Reload logs when filters change
+  useEffect(() => {
+    if (activeTab === 'logs' && isAdmin && authChecked) {
+      fetchSystemLogs();
+    }
+  }, [selectedLogLevel, selectedLogType]);
+
+  // Auto-refresh logs
+  useEffect(() => {
+    if (!autoRefreshLogs || activeTab !== 'logs') return;
+
+    const interval = setInterval(() => {
+      fetchSystemLogs();
+      fetchLogsStats();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoRefreshLogs, selectedLogLevel, selectedLogType, activeTab]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -829,6 +866,107 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSystemLogs = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (selectedLogLevel !== 'all') params.append('level', selectedLogLevel);
+      if (selectedLogType !== 'all') params.append('type', selectedLogType);
+      params.append('limit', '100');
+
+      const response = await fetch(`/api/admin/logs?${params}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setLogs(data.logs);
+      }
+    } catch (error) {
+      console.error('Failed to fetch logs:', error);
+    }
+  };
+
+  const fetchLogsStats = async () => {
+    try {
+      const response = await fetch('/api/admin/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'stats' }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setLogsStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Failed to fetch logs stats:', error);
+    }
+  };
+
+  const loadSystemLogs = async () => {
+    setLoadingLogs(true);
+    await Promise.all([fetchSystemLogs(), fetchLogsStats()]);
+    setLoadingLogs(false);
+  };
+
+  // Get log level badge color
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'error':
+      case 'fatal':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'warn':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'info':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+    }
+  };
+
+  // Get type badge color
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'security':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      case 'rate_limit':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      case 'error':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'performance':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+    }
+  };
+
+  const handleDeleteDestination = (slug: string, name: string) => {
+    confirm({
+      title: 'Delete Destination',
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('destinations')
+            .delete()
+            .eq('slug', slug);
+
+          if (error) throw error;
+
+          // Reload the list and stats after deletion
+          await loadDestinationList();
+          await loadEnrichmentStats();
+
+          toast.success(`Successfully deleted "${name}"`);
+        } catch (e: any) {
+          console.error('Delete error:', e);
+          toast.error(`Failed to delete: ${e.message}`);
+        }
+      }
+    });
+  };
+
   const handleSearchDestinations = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
@@ -886,7 +1024,7 @@ export default function AdminPage() {
         {/* Tab Navigation - Matches account page style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {['destinations', 'analytics', 'searches'].map((tab) => (
+            {['destinations', 'analytics', 'searches', 'logs'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -983,7 +1121,7 @@ export default function AdminPage() {
                 return (
                   <div
                     key={dest.slug}
-                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                    className="group flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-200 hover:scale-[1.01]"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -1001,13 +1139,13 @@ export default function AdminPage() {
                         <span className="text-xs">Slug: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{dest.slug}</code></span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => {
                           setEditingDestination(dest);
                           setShowCreateModal(true);
                         }}
-                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium flex items-center gap-1"
+                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-150 text-xs font-medium flex items-center gap-1"
                       >
                         <Edit className="h-3 w-3" />
                         Edit
@@ -1017,9 +1155,16 @@ export default function AdminPage() {
                           setEnrichSlug(dest.slug);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium"
+                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-150 text-xs font-medium"
                       >
                         Enrich
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDestination(dest.slug, dest.name)}
+                        className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 hover:shadow-sm transition-all duration-150 text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -1130,6 +1275,264 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Logs Tab */}
+        {activeTab === 'logs' && (
+          <div className="fade-in space-y-6">
+            {/* Stats Cards */}
+            {logsStats && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Logs</div>
+                  <div className="text-2xl font-light">{logsStats.totalLogs.toLocaleString()}</div>
+                </div>
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="text-xs text-red-600 dark:text-red-400 mb-1">Errors</div>
+                  <div className="text-2xl font-light text-red-600 dark:text-red-400">{logsStats.errorCount.toLocaleString()}</div>
+                </div>
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="text-xs text-yellow-600 dark:text-yellow-400 mb-1">Warnings</div>
+                  <div className="text-2xl font-light text-yellow-600 dark:text-yellow-400">{logsStats.warnCount.toLocaleString()}</div>
+                </div>
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="text-xs text-purple-600 dark:text-purple-400 mb-1">Security</div>
+                  <div className="text-2xl font-light text-purple-600 dark:text-purple-400">{logsStats.securityEvents.toLocaleString()}</div>
+                </div>
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="text-xs text-orange-600 dark:text-orange-400 mb-1">Rate Limits</div>
+                  <div className="text-2xl font-light text-orange-600 dark:text-orange-400">{logsStats.rateLimitEvents.toLocaleString()}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-4 items-center p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Level</label>
+                <select
+                  value={selectedLogLevel}
+                  onChange={(e) => setSelectedLogLevel(e.target.value)}
+                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-900"
+                >
+                  <option value="all">All Levels</option>
+                  <option value="fatal">Fatal</option>
+                  <option value="error">Error</option>
+                  <option value="warn">Warning</option>
+                  <option value="info">Info</option>
+                  <option value="debug">Debug</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
+                <select
+                  value={selectedLogType}
+                  onChange={(e) => setSelectedLogType(e.target.value)}
+                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-900"
+                >
+                  <option value="all">All Types</option>
+                  <option value="security">Security</option>
+                  <option value="rate_limit">Rate Limit</option>
+                  <option value="error">Error</option>
+                  <option value="upload">Upload</option>
+                  <option value="performance">Performance</option>
+                </select>
+              </div>
+
+              <div className="flex-1"></div>
+
+              <button
+                onClick={() => setAutoRefreshLogs(!autoRefreshLogs)}
+                className={`px-4 py-1.5 rounded-xl text-xs font-medium ${
+                  autoRefreshLogs
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {autoRefreshLogs ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
+              </button>
+
+              <button
+                onClick={() => {
+                  fetchSystemLogs();
+                  fetchLogsStats();
+                }}
+                className="px-4 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-80 transition-opacity text-xs font-medium"
+              >
+                Refresh
+              </button>
+            </div>
+
+            {/* Logs Table */}
+            {loadingLogs ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+              </div>
+            ) : (
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                    <thead className="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                      {logs.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                            No logs found matching the filters
+                          </td>
+                        </tr>
+                      ) : (
+                        logs.map((log) => (
+                          <tr
+                            key={log.id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
+                            onClick={() => setSelectedLog(log)}
+                          >
+                            <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
+                              {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getLevelColor(log.level)}`}>
+                                {log.level}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getTypeColor(log.type)}`}>
+                                {log.type}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs">
+                              <div className="truncate max-w-md">{log.message}</div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-xs">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedLog(log);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                View Details
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Log Details Modal */}
+        {selectedLog && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-xl font-semibold">Log Details</h2>
+                  <button
+                    onClick={() => setSelectedLog(null)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Timestamp
+                    </label>
+                    <div className="text-sm">
+                      {new Date(selectedLog.timestamp).toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Level
+                      </label>
+                      <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getLevelColor(selectedLog.level)}`}>
+                        {selectedLog.level}
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Type
+                      </label>
+                      <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getTypeColor(selectedLog.type)}`}>
+                        {selectedLog.type}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Message
+                    </label>
+                    <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded text-sm">
+                      {selectedLog.message}
+                    </div>
+                  </div>
+
+                  {selectedLog.user_id && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        User ID
+                      </label>
+                      <div className="font-mono text-xs bg-gray-50 dark:bg-gray-900 p-2 rounded">
+                        {selectedLog.user_id}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedLog.context && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Context
+                      </label>
+                      <pre className="bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs overflow-x-auto">
+                        {JSON.stringify(selectedLog.context, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+
+                  {selectedLog.error && (
+                    <div>
+                      <label className="block text-xs font-medium text-red-600 dark:text-red-400 mb-1">
+                        Error Details
+                      </label>
+                      <pre className="bg-red-50 dark:bg-red-900/20 p-3 rounded text-xs overflow-x-auto text-red-900 dark:text-red-100 border border-red-200 dark:border-red-800">
+                        {JSON.stringify(selectedLog.error, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setSelectedLog(null)}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-2xl hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Create/Edit Drawer - Outside tabs, always available */}
         {showCreateModal && (
           <>
@@ -1168,6 +1571,7 @@ export default function AdminPage() {
               <div className="p-6">
                 <DestinationForm
                   destination={editingDestination}
+                  toast={toast}
                   onSave={async (data) => {
                     setIsSaving(true);
                     try {
@@ -1198,8 +1602,9 @@ export default function AdminPage() {
                       setEditingDestination(null);
                       await loadDestinationList();
                       await loadEnrichmentStats();
+                      toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
                     } catch (e: any) {
-                      alert(`Error: ${e.message}`);
+                      toast.error(`Error: ${e.message}`);
                     } finally {
                       setIsSaving(false);
                     }
@@ -1214,6 +1619,9 @@ export default function AdminPage() {
             </div>
           </>
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialogComponent />
       </div>
     </main>
   );

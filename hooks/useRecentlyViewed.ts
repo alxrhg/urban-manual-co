@@ -6,6 +6,7 @@ interface RecentlyViewedItem {
   city: string;
   image: string;
   category: string;
+  michelin_stars?: number;
   viewedAt: number;
 }
 

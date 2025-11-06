@@ -138,66 +138,6 @@ export function SearchFiltersComponent({
             {/* Scrollable Content */}
             <div className="max-h-[70vh] overflow-y-auto px-6 py-4 space-y-6">
 
-              {/* City Filter */}
-              <div>
-                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">City</div>
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                  <button
-                    onClick={() => updateFilter('city', undefined)}
-                    className={`transition-all ${
-                      !filters.city
-                        ? "font-medium text-black dark:text-white"
-                        : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                    }`}
-                  >
-                    All
-                  </button>
-                  {availableCities.slice(0, 15).map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => updateFilter('city', filters.city === city ? undefined : city)}
-                      className={`transition-all ${
-                        filters.city === city
-                          ? "font-medium text-black dark:text-white"
-                          : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                      }`}
-                    >
-                      {capitalizeCity(city)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Category Filter */}
-              <div>
-                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Category</div>
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                  <button
-                    onClick={() => updateFilter('category', undefined)}
-                    className={`transition-all ${
-                      !filters.category
-                        ? "font-medium text-black dark:text-white"
-                        : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                    }`}
-                  >
-                    All
-                  </button>
-                  {availableCategories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => updateFilter('category', filters.category === category ? undefined : category)}
-                      className={`transition-all ${
-                        filters.category === category
-                          ? "font-medium text-black dark:text-white"
-                          : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                      }`}
-                    >
-                      {capitalizeCategory(category)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Special Filters */}
               <div>
                 <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Special</div>
