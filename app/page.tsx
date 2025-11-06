@@ -261,20 +261,16 @@ export default function Home() {
     }
   }, [user]);
 
-  // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
-  // Works like chat but with convenience of auto-trigger
+  // CHAT MODE: Explicit Enter submit only (no auto-trigger)
+  // Clear state when search is emptied
   useEffect(() => {
-    if (searchTerm.trim().length > 0) {
-      const timer = setTimeout(() => {
-        performAISearch(searchTerm);
-      }, 500); // 500ms debounce for auto-trigger
-      return () => clearTimeout(timer);
-    } else {
+    if (searchTerm.trim().length === 0) {
       // Clear everything when search is empty
       setFilteredDestinations([]);
       setChatResponse('');
       setConversationHistory([]);
       setSearching(false);
+      setSubmittedQuery('');
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
@@ -371,9 +367,14 @@ export default function Home() {
   const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
 
+  // Track submitted query for chat display
+  const [submittedQuery, setSubmittedQuery] = useState<string>('');
+  const [followUpInput, setFollowUpInput] = useState<string>('');
+
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = async (query: string) => {
+    setSubmittedQuery(query); // Store the submitted query
     // Match chat component: only check if empty or loading
     if (!query.trim() || searching) {
       return;
@@ -719,60 +720,99 @@ export default function Home() {
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
                 <div className="w-full">
-                  <GreetingHero
-                searchQuery={searchTerm}
-                onSearchChange={(value) => {
-                  setSearchTerm(value);
-                  // Clear conversation history only if search is cleared
-                  if (!value.trim()) {
-                    setConversationHistory([]);
-                    setSearchIntent(null);
-                    setSeasonalContext(null);
-                    setSearchTier(null);
-                    setChatResponse('');
-                    setFilteredDestinations([]);
-                  }
-                }}
-                onSubmit={(query) => {
-                  // CHAT MODE: Explicit submit on Enter key (like chat component)
-                  if (query.trim() && !searching) {
-                    performAISearch(query);
-                  }
-                }}
-                userName={(function () {
-                  const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                  if (!raw) return undefined;
-                  return raw
-                    .split(/[\s._-]+/)
-                    .filter(Boolean)
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(' ');
-                })()}
-                isAIEnabled={isAIEnabled}
-                isSearching={searching}
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  // Sync with legacy state for backward compatibility
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  // Track filter changes
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                availableCities={cities}
-                availableCategories={categories}
-                  />
+                  {/* Show GreetingHero only when no active search */}
+                  {!submittedQuery && (
+                    <GreetingHero
+                      searchQuery={searchTerm}
+                      onSearchChange={(value) => {
+                        setSearchTerm(value);
+                        // Clear conversation history only if search is cleared
+                        if (!value.trim()) {
+                          setConversationHistory([]);
+                          setSearchIntent(null);
+                          setSeasonalContext(null);
+                          setSearchTier(null);
+                          setChatResponse('');
+                          setFilteredDestinations([]);
+                          setSubmittedQuery('');
+                        }
+                      }}
+                      onSubmit={(query) => {
+                        // CHAT MODE: Explicit submit on Enter key (like chat component)
+                        if (query.trim() && !searching) {
+                          performAISearch(query);
+                        }
+                      }}
+                      userName={(function () {
+                        const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                        if (!raw) return undefined;
+                        return raw
+                          .split(/[\s._-]+/)
+                          .filter(Boolean)
+                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                          .join(' ');
+                      })()}
+                      isAIEnabled={isAIEnabled}
+                      isSearching={searching}
+                      filters={advancedFilters}
+                      onFiltersChange={(newFilters) => {
+                        setAdvancedFilters(newFilters);
+                        // Sync with legacy state for backward compatibility
+                        if (newFilters.city !== undefined) {
+                          setSelectedCity(newFilters.city || '');
+                        }
+                        if (newFilters.category !== undefined) {
+                          setSelectedCategory(newFilters.category || '');
+                        }
+                        // Track filter changes
+                        Object.entries(newFilters).forEach(([key, value]) => {
+                          if (value !== undefined && value !== null && value !== '') {
+                            trackFilterChange({ filterType: key, value });
+                          }
+                        });
+                      }}
+                      availableCities={cities}
+                      availableCategories={categories}
+                    />
+                  )}
+
+                  {/* Chat-like display when search is active */}
+                  {submittedQuery && (
+                    <div className="w-full space-y-6">
+                      {/* Greeting */}
+                      <div className="text-left">
+                        <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+                          {(() => {
+                            const now = new Date();
+                            const currentHour = now.getHours();
+                            let greeting = 'GOOD EVENING';
+                            if (currentHour < 12) greeting = 'GOOD MORNING';
+                            else if (currentHour < 18) greeting = 'GOOD AFTERNOON';
+
+                            const userName = (function () {
+                              const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                              if (!raw) return undefined;
+                              return raw
+                                .split(/[\s._-]+/)
+                                .filter(Boolean)
+                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                .join(' ');
+                            })();
+
+                            return `${greeting}${userName ? `, ${userName}` : ''}`;
+                          })()}
+                        </h2>
+                      </div>
+
+                      {/* User's submitted query (static text) */}
+                      <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                        {submittedQuery}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Loading State */}
-                  {searchTerm && searching && (
+                  {submittedQuery && searching && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <div className="flex items-center gap-2">
                         <span className="animate-pulse">✨</span>
@@ -782,7 +822,7 @@ export default function Home() {
                   )}
 
                   {/* AI conversational response */}
-                  {searchTerm && !searching && chatResponse && (
+                  {submittedQuery && !searching && chatResponse && (
                     <>
                       <MarkdownRenderer
                         content={chatResponse}
@@ -791,14 +831,33 @@ export default function Home() {
                       {/* Context-aware follow-up questions */}
                       {filteredDestinations.length > 0 && (
                         <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                          {getContextAwareLoadingMessage(searchTerm)}
+                          {getContextAwareLoadingMessage(submittedQuery)}
                         </div>
                       )}
+
+                      {/* Follow-up input field - Chat style */}
+                      <div className="mt-8 relative">
+                        <input
+                          placeholder="Refine your search or ask a follow-up..."
+                          value={followUpInput}
+                          onChange={(e) => setFollowUpInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
+                              e.preventDefault();
+                              const query = followUpInput.trim();
+                              setSearchTerm(query);
+                              setFollowUpInput('');
+                              performAISearch(query);
+                            }
+                          }}
+                          className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                        />
+                      </div>
                     </>
                   )}
 
                   {/* No results message */}
-                  {searchTerm && !searching && filteredDestinations.length === 0 && !chatResponse && (
+                  {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <span>No results found. Try refining your search.</span>
                     </div>
@@ -807,7 +866,7 @@ export default function Home() {
               </div>
               
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
-              {!searchTerm && (
+              {!submittedQuery && (
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
                     {/* City List */}
@@ -945,7 +1004,7 @@ export default function Home() {
             </div>
 
             {/* Recently Viewed - Show when no active search */}
-            {!searchTerm.trim() && !selectedCity && !selectedCategory && (
+            {!submittedQuery && !selectedCity && !selectedCategory && (
               <RecentlyViewed
                 onCardClick={(destination) => {
                   setSelectedDestination(destination);
@@ -978,7 +1037,7 @@ export default function Home() {
             )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
-            {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
+            {user && !submittedQuery && !selectedCity && !selectedCategory && (
               <SmartRecommendations
                 onCardClick={(destination) => {
                   setSelectedDestination(destination);
@@ -1011,7 +1070,7 @@ export default function Home() {
             )}
 
             {/* Trending Section - Show when no active search */}
-            {!searchTerm.trim() && (
+            {!submittedQuery && (
               <TrendingSection />
             )}
 
