@@ -17,7 +17,7 @@ export async function GET(
 
     if (authError || !currentUser) {
       logSecurityEvent('personalization_unauthorized', {
-        requestedUserId: user_id,
+        resource: user_id,
         success: false,
         reason: 'Not authenticated',
       });
@@ -30,7 +30,7 @@ export async function GET(
     if (currentUser.id !== user_id) {
       logSecurityEvent('personalization_forbidden', {
         userId: currentUser.id,
-        requestedUserId: user_id,
+        resource: user_id,
         success: false,
         reason: 'Attempting to access another user\'s data',
       });
