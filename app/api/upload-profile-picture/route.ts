@@ -3,6 +3,13 @@ import { createServerClient } from '@/lib/supabase-server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { applyRateLimit, getRateLimitHeaders, getRateLimitIdentifier, RATE_LIMITS } from '@/lib/rateLimit';
 import { logger, logSecurityEvent, logError, startTimer } from '@/lib/logger';
+import {
+  uploadRatelimit,
+  memoryUploadRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   const timer = startTimer();
@@ -38,6 +45,17 @@ export async function POST(request: NextRequest) {
           status: 429,
           headers: getRateLimitHeaders(rateLimit),
         }
+    // Rate limiting: 3 uploads per minute
+    const identifier = getIdentifier(request, user.id);
+    const ratelimit = isUpstashConfigured() ? uploadRatelimit : memoryUploadRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Too many upload requests. Please wait a moment.',
+        limit,
+        remaining,
+        reset
       );
     }
 

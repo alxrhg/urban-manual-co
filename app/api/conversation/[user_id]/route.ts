@@ -21,6 +21,13 @@ import {
 } from '../utils/contextHandler';
 import { extractIntent } from '@/app/api/intent/schema';
 import { logConversationMetrics } from '@/lib/metrics/conversationMetrics';
+import {
+  conversationRatelimit,
+  memoryConversationRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
@@ -34,13 +41,7 @@ export async function POST(
   context: any
 ) {
   try {
-    const { message, session_token } = await request.json();
-
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
-    }
-
-    // Get user context
+    // Get user context first for rate limiting
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     const paramsValue = context?.params && typeof context.params.then === 'function'
@@ -48,6 +49,26 @@ export async function POST(
       : context?.params;
     const { user_id } = paramsValue || {};
     const userId = user?.id || user_id || undefined;
+
+    // Rate limiting: 5 requests per 10 seconds for conversation
+    const identifier = getIdentifier(request, userId);
+    const ratelimit = isUpstashConfigured() ? conversationRatelimit : memoryConversationRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Too many conversation requests. Please wait a moment.',
+        limit,
+        remaining,
+        reset
+      );
+    }
+
+    const { message, session_token } = await request.json();
+
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    }
 
     // Get or create session
     const session = await getOrCreateSession(userId, session_token);
