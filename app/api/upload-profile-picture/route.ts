@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
     if (!detectedType) {
       logSecurityEvent('upload_invalid_file', {
         userId: user.id,
-        fileName: file.name,
-        claimedType: file.type,
+        resource: file.name,
+        action: `claimed_type:${file.type}`,
         success: false,
         reason: 'Could not detect file type',
       });
@@ -95,10 +95,8 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_TYPES.includes(detectedType.mime) || !ALLOWED_EXTENSIONS.includes(detectedType.ext)) {
       logSecurityEvent('upload_type_mismatch', {
         userId: user.id,
-        fileName: file.name,
-        claimedType: file.type,
-        detectedType: detectedType.mime,
-        detectedExt: detectedType.ext,
+        resource: file.name,
+        action: `claimed:${file.type},detected:${detectedType.mime}`,
         success: false,
         reason: 'File type not allowed or mismatch',
       });
