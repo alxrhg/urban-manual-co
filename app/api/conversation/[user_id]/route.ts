@@ -36,6 +36,14 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 // Use GPT-5-turbo if available, otherwise fall back to OpenAI model or Gemini
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 
+// Timeout helper for AI calls
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
+
 export async function POST(
   request: NextRequest,
   context: any
@@ -158,7 +166,7 @@ export async function POST(
         // Separate system from conversation messages for OpenAI
         const systemMsg = llmMessages.find(m => m.role === 'system');
         const conversationMsgs = llmMessages.filter(m => m.role !== 'system');
-        
+
         const openaiMessages = [
           ...(systemMsg ? [{ role: 'system' as const, content: systemMsg.content }] : []),
           ...conversationMsgs.map((msg) => ({
@@ -167,15 +175,21 @@ export async function POST(
           })),
         ];
 
-        const response = await openai.chat.completions.create({
-          model: CONVERSATION_MODEL,
-          messages: openaiMessages,
-          temperature: 0.8,
-          max_tokens: 150,
-        });
+        const response = await withTimeout(
+          openai.chat.completions.create({
+            model: CONVERSATION_MODEL,
+            messages: openaiMessages,
+            temperature: 0.8,
+            max_tokens: 150,
+          }),
+          5000, // 5 second timeout
+          null
+        );
 
-        assistantResponse = response.choices?.[0]?.message?.content || '';
-        usedModel = CONVERSATION_MODEL;
+        assistantResponse = response?.choices?.[0]?.message?.content || '';
+        if (assistantResponse) {
+          usedModel = CONVERSATION_MODEL;
+        }
       } catch (error) {
         console.error('OpenAI error, falling back:', error);
       }
@@ -186,9 +200,15 @@ export async function POST(
       try {
         const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
         const prompt = llmMessages.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
-        const result = await model.generateContent(prompt);
-        assistantResponse = result.response.text();
-        usedModel = GEMINI_MODEL;
+        const result = await withTimeout(
+          model.generateContent(prompt),
+          5000, // 5 second timeout
+          null
+        );
+        if (result) {
+          assistantResponse = result.response.text();
+          usedModel = GEMINI_MODEL;
+        }
       } catch (error) {
         console.error('Gemini error:', error);
       }
