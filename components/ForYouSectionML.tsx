@@ -65,7 +65,7 @@ export function ForYouSectionML() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-        {recommendations.map((rec) => (
+        {recommendations.map((rec, index) => (
           <button
             key={rec.destination_id}
             onClick={() => {
@@ -86,7 +86,7 @@ export function ForYouSectionML() {
             className={`${CARD_WRAPPER} text-left group`}
             title={rec.reason}
           >
-            <div className={CARD_MEDIA}>
+            <div className={`${CARD_MEDIA} mb-3`}>
               {/* Image would be fetched from destination data */}
               <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
                 <MapPin className="h-8 w-8 opacity-20" />
@@ -103,11 +103,16 @@ export function ForYouSectionML() {
             <div className="space-y-0.5">
               <div className={CARD_TITLE}>{rec.name}</div>
               <div className={CARD_META}>
-                {rec.city && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {rec.city}
-                  </span>
+                <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                  {rec.city}
+                </span>
+                {rec.category && (
+                  <>
+                    <span className="text-gray-300 dark:text-gray-700">•</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
+                      {rec.category}
+                    </span>
+                  </>
                 )}
               </div>
               {isMLPowered && (
