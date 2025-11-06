@@ -218,7 +218,7 @@ export function useFilterSteps(
     },
     ...(intent?.city ? [{
       label: `Filtering by location`,
-      description: `Showing places in ${intent.city}`,
+      description: `Showing places in ${intent.city.charAt(0).toUpperCase() + intent.city.slice(1)}`,
       icon: MapPin,
       filterFn: (d: Destination) =>
         d.city?.toLowerCase().includes(intent.city?.toLowerCase() || '') || false,
