@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # ML Service - Python FastAPI with Google Trends integration
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: urban-manual-ml-service
+    ports:
+      - "8000:8000"
+    environment:
+      # Service Configuration
+      - ML_SERVICE_HOST=0.0.0.0
+      - ML_SERVICE_PORT=8000
+      - LOG_LEVEL=INFO
+
+      # Database (use your Supabase credentials)
+      - POSTGRES_URL=${POSTGRES_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+
+      # Model Configuration
+      - LIGHTFM_EPOCHS=50
+      - LIGHTFM_THREADS=4
+      - PROPHET_SEASONALITY_MODE=multiplicative
+      - CACHE_TTL_HOURS=24
+
+      # Rate Limiting
+      - MAX_REQUESTS_PER_MINUTE=60
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - urban-manual-network
+    volumes:
+      # Mount source code for development (hot reload)
+      - ./ml-service/app:/app/app:cached
+      # Persist model cache
+      - ml-models-cache:/app/models
+
+  # Next.js Web Application
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: urban-manual-nextjs
+    ports:
+      - "3000:3000"
+    environment:
+      # Supabase Configuration
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - POSTGRES_URL=${POSTGRES_URL}
+
+      # Payload CMS
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET}
+
+      # Google Services
+      - NEXT_PUBLIC_GOOGLE_API_KEY=${NEXT_PUBLIC_GOOGLE_API_KEY}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+
+      # ML Service (internal Docker network)
+      - ML_SERVICE_URL=http://ml-service:8000
+
+      # Upstash Redis
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+
+      # OpenAI (optional)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+      # Anthropic Claude (optional)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    restart: unless-stopped
+    depends_on:
+      ml-service:
+        condition: service_healthy
+    networks:
+      - urban-manual-network
+    volumes:
+      # Mount source code for development
+      - .:/app:cached
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+networks:
+  urban-manual-network:
+    driver: bridge
+
+volumes:
+  ml-models-cache:
+    driver: local

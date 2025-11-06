@@ -1,0 +1,238 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Start All Services (Docker)",
+      "type": "shell",
+      "command": "docker-compose -f docker-compose.dev.yml up --build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "🛑 Stop All Services",
+      "type": "shell",
+      "command": "docker-compose -f docker-compose.dev.yml down",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🌐 Start Next.js Only (Local)",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build"
+    },
+    {
+      "label": "🤖 Start ML Service Only (Docker)",
+      "type": "shell",
+      "command": "cd ml-service && docker-compose up --build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "🐍 Start ML Service (Python Local)",
+      "type": "shell",
+      "command": "cd ml-service && source venv/bin/activate && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "dependsOn": "Setup ML Service Python Environment"
+    },
+    {
+      "label": "Setup ML Service Python Environment",
+      "type": "shell",
+      "command": "cd ml-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🧪 Run Intelligence Tests",
+      "type": "npm",
+      "script": "test:intelligence",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔧 Build Next.js",
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "build"
+    },
+    {
+      "label": "🧹 Lint Code",
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "📊 Check ML Service Health",
+      "type": "shell",
+      "command": "curl http://localhost:8000/health",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "📖 View ML Service API Docs",
+      "type": "shell",
+      "command": "open http://localhost:8000/docs || xdg-open http://localhost:8000/docs",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🌍 Open Next.js App",
+      "type": "shell",
+      "command": "open http://localhost:3000 || xdg-open http://localhost:3000",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔄 Install Dependencies (All)",
+      "type": "shell",
+      "command": "npm install && cd ml-service && pip install -r requirements.txt && cd ../ai-agents && npm install",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "📦 Install Google Trends Dependency",
+      "type": "shell",
+      "command": "cd ml-service && pip install pytrends==4.9.2",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🗄️ Run Database Migration",
+      "type": "shell",
+      "command": "npm run migrate:026",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔄 Sync to Asimov",
+      "type": "npm",
+      "script": "sync:asimov",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🗺️ Enrich with Google Places",
+      "type": "npm",
+      "script": "enrich:google",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🤖 Start AI Agents",
+      "type": "shell",
+      "command": "cd ai-agents && npm run dev",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🧠 Generate Migration (AI Agent)",
+      "type": "shell",
+      "command": "cd ai-agents && npm run agent migrate \"${input:migrationDescription}\" \"${input:migrationRequirements}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "📝 View Docker Logs",
+      "type": "shell",
+      "command": "docker-compose -f docker-compose.dev.yml logs -f",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🧹 Clean Docker Volumes",
+      "type": "shell",
+      "command": "docker-compose -f docker-compose.dev.yml down -v",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "migrationDescription",
+      "type": "promptString",
+      "description": "Migration description"
+    },
+    {
+      "id": "migrationRequirements",
+      "type": "promptString",
+      "description": "Migration requirements"
+    }
+  ]
+}
