@@ -143,18 +143,10 @@ export default function GreetingHero({
                 }
               }}
               className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-              style={{ 
-                paddingLeft: isSearching ? '32px' : '0',
-                paddingRight: isAIEnabled && !searchQuery ? '80px' : '0'
+              style={{
+                paddingLeft: isSearching ? '32px' : '0'
               }}
             />
-            {/* Travel Intelligence hint */}
-            {isAIEnabled && !searchQuery && (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-[1px]">
-                <Sparkles className="h-3 w-3" />
-                <span>Travel Intelligence</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
