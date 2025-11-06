@@ -1,0 +1,40 @@
+{
+  "name": "@urban-manual/ai-agents",
+  "version": "0.1.0",
+  "description": "AI agent automation for Urban Manual - migration generation, test creation, and more",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "agent": "tsx src/cli.ts",
+    "migrate": "tsx src/agents/migration-generator.ts",
+    "test-gen": "tsx src/agents/test-generator.ts",
+    "review": "tsx src/agents/code-reviewer.ts",
+    "docs": "tsx src/agents/documentation-generator.ts",
+    "refactor": "tsx src/agents/refactoring-agent.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.31",
+    "@langchain/langgraph": "^0.2.24",
+    "@langchain/openai": "^0.3.17",
+    "@langchain/anthropic": "^0.3.7",
+    "@langchain/community": "^0.3.16",
+    "langchain": "^0.3.7",
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.5",
+    "commander": "^12.1.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.1.1",
+    "drizzle-orm": "^0.36.4",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

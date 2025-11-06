@@ -1,0 +1,261 @@
+name: AI Agents CI/CD
+
+on:
+  pull_request:
+    branches: [main, master]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      agent_task:
+        description: 'Agent task to run'
+        required: true
+        type: choice
+        options:
+          - review
+          - test-generation
+          - docs-generation
+          - refactor-suggestions
+
+jobs:
+  # Automated code review on PRs
+  code-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ai-agents/package-lock.json
+
+      - name: Install AI Agents dependencies
+        working-directory: ai-agents
+        run: npm ci
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v42
+        with:
+          files: |
+            src/**/*.ts
+            src/**/*.tsx
+            src/**/*.js
+            src/**/*.jsx
+
+      - name: Review changed files
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: ai-agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo "Reviewing ${{ steps.changed-files.outputs.all_changed_files }}"
+
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "📝 Reviewing: $file"
+            npm run agent review "../$file" --focus security,performance || true
+          done
+
+      - name: Comment PR with review
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            // Read review files
+            const reviews = [];
+            const files = '${{ steps.changed-files.outputs.all_changed_files }}'.split(' ');
+
+            for (const file of files) {
+              const reviewFile = `${file}.review.md`;
+              if (fs.existsSync(reviewFile)) {
+                const content = fs.readFileSync(reviewFile, 'utf8');
+                reviews.push(`## ${file}\n\n${content}`);
+              }
+            }
+
+            if (reviews.length > 0) {
+              const body = `## 🤖 AI Code Review\n\n${reviews.join('\n\n---\n\n')}`;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.name,
+                body: body
+              });
+            }
+
+  # Test generation for new files
+  test-generation:
+    name: Generate Missing Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ai-agents/package-lock.json
+
+      - name: Install AI Agents dependencies
+        working-directory: ai-agents
+        run: npm ci
+
+      - name: Get files without tests
+        id: find-untested
+        run: |
+          untested=""
+          for file in $(find src -name "*.ts" -o -name "*.tsx" | grep -v ".test." | grep -v ".spec."); do
+            testfile=$(echo "$file" | sed 's/\.tsx\?$/.test.ts/')
+            if [ ! -f "$testfile" ]; then
+              untested="$untested $file"
+            fi
+          done
+          echo "untested=$untested" >> $GITHUB_OUTPUT
+
+      - name: Generate tests
+        if: steps.find-untested.outputs.untested != ''
+        working-directory: ai-agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          for file in ${{ steps.find-untested.outputs.untested }}; do
+            echo "🧪 Generating tests for: $file"
+            npm run agent test "../$file" --type unit || true
+          done
+
+      - name: Create PR for generated tests
+        if: steps.find-untested.outputs.untested != ''
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'test: add AI-generated tests for untested files'
+          branch: ai/generated-tests-${{ github.event.pull_request.number }}
+          title: '🤖 AI-Generated Tests for PR #${{ github.event.pull_request.number }}'
+          body: |
+            This PR adds AI-generated tests for files that were missing test coverage.
+
+            **Generated by:** AI Test Generator Agent
+            **Original PR:** #${{ github.event.pull_request.number }}
+
+            Please review the generated tests carefully before merging.
+
+  # Documentation check
+  docs-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ai-agents/package-lock.json
+
+      - name: Install AI Agents dependencies
+        working-directory: ai-agents
+        run: npm ci
+
+      - name: Check for missing README
+        id: check-readme
+        run: |
+          if [ ! -f "README.md" ]; then
+            echo "missing=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate README if missing
+        if: steps.check-readme.outputs.missing == 'true'
+        working-directory: ai-agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          npm run agent docs readme ..
+
+      - name: Check API documentation
+        run: |
+          echo "📚 Checking for missing API documentation..."
+          # Add logic to check for undocumented exports
+
+  # Manual workflow runs
+  manual-agent-tasks:
+    name: Manual Agent Tasks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ai-agents/package-lock.json
+
+      - name: Install AI Agents dependencies
+        working-directory: ai-agents
+        run: npm ci
+
+      - name: Run agent task
+        working-directory: ai-agents
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          case "${{ github.event.inputs.agent_task }}" in
+            review)
+              echo "🔍 Running code review on all files..."
+              find ../src -name "*.ts" -o -name "*.tsx" | head -10 | xargs -I {} npm run agent review {}
+              ;;
+            test-generation)
+              echo "🧪 Generating tests..."
+              npm run agent test-dir ../src --type unit
+              ;;
+            docs-generation)
+              echo "📚 Generating documentation..."
+              npm run agent docs readme ..
+              npm run agent docs architecture ..
+              ;;
+            refactor-suggestions)
+              echo "💡 Suggesting refactorings..."
+              find ../src -name "*.ts" | head -5 | xargs -I {} npm run agent suggest {}
+              ;;
+          esac
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-outputs
+          path: |
+            **/*.review.md
+            **/*.test.ts
+            **/*.api.md
+            ARCHITECTURE.md
+            README.md
