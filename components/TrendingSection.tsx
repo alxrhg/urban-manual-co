@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, memo, useRef } from 'react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
@@ -20,12 +20,14 @@ interface Destination {
   is_open_now?: boolean;
 }
 
-export function TrendingSection({ city }: { city?: string }) {
+function TrendingSectionComponent({ city }: { city?: string }) {
   const router = useRouter();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  const fetchTrending = useCallback(() => {
     const params = new URLSearchParams();
     if (city) params.set('city', city);
     params.set('limit', '6');
@@ -41,11 +43,42 @@ export function TrendingSection({ city }: { city?: string }) {
       });
   }, [city]);
 
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      { rootMargin: '100px' } // Start loading 100px before coming into view
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    // Only fetch when visible
+    if (isVisible) {
+      fetchTrending();
+    }
+  }, [isVisible, fetchTrending]);
+
   if (loading) return null;
   if (!destinations.length) return null;
 
   return (
-    <section className="mb-12">
+    <section ref={sectionRef} className="mb-12">
       <div className="flex items-center gap-2 mb-4">
         <h2 className="text-sm tracking-wide uppercase text-neutral-500">
           Trending This Week
@@ -119,4 +152,7 @@ export function TrendingSection({ city }: { city?: string }) {
     </section>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+export const TrendingSection = memo(TrendingSectionComponent);
 

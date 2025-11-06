@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       trending: trending || [],
       meta: {
         filters: { city, category },
@@ -33,6 +33,11 @@ export async function GET(request: NextRequest) {
         period: 'Past 14 days',
       },
     });
+
+    // Add cache headers (5 minutes for trending data)
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+
+    return response;
   } catch (e: any) {
     console.error('Trending error:', e);
     return NextResponse.json(
