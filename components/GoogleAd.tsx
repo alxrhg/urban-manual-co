@@ -65,21 +65,42 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
 /**
  * Multiplex ad - Grid of native ads matching your card layout
  * Perfect for insertion between rows in destination grids
+ * Automatically hides if no ad content is available
  */
 export function MultiplexAd({ slot, className = '' }: { slot: string; className?: string }) {
   const adRef = useRef<HTMLModElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
+
+      // Check if ad loaded after a delay
+      const checkAdLoaded = setTimeout(() => {
+        if (adRef.current && containerRef.current) {
+          const adStatus = adRef.current.getAttribute('data-ad-status');
+          const hasContent = adRef.current.innerHTML.trim().length > 0;
+
+          // Hide container if ad didn't load or has no content
+          if (adStatus === 'unfilled' || !hasContent) {
+            containerRef.current.style.display = 'none';
+          }
+        }
+      }, 1000);
+
+      return () => clearTimeout(checkAdLoaded);
     } catch (err) {
       console.error('AdSense error:', err);
+      // Hide on error
+      if (containerRef.current) {
+        containerRef.current.style.display = 'none';
+      }
     }
   }, []);
 
   return (
-    <div className={`col-span-full ${className}`}>
+    <div ref={containerRef} className={`col-span-full ${className}`}>
       <div className="w-full border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
         <div className="text-xs text-gray-400 mb-3 text-center">Sponsored</div>
         <ins

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
+import { MultiplexAd } from '@/components/GoogleAd';
 
 interface Destination {
   id: number;
@@ -196,6 +197,13 @@ function SearchPageContent() {
           />
         ))}
       </div>
+
+      {/* Ad after grid */}
+      {searchState.filteredResults.length > 0 && (
+        <div className="mt-8">
+          <MultiplexAd slot="3271683710" />
+        </div>
+      )}
 
       {searchState.refinements.length > 0 && (
         <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
