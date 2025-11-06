@@ -246,7 +246,7 @@ export default function Home() {
       }
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
 
   // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
   useEffect(() => {
