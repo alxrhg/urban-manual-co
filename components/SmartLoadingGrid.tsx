@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from './LovablyDestinationCard';
+import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
+import Image from 'next/image';
 import { Sparkles, MapPin, Filter, Star } from 'lucide-react';
 
 interface Destination {
@@ -241,11 +242,55 @@ export function SmartLoadingGrid({
                   delay: idx * 0.005, // Subtle stagger
                 }}
               >
-                <LovablyDestinationCard
-                  destination={destination as any}
-                  borderColor={LOVABLY_BORDER_COLORS[idx % LOVABLY_BORDER_COLORS.length]}
+                <button
                   onClick={() => !isFiltered && onCardClick(destination)}
-                />
+                  className={`${CARD_WRAPPER} text-left w-full`}
+                  disabled={isFiltered}
+                >
+                  <div className={`${CARD_MEDIA} mb-2`}>
+                    {destination.image ? (
+                      <Image
+                        src={destination.image}
+                        alt={destination.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                        <MapPin className="h-12 w-12 opacity-20" />
+                      </div>
+                    )}
+                    {destination.michelin_stars && destination.michelin_stars > 0 && (
+                      <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                        <img
+                          src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                          alt="Michelin star"
+                          className="h-3 w-3"
+                        />
+                        <span>{destination.michelin_stars}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className={CARD_TITLE}>{destination.name}</h3>
+                    <div className={CARD_META}>
+                      {destination.city && (
+                        <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                          {destination.city}
+                        </span>
+                      )}
+                      {destination.category && (
+                        <>
+                          <span className="text-gray-300 dark:text-gray-700">•</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
+                            {destination.category}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </button>
               </motion.div>
             );
           })}
