@@ -1314,20 +1314,10 @@ export default function Home() {
             );
           })()}
 
-          {/* Horizontal Ad below pagination */}
+          {/* Ad below pagination */}
           {displayDestinations.length > 0 && (
             <div className="mt-8 w-full">
-              <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
-                <div className="text-xs text-gray-400 mb-2 text-center">Sponsored</div>
-                <ins
-                  className="adsbygoogle"
-                  style={{ display: 'block', height: '90px' }}
-                  data-ad-client="ca-pub-3052286230434362"
-                  data-ad-slot="3271683710"
-                  data-ad-format="horizontal"
-                  data-full-width-responsive="false"
-                />
-              </div>
+              <MultiplexAd slot="3271683710" />
             </div>
           )}
           </>
