@@ -174,7 +174,6 @@ export default function Home() {
   const [searching, setSearching] = useState(false);
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   // Pagination state
@@ -335,7 +334,6 @@ export default function Home() {
     setSearching(true);
     setSearchTier('ai-enhanced');
     setSearchIntent(null);
-    setSearchSuggestions([]);
 
     try {
       // Match chat component exactly - build history from existing conversation
@@ -680,7 +678,6 @@ export default function Home() {
                   // Clear conversation history only if search is cleared
                   if (!value.trim()) {
                     setConversationHistory([]);
-                    setSearchSuggestions([]);
                     setSearchIntent(null);
                     setSeasonalContext(null);
                     setSearchTier(null);
