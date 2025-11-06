@@ -1,8 +1,13 @@
- 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { embedText } from '@/lib/llm';
+import {
+  searchRatelimit,
+  memorySearchRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -84,9 +89,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { query, filters = {}, userId, session_token } = body;
     const PAGE_SIZE = 10;
-    
+
     // Try to get userId from cookies/auth if not provided
     let authenticatedUserId = userId;
+
+    // Rate limiting: 20 requests per 10 seconds for search
+    const identifier = getIdentifier(request, authenticatedUserId);
+    const ratelimit = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Too many search requests. Please wait a moment.',
+        limit,
+        remaining,
+        reset
+      );
+    }
     let conversationContext: any = null;
 
     if (!authenticatedUserId) {
