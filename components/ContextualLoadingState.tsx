@@ -5,12 +5,12 @@ import { Sparkles } from 'lucide-react';
 interface ContextualLoadingStateProps {
   intent?: {
     primaryIntent?: string;
-    city?: string;
-    category?: string;
+    city?: string | null;
+    category?: string | null;
     modifiers?: string[];
     temporalContext?: {
       timeframe?: string;
-    };
+    } | null;
   };
   query: string;
 }

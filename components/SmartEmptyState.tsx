@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 interface SmartEmptyStateProps {
   query: string;
   intent?: {
-    city?: string;
-    category?: string;
+    city?: string | null;
+    category?: string | null;
   };
   onAlternativeClick: (alternative: string) => void;
 }
