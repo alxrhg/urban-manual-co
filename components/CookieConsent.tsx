@@ -76,24 +76,27 @@ export function CookieConsent() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-2 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl p-6">
-          <div className="flex items-start gap-4">
-            {/* Icon */}
-            <div className="flex-shrink-0">
-              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
+        <div className="bg-white/85 dark:bg-gray-950/85 backdrop-blur-lg border-t sm:border border-white/20 dark:border-gray-700/30 sm:rounded-2xl shadow-2xl p-3 sm:p-6">
+          <div className="flex items-start gap-2 sm:gap-4">
+            {/* Icon - Hidden on mobile */}
+            <div className="flex-shrink-0 hidden sm:block">
+              <div className="p-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-full border border-white/30 dark:border-gray-700/30">
                 <Cookie className="h-5 w-5 text-gray-900 dark:text-white" />
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-2 sm:space-y-4">
               <div>
-                <h3 className="text-sm font-medium mb-2">We value your privacy</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                <h3 className="text-xs sm:text-sm font-medium mb-1 sm:mb-2">We value your privacy</h3>
+                <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 leading-relaxed hidden sm:block">
                   We use cookies to enhance your browsing experience, analyze site traffic, and personalize content.
                   By clicking "Accept All", you consent to our use of cookies.
+                </p>
+                <p className="text-[10px] text-gray-600 dark:text-gray-400 leading-relaxed sm:hidden">
+                  We use cookies to enhance your experience.
                 </p>
               </div>
 
@@ -176,62 +179,52 @@ export function CookieConsent() {
               )}
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="flex flex-row items-center gap-1.5 sm:gap-2">
                 {!showDetails ? (
                   <>
                     <button
                       onClick={acceptAll}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] sm:text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
                     >
-                      Accept All
+                      Accept
                     </button>
                     <button
                       onClick={acceptNecessary}
-                      className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-200 dark:border-gray-800 text-[10px] sm:text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
-                      Necessary Only
+                      Decline
                     </button>
                     <button
                       onClick={() => setShowDetails(true)}
-                      className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                      className="hidden sm:block px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                       Customize
                     </button>
+                    <a
+                      href="/privacy"
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-center"
+                    >
+                      Privacy
+                    </a>
                   </>
                 ) : (
                   <>
                     <button
                       onClick={saveCustom}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] sm:text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
                     >
-                      Save Preferences
+                      Save
                     </button>
                     <button
                       onClick={() => setShowDetails(false)}
-                      className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-200 dark:border-gray-800 text-[10px] sm:text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
                       Back
                     </button>
                   </>
                 )}
-
-                <a
-                  href="/privacy"
-                  className="px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-center"
-                >
-                  Privacy Policy
-                </a>
               </div>
             </div>
-
-            {/* Close button (mobile) */}
-            <button
-              onClick={acceptNecessary}
-              className="flex-shrink-0 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors sm:hidden"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
         </div>
       </div>

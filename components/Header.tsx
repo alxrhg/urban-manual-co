@@ -204,46 +204,46 @@ export function Header() {
       {isMenuOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/30 z-40"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
             onClick={() => setIsMenuOpen(false)}
             aria-hidden="true"
           />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed right-4 top-16 z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed right-4 top-16 z-50 w-72 rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
             role="menu"
             aria-label="Main menu"
           >
             {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-l border-white/20 dark:border-gray-700/30" aria-hidden="true" />
             <div className="py-2">
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                 role="menuitem"
               >
                 Cities
               </button>
               <button
                 onClick={() => { navigate('/map'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                 role="menuitem"
               >
                 Map
               </button>
               <button
                 onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                 role="menuitem"
               >
                 Discover Collections
               </button>
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
+              <div className="my-2 border-t border-white/20 dark:border-gray-700/30" role="separator" />
               {user ? (
                 <>
                   <button
                     onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                     role="menuitem"
                   >
                     Account
@@ -251,7 +251,7 @@ export function Header() {
                   {isAdmin && (
                     <button
                       onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
-                      className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                      className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 font-medium transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                       role="menuitem"
                     >
                       Admin
@@ -259,7 +259,7 @@ export function Header() {
                   )}
                   <button
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                     role="menuitem"
                   >
                     Sign Out
@@ -268,16 +268,16 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }}
-                  className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                   role="menuitem"
                 >
                   Sign In
                 </button>
               )}
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
+              <div className="my-2 border-t border-white/20 dark:border-gray-700/30" role="separator" />
               <button
                 onClick={toggleDarkMode}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
                 role="menuitem"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >

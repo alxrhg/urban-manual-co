@@ -118,12 +118,12 @@ export function SearchFiltersComponent({
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute top-full right-0 mt-2 w-80 bg-white/90 dark:bg-black/90 backdrop-blur-md border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-2xl z-50 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 dark:border-gray-700/30">
               <div className="text-sm font-medium">Filters</div>
               {hasActiveFilters && (
                 <button
@@ -237,7 +237,7 @@ export function SearchFiltersComponent({
               </div>
 
               {/* Near Me Filter */}
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+              <div className="pt-4 border-t border-white/20 dark:border-gray-700/30">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
