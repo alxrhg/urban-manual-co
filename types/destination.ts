@@ -23,6 +23,21 @@ export interface Destination {
   tags?: string[] | null;
   last_enriched_at?: string | null;
   save_count?: number;
+  // Google Places API enriched data (JSON fields from database)
+  formatted_address?: string | null;
+  international_phone_number?: string | null;
+  user_ratings_total?: number | null;
+  opening_hours_json?: any | null;
+  reviews_json?: any | null;
+  photos_json?: any | null;
+  editorial_summary?: string | null;
+  google_name?: string | null;
+  place_types_json?: any | null;
+  utc_offset?: number | null;
+  vicinity?: string | null;
+  timezone_id?: string | null;
+  primary_photo_url?: string | null;
+  photo_count?: number | null;
   // Geolocation fields
   latitude?: number | null;
   longitude?: number | null;
