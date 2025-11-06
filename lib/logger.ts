@@ -10,6 +10,7 @@
  */
 
 import pino from 'pino';
+import { writeLogToDatabase } from './loggerDatabase';
 
 // Sensitive field patterns to redact
 const SENSITIVE_PATHS = [
@@ -144,14 +145,16 @@ export function logError(
   error: Error | unknown,
   context?: Record<string, any>
 ) {
+  const errorDetails = error instanceof Error ? {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+  } : { message: String(error) };
+
   if (error instanceof Error) {
     logger.error({
       type: 'error',
-      err: {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-      },
+      err: errorDetails,
       ...context,
     }, error.message);
   } else {
@@ -161,6 +164,16 @@ export function logError(
       ...context,
     }, 'Unknown error occurred');
   }
+
+  // Also write errors to database for admin viewing
+  writeLogToDatabase({
+    level: 'error',
+    type: 'error',
+    message: error instanceof Error ? error.message : String(error),
+    user_id: context?.userId,
+    context,
+    error: errorDetails,
+  }).catch(() => {}); // Silent fail
 }
 
 /**
@@ -211,6 +224,17 @@ export function logSecurityEvent(
     event,
     ...details,
   }, `Security event: ${event}`);
+
+  // Also write security events to database for admin viewing
+  if (details.success === false) {
+    writeLogToDatabase({
+      level,
+      type: 'security',
+      message: `Security event: ${event}`,
+      user_id: details.userId,
+      context: { event, ...details },
+    }).catch(() => {}); // Silent fail
+  }
 }
 
 /**
@@ -228,6 +252,14 @@ export function logRateLimit(
       endpoint,
       exceeded,
     }, `Rate limit exceeded: ${identifier} on ${endpoint}`);
+
+    // Also write rate limit exceeded events to database
+    writeLogToDatabase({
+      level: 'warn',
+      type: 'rate_limit',
+      message: `Rate limit exceeded: ${identifier} on ${endpoint}`,
+      context: { identifier, endpoint, exceeded },
+    }).catch(() => {}); // Silent fail
   } else {
     logger.debug({
       type: 'rate_limit',
