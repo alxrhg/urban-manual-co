@@ -252,8 +252,8 @@ export default function Home() {
   useEffect(() => {
     setAdvancedFilters(prev => ({
       ...prev,
-      city: selectedCity || undefined,
-      category: selectedCategory || undefined,
+      city: selectedCity && selectedCity.trim() ? selectedCity : undefined,
+      category: selectedCategory && selectedCategory.trim() ? selectedCategory : undefined,
     }));
   }, [selectedCity, selectedCategory]);
 

@@ -543,6 +543,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 href={`/city/${destination.city}`}
                 className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   router.push(`/city/${destination.city}`);
                 }}
@@ -1014,7 +1015,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       key={rec.slug}
                       onClick={() => {
                         // Navigate to recommended destination
-                        window.location.href = `/destination/${rec.slug}`;
+                        router.push(`/destination/${rec.slug}`);
                       }}
                       className="flex-shrink-0 w-40 group text-left"
                     >
