@@ -9,6 +9,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { CookieConsent } from "@/components/CookieConsent";
+import { ToastContainer } from "@/components/Toast";
 
 export const metadata: Metadata = {
   title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
@@ -154,6 +155,7 @@ export default function RootLayout({
             </ItineraryProvider>
           </AuthProvider>
         </TRPCProvider>
+        <ToastContainer />
         <Analytics />
         <SpeedInsights />
       </body>

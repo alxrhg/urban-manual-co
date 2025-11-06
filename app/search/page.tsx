@@ -9,6 +9,7 @@ import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
+import { MultiplexAd } from '@/components/GoogleAd';
 
 interface Destination {
   id: number;
@@ -266,6 +267,17 @@ function SearchPageContent() {
             </button>
           )}
         </>
+      {/* Ad after grid */}
+      {searchState.filteredResults.length > 0 && (
+        <div className="mt-8">
+          <MultiplexAd slot="3271683710" />
+        </div>
+      )}
+
+      {searchState.refinements.length > 0 && (
+        <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
+          Clear all filters
+        </button>
       )}
     </div>
   );
