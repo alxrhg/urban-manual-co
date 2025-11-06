@@ -258,7 +258,10 @@ export default function Home() {
   // Session and context state
   const [lastSession, setLastSession] = useState<any>(null);
   const [userContext, setUserContext] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [showSessionResume, setShowSessionResume] = useState(false);
+  // Phase 2 & 3: Enriched greeting context
+  const [enrichedGreetingContext, setEnrichedGreetingContext] = useState<any>(null);
 
   // Track submitted query for chat display
   const [submittedQuery, setSubmittedQuery] = useState<string>('');
@@ -291,6 +294,13 @@ export default function Home() {
       fetchUserProfile();
     }
   }, [user]);
+
+  // Phase 2 & 3: Fetch enriched greeting context when user profile is loaded
+  useEffect(() => {
+    if (user && userProfile) {
+      fetchEnrichedGreetingContext();
+    }
+  }, [user, userProfile]);
 
   // Fetch last conversation session
   async function fetchLastSession() {
@@ -332,6 +342,9 @@ export default function Home() {
         .single();
 
       if (!error && data) {
+        // Store full profile for greeting context
+        setUserProfile(data);
+        // Also store simplified version for other components
         setUserContext({
           favoriteCities: data.favorite_cities || [],
           favoriteCategories: data.favorite_categories || [],
@@ -340,6 +353,31 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+    }
+  }
+
+  // Phase 2 & 3: Fetch enriched greeting context (journey, achievements, weather, trending)
+  async function fetchEnrichedGreetingContext() {
+    if (!user || !userProfile) return;
+
+    try {
+      const favoriteCity = userProfile.favorite_cities?.[0];
+      const params = new URLSearchParams({
+        userId: user.id,
+      });
+      if (favoriteCity) {
+        params.append('favoriteCity', favoriteCity);
+      }
+
+      const response = await fetch(`/api/greeting/context?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.context) {
+          setEnrichedGreetingContext(data.context);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching enriched greeting context:', error);
     }
   }
 
@@ -874,6 +912,9 @@ export default function Home() {
                             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                             .join(' ');
                         })()}
+                        userProfile={userProfile}
+                        lastSession={lastSession}
+                        enrichedContext={enrichedGreetingContext}
                         isAIEnabled={isAIEnabled}
                         isSearching={searching}
                         filters={advancedFilters}
