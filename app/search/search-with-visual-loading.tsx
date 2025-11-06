@@ -1,0 +1,326 @@
+'use client';
+
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
+import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
+import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
+import { SmartEmptyState } from '@/components/SmartEmptyState';
+import { SmartLoadingGrid } from '@/components/SmartLoadingGrid'; // ✨ NEW!
+import { type ExtractedIntent } from '@/app/api/intent/schema';
+import { MultiplexAd } from '@/components/GoogleAd';
+
+interface Destination {
+  id: number;
+  name: string;
+  city?: string;
+  category?: string;
+  description?: string;
+  image?: string;
+  michelin_stars?: number;
+  is_open_now?: boolean;
+  price_level?: number;
+}
+
+interface SearchState {
+  originalQuery: string;
+  refinements: string[];
+  allResults: Destination[];
+  filteredResults: Destination[];
+  conversationHistory: Message[];
+  suggestions: Array<{ label: string; refinement: string }>;
+  intent?: ExtractedIntent;
+  isLoading?: boolean;
+  showVisualLoading?: boolean; // ✨ NEW!
+}
+
+function SearchPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const query = searchParams.get('q') || '';
+
+  const [searchState, setSearchState] = useState<SearchState>({
+    originalQuery: query,
+    refinements: [],
+    allResults: [],
+    filteredResults: [],
+    conversationHistory: [],
+    suggestions: [],
+  });
+
+  // ✨ Fetch sample destinations for visual loading
+  const [sampleDestinations, setSampleDestinations] = useState<Destination[]>([]);
+
+  useEffect(() => {
+    // Fetch a large sample set to show during loading
+    async function fetchSampleDestinations() {
+      try {
+        const res = await fetch('/api/destinations/sample?limit=100');
+        const data = await res.json();
+        setSampleDestinations(data.destinations || []);
+      } catch (error) {
+        console.error('Failed to fetch sample destinations:', error);
+      }
+    }
+    fetchSampleDestinations();
+  }, []);
+
+  useEffect(() => {
+    if (query) performInitialSearch(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  // Recompute suggestions whenever filtered results or refinements change
+  useEffect(() => {
+    async function updateSuggestions() {
+      const newSuggestions = await generateSuggestions({
+        query: searchState.originalQuery,
+        results: searchState.filteredResults,
+        refinements: searchState.refinements,
+        filters: {},
+      });
+      setSearchState((prev) => ({
+        ...prev,
+        suggestions: newSuggestions,
+      }));
+    }
+    if (searchState.filteredResults.length > 0) {
+      updateSuggestions();
+    }
+  }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
+
+  async function performInitialSearch(searchQuery: string) {
+    // ✨ Enable visual loading
+    setSearchState(prev => ({
+      ...prev,
+      isLoading: true,
+      showVisualLoading: true
+    }));
+
+    try {
+      const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      const results: Destination[] = data.results || [];
+
+      // ✨ Wait a bit for visual loading animation to complete
+      setTimeout(() => {
+        setSearchState({
+          originalQuery: searchQuery,
+          refinements: [],
+          allResults: results,
+          filteredResults: results,
+          conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
+          suggestions: data.suggestions || [],
+          intent: data.intent,
+          isLoading: false,
+          showVisualLoading: false, // ✨ Hide visual loading
+        });
+      }, 3000); // Let animation run for 3 seconds
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchState(prev => ({
+        ...prev,
+        isLoading: false,
+        showVisualLoading: false
+      }));
+    }
+  }
+
+  async function handleRefinement(refinement: string) {
+    const newRefinements = [...searchState.refinements, refinement];
+    const res = await fetch('/api/search/refine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        originalQuery: searchState.originalQuery,
+        refinements: newRefinements,
+        allResults: searchState.allResults.map((r) => r.id),
+      }),
+    });
+    const data = await res.json();
+
+    setSearchState((prev) => ({
+      ...prev,
+      refinements: newRefinements,
+      filteredResults: data.filteredResults || [],
+      conversationHistory: ([
+        ...prev.conversationHistory,
+        { role: 'user' as const, content: refinement },
+        ...(data.contextResponse ? [{ role: 'assistant' as const, content: data.contextResponse }] : []),
+      ]) as Message[],
+    }));
+  }
+
+  async function handleFollowUp(message: string): Promise<string> {
+    try {
+      const res = await fetch('/api/search/follow-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalQuery: searchState.originalQuery,
+          followUpMessage: message,
+          conversationHistory: searchState.conversationHistory,
+          currentResults: searchState.filteredResults.map((r) => ({ id: r.id })),
+          refinements: searchState.refinements,
+          intent: searchState.intent,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Follow-up search failed');
+      }
+
+      const data = await res.json();
+      const results: Destination[] = data.results || [];
+
+      setSearchState((prev) => ({
+        ...prev,
+        refinements: [...prev.refinements, message],
+        filteredResults: results,
+        allResults: results.length > prev.allResults.length ? results : prev.allResults,
+        conversationHistory: [
+          ...prev.conversationHistory,
+          { role: 'user' as const, content: message },
+          ...(data.contextResponse ? [{ role: 'assistant' as const, content: data.contextResponse }] : []),
+        ] as Message[],
+        suggestions: data.suggestions || prev.suggestions,
+      }));
+
+      return data.contextResponse || '';
+    } catch (error) {
+      console.error('Follow-up error:', error);
+      return 'Sorry, I encountered an error processing your request. Please try again.';
+    }
+  }
+
+  function handleChipClick(chipRefinement: string) {
+    handleRefinement(chipRefinement);
+  }
+
+  function clearFilters() {
+    setSearchState((prev) => ({
+      ...prev,
+      refinements: [],
+      filteredResults: prev.allResults,
+      conversationHistory: ([
+        ...prev.conversationHistory,
+        { role: 'assistant' as const, content: `Filters cleared. Showing all ${prev.allResults.length} results.` },
+      ]) as Message[],
+    }));
+  }
+
+  function handleIntentChipRemove(chipType: string, value: string) {
+    let newQuery = searchState.originalQuery;
+
+    if (chipType === 'city') {
+      newQuery = newQuery.replace(new RegExp(value, 'gi'), '').trim();
+    } else if (chipType === 'category') {
+      newQuery = newQuery.replace(new RegExp(value, 'gi'), '').trim();
+    }
+
+    if (newQuery && newQuery !== searchState.originalQuery) {
+      performInitialSearch(newQuery);
+    }
+  }
+
+  function handleAlternativeClick(alternative: string) {
+    performInitialSearch(alternative);
+  }
+
+  return (
+    <div className="px-6 md:px-10 py-10">
+      <p className="text-xs tracking-widest text-neutral-400 mb-8">
+        {new Date().getHours() < 12 ? 'GOOD MORNING' : new Date().getHours() < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING'}
+      </p>
+
+      <CompactResponseSection
+        query={searchState.originalQuery}
+        messages={searchState.conversationHistory}
+        suggestions={searchState.suggestions}
+        onChipClick={handleChipClick}
+        onFollowUp={handleFollowUp}
+      />
+
+      {/* Intent Confirmation Chips */}
+      {searchState.intent && !searchState.isLoading && (
+        <div className="mb-6">
+          <IntentConfirmationChips
+            intent={searchState.intent}
+            onChipRemove={handleIntentChipRemove}
+            editable={true}
+          />
+        </div>
+      )}
+
+      {/* ✨ NEW: Visual Loading State with Progressive Filtering */}
+      {searchState.showVisualLoading && sampleDestinations.length > 0 && (
+        <SmartLoadingGrid
+          query={searchState.originalQuery}
+          intent={{
+            city: searchState.intent?.city || null,
+            category: searchState.intent?.category || null,
+          }}
+          allDestinations={sampleDestinations}
+          onCardClick={(dest) => {
+            // Cards are not clickable during loading
+          }}
+        />
+      )}
+
+      {/* Empty State */}
+      {!searchState.isLoading && searchState.filteredResults.length === 0 && searchState.originalQuery && (
+        <SmartEmptyState
+          query={searchState.originalQuery}
+          intent={searchState.intent}
+          onAlternativeClick={handleAlternativeClick}
+        />
+      )}
+
+      {/* Results */}
+      {!searchState.isLoading && !searchState.showVisualLoading && searchState.filteredResults.length > 0 && (
+        <>
+          <div className="mb-4 text-sm text-neutral-500">
+            Showing {searchState.filteredResults.length}
+            {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
+              <span> of {searchState.allResults.length}</span>
+            )}
+            {searchState.refinements.length > 0 && (
+              <span> (filtered by: {searchState.refinements.join(', ')})</span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
+            {searchState.filteredResults.map((d, idx) => (
+              <LovablyDestinationCard
+                key={d.id}
+                destination={d as any}
+                borderColor={LOVABLY_BORDER_COLORS[idx % LOVABLY_BORDER_COLORS.length]}
+                onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+              />
+            ))}
+          </div>
+
+          {searchState.refinements.length > 0 && (
+            <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
+              Clear all filters
+            </button>
+          )}
+
+          {/* Ad after grid */}
+          <div className="mt-8">
+            <MultiplexAd slot="3271683710" />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function SearchPageWithVisualLoading() {
+  return (
+    <Suspense fallback={<div className="px-6 md:px-10 py-10">Loading...</div>}>
+      <SearchPageContent />
+    </Suspense>
+  );
+}
