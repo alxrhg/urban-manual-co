@@ -42,13 +42,14 @@ export const aiRouter = router({
         }),
 
         // Get user's saved places for context
-        supabase.rpc('get_user_saved_destinations', { target_user_id: userId }).catch(error => {
-          console.error('Error fetching saved places:', error);
-          return { data: null };
-        })
+        supabase.rpc('get_user_saved_destinations', { target_user_id: userId })
       ]);
 
-      const savedPlaces = savedPlacesResult;
+      // Handle saved places result
+      const savedPlaces = savedPlacesResult?.data || null;
+      if (savedPlacesResult?.error) {
+        console.error('Error fetching saved places:', savedPlacesResult.error);
+      }
 
       // Pre-process query for fuzzy matching
       const budgetInference = inferPriceFromBudgetPhrase(input.message);
