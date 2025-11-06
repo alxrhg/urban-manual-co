@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { MapPin, Heart, Check } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
@@ -13,6 +13,7 @@ import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
+import { TripsTab } from "@/components/TripsTab";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -25,8 +26,10 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
-export default function Account() {
+// Separate component to handle search params
+function AccountContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
   const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
@@ -34,7 +37,7 @@ export default function Account() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'trips' | 'achievements' | 'settings'>('profile');
   const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state
@@ -63,6 +66,14 @@ export default function Account() {
 
     checkAuth();
   }, []);
+
+  // Handle tab query parameter
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'settings'].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
 
   // Fetch total destinations count
   useEffect(() => {
@@ -292,7 +303,7 @@ export default function Account() {
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {['profile', 'visited', 'saved', 'collections', 'achievements', 'settings'].map((tab) => (
+            {['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'settings'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -479,6 +490,13 @@ export default function Account() {
           </div>
         )}
 
+        {/* Trips Tab */}
+        {activeTab === 'trips' && (
+          <div className="fade-in">
+            <TripsTab onCreateTrip={() => loadUserData()} />
+          </div>
+        )}
+
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
           <div className="fade-in">
@@ -585,5 +603,14 @@ export default function Account() {
         </div>
       )}
     </main>
+  );
+}
+
+// Wrap AccountContent in Suspense
+export default function Account() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <AccountContent />
+    </Suspense>
   );
 }
