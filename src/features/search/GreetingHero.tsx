@@ -182,12 +182,9 @@ export default function GreetingHero({
                 }
               }}
               className="w-full text-left text-base uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-              style={{ 
+              style={{
                 paddingLeft: isSearching ? '32px' : '0',
                 paddingRight: isAIEnabled && !searchQuery ? '80px' : '0'
-              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-              style={{
-                paddingLeft: isSearching ? '32px' : '0'
               }}
             />
           </div>

@@ -221,11 +221,6 @@ export function Header() {
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
-            <div className="py-2">
-              <button
-                onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Cities
@@ -233,7 +228,6 @@ export function Header() {
               <button
                 onClick={() => { navigate('/map'); setIsMenuOpen(false); }}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Map
@@ -241,19 +235,16 @@ export function Header() {
               <button
                 onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Discover Collections
               </button>
               <div className="my-2 border-t border-white/20 dark:border-gray-700/30" role="separator" />
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               {user ? (
                 <>
                   <button
                     onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
                     className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Account
@@ -262,7 +253,6 @@ export function Header() {
                     <button
                       onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
                       className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 font-medium transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-                      className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                       role="menuitem"
                     >
                       Admin
@@ -271,7 +261,6 @@ export function Header() {
                   <button
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
                     className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Sign Out
@@ -281,7 +270,6 @@ export function Header() {
                 <button
                   onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }}
                   className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-                  className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                   role="menuitem"
                 >
                   Sign In
@@ -291,10 +279,6 @@ export function Header() {
               <button
                 onClick={toggleDarkMode}
                 className="block w-full text-left px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-white/50 dark:focus:bg-gray-800/50"
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
-              <button
-                onClick={toggleDarkMode}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
