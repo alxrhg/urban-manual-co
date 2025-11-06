@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const { data: destinations, error } = await supabase
       .from('destinations')
       .select('id, slug, name, city, category, image, michelin_stars, price_level, rating, tags')
-      .order('rating', { ascending: false, nullsLast: true })
+      .order('rating', { ascending: false })
       .limit(limit);
 
     if (error) {
