@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
       conversationHistory = [],
       currentResults = [],
       refinements = [],
+      intent = null, // Original intent from the first search
     } = body;
 
     if (!originalQuery || !followUpMessage) {
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Extract location and category from combined query
     let searchCity: string | undefined;
     let locationName: string | null = null;
-    
+
     // Try to find location in the combined query
     const lowerQuery = combinedQuery.toLowerCase();
     locationName = await findLocationByName(lowerQuery);
@@ -68,8 +69,31 @@ export async function POST(request: NextRequest) {
       searchCity = locationName;
     }
 
-    // Extract category from follow-up message
-    const category = extractCategoryFromFollowUp(followUpMessage);
+    // Fall back to intent city if not found in query
+    if (!searchCity && intent?.city) {
+      searchCity = intent.city;
+      locationName = intent.city;
+    }
+
+    // Extract category from combined query (not just follow-up)
+    // This preserves category context when user responds with budget/refinements
+    let category = extractCategoryFromFollowUp(combinedQuery);
+
+    // CRITICAL FIX: If no category found in combined query, use original intent category
+    // This prevents "cheap" from losing the "hotel" context
+    if (!category && intent?.category) {
+      // Normalize intent category to match our database categories
+      const categorySynonyms: Record<string, string> = {
+        'restaurant': 'Dining',
+        'dining': 'Dining',
+        'hotel': 'Hotel',
+        'cafe': 'Cafe',
+        'bar': 'Bar',
+        'museum': 'Culture',
+        'gallery': 'Culture',
+      };
+      category = categorySynonyms[intent.category.toLowerCase()] || intent.category;
+    }
 
     // Intelligent search
     const { data: results, error } = await supabase.rpc(

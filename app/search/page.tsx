@@ -133,6 +133,7 @@ function SearchPageContent() {
           conversationHistory: searchState.conversationHistory,
           currentResults: searchState.filteredResults.map((r) => ({ id: r.id })),
           refinements: searchState.refinements,
+          intent: searchState.intent, // Pass the original intent to preserve context
         }),
       });
 
