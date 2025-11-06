@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, SlidersHorizontal, Sparkles, Loader2, X, Clock } from 'lucide-react';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
+import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
+import { UserProfile } from '@/types/personalization';
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -10,6 +12,17 @@ interface GreetingHeroProps {
   onOpenFilters?: () => void;
   onSubmit?: (query: string) => void; // CHAT MODE: Explicit submit handler
   userName?: string;
+  userProfile?: UserProfile | null;
+  lastSession?: {
+    id: string;
+    last_activity: string;
+    context_summary?: {
+      city?: string;
+      category?: string;
+      preferences?: string[];
+      lastQuery?: string;
+    };
+  } | null;
   isAIEnabled?: boolean;
   isSearching?: boolean;
   filters?: any;
@@ -24,6 +37,8 @@ export default function GreetingHero({
   onOpenFilters,
   onSubmit,
   userName,
+  userProfile,
+  lastSession,
   isAIEnabled = false,
   isSearching = false,
   filters,
@@ -34,8 +49,26 @@ export default function GreetingHero({
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Get current time
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentDay = now.getDay();
+
+  // Generate contextual greeting
+  const greetingContext: GreetingContext = {
+    userName,
+    userProfile,
+    lastSession,
+    currentHour,
+    currentDay,
+  };
+
+  const { greeting, subtext } = generateContextualGreeting(greetingContext);
+
   // Rotating AI-powered travel intelligence cues
+  const contextualPlaceholder = generateContextualPlaceholder(greetingContext);
   const aiPlaceholders = [
+    contextualPlaceholder,
     "Ask me anything about travel",
     "Where would you like to explore?",
     "Find romantic hotels in Tokyo",
@@ -49,29 +82,6 @@ export default function GreetingHero({
     "What's trending in Tokyo?",
     "Find places open late night",
   ];
-
-  // Get current time for greeting
-  const now = new Date();
-  const currentHour = now.getHours();
-  let greeting = 'GOOD EVENING';
-  if (currentHour < 12) {
-    greeting = 'GOOD MORNING';
-  } else if (currentHour < 18) {
-    greeting = 'GOOD AFTERNOON';
-  }
-
-  // Format date and time
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  };
-  const dateStr = now.toLocaleDateString('en-US', options);
-  const timeStr = now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
 
 
   // Rotate placeholder text every 3 seconds when input is empty
@@ -110,11 +120,16 @@ export default function GreetingHero({
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
-        {/* Greeting above search - Keep this */}
+        {/* Greeting above search - Enhanced with context */}
         <div className="text-left mb-8">
           <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-            {greeting}{userName ? `, ${userName}` : ''}
+            {greeting}
           </h1>
+          {subtext && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 normal-case tracking-normal font-normal">
+              {subtext}
+            </p>
+          )}
         </div>
 
         {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}

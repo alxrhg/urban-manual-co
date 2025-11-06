@@ -259,6 +259,7 @@ export default function Home() {
   // Session and context state
   const [lastSession, setLastSession] = useState<any>(null);
   const [userContext, setUserContext] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [showSessionResume, setShowSessionResume] = useState(false);
 
   // Track submitted query for chat display
@@ -333,6 +334,9 @@ export default function Home() {
         .single();
 
       if (!error && data) {
+        // Store full profile for greeting context
+        setUserProfile(data);
+        // Also store simplified version for other components
         setUserContext({
           favoriteCities: data.favorite_cities || [],
           favoriteCategories: data.favorite_categories || [],
@@ -875,6 +879,8 @@ export default function Home() {
                             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                             .join(' ');
                         })()}
+                        userProfile={userProfile}
+                        lastSession={lastSession}
                         isAIEnabled={isAIEnabled}
                         isSearching={searching}
                         filters={advancedFilters}
