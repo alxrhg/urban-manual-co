@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, memo, useRef } from 'react';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
-import Image from 'next/image';
-import { MapPin } from 'lucide-react';
+import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from './LovablyDestinationCard';
 import { trackEvent } from '@/lib/analytics/track';
 import { useRouter } from 'next/navigation';
 
@@ -87,9 +85,11 @@ function TrendingSectionComponent({ city }: { city?: string }) {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-        {destinations.map((dest) => (
-          <button
+        {destinations.map((dest, index) => (
+          <LovablyDestinationCard
             key={dest.id}
+            destination={dest}
+            borderColor={LOVABLY_BORDER_COLORS[index % LOVABLY_BORDER_COLORS.length]}
             onClick={() => {
               trackEvent({
                 event_type: 'click',
@@ -103,50 +103,8 @@ function TrendingSectionComponent({ city }: { city?: string }) {
               });
               router.push(`/destination/${dest.slug}`);
             }}
-            className={`${CARD_WRAPPER} text-left`}
-          >
-            <div className={CARD_MEDIA}>
-              {dest.image ? (
-                <Image
-                  src={dest.image}
-                  alt={dest.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                  <MapPin className="h-8 w-8 opacity-20" />
-                </div>
-              )}
-              {dest.is_open_now && (
-                <span className="absolute top-2 right-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm">
-                  OPEN NOW
-                </span>
-              )}
-              {dest.michelin_stars && dest.michelin_stars > 0 && (
-                <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-3 w-3"
-                  />
-                  <span>{dest.michelin_stars}</span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-0.5">
-              <div className={CARD_TITLE}>{dest.name}</div>
-              <div className={CARD_META}>
-                {dest.city && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {dest.city}
-                  </span>
-                )}
-              </div>
-            </div>
-          </button>
+            showMLBadges={true}
+          />
         ))}
       </div>
     </section>

@@ -9,6 +9,7 @@ interface LovablyDestinationCardProps {
   borderColor: string;
   onClick: () => void;
   showMLBadges?: boolean;
+  visited?: boolean;
 }
 
 // Colorful border colors (Lovably-style)
@@ -23,7 +24,7 @@ export const LOVABLY_BORDER_COLORS = [
   'border-cyan-500',
 ];
 
-export function LovablyDestinationCard({ destination, borderColor, onClick, showMLBadges = true }: LovablyDestinationCardProps) {
+export function LovablyDestinationCard({ destination, borderColor, onClick, showMLBadges = true, visited = false }: LovablyDestinationCardProps) {
   return (
     <button
       onClick={onClick}
@@ -33,6 +34,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
         transition-all duration-300
         hover:scale-[1.02]
         bg-gray-100 dark:bg-gray-800
+        ${visited ? 'opacity-50' : ''}
       `}
     >
       {/* Image */}
@@ -42,7 +44,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
             src={destination.image}
             alt={destination.name}
             fill
-            className="object-cover"
+            className={`object-cover ${visited ? 'grayscale' : ''}`}
             sizes="(max-width: 768px) 50vw, 25vw"
             quality={85}
           />

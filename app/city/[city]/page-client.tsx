@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_META, CARD_TITLE } from '@/components/CardStyles';
+import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
 import { MultiplexAd } from '@/components/GoogleAd';
 
 const DestinationDrawer = dynamic(
@@ -264,62 +264,17 @@ export default function CityPageClient() {
                   const isVisited = user && visitedSlugs.has(destination.slug);
 
                   return (
-                    <button
+                    <LovablyDestinationCard
                       key={destination.slug}
+                      destination={destination}
+                      borderColor={LOVABLY_BORDER_COLORS[index % LOVABLY_BORDER_COLORS.length]}
                       onClick={() => {
                         setSelectedDestination(destination);
                         setIsDrawerOpen(true);
                       }}
-                      className={`${CARD_WRAPPER} cursor-pointer text-left ${
-                        isVisited ? 'opacity-50' : ''
-                      }`}
-                    >
-                      <div className={`${CARD_MEDIA} mb-2 relative`}>
-                        {destination.image ? (
-                          <Image
-                            src={destination.image}
-                            alt={destination.name}
-                            fill
-                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className={`object-cover group-hover:scale-105 transition-transform duration-300 ${
-                              isVisited ? 'grayscale' : ''
-                            }`}
-                            quality={80}
-                            loading={index < 6 ? 'eager' : 'lazy'}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                            <MapPin className="h-10 w-10 opacity-20" />
-                          </div>
-                        )}
-
-                        {destination.michelin_stars && destination.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                            <img
-                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                            />
-                            {destination.michelin_stars}
-                          </div>
-                        )}
-
-                        {destination.crown && (
-                          <div className="absolute top-2 right-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm">
-                            Crown
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <h3 className={CARD_TITLE}>
-                          {destination.name}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {destination.category && capitalizeCategory(destination.category)}
-                        </p>
-                      </div>
-                    </button>
+                      showMLBadges={true}
+                      visited={!!isVisited}
+                    />
                   );
                 })}
               </div>

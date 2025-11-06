@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
-import Image from 'next/image';
-import { MapPin } from 'lucide-react';
+import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
 import { trackEvent } from '@/lib/analytics/track';
 
 interface Destination {
@@ -48,11 +46,11 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
             Similar Vibe
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-            {similar.map((dest) => (
-              <a
+            {similar.map((dest, index) => (
+              <LovablyDestinationCard
                 key={dest.id}
-                href={`/destination/${dest.slug}`}
-                className={CARD_WRAPPER}
+                destination={dest}
+                borderColor={LOVABLY_BORDER_COLORS[index % LOVABLY_BORDER_COLORS.length]}
                 onClick={() => {
                   trackEvent({
                     event_type: 'click',
@@ -66,41 +64,10 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
                       match_score: dest.match_score,
                     },
                   });
+                  window.location.href = `/destination/${dest.slug}`;
                 }}
-              >
-                <div className={CARD_MEDIA}>
-                  {dest.image ? (
-                    <Image
-                      src={dest.image}
-                      alt={dest.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                      <MapPin className="h-8 w-8 opacity-20" />
-                    </div>
-                  )}
-                  {dest.michelin_stars && dest.michelin_stars > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                      <span>⭐</span>
-                      <span>{dest.michelin_stars}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-0.5">
-                  <div className={CARD_TITLE}>{dest.name}</div>
-                  <div className={CARD_META}>
-                    {dest.city && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {dest.city}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </a>
+                showMLBadges={true}
+              />
             ))}
           </div>
         </section>
@@ -112,11 +79,11 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
             Pair With
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-            {complementary.map((dest) => (
-              <a
+            {complementary.map((dest, index) => (
+              <LovablyDestinationCard
                 key={dest.id}
-                href={`/destination/${dest.slug}`}
-                className={CARD_WRAPPER}
+                destination={dest}
+                borderColor={LOVABLY_BORDER_COLORS[index % LOVABLY_BORDER_COLORS.length]}
                 onClick={() => {
                   trackEvent({
                     event_type: 'click',
@@ -130,41 +97,10 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
                       match_score: dest.match_score,
                     },
                   });
+                  window.location.href = `/destination/${dest.slug}`;
                 }}
-              >
-                <div className={CARD_MEDIA}>
-                  {dest.image ? (
-                    <Image
-                      src={dest.image}
-                      alt={dest.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                      <MapPin className="h-8 w-8 opacity-20" />
-                    </div>
-                  )}
-                  {dest.michelin_stars && dest.michelin_stars > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                      <span>⭐</span>
-                      <span>{dest.michelin_stars}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-0.5">
-                  <div className={CARD_TITLE}>{dest.name}</div>
-                  <div className={CARD_META}>
-                    {dest.city && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {dest.city}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </a>
+                showMLBadges={true}
+              />
             ))}
           </div>
         </section>
