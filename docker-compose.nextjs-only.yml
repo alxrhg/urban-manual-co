@@ -1,0 +1,53 @@
+version: '3.8'
+
+# This Docker Compose file runs ONLY Next.js
+# Use this when your ML Service is deployed to the cloud (Railway/Fly.io/Render)
+
+services:
+  # Next.js Web Application
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: urban-manual-nextjs
+    ports:
+      - "3000:3000"
+    environment:
+      # Supabase Configuration
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - POSTGRES_URL=${POSTGRES_URL}
+
+      # Payload CMS
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET}
+
+      # Google Services
+      - NEXT_PUBLIC_GOOGLE_API_KEY=${NEXT_PUBLIC_GOOGLE_API_KEY}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+
+      # ML Service (CLOUD URL - Railway/Fly.io/Render)
+      - ML_SERVICE_URL=${ML_SERVICE_URL}
+
+      # Upstash Redis
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+
+      # OpenAI (optional)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+      # Anthropic Claude (optional)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    restart: unless-stopped
+    networks:
+      - urban-manual-network
+    volumes:
+      # Mount source code for development
+      - .:/app:cached
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+networks:
+  urban-manual-network:
+    driver: bridge

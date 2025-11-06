@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: urban-manual-ml
+    env: docker
+    region: oregon  # US West - fastest free region
+    plan: free  # or 'starter' for paid
+    branch: main
+    rootDir: ml-service
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
+    healthCheckPath: /health
+
+    # Environment variables
+    envVars:
+      - key: ML_SERVICE_HOST
+        value: 0.0.0.0
+
+      - key: ML_SERVICE_PORT
+        value: 8000
+
+      - key: LOG_LEVEL
+        value: INFO
+
+      - key: LIGHTFM_EPOCHS
+        value: 50
+
+      - key: LIGHTFM_THREADS
+        value: 4
+
+      - key: PROPHET_SEASONALITY_MODE
+        value: multiplicative
+
+      - key: CACHE_TTL_HOURS
+        value: 24
+
+      - key: MAX_REQUESTS_PER_MINUTE
+        value: 60
+
+      # Secrets - set in Render dashboard
+      - key: SUPABASE_URL
+        sync: false
+
+      - key: SUPABASE_ANON_KEY
+        sync: false
+
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+      - key: POSTGRES_URL
+        sync: false

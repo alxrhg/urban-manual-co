@@ -39,6 +39,40 @@
       "group": "build"
     },
     {
+      "label": "☁️ Start Next.js (Cloud ML)",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build",
+      "dependsOn": "Check Cloud ML Service"
+    },
+    {
+      "label": "☁️ Start Next.js Only (Docker + Cloud ML)",
+      "type": "shell",
+      "command": "docker-compose -f docker-compose.nextjs-only.yml up --build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Check Cloud ML Service",
+      "type": "shell",
+      "command": "curl -f ${ML_SERVICE_URL}/health || echo '⚠️  Warning: Cloud ML Service not responding. Check ML_SERVICE_URL in .env'",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
       "label": "🤖 Start ML Service Only (Docker)",
       "type": "shell",
       "command": "cd ml-service && docker-compose up --build",

@@ -1,0 +1,46 @@
+app = "urban-manual-ml"
+primary_region = "iad"  # Washington D.C. - change to your nearest region
+
+# Use production Dockerfile for better performance
+[build]
+  dockerfile = "Dockerfile"
+
+# Environment variables
+[env]
+  ML_SERVICE_HOST = "0.0.0.0"
+  ML_SERVICE_PORT = "8000"
+  LOG_LEVEL = "INFO"
+  LIGHTFM_EPOCHS = "50"
+  LIGHTFM_THREADS = "4"
+  PROPHET_SEASONALITY_MODE = "multiplicative"
+  CACHE_TTL_HOURS = "24"
+  MAX_REQUESTS_PER_MINUTE = "60"
+
+# HTTP service configuration
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+# Health checks
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+# VM configuration
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+# Secrets (set with: flyctl secrets set KEY=value)
+# SUPABASE_URL
+# SUPABASE_ANON_KEY
+# SUPABASE_SERVICE_ROLE_KEY
+# POSTGRES_URL

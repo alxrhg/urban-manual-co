@@ -2,25 +2,47 @@
 
 Quick reference for running Urban Manual in Cursor IDE.
 
-## ⚡ Quick Start (30 seconds)
+## ⚡ Quick Start
 
-1. **Open project in Cursor**
+### Option 1: Cloud ML (Recommended - Fastest!)
+
+**No Docker needed! Deploy ML service once, develop anywhere.**
+
+1. **Deploy ML service** (5 minutes, one-time)
    ```bash
-   cursor .
+   cd ml-service
+   ./deploy-railway.sh
+   # Copy the URL you get
    ```
 
-2. **Set up environment**
+2. **Configure local environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env and set:
+   # ML_SERVICE_URL=https://your-railway-url.com
+   ```
+
+3. **Start developing**
+   - Press `Cmd+Shift+B` → **"☁️ Start Next.js (Cloud ML)"**
+   - Or just: `npm run dev`
+
+Done! 🎉 See [CLOUD_ML_QUICKSTART.md](./CLOUD_ML_QUICKSTART.md) for details.
+
+### Option 2: Full Local (Docker)
+
+**Run everything locally with Docker.**
+
+1. **Set up environment**
    ```bash
    cp .env.example .env
    cp ml-service/.env.example ml-service/.env
    # Edit .env files with your credentials
    ```
 
-3. **Start services**
-   - Press `Cmd+Shift+B` (Mac) or `Ctrl+Shift+B` (Windows/Linux)
-   - Select: **"🚀 Start All Services (Docker)"**
+2. **Start services**
+   - Press `Cmd+Shift+B` → **"🚀 Start All Services (Docker)"**
 
-4. **Access services**
+3. **Access services**
    - Next.js: http://localhost:3000
    - ML Service: http://localhost:8000/docs
 
@@ -34,9 +56,10 @@ Done! 🎉
 
 | Task | Shortcut | Description |
 |------|----------|-------------|
-| **All Services** | `Cmd+Shift+B` → 1 | Docker Compose (Next.js + ML) |
-| **Next.js Only** | `Cmd+Shift+B` → 3 | Frontend dev server |
-| **ML Service** | `Cmd+Shift+B` → 4 | Python FastAPI service |
+| **☁️ Cloud ML** | `Cmd+Shift+B` → "☁️ Start Next.js (Cloud ML)" | Recommended: Use cloud ML |
+| **All Services** | `Cmd+Shift+B` → "🚀 Start All Services" | Docker Compose (Next.js + ML) |
+| **Next.js Only** | `Cmd+Shift+B` → "🌐 Start Next.js Only" | Frontend only (local) |
+| **ML Service** | `Cmd+Shift+B` → "🤖 Start ML Service" | Python FastAPI service |
 
 ### Stopping Services
 
