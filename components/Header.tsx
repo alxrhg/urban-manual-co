@@ -114,15 +114,15 @@ export function Header() {
   };
 
   return (
-    <header className="mt-5" role="banner">
+    <header className="mt-6 md:mt-8" role="banner">
       {/* Top Bar */}
-      <div className="px-6 md:px-10 pb-4">
+      <div className="px-6 md:px-12 lg:px-16 pb-6 md:pb-8">
         <nav className={`max-w-[1920px] mx-auto relative`} aria-label="Main navigation">
           {/* Logo - Top Left */}
           <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
             <button
               onClick={() => navigate("/")}
-              className="font-medium text-sm hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg px-2 py-1 -m-1"
+              className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg px-3 py-2 -m-2"
               aria-label="Go to homepage"
             >
               Urban Manual®
@@ -143,7 +143,7 @@ export function Header() {
               {user ? (
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-full"
+                  className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-full"
                   aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
                   aria-expanded={isMenuOpen}
                   aria-haspopup="true"
@@ -219,21 +219,21 @@ export function Header() {
             <div className="py-2">
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Cities
               </button>
               <button
                 onClick={() => { navigate('/map'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Map
               </button>
               <button
                 onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Discover Collections
@@ -243,7 +243,7 @@ export function Header() {
                 <>
                   <button
                     onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Account
@@ -251,7 +251,7 @@ export function Header() {
                   {isAdmin && (
                     <button
                       onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
-                      className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                      className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                       role="menuitem"
                     >
                       Admin
@@ -259,7 +259,7 @@ export function Header() {
                   )}
                   <button
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
-                    className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Sign Out
@@ -268,7 +268,7 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }}
-                  className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                   role="menuitem"
                 >
                   Sign In
@@ -277,7 +277,7 @@ export function Header() {
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               <button
                 onClick={toggleDarkMode}
-                className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
