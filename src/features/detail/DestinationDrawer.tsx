@@ -12,6 +12,8 @@ import { VisitedModal } from '@/components/VisitedModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 // Dynamically import AppleMap to avoid SSR issues
 const AppleMap = dynamic(() => import('@/components/AppleMap'), { 
@@ -163,6 +165,35 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile for bottom sheet behavior
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // iOS-style swipe gesture motion values
+  const y = useMotionValue(0);
+  const x = useMotionValue(0);
+  const opacity = useTransform(
+    isMobile ? y : x,
+    isMobile ? [0, 150] : [0, 200],
+    [1, 0.3]
+  );
+
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const threshold = isMobile ? 150 : 200;
+    const velocity = isMobile ? info.velocity.y : info.velocity.x;
+    const offset = isMobile ? info.offset.y : info.offset.x;
+
+    // iOS-style: swipe down (mobile) or right (desktop) to dismiss
+    if ((isMobile && offset > threshold) || (!isMobile && offset > threshold) || Math.abs(velocity) > 500) {
+      onClose();
+    }
+  };
 
 
   // Prevent body scroll when drawer is open
@@ -486,12 +517,54 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Slideover Card */}
-      <div
-        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-gray-950/95 backdrop-blur-md z-50 shadow-2xl ring-1 ring-white/20 dark:ring-gray-700/30 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
-        } overflow-hidden flex flex-col`}
+      {/* iOS-style Bottom Sheet (mobile) / Slideover (desktop) */}
+      <motion.div
+        drag={isOpen ? (isMobile ? 'y' : 'x') : false}
+        dragConstraints={isMobile ? { top: 0, bottom: 0 } : { left: 0, right: 0 }}
+        dragElastic={{ top: 0, bottom: 0.2, left: 0, right: 0.2 }}
+        onDragEnd={handleDragEnd}
+        style={{
+          y: isMobile ? y : 0,
+          x: isMobile ? 0 : x,
+          opacity,
+          touchAction: 'none'
+        }}
+        initial={
+          isMobile
+            ? { y: '100%', opacity: 0 }
+            : { x: '100%', opacity: 0 }
+        }
+        animate={
+          isOpen
+            ? { y: 0, x: 0, opacity: 1 }
+            : isMobile
+            ? { y: '100%', opacity: 0 }
+            : { x: '100%', opacity: 0 }
+        }
+        exit={
+          isMobile
+            ? { y: '100%', opacity: 0 }
+            : { x: '100%', opacity: 0 }
+        }
+        transition={{
+          type: 'spring',
+          damping: 30,
+          stiffness: 300,
+        }}
+        className={cn(
+          'fixed z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md shadow-2xl ring-1 ring-white/20 dark:ring-gray-700/30 overflow-hidden flex flex-col',
+          isMobile
+            ? 'left-0 right-0 bottom-0 rounded-t-[20px] max-h-[90vh] pb-[env(safe-area-inset-bottom)]'
+            : 'right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-1rem)] min-w-[320px] rounded-2xl'
+        )}
       >
+        {/* iOS-style drag indicator for mobile bottom sheet */}
+        {isMobile && (
+          <div className="flex justify-center pt-2 pb-1">
+            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex-shrink-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-white/20 dark:border-gray-700/30 px-6 py-4 flex items-center justify-end">
           <div className="flex items-center gap-2">
@@ -501,19 +574,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Open in new tab"
                 aria-label="Open destination in new tab"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-5 w-5" />
               </a>
             )}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Close"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -1093,7 +1166,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
         </div>
-      </div>
+      </motion.div>
 
       {/* Save Destination Modal */}
       {destination?.id && (

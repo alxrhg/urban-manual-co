@@ -85,7 +85,7 @@ export function ConfirmDialog({
           />
 
           {/* Dialog */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -95,14 +95,14 @@ export function ConfirmDialog({
                 ease: [0.4, 0, 0.2, 1]
               }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200 dark:border-gray-800"
+              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-col"
               role="dialog"
               aria-modal="true"
               aria-labelledby="dialog-title"
               aria-describedby="dialog-description"
             >
-              {/* Content */}
-              <div className="p-6">
+              {/* Content - Scrollable if overflow */}
+              <div className="p-6 overflow-y-auto flex-1">
                 {/* Icon and Title */}
                 <div className="flex items-start gap-4 mb-4">
                   <div className="flex-shrink-0 mt-0.5">
@@ -125,19 +125,19 @@ export function ConfirmDialog({
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-gray-800">
+              {/* Actions - iOS-friendly touch targets */}
+              <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
                 <button
                   onClick={onClose}
                   disabled={isLoading}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-3 min-h-[44px] text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {cancelText}
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={isLoading}
-                  className={`px-4 py-2 text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] ${buttonStyles[type]}`}
+                  className={`px-5 py-3 min-h-[44px] text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] ${buttonStyles[type]}`}
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center gap-2">

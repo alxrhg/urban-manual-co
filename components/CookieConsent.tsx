@@ -76,9 +76,9 @@ export function CookieConsent() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-2 sm:p-6">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-2 sm:p-6 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white/85 dark:bg-gray-950/85 backdrop-blur-lg border-t sm:border border-white/20 dark:border-gray-700/30 sm:rounded-2xl shadow-2xl p-3 sm:p-6">
+        <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-lg border-t sm:border border-white/20 dark:border-gray-700/30 sm:rounded-2xl shadow-2xl p-4 sm:p-6">
           <div className="flex items-start gap-2 sm:gap-4">
             {/* Icon - Hidden on mobile */}
             <div className="flex-shrink-0 hidden sm:block">
@@ -178,31 +178,31 @@ export function CookieConsent() {
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex flex-row items-center gap-1.5 sm:gap-2">
+              {/* Actions - iOS-friendly touch targets */}
+              <div className="flex flex-row items-center gap-2 flex-wrap">
                 {!showDetails ? (
                   <>
                     <button
                       onClick={acceptAll}
-                      className="px-3 py-1.5 sm:px-4 sm:py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] sm:text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+                      className="px-4 py-2.5 sm:px-5 sm:py-3 min-h-[44px] bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
                     >
                       Accept
                     </button>
                     <button
                       onClick={acceptNecessary}
-                      className="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-200 dark:border-gray-800 text-[10px] sm:text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      className="px-4 py-2.5 sm:px-5 sm:py-3 min-h-[44px] border border-gray-200 dark:border-gray-800 text-xs sm:text-sm font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
                       Decline
                     </button>
                     <button
                       onClick={() => setShowDetails(true)}
-                      className="hidden sm:block px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                      className="hidden sm:block px-5 py-3 min-h-[44px] text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                       Customize
                     </button>
                     <a
                       href="/privacy"
-                      className="px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-center"
+                      className="px-4 py-2.5 sm:px-5 sm:py-3 min-h-[44px] flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                       Privacy
                     </a>
@@ -211,13 +211,13 @@ export function CookieConsent() {
                   <>
                     <button
                       onClick={saveCustom}
-                      className="px-3 py-1.5 sm:px-4 sm:py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] sm:text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+                      className="px-4 py-2.5 sm:px-5 sm:py-3 min-h-[44px] bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
                     >
                       Save
                     </button>
                     <button
                       onClick={() => setShowDetails(false)}
-                      className="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-200 dark:border-gray-800 text-[10px] sm:text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      className="px-4 py-2.5 sm:px-5 sm:py-3 min-h-[44px] border border-gray-200 dark:border-gray-800 text-xs sm:text-sm font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
                       Back
                     </button>
