@@ -982,12 +982,17 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
-                          className={`transition-all duration-200 ease-out ${
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
                             advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            className="h-3 w-3"
+                          />
                           Michelin
                         </button>
                         {categories.map((category) => (
