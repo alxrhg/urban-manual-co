@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Plus, Edit, Search, X } from "lucide-react";
+import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 
@@ -829,6 +829,30 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteDestination = async (slug: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('destinations')
+        .delete()
+        .eq('slug', slug);
+
+      if (error) throw error;
+
+      // Reload the list and stats after deletion
+      await loadDestinationList();
+      await loadEnrichmentStats();
+
+      alert(`✅ Successfully deleted "${name}"`);
+    } catch (e: any) {
+      console.error('Delete error:', e);
+      alert(`Failed to delete destination: ${e.message}`);
+    }
+  };
+
   const handleSearchDestinations = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
@@ -1020,6 +1044,13 @@ export default function AdminPage() {
                         className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium"
                       >
                         Enrich
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDestination(dest.slug, dest.name)}
+                        className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
                       </button>
                     </div>
                   </div>
