@@ -1,0 +1,298 @@
+{
+  "name": "Instagram Content Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1,3,5"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "notes": "Runs Mon, Wed, Fri at 9am"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "contentPillar",
+              "value": "={{ ['educational', 'inspirational', 'promotional'][Math.floor(Math.random() * 3)] }}"
+            },
+            {
+              "name": "destination",
+              "value": "={{ ['Paris', 'Tokyo', 'Bali', 'New York', 'Iceland', 'Santorini', 'Barcelona', 'Thailand'][Math.floor(Math.random() * 8)] }}"
+            }
+          ]
+        }
+      },
+      "name": "Generate Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "options": {}
+      },
+      "name": "Load Brand Config",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "notes": "Loads brand-aesthetic.json"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "prompt": "=You are creating content for Urban Manual's Instagram.\n\nContent Pillar: {{ $json.contentPillar }}\nDestination: {{ $json.destination }}\n\nGenerate:\n1. A detailed image prompt for DALL-E (travel photography)\n2. An engaging Instagram caption (100-150 words)\n3. 8 relevant hashtags\n\nFollow the brand aesthetic: Modern, clean, aspirational travel content. Natural colors, rule of thirds composition.\n\nOutput as JSON:\n{\n  \"imagePrompt\": \"...\",\n  \"caption\": \"...\",\n  \"hashtags\": [\"#tag1\", \"#tag2\", ...]\n}",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "name": "Generate Caption & Image Prompt",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "1",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "dall-e-3",
+        "prompt": "={{ $json.imagePrompt }}",
+        "size": "1024x1024",
+        "quality": "hd"
+      },
+      "name": "Generate Image (DALL-E)",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "1",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "fileName": "={{ 'instagram_' + new Date().getTime() + '.png' }}",
+        "options": {}
+      },
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "fileContent": "={{ $binary.data }}",
+        "fileName": "={{ $json.fileName }}",
+        "filePath": "/home/node/.n8n/generated-content/"
+      },
+      "name": "Save Image",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "id",
+              "value": "={{ 'post_' + new Date().getTime() }}"
+            },
+            {
+              "name": "status",
+              "value": "pending_approval"
+            },
+            {
+              "name": "created",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "imagePath",
+              "value": "={{ $json.fileName }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.caption }}"
+            },
+            {
+              "name": "hashtags",
+              "value": "={{ $json.hashtags.join(' ') }}"
+            },
+            {
+              "name": "destination",
+              "value": "={{ $json.destination }}"
+            },
+            {
+              "name": "contentPillar",
+              "value": "={{ $json.contentPillar }}"
+            }
+          ]
+        }
+      },
+      "name": "Prepare Queue Entry",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "fileContent": "={{ JSON.stringify($json, null, 2) + '\\n---\\n' }}",
+        "fileName": "approval-queue.jsonl",
+        "filePath": "/home/node/.n8n/approval-queue/"
+      },
+      "name": "Add to Approval Queue",
+      "type": "n8n-nodes-base.writeFile",
+      "typeVersion": 1,
+      "position": [1850, 300],
+      "notes": "Adds to queue for bulk approval"
+    },
+    {
+      "parameters": {
+        "message": "=🎨 New Instagram content ready for review!\n\n📍 Destination: {{ $json.destination }}\n📊 Pillar: {{ $json.contentPillar }}\n🆔 ID: {{ $json.id }}\n\n✅ Review at: http://localhost:5678/approval-dashboard\n\nCaption preview:\n{{ $json.caption.substring(0, 100) }}...",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}"
+      },
+      "name": "Send Notification (Optional)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [2050, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "2",
+          "name": "Telegram Bot"
+        }
+      },
+      "notes": "Optional: Notify via Telegram"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Variables": {
+      "main": [
+        [
+          {
+            "node": "Load Brand Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Brand Config": {
+      "main": [
+        [
+          {
+            "node": "Generate Caption & Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Caption & Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Image (DALL-E)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image (DALL-E)": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Save Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Image": {
+      "main": [
+        [
+          {
+            "node": "Prepare Queue Entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Queue Entry": {
+      "main": [
+        [
+          {
+            "node": "Add to Approval Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Approval Queue": {
+      "main": [
+        [
+          {
+            "node": "Send Notification (Optional)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

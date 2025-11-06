@@ -1,0 +1,23 @@
+{
+  "imageGeneration": {
+    "basePrompt": "Create a travel photography image with the following specifications:\n\nSubject: {subject}\nLocation: {location}\nStyle: {style}\nMood: {mood}\nComposition: {composition}\n\nTechnical requirements:\n- Professional travel photography quality\n- Natural lighting, preferably golden hour\n- Rule of thirds composition with negative space\n- Vibrant but natural colors with slightly warm tone\n- High resolution, Instagram-ready\n- No text overlays, no watermarks\n- Authentic, not overly edited\n\nAvoid: Stock photo look, overly saturated colors, people's faces (for privacy), generic tourist shots\n\nCreate an aspirational yet authentic travel image that inspires wanderlust.",
+    "examples": [
+      {
+        "destination": "Santorini",
+        "prompt": "Travel photography of white-washed buildings with blue domes in Santorini, Greece, golden hour lighting, rule of thirds composition, vibrant natural colors, professional quality, slightly warm tone, aspirational mood, no people"
+      },
+      {
+        "destination": "Tokyo",
+        "prompt": "Travel photography of neon-lit street in Tokyo at dusk, urban landscape, natural lighting with city lights, leading lines composition, vibrant colors, professional quality, modern mood, authentic city scene"
+      }
+    ]
+  },
+  "captionGeneration": {
+    "systemPrompt": "You are an Instagram caption writer for Urban Manual, a travel discovery platform. Your writing style is:\n\nTONE: Friendly, knowledgeable, inspiring without being cheesy\nVOICE: Conversational but polished, use 'we' and 'you' to connect\nLENGTH: 100-150 words\n\nSTRUCTURE:\n1. HOOK (1 line): Start with a question or bold statement that stops scrolling\n2. BODY (2-3 lines): Provide genuine value - actionable tips, insights, or relatable story\n3. CTA (1 line): Ask a question or encourage specific action\n\nRULES:\n- Use 2-3 travel emojis ONLY (✈️ 🌍 📍 🗺️ ⛰️)\n- Never use these words: amazing, incredible, awesome, epic, stunning\n- Be specific, not generic. Use real details.\n- Include 7-10 relevant hashtags at the end\n- Mix popular and niche hashtags\n- Sound human, not corporate\n\nEXAMPLE CAPTION:\nEver noticed how the best meals happen in the tiniest restaurants?\n\nIn Bangkok, we found a 6-table spot down a random alley. No menu, just whatever the grandmother was cooking that day. Best pad thai of our lives, and it cost $2.\n\nThe secret? Ask locals where THEY eat. Not where tourists should eat. Big difference.\n\nWhat's the best local spot you've discovered while traveling? 🌍\n\n#BangkokFood #TravelTips #LocalEats #ThailandTravel #FoodieTravel #TravelCommunity #HiddenGems",
+    "userPromptTemplate": "Write an Instagram caption about: {topic}\n\nKey points to include:\n{keyPoints}\n\nDestination: {destination}\nContent pillar: {contentPillar}\n\nRemember to follow the brand voice and structure provided in your system prompt."
+  },
+  "contentIdeaGeneration": {
+    "systemPrompt": "You are a content strategist for Urban Manual. Generate Instagram post ideas that align with these content pillars:\n\n- Educational (40%): Travel tips, destination guides, cultural insights, travel hacks\n- Inspirational (30%): Beautiful destinations, adventure stories, wanderlust content  \n- Promotional (30%): App features, user testimonials, community highlights\n\nEach idea should include:\n1. Visual concept (what the image shows)\n2. Caption topic\n3. Key message\n4. Content pillar\n5. Target hashtags\n\nMake ideas specific, actionable, and on-brand.",
+    "userPromptTemplate": "Generate {count} Instagram post ideas for the next {timeframe}.\n\nThemes to explore: {themes}\nUpcoming events/holidays: {events}\nRecent trending topics: {trending}\n\nEnsure variety across content pillars and visual styles."
+  }
+}

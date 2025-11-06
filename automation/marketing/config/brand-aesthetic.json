@@ -1,0 +1,79 @@
+{
+  "brandName": "Urban Manual",
+  "instagram": {
+    "handle": "@yourhandle",
+    "bio": "Your Instagram bio here"
+  },
+  "visualStyle": {
+    "description": "Modern, clean, travel-focused aesthetic",
+    "colorPalette": {
+      "primary": "#1a1a1a",
+      "secondary": "#f5f5f5",
+      "accent": "#ff6b6b",
+      "background": "#ffffff"
+    },
+    "mood": "Aspirational, adventurous, authentic",
+    "photoStyle": {
+      "composition": "Rule of thirds, leading lines, negative space",
+      "lighting": "Natural, golden hour preferred, soft shadows",
+      "filters": "Minimal editing, enhance natural colors, slightly warm tone",
+      "orientation": "Mix of landscape (60%) and portrait (40%)",
+      "subjectMatter": ["destinations", "architecture", "local culture", "food", "landscapes"]
+    },
+    "imagePromptTemplate": "Travel photography, {subject}, {location}, natural lighting, rule of thirds composition, vibrant but natural colors, professional quality, high resolution, slightly warm tone, {mood}"
+  },
+  "captionStyle": {
+    "tone": "Friendly, knowledgeable, inspiring",
+    "voice": "Conversational but polished, use 'we' and 'you'",
+    "structure": {
+      "hook": "Start with a question or bold statement (1 line)",
+      "body": "Provide value - tips, insights, or story (2-3 lines)",
+      "cta": "Call-to-action - ask a question or encourage action (1 line)"
+    },
+    "length": "100-150 words",
+    "emojiUsage": "Sparingly - 2-3 max, only travel-related (✈️ 🌍 📍 🗺️ ⛰️)",
+    "hashtagStrategy": {
+      "count": "7-10 hashtags",
+      "types": ["brand", "location-specific", "travel-niche", "trending"],
+      "placement": "End of caption or first comment"
+    },
+    "examples": [
+      {
+        "hook": "Ever wondered what makes Paris magical beyond the Eiffel Tower?",
+        "body": "It's the hidden courtyards in Le Marais, the smell of fresh croissants at sunrise, and the way locals greet you at corner cafés. The real Paris lives in neighborhoods tourists rarely explore.",
+        "cta": "What's your favorite hidden gem in a major city? 📍",
+        "hashtags": "#ParisTravel #HiddenGems #TravelTips #ExploreParis #TravelCommunity"
+      }
+    ]
+  },
+  "contentPillars": {
+    "educational": {
+      "percentage": 40,
+      "types": ["Travel tips", "Destination guides", "Cultural insights", "Travel hacks"]
+    },
+    "inspirational": {
+      "percentage": 30,
+      "types": ["Beautiful destinations", "Adventure stories", "Wanderlust content"]
+    },
+    "promotional": {
+      "percentage": 30,
+      "types": ["App features", "User testimonials", "Community highlights"]
+    }
+  },
+  "postingSchedule": {
+    "frequency": "5-7 posts per week",
+    "bestTimes": ["9:00 AM", "1:00 PM", "7:00 PM"],
+    "timezone": "America/New_York"
+  },
+  "aiSettings": {
+    "imageModel": "dall-e-3",
+    "textModel": "gpt-4",
+    "temperature": 0.7,
+    "maxTokens": 500
+  },
+  "doNotUse": {
+    "words": ["amazing", "incredible", "awesome", "epic"],
+    "styles": ["overly filtered", "stock photo look", "text-heavy graphics"],
+    "hashtags": ["#followforfollow", "#like4like"]
+  }
+}

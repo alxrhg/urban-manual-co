@@ -1,0 +1,279 @@
+{
+  "name": "Instagram Auto-Poster (Approved Content)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9,13,19 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Posting Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "notes": "Posts at 9am, 1pm, 7pm daily"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "filePath": "/home/node/.n8n/approval-queue/approved-queue.jsonl"
+      },
+      "name": "Load Approved Queue",
+      "type": "n8n-nodes-base.readFile",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "notes": "Reads approved posts from queue"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Split JSONL into individual posts\nconst lines = items[0].json.data.split('\\n---\\n').filter(l => l.trim());\nconst posts = lines.map(line => JSON.parse(line));\n\n// Filter for approved posts that haven't been posted yet\nconst approvedPosts = posts.filter(p => p.status === 'approved' && !p.posted);\n\n// Get the next post to publish\nif (approvedPosts.length > 0) {\n  return [{ json: approvedPosts[0] }];\n} else {\n  // No posts ready\n  return [];\n}"
+      },
+      "name": "Get Next Post",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "filePath": "=/home/node/.n8n/generated-content/{{ $json.imagePath }}"
+      },
+      "name": "Load Image",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "media",
+        "operation": "upload",
+        "mediaType": "image",
+        "binaryProperty": "data",
+        "caption": "={{ $json.caption + '\\n\\n' + $json.hashtags }}"
+      },
+      "name": "Upload to Instagram",
+      "type": "n8n-nodes-base.instagram",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "credentials": {
+        "instagramOAuth2Api": {
+          "id": "3",
+          "name": "Instagram Business Account"
+        }
+      },
+      "notes": "Posts to Instagram via Graph API"
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "publish",
+        "creationId": "={{ $json.id }}"
+      },
+      "name": "Publish Post",
+      "type": "n8n-nodes-base.instagram",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "credentials": {
+        "instagramOAuth2Api": {
+          "id": "3",
+          "name": "Instagram Business Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "posted"
+            },
+            {
+              "name": "postedAt",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "instagramMediaId",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "name": "Update Post Status",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update the status in the queue file\nconst currentPost = items[0].json;\nconst queueData = $('Load Approved Queue').first().json.data;\nconst lines = queueData.split('\\n---\\n');\n\n// Update the current post's status\nconst updatedLines = lines.map(line => {\n  if (!line.trim()) return line;\n  const post = JSON.parse(line);\n  if (post.id === currentPost.id) {\n    post.status = 'posted';\n    post.postedAt = new Date().toISOString();\n    post.instagramMediaId = currentPost.instagramMediaId;\n  }\n  return JSON.stringify(post);\n});\n\nreturn [{ json: { data: updatedLines.join('\\n---\\n') } }];"
+      },
+      "name": "Update Queue File",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileContent": "={{ $json.data }}",
+        "filePath": "/home/node/.n8n/approval-queue/approved-queue.jsonl"
+      },
+      "name": "Save Updated Queue",
+      "type": "n8n-nodes-base.writeFile",
+      "typeVersion": 1,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "message": "=✅ Posted to Instagram!\n\n📍 {{ $json.destination }}\n🆔 Post ID: {{ $json.id }}\n🔗 Instagram Media ID: {{ $json.instagramMediaId }}\n\nPosted at: {{ $json.postedAt }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}"
+      },
+      "name": "Notify Success",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [2050, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "2",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "message": "=❌ Failed to post to Instagram\n\n🆔 Post ID: {{ $json.id }}\n⚠️ Error: {{ $json.error }}\n\nCheck logs for details.",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}"
+      },
+      "name": "Notify Error",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1250, 500],
+      "credentials": {
+        "telegramApi": {
+          "id": "2",
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Posting Schedule": {
+      "main": [
+        [
+          {
+            "node": "Load Approved Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Approved Queue": {
+      "main": [
+        [
+          {
+            "node": "Get Next Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Next Post": {
+      "main": [
+        [
+          {
+            "node": "Load Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Image": {
+      "main": [
+        [
+          {
+            "node": "Upload to Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Instagram": {
+      "main": [
+        [
+          {
+            "node": "Publish Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Post": {
+      "main": [
+        [
+          {
+            "node": "Update Post Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Post Status": {
+      "main": [
+        [
+          {
+            "node": "Update Queue File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Queue File": {
+      "main": [
+        [
+          {
+            "node": "Save Updated Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Updated Queue": {
+      "main": [
+        [
+          {
+            "node": "Notify Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "executionTimeout": 300,
+    "errorWorkflow": "error-handler"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

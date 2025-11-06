@@ -1,0 +1,29 @@
+{
+  "name": "instagram-marketing-automation",
+  "version": "1.0.0",
+  "description": "AI-powered Instagram content generation and approval system",
+  "scripts": {
+    "start": "node approval-queue/approval-server.js",
+    "init": "node scripts/init-setup.js",
+    "dev": "nodemon approval-queue/approval-server.js",
+    "docker:up": "cd .. && docker-compose up -d",
+    "docker:down": "cd .. && docker-compose down",
+    "docker:logs": "cd .. && docker-compose logs -f n8n",
+    "test": "node scripts/test-setup.js"
+  },
+  "keywords": [
+    "instagram",
+    "automation",
+    "ai",
+    "marketing",
+    "n8n"
+  ],
+  "author": "Urban Manual",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

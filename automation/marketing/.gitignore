@@ -1,0 +1,34 @@
+# Environment files
+.env
+.env.local
+
+# Queue files (generated content)
+approval-queue/approval-queue.jsonl
+approval-queue/approved-queue.jsonl
+
+# Generated content (images)
+generated-content/*.png
+generated-content/*.jpg
+generated-content/*.jpeg
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
