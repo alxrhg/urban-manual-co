@@ -6,21 +6,25 @@ import { supabase } from "@/lib/supabase";
 import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
+import { useToast } from "@/hooks/useToast";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 // Destination Form Component
-function DestinationForm({ 
-  destination, 
-  onSave, 
-  onCancel, 
-  isSaving 
-}: { 
-  destination?: any; 
-  onSave: (data: any) => Promise<void>; 
-  onCancel: () => void; 
+function DestinationForm({
+  destination,
+  onSave,
+  onCancel,
+  isSaving,
+  toast
+}: {
+  destination?: any;
+  onSave: (data: any) => Promise<void>;
+  onCancel: () => void;
   isSaving: boolean;
+  toast: any;
 }) {
   const [formData, setFormData] = useState({
     slug: destination?.slug || '',
@@ -147,7 +151,7 @@ function DestinationForm({
       return data.url;
     } catch (error: any) {
       console.error('Upload error:', error);
-      alert(`Image upload failed: ${error.message}`);
+      toast.error(`Image upload failed: ${error.message}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -156,7 +160,7 @@ function DestinationForm({
 
   const fetchFromGoogle = async () => {
     if (!formData.name.trim()) {
-      alert('Please enter a name first');
+      toast.warning('Please enter a name first');
       return;
     }
 
@@ -204,10 +208,10 @@ function DestinationForm({
       }
 
       // Show success message
-      alert(`✅ Fetched data from Google Places!\n\nName: ${data.name}\nCity: ${data.city}\nCategory: ${data.category || 'Not found'}`);
+      toast.success(`Fetched data from Google Places! Name: ${data.name}, City: ${data.city}`);
     } catch (error: any) {
       console.error('Fetch Google error:', error);
-      alert(`Failed to fetch from Google: ${error.message}`);
+      toast.error(`Failed to fetch from Google: ${error.message}`);
     } finally {
       setFetchingGoogle(false);
     }
@@ -567,6 +571,8 @@ function DestinationForm({
 
 export default function AdminPage() {
   const router = useRouter();
+  const toast = useToast();
+  const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -829,28 +835,33 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteDestination = async (slug: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
-      return;
-    }
+  const handleDeleteDestination = (slug: string, name: string) => {
+    confirm({
+      title: 'Delete Destination',
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('destinations')
+            .delete()
+            .eq('slug', slug);
 
-    try {
-      const { error } = await supabase
-        .from('destinations')
-        .delete()
-        .eq('slug', slug);
+          if (error) throw error;
 
-      if (error) throw error;
+          // Reload the list and stats after deletion
+          await loadDestinationList();
+          await loadEnrichmentStats();
 
-      // Reload the list and stats after deletion
-      await loadDestinationList();
-      await loadEnrichmentStats();
-
-      alert(`✅ Successfully deleted "${name}"`);
-    } catch (e: any) {
-      console.error('Delete error:', e);
-      alert(`Failed to delete destination: ${e.message}`);
-    }
+          toast.success(`Successfully deleted "${name}"`);
+        } catch (e: any) {
+          console.error('Delete error:', e);
+          toast.error(`Failed to delete: ${e.message}`);
+        }
+      }
+    });
   };
 
   const handleSearchDestinations = async () => {
@@ -1007,7 +1018,7 @@ export default function AdminPage() {
                 return (
                   <div
                     key={dest.slug}
-                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                    className="group flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-200 hover:scale-[1.01]"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -1025,13 +1036,13 @@ export default function AdminPage() {
                         <span className="text-xs">Slug: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{dest.slug}</code></span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => {
                           setEditingDestination(dest);
                           setShowCreateModal(true);
                         }}
-                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium flex items-center gap-1"
+                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-150 text-xs font-medium flex items-center gap-1"
                       >
                         <Edit className="h-3 w-3" />
                         Edit
@@ -1041,13 +1052,13 @@ export default function AdminPage() {
                           setEnrichSlug(dest.slug);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium"
+                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-150 text-xs font-medium"
                       >
                         Enrich
                       </button>
                       <button
                         onClick={() => handleDeleteDestination(dest.slug, dest.name)}
-                        className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1"
+                        className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 hover:shadow-sm transition-all duration-150 text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1"
                       >
                         <Trash2 className="h-3 w-3" />
                         Delete
@@ -1199,6 +1210,7 @@ export default function AdminPage() {
               <div className="p-6">
                 <DestinationForm
                   destination={editingDestination}
+                  toast={toast}
                   onSave={async (data) => {
                     setIsSaving(true);
                     try {
@@ -1229,8 +1241,9 @@ export default function AdminPage() {
                       setEditingDestination(null);
                       await loadDestinationList();
                       await loadEnrichmentStats();
+                      toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
                     } catch (e: any) {
-                      alert(`Error: ${e.message}`);
+                      toast.error(`Error: ${e.message}`);
                     } finally {
                       setIsSaving(false);
                     }
@@ -1245,6 +1258,9 @@ export default function AdminPage() {
             </div>
           </>
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialogComponent />
       </div>
     </main>
   );
