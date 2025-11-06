@@ -11,6 +11,8 @@
  * Then use: https://github.com/upstash/ratelimit
  */
 
+import { logRateLimit } from './logger';
+
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -71,6 +73,9 @@ class RateLimiter {
 
     // Entry exists and not expired
     if (entry.count >= limit) {
+      // Log rate limit exceeded
+      logRateLimit(identifier, 'rate-limited', true);
+
       return {
         success: false,
         limit,
@@ -81,6 +86,13 @@ class RateLimiter {
 
     // Increment count
     entry.count++;
+
+    // Log successful check (debug level)
+    if (entry.count === limit - 2) {
+      // Warn when approaching limit
+      logRateLimit(identifier, 'approaching-limit', false);
+    }
+
     return {
       success: true,
       limit,
