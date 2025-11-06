@@ -18,6 +18,7 @@ This is a **Next.js 16** application with optional microservices for enhanced fe
 - 📱 **Responsive Design** - Beautiful on desktop and mobile
 - 🎨 **Urban Manual Inspired** - Clean, minimal, editorial design
 - 🌙 **Dark Mode** - Full dark mode support
+- 🤖 **ML-Powered Recommendations** - Optional: Enhanced recommendations with collaborative filtering (see [ML Integration Guide](./ML_INTEGRATION_GUIDE.md))
 
 ### Tech Stack
 
@@ -185,11 +186,13 @@ Inspired by Urban Manual and Little Places London:
 
 ## Documentation
 
+### ML Integration (New! ✨)
+- 🚀 **[ML Integration Guide](./ML_INTEGRATION_GUIDE.md)** - **START HERE**: ML service is now integrated! Simple 2-minute setup.
+
 ### Architecture & Services
 - 📖 **[Microservices Architecture Guide](./MICROSERVICES_ARCHITECTURE.md)** - Why services are separate and how they work
 - ⚡ **[Quick Start: Optional Services](./QUICKSTART_OPTIONAL_SERVICES.md)** - Enable ML, Rust, and AI features
 - 🚢 **[Deployment Guide](./DEPLOYMENT_RUST_AI.md)** - Deploy optional services to production
-- 🤖 **[ML Integration](./ML_INTEGRATION.md)** - ML service integration details
 
 ### Service-Specific Docs
 - **[ML Service README](./ml-service/README.md)** - Python ML service documentation

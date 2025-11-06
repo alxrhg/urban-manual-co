@@ -31,6 +31,8 @@ import { PersonalizedRecommendations } from '@/components/PersonalizedRecommenda
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
+import { ForYouSectionML } from '@/components/ForYouSectionML';
+import { TrendingSectionML } from '@/components/TrendingSectionML';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
@@ -1236,6 +1238,11 @@ export default function Home() {
               />
             )}
 
+            {/* ML-Powered For You Section - Show when user is logged in and no active search */}
+            {user && !submittedQuery && !selectedCity && !selectedCategory && (
+              <ForYouSectionML />
+            )}
+
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
               <SmartRecommendations
@@ -1269,7 +1276,12 @@ export default function Home() {
               />
             )}
 
-            {/* Trending Section - Show when no active search */}
+            {/* ML-Powered Trending Section - Show when no active search */}
+            {!submittedQuery && (
+              <TrendingSectionML />
+            )}
+
+            {/* Standard Trending Section (Fallback) - Show when no active search */}
             {!submittedQuery && (
               <TrendingSection />
             )}
