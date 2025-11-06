@@ -7,9 +7,12 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "generate:migration": "tsx src/agents/migration-generator.ts",
-    "generate:tests": "tsx src/agents/test-generator.ts",
-    "agent": "tsx src/cli.ts"
+    "agent": "tsx src/cli.ts",
+    "migrate": "tsx src/agents/migration-generator.ts",
+    "test-gen": "tsx src/agents/test-generator.ts",
+    "review": "tsx src/agents/code-reviewer.ts",
+    "docs": "tsx src/agents/documentation-generator.ts",
+    "refactor": "tsx src/agents/refactoring-agent.ts"
   },
   "dependencies": {
     "@langchain/core": "^0.3.31",

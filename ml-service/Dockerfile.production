@@ -1,0 +1,68 @@
+# Multi-stage Dockerfile with Rust modules for production
+# Stage 1: Build Rust modules
+FROM rust:1.75-slim as rust-builder
+
+WORKDIR /rust-build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    python3-dev \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install maturin for building Python wheels
+RUN pip3 install maturin
+
+# Copy Rust workspace
+COPY ../rust-modules/Cargo.toml ./Cargo.toml
+COPY ../rust-modules/embedding-processor ./embedding-processor
+COPY ../rust-modules/vector-search ./vector-search
+
+# Build Rust modules and create Python wheels
+RUN cd embedding-processor && maturin build --release && \
+    cd ../vector-search && maturin build --release
+
+# Stage 2: Python runtime with Rust modules
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (Rust-based Python package manager - 15x faster!)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Copy dependency files first for better caching
+COPY pyproject.toml .
+COPY requirements.txt .
+
+# Install Python dependencies using uv
+RUN uv pip install --system --no-cache -r requirements.txt
+
+# Copy and install Rust module wheels from builder stage
+COPY --from=rust-builder /rust-build/embedding-processor/target/wheels/*.whl /tmp/wheels/
+COPY --from=rust-builder /rust-build/vector-search/target/wheels/*.whl /tmp/wheels/
+RUN pip install --no-cache-dir /tmp/wheels/*.whl && rm -rf /tmp/wheels
+
+# Copy application code
+COPY . .
+
+# Create non-root user
+RUN useradd -m -u 1000 mluser && chown -R mluser:mluser /app
+USER mluser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+
+# Run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
