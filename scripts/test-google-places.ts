@@ -24,7 +24,7 @@ if (!GOOGLE_API_KEY) {
 }
 
 console.log('🔍 Testing Google Places API (New)...\n');
-console.log(`API Key: ${GOOGLE_API_KEY.substring(0, 20)}...`);
+console.log('API Key: [REDACTED]');
 
 // Test 1: Text Search
 async function testTextSearch() {
