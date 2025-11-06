@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { MapPin, Heart, Check } from "lucide-react";
@@ -26,7 +26,8 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
-export default function Account() {
+// Separate component to handle search params
+function AccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
@@ -602,5 +603,14 @@ export default function Account() {
         </div>
       )}
     </main>
+  );
+}
+
+// Wrap AccountContent in Suspense
+export default function Account() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <AccountContent />
+    </Suspense>
   );
 }
