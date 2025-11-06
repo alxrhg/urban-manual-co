@@ -20,6 +20,9 @@ SQLAlchemy==2.0.35
 # HTTP client
 httpx==0.27.2
 
+# Google Trends
+pytrends==4.9.2
+
 # Data validation and serialization
 python-multipart==0.0.12
 

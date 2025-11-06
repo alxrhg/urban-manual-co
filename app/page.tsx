@@ -31,6 +31,7 @@ import { PersonalizedRecommendations } from '@/components/PersonalizedRecommenda
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
+import GoogleTrendsSection from '@/components/GoogleTrendsSection';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
@@ -1272,6 +1273,11 @@ export default function Home() {
             {/* Trending Section - Show when no active search */}
             {!submittedQuery && (
               <TrendingSection />
+            )}
+
+            {/* Google Trends Section - Show when no active search */}
+            {!submittedQuery && (
+              <GoogleTrendsSection region="united_states" showRealtime={false} />
             )}
 
             {/* Near Me - No Results Message */}

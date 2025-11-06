@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from app.config import get_settings
 from app.utils.database import init_db_pool, close_db_pool
 from app.utils.logger import get_logger
-from app.api import health, recommendations, forecast
+from app.api import health, recommendations, forecast, google_trends
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -50,6 +50,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(recommendations.router, prefix="/api/recommend", tags=["Recommendations"])
 app.include_router(forecast.router, prefix="/api/forecast", tags=["Forecasting"])
+app.include_router(google_trends.router, prefix="/api/trends", tags=["Google Trends"])
 
 
 @app.get("/api")
@@ -62,7 +63,8 @@ async def api_root():
             "health": "/health",
             "docs": "/docs",
             "recommendations": "/api/recommend/collaborative",
-            "forecasting": "/api/forecast/demand"
+            "forecasting": "/api/forecast/demand",
+            "google_trends": "/api/trends"
         }
     }
 
