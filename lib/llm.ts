@@ -5,6 +5,49 @@ const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOO
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 
+export async function generateText(
+  prompt: string,
+  options?: { temperature?: number; maxTokens?: number }
+): Promise<string | null> {
+  const temperature = options?.temperature ?? 0.7;
+  const maxTokens = options?.maxTokens ?? 100;
+
+  // Prefer OpenAI if configured
+  const openai = getOpenAI();
+  if (openai) {
+    try {
+      const resp = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature,
+        max_tokens: maxTokens,
+      });
+      return resp.choices?.[0]?.message?.content || null;
+    } catch (error) {
+      console.error('OpenAI generateText error:', error);
+    }
+  }
+
+  // Fallback to Gemini
+  if (genAI) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        generationConfig: {
+          temperature,
+          maxOutputTokens: maxTokens,
+        },
+      });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error) {
+      console.error('Gemini generateText error:', error);
+    }
+  }
+
+  return null;
+}
+
 export async function generateJSON(system: string, user: string): Promise<any | null> {
   // Prefer OpenAI if configured
   const openai = getOpenAI();

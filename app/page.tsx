@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
@@ -36,6 +36,11 @@ import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
 import { TripAwareBanner } from '@/components/TripAwareBanner';
+import { SessionResume } from '@/components/SessionResume';
+import { ContextCards } from '@/components/ContextCards';
+import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
+import { DestinationBadges } from '@/components/DestinationBadges';
+import { type ExtractedIntent } from '@/app/api/intent/schema';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -157,6 +162,53 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
+function getContextAwareLoadingMessage(searchTerm: string): string {
+  const query = searchTerm.toLowerCase();
+
+  // Restaurant/Dining related
+  if (query.match(/restaurant|dining|food|eat/)) {
+    return "French or Japanese? Date night or casual?";
+  }
+
+  // Coffee/Cafe related
+  if (query.match(/coffee|cafe|caf[eé]/)) {
+    return "Cozy hideaway or trendy spot?";
+  }
+
+  // Bar/Nightlife related
+  if (query.match(/bar|cocktail|drink|nightlife|pub/)) {
+    return "Cocktails or craft beer? Upbeat or intimate?";
+  }
+
+  // Hotel/Accommodation related
+  if (query.match(/hotel|stay|accommodation|lodging/)) {
+    return "Luxury or boutique? Business or leisure?";
+  }
+
+  // Shopping related
+  if (query.match(/shop|shopping|boutique|store/)) {
+    return "Designer or vintage? Mall or local markets?";
+  }
+
+  // Activities/Entertainment related
+  if (query.match(/museum|gallery|art|culture|theater|theatre/)) {
+    return "Classic or contemporary? Guided or self-paced?";
+  }
+
+  // Parks/Outdoor related
+  if (query.match(/park|outdoor|beach|hiking|nature/)) {
+    return "Active adventure or peaceful retreat?";
+  }
+
+  // Spa/Wellness related
+  if (query.match(/spa|wellness|massage|relax/)) {
+    return "Full day retreat or quick escape?";
+  }
+
+  // No fallback - let AI ask user directly through conversation
+  return "";
+}
+
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
@@ -198,6 +250,33 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
 
+  // AI-powered chat using the chat API endpoint - only website content
+  const [chatResponse, setChatResponse] = useState<string>('');
+  const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
+  const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null); // Store enhanced intent data
+  const [seasonalContext, setSeasonalContext] = useState<any>(null);
+
+  // Session and context state
+  const [lastSession, setLastSession] = useState<any>(null);
+  const [userContext, setUserContext] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [showSessionResume, setShowSessionResume] = useState(false);
+  // Phase 2 & 3: Enriched greeting context
+  const [enrichedGreetingContext, setEnrichedGreetingContext] = useState<any>(null);
+
+  // Track submitted query for chat display
+  const [submittedQuery, setSubmittedQuery] = useState<string>('');
+  const [followUpInput, setFollowUpInput] = useState<string>('');
+
+  // Track visual chat messages for display
+  const [chatMessages, setChatMessages] = useState<Array<{
+    type: 'user' | 'assistant';
+    content: string;
+    contextPrompt?: string;
+  }>>([]);
+
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // Don't fetch all destinations on page load - only fetch when needed for filtering
     // This dramatically improves initial page load speed
@@ -212,28 +291,127 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       fetchVisitedPlaces();
+      fetchLastSession();
+      fetchUserProfile();
     }
   }, [user]);
 
-  // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
-  // Works like chat but with convenience of auto-trigger
+  // Phase 2 & 3: Fetch enriched greeting context when user profile is loaded
   useEffect(() => {
-    if (searchTerm.trim().length > 0) {
-      const timer = setTimeout(() => {
-        performAISearch(searchTerm);
-      }, 500); // 500ms debounce for auto-trigger
-      return () => clearTimeout(timer);
-    } else {
+    if (user && userProfile) {
+      fetchEnrichedGreetingContext();
+    }
+  }, [user, userProfile]);
+
+  // Fetch last conversation session
+  async function fetchLastSession() {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/conversation/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.session_id && data.messages && data.messages.length > 0) {
+          setLastSession({
+            id: data.session_id,
+            last_activity: data.last_activity || new Date().toISOString(),
+            context_summary: data.context,
+            message_count: data.messages.length,
+          });
+          // Show session resume if session is less than 24 hours old
+          const lastActivity = new Date(data.last_activity || Date.now());
+          const hoursSince = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60);
+          if (hoursSince < 24) {
+            setShowSessionResume(true);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching last session:', error);
+    }
+  }
+
+  // Fetch user profile for context
+  async function fetchUserProfile() {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!error && data) {
+        // Store full profile for greeting context
+        setUserProfile(data);
+        // Also store simplified version for other components
+        setUserContext({
+          favoriteCities: data.favorite_cities || [],
+          favoriteCategories: data.favorite_categories || [],
+          travelStyle: data.travel_style,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  }
+
+  // Phase 2 & 3: Fetch enriched greeting context (journey, achievements, weather, trending)
+  async function fetchEnrichedGreetingContext() {
+    if (!user || !userProfile) return;
+
+    try {
+      const favoriteCity = userProfile.favorite_cities?.[0];
+      const params = new URLSearchParams({
+        userId: user.id,
+      });
+      if (favoriteCity) {
+        params.append('favoriteCity', favoriteCity);
+      }
+
+      const response = await fetch(`/api/greeting/context?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.context) {
+          setEnrichedGreetingContext(data.context);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching enriched greeting context:', error);
+    }
+  }
+
+  function handleResumeSession(sessionId: string) {
+    // Load the session
+    setShowSessionResume(false);
+    // The session is already loaded from fetchLastSession
+    // Just scroll to the chat area or show a confirmation
+  }
+
+  // CHAT MODE: Explicit Enter submit only (no auto-trigger)
+  // Clear state when search is emptied
+  useEffect(() => {
+    if (searchTerm.trim().length === 0) {
       // Clear everything when search is empty
       setFilteredDestinations([]);
       setChatResponse('');
       setConversationHistory([]);
       setSearching(false);
+      setSubmittedQuery('');
+      setChatMessages([]);
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
     }
   }, [searchTerm]); // ONLY depend on searchTerm
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
 
   // Separate useEffect for filters (only when NO search term)
   // Fetch destinations lazily when filters are applied
@@ -319,15 +497,10 @@ export default function Home() {
     }
   };
 
-  // AI-powered chat using the chat API endpoint - only website content
-  const [chatResponse, setChatResponse] = useState<string>('');
-  const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
-  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
-  const [seasonalContext, setSeasonalContext] = useState<any>(null);
-
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = async (query: string) => {
+    setSubmittedQuery(query); // Store the submitted query
     // Match chat component: only check if empty or loading
     if (!query.trim() || searching) {
       return;
@@ -397,15 +570,31 @@ export default function Home() {
 
       // ONLY show the latest AI response (simple text)
       setChatResponse(data.content || '');
-      
+
       // ALWAYS set destinations array
-      setFilteredDestinations(data.destinations || []);
+      const destinations = data.destinations || [];
+      setFilteredDestinations(destinations);
+
+      // Add messages to visual chat history
+      const contextPrompt = getContextAwareLoadingMessage(query);
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: data.content || '', contextPrompt: destinations.length > 0 ? contextPrompt : undefined }
+      ]);
     } catch (error) {
       console.error('AI chat error:', error);
       setChatResponse('Sorry, I encountered an error. Please try again.');
       setFilteredDestinations([]);
       setSearchIntent(null);
       setSeasonalContext(null);
+
+      // Add error message to chat
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+      ]);
     } finally {
       setSearching(false);
     }
@@ -667,84 +856,198 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[60vh] flex flex-col px-6 md:px-10 py-20">
+        <section className="min-h-[65vh] flex flex-col px-6 md:px-12 lg:px-16 py-24 md:py-28">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
                 <div className="w-full">
-                  <GreetingHero
-                searchQuery={searchTerm}
-                onSearchChange={(value) => {
-                  setSearchTerm(value);
-                  // Clear conversation history only if search is cleared
-                  if (!value.trim()) {
-                    setConversationHistory([]);
-                    setSearchIntent(null);
-                    setSeasonalContext(null);
-                    setSearchTier(null);
-                    setChatResponse('');
-                    setFilteredDestinations([]);
-                  }
-                }}
-                onSubmit={(query) => {
-                  // CHAT MODE: Explicit submit on Enter key (like chat component)
-                  if (query.trim() && !searching) {
-                    performAISearch(query);
-                  }
-                }}
-                userName={(function () {
-                  const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                  if (!raw) return undefined;
-                  return raw
-                    .split(/[\s._-]+/)
-                    .filter(Boolean)
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(' ');
-                })()}
-                isAIEnabled={isAIEnabled}
-                isSearching={searching}
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  // Sync with legacy state for backward compatibility
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  // Track filter changes
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                availableCities={cities}
-                availableCategories={categories}
-                  />
+                  {/* Show GreetingHero only when no active search */}
+                  {!submittedQuery && (
+                    <>
+                      {/* Session Resume - Show if there's a recent session */}
+                      {showSessionResume && lastSession && (
+                        <div className="mb-6">
+                          <SessionResume
+                            session={lastSession}
+                            onResume={handleResumeSession}
+                            onDismiss={() => setShowSessionResume(false)}
+                          />
+                        </div>
+                      )}
 
-                  {/* Loading State */}
-                  {searchTerm && searching && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="animate-pulse">✨</span>
-                        <span>Analyzing your query with travel intelligence...</span>
+                      {/* Context Cards - Show user's saved preferences */}
+                      {userContext && user && !searchTerm && (
+                        <div className="mb-6">
+                          <ContextCards context={userContext} />
+                        </div>
+                      )}
+
+                      <GreetingHero
+                        searchQuery={searchTerm}
+                        onSearchChange={(value) => {
+                          setSearchTerm(value);
+                          // Clear conversation history only if search is cleared
+                          if (!value.trim()) {
+                            setConversationHistory([]);
+                            setSearchIntent(null);
+                            setSeasonalContext(null);
+                            setSearchTier(null);
+                            setChatResponse('');
+                            setFilteredDestinations([]);
+                            setSubmittedQuery('');
+                          }
+                        }}
+                        onSubmit={(query) => {
+                          // CHAT MODE: Explicit submit on Enter key (like chat component)
+                          if (query.trim() && !searching) {
+                            performAISearch(query);
+                          }
+                        }}
+                        userName={(function () {
+                          const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                          if (!raw) return undefined;
+                          return raw
+                            .split(/[\s._-]+/)
+                            .filter(Boolean)
+                            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                            .join(' ');
+                        })()}
+                        userProfile={userProfile}
+                        lastSession={lastSession}
+                        enrichedContext={enrichedGreetingContext}
+                        isAIEnabled={isAIEnabled}
+                        isSearching={searching}
+                        filters={advancedFilters}
+                        onFiltersChange={(newFilters) => {
+                          setAdvancedFilters(newFilters);
+                          // Sync with legacy state for backward compatibility
+                          if (newFilters.city !== undefined) {
+                            setSelectedCity(newFilters.city || '');
+                          }
+                          if (newFilters.category !== undefined) {
+                            setSelectedCategory(newFilters.category || '');
+                          }
+                          // Track filter changes
+                          Object.entries(newFilters).forEach(([key, value]) => {
+                            if (value !== undefined && value !== null && value !== '') {
+                              trackFilterChange({ filterType: key, value });
+                            }
+                          });
+                        }}
+                        availableCities={cities}
+                        availableCategories={categories}
+                      />
+                    </>
+                  )}
+
+                  {/* Chat-like display when search is active */}
+                  {submittedQuery && (
+                    <div className="w-full">
+                      {/* Greeting */}
+                      <div className="text-left mb-6">
+                        <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+                          {(() => {
+                            const now = new Date();
+                            const currentHour = now.getHours();
+                            let greeting = 'GOOD EVENING';
+                            if (currentHour < 12) greeting = 'GOOD MORNING';
+                            else if (currentHour < 18) greeting = 'GOOD AFTERNOON';
+
+                            const userName = (function () {
+                              const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                              if (!raw) return undefined;
+                              return raw
+                                .split(/[\s._-]+/)
+                                .filter(Boolean)
+                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                .join(' ');
+                            })();
+
+                            return `${greeting}${userName ? `, ${userName}` : ''}`;
+                          })()}
+                        </h2>
                       </div>
+
+                      {/* Intent Confirmation Chips */}
+                      {searchIntent && !searching && (
+                        <div className="mb-6">
+                          <IntentConfirmationChips
+                            intent={searchIntent}
+                            onChipRemove={(chipType, value) => {
+                              // Modify the search based on what was removed
+                              setSearchTerm('');
+                              setSubmittedQuery('');
+                              setSearchIntent(null);
+                            }}
+                            editable={true}
+                          />
+                        </div>
+                      )}
+
+                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
+                      <div
+                        ref={chatContainerRef}
+                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+                      >
+                        {chatMessages.map((message, index) => (
+                          <div key={index} className="space-y-2">
+                            {message.type === 'user' ? (
+                              <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                {message.content}
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <MarkdownRenderer
+                                  content={message.content}
+                                  className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                />
+                                {message.contextPrompt && (
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                    {message.contextPrompt}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Loading State */}
+                        {searching && (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="animate-pulse">✨</span>
+                              <span>Finding the perfect spots...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Follow-up input field - Chat style */}
+                      {!searching && chatMessages.length > 0 && (
+                        <div className="relative">
+                          <input
+                            placeholder="Refine your search or ask a follow-up..."
+                            value={followUpInput}
+                            onChange={(e) => setFollowUpInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
+                                e.preventDefault();
+                                const query = followUpInput.trim();
+                                setSearchTerm(query);
+                                setFollowUpInput('');
+                                performAISearch(query);
+                              }
+                            }}
+                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* AI conversational response */}
-                  {searchTerm && !searching && chatResponse && (
-                    <MarkdownRenderer
-                      content={chatResponse}
-                      className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                    />
-                  )}
-
                   {/* No results message */}
-                  {searchTerm && !searching && filteredDestinations.length === 0 && !chatResponse && (
+                  {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <span>No results found. Try refining your search.</span>
                     </div>
@@ -753,18 +1056,18 @@ export default function Home() {
               </div>
               
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
-              {!searchTerm && (
+              {!submittedQuery && (
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
                     {/* City List */}
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                       <button
                         onClick={() => {
                           setSelectedCity("");
                           setCurrentPage(1);
                           trackFilterChange({ filterType: 'city', value: 'all' });
                         }}
-                        className={`transition-all ${
+                        className={`transition-all duration-200 ease-out ${
                           !selectedCity
                             ? "font-medium text-black dark:text-white"
                             : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -781,7 +1084,7 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                           }}
-                          className={`transition-all ${
+                          className={`transition-all duration-200 ease-out ${
                             selectedCity === city
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -793,7 +1096,7 @@ export default function Home() {
                       {cities.length > 20 && (
                         <button
                           onClick={() => setShowAllCities(!showAllCities)}
-                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
+                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
                         >
                           {showAllCities ? '- Show Less' : '+ Show More'}
                         </button>
@@ -802,7 +1105,7 @@ export default function Home() {
                     
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
                           onClick={() => {
                             setSelectedCategory("");
@@ -810,7 +1113,7 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
-                          className={`transition-all ${
+                          className={`transition-all duration-200 ease-out ${
                             !selectedCategory && !advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -827,12 +1130,17 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
-                          className={`transition-all ${
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
                             advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            className="h-3 w-3"
+                          />
                           Michelin
                         </button>
                         {categories.map((category) => (
@@ -845,7 +1153,7 @@ export default function Home() {
                               setCurrentPage(1);
                               trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                             }}
-                            className={`transition-all ${
+                            className={`transition-all duration-200 ease-out ${
                               selectedCategory === category && !advancedFilters.michelin
                                 ? "font-medium text-black dark:text-white"
                                 : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -864,7 +1172,7 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="px-6 md:px-10 pb-20">
+              <div className="px-6 md:px-12 lg:px-16 pb-24 md:pb-32">
                 <div className="max-w-[1800px] mx-auto">
                   {/* Trip Aware Banner - Only show for logged in users when no active search */}
                   {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
@@ -896,7 +1204,7 @@ export default function Home() {
             </div>
 
             {/* Recently Viewed - Show when no active search */}
-            {!searchTerm.trim() && !selectedCity && !selectedCategory && (
+            {!submittedQuery && !selectedCity && !selectedCategory && (
               <RecentlyViewed
                 onCardClick={(destination) => {
                   setSelectedDestination(destination);
@@ -929,7 +1237,7 @@ export default function Home() {
             )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
-            {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
+            {user && !submittedQuery && !selectedCity && !selectedCategory && (
               <SmartRecommendations
                 onCardClick={(destination) => {
                   setSelectedDestination(destination);
@@ -962,7 +1270,7 @@ export default function Home() {
             )}
 
             {/* Trending Section - Show when no active search */}
-            {!searchTerm.trim() && (
+            {!submittedQuery && (
               <TrendingSection />
             )}
 
@@ -996,7 +1304,7 @@ export default function Home() {
 
               return (
               <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
                 {(() => {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
@@ -1035,10 +1343,10 @@ export default function Home() {
                         });
                       }
                     }}
-                    className={`${CARD_WRAPPER} cursor-pointer text-left`}
+                    className={`${CARD_WRAPPER} cursor-pointer text-left focus-ring`}
                   >
                     {/* Image Container */}
-                    <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
+                    <div className={`${CARD_MEDIA} mb-3 relative overflow-hidden`}>
                       {destination.image ? (
                         <Image
                           src={destination.image}
@@ -1111,11 +1419,11 @@ export default function Home() {
             if (totalPages <= 1) return null;
 
             return (
-              <div className="mt-8 w-full flex flex-wrap items-center justify-center gap-2">
+              <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -1137,10 +1445,10 @@ export default function Home() {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`px-2.5 sm:px-3 py-2 text-xs rounded-2xl transition-colors ${
+                        className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
                           currentPage === pageNum
-                            ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
-                            : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                            ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
+                            : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm font-medium'
                         }`}
                       >
                         {pageNum}
@@ -1152,7 +1460,7 @@ export default function Home() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -1164,20 +1472,10 @@ export default function Home() {
             );
           })()}
 
-          {/* Horizontal Ad below pagination */}
+          {/* Ad below pagination */}
           {displayDestinations.length > 0 && (
             <div className="mt-8 w-full">
-              <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
-                <div className="text-xs text-gray-400 mb-2 text-center">Sponsored</div>
-                <ins
-                  className="adsbygoogle"
-                  style={{ display: 'block', height: '90px' }}
-                  data-ad-client="ca-pub-3052286230434362"
-                  data-ad-slot="3271683710"
-                  data-ad-format="horizontal"
-                  data-full-width-responsive="false"
-                />
-              </div>
+              <MultiplexAd slot="3271683710" />
             </div>
           )}
           </>

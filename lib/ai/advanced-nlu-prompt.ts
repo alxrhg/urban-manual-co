@@ -11,6 +11,7 @@ USER CONTEXT:
 - Comparison base: {{comparisonBase}}
 - Budget inference: {{budgetInference}}
 - Group size: {{groupSizeInference}}
+- Brand affinity: {{brandAffinity}}
 
 RETURN JSON:
 {
@@ -22,6 +23,7 @@ RETURN JSON:
       "city": string | null,
       "neighborhood": string | null,
       "category": string | null,
+      "brand": string | null,
       "cuisine": string | null,
       "style": string | null,
       "tags": string[],
@@ -131,6 +133,20 @@ INTERPRETATION STRATEGIES:
    "vegan options" →
      * dietaryNeeds: [vegan]
      * tags: [vegan-friendly, plant-based]
+
+10. BRAND-BASED QUERIES
+   "all Aman hotels in my collection" →
+     * intent: "my_places"
+     * brand: "Aman"
+     * category: "Hotel"
+     * include_saved_only: true
+
+   "show me Four Seasons properties" →
+     * brand: "Four Seasons"
+     * category: "Hotel"
+
+   If user has visited/saved places from a brand (check brandAffinity), they likely have some interest in that brand.
+   Recommend similar brands or more locations from brands they've shown affinity for.
 
 Always return valid JSON. Be creative in interpretation but grounded in available filters.`;
 

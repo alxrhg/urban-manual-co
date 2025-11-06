@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import {
+  uploadRatelimit,
+  memoryUploadRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +17,20 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limiting: 3 uploads per minute
+    const identifier = getIdentifier(request, user.id);
+    const ratelimit = isUpstashConfigured() ? uploadRatelimit : memoryUploadRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Too many upload requests. Please wait a moment.',
+        limit,
+        remaining,
+        reset
+      );
     }
 
     // 2. Use service role client for storage operations

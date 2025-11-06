@@ -34,6 +34,8 @@ console.log(`- Supabase URL: ${supabaseUrl ? '✓ Set' : '✗ Missing'}`);
 console.log(`- Supabase Key: ${supabaseKey ? '✓ Set' : '✗ Missing'}`);
 console.log('');
 
+// Note: These are environment checks only, not logging actual secret values
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function backfillEmbeddings(batchSize = 50) {

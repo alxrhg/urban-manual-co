@@ -10,6 +10,8 @@ export interface Destination {
   image?: string;
   michelin_stars?: number;
   crown?: boolean;
+  brand?: string | null;
+  architect?: string | null;
   // Enrichment fields
   place_id?: string | null;
   rating?: number | null;

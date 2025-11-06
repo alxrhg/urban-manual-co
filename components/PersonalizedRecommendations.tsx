@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { MapPin, Sparkles } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Link from 'next/link';
+import { useMemo, memo } from 'react';
 
 interface PersonalizedRecommendationsProps {
   limit?: number;
@@ -16,7 +17,7 @@ interface PersonalizedRecommendationsProps {
   filterCity?: string; // Filter recommendations by city slug
 }
 
-export function PersonalizedRecommendations({
+function PersonalizedRecommendationsComponent({
   limit = 12,
   title = 'For You',
   showTitle = true,
@@ -57,16 +58,20 @@ export function PersonalizedRecommendations({
     );
   }
 
-  let destinations = recommendations
-    .map((rec) => rec.destination)
-    .filter((d): d is Destination => !!d);
-  
-  // Additional client-side city filtering (as backup)
-  if (filterCity) {
-    destinations = destinations.filter(d => 
-      d.city?.toLowerCase() === filterCity.toLowerCase()
-    );
-  }
+  const destinations = useMemo(() => {
+    let filtered = recommendations
+      .map((rec) => rec.destination)
+      .filter((d): d is Destination => !!d);
+
+    // Additional client-side city filtering (as backup)
+    if (filterCity) {
+      filtered = filtered.filter(d =>
+        d.city?.toLowerCase() === filterCity.toLowerCase()
+      );
+    }
+
+    return filtered;
+  }, [recommendations, filterCity]);
 
   if (destinations.length === 0) {
     return null;
@@ -170,4 +175,7 @@ export function PersonalizedRecommendations({
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+export const PersonalizedRecommendations = memo(PersonalizedRecommendationsComponent);
 
