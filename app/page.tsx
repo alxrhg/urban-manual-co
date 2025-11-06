@@ -205,8 +205,8 @@ function getContextAwareLoadingMessage(searchTerm: string): string {
     return "Full day retreat or quick escape?";
   }
 
-  // Generic/Default
-  return "Indoor or outdoor? Budget-friendly or splurge-worthy?";
+  // No fallback - let AI ask user directly through conversation
+  return "";
 }
 
 export default function Home() {
