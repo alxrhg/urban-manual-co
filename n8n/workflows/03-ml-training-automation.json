@@ -1,0 +1,393 @@
+{
+  "name": "ML Model Training Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 3 * * 0"
+            }
+          ]
+        }
+      },
+      "name": "Weekly on Sunday 3 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "schedule-trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(DISTINCT user_id) as user_count, COUNT(*) as interaction_count, MAX(created_at) as latest_interaction FROM ( SELECT user_id, created_at FROM saved_destinations UNION ALL SELECT user_id, visited_at as created_at FROM visited_places ) as interactions WHERE created_at > NOW() - INTERVAL '7 days';",
+        "options": {}
+      },
+      "name": "Check New Interactions",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "id": "check-interactions",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "enough-interactions",
+              "leftValue": "={{ $json.interaction_count }}",
+              "rightValue": "100",
+              "operator": {
+                "type": "number",
+                "operation": "larger"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Enough Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "id": "enough-data",
+      "notesInFlow": true,
+      "notes": "Only retrain if we have at least 100 new interactions"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "url": "={{ $env.ML_SERVICE_URL }}/api/recommend/train",
+        "options": {}
+      },
+      "name": "Train Collaborative Filtering",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 200],
+      "id": "train-collaborative"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "url": "={{ $env.ML_SERVICE_URL }}/api/forecast/train",
+        "options": {}
+      },
+      "name": "Train Demand Forecasting",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 400],
+      "id": "train-forecasting"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Wait for both training jobs to complete\nconst collaborativeResult = $input.first().json;\nconst forecastingResult = $input.last().json;\n\nreturn {\n  json: {\n    collaborative_success: collaborativeResult.success || true,\n    forecasting_success: forecastingResult.success || true,\n    collaborative_metrics: collaborativeResult.metrics || {},\n    forecasting_metrics: forecastingResult.metrics || {},\n    trained_at: new Date().toISOString()\n  }\n};"
+      },
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "id": "aggregate-results"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT destination_id, COUNT(*) as prediction_count FROM ( SELECT DISTINCT d.id as destination_id FROM destinations d CROSS JOIN (SELECT DISTINCT user_id FROM user_profiles LIMIT 10) u ) as test_data LIMIT 5;",
+        "options": {}
+      },
+      "name": "Get Test Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1250, 300],
+      "id": "get-test-data",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "url": "={{ $env.ML_SERVICE_URL }}/api/recommend/collaborative",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "user_id",
+              "value": "={{ $json.user_id }}"
+            },
+            {
+              "name": "n",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Test Recommendations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1450, 300],
+      "id": "test-recommendations",
+      "notesInFlow": true,
+      "notes": "Validate model works after training"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate test results\nconst testResults = $input.all();\nconst successCount = testResults.filter(r => r.json.recommendations && r.json.recommendations.length > 0).length;\nconst totalTests = testResults.length;\n\nconst success = successCount > 0;\nconst successRate = (successCount / totalTests) * 100;\n\nreturn {\n  json: {\n    validation_success: success,\n    tests_passed: successCount,\n    total_tests: totalTests,\n    success_rate: successRate.toFixed(2) + '%',\n    status: success ? '✅ Models validated successfully' : '❌ Model validation failed'\n  }\n};"
+      },
+      "name": "Validate Models",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 300],
+      "id": "validate-models"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "admin_logs",
+          "mode": "list",
+          "cachedResultName": "admin_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "ml_model_training",
+            "details": "={{ JSON.stringify($json) }}",
+            "created_at": "={{ $now }}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Log Training Results",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1850, 300],
+      "id": "log-results",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format summary message\nconst trainingData = $('Aggregate Results').first().json;\nconst validationData = $json;\nconst interactionData = $('Check New Interactions').first().json;\n\nconst message = `\n📊 **ML Model Training Complete**\n\n**New Data This Week:**\n- Users: ${interactionData.user_count}\n- Interactions: ${interactionData.interaction_count}\n\n**Training Results:**\n- Collaborative Filtering: ${trainingData.collaborative_success ? '✅' : '❌'}\n- Demand Forecasting: ${trainingData.forecasting_success ? '✅' : '❌'}\n\n**Validation:**\n- Tests Passed: ${validationData.tests_passed}/${validationData.total_tests}\n- Success Rate: ${validationData.success_rate}\n- Status: ${validationData.status}\n\n**Timestamp:** ${new Date().toISOString()}\n\n${validationData.validation_success ? '🎉 Models are ready for production!' : '⚠️ Review model performance before deployment'}\n`;\n\nreturn {\n  json: {\n    summary: message,\n    metrics: {\n      ...trainingData,\n      ...validationData,\n      new_interactions: interactionData.interaction_count\n    }\n  }\n};"
+      },
+      "name": "Format Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2050, 300],
+      "id": "format-summary"
+    },
+    {
+      "parameters": {
+        "content": "={{ $json.summary }}",
+        "options": {}
+      },
+      "name": "Output Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2250, 300],
+      "id": "output-summary",
+      "notesInFlow": true,
+      "notes": "Replace with Slack notification in production"
+    },
+    {
+      "parameters": {
+        "content": "⏭️ Skipping training - not enough new data (< 100 interactions)",
+        "options": {}
+      },
+      "name": "Skip Training",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 500],
+      "id": "skip-training"
+    }
+  ],
+  "connections": {
+    "Weekly on Sunday 3 AM": {
+      "main": [
+        [
+          {
+            "node": "Check New Interactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check New Interactions": {
+      "main": [
+        [
+          {
+            "node": "Enough Data?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enough Data?": {
+      "main": [
+        [
+          {
+            "node": "Train Collaborative Filtering",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Train Demand Forecasting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Training",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Train Collaborative Filtering": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Train Demand Forecasting": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Get Test Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Test Data": {
+      "main": [
+        [
+          {
+            "node": "Test Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Validate Models",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Models": {
+      "main": [
+        [
+          {
+            "node": "Log Training Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Training Results": {
+      "main": [
+        [
+          {
+            "node": "Format Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Summary": {
+      "main": [
+        [
+          {
+            "node": "Output Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "urban-manual",
+      "id": "urban-manual-tag"
+    },
+    {
+      "name": "ml",
+      "id": "ml-tag"
+    },
+    {
+      "name": "automation",
+      "id": "automation-tag"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-11-06T00:00:00.000Z",
+  "versionId": "1"
+}

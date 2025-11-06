@@ -1,0 +1,411 @@
+{
+  "name": "User Onboarding Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "user-signup",
+        "options": {}
+      },
+      "name": "Webhook: New User Signup",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "user-signup-webhook",
+      "id": "webhook-trigger",
+      "notesInFlow": true,
+      "notes": "Configure Supabase Database Webhook to call this endpoint on auth.users INSERT"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract user data from webhook\nconst userData = $input.first().json;\n\nreturn {\n  json: {\n    user_id: userData.record.id,\n    email: userData.record.email,\n    created_at: userData.record.created_at,\n    metadata: userData.record.raw_user_meta_data || {}\n  }\n};"
+      },
+      "name": "Extract User Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "id": "extract-user-info"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "insert",
+        "tableId": "user_profiles",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.user_id }}",
+            "created_at": "={{ $json.created_at }}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Create User Profile",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "id": "create-user-profile",
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-api",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "sendTo": "={{ $json.email }}",
+        "subject": "Welcome to The Urban Manual 🌏",
+        "emailType": "html",
+        "message": "=<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; border-radius: 10px 10px 0 0; }\n    .content { background: white; padding: 40px 20px; }\n    .button { background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }\n    .footer { background: #f7f7f7; padding: 20px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 10px 10px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>Welcome to The Urban Manual</h1>\n      <p>Your journey to 897 curated destinations begins now</p>\n    </div>\n    <div class=\"content\">\n      <p>Hi there! 👋</p>\n      \n      <p>We're thrilled to have you join our community of food and culture enthusiasts. The Urban Manual is your curated guide to discovering the world's most remarkable destinations.</p>\n      \n      <h3>Get Started:</h3>\n      <ul>\n        <li>🗺️ Explore 897 hand-picked destinations</li>\n        <li>⭐ Track your visits and save favorites</li>\n        <li>🤖 Get AI-powered recommendations</li>\n        <li>📍 Create personalized itineraries</li>\n      </ul>\n      \n      <a href=\"https://theurbanmanual.com/account\" class=\"button\">Complete Your Profile</a>\n      \n      <p>Pro tip: Complete your profile to get personalized recommendations based on your taste!</p>\n    </div>\n    <div class=\"footer\">\n      <p>The Urban Manual | Curated Destinations Worldwide</p>\n      <p>Questions? Reply to this email or visit our help center</p>\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "id": "send-welcome-email",
+      "notesInFlow": true,
+      "notes": "Configure Gmail OAuth or use SendGrid/Resend for production"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "hours"
+      },
+      "name": "Wait 2 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "webhookId": "wait-2-hours",
+      "id": "wait-2-hours"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT id, favorite_cities, favorite_categories, travel_style FROM user_profiles WHERE id = '{{ $json.user_id }}';",
+        "options": {}
+      },
+      "name": "Check Profile Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1250, 300],
+      "id": "check-profile-status",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "profile-incomplete",
+              "leftValue": "={{ $json.favorite_cities }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "name": "Profile Incomplete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1450, 300],
+      "id": "profile-incomplete"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "sendTo": "={{ $json.email }}",
+        "subject": "🎯 Get Personalized Recommendations",
+        "emailType": "html",
+        "message": "=<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .content { background: white; padding: 40px 20px; }\n    .button { background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"content\">\n      <h2>You're missing out! 🌟</h2>\n      \n      <p>We noticed you haven't completed your travel profile yet. By adding your preferences, you'll unlock:</p>\n      \n      <ul>\n        <li>🎯 Personalized destination recommendations</li>\n        <li>🤖 AI-powered travel suggestions</li>\n        <li>📊 Custom insights based on your taste</li>\n        <li>💎 Hidden gems matching your style</li>\n      </ul>\n      \n      <p>It takes just 2 minutes!</p>\n      \n      <a href=\"https://theurbanmanual.com/account\" class=\"button\">Complete Profile Now</a>\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "name": "Send Profile Nudge",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1650, 200],
+      "id": "send-profile-nudge"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "name": "Wait 3 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1850, 200],
+      "webhookId": "wait-3-days",
+      "id": "wait-3-days"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT COUNT(*) as activity_count FROM (\n  SELECT user_id FROM saved_destinations WHERE user_id = '{{ $json.user_id }}'\n  UNION ALL\n  SELECT user_id FROM visited_places WHERE user_id = '{{ $json.user_id }}'\n) as combined;",
+        "options": {}
+      },
+      "name": "Check User Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2050, 200],
+      "id": "check-user-activity",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "no-activity",
+              "leftValue": "={{ $json.activity_count }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "No Activity?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2250, 200],
+      "id": "no-activity"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT slug, name, city, category, michelin_stars, image FROM destinations WHERE views_count > 100 ORDER BY RANDOM() LIMIT 5;",
+        "options": {}
+      },
+      "name": "Get Popular Destinations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2450, 100],
+      "id": "get-popular-destinations",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format destinations for email\nconst destinations = $input.all().map(item => item.json);\n\nconst destinationHTML = destinations.map(d => `\n  <div style=\"margin: 20px 0; border: 1px solid #eee; border-radius: 8px; overflow: hidden;\">\n    <img src=\"${d.image}\" alt=\"${d.name}\" style=\"width: 100%; height: 200px; object-fit: cover;\" />\n    <div style=\"padding: 15px;\">\n      <h3 style=\"margin: 0 0 10px 0;\">${d.name} ${'⭐'.repeat(d.michelin_stars || 0)}</h3>\n      <p style=\"color: #666; margin: 0;\">${d.city} • ${d.category}</p>\n      <a href=\"https://theurbanmanual.com/destination/${d.slug}\" style=\"color: #667eea; text-decoration: none;\">View Details →</a>\n    </div>\n  </div>\n`).join('');\n\nreturn {\n  json: {\n    destinationsHTML: destinationHTML\n  }\n};"
+      },
+      "name": "Format Destinations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2650, 100],
+      "id": "format-destinations"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "sendTo": "={{ $('Extract User Info').item.json.email }}",
+        "subject": "🍜 Discover These Popular Destinations",
+        "emailType": "html",
+        "message": "=<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <h2>Haven't explored yet? Start here! 🌏</h2>\n    \n    <p>We noticed you haven't saved or visited any destinations yet. Here are some of our most popular spots to get you started:</p>\n    \n    {{ $json.destinationsHTML }}\n    \n    <a href=\"https://theurbanmanual.com\" style=\"background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0;\">Explore All 897 Destinations</a>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "name": "Send Engagement Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [2850, 100],
+      "id": "send-engagement-email"
+    }
+  ],
+  "connections": {
+    "Webhook: New User Signup": {
+      "main": [
+        [
+          {
+            "node": "Extract User Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract User Info": {
+      "main": [
+        [
+          {
+            "node": "Create User Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create User Profile": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Wait 2 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Profile Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Profile Status": {
+      "main": [
+        [
+          {
+            "node": "Profile Incomplete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile Incomplete?": {
+      "main": [
+        [
+          {
+            "node": "Send Profile Nudge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Profile Nudge": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days": {
+      "main": [
+        [
+          {
+            "node": "Check User Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check User Activity": {
+      "main": [
+        [
+          {
+            "node": "No Activity?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Activity?": {
+      "main": [
+        [
+          {
+            "node": "Get Popular Destinations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Popular Destinations": {
+      "main": [
+        [
+          {
+            "node": "Format Destinations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Destinations": {
+      "main": [
+        [
+          {
+            "node": "Send Engagement Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "urban-manual",
+      "id": "urban-manual-tag"
+    },
+    {
+      "name": "onboarding",
+      "id": "onboarding-tag"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-11-06T00:00:00.000Z",
+  "versionId": "1"
+}

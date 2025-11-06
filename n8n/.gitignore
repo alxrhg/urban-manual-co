@@ -1,0 +1,28 @@
+# Environment variables
+.env
+
+# n8n data
+.n8n/
+data/
+
+# Docker volumes
+volumes/
+
+# Logs
+logs/
+*.log
+
+# Custom nodes node_modules
+custom-nodes/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp

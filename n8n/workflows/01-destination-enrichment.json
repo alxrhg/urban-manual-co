@@ -1,0 +1,235 @@
+{
+  "name": "Destination Enrichment Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily at 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "schedule-trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, slug, name, city, place_id, last_enriched_at FROM destinations WHERE last_enriched_at < NOW() - INTERVAL '30 days' OR last_enriched_at IS NULL ORDER BY views_count DESC LIMIT 50;",
+        "options": {}
+      },
+      "name": "Get Stale Destinations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "id": "get-stale-destinations",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Loop Each Destination",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [650, 300],
+      "id": "loop-destinations"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleMapsApi",
+        "requestMethod": "GET",
+        "url": "=https://maps.googleapis.com/maps/api/place/details/json?place_id={{ $json.place_id }}&fields=rating,user_ratings_total,opening_hours,website,formatted_phone_number,photos,price_level,reviews&key={{ $env.GOOGLE_API_KEY }}",
+        "options": {}
+      },
+      "name": "Google Places API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 300],
+      "id": "google-places-api"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and format Google Places data\nconst result = $input.item.json.result;\nconst destination = $input.first().json;\n\n// Format opening hours\nlet opening_hours = null;\nif (result.opening_hours?.weekday_text) {\n  opening_hours = result.opening_hours.weekday_text;\n}\n\n// Get first photo reference\nlet photo_reference = null;\nif (result.photos && result.photos.length > 0) {\n  photo_reference = result.photos[0].photo_reference;\n}\n\n// Get top review\nlet top_review = null;\nif (result.reviews && result.reviews.length > 0) {\n  top_review = result.reviews[0].text;\n}\n\nreturn {\n  json: {\n    id: destination.id,\n    slug: destination.slug,\n    rating: result.rating || null,\n    user_ratings_total: result.user_ratings_total || 0,\n    price_level: result.price_level || null,\n    website: result.website || null,\n    phone_number: result.formatted_phone_number || null,\n    opening_hours: opening_hours,\n    photo_reference: photo_reference,\n    top_review: top_review,\n    last_enriched_at: new Date().toISOString()\n  }\n};"
+      },
+      "name": "Transform Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "id": "transform-data"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE destinations SET rating = {{ $json.rating }}, user_ratings_total = {{ $json.user_ratings_total }}, price_level = {{ $json.price_level }}, website = '{{ $json.website }}', phone_number = '{{ $json.phone_number }}', opening_hours = '{{ JSON.stringify($json.opening_hours) }}'::jsonb, last_enriched_at = NOW() WHERE id = {{ $json.id }};",
+        "options": {}
+      },
+      "name": "Update Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1250, 300],
+      "id": "update-supabase",
+      "credentials": {
+        "postgres": {
+          "id": "supabase-db",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [1450, 300],
+      "id": "aggregate-results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Count successful enrichments\nconst items = $input.all();\nconst count = items.length;\nconst destinations = items.map(item => item.json.slug).join(', ');\n\nreturn {\n  json: {\n    message: `✅ Successfully enriched ${count} destinations`,\n    count: count,\n    destinations: destinations,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "name": "Format Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 300],
+      "id": "format-summary"
+    },
+    {
+      "parameters": {
+        "content": "=📊 **Destination Enrichment Complete**\\n\\n{{ $json.message }}\\n\\nDestinations updated: {{ $json.destinations }}\\n\\nTime: {{ $json.timestamp }}",
+        "options": {}
+      },
+      "name": "Log Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1850, 300],
+      "id": "log-summary",
+      "notesInFlow": true,
+      "notes": "In production, replace this with Slack notification"
+    }
+  ],
+  "connections": {
+    "Daily at 2 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Stale Destinations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Stale Destinations": {
+      "main": [
+        [
+          {
+            "node": "Loop Each Destination",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Each Destination": {
+      "main": [
+        [
+          {
+            "node": "Google Places API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Places API": {
+      "main": [
+        [
+          {
+            "node": "Transform Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Data": {
+      "main": [
+        [
+          {
+            "node": "Update Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Supabase": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Format Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Summary": {
+      "main": [
+        [
+          {
+            "node": "Log Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "urban-manual",
+      "id": "urban-manual-tag"
+    },
+    {
+      "name": "automation",
+      "id": "automation-tag"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-11-06T00:00:00.000Z",
+  "versionId": "1"
+}
