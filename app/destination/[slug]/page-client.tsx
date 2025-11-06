@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Bookmark, Check, Plus } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
@@ -40,26 +40,60 @@ function formatLabel(value: string): string {
     .join(' ');
 }
 
-export default function DestinationPageClient() {
+interface DestinationPageClientProps {
+  initialDestination: Destination;
+}
+
+export default function DestinationPageClient({ initialDestination }: DestinationPageClientProps) {
   const router = useRouter();
-  const params = useParams();
-  const slug = params.slug as string;
   const { addToRecentlyViewed } = useRecentlyViewed();
   const { user } = useAuth();
 
-  const [destination, setDestination] = useState<Destination | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [destination] = useState<Destination>(initialDestination);
+  const [loading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
-  const [enrichedData, setEnrichedData] = useState<any>(null);
 
-  useEffect(() => {
-    fetchDestination();
-  }, [slug]);
+  // Parse enriched JSON fields from initial destination
+  const enrichedData = useState(() => {
+    const enriched: any = { ...initialDestination };
+
+    if (initialDestination.opening_hours_json) {
+      try {
+        enriched.opening_hours = typeof initialDestination.opening_hours_json === 'string'
+          ? JSON.parse(initialDestination.opening_hours_json)
+          : initialDestination.opening_hours_json;
+      } catch (e) {
+        console.error('Error parsing opening_hours_json:', e);
+      }
+    }
+
+    if (initialDestination.reviews_json) {
+      try {
+        enriched.reviews = typeof initialDestination.reviews_json === 'string'
+          ? JSON.parse(initialDestination.reviews_json)
+          : initialDestination.reviews_json;
+      } catch (e) {
+        console.error('Error parsing reviews_json:', e);
+      }
+    }
+
+    if (initialDestination.photos_json) {
+      try {
+        enriched.photos = typeof initialDestination.photos_json === 'string'
+          ? JSON.parse(initialDestination.photos_json)
+          : initialDestination.photos_json;
+      } catch (e) {
+        console.error('Error parsing photos_json:', e);
+      }
+    }
+
+    return enriched;
+  })[0];
 
   // Track destination view
   useEffect(() => {
@@ -187,82 +221,6 @@ export default function DestinationPageClient() {
     setIsVisited(!!visitedData);
   };
 
-  const fetchDestination = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('destinations')
-        .select(`
-          *,
-          formatted_address,
-          international_phone_number,
-          website,
-          rating,
-          user_ratings_total,
-          price_level,
-          opening_hours_json,
-          editorial_summary,
-          google_name,
-          place_types_json,
-          utc_offset,
-          vicinity,
-          reviews_json,
-          timezone_id,
-          latitude,
-          longitude,
-          photos_json,
-          primary_photo_url,
-          photo_count
-        `)
-        .eq('slug', slug)
-        .single();
-
-      if (error) throw error;
-      setDestination(data);
-
-      // Parse enriched JSON fields
-      if (data) {
-        const enriched: any = { ...data };
-
-        if (data.opening_hours_json) {
-          try {
-            enriched.opening_hours = typeof data.opening_hours_json === 'string'
-              ? JSON.parse(data.opening_hours_json)
-              : data.opening_hours_json;
-          } catch (e) {
-            console.error('Error parsing opening_hours_json:', e);
-          }
-        }
-
-        if (data.reviews_json) {
-          try {
-            enriched.reviews = typeof data.reviews_json === 'string'
-              ? JSON.parse(data.reviews_json)
-              : data.reviews_json;
-          } catch (e) {
-            console.error('Error parsing reviews_json:', e);
-          }
-        }
-
-        if (data.photos_json) {
-          try {
-            enriched.photos = typeof data.photos_json === 'string'
-              ? JSON.parse(data.photos_json)
-              : data.photos_json;
-          } catch (e) {
-            console.error('Error parsing photos_json:', e);
-          }
-        }
-
-        setEnrichedData(enriched);
-      }
-    } catch (err) {
-      console.error('Error fetching destination:', err);
-      setDestination(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadRecommendations = async () => {
     if (!destination) return;
 
@@ -345,35 +303,6 @@ export default function DestinationPageClient() {
       setLoadingRecommendations(false);
     }
   };
-
-  if (loading) {
-    return (
-      <main className="px-6 md:px-10 py-20">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!destination) {
-    return (
-      <main className="px-6 md:px-10 py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-2xl font-light mb-4">Destination not found</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-            We couldn't locate that destination in the manual.
-          </p>
-          <button
-            onClick={() => router.push('/')}
-            className="px-6 py-2 bg-black text-white dark:bg-white dark:text-black text-xs font-medium rounded-sm hover:opacity-80 transition-opacity"
-          >
-            Return to catalogue
-          </button>
-        </div>
-      </main>
-    );
-  }
 
   const cityName = capitalizeCity(destination.city);
 
@@ -652,7 +581,7 @@ export default function DestinationPageClient() {
             Back to catalogue
           </button>
           <button
-            onClick={() => router.push(`/city/${encodeURIComponent(destination.city)}`)}
+            onClick={() => router.push(`/city/${destination.city}`)}
             className="flex-1 min-w-[160px] px-6 py-2 text-xs font-medium bg-black text-white dark:bg-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity"
           >
             Explore {cityName}
