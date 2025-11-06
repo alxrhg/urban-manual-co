@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { BarChart3, Users, Eye, MousePointerClick, Search, TrendingUp, Loader2 } from 'lucide-react';
+import { CohortAnalysis } from '@/components/analytics/CohortAnalysis';
+import { RetentionMetrics } from '@/components/analytics/RetentionMetrics';
+import { EngagementFunnel } from '@/components/analytics/EngagementFunnel';
 
 export default function AnalyticsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'retention' | 'cohorts' | 'funnel'>('overview');
   const [stats, setStats] = useState({
     totalViews: 0,
     totalSearches: 0,
@@ -128,60 +132,132 @@ export default function AnalyticsPage() {
           <p className="text-gray-600 dark:text-gray-400">User behavior and engagement metrics</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Views</div>
-              <Eye className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="text-3xl font-bold">{stats.totalViews.toLocaleString()}</div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Searches</div>
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="text-3xl font-bold">{stats.totalSearches.toLocaleString()}</div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Saves</div>
-              <MousePointerClick className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="text-3xl font-bold">{stats.totalSaves.toLocaleString()}</div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Users</div>
-              <Users className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="text-3xl font-bold">{stats.totalUsers.toLocaleString()}</div>
+        {/* Tab Navigation */}
+        <div className="mb-8 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex gap-4 text-sm">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-4 py-2 border-b-2 transition-colors ${
+                activeTab === 'overview'
+                  ? 'border-black dark:border-white text-black dark:text-white font-medium'
+                  : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('retention')}
+              className={`px-4 py-2 border-b-2 transition-colors ${
+                activeTab === 'retention'
+                  ? 'border-black dark:border-white text-black dark:text-white font-medium'
+                  : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+              }`}
+            >
+              Retention
+            </button>
+            <button
+              onClick={() => setActiveTab('cohorts')}
+              className={`px-4 py-2 border-b-2 transition-colors ${
+                activeTab === 'cohorts'
+                  ? 'border-black dark:border-white text-black dark:text-white font-medium'
+                  : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+              }`}
+            >
+              Cohort Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab('funnel')}
+              className={`px-4 py-2 border-b-2 transition-colors ${
+                activeTab === 'funnel'
+                  ? 'border-black dark:border-white text-black dark:text-white font-medium'
+                  : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+              }`}
+            >
+              Engagement Funnel
+            </button>
           </div>
         </div>
 
-        {/* Top Searches */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Top Search Queries
-          </h2>
-          {stats.topSearches.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400">No search data available yet</p>
-          ) : (
-            <div className="space-y-2">
-              {stats.topSearches.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl">
-                  <span className="font-medium">{item.query}</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{item.count} searches</span>
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Views</div>
+                  <Eye className="h-5 w-5 text-gray-400" />
                 </div>
-              ))}
+                <div className="text-3xl font-bold">{stats.totalViews.toLocaleString()}</div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Searches</div>
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <div className="text-3xl font-bold">{stats.totalSearches.toLocaleString()}</div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Saves</div>
+                  <MousePointerClick className="h-5 w-5 text-gray-400" />
+                </div>
+                <div className="text-3xl font-bold">{stats.totalSaves.toLocaleString()}</div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Users</div>
+                  <Users className="h-5 w-5 text-gray-400" />
+                </div>
+                <div className="text-3xl font-bold">{stats.totalUsers.toLocaleString()}</div>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Top Searches */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Top Search Queries
+              </h2>
+              {stats.topSearches.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400">No search data available yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {stats.topSearches.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl">
+                      <span className="font-medium">{item.query}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{item.count} searches</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Retention Tab */}
+        {activeTab === 'retention' && (
+          <div>
+            <RetentionMetrics />
+          </div>
+        )}
+
+        {/* Cohorts Tab */}
+        {activeTab === 'cohorts' && (
+          <div>
+            <CohortAnalysis />
+          </div>
+        )}
+
+        {/* Funnel Tab */}
+        {activeTab === 'funnel' && (
+          <div>
+            <EngagementFunnel />
+          </div>
+        )}
       </div>
     </div>
   );
