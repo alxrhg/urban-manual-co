@@ -1,40 +1,41 @@
 /**
- * API Route: Get weather for a location
- * GET /api/weather?lat=...&lng=...
+ * Weather API
+ * Get current weather for a city
+ *
+ * GET /api/weather?city=Paris&country=FR
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { fetchWeather } from '@/lib/enrichment/weather';
+import { NextRequest, NextResponse } from 'next/server'
+import { weatherService } from '@/services/weather/weather-service'
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const lat = parseFloat(searchParams.get('lat') || '0');
-    const lng = parseFloat(searchParams.get('lng') || '0');
+    const { searchParams } = new URL(request.url)
+    const city = searchParams.get('city')
+    const country = searchParams.get('country')
 
-    if (!lat || !lng) {
-      return NextResponse.json(
-        { error: 'Latitude and longitude are required' },
-        { status: 400 }
-      );
+    if (!city) {
+      return NextResponse.json({ error: 'city parameter is required' }, { status: 400 })
     }
 
-    const weather = await fetchWeather(lat, lng);
+    const weather = await weatherService.getWeather(city, country || undefined)
 
-    if (!weather) {
-      return NextResponse.json(
-        { error: 'Weather data not available' },
-        { status: 404 }
-      );
-    }
+    return NextResponse.json({
+      success: true,
+      weather: {
+        ...weather,
+        emoji: weatherService.getWeatherEmoji(weather.weather_condition),
+      },
+    })
+  } catch (error) {
+    console.error('[Weather] Error:', error)
 
-    return NextResponse.json(weather);
-  } catch (error: any) {
-    console.error('Error fetching weather:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch weather' },
+      {
+        error: 'Failed to fetch weather',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
-    );
+    )
   }
 }
-

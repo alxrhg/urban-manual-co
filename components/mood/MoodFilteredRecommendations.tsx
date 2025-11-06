@@ -161,8 +161,16 @@ export function MoodFilteredRecommendations({
 // Mood Recommendation Card
 // ============================================
 
+interface MoodFilteredRec {
+  destination_id: number
+  overall_score: number
+  mood_score: number
+  mood_breakdown: Record<string, number>
+  dimension_scores: Record<string, number>
+}
+
 interface MoodRecommendationCardProps {
-  recommendation: any
+  recommendation: MoodFilteredRec
   index: number
   moodColor: { primary: string; secondary: string }
   onView: () => void
