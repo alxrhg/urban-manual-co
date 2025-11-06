@@ -133,7 +133,7 @@ export function TripAwareBanner({ onPlanTrip }: TripAwareBannerProps) {
     if (onPlanTrip) {
       onPlanTrip(upcomingTrip.id);
     } else {
-      router.push(`/trips/${upcomingTrip.id}`);
+      router.push('/account?tab=trips');
     }
   };
 
