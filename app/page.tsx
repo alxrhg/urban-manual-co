@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
@@ -156,6 +156,53 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
+function getContextAwareLoadingMessage(searchTerm: string): string {
+  const query = searchTerm.toLowerCase();
+
+  // Restaurant/Dining related
+  if (query.match(/restaurant|dining|food|eat/)) {
+    return "French or Japanese? Date night or casual?";
+  }
+
+  // Coffee/Cafe related
+  if (query.match(/coffee|cafe|caf[eé]/)) {
+    return "Cozy hideaway or trendy spot?";
+  }
+
+  // Bar/Nightlife related
+  if (query.match(/bar|cocktail|drink|nightlife|pub/)) {
+    return "Cocktails or craft beer? Upbeat or intimate?";
+  }
+
+  // Hotel/Accommodation related
+  if (query.match(/hotel|stay|accommodation|lodging/)) {
+    return "Luxury or boutique? Business or leisure?";
+  }
+
+  // Shopping related
+  if (query.match(/shop|shopping|boutique|store/)) {
+    return "Designer or vintage? Mall or local markets?";
+  }
+
+  // Activities/Entertainment related
+  if (query.match(/museum|gallery|art|culture|theater|theatre/)) {
+    return "Classic or contemporary? Guided or self-paced?";
+  }
+
+  // Parks/Outdoor related
+  if (query.match(/park|outdoor|beach|hiking|nature/)) {
+    return "Active adventure or peaceful retreat?";
+  }
+
+  // Spa/Wellness related
+  if (query.match(/spa|wellness|massage|relax/)) {
+    return "Full day retreat or quick escape?";
+  }
+
+  // Generic/Default
+  return "Indoor or outdoor? Budget-friendly or splurge-worthy?";
+}
+
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
@@ -197,6 +244,25 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
 
+  // AI-powered chat using the chat API endpoint - only website content
+  const [chatResponse, setChatResponse] = useState<string>('');
+  const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
+  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
+  const [seasonalContext, setSeasonalContext] = useState<any>(null);
+
+  // Track submitted query for chat display
+  const [submittedQuery, setSubmittedQuery] = useState<string>('');
+  const [followUpInput, setFollowUpInput] = useState<string>('');
+
+  // Track visual chat messages for display
+  const [chatMessages, setChatMessages] = useState<Array<{
+    type: 'user' | 'assistant';
+    content: string;
+    contextPrompt?: string;
+  }>>([]);
+
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // Don't fetch all destinations on page load - only fetch when needed for filtering
     // This dramatically improves initial page load speed
@@ -214,25 +280,29 @@ export default function Home() {
     }
   }, [user]);
 
-  // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
-  // Works like chat but with convenience of auto-trigger
+  // CHAT MODE: Explicit Enter submit only (no auto-trigger)
+  // Clear state when search is emptied
   useEffect(() => {
-    if (searchTerm.trim().length > 0) {
-      const timer = setTimeout(() => {
-        performAISearch(searchTerm);
-      }, 500); // 500ms debounce for auto-trigger
-      return () => clearTimeout(timer);
-    } else {
+    if (searchTerm.trim().length === 0) {
       // Clear everything when search is empty
       setFilteredDestinations([]);
       setChatResponse('');
       setConversationHistory([]);
       setSearching(false);
+      setSubmittedQuery('');
+      setChatMessages([]);
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
     }
   }, [searchTerm]); // ONLY depend on searchTerm
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
 
   // Separate useEffect for filters (only when NO search term)
   // Fetch destinations lazily when filters are applied
@@ -318,15 +388,10 @@ export default function Home() {
     }
   };
 
-  // AI-powered chat using the chat API endpoint - only website content
-  const [chatResponse, setChatResponse] = useState<string>('');
-  const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
-  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
-  const [seasonalContext, setSeasonalContext] = useState<any>(null);
-
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = async (query: string) => {
+    setSubmittedQuery(query); // Store the submitted query
     // Match chat component: only check if empty or loading
     if (!query.trim() || searching) {
       return;
@@ -396,15 +461,31 @@ export default function Home() {
 
       // ONLY show the latest AI response (simple text)
       setChatResponse(data.content || '');
-      
+
       // ALWAYS set destinations array
-      setFilteredDestinations(data.destinations || []);
+      const destinations = data.destinations || [];
+      setFilteredDestinations(destinations);
+
+      // Add messages to visual chat history
+      const contextPrompt = getContextAwareLoadingMessage(query);
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: data.content || '', contextPrompt: destinations.length > 0 ? contextPrompt : undefined }
+      ]);
     } catch (error) {
       console.error('AI chat error:', error);
       setChatResponse('Sorry, I encountered an error. Please try again.');
       setFilteredDestinations([]);
       setSearchIntent(null);
       setSeasonalContext(null);
+
+      // Add error message to chat
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+      ]);
     } finally {
       setSearching(false);
     }
@@ -672,78 +753,153 @@ export default function Home() {
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
                 <div className="w-full">
-                  <GreetingHero
-                searchQuery={searchTerm}
-                onSearchChange={(value) => {
-                  setSearchTerm(value);
-                  // Clear conversation history only if search is cleared
-                  if (!value.trim()) {
-                    setConversationHistory([]);
-                    setSearchIntent(null);
-                    setSeasonalContext(null);
-                    setSearchTier(null);
-                    setChatResponse('');
-                    setFilteredDestinations([]);
-                  }
-                }}
-                onSubmit={(query) => {
-                  // CHAT MODE: Explicit submit on Enter key (like chat component)
-                  if (query.trim() && !searching) {
-                    performAISearch(query);
-                  }
-                }}
-                userName={(function () {
-                  const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                  if (!raw) return undefined;
-                  return raw
-                    .split(/[\s._-]+/)
-                    .filter(Boolean)
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(' ');
-                })()}
-                isAIEnabled={isAIEnabled}
-                isSearching={searching}
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  // Sync with legacy state for backward compatibility
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  // Track filter changes
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                availableCities={cities}
-                availableCategories={categories}
-                  />
-
-                  {/* Loading State */}
-                  {searchTerm && searching && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="animate-pulse">✨</span>
-                        <span>Analyzing your query with travel intelligence...</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* AI conversational response */}
-                  {searchTerm && !searching && chatResponse && (
-                    <MarkdownRenderer
-                      content={chatResponse}
-                      className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                  {/* Show GreetingHero only when no active search */}
+                  {!submittedQuery && (
+                    <GreetingHero
+                      searchQuery={searchTerm}
+                      onSearchChange={(value) => {
+                        setSearchTerm(value);
+                        // Clear conversation history only if search is cleared
+                        if (!value.trim()) {
+                          setConversationHistory([]);
+                          setSearchIntent(null);
+                          setSeasonalContext(null);
+                          setSearchTier(null);
+                          setChatResponse('');
+                          setFilteredDestinations([]);
+                          setSubmittedQuery('');
+                        }
+                      }}
+                      onSubmit={(query) => {
+                        // CHAT MODE: Explicit submit on Enter key (like chat component)
+                        if (query.trim() && !searching) {
+                          performAISearch(query);
+                        }
+                      }}
+                      userName={(function () {
+                        const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                        if (!raw) return undefined;
+                        return raw
+                          .split(/[\s._-]+/)
+                          .filter(Boolean)
+                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                          .join(' ');
+                      })()}
+                      isAIEnabled={isAIEnabled}
+                      isSearching={searching}
+                      filters={advancedFilters}
+                      onFiltersChange={(newFilters) => {
+                        setAdvancedFilters(newFilters);
+                        // Sync with legacy state for backward compatibility
+                        if (newFilters.city !== undefined) {
+                          setSelectedCity(newFilters.city || '');
+                        }
+                        if (newFilters.category !== undefined) {
+                          setSelectedCategory(newFilters.category || '');
+                        }
+                        // Track filter changes
+                        Object.entries(newFilters).forEach(([key, value]) => {
+                          if (value !== undefined && value !== null && value !== '') {
+                            trackFilterChange({ filterType: key, value });
+                          }
+                        });
+                      }}
+                      availableCities={cities}
+                      availableCategories={categories}
                     />
                   )}
 
+                  {/* Chat-like display when search is active */}
+                  {submittedQuery && (
+                    <div className="w-full">
+                      {/* Greeting */}
+                      <div className="text-left mb-6">
+                        <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+                          {(() => {
+                            const now = new Date();
+                            const currentHour = now.getHours();
+                            let greeting = 'GOOD EVENING';
+                            if (currentHour < 12) greeting = 'GOOD MORNING';
+                            else if (currentHour < 18) greeting = 'GOOD AFTERNOON';
+
+                            const userName = (function () {
+                              const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                              if (!raw) return undefined;
+                              return raw
+                                .split(/[\s._-]+/)
+                                .filter(Boolean)
+                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                .join(' ');
+                            })();
+
+                            return `${greeting}${userName ? `, ${userName}` : ''}`;
+                          })()}
+                        </h2>
+                      </div>
+
+                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
+                      <div
+                        ref={chatContainerRef}
+                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+                      >
+                        {chatMessages.map((message, index) => (
+                          <div key={index} className="space-y-2">
+                            {message.type === 'user' ? (
+                              <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                {message.content}
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <MarkdownRenderer
+                                  content={message.content}
+                                  className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                />
+                                {message.contextPrompt && (
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                    {message.contextPrompt}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Loading State */}
+                        {searching && (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="animate-pulse">✨</span>
+                              <span>Finding the perfect spots...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Follow-up input field - Chat style */}
+                      {!searching && chatMessages.length > 0 && (
+                        <div className="relative">
+                          <input
+                            placeholder="Refine your search or ask a follow-up..."
+                            value={followUpInput}
+                            onChange={(e) => setFollowUpInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
+                                e.preventDefault();
+                                const query = followUpInput.trim();
+                                setSearchTerm(query);
+                                setFollowUpInput('');
+                                performAISearch(query);
+                              }
+                            }}
+                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* No results message */}
-                  {searchTerm && !searching && filteredDestinations.length === 0 && !chatResponse && (
+                  {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
                     <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <span>No results found. Try refining your search.</span>
                     </div>
@@ -752,7 +908,7 @@ export default function Home() {
               </div>
               
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
-              {!searchTerm && (
+              {!submittedQuery && (
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
                     {/* City List */}
@@ -890,7 +1046,7 @@ export default function Home() {
             </div>
 
             {/* Recently Viewed - Show when no active search */}
-            {!searchTerm.trim() && !selectedCity && !selectedCategory && (
+            {!submittedQuery && !selectedCity && !selectedCategory && (
               <RecentlyViewed
                 onCardClick={(destination) => {
                   setSelectedDestination(destination);
@@ -923,7 +1079,7 @@ export default function Home() {
             )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
-            {user && !searchTerm.trim() && !selectedCity && !selectedCategory && (
+            {user && !submittedQuery && !selectedCity && !selectedCategory && (
               <SmartRecommendations
                 onCardClick={(destination) => {
                   setSelectedDestination(destination);
@@ -956,7 +1112,7 @@ export default function Home() {
             )}
 
             {/* Trending Section - Show when no active search */}
-            {!searchTerm.trim() && (
+            {!submittedQuery && (
               <TrendingSection />
             )}
 
