@@ -81,7 +81,7 @@ export function MoodSelector({
             ⭐ Based on your history
           </h3>
           <div className="flex flex-wrap gap-2">
-            {suggestedMoods.map(moodKey => {
+            {suggestedMoods.map((moodKey: string) => {
               const mood = categories
                 .flatMap(([_, moods]) => moods)
                 .find(m => m.mood_key === moodKey)
