@@ -221,7 +221,7 @@ export function useFilterSteps(
       description: `Showing places in ${intent.city}`,
       icon: MapPin,
       filterFn: (d: Destination) =>
-        d.city?.toLowerCase().includes(intent.city?.toLowerCase() || ''),
+        d.city?.toLowerCase().includes(intent.city?.toLowerCase() || '') || false,
       duration: 600,
     }] : []),
     ...(intent?.category ? [{
@@ -229,7 +229,7 @@ export function useFilterSteps(
       description: `Finding ${intent.category} spots`,
       icon: Filter,
       filterFn: (d: Destination) =>
-        d.category?.toLowerCase() === intent.category?.toLowerCase(),
+        d.category?.toLowerCase() === intent.category?.toLowerCase() || false,
       duration: 600,
     }] : []),
     ...(intent?.michelin ? [{
