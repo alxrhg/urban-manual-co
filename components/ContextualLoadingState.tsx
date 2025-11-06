@@ -109,7 +109,7 @@ export function ContextualLoadingState({ intent, query }: ContextualLoadingState
         return 'Uncovering hidden gems...';
       }
       if (modifier.includes('trendy') || modifier.includes('popular')) {
-        return 'Spotting what's hot right now...';
+        return "Spotting what's hot right now...";
       }
     }
 
