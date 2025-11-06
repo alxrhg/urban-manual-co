@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 
 interface MarkdownRendererProps {
   content: string;
@@ -10,14 +10,14 @@ interface MarkdownRendererProps {
  * Handles basic markdown formatting: bold, italic, lists, line breaks
  */
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
-  const renderMarkdown = (text: string): JSX.Element[] => {
+  const renderMarkdown = (text: string): ReactElement[] => {
     const lines = text.split('\n');
-    const elements: JSX.Element[] = [];
-    let listItems: JSX.Element[] = [];
+    const elements: ReactElement[] = [];
+    let listItems: ReactElement[] = [];
     let listKey = 0;
 
-    const processInlineMarkdown = (line: string): (string | JSX.Element)[] => {
-      const parts: (string | JSX.Element)[] = [];
+    const processInlineMarkdown = (line: string): (string | ReactElement)[] => {
+      const parts: (string | ReactElement)[] = [];
       let remaining = line;
       let key = 0;
 
