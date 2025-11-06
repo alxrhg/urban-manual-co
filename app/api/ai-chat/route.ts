@@ -573,25 +573,24 @@ async function processAIChatRequest(
     // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
       searchPromises.push(
-        supabase.rpc('match_destinations', {
-          query_embedding: queryEmbedding,
-          match_threshold: 0.6,
-          match_count: 100,
-          filter_city: intent.city || null,
-          filter_category: intent.category || null,
-          filter_michelin_stars: intent.filters?.michelinStar || null,
-          filter_min_rating: intent.filters?.rating || null,
-          filter_max_price_level: intent.filters?.priceLevel || null,
-          search_query: query
-        }).then(({ data, error }) => ({
-          type: 'vector',
-          data: data || [],
-          error
-        })).catch((error: any) => ({
-          type: 'vector',
-          data: [],
-          error
-        }))
+        (async () => {
+          try {
+            const { data, error } = await supabase.rpc('match_destinations', {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.6,
+              match_count: 100,
+              filter_city: intent.city || null,
+              filter_category: intent.category || null,
+              filter_michelin_stars: intent.filters?.michelinStar || null,
+              filter_min_rating: intent.filters?.rating || null,
+              filter_max_price_level: intent.filters?.priceLevel || null,
+              search_query: query
+            });
+            return { type: 'vector', data: data || [], error };
+          } catch (error: any) {
+            return { type: 'vector', data: [], error };
+          }
+        })()
       );
     }
 
@@ -631,17 +630,14 @@ async function processAIChatRequest(
     };
 
     searchPromises.push(
-      buildKeywordQuery()
-        .then(({ data, error }) => ({
-          type: 'keyword',
-          data: data || [],
-          error
-        }))
-        .catch((error: any) => ({
-          type: 'keyword',
-          data: [],
-          error
-        }))
+      (async () => {
+        try {
+          const { data, error } = await buildKeywordQuery();
+          return { type: 'keyword', data: data || [], error };
+        } catch (error: any) {
+          return { type: 'keyword', data: [], error };
+        }
+      })()
     );
 
     // Execute all search strategies in parallel
