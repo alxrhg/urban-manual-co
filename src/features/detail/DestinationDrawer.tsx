@@ -559,7 +559,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Title */}
             <h1 className="text-3xl font-light leading-tight">
-              {destination.name}
+              <a
+                href={`/destination/${destination.slug}`}
+                className="hover:opacity-70 transition-opacity cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onClose();
+                  setTimeout(() => {
+                    router.push(`/destination/${destination.slug}`);
+                  }, 150);
+                }}
+              >
+                {destination.name}
+              </a>
             </h1>
 
             {/* Action Buttons - Prominent position right after title */}
