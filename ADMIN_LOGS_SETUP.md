@@ -54,12 +54,14 @@ WHERE email = 'your-admin-email@example.com';
 
 ### Step 3: Access the Admin Dashboard
 
-Navigate to:
-```
-https://your-domain.com/admin/logs
-```
+1. Navigate to the admin page:
+   ```
+   https://your-domain.com/admin
+   ```
 
-You must be logged in as an admin user.
+2. Click on the **"Logs"** tab to view system logs
+
+You must be logged in as an admin user to access this section.
 
 ---
 
@@ -398,7 +400,7 @@ Possible improvements:
 
 For issues or questions:
 1. Check this documentation
-2. Review the code in `app/admin/logs/`
+2. Review the code in `app/admin/page.tsx` (Logs tab section)
 3. Check Supabase logs for errors
 4. Verify RLS policies and permissions
 

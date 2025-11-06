@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 export async function GET(request: NextRequest) {
   try {
     // Require admin authentication
-    const { supabase, user } = await requireAdmin(request);
+    const { serviceClient, user } = await requireAdmin(request);
 
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // Build query
-    let query = supabase
+    let query = serviceClient
       .from('logs')
       .select('*', { count: 'exact' })
       .order('timestamp', { ascending: false });
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 // Get log statistics
 export async function POST(request: NextRequest) {
   try {
-    const { supabase } = await requireAdmin(request);
+    const { serviceClient } = await requireAdmin(request);
     const body = await request.json();
     const { action } = body;
 
@@ -76,15 +76,15 @@ export async function POST(request: NextRequest) {
         { count: securityEvents },
         { count: rateLimitEvents },
       ] = await Promise.all([
-        supabase.from('logs').select('*', { count: 'exact', head: true }),
-        supabase.from('logs').select('*', { count: 'exact', head: true }).eq('level', 'error'),
-        supabase.from('logs').select('*', { count: 'exact', head: true }).eq('level', 'warn'),
-        supabase.from('logs').select('*', { count: 'exact', head: true }).eq('type', 'security'),
-        supabase.from('logs').select('*', { count: 'exact', head: true }).eq('type', 'rate_limit'),
+        serviceClient.from('logs').select('*', { count: 'exact', head: true }),
+        serviceClient.from('logs').select('*', { count: 'exact', head: true }).eq('level', 'error'),
+        serviceClient.from('logs').select('*', { count: 'exact', head: true }).eq('level', 'warn'),
+        serviceClient.from('logs').select('*', { count: 'exact', head: true }).eq('type', 'security'),
+        serviceClient.from('logs').select('*', { count: 'exact', head: true }).eq('type', 'rate_limit'),
       ]);
 
       // Get recent error logs
-      const { data: recentErrors } = await supabase
+      const { data: recentErrors } = await serviceClient
         .from('logs')
         .select('*')
         .eq('level', 'error')
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         .limit(10);
 
       // Get top users hitting rate limits
-      const { data: topRateLimitUsers } = await supabase
+      const { data: topRateLimitUsers } = await serviceClient
         .from('logs')
         .select('user_id, context')
         .eq('type', 'rate_limit')
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { error } = await supabase
+      const { error } = await serviceClient
         .from('logs')
         .delete()
         .lt('created_at', thirtyDaysAgo.toISOString());
