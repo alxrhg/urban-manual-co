@@ -17,14 +17,14 @@ import { useState } from 'react'
 // ============================================
 
 export function MoodDiscoveryPage() {
-  const { selectedMood, selectMood } = useMoodSelector()
+  const { selectedMood, selectMood, clearMood } = useMoodSelector()
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Mood Selector */}
       <MoodSelector
         selectedMood={selectedMood}
-        onMoodSelect={selectMood}
+        onMoodSelect={(mood) => mood ? selectMood(mood) : clearMood()}
         className="mb-8"
       />
 
