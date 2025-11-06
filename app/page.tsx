@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
@@ -271,11 +271,19 @@ export default function Home() {
       setConversationHistory([]);
       setSearching(false);
       setSubmittedQuery('');
+      setChatMessages([]);
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
     }
   }, [searchTerm]); // ONLY depend on searchTerm
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
 
   // Separate useEffect for filters (only when NO search term)
   // Fetch destinations lazily when filters are applied
@@ -371,6 +379,15 @@ export default function Home() {
   const [submittedQuery, setSubmittedQuery] = useState<string>('');
   const [followUpInput, setFollowUpInput] = useState<string>('');
 
+  // Track visual chat messages for display
+  const [chatMessages, setChatMessages] = useState<Array<{
+    type: 'user' | 'assistant';
+    content: string;
+    contextPrompt?: string;
+  }>>([]);
+
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = async (query: string) => {
@@ -444,15 +461,31 @@ export default function Home() {
 
       // ONLY show the latest AI response (simple text)
       setChatResponse(data.content || '');
-      
+
       // ALWAYS set destinations array
-      setFilteredDestinations(data.destinations || []);
+      const destinations = data.destinations || [];
+      setFilteredDestinations(destinations);
+
+      // Add messages to visual chat history
+      const contextPrompt = getContextAwareLoadingMessage(query);
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: data.content || '', contextPrompt: destinations.length > 0 ? contextPrompt : undefined }
+      ]);
     } catch (error) {
       console.error('AI chat error:', error);
       setChatResponse('Sorry, I encountered an error. Please try again.');
       setFilteredDestinations([]);
       setSearchIntent(null);
       setSeasonalContext(null);
+
+      // Add error message to chat
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+      ]);
     } finally {
       setSearching(false);
     }
@@ -778,9 +811,9 @@ export default function Home() {
 
                   {/* Chat-like display when search is active */}
                   {submittedQuery && (
-                    <div className="w-full space-y-6">
+                    <div className="w-full">
                       {/* Greeting */}
-                      <div className="text-left">
+                      <div className="text-left mb-6">
                         <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
                           {(() => {
                             const now = new Date();
@@ -804,56 +837,65 @@ export default function Home() {
                         </h2>
                       </div>
 
-                      {/* User's submitted query (static text) */}
-                      <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                        {submittedQuery}
-                      </div>
-                    </div>
-                  )}
+                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
+                      <div
+                        ref={chatContainerRef}
+                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+                      >
+                        {chatMessages.map((message, index) => (
+                          <div key={index} className="space-y-2">
+                            {message.type === 'user' ? (
+                              <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                {message.content}
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <MarkdownRenderer
+                                  content={message.content}
+                                  className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                />
+                                {message.contextPrompt && (
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                    {message.contextPrompt}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
 
-                  {/* Loading State */}
-                  {submittedQuery && searching && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="animate-pulse">✨</span>
-                        <span>Finding the perfect spots...</span>
+                        {/* Loading State */}
+                        {searching && (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="animate-pulse">✨</span>
+                              <span>Finding the perfect spots...</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* AI conversational response */}
-                  {submittedQuery && !searching && chatResponse && (
-                    <>
-                      <MarkdownRenderer
-                        content={chatResponse}
-                        className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                      />
-                      {/* Context-aware follow-up questions */}
-                      {filteredDestinations.length > 0 && (
-                        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                          {getContextAwareLoadingMessage(submittedQuery)}
-                        </div>
-                      )}
 
                       {/* Follow-up input field - Chat style */}
-                      <div className="mt-8 relative">
-                        <input
-                          placeholder="Refine your search or ask a follow-up..."
-                          value={followUpInput}
-                          onChange={(e) => setFollowUpInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
-                              e.preventDefault();
-                              const query = followUpInput.trim();
-                              setSearchTerm(query);
-                              setFollowUpInput('');
-                              performAISearch(query);
-                            }
-                          }}
-                          className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-                        />
-                      </div>
-                    </>
+                      {!searching && chatMessages.length > 0 && (
+                        <div className="relative">
+                          <input
+                            placeholder="Refine your search or ask a follow-up..."
+                            value={followUpInput}
+                            onChange={(e) => setFollowUpInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
+                                e.preventDefault();
+                                const query = followUpInput.trim();
+                                setSearchTerm(query);
+                                setFollowUpInput('');
+                                performAISearch(query);
+                              }
+                            }}
+                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* No results message */}
