@@ -546,7 +546,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   e.preventDefault();
                   e.stopPropagation();
                   onClose();
-                  router.push(`/city/${destination.city}`);
+                  // Small delay to let drawer start closing animation
+                  setTimeout(() => {
+                    router.push(`/city/${destination.city}`);
+                  }, 150);
                 }}
               >
                 <MapPin className="h-3 w-3" />
@@ -620,7 +623,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <button
                     onClick={() => {
                       onClose();
-                      router.push('/auth/login');
+                      setTimeout(() => {
+                        router.push('/auth/login');
+                      }, 150);
                     }}
                     className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
                   >
@@ -630,7 +635,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <button
                     onClick={() => {
                       onClose();
-                      router.push('/auth/login');
+                      setTimeout(() => {
+                        router.push('/auth/login');
+                      }, 150);
                     }}
                     className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
                   >
@@ -1023,7 +1030,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       onClick={() => {
                         // Close drawer and navigate to recommended destination
                         onClose();
-                        router.push(`/destination/${rec.slug}`);
+                        setTimeout(() => {
+                          router.push(`/destination/${rec.slug}`);
+                        }, 150);
                       }}
                       className="flex-shrink-0 w-40 group text-left"
                     >

@@ -37,7 +37,13 @@ export function SearchFiltersComponent({
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
 
   function updateFilter(key: keyof SearchFilters, value: any) {
-    onFiltersChange({ ...filters, [key]: value });
+    const newFilters = { ...filters };
+    if (value === undefined || value === null || value === '') {
+      delete newFilters[key];
+    } else {
+      newFilters[key] = value;
+    }
+    onFiltersChange(newFilters);
   }
 
   function clearFilter(key: keyof SearchFilters) {
@@ -86,7 +92,10 @@ export function SearchFiltersComponent({
     }
   }, [hasLocation, latitude, longitude, filters.nearMe, nearMeRadius]);
 
-  const hasActiveFilters = Object.keys(filters).length > 0;
+  const hasActiveFilters = Object.keys(filters).some(key => {
+    const value = filters[key as keyof SearchFilters];
+    return value !== undefined && value !== null && value !== '';
+  });
 
   const formatDistance = (km: number) => {
     if (km < 1) return `${Math.round(km * 1000)}m`;
