@@ -14,6 +14,7 @@ interface DestinationPageProps {
     id: number
     name: string
     slug: string
+    website?: string
   }
   source?: string
 }
