@@ -2,21 +2,14 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { SmartEmptyState } from '@/components/SmartEmptyState';
-import { ContextualLoadingState } from '@/components/ContextualLoadingState';
+import { SmartLoadingGrid } from '@/components/SmartLoadingGrid'; // ✨ NEW!
 import { type ExtractedIntent } from '@/app/api/intent/schema';
-
-// ⚡ OPTIMIZATION #9: Dynamic imports for code splitting (reduces initial bundle by ~200KB)
-// Ads are heavy and not critical for initial page load
-const MultiplexAd = dynamic(() => import('@/components/GoogleAd').then(mod => ({ default: mod.MultiplexAd })), {
-  loading: () => <div className="h-24 bg-gray-100 animate-pulse rounded" />,
-  ssr: false, // Ads don't need SSR
-});
+import { MultiplexAd } from '@/components/GoogleAd';
 
 interface Destination {
   id: number;
@@ -39,6 +32,7 @@ interface SearchState {
   suggestions: Array<{ label: string; refinement: string }>;
   intent?: ExtractedIntent;
   isLoading?: boolean;
+  showVisualLoading?: boolean; // ✨ NEW!
 }
 
 function SearchPageContent() {
@@ -55,6 +49,23 @@ function SearchPageContent() {
     suggestions: [],
   });
 
+  // ✨ Fetch sample destinations for visual loading
+  const [sampleDestinations, setSampleDestinations] = useState<Destination[]>([]);
+
+  useEffect(() => {
+    // Fetch a large sample set to show during loading
+    async function fetchSampleDestinations() {
+      try {
+        const res = await fetch('/api/destinations/sample?limit=100');
+        const data = await res.json();
+        setSampleDestinations(data.destinations || []);
+      } catch (error) {
+        console.error('Failed to fetch sample destinations:', error);
+      }
+    }
+    fetchSampleDestinations();
+  }, []);
+
   useEffect(() => {
     if (query) performInitialSearch(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,7 +78,7 @@ function SearchPageContent() {
         query: searchState.originalQuery,
         results: searchState.filteredResults,
         refinements: searchState.refinements,
-        filters: { /* could pass openNow/price if present */ },
+        filters: {},
       });
       setSearchState((prev) => ({
         ...prev,
@@ -80,26 +91,39 @@ function SearchPageContent() {
   }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
 
   async function performInitialSearch(searchQuery: string) {
-    setSearchState(prev => ({ ...prev, isLoading: true }));
+    // ✨ Enable visual loading
+    setSearchState(prev => ({
+      ...prev,
+      isLoading: true,
+      showVisualLoading: true
+    }));
 
     try {
       const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
       const results: Destination[] = data.results || [];
 
-      setSearchState({
-        originalQuery: searchQuery,
-        refinements: [],
-        allResults: results,
-        filteredResults: results,
-        conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
-        suggestions: data.suggestions || [],
-        intent: data.intent,
-        isLoading: false,
-      });
+      // ✨ Wait a bit for visual loading animation to complete
+      setTimeout(() => {
+        setSearchState({
+          originalQuery: searchQuery,
+          refinements: [],
+          allResults: results,
+          filteredResults: results,
+          conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
+          suggestions: data.suggestions || [],
+          intent: data.intent,
+          isLoading: false,
+          showVisualLoading: false, // ✨ Hide visual loading
+        });
+      }, 3000); // Let animation run for 3 seconds
     } catch (error) {
       console.error('Search error:', error);
-      setSearchState(prev => ({ ...prev, isLoading: false }));
+      setSearchState(prev => ({
+        ...prev,
+        isLoading: false,
+        showVisualLoading: false
+      }));
     }
   }
 
@@ -125,7 +149,6 @@ function SearchPageContent() {
         { role: 'user' as const, content: refinement },
         ...(data.contextResponse ? [{ role: 'assistant' as const, content: data.contextResponse }] : []),
       ]) as Message[],
-      // Keep initial suggestions for now; can evolve to state-driven
     }));
   }
 
@@ -140,7 +163,7 @@ function SearchPageContent() {
           conversationHistory: searchState.conversationHistory,
           currentResults: searchState.filteredResults.map((r) => ({ id: r.id })),
           refinements: searchState.refinements,
-          intent: searchState.intent, // Pass the original intent to preserve context
+          intent: searchState.intent,
         }),
       });
 
@@ -188,7 +211,6 @@ function SearchPageContent() {
   }
 
   function handleIntentChipRemove(chipType: string, value: string) {
-    // When user removes an intent chip, perform a new search without that constraint
     let newQuery = searchState.originalQuery;
 
     if (chipType === 'city') {
@@ -231,9 +253,19 @@ function SearchPageContent() {
         </div>
       )}
 
-      {/* Loading State */}
-      {searchState.isLoading && (
-        <ContextualLoadingState intent={searchState.intent} query={searchState.originalQuery} />
+      {/* ✨ NEW: Visual Loading State with Progressive Filtering */}
+      {searchState.showVisualLoading && sampleDestinations.length > 0 && (
+        <SmartLoadingGrid
+          query={searchState.originalQuery}
+          intent={{
+            city: searchState.intent?.city || null,
+            category: searchState.intent?.category || null,
+          }}
+          allDestinations={sampleDestinations}
+          onCardClick={(dest) => {
+            // Cards are not clickable during loading
+          }}
+        />
       )}
 
       {/* Empty State */}
@@ -246,7 +278,7 @@ function SearchPageContent() {
       )}
 
       {/* Results */}
-      {!searchState.isLoading && searchState.filteredResults.length > 0 && (
+      {!searchState.isLoading && !searchState.showVisualLoading && searchState.filteredResults.length > 0 && (
         <>
           <div className="mb-4 text-sm text-neutral-500">
             Showing {searchState.filteredResults.length}
@@ -285,16 +317,10 @@ function SearchPageContent() {
   );
 }
 
-export default function SearchPage() {
+export default function SearchPageWithVisualLoading() {
   return (
-    <Suspense fallback={<div className="px-6 md:px-10 py-10"><div className="text-sm text-neutral-500 mb-4">with our in-house travel intelligence…</div><div className="h-4 w-48 bg-gray-200 rounded mb-6" /><div className="h-5 w-80 bg-gray-200 rounded mb-8" /><div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-      {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="aspect-square rounded-2xl bg-gray-200" />
-      ))}
-    </div></div>}>
+    <Suspense fallback={<div className="px-6 md:px-10 py-10">Loading...</div>}>
       <SearchPageContent />
     </Suspense>
   );
 }
-
-

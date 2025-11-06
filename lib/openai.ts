@@ -49,7 +49,8 @@ export const getOpenAI = () => {
   return _openai;
 };
 
-export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+// GPT-5 Nano: 8x faster (<150ms), 3x cheaper ($0.05/1M), released Aug 2025
+export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5-nano';
 export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';
 
 

@@ -23,8 +23,20 @@ export async function generateText(
         max_tokens: maxTokens,
       });
       return resp.choices?.[0]?.message?.content || null;
-    } catch (error) {
-      console.error('OpenAI generateText error:', error);
+    } catch (error: any) {
+      console.warn(`${OPENAI_MODEL} failed, falling back to gpt-4o-mini:`, error.message);
+      // Auto-fallback to GPT-4o-mini if GPT-5 Nano fails
+      try {
+        const resp = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature,
+          max_tokens: maxTokens,
+        });
+        return resp.choices?.[0]?.message?.content || null;
+      } catch (fallbackError: any) {
+        console.error('GPT-4o-mini fallback also failed:', fallbackError.message);
+      }
     }
   }
 
@@ -64,7 +76,25 @@ export async function generateJSON(system: string, user: string): Promise<any | 
       const text = resp.choices?.[0]?.message?.content || '';
       const match = text.match(/\{[\s\S]*\}/);
       if (match) return JSON.parse(match[0]);
-    } catch (_) {}
+    } catch (error: any) {
+      // Auto-fallback to GPT-4o-mini if GPT-5 Nano fails
+      console.warn(`${OPENAI_MODEL} failed, falling back to gpt-4o-mini:`, error.message);
+      try {
+        const resp = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: `${system}\nReturn ONLY valid JSON.` },
+            { role: 'user', content: user }
+          ],
+          temperature: 0.2,
+        });
+        const text = resp.choices?.[0]?.message?.content || '';
+        const match = text.match(/\{[\s\S]*\}/);
+        if (match) return JSON.parse(match[0]);
+      } catch (fallbackError: any) {
+        console.error('GPT-4o-mini fallback also failed:', fallbackError.message);
+      }
+    }
   }
   // Fallback to Gemini
   if (genAI) {
