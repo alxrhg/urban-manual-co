@@ -35,7 +35,6 @@ import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
-import { ConversationStarters } from '@/components/ConversationStarters';
 import { SessionResume } from '@/components/SessionResume';
 import { ContextCards } from '@/components/ContextCards';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
@@ -897,20 +896,6 @@ export default function Home() {
                         availableCities={cities}
                         availableCategories={categories}
                       />
-
-                      {/* Conversation Starters - Show below search input */}
-                      {!searchTerm && (
-                        <div className="mt-8">
-                          <ConversationStarters
-                            onStarterClick={(query) => {
-                              setSearchTerm(query);
-                              performAISearch(query);
-                            }}
-                            city={selectedCity}
-                            category={selectedCategory}
-                          />
-                        </div>
-                      )}
                     </>
                   )}
 
