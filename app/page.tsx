@@ -666,7 +666,7 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[60vh] flex flex-col px-6 md:px-10 py-20">
+        <section className="min-h-[65vh] flex flex-col px-6 md:px-12 lg:px-16 py-24 md:py-28">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -756,14 +756,14 @@ export default function Home() {
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
                     {/* City List */}
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                       <button
                         onClick={() => {
                           setSelectedCity("");
                           setCurrentPage(1);
                           trackFilterChange({ filterType: 'city', value: 'all' });
                         }}
-                        className={`transition-all ${
+                        className={`transition-all duration-200 ease-out ${
                           !selectedCity
                             ? "font-medium text-black dark:text-white"
                             : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -780,7 +780,7 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                           }}
-                          className={`transition-all ${
+                          className={`transition-all duration-200 ease-out ${
                             selectedCity === city
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -792,7 +792,7 @@ export default function Home() {
                       {cities.length > 20 && (
                         <button
                           onClick={() => setShowAllCities(!showAllCities)}
-                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors"
+                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
                         >
                           {showAllCities ? '- Show Less' : '+ Show More'}
                         </button>
@@ -801,7 +801,7 @@ export default function Home() {
                     
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
                           onClick={() => {
                             setSelectedCategory("");
@@ -809,7 +809,7 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
-                          className={`transition-all ${
+                          className={`transition-all duration-200 ease-out ${
                             !selectedCategory && !advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -826,7 +826,7 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
-                          className={`transition-all ${
+                          className={`transition-all duration-200 ease-out ${
                             advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -844,7 +844,7 @@ export default function Home() {
                               setCurrentPage(1);
                               trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                             }}
-                            className={`transition-all ${
+                            className={`transition-all duration-200 ease-out ${
                               selectedCategory === category && !advancedFilters.michelin
                                 ? "font-medium text-black dark:text-white"
                                 : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -863,7 +863,7 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="px-6 md:px-10 pb-20">
+              <div className="px-6 md:px-12 lg:px-16 pb-24 md:pb-32">
                 <div className="max-w-[1800px] mx-auto">
                   {/* Filter - Top right of grid section */}
                   <div className="flex justify-end mb-6 relative">
@@ -990,7 +990,7 @@ export default function Home() {
 
               return (
               <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
                 {(() => {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
@@ -1029,10 +1029,10 @@ export default function Home() {
                         });
                       }
                     }}
-                    className={`${CARD_WRAPPER} cursor-pointer text-left`}
+                    className={`${CARD_WRAPPER} cursor-pointer text-left focus-ring`}
                   >
                     {/* Image Container */}
-                    <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
+                    <div className={`${CARD_MEDIA} mb-3 relative overflow-hidden`}>
                       {destination.image ? (
                         <Image
                           src={destination.image}
@@ -1105,11 +1105,11 @@ export default function Home() {
             if (totalPages <= 1) return null;
 
             return (
-              <div className="mt-8 w-full flex flex-wrap items-center justify-center gap-2">
+              <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -1131,10 +1131,10 @@ export default function Home() {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`px-2.5 sm:px-3 py-2 text-xs rounded-2xl transition-colors ${
+                        className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
                           currentPage === pageNum
-                            ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
-                            : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                            ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
+                            : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm font-medium'
                         }`}
                       >
                         {pageNum}
@@ -1146,7 +1146,7 @@ export default function Home() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
