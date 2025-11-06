@@ -1,15 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Handle missing env vars during build (e.g., when building without .env.local)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+// ✅ SECURITY FIX: Fail fast in production if environment variables are missing
+function getRequiredEnv(key: string, defaultValue?: string): string {
+  const value = process.env[key];
 
-// Warn in development if credentials are missing
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('⚠️  Supabase credentials not found. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local');
+  if (!value) {
+    // In production, throw error for missing required env vars
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`Missing required environment variable: ${key}. Application cannot start without proper configuration.`);
+    }
+
+    // In development, warn and use default
+    if (typeof window !== 'undefined') {
+      console.warn(`⚠️  Missing ${key}, using ${defaultValue ? 'placeholder' : 'undefined'}`);
+    }
+
+    return defaultValue || '';
   }
+
+  return value;
 }
+
+const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://placeholder.supabase.co');
+const supabaseAnonKey = getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'placeholder-key');
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

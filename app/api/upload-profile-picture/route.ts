@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import { applyRateLimit, getRateLimitHeaders, getRateLimitIdentifier, RATE_LIMITS } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +11,24 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // ✅ SECURITY FIX: Apply rate limiting (prevent upload abuse)
+    const identifier = getRateLimitIdentifier(request, user.id);
+    const { success, ...rateLimit } = await applyRateLimit(identifier, RATE_LIMITS.UPLOAD);
+
+    if (!success) {
+      return NextResponse.json(
+        {
+          error: 'Upload rate limit exceeded. Please try again later.',
+          limit: rateLimit.limit,
+          reset: new Date(rateLimit.reset).toISOString(),
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit),
+        }
+      );
     }
 
     // 2. Use service role client for storage operations
@@ -23,15 +42,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    // ✅ SECURITY FIX: Strict file type validation (whitelist approach)
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif'];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({
+        error: 'Invalid file type. Only JPEG, PNG, WebP, and AVIF images are allowed',
+        provided: file.type
+      }, { status: 400 });
     }
 
     // Validate file size (max 2MB for profile pictures)
-    if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File size must be less than 2MB' }, { status: 400 });
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({
+        error: 'File size must be less than 2MB',
+        size: file.size,
+        maxSize: MAX_SIZE
+      }, { status: 400 });
     }
+
+    // TODO: For production, consider adding magic byte verification with 'file-type' package
+    // or image validation with 'sharp' package to prevent file type spoofing
 
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
@@ -82,8 +113,12 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 });
+    console.error('[Upload Profile Picture] Error:', error);
+    return NextResponse.json({
+      error: 'Upload failed',
+      // Only expose error details in development
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
+    }, { status: 500 });
   }
 }
 

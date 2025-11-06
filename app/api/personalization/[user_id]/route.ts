@@ -9,6 +9,23 @@ export async function GET(
     const { user_id } = await context.params;
     const supabase = await createServerClient();
 
+    // ✅ SECURITY FIX: Verify authorization - users can only access their own personalization data
+    const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !currentUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized - authentication required' },
+        { status: 401 }
+      );
+    }
+
+    if (currentUser.id !== user_id) {
+      return NextResponse.json(
+        { error: 'Forbidden - cannot access another user\'s personalization data' },
+        { status: 403 }
+      );
+    }
+
     // Check cache first
     const { data: cached } = await supabase
       .from('personalization_scores')
@@ -104,9 +121,13 @@ export async function GET(
       source: 'personalized',
     });
   } catch (e: any) {
-    console.error('Personalization error:', e);
+    console.error('[Personalization API] Error:', e);
     return NextResponse.json(
-      { error: 'Failed to load personalization', details: e.message },
+      {
+        error: 'Failed to load personalization',
+        // Only expose error details in development
+        ...(process.env.NODE_ENV === 'development' && { details: e.message })
+      },
       { status: 500 }
     );
   }
