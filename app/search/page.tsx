@@ -272,6 +272,7 @@ function SearchPageContent() {
             </button>
           )}
         </>
+      )}
     </div>
   );
 }
