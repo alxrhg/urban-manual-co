@@ -34,6 +34,7 @@ import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
+import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -735,9 +736,10 @@ export default function Home() {
 
                   {/* AI conversational response */}
                   {searchTerm && !searching && chatResponse && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left whitespace-pre-line">
-                      {chatResponse}
-                    </div>
+                    <MarkdownRenderer
+                      content={chatResponse}
+                      className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                    />
                   )}
 
                   {/* No results message */}
