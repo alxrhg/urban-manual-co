@@ -2,6 +2,15 @@
 ios-app/
 ios/
 
+# Exclude AI agents (separate Node.js project)
+ai-agents/
+
+# Exclude Rust modules (separate Rust project)
+rust-modules/
+
+# Exclude ML service (separate Python project)
+ml-service/
+
 # Other build artifacts and temporary files
 *.swift
 *.xcodeproj
@@ -16,3 +25,6 @@ build/
 Package.swift
 Package.resolved
 
+# Documentation files (not needed for build)
+STACK_OVERFLOW_2025_UPDATES.md
+DEPLOYMENT_RUST_AI.md

@@ -43,6 +43,10 @@
     "scripts",
     "vite.config.ts",
     "vitest.config.ts",
-    "supabase/functions"
+    "supabase/functions",
+    "ai-agents",
+    "rust-modules",
+    "ml-service",
+    "ios-app"
   ]
 }
