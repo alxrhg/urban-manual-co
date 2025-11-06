@@ -6,6 +6,7 @@
 import { getWeatherEmoji } from '@/lib/enrichment/weather';
 
 export interface GreetingWeatherData {
+  city: string;
   temperature: number;
   weatherCode: number;
   description: string;
