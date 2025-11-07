@@ -8,7 +8,7 @@ import {
   generateDestinationBreadcrumb,
   generateDestinationFAQ
 } from '@/lib/metadata';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase-server';
 import { Destination } from '@/types/destination';
 import DestinationPageClient from './page-client';
 
@@ -47,7 +47,8 @@ export default async function DestinationPage({
     notFound();
   }
 
-  // Fetch destination data on server
+  // Fetch destination data on server using server-side client
+  const supabase = await createServerClient();
   const { data: destination, error } = await supabase
     .from('destinations')
     .select(`
@@ -77,6 +78,7 @@ export default async function DestinationPage({
 
   // If destination not found, show 404
   if (error || !destination) {
+    console.error('[Destination Page] Error fetching destination:', error);
     notFound();
   }
 

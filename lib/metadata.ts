@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { supabase } from './supabase';
+import { createServerClient } from './supabase-server';
 import { Destination } from '@/types/destination';
 
 /**
@@ -7,6 +7,7 @@ import { Destination } from '@/types/destination';
  */
 export async function generateDestinationMetadata(slug: string): Promise<Metadata> {
   try {
+    const supabase = await createServerClient();
     const { data: destination, error } = await supabase
       .from('destinations')
       .select('*')
