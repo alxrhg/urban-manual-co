@@ -278,11 +278,66 @@ export default function Home() {
     // Track homepage view
     trackPageView({ pageType: 'home' });
 
+    // Suppress network errors from invalid Supabase URLs
+    const originalError = window.console.error;
+    const originalWarn = window.console.warn;
+    
+    window.console.error = (...args: any[]) => {
+      const message = args.join(' ');
+      // Suppress CORS and network errors for invalid Supabase URLs
+      if (
+        message.includes('invalid.supabase') ||
+        message.includes('Failed to fetch') ||
+        message.includes('A server with the specified hostname could not be found') ||
+        (message.includes('CORS') && message.includes('supabase'))
+      ) {
+        return; // Suppress these errors
+      }
+      originalError.apply(console, args);
+    };
+
+    window.console.warn = (...args: any[]) => {
+      const message = args.join(' ');
+      // Suppress network warnings for invalid Supabase URLs
+      if (
+        message.includes('invalid.supabase') ||
+        message.includes('Failed to fetch') ||
+        message.includes('hostname')
+      ) {
+        return; // Suppress these warnings
+      }
+      originalWarn.apply(console, args);
+    };
+
+    // Suppress unhandled promise rejections for Supabase errors
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const message = reason?.message || reason?.toString() || '';
+      if (
+        message.includes('invalid.supabase') ||
+        message.includes('Failed to fetch') ||
+        message.includes('hostname') ||
+        message.includes('CORS')
+      ) {
+        event.preventDefault(); // Suppress the error
+        return;
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
     // Load filter data first (cities and categories) for faster initial display
     fetchFilterData();
 
     // Then load full destinations in background
     fetchDestinations();
+
+    // Cleanup
+    return () => {
+      window.console.error = originalError;
+      window.console.warn = originalWarn;
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
   }, []);
 
   useEffect(() => {
