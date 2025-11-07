@@ -141,19 +141,20 @@ export class DiscoveryEngineService {
       const results = ((response as any).results || []).map((result: any) => {
         const document = result.document;
         const structData = document?.structData || {};
+        const struct = structData as any;
         
         return {
           id: document?.id || '',
-          name: structData.name || '',
-          description: structData.description || '',
-          city: structData.city || '',
-          category: structData.category || '',
-          tags: structData.tags || [],
-          rating: structData.rating || 0,
-          priceLevel: structData.price_level || 0,
-          slug: structData.slug || '',
-          uri: document?.uri || '',
-          relevanceScore: result.relevanceScore || 0,
+          name: struct.name || '',
+          description: struct.description || '',
+          city: struct.city || '',
+          category: struct.category || '',
+          tags: struct.tags || [],
+          rating: struct.rating || 0,
+          priceLevel: struct.price_level || 0,
+          slug: struct.slug || '',
+          uri: (document as any)?.uri || '',
+          relevanceScore: (result as any).relevanceScore || 0,
         };
       });
 
@@ -216,19 +217,20 @@ export class DiscoveryEngineService {
       return (response.results || []).map((result) => {
         const document = result.document;
         const structData = document?.structData || {};
+        const struct = structData as any;
         
         return {
           id: document?.id || '',
-          name: structData.name || '',
-          description: structData.description || '',
-          city: structData.city || '',
-          category: structData.category || '',
-          tags: structData.tags || [],
-          rating: structData.rating || 0,
-          priceLevel: structData.price_level || 0,
-          slug: structData.slug || '',
-          uri: document?.uri || '',
-          relevanceScore: result.relevanceScore || 0,
+          name: struct.name || '',
+          description: struct.description || '',
+          city: struct.city || '',
+          category: struct.category || '',
+          tags: struct.tags || [],
+          rating: struct.rating || 0,
+          priceLevel: struct.price_level || 0,
+          slug: struct.slug || '',
+          uri: (document as any)?.uri || '',
+          relevanceScore: (result as any).relevanceScore || 0,
         };
       });
     } catch (error: any) {
@@ -356,7 +358,7 @@ export class DiscoveryEngineService {
         userEvent,
       };
 
-      await this.userEventClient.collectUserEvent(request);
+      await this.userEventClient.collectUserEvent(request as any);
     } catch (error: any) {
       // Log but don't throw - event tracking shouldn't break the app
       console.warn('Discovery Engine event tracking failed:', error);
