@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import recommendations, forecast, health, graph_sequencing
+from app.api import recommendations, forecast, health, graph_sequencing, insights
 from app.config import get_settings
 
 settings = get_settings()
@@ -11,7 +11,7 @@ settings = get_settings()
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="ML Service for Urban Manual - Collaborative Filtering & Demand Forecasting"
+    description="ML Service for Urban Manual - Collaborative Filtering, Forecasting, Sentiment, Topics, Anomalies & Events"
 )
 
 # CORS middleware
@@ -28,6 +28,7 @@ app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(recommendations.router, prefix="/api/recommendations", tags=["Recommendations"])
 app.include_router(forecast.router, prefix="/api/forecast", tags=["Forecasting"])
 app.include_router(graph_sequencing.router, prefix="/api/graph", tags=["Graph Sequencing"])
+app.include_router(insights.router, prefix="/api", tags=["Phase 3: Advanced Features"])
 
 @app.get("/")
 async def root():
@@ -41,6 +42,10 @@ async def root():
             "recommendations": "/api/recommendations/collaborative",
             "forecast": "/api/forecast/demand",
             "graph": "/api/graph/suggest-next",
+            "sentiment": "/api/sentiment/analyze",
+            "topics": "/api/topics/extract",
+            "anomaly": "/api/anomaly/destination/{id}",
+            "events": "/api/events/recommendations/{city}",
         }
     }
 
