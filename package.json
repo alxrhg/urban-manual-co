@@ -18,6 +18,7 @@
     "retry:tate-modern": "tsx scripts/retry-tate-modern.ts",
     "enrich:comprehensive": "tsx scripts/enrich-comprehensive.ts",
     "migrate:026": "tsx scripts/run-migration-026.ts",
+    "aggregate:user-data": "tsx scripts/aggregate-user-data.ts",
     "update:google-trends": "tsx scripts/update-google-trends.ts",
     "update:multi-source-trends": "tsx scripts/update-multi-source-trends.ts"
   },
