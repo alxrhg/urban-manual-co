@@ -78,12 +78,12 @@ export default function AnalyticsPage() {
         .select('*', { count: 'exact', head: true });
 
       // Aggregate stats
-      const views = interactions?.filter(i => i.interaction_type === 'view').length || 0;
-      const searches = visits?.filter(v => v.search_query).length || 0;
-      const saves = interactions?.filter(i => i.interaction_type === 'save').length || 0;
+      const views = (interactions as any[])?.filter((i: any) => i.interaction_type === 'view').length || 0;
+      const searches = (visits as any[])?.filter((v: any) => v.search_query).length || 0;
+      const saves = (interactions as any[])?.filter((i: any) => i.interaction_type === 'save').length || 0;
 
       // Top searches
-      const searchQueries = visits?.map(v => v.search_query).filter(Boolean) || [];
+      const searchQueries = (visits as any[])?.map((v: any) => v.search_query).filter(Boolean) || [];
       const searchCounts: Record<string, number> = {};
       searchQueries.forEach((q: string) => {
         searchCounts[q] = (searchCounts[q] || 0) + 1;
