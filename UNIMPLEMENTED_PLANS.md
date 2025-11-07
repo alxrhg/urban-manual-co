@@ -233,10 +233,11 @@
 1. **Filter Data Loading** - Optimize homepage filter loading (fetch filter data first, then destinations)
 2. **Real-Time Data Collection** - Set up basic data collection for crowding levels (Google Popular Times API or manual entry)
 
-### High Impact (1-2 months):
-1. **Real-Time Intelligence Foundation** - Start with database schema and basic services
-2. **ML Service Setup** - Set up Python microservice infrastructure
-3. **Demand Forecasting** - Implement Prophet-based forecasting
+### High Impact (Next Steps):
+1. **ML Model Training** - Connect ML service to database, train Prophet models with historical data
+2. **Google Popular Times Integration** - When API access becomes available
+3. **Alert Notifications** - Push notifications for price alerts
+4. **Full Crowding Indicators** - Enhanced UI with trend visualization
 
 ### Long Term (3-6 months):
 1. **Full Intelligence Expansion** - Complete all ML models
@@ -263,10 +264,21 @@
 - **Features**: Crowding levels, wait times, availability status, auto-refresh
 - **Status**: Ready to display data once database tables are populated
 
-### Near Me Filter
-- **Integration**: Fully integrated into `SearchFiltersComponent`
-- **Features**: Geolocation, radius slider (0.5-25km), distance badges, nearby API
-- **Status**: Fully functional, requires destination coordinates to be populated
+### Real-Time Intelligence Data Collection
+- **APIs**: User reports, crowding aggregation, price alerts
+- **UI**: `RealtimeReportForm` component for user submissions
+- **Features**: Wait time estimates, best time predictions (enhanced), price alerts
+- **Status**: Fully implemented and ready for use
+
+### ML Service Infrastructure
+- **Service**: FastAPI-based Python microservice
+- **Endpoints**: Demand forecasting, peak time predictions
+- **Status**: Foundation created, needs database integration and model training
+
+### Filter Data Loading Optimization
+- **Improvement**: Filters load first, destinations load in background
+- **Impact**: Faster initial page load, better UX
+- **Status**: Implemented and active
 
 ## 🔍 Verification Needed
 
