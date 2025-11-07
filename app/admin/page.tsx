@@ -1232,7 +1232,7 @@ export default function AdminPage() {
 
                         const { error } = await supabase
                           .from('destinations')
-                          .insert([data]);
+                          .insert([data] as any);
 
                         if (error) throw error;
                       }
