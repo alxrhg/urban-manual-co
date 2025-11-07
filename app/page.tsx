@@ -494,7 +494,7 @@ export default function Home() {
       // Select only essential columns to avoid issues with missing columns
       const { data, error } = await supabase
         .from('destinations')
-        .select('slug, name, city, category, description, content, image, michelin_stars, crown')
+        .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
         .order('name');
 
       if (error) {
@@ -728,12 +728,43 @@ export default function Home() {
         filtered = filtered.filter(d => d.city === cityFilter);
       }
 
-      // Category filter (from advancedFilters or selectedCategory)
+      // Category filter (from advancedFilters or selectedCategory) - enhanced with tags
       const categoryFilter = advancedFilters.category || selectedCategory;
       if (categoryFilter) {
-        filtered = filtered.filter(d =>
-          d.category && d.category.toLowerCase().trim() === categoryFilter.toLowerCase().trim()
-        );
+        filtered = filtered.filter(d => {
+          const categoryMatch = d.category && d.category.toLowerCase().trim() === categoryFilter.toLowerCase().trim();
+          
+          // If category matches, include it
+          if (categoryMatch) return true;
+          
+          // Also check tags for category-related matches
+          const tags = d.tags || [];
+          const categoryLower = categoryFilter.toLowerCase().trim();
+          
+          // Map categories to relevant tag patterns
+          const categoryTagMap: Record<string, string[]> = {
+            'dining': ['restaurant', 'dining', 'fine-dining', 'italian_restaurant', 'mexican_restaurant', 'japanese_restaurant', 'french_restaurant', 'chinese_restaurant', 'thai_restaurant', 'indian_restaurant', 'seafood_restaurant', 'steak_house', 'pizza', 'food'],
+            'cafe': ['cafe', 'coffee_shop', 'coffee', 'bakery', 'pastry'],
+            'bar': ['bar', 'pub', 'cocktail_bar', 'wine_bar', 'beer', 'nightclub', 'lounge'],
+            'hotel': ['hotel', 'lodging', 'resort', 'inn', 'hostel'],
+            'shopping': ['store', 'shopping', 'mall', 'market', 'boutique'],
+            'attraction': ['tourist_attraction', 'museum', 'park', 'landmark', 'monument'],
+            'nightlife': ['nightclub', 'bar', 'pub', 'lounge', 'entertainment'],
+          };
+          
+          // Get relevant tags for this category
+          const relevantTags = categoryTagMap[categoryLower] || [];
+          
+          // Check if any tags match
+          const tagMatch = tags.some(tag => {
+            const tagLower = tag.toLowerCase();
+            return relevantTags.some(relevantTag => 
+              tagLower.includes(relevantTag) || relevantTag.includes(tagLower)
+            );
+          });
+          
+          return tagMatch;
+        });
       }
 
       // Michelin filter
