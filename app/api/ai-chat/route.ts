@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
+import { unifiedSearch } from '@/lib/discovery-engine/integration';
+import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
+import { createServerClient } from '@/lib/supabase-server';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -292,6 +295,101 @@ Return only the JSON, no other text.`;
   return parseQueryFallback(query);
 }
 
+/**
+ * Parse natural language query to extract filters
+ */
+function parseNaturalLanguageFilters(query: string): {
+  city?: string;
+  category?: string;
+  priceLevel?: number;
+  minRating?: number;
+} {
+  const filters: any = {};
+  const lowerQuery = query.toLowerCase();
+
+  // Price level detection
+  if (lowerQuery.includes('under $') || lowerQuery.includes('cheap') || lowerQuery.includes('budget')) {
+    filters.priceLevel = 2;
+  } else if (lowerQuery.includes('affordable') || lowerQuery.includes('moderate')) {
+    filters.priceLevel = 3;
+  } else if (lowerQuery.includes('expensive') || lowerQuery.includes('fine dining') || lowerQuery.includes('luxury')) {
+    filters.priceLevel = 4;
+  }
+
+  // Rating detection
+  if (lowerQuery.includes('highly rated') || lowerQuery.includes('best') || lowerQuery.includes('top rated')) {
+    filters.minRating = 4.5;
+  } else if (lowerQuery.includes('good reviews') || lowerQuery.includes('well reviewed')) {
+    filters.minRating = 4.0;
+  }
+
+  // Category detection (basic)
+  const categoryKeywords: { [key: string]: string } = {
+    restaurant: 'Dining',
+    cafe: 'Cafe',
+    museum: 'Culture',
+    gallery: 'Culture',
+    park: 'Outdoor',
+    bar: 'Bar',
+    club: 'Bar',
+    hotel: 'Hotel',
+  };
+
+  for (const [keyword, category] of Object.entries(categoryKeywords)) {
+    if (lowerQuery.includes(keyword)) {
+      filters.category = category;
+      break;
+    }
+  }
+
+  // City detection (basic)
+  const cityPatterns = [
+    /\b(paris|tokyo|new york|london|berlin|rome|barcelona|amsterdam|vienna|prague)\b/i,
+  ];
+
+  for (const pattern of cityPatterns) {
+    const match = query.match(pattern);
+    if (match) {
+      filters.city = match[1].toLowerCase();
+      break;
+    }
+  }
+
+  return filters;
+}
+
+/**
+ * Clean natural language query by removing filter keywords
+ */
+function cleanNaturalLanguageQuery(query: string): string {
+  // Remove common filter phrases
+  const filterPhrases = [
+    /\bunder \$\d+\b/gi,
+    /\bcheap\b/gi,
+    /\bbudget\b/gi,
+    /\baffordable\b/gi,
+    /\bexpensive\b/gi,
+    /\bfine dining\b/gi,
+    /\bluxury\b/gi,
+    /\bhighly rated\b/gi,
+    /\btop rated\b/gi,
+    /\bgood reviews\b/gi,
+    /\bwell reviewed\b/gi,
+    /\bopen now\b/gi,
+    /\bwith (wifi|parking|outdoor seating)\b/gi,
+  ];
+
+  let cleaned = query;
+  for (const phrase of filterPhrases) {
+    cleaned = cleaned.replace(phrase, '').trim();
+  }
+
+  // Clean up multiple spaces
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+  return cleaned || query; // Return original if cleaned is empty
+}
+
 function parseQueryFallback(query: string): {
   keywords: string[];
   city?: string;
@@ -565,91 +663,202 @@ async function processAIChatRequest(
     }
 
     let results: any[] = [];
+    let searchTier = 'ai-chat';
 
-    // Parallel search strategies for better performance
-    const searchPromises: Promise<any>[] = [];
+    // Determine if this is a conversational query (follow-up)
+    const isConversational = conversationHistory.length > 0;
+    const isNaturalLanguage = query.includes('with') || query.includes('under') || query.includes('near') || 
+                              query.includes('open now') || query.includes('outdoor') || query.includes('indoor');
 
-    // Strategy 1: Vector similarity search (if embeddings available)
-    if (queryEmbedding) {
-      searchPromises.push(
-        (async () => {
-          try {
-            const { data, error } = await supabase.rpc('match_destinations', {
-              query_embedding: queryEmbedding,
-              match_threshold: 0.6,
-              match_count: 100,
-              filter_city: intent.city || null,
-              filter_category: intent.category || null,
-              filter_michelin_stars: intent.filters?.michelinStar || null,
-              filter_min_rating: intent.filters?.rating || null,
-              filter_max_price_level: intent.filters?.priceLevel || null,
-              search_query: query
+    // Strategy 1: Try Discovery Engine with conversational or natural language search (if applicable)
+    try {
+      let discoveryResult;
+      
+      // Use conversational search for follow-up queries
+      if (isConversational && conversationHistory.length > 0) {
+        try {
+          const discoveryEngine = getDiscoveryEngineService();
+          if (discoveryEngine.isAvailable()) {
+            // Build enhanced query with conversation context
+            const recentQueries = conversationHistory.slice(-3).map(m => m.content).join(' ');
+            const enhancedQuery = `${query} (context: ${recentQueries})`;
+            
+            const convResults = await discoveryEngine.search(enhancedQuery, {
+              userId: userId,
+              pageSize: 100,
+              filters: {
+                city: intent.city,
+                category: intent.category,
+                priceLevel: intent.filters?.priceLevel,
+                minRating: intent.filters?.rating,
+              },
             });
-            return { type: 'vector', data: data || [], error };
-          } catch (error: any) {
-            return { type: 'vector', data: [], error };
+            
+            if (convResults.results.length > 0) {
+              discoveryResult = {
+                source: 'discovery_engine',
+                results: convResults.results,
+                totalSize: convResults.totalSize,
+              };
+              searchTier = 'conversational-search';
+              console.log(`[AI Chat] Conversational search found ${discoveryResult.results.length} results`);
+            }
           }
-        })()
-      );
+        } catch (convError) {
+          console.warn('[AI Chat] Conversational search failed, falling back to regular search:', convError);
+        }
+      }
+      
+      // Use natural language search for complex queries
+      if (!discoveryResult && isNaturalLanguage) {
+        try {
+          const discoveryEngine = getDiscoveryEngineService();
+          if (discoveryEngine.isAvailable()) {
+            // Parse natural language filters
+            const parsedFilters = parseNaturalLanguageFilters(query);
+            const cleanQuery = cleanNaturalLanguageQuery(query);
+            
+            const nlResults = await discoveryEngine.search(cleanQuery, {
+              userId: userId,
+              pageSize: 100,
+              filters: parsedFilters,
+            });
+            
+            if (nlResults.results.length > 0) {
+              discoveryResult = {
+                source: 'discovery_engine',
+                results: nlResults.results,
+                totalSize: nlResults.totalSize,
+              };
+              searchTier = 'natural-language-search';
+              console.log(`[AI Chat] Natural language search found ${discoveryResult.results.length} results`);
+            }
+          }
+        } catch (nlError) {
+          console.warn('[AI Chat] Natural language search failed, falling back to regular search:', nlError);
+        }
+      }
+      
+      // Fallback to regular Discovery Engine search
+      if (!discoveryResult) {
+        discoveryResult = await unifiedSearch({
+          query: query,
+          userId: userId,
+          city: intent.city,
+          category: intent.category,
+          priceLevel: intent.filters?.priceLevel,
+          minRating: intent.filters?.rating,
+          pageSize: 100,
+          useCache: true,
+        });
+      }
+
+      if (discoveryResult.source === 'discovery_engine' && discoveryResult.results.length > 0) {
+        // Transform Discovery Engine results to match our format
+        results = discoveryResult.results.map((result: any) => ({
+          ...result,
+          // Map Discovery Engine fields to our expected format
+          id: result.id || result.slug,
+          name: result.name,
+          description: result.description,
+          city: result.city,
+          category: result.category,
+          rating: result.rating || 0,
+          price_level: result.priceLevel || result.price_level || 0,
+          michelin_stars: result.michelin_stars || 0,
+          slug: result.slug || result.id,
+          relevanceScore: result.relevanceScore || 0,
+        }));
+        searchTier = 'discovery-engine';
+        console.log(`[AI Chat] Discovery Engine found ${results.length} results`);
+        
+        // Track search event for personalization
+        if (userId) {
+          try {
+            const discoveryEngine = getDiscoveryEngineService();
+            if (discoveryEngine.isAvailable()) {
+              await discoveryEngine.trackEvent({
+                userId: userId,
+                eventType: 'search',
+                searchQuery: query,
+              });
+            }
+          } catch (trackError) {
+            console.warn('[AI Chat] Failed to track search event:', trackError);
+          }
+        }
+      }
+    } catch (discoveryError: any) {
+      console.warn('[AI Chat] Discovery Engine search failed, falling back:', discoveryError);
     }
 
-    // Strategy 2: Basic keyword search (run in parallel with vector search)
-    const buildKeywordQuery = () => {
-      let fallbackQuery = supabase
-        .from('destinations')
-        .select('*')
-        .limit(100);
-
-      if (intent.city) {
-        fallbackQuery = fallbackQuery.ilike('city', `%${intent.city}%`);
-      }
-
-      if (intent.category) {
-        fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
-      }
-
-      if (intent.filters?.rating) {
-        fallbackQuery = fallbackQuery.gte('rating', intent.filters.rating);
-      }
-
-      if (intent.filters?.priceLevel) {
-        fallbackQuery = fallbackQuery.lte('price_level', intent.filters.priceLevel);
-      }
-
-      if (intent.filters?.michelinStar) {
-        fallbackQuery = fallbackQuery.gte('michelin_stars', intent.filters.michelinStar);
-      }
-
-      const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
-      if (keywords.length > 0) {
-        fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
-      }
-
-      return fallbackQuery;
-    };
-
-    searchPromises.push(
-      (async () => {
-        try {
-          const { data, error } = await buildKeywordQuery();
-          return { type: 'keyword', data: data || [], error };
-        } catch (error: any) {
-          return { type: 'keyword', data: [], error };
+    // Strategy 2: Fallback to Supabase vector search (if Discovery Engine didn't return results)
+    if (results.length === 0 && queryEmbedding) {
+      try {
+        const { data, error } = await supabase.rpc('match_destinations', {
+          query_embedding: queryEmbedding,
+          match_threshold: 0.6,
+          match_count: 100,
+          filter_city: intent.city || null,
+          filter_category: intent.category || null,
+          filter_michelin_stars: intent.filters?.michelinStar || null,
+          filter_min_rating: intent.filters?.rating || null,
+          filter_max_price_level: intent.filters?.priceLevel || null,
+          search_query: query
+        });
+        
+        if (!error && data && data.length > 0) {
+          results = data;
+          searchTier = 'vector-search';
+          console.log(`[AI Chat] Vector search found ${results.length} results`);
         }
-      })()
-    );
+      } catch (error: any) {
+        console.error('[AI Chat] Vector search error:', error);
+      }
+    }
 
-    // Execute all search strategies in parallel
-    const searchResults = await Promise.all(searchPromises);
+    // Strategy 3: Fallback to keyword search (if still no results)
+    if (results.length === 0) {
+      try {
+        let keywordQuery = supabase
+          .from('destinations')
+          .select('*')
+          .limit(100);
 
-    // Use the first successful result (prefer vector over keyword)
-    for (const result of searchResults) {
-      if (!result.error && result.data.length > 0) {
-        results = result.data;
-        console.log(`[AI Chat] ${result.type} search found ${results.length} results`);
-        break;
-      } else if (result.error) {
-        console.error(`[AI Chat] ${result.type} search error:`, result.error);
+        if (intent.city) {
+          keywordQuery = keywordQuery.ilike('city', `%${intent.city}%`);
+        }
+
+        if (intent.category) {
+          keywordQuery = keywordQuery.ilike('category', `%${intent.category}%`);
+        }
+
+        if (intent.filters?.rating) {
+          keywordQuery = keywordQuery.gte('rating', intent.filters.rating);
+        }
+
+        if (intent.filters?.priceLevel) {
+          keywordQuery = keywordQuery.lte('price_level', intent.filters.priceLevel);
+        }
+
+        if (intent.filters?.michelinStar) {
+          keywordQuery = keywordQuery.gte('michelin_stars', intent.filters.michelinStar);
+        }
+
+        const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
+        if (keywords.length > 0) {
+          keywordQuery = keywordQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
+        }
+
+        const { data, error } = await keywordQuery;
+        
+        if (!error && data && data.length > 0) {
+          results = data;
+          searchTier = 'keyword-search';
+          console.log(`[AI Chat] Keyword search found ${results.length} results`);
+        }
+      } catch (error: any) {
+        console.error('[AI Chat] Keyword search error:', error);
       }
     }
 
@@ -794,6 +1003,7 @@ async function processAIChatRequest(
 
                 // Include enriched metadata in response
                 const enrichedMetadata = {
+                  searchTier: searchTier,
                   hasWeather: limitedResults.some((r: any) => r.currentWeather),
                   hasEvents: limitedResults.some((r: any) => r.nearbyEvents && r.nearbyEvents.length > 0),
                   hasRoutes: limitedResults.some((r: any) => r.routeFromCityCenter),
@@ -805,6 +1015,7 @@ async function processAIChatRequest(
                 const responseData = {
                   content: enhancedContent,
                   destinations: limitedResults,
+                  searchTier: searchTier, // Include search tier (discovery-engine, vector-search, keyword-search)
                   intent: {
                     ...intent,
                     resultCount: limitedResults.length,

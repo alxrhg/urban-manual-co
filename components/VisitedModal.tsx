@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { X, Star, Calendar } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface VisitedModalProps {
   destinationSlug: string;
@@ -19,6 +20,7 @@ export function VisitedModal({
   onClose,
   onUpdate,
 }: VisitedModalProps) {
+  const { user } = useAuth();
   const [visitRating, setVisitRating] = useState<number | null>(null);
   const [visitNotes, setVisitNotes] = useState('');
   const [visitDate, setVisitDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -95,6 +97,21 @@ export function VisitedModal({
           });
 
         if (error) throw error;
+        
+        // Track visit event to Discovery Engine (only for new visits)
+        if (user) {
+          fetch('/api/discovery/track-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              eventType: 'visit',
+              documentId: destinationSlug,
+            }),
+          }).catch((error) => {
+            console.warn('Failed to track visit event:', error);
+          });
+        }
       }
 
       if (onUpdate) onUpdate();

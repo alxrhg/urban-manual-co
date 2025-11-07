@@ -27,7 +27,6 @@ import {
   getSessionId,
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
-import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
@@ -1379,42 +1378,6 @@ export default function Home() {
               />
             )}
 
-            {/* AI-Powered Personalized Recommendations - Show when user is logged in and no active search */}
-            {user && !submittedQuery && !selectedCity && !selectedCategory && (
-              <PersonalizedRecommendations
-                limit={12}
-                title="For You"
-                onDestinationClick={(destination) => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
-
-                  // Track destination click
-                  trackDestinationClick({
-                    destinationSlug: destination.slug,
-                    position: 0,
-                    source: 'personalized_recommendations',
-                  });
-
-                  // Also track with new analytics system
-                  if (destination.id) {
-                    import('@/lib/analytics/track').then(({ trackEvent }) => {
-                      trackEvent({
-                        event_type: 'click',
-                        destination_id: destination.id,
-                        destination_slug: destination.slug,
-                        metadata: {
-                          category: destination.category,
-                          city: destination.city,
-                          source: 'personalized_recommendations',
-                        },
-                      });
-                    });
-                  }
-                }}
-                className="mb-12"
-              />
-            )}
-
             {/* Trending Section - Show when no active search */}
             {!submittedQuery && (
               <TrendingSection />
@@ -1486,6 +1449,21 @@ export default function Home() {
                               position: index,
                             },
                           });
+                        });
+                      }
+                      
+                      // Track click event to Discovery Engine for personalization
+                      if (user?.id) {
+                        fetch('/api/discovery/track-event', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            userId: user.id,
+                            eventType: 'click',
+                            documentId: destination.slug,
+                          }),
+                        }).catch((error) => {
+                          console.warn('Failed to track click event:', error);
                         });
                       }
                     }}

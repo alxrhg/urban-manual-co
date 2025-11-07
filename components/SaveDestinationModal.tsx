@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Collection } from '@/types/personalization';
 import { CollectionsManager } from './CollectionsManager';
 import { X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SaveDestinationModalProps {
   destinationId: number;
@@ -21,6 +22,7 @@ export function SaveDestinationModal({
   onClose,
   onSave,
 }: SaveDestinationModalProps) {
+  const { user } = useAuth();
   const [currentCollectionId, setCurrentCollectionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -89,6 +91,22 @@ export function SaveDestinationModal({
       }
 
       setCurrentCollectionId(collectionId);
+      
+      // Track save event to Discovery Engine
+      if (user && collectionId !== null) {
+        fetch('/api/discovery/track-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            eventType: 'save',
+            documentId: destinationSlug,
+          }),
+        }).catch((error) => {
+          console.warn('Failed to track save event:', error);
+        });
+      }
+      
       if (onSave) onSave(collectionId);
       onClose();
     } catch (error) {

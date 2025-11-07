@@ -97,6 +97,21 @@ export default function DestinationPageClient({ initialDestination }: Destinatio
 
   // Track destination view
   useEffect(() => {
+    if (destination?.id && user?.id) {
+      // Track view event to Discovery Engine for personalization
+      fetch('/api/discovery/track-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          eventType: 'view',
+          documentId: destination.slug,
+        }),
+      }).catch((error) => {
+        console.warn('Failed to track view event:', error);
+      });
+    }
+    
     if (destination?.id) {
       trackEvent({
         event_type: 'view',

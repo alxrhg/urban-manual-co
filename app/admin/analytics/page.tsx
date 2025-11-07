@@ -1,106 +1,52 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { BarChart3, Users, Eye, MousePointerClick, Search, TrendingUp, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, Search, Eye, MousePointerClick } from 'lucide-react';
+
+interface AnalyticsData {
+  summary: {
+    totalSearches: number;
+    totalViews: number;
+    discoveryEngineEnabled: boolean;
+    dateRange: {
+      start: string | null;
+      end: string | null;
+    };
+  };
+  popularQueries: Array<{ query: string; count: number }>;
+  popularDestinations: Array<{ slug: string; count: number }>;
+  searchTrends: Array<{ date: string; count: number }>;
+  metrics: {
+    averageResultsPerQuery: number;
+    clickThroughRate: number;
+    searchToSaveRate: number;
+  };
+}
 
 export default function AnalyticsPage() {
-  const router = useRouter();
   const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalViews: 0,
-    totalSearches: 0,
-    totalSaves: 0,
-    totalUsers: 0,
-    topSearches: [] as { query: string; count: number }[],
-    topDestinations: [] as { slug: string; name: string; views: number }[],
+  const [dateRange, setDateRange] = useState({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
-    checkAdminAndLoad();
-  }, [user]);
-
-  async function checkAdminAndLoad() {
-    if (!user?.email) {
-      router.push('/account');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/is-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email }),
-      });
-      const data = await res.json();
-
-      if (!data.isAdmin) {
-        router.push('/account');
-        return;
-      }
-
-      setIsAdmin(true);
+    if (user) {
       loadAnalytics();
-    } catch (error) {
-      router.push('/account');
     }
-  }
+  }, [user, dateRange]);
 
   async function loadAnalytics() {
     try {
       setLoading(true);
-
-      // Get user interactions stats
-      const { data: interactions, error: interactionsError } = await supabase
-        .from('user_interactions')
-        .select('interaction_type');
-
-      if (interactionsError) {
-        console.error('Error loading interactions:', interactionsError);
-      }
-
-      // Get visit history stats
-      const { data: visits, error: visitsError } = await supabase
-        .from('visit_history')
-        .select('destination_id, search_query');
-
-      if (visitsError) {
-        console.error('Error loading visits:', visitsError);
-      }
-
-      // Get user count
-      const { count: userCount } = await supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Aggregate stats
-      const views = (interactions as any[])?.filter((i: any) => i.interaction_type === 'view').length || 0;
-      const searches = (visits as any[])?.filter((v: any) => v.search_query).length || 0;
-      const saves = (interactions as any[])?.filter((i: any) => i.interaction_type === 'save').length || 0;
-
-      // Top searches
-      const searchQueries = (visits as any[])?.map((v: any) => v.search_query).filter(Boolean) || [];
-      const searchCounts: Record<string, number> = {};
-      searchQueries.forEach((q: string) => {
-        searchCounts[q] = (searchCounts[q] || 0) + 1;
-      });
-      const topSearches = Object.entries(searchCounts)
-        .map(([query, count]) => ({ query, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-
-      setStats({
-        totalViews: views,
-        totalSearches: searches,
-        totalSaves: saves,
-        totalUsers: userCount || 0,
-        topSearches,
-        topDestinations: [],
-      });
+      const response = await fetch(
+        `/api/discovery/analytics?startDate=${dateRange.start}&endDate=${dateRange.end}`
+      );
+      const data = await response.json();
+      setAnalytics(data);
     } catch (error) {
       console.error('Error loading analytics:', error);
     } finally {
@@ -108,82 +54,167 @@ export default function AnalyticsPage() {
     }
   }
 
-  if (loading) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-gray-600 dark:text-gray-400">Please sign in to view analytics</p>
       </div>
     );
   }
 
-  if (!isAdmin) {
-    return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Failed to load analytics</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
-      <div className="max-w-[1800px] mx-auto">
+    <div className="min-h-screen bg-white dark:bg-gray-900 px-6 md:px-12 lg:px-16 py-12">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Analytics Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-400">User behavior and engagement metrics</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Search Analytics</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Insights into search behavior and Discovery Engine performance
+          </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Views</div>
-              <Eye className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="text-3xl font-bold">{stats.totalViews.toLocaleString()}</div>
+        {/* Date Range Selector */}
+        <div className="mb-8 flex gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Start Date
+            </label>
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              End Date
+            </label>
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Searches</div>
               <Search className="h-5 w-5 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">Searches</span>
             </div>
-            <div className="text-3xl font-bold">{stats.totalSearches.toLocaleString()}</div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {analytics.summary.totalSearches.toLocaleString()}
+            </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Saves</div>
+              <Eye className="h-5 w-5 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">Views</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {analytics.summary.totalViews.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-2">
               <MousePointerClick className="h-5 w-5 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">CTR</span>
             </div>
-            <div className="text-3xl font-bold">{stats.totalSaves.toLocaleString()}</div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {(analytics.metrics.clickThroughRate * 100).toFixed(1)}%
+            </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Users</div>
-              <Users className="h-5 w-5 text-gray-400" />
+              <BarChart3 className="h-5 w-5 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">Discovery Engine</span>
             </div>
-            <div className="text-3xl font-bold">{stats.totalUsers.toLocaleString()}</div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {analytics.summary.discoveryEngineEnabled ? '✓ Enabled' : '✗ Disabled'}
+            </p>
           </div>
         </div>
 
-        {/* Top Searches */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Top Search Queries
-          </h2>
-          {stats.topSearches.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400">No search data available yet</p>
-          ) : (
-            <div className="space-y-2">
-              {stats.topSearches.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl">
-                  <span className="font-medium">{item.query}</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{item.count} searches</span>
+        {/* Popular Queries */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Popular Search Queries</h2>
+          <div className="space-y-2">
+            {analytics.popularQueries.slice(0, 10).map((item, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+              >
+                <span className="text-gray-900 dark:text-white">{item.query}</span>
+                <span className="text-gray-600 dark:text-gray-400 font-medium">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Popular Destinations */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Popular Destinations</h2>
+          <div className="space-y-2">
+            {analytics.popularDestinations.slice(0, 10).map((item, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+              >
+                <span className="text-gray-900 dark:text-white">{item.slug}</span>
+                <span className="text-gray-600 dark:text-gray-400 font-medium">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Search Trends */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Search Trends (Last 30 Days)</h2>
+          <div className="space-y-2">
+            {analytics.searchTrends.slice(-10).map((item, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+              >
+                <span className="text-gray-600 dark:text-gray-400">{item.date}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-gray-900 dark:bg-white h-2 rounded-full"
+                      style={{
+                        width: `${(item.count / Math.max(...analytics.searchTrends.map(t => t.count))) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="text-gray-900 dark:text-white font-medium w-12 text-right">{item.count}</span>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

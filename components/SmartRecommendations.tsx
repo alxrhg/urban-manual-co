@@ -50,7 +50,47 @@ function SmartRecommendationsComponent({ onCardClick }: SmartRecommendationsProp
 
       setContext(contextLabel);
 
-      // Fetch recommendations based on context
+      // Try contextual recommendations first (Discovery Engine)
+      try {
+        const contextResponse = await fetch('/api/discovery/recommendations/contextual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.id,
+            context: {
+              time: now.toISOString(),
+              weather: null, // Could be fetched from weather API
+              city: null, // Could be detected from user location
+              category: contextType === 'evening' ? 'dining' : contextType === 'morning' ? 'cafe' : null,
+            },
+            pageSize: 12,
+          }),
+        });
+
+        if (contextResponse.ok) {
+          const contextData = await contextResponse.json();
+          if (contextData.recommendations && contextData.recommendations.length > 0) {
+            // Transform Discovery Engine recommendations to Destination format
+            const transformed = contextData.recommendations.map((rec: any) => ({
+              id: rec.id || rec.slug,
+              slug: rec.slug || rec.id,
+              name: rec.name,
+              description: rec.description,
+              city: rec.city,
+              category: rec.category,
+              rating: rec.rating || 0,
+              price_level: rec.priceLevel || rec.price_level || 0,
+              image: rec.images?.[0] || null,
+            }));
+            setRecommendations(transformed);
+            return; // Success, exit early
+          }
+        }
+      } catch (error) {
+        console.warn('Contextual recommendations failed, falling back:', error);
+      }
+
+      // Fallback to smart recommendations
       const response = await fetch(`/api/recommendations/smart?context=${contextType}&userId=${user?.id}`);
       const data = await response.json();
 
