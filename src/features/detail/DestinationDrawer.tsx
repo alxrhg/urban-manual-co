@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
@@ -496,17 +497,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-end">
           <div className="flex items-center gap-2">
             {destination?.slug && (
-              <a
+              <Link
                 href={`/destination/${destination.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose(); // Close drawer when navigating
+                }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                title="Open in new tab"
-                aria-label="Open destination in new tab"
+                title="Open destination page"
+                aria-label="Open destination page"
               >
                 <ExternalLink className="h-4 w-4" />
-              </a>
+              </Link>
             )}
             <button
               onClick={onClose}
