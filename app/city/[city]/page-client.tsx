@@ -88,10 +88,10 @@ export default function CityPageClient() {
 
       if (error) throw error;
 
-      const results = data || [];
+      const results = (data || []) as any[];
       setDestinations(results);
 
-      const uniqueCategories = Array.from(new Set(results.map(d => d.category).filter(Boolean))) as string[];
+      const uniqueCategories = Array.from(new Set(results.map((d: any) => d.category).filter(Boolean))) as string[];
       setCategories(uniqueCategories);
 
       applyFilters(results, selectedCategory, advancedFilters);
