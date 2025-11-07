@@ -22,6 +22,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Destination not found' }, { status: 404 });
     }
 
+    const dest = destination as any;
+
     // Build query for related destinations
     let query = supabase
       .from('destinations')
@@ -33,54 +35,54 @@ export async function GET(request: NextRequest) {
     const related: any[] = [];
     
     // 1. Same city + same category (highest priority)
-    if (destination.city && destination.category) {
+    if (dest.city && dest.category) {
       const { data: sameCityCategory } = await supabase
         .from('destinations')
         .select('*')
-        .eq('city', destination.city)
-        .eq('category', destination.category)
+        .eq('city', dest.city)
+        .eq('category', dest.category)
         .neq('slug', slug)
         .limit(limit);
       
       if (sameCityCategory) {
-        related.push(...sameCityCategory.map(d => ({ ...d, _score: 10 })));
+        related.push(...(sameCityCategory as any[]).map((d: any) => ({ ...d, _score: 10 })));
       }
     }
 
     // 2. Same city, different category
-    if (destination.city && related.length < limit) {
+    if (dest.city && related.length < limit) {
       const { data: sameCity } = await supabase
         .from('destinations')
         .select('*')
-        .eq('city', destination.city)
-        .neq('category', destination.category || '')
+        .eq('city', dest.city)
+        .neq('category', dest.category || '')
         .neq('slug', slug)
-        .not('slug', 'in', `(${related.map(r => r.slug).join(',') || 'none'})`)
+        .not('slug', 'in', `(${related.map((r: any) => r.slug).join(',') || 'none'})`)
         .limit(limit - related.length);
       
       if (sameCity) {
-        related.push(...sameCity.map(d => ({ ...d, _score: 7 })));
+        related.push(...(sameCity as any[]).map((d: any) => ({ ...d, _score: 7 })));
       }
     }
 
     // 3. Same category, different city
-    if (destination.category && related.length < limit) {
+    if (dest.category && related.length < limit) {
       const { data: sameCategory } = await supabase
         .from('destinations')
         .select('*')
-        .eq('category', destination.category)
-        .neq('city', destination.city || '')
+        .eq('category', dest.category)
+        .neq('city', dest.city || '')
         .neq('slug', slug)
-        .not('slug', 'in', `(${related.map(r => r.slug).join(',') || 'none'})`)
+        .not('slug', 'in', `(${related.map((r: any) => r.slug).join(',') || 'none'})`)
         .limit(limit - related.length);
       
       if (sameCategory) {
-        related.push(...sameCategory.map(d => ({ ...d, _score: 5 })));
+        related.push(...(sameCategory as any[]).map((d: any) => ({ ...d, _score: 5 })));
       }
     }
 
     // 4. Boost Michelin-starred places
-    const boosted = related.map(d => {
+    const boosted = related.map((d: any) => {
       let score = d._score || 3;
       if (d.michelin_stars && d.michelin_stars > 0) score += 2;
       if (d.crown) score += 1;
@@ -90,9 +92,9 @@ export async function GET(request: NextRequest) {
 
     // Sort by score and limit
     const final = boosted
-      .sort((a, b) => (b._score || 0) - (a._score || 0))
+      .sort((a: any, b: any) => (b._score || 0) - (a._score || 0))
       .slice(0, limit)
-      .map(({ _score, ...rest }) => rest);
+      .map(({ _score, ...rest }: any) => rest);
 
     return NextResponse.json({
       related: final,
