@@ -96,13 +96,21 @@ export default function AppleMap({
           // Initialize MapKit with authorization callback
           window.mapkit.init({
             authorizationCallback: (done: (token: string) => void) => {
-              // Fetch token with retry logic
+              let tokenFetched = false;
+              
+              // Fetch token with retry logic and timeout
               const fetchToken = async (attempt: number = 0): Promise<void> => {
+                const abortController = new AbortController();
+                const timeoutId = setTimeout(() => abortController.abort(), 5000);
+                
                 try {
                   const res = await fetch('/api/mapkit-token', {
                     credentials: 'same-origin',
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json' },
+                    signal: abortController.signal,
                   });
+                  
+                  clearTimeout(timeoutId);
 
                   if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}));
@@ -115,23 +123,39 @@ export default function AppleMap({
                   const data = await res.json();
 
                   if (data.token) {
+                    tokenFetched = true;
                     done(data.token);
+                    return; // Success, exit early
                   } else {
                     throw new Error(data.error || 'No token in response');
                   }
                 } catch (err: any) {
-                  console.error(`MapKit token fetch error (attempt ${attempt + 1}):`, err);
+                  clearTimeout(timeoutId);
+                  
+                  // Check if it's an abort/timeout error
+                  const isTimeout = err.name === 'AbortError' || err.message?.includes('timeout');
+                  const errorMsg = isTimeout 
+                    ? 'Token request timeout - check your network connection or API endpoint'
+                    : (err.message || `Map authentication failed after ${attempt + 1} attempts`);
+                  
+                  // Don't log timeout errors on retry attempts
+                  if (!isTimeout || attempt === 0) {
+                    console.error(`MapKit token fetch error (attempt ${attempt + 1}):`, err);
+                  }
 
-                  // Retry up to 3 times with exponential backoff
-                  if (attempt < 2) {
+                  // Retry up to 2 times with exponential backoff
+                  if (attempt < 1 && !tokenFetched) {
                     const delay = Math.pow(2, attempt) * 1000; // 1s, 2s
                     setTimeout(() => fetchToken(attempt + 1), delay);
                     setRetryCount(attempt + 1);
-                  } else {
-                    const errorMsg = err.message || `Map authentication failed after ${attempt + 1} attempts`;
+                  } else if (!tokenFetched) {
+                    // Final attempt failed
+                    console.error('MapKit token fetch failed:', errorMsg);
                     setError(errorMsg);
+                    // Call done with empty string to unblock MapKit initialization
+                    // MapKit will show an error but won't hang
+                    done('');
                     reject(new Error(errorMsg));
-                    done(''); // Try without token as last resort
                   }
                 }
               };
@@ -147,29 +171,31 @@ export default function AppleMap({
           } catch {}
 
           // Wait for MapKit to be ready
-          if (window.mapkit.loaded) {
-            window.__mapkitInitialized = true;
-            resolve();
-          } else {
-            // MapKit might take a moment to initialize
-            const checkLoaded = setInterval(() => {
-              if (window.mapkit && window.mapkit.loaded) {
-                clearInterval(checkLoaded);
-                window.__mapkitInitialized = true;
-                resolve();
-              }
-            }, 100);
-
-            // Timeout after 10 seconds
-            setTimeout(() => {
+          // MapKit initialization depends on the authorization callback completing
+          // If token fetch fails, we call done('') to unblock, but MapKit might still not load
+          let initCheckCount = 0;
+          const maxChecks = 150; // 15 seconds (150 * 100ms)
+          
+          const checkLoaded = setInterval(() => {
+            initCheckCount++;
+            
+            if (window.mapkit && window.mapkit.loaded) {
               clearInterval(checkLoaded);
-              if (!window.mapkit?.loaded) {
-                const err = 'MapKit initialization timeout';
-                setError(err);
-                reject(new Error(err));
-              }
-            }, 10000);
-          }
+              window.__mapkitInitialized = true;
+              console.log('MapKit initialized successfully');
+              resolve();
+            } else if (initCheckCount >= maxChecks) {
+              clearInterval(checkLoaded);
+              const err = 'MapKit initialization timeout - token may be invalid or credentials missing';
+              console.error('MapKit initialization timeout:', {
+                mapkitExists: !!window.mapkit,
+                loaded: window.mapkit?.loaded,
+                checkCount: initCheckCount,
+              });
+              setError(err);
+              reject(new Error(err));
+            }
+          }, 100);
         } catch (err: any) {
           console.error('MapKit initialization error:', err);
           const errorMsg = `Failed to initialize MapKit: ${err.message}`;
