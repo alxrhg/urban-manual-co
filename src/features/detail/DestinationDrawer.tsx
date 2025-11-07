@@ -236,40 +236,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         
         if (!error && data) {
           // Parse JSON fields
-          const enriched: any = { ...data };
-          if (data.opening_hours_json) {
+          const dataObj = data as any;
+          const enriched: any = { ...(dataObj as Record<string, any>) };
+          if (dataObj.opening_hours_json) {
             try {
-              enriched.opening_hours = typeof data.opening_hours_json === 'string' 
-                ? JSON.parse(data.opening_hours_json) 
-                : data.opening_hours_json;
+              enriched.opening_hours = typeof dataObj.opening_hours_json === 'string' 
+                ? JSON.parse(dataObj.opening_hours_json) 
+                : dataObj.opening_hours_json;
             } catch (e) {
               console.error('Error parsing opening_hours_json:', e);
             }
           }
           // current/secondary opening hours fields removed; rely on opening_hours_json only
-          if (data.place_types_json) {
+          if (dataObj.place_types_json) {
             try {
-              enriched.place_types = typeof data.place_types_json === 'string'
-                ? JSON.parse(data.place_types_json)
-                : data.place_types_json;
+              enriched.place_types = typeof dataObj.place_types_json === 'string'
+                ? JSON.parse(dataObj.place_types_json)
+                : dataObj.place_types_json;
             } catch (e) {
               console.error('Error parsing place_types_json:', e);
             }
           }
-          if (data.reviews_json) {
+          if (dataObj.reviews_json) {
             try {
-              enriched.reviews = typeof data.reviews_json === 'string'
-                ? JSON.parse(data.reviews_json)
-                : data.reviews_json;
+              enriched.reviews = typeof dataObj.reviews_json === 'string'
+                ? JSON.parse(dataObj.reviews_json)
+                : dataObj.reviews_json;
             } catch (e) {
               console.error('Error parsing reviews_json:', e);
             }
           }
-          if (data.address_components_json) {
+          if (dataObj.address_components_json) {
             try {
-              enriched.address_components = typeof data.address_components_json === 'string'
-                ? JSON.parse(data.address_components_json)
-                : data.address_components_json;
+              enriched.address_components = typeof dataObj.address_components_json === 'string'
+                ? JSON.parse(dataObj.address_components_json)
+                : dataObj.address_components_json;
             } catch (e) {
               console.error('Error parsing address_components_json:', e);
             }
@@ -372,13 +373,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         if (onVisitToggle) onVisitToggle(destination.slug, false);
       } else {
         // Add visit with current date
-        const { error } = await supabase
-          .from('visited_places')
-          .insert({
-            user_id: user.id,
-            destination_slug: destination.slug,
-            visited_at: new Date().toISOString(),
-          });
+        const { error } =           await (supabase
+            .from('visited_places')
+            .insert as any)({
+              user_id: user.id,
+              destination_slug: destination.slug,
+              visited_at: new Date().toISOString(),
+            });
 
         if (error) throw error;
 
@@ -457,9 +458,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         
         const data = await response.json();
 
-        if (data.recommendations && Array.isArray(data.recommendations)) {
+        const dataObj2 = data as any;
+        if (dataObj2.recommendations && Array.isArray(dataObj2.recommendations)) {
           setRecommendations(
-            data.recommendations
+            dataObj2.recommendations
               .map((rec: any) => rec.destination || rec)
               .filter(Boolean)
           );
