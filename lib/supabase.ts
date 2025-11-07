@@ -1,25 +1,72 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Handle missing env vars during build (e.g., when building without .env.local)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+function getRequiredEnv(key: string): string {
+  const value = process.env[key];
 
-// Warn in development if credentials are missing
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('⚠️  Supabase credentials not found. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local');
+  if (!value) {
+    const isServer = typeof window === 'undefined';
+    if (isServer) {
+      throw new Error(
+        `Missing required environment variable: ${key}. ` +
+        `Please set ${key} in your .env.local file or environment variables.`
+      );
+    }
+    console.error(
+      `❌ Missing required environment variable: ${key}\n` +
+      `This variable must be set during build time in Vercel.\n` +
+      `Please ensure ${key} is set in Vercel environment variables and redeploy.`
+    );
+    return '';
   }
+
+  if (value.includes('placeholder') || value.includes('invalid')) {
+    const isServer = typeof window === 'undefined';
+    if (isServer) {
+      throw new Error(
+        `Invalid environment variable: ${key} contains placeholder/invalid value. ` +
+        `Please set a real ${key} value in your .env.local file.`
+      );
+    }
+    console.error(`❌ ${key} contains placeholder/invalid value. Please set a real Supabase URL in Vercel and redeploy.`);
+    return '';
+  }
+  return value;
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    // Use PKCE flow (code exchange) instead of implicit flow (hash fragments)
-    flowType: 'pkce',
-    // Ensure storage is available for code verifier
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'sb-auth-token',
+const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+const supabaseAnonKey = getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+
+let supabase: ReturnType<typeof createClient>;
+
+try {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (typeof window !== 'undefined') {
+      console.error(
+        '❌ Supabase configuration is missing or invalid.\n' +
+        'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel environment variables and redeploy.\n' +
+        'Note: NEXT_PUBLIC_ variables are inlined at build time, so you must rebuild after setting them.'
+      );
+    }
+    supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+  } else {
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: 'sb-auth-token',
+      }
+    });
   }
-});
+} catch (error) {
+  console.error('Failed to create Supabase client:', error);
+  supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
+
+export { supabase };

@@ -217,6 +217,7 @@ export default function Home() {
   
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
@@ -277,14 +278,17 @@ export default function Home() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Don't fetch all destinations on page load - only fetch when needed for filtering
-    // This dramatically improves initial page load speed
-
     // Initialize session tracking
     initializeSession();
 
     // Track homepage view
     trackPageView({ pageType: 'home' });
+
+    // Load filter data first (cities and categories) for faster initial display
+    fetchFilterData();
+
+    // Then load full destinations in background
+    fetchDestinations();
   }, []);
 
   useEffect(() => {
@@ -435,6 +439,56 @@ export default function Home() {
     }));
   }, [selectedCity, selectedCategory]);
 
+  // Fetch filter data (cities and categories) first for faster initial display
+  const fetchFilterData = async () => {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
+        console.error('[Filter Data] Supabase not configured properly');
+        return;
+      }
+
+      console.log('[Filter Data] Starting fetch...');
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('city, category')
+        .order('city');
+
+      if (error) {
+        console.error('[Filter Data] Error:', error);
+        return;
+      }
+
+      // Extract unique cities and categories
+      const uniqueCities = Array.from(
+        new Set(
+          (data || [])
+            .map(d => d.city?.trim())
+            .filter(Boolean)
+        )
+      ).sort();
+
+      const uniqueCategories = Array.from(
+        new Set(
+          (data || [])
+            .map(d => d.category?.trim())
+            .filter(Boolean)
+        )
+      ).sort();
+
+      setCities(uniqueCities as string[]);
+      setCategories(uniqueCategories as string[]);
+
+      console.log('[Filter Data] State updated:', {
+        cities: uniqueCities.length,
+        categories: uniqueCategories.length,
+        sampleCities: uniqueCities.slice(0, 5)
+      });
+    } catch (error) {
+      console.error('[Filter Data] Exception:', error);
+    }
+  };
+
   const fetchDestinations = async () => {
     try {
       // Select only essential columns to avoid issues with missing columns
@@ -453,7 +507,15 @@ export default function Home() {
 
       setDestinations(data || []);
 
-      // Extract unique categories from actual data
+      // Extract unique cities and categories from full data (for consistency)
+      const uniqueCities = Array.from(
+        new Set(
+          (data || [])
+            .map(d => d.city?.trim())
+            .filter(Boolean)
+        )
+      ).sort();
+
       const uniqueCategories = Array.from(
         new Set(
           (data || [])
@@ -462,10 +524,13 @@ export default function Home() {
         )
       ).sort();
 
+      // Update cities and categories from full data (ensures consistency)
+      setCities(uniqueCities as string[]);
       setCategories(uniqueCategories as string[]);
     } catch (error) {
       console.error('Error fetching destinations:', error);
       setDestinations([]);
+      setCities([]);
       setCategories([]);
     } finally {
       setLoading(false);
@@ -799,7 +864,7 @@ export default function Home() {
     setFilteredDestinations(filtered);
   };
 
-  const cities = Array.from(new Set(destinations.map(d => d.city))).sort();
+  // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   const displayedCities = showAllCities ? cities : cities.slice(0, 20);
 
   if (loading) {

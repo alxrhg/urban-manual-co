@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
-import { searchAsimov, mapAsimovResultsToDestinations } from '@/lib/search/asimov';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;

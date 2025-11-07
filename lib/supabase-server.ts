@@ -1,13 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 
+function requireEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}. Please set ${key} in your .env.local file.`);
+  }
+  if (value.includes('placeholder') || value.includes('invalid')) {
+    throw new Error(`Invalid environment variable: ${key} contains placeholder/invalid value. Please set a real ${key} value.`);
+  }
+  return value;
+}
+
 /**
  * Client-side: Uses anon key + user JWT (RLS enforced)
  * Use this in client components
  */
 export function createClientComponentClient() {
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
   );
 }
 
@@ -21,8 +32,8 @@ export async function createServerClient() {
   // The client-side supabase client automatically sends the session token
   // For server-side, we create a basic client that will work with getUser() calls
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key',
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
     {
       auth: {
         persistSession: false,
@@ -38,15 +49,9 @@ export async function createServerClient() {
  * NEVER expose to client
  */
 export function createServiceRoleClient() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!serviceRoleKey) {
-    console.warn('SUPABASE_SERVICE_ROLE_KEY is not set. Returning null client.');
-    return null;
-  }
-
+  const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
     serviceRoleKey,
     {
       auth: {

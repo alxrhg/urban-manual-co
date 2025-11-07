@@ -1,8 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 import type { UserInteraction } from '@/types/personalization';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+function getEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) {
+    if (typeof window !== 'undefined') {
+      console.error(`❌ Missing required environment variable: ${key}`);
+    }
+    return ''; // Don't throw on client-side
+  }
+  if (value.includes('placeholder')) {
+    if (typeof window !== 'undefined') {
+      console.error(`❌ ${key} contains placeholder value. Please set a real Supabase URL.`);
+    }
+    return '';
+  }
+  return value;
+}
+
+const supabaseUrl = getEnv('NEXT_PUBLIC_SUPABASE_URL');
+const supabaseAnonKey = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+
+const hasValidConfig = supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('placeholder') && !supabaseAnonKey.includes('placeholder');
 
 // Session ID management (for anonymous tracking)
 function getSessionId(): string {
@@ -55,7 +74,9 @@ export function trackFilterChange(data?: { filterType?: string; value?: any }): 
 export { getSessionId };
 
 export class PersonalizationTracker {
-  private supabase = createClient(supabaseUrl, supabaseAnonKey);
+  private supabase = hasValidConfig
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;
   private userId?: string;
 
   constructor(userId?: string) {
@@ -70,7 +91,7 @@ export class PersonalizationTracker {
     source?: string,
     searchQuery?: string
   ): Promise<void> {
-    if (!this.userId) return;
+    if (!this.userId || !this.supabase) return;
 
     try {
       // Add to visit history
@@ -92,7 +113,7 @@ export class PersonalizationTracker {
    * Track save/unsave
    */
   async trackSave(destinationId: number, collectionId?: string): Promise<void> {
-    if (!this.userId) return;
+    if (!this.userId || !this.supabase) return;
 
     try {
       await this.supabase.from('saved_destinations').insert({
@@ -111,7 +132,7 @@ export class PersonalizationTracker {
    * Track unsave
    */
   async trackUnsave(destinationId: number): Promise<void> {
-    if (!this.userId) return;
+    if (!this.userId || !this.supabase) return;
 
     try {
       await this.supabase
@@ -165,7 +186,7 @@ export class PersonalizationTracker {
     destinationId: number,
     type: UserInteraction['interaction_type']
   ): Promise<void> {
-    if (!this.userId) return;
+    if (!this.userId || !this.supabase) return;
 
     try {
       await this.supabase.from('user_interactions').insert({
