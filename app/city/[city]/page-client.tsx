@@ -166,7 +166,7 @@ export default function CityPageClient() {
 
       if (error) throw error;
 
-      const slugSet = new Set(data?.map(entry => entry.destination_slug) || []);
+      const slugSet = new Set((data as any[])?.map((entry: any) => entry.destination_slug) || []);
       setVisitedSlugs(slugSet);
     } catch (err) {
       console.error('Error fetching visited destinations:', err);
@@ -435,7 +435,7 @@ export default function CityPageClient() {
           if (data) {
             await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', slug);
           } else {
-            await supabase.from('saved_places').insert({ user_id: user.id, destination_slug: slug });
+            await (supabase.from('saved_places').insert as any)({ user_id: user.id, destination_slug: slug });
           }
         }}
         onVisitToggle={async (slug: string) => {
@@ -456,7 +456,7 @@ export default function CityPageClient() {
               return next;
             });
           } else {
-            await supabase.from('visited_places').insert({ user_id: user.id, destination_slug: slug });
+            await (supabase.from('visited_places').insert as any)({ user_id: user.id, destination_slug: slug });
             setVisitedSlugs(prev => {
               const next = new Set(prev);
               next.add(slug);
