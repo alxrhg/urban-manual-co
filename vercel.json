@@ -3,6 +3,22 @@
     {
       "path": "/api/cron/compute-intelligence",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/aggregate-user-data",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/train-ml-models",
+      "schedule": "0 4 * * 1"
+    },
+    {
+      "path": "/api/realtime/check-price-alerts",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/realtime/aggregate-crowding",
+      "schedule": "0 */6 * * *"
     }
   ]
 }
