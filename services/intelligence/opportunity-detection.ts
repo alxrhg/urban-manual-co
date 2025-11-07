@@ -156,7 +156,7 @@ export class OpportunityDetectionService {
       if (!city) return opportunities;
 
       // Get upcoming events in city
-      const { data: destinations } = await this.supabase
+      const { data: destinations } = await (this.supabase as any)
         .from('destinations')
         .select('id, name, slug, city, nearby_events_json')
         .ilike('city', `%${city}%`)
@@ -213,7 +213,7 @@ export class OpportunityDetectionService {
       if (!city) return opportunities;
 
       // Get destinations with good weather conditions
-      const { data: destinations } = await this.supabase
+      const { data: destinations } = await (this.supabase as any)
         .from('destinations')
         .select('id, name, slug, city, current_weather_json, category')
         .ilike('city', `%${city}%`)

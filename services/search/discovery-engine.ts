@@ -138,7 +138,7 @@ export class DiscoveryEngineService {
 
       const [response] = await this.searchClient.search(request);
 
-      const results = (response.results || []).map((result) => {
+      const results = ((response as any).results || []).map((result: any) => {
         const document = result.document;
         const structData = document?.structData || {};
         
@@ -159,8 +159,8 @@ export class DiscoveryEngineService {
 
       return {
         results,
-        totalSize: response.totalSize || 0,
-        nextPageToken: response.nextPageToken,
+        totalSize: (response as any).totalSize || 0,
+        nextPageToken: (response as any).nextPageToken,
       };
     } catch (error: any) {
       console.error('Discovery Engine search error:', error);
