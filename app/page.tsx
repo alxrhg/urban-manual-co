@@ -449,6 +449,7 @@ export default function Home() {
       if (error) {
         console.error('[Filter Data] Error:', error);
         setLoading(false); // Set loading false even on error
+        // Don't return - try to extract from empty data or wait for fetchDestinations
         return;
       }
 
@@ -457,7 +458,7 @@ export default function Home() {
         new Set(
           ((data || []) as any[])
             .map((d: any) => d.city?.trim())
-            .filter(Boolean)
+            .filter((city: any) => city && city.length > 0)
         )
       ).sort();
 
@@ -465,10 +466,11 @@ export default function Home() {
         new Set(
           ((data || []) as any[])
             .map((d: any) => d.category?.trim())
-            .filter(Boolean)
+            .filter((cat: any) => cat && cat.length > 0)
         )
       ).sort();
 
+      // Always set the state, even if arrays are empty (they'll be populated by fetchDestinations)
       setCities(uniqueCities as string[]);
       setCategories(uniqueCategories as string[]);
 
@@ -479,7 +481,8 @@ export default function Home() {
       console.log('[Filter Data] State updated:', {
         cities: uniqueCities.length,
         categories: uniqueCategories.length,
-        sampleCities: uniqueCities.slice(0, 5)
+        sampleCities: uniqueCities.slice(0, 5),
+        sampleCategories: uniqueCategories.slice(0, 5)
       });
     } catch (error) {
       console.error('[Filter Data] Exception:', error);
@@ -524,11 +527,21 @@ export default function Home() {
         )
       ).sort();
 
-      // Update cities and categories from full data (ensures consistency)
-      // Only update if we got more complete data
-      if (uniqueCities.length > cities.length || uniqueCategories.length > categories.length) {
-        setCities(uniqueCities as string[]);
-        setCategories(uniqueCategories as string[]);
+      // Always update cities and categories from full data (ensures consistency)
+      // This ensures the lists are populated even if fetchFilterData didn't work
+      // Update regardless of current state to ensure lists are always populated
+      setCities(uniqueCities as string[]);
+      setCategories(uniqueCategories as string[]);
+      
+      if (uniqueCities.length > 0 || uniqueCategories.length > 0) {
+        console.log('[Destinations] Updated filter lists:', {
+          cities: uniqueCities.length,
+          categories: uniqueCategories.length,
+          sampleCities: uniqueCities.slice(0, 5),
+          sampleCategories: uniqueCategories.slice(0, 5)
+        });
+      } else {
+        console.warn('[Destinations] No cities or categories found in data');
       }
     } catch (error) {
       console.error('Error fetching destinations:', error);
@@ -901,9 +914,23 @@ export default function Home() {
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Ensure displayedCities is always an array, even if cities is empty
+  // Always show cities if they exist, regardless of showAllCities state initially
   const displayedCities = cities.length > 0 
     ? (showAllCities ? cities : cities.slice(0, 20))
     : [];
+  
+  // Debug logging to help diagnose filter list issues
+  useEffect(() => {
+    if (cities.length > 0 || categories.length > 0) {
+      console.log('[Home] Filter lists state:', {
+        citiesCount: cities.length,
+        categoriesCount: categories.length,
+        displayedCitiesCount: displayedCities.length,
+        sampleCities: cities.slice(0, 5),
+        sampleCategories: categories.slice(0, 5)
+      });
+    }
+  }, [cities, categories, displayedCities.length]);
 
   if (loading) {
     return (
