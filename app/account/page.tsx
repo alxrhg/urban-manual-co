@@ -110,10 +110,10 @@ export default function Account() {
       // Collect all unique slugs
       const allSlugs = new Set<string>();
       if (savedResult.data) {
-        savedResult.data.forEach(item => allSlugs.add(item.destination_slug));
+        (savedResult.data as any[]).forEach((item: any) => allSlugs.add(item.destination_slug));
       }
       if (visitedResult.data) {
-        visitedResult.data.forEach(item => allSlugs.add(item.destination_slug));
+        (visitedResult.data as any[]).forEach((item: any) => allSlugs.add(item.destination_slug));
       }
 
       // Fetch destinations
