@@ -879,7 +879,7 @@ async function processAIChatRequest(
                 // Log search/chat interaction (best-effort)
                 try {
                   await (async () => {
-                    const query = supabase
+                    const insertQuery = supabase
                       .from('user_interactions')
                       .insert({
                         interaction_type: 'search',
@@ -892,7 +892,7 @@ async function processAIChatRequest(
                           source: 'api/ai-chat',
                         }
                       } as any);
-                    return await query;
+                    return await insertQuery;
                   })();
                 } catch {}
 
