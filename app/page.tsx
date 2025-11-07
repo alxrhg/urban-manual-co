@@ -492,6 +492,14 @@ export default function Home() {
 
   const fetchDestinations = async () => {
     try {
+      // Check if Supabase is properly configured before making requests
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
+        console.warn('[Destinations] Supabase not configured, skipping fetch');
+        setDestinations([]);
+        return;
+      }
+
       // Select only essential columns to avoid issues with missing columns
       const { data, error } = await supabase
         .from('destinations')
@@ -499,7 +507,10 @@ export default function Home() {
         .order('name');
 
       if (error) {
-        console.error('Error fetching destinations:', error);
+        // Don't log network errors for invalid URLs (they're expected)
+        if (!error.message?.includes('hostname') && !error.message?.includes('Failed to fetch')) {
+          console.error('Error fetching destinations:', error);
+        }
         setDestinations([]);
         // Don't reset categories here - they're already loaded from fetchFilterData
         // setCategories([]);
@@ -543,8 +554,11 @@ export default function Home() {
       } else {
         console.warn('[Destinations] No cities or categories found in data');
       }
-    } catch (error) {
-      console.error('Error fetching destinations:', error);
+    } catch (error: any) {
+      // Don't log network errors for invalid URLs (they're expected)
+      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
+        console.error('Error fetching destinations:', error);
+      }
       setDestinations([]);
       // Don't reset cities/categories or loading - filters are already shown
     }
@@ -555,6 +569,13 @@ export default function Home() {
     if (!user) return;
 
     try {
+      // Check if Supabase is properly configured before making requests
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
+        console.warn('[Visited Places] Supabase not configured, skipping fetch');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('visited_places')
         .select('destination_slug')
@@ -563,6 +584,12 @@ export default function Home() {
       // Handle missing table or RLS errors gracefully
       if (error && (error.code === 'PGRST116' || error.code === 'PGRST301')) {
         // Table doesn't exist or RLS blocking - that's fine, just continue
+        return;
+      }
+
+      // Don't throw network errors for invalid URLs (they're expected)
+      if (error && (error.message?.includes('hostname') || error.message?.includes('Failed to fetch') || error.message?.includes('invalid.supabase'))) {
+        console.warn('[Visited Places] Supabase not configured, skipping fetch');
         return;
       }
 
