@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
+import { deepIntentAnalysisService } from '@/services/intelligence/deep-intent-analysis';
 import { createServerClient } from '@/lib/supabase-server';
 
+/**
+ * POST /api/intelligence/deep-understand
+ * Enhanced intent analysis with multi-intent detection
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const body = await request.json();
-    const { query, conversation_history = [] } = body;
+    const { query, conversationHistory = [], userId } = body;
 
     if (!query) {
       return NextResponse.json(
@@ -17,14 +21,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const enhancedIntent = await intentAnalysisService.analyzeIntent(
+    const result = await deepIntentAnalysisService.analyzeMultiIntent(
       query,
-      conversation_history,
-      user?.id
+      conversationHistory,
+      userId || user?.id
     );
 
     return NextResponse.json({
-      intent: enhancedIntent,
+      ...result,
       query,
     });
   } catch (error: any) {
