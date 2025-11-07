@@ -659,7 +659,7 @@ async function processAIChatRequest(
       searchPromises.push(
         (async () => {
           try {
-            const { data, error } = await supabase.rpc('match_destinations', {
+            const { data, error } = await (supabase.rpc as any)('match_destinations', {
               query_embedding: queryEmbedding,
               match_threshold: 0.6,
               match_count: 100,
