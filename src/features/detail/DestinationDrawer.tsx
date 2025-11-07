@@ -14,6 +14,7 @@ import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
+import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 
 // Dynamically import AppleMap to avoid SSR issues
 const AppleMap = dynamic(() => import('@/components/AppleMap'), { 
@@ -712,13 +713,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Real-Time Status Badge */}
             {destination.id && (
-              <div className="mt-4">
+              <div className="mt-4 space-y-4">
                 <RealtimeStatusBadge
                   destinationId={destination.id}
                   compact={false}
                   showCrowding={true}
                   showWaitTime={true}
                   showAvailability={true}
+                />
+                
+                {/* User Report Form */}
+                <RealtimeReportForm
+                  destinationId={destination.id}
+                  destinationName={destination.name}
                 />
               </div>
             )}
