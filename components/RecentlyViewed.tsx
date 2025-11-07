@@ -1,9 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { useAuth } from '@/contexts/AuthContext';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 
@@ -20,7 +22,57 @@ interface RecentlyViewedProps {
 
 export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { recentlyViewed } = useRecentlyViewed();
+  const [enhancedRecommendations, setEnhancedRecommendations] = useState<Destination[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch Discovery Engine recommendations based on view history
+  useEffect(() => {
+    if (recentlyViewed.length > 0 && user?.id) {
+      setLoading(true);
+      
+      // Get categories and cities from recently viewed
+      const categories = [...new Set(recentlyViewed.map(item => item.category))];
+      const cities = [...new Set(recentlyViewed.map(item => item.city))];
+      
+      // Fetch Discovery Engine recommendations based on view history
+      fetch('/api/discovery/recommendations/contextual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          context: {
+            category: categories[0] || null,
+            city: cities[0] || null,
+            pageSize: 6,
+          },
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.recommendations && data.recommendations.length > 0) {
+            // Transform Discovery Engine results to Destination format
+            const transformed = data.recommendations.map((rec: any) => ({
+              id: rec.id || parseInt(rec.slug) || 0,
+              slug: rec.slug || rec.id,
+              name: rec.name,
+              city: rec.city,
+              category: rec.category,
+              image: rec.images?.[0] || rec.image,
+              rating: rec.rating || 0,
+              price_level: rec.priceLevel || rec.price_level || 0,
+              michelin_stars: rec.michelin_stars || 0,
+            }));
+            setEnhancedRecommendations(transformed);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setLoading(false);
+        });
+    }
+  }, [recentlyViewed, user?.id]);
 
   if (recentlyViewed.length === 0) {
     return null;
@@ -39,7 +91,25 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
         {recentlyViewed.map((item) => (
           <button
             key={item.slug}
-            onClick={() => {
+            onClick={async () => {
+              // Track click event to Discovery Engine for personalization
+              if (user?.id) {
+                try {
+                  await fetch('/api/discovery/track-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      userId: user.id,
+                      eventType: 'click',
+                      documentId: item.slug,
+                      source: 'recently_viewed',
+                    }),
+                  });
+                } catch (error) {
+                  console.warn('Discovery Engine tracking error:', error);
+                }
+              }
+              
               if (onCardClick) {
                 onCardClick(item as Destination);
               } else {

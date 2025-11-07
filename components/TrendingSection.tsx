@@ -27,7 +27,45 @@ function TrendingSectionComponent({ city }: { city?: string }) {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
-  const fetchTrending = useCallback(() => {
+  const fetchTrending = useCallback(async () => {
+    try {
+      // Try Discovery Engine first for trending/popular destinations
+      const discoveryResponse = await fetch('/api/search/discovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: 'trending popular destinations',
+          filters: city ? { city } : {},
+          pageSize: 6,
+        }),
+      });
+
+      if (discoveryResponse.ok) {
+        const discoveryData = await discoveryResponse.json();
+        if (discoveryData.results && discoveryData.results.length > 0) {
+          // Transform Discovery Engine results to Destination format
+          const transformed = discoveryData.results.map((result: any) => ({
+            id: result.id || parseInt(result.slug) || 0,
+            slug: result.slug || result.id,
+            name: result.name,
+            city: result.city,
+            category: result.category,
+            image: result.images?.[0] || result.image,
+            rating: result.rating || 0,
+            price_level: result.priceLevel || result.price_level || 0,
+            michelin_stars: result.michelin_stars || 0,
+            is_open_now: result.is_open_now,
+          }));
+          setDestinations(transformed);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (error) {
+      console.warn('Discovery Engine trending failed, falling back:', error);
+    }
+
+    // Fallback to classic trending API
     const params = new URLSearchParams();
     if (city) params.set('city', city);
     params.set('limit', '6');
@@ -90,7 +128,7 @@ function TrendingSectionComponent({ city }: { city?: string }) {
         {destinations.map((dest) => (
           <button
             key={dest.id}
-            onClick={() => {
+            onClick={async () => {
               trackEvent({
                 event_type: 'click',
                 destination_id: dest.id,
@@ -101,6 +139,25 @@ function TrendingSectionComponent({ city }: { city?: string }) {
                   source: 'trending_section',
                 },
               });
+              
+              // Track click event to Discovery Engine for personalization
+              try {
+                const response = await fetch('/api/discovery/track-event', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    eventType: 'click',
+                    documentId: dest.slug,
+                    source: 'trending_section',
+                  }),
+                });
+                if (!response.ok) {
+                  console.warn('Failed to track Discovery Engine event');
+                }
+              } catch (error) {
+                console.warn('Discovery Engine tracking error:', error);
+              }
+              
               router.push(`/destination/${dest.slug}`);
             }}
             className={`${CARD_WRAPPER} text-left`}

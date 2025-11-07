@@ -1341,6 +1341,22 @@ export default function Home() {
                       });
                     });
                   }
+
+                  // Track click event to Discovery Engine for personalization
+                  if (user?.id) {
+                    fetch('/api/discovery/track-event', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userId: user.id,
+                        eventType: 'click',
+                        documentId: destination.slug,
+                        source: 'recently_viewed',
+                      }),
+                    }).catch((error) => {
+                      console.warn('Failed to track Discovery Engine event:', error);
+                    });
+                  }
                 }}
               />
             )}
@@ -1372,6 +1388,22 @@ export default function Home() {
                           source: 'smart_recommendations',
                         },
                       });
+                    });
+                  }
+
+                  // Track click event to Discovery Engine for personalization
+                  if (user?.id) {
+                    fetch('/api/discovery/track-event', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userId: user.id,
+                        eventType: 'click',
+                        documentId: destination.slug,
+                        source: 'smart_recommendations',
+                      }),
+                    }).catch((error) => {
+                      console.warn('Failed to track Discovery Engine event:', error);
                     });
                   }
                 }}
