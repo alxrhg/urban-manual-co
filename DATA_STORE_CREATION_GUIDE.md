@@ -1,77 +1,106 @@
-# Creating Discovery Engine Data Store - Import Source Selection
+# Creating Discovery Engine Data Store - Official Guide
 
-## Important: You Don't Need to Select an Import Source!
+Based on the [official Google Cloud documentation](https://cloud.google.com/generative-ai-app-builder/docs/create-datastore-ingest), here's how to create your data store correctly.
 
-The import source options you're seeing (Website Content, BigQuery, Cloud Storage, etc.) are for **automatic data ingestion** during setup. 
+## Data Store Types
 
-**We're using manual API imports instead**, so you can:
+For Urban Manual, you need a **structured data store** because we're importing destination data (products/catalog).
 
-1. **Skip this step** - If there's a "Skip" or "Continue" button
-2. **Choose any option** - Just to proceed (you won't use it)
-3. **Choose "Cloud Storage"** - If you want to set it up but not use it
+## Import Methods for Structured Data
 
----
+According to the documentation, for structured data you have three options:
 
-## What to Do
+1. **Import from BigQuery** - If your data is in BigQuery
+2. **Import from Cloud Storage** - If your data is in a Cloud Storage bucket
+3. **Upload structured JSON data with the API** - Manual upload via API calls
 
-### Option 1: Skip Import Source (Recommended)
+## What to Choose During Creation
 
-1. Look for a **"Skip"**, **"Continue"**, or **"Create without data"** button
-2. Click it to create an empty data store
-3. We'll import data via API after creation
+### Option 1: Cloud Storage (Recommended for Setup)
 
-### Option 2: Choose Any Option (Just to Proceed)
+1. Select **"Cloud Storage"** as the import source
+2. You can:
+   - Create an empty bucket (we won't use it)
+   - Or skip the bucket configuration if possible
+3. Complete the data store creation
 
-If you must select something:
-- Choose **"Cloud Storage"** (easiest to skip later)
-- Or **"BigQuery"** 
-- Or any option that lets you proceed
+**Why this works:** Even if you select Cloud Storage, you can still use API imports later. The import source selection is just for the initial setup method.
 
-**Don't worry** - we won't use this import method. We'll import via API after the data store is created.
+### Option 2: BigQuery (Alternative)
 
-### Option 3: Use Cloud Storage (If You Want)
+1. Select **"BigQuery"** as the import source
+2. You can skip the table selection or create an empty dataset
+3. Complete the data store creation
 
-If you want to set up Cloud Storage as a backup method:
+**Note:** We'll still use API imports for actual data, not BigQuery.
 
-1. Select **"Cloud Storage"**
-2. You can create an empty bucket or skip the configuration
-3. We'll still use API imports primarily
+### Option 3: Skip if Possible
 
----
+If the UI allows you to skip the import source selection:
+1. Click **"Skip"** or **"Continue without data"**
+2. Create an empty data store
+3. Import data via API after creation
 
 ## After Data Store Creation
 
-Once the data store is created (empty is fine!), you'll import data using our scripts:
+Once your data store is created, you'll import data using the **API method**:
 
 ```bash
-# 1. Export data from Supabase
+# 1. Export from Supabase
 npm run discovery:export
 
-# 2. Import to Discovery Engine via API
+# 2. Import via API (this is the "Upload structured JSON data with the API" method)
 npm run discovery:import
 ```
 
-This uses the Discovery Engine API directly (the `importDocuments` method), which is independent of the import source you selected during creation.
+This uses the Discovery Engine API's `importDocuments` method, which is the official way to "Upload structured JSON data with the API" as mentioned in the documentation.
 
----
+## Understanding the Documentation
+
+From the [official docs](https://cloud.google.com/generative-ai-app-builder/docs/create-datastore-ingest):
+
+> **Structured data**: You can import data from BigQuery or Cloud Storage. You can also manually upload structured JSON data through the API.
+
+This confirms:
+- ✅ The import source selection during creation is for **automatic ingestion**
+- ✅ **API uploads** are a separate method you can use after creation
+- ✅ You can create the data store with one method and use API imports later
+
+## Recommended Steps
+
+1. **Create Data Store:**
+   - Name: `urban-manual-destinations`
+   - Type: **Structured data** (or **Generic**)
+   - Location: **Global**
+   - Import Source: **Cloud Storage** (or any option to proceed)
+
+2. **After Creation:**
+   - Note the **Data Store ID**
+   - Set environment variables:
+     ```bash
+     GOOGLE_CLOUD_PROJECT_ID=your-project-id
+     DISCOVERY_ENGINE_DATA_STORE_ID=urban-manual-destinations
+     GOOGLE_CLOUD_LOCATION=global
+     ```
+
+3. **Import Data via API:**
+   ```bash
+   npm run discovery:export
+   npm run discovery:import
+   ```
 
 ## Why This Works
 
-- **Data store creation** = Setting up the container (can be empty)
-- **API import** = Adding data programmatically (what we do)
-- The import source selection is just for **automatic ingestion** - we don't need it
+The data store creation process sets up the **container**. The import source selection is just for **initial data ingestion**. Once created, you can:
 
----
+- Use API calls to import/update data (what we're doing)
+- Use Cloud Storage imports (if you set it up)
+- Use BigQuery imports (if you set it up)
+
+All three methods work independently - choosing one during creation doesn't lock you into that method.
 
 ## Summary
 
-**Just create the data store with any option (or skip if possible).** The import source doesn't matter because we're importing via API after creation.
+**Just select "Cloud Storage" (or any option) to proceed with data store creation.** Then use our API import scripts (`npm run discovery:import`) which is the official "Upload structured JSON data with the API" method mentioned in the documentation.
 
-The important things are:
-- ✅ Data store name: `urban-manual-destinations`
-- ✅ Type: **Generic**
-- ✅ Location: **Global** (or your preferred region)
-- ✅ Data Store ID: Note this down!
-
-Then use `npm run discovery:import` to add your data via API.
-
+The import source selection is just for setup - you'll use API imports for actual data management.
