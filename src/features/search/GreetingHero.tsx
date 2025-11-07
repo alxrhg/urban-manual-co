@@ -144,11 +144,6 @@ export default function GreetingHero({
           <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
             {greeting}
           </h1>
-          {subtext && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 normal-case tracking-normal font-normal">
-              {subtext}
-            </p>
-          )}
         </div>
 
         {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
