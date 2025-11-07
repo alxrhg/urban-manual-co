@@ -446,6 +446,7 @@ export default function Home() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
         console.error('[Filter Data] Supabase not configured properly');
+        setLoading(false); // Still set loading false to show UI
         return;
       }
 
@@ -457,6 +458,7 @@ export default function Home() {
 
       if (error) {
         console.error('[Filter Data] Error:', error);
+        setLoading(false); // Set loading false even on error
         return;
       }
 
@@ -480,6 +482,10 @@ export default function Home() {
       setCities(uniqueCities as string[]);
       setCategories(uniqueCategories as string[]);
 
+      // Set loading to false immediately after filter data loads
+      // This allows filters to show while destinations load in background
+      setLoading(false);
+
       console.log('[Filter Data] State updated:', {
         cities: uniqueCities.length,
         categories: uniqueCategories.length,
@@ -487,6 +493,7 @@ export default function Home() {
       });
     } catch (error) {
       console.error('[Filter Data] Exception:', error);
+      setLoading(false); // Set loading false on exception
     }
   };
 
@@ -501,14 +508,16 @@ export default function Home() {
       if (error) {
         console.error('Error fetching destinations:', error);
         setDestinations([]);
-        setCategories([]);
-        setLoading(false);
+        // Don't reset categories here - they're already loaded from fetchFilterData
+        // setCategories([]);
+        // Don't set loading false here - it's already false from fetchFilterData
         return;
       }
 
       setDestinations(data || []);
 
       // Extract unique cities and categories from full data (for consistency)
+      // This ensures we have the complete list after full data loads
       const uniqueCities = Array.from(
         new Set(
           (data || [])
@@ -526,16 +535,17 @@ export default function Home() {
       ).sort();
 
       // Update cities and categories from full data (ensures consistency)
-      setCities(uniqueCities as string[]);
-      setCategories(uniqueCategories as string[]);
+      // Only update if we got more complete data
+      if (uniqueCities.length > cities.length || uniqueCategories.length > categories.length) {
+        setCities(uniqueCities as string[]);
+        setCategories(uniqueCategories as string[]);
+      }
     } catch (error) {
       console.error('Error fetching destinations:', error);
       setDestinations([]);
-      setCities([]);
-      setCategories([]);
-    } finally {
-      setLoading(false);
+      // Don't reset cities/categories or loading - filters are already shown
     }
+    // Don't set loading false here - it's already false from fetchFilterData
   };
 
   const fetchVisitedPlaces = async () => {
