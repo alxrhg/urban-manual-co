@@ -152,9 +152,10 @@ async def train_model(
     request: TrainRequest = TrainRequest()
 ):
     """
-    Train the collaborative filtering model.
+    Train the collaborative filtering model (enhanced).
 
     This is a long-running operation that runs in the background.
+    Includes recency weighting, temporal features, and evaluation.
 
     Args:
         request: Training parameters
@@ -162,7 +163,7 @@ async def train_model(
     Returns:
         Training status
     """
-    logger.info("Received training request")
+    logger.info("Received training request (enhanced)")
 
     # Add training task to background
     background_tasks.add_task(
@@ -173,14 +174,14 @@ async def train_model(
 
     return TrainResponse(
         status="training_started",
-        message="Model training started in background. Check /model/status for progress."
+        message="Enhanced model training started in background. Includes recency weighting and temporal features. Check /model/status for progress."
     )
 
 
 @router.get("/model/status", tags=["Model Management"])
 async def get_model_status():
     """
-    Get current model training status.
+    Get current model training status with evaluation metrics.
 
     Returns:
         Model status and metadata
@@ -189,30 +190,54 @@ async def get_model_status():
 
     is_trained = model.model is not None
 
-    return {
+    status = {
         "is_trained": is_trained,
         "trained_at": model.trained_at.isoformat() if model.trained_at else None,
         "num_users": len(model.user_id_map) if is_trained else 0,
         "num_items": len(model.item_id_map) if is_trained else 0,
-        "model_type": "LightFM WARP",
-        "status": "ready" if is_trained else "not_trained"
+        "model_type": "LightFM WARP (Enhanced)",
+        "status": "ready" if is_trained else "not_trained",
+        "evaluation_metrics": model.get_evaluation_metrics() if is_trained else {},
+        "cache_size": len(model.recommendation_cache),
     }
+
+    return status
 
 
 def _train_model_task(epochs: Optional[int] = None, num_threads: Optional[int] = None):
-    """Background task for model training."""
+    """Background task for model training (enhanced)."""
     try:
-        logger.info("Starting model training task")
+        logger.info("Starting enhanced model training task")
         model = get_model()
-        success = model.train(epochs=epochs, num_threads=num_threads)
+        success = model.train(epochs=epochs, num_threads=num_threads, evaluate=True)
 
         if success:
-            logger.info("Model training completed successfully")
+            metrics = model.get_evaluation_metrics()
+            logger.info(f"Model training completed successfully. Metrics: {metrics}")
         else:
             logger.error("Model training failed")
 
     except Exception as e:
         logger.error(f"Error in training task: {e}")
+
+
+@router.post("/cache/clear", tags=["Model Management"])
+async def clear_cache():
+    """
+    Clear recommendation cache.
+    
+    Useful after model retraining or when cache becomes stale.
+    """
+    try:
+        model = get_model()
+        model.clear_cache()
+        return {
+            "status": "success",
+            "message": "Recommendation cache cleared"
+        }
+    except Exception as e:
+        logger.error(f"Error clearing cache: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 def _get_user_interactions(
