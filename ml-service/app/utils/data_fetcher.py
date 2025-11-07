@@ -267,3 +267,105 @@ class DataFetcher:
         except Exception as e:
             logger.error(f"Error fetching top destinations: {e}")
             raise
+
+    @staticmethod
+    def fetch_visit_history(days: int = 180) -> pd.DataFrame:
+        """
+        Fetch visit history for graph building.
+        
+        Args:
+            days: Number of days of history to fetch
+        
+        Returns:
+            DataFrame with columns: user_id, destination_id, visited_at
+        """
+        logger.info(f"Fetching visit history for last {days} days")
+
+        query = """
+        SELECT
+            vp.user_id,
+            d.id as destination_id,
+            vp.visited_at
+        FROM visited_places vp
+        JOIN destinations d ON d.slug = vp.destination_slug
+        WHERE vp.visited_at >= NOW() - INTERVAL '%s days'
+        AND vp.user_id IS NOT NULL
+        ORDER BY vp.user_id, vp.visited_at
+        """
+
+        try:
+            with get_db_connection() as conn:
+                df = pd.read_sql_query(query % days, conn)
+
+            logger.info(f"Fetched {len(df)} visit records for {df['user_id'].nunique()} users")
+            return df
+
+        except Exception as e:
+            logger.error(f"Error fetching visit history: {e}")
+            raise
+
+    @staticmethod
+    def get_destination_location(destination_id: int) -> Optional[Dict[str, float]]:
+        """
+        Get location (lat/lng) for a destination.
+        
+        Args:
+            destination_id: Destination ID
+        
+        Returns:
+            Dict with 'lat' and 'lng' keys, or None if not found
+        """
+        query = """
+        SELECT latitude, longitude
+        FROM destinations
+        WHERE id = %s
+        """
+
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (destination_id,))
+                    result = cur.fetchone()
+                    if result and result[0] and result[1]:
+                        return {'lat': float(result[0]), 'lng': float(result[1])}
+            return None
+        except Exception as e:
+            logger.warning(f"Error fetching location for destination {destination_id}: {e}")
+            return None
+
+    @staticmethod
+    def get_destination_details(destination_id: int) -> Optional[Dict]:
+        """
+        Get basic details for a destination.
+        
+        Args:
+            destination_id: Destination ID
+        
+        Returns:
+            Dict with destination details or None
+        """
+        query = """
+        SELECT id, slug, name, city, category, latitude, longitude
+        FROM destinations
+        WHERE id = %s
+        """
+
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (destination_id,))
+                    result = cur.fetchone()
+                    if result:
+                        return {
+                            'id': result[0],
+                            'slug': result[1],
+                            'name': result[2],
+                            'city': result[3],
+                            'category': result[4],
+                            'latitude': result[5],
+                            'longitude': result[6],
+                        }
+            return None
+        except Exception as e:
+            logger.warning(f"Error fetching details for destination {destination_id}: {e}")
+            return None

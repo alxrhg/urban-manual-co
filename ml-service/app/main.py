@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import recommendations, forecast, health
+from app.api import recommendations, forecast, health, graph_sequencing
 from app.config import get_settings
 
 settings = get_settings()
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(recommendations.router, prefix="/api/recommendations", tags=["Recommendations"])
 app.include_router(forecast.router, prefix="/api/forecast", tags=["Forecasting"])
+app.include_router(graph_sequencing.router, prefix="/api/graph", tags=["Graph Sequencing"])
 
 @app.get("/")
 async def root():
@@ -39,6 +40,7 @@ async def root():
             "health": "/api/health",
             "recommendations": "/api/recommendations/collaborative",
             "forecast": "/api/forecast/demand",
+            "graph": "/api/graph/suggest-next",
         }
     }
 
