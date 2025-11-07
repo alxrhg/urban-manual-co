@@ -7,8 +7,14 @@
  *   npm run enrich --limit 10   - Enrich only first 10 destinations
  */
 
+import * as dotenv from 'dotenv';
+import { resolve } from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { enrichDestination } from '../lib/enrichment';
+
+// Load environment variables from .env.local or .env
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: resolve(process.cwd(), '.env') });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;

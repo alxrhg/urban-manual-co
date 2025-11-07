@@ -13,6 +13,7 @@ import { VisitedModal } from '@/components/VisitedModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 
 // Dynamically import AppleMap to avoid SSR issues
 const AppleMap = dynamic(() => import('@/components/AppleMap'), { 
@@ -706,6 +707,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     ✨ {tag}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Real-Time Status Badge */}
+            {destination.id && (
+              <div className="mt-4">
+                <RealtimeStatusBadge
+                  destinationId={destination.id}
+                  compact={false}
+                  showCrowding={true}
+                  showWaitTime={true}
+                  showAvailability={true}
+                />
               </div>
             )}
 

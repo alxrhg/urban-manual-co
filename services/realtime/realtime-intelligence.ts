@@ -3,12 +3,9 @@
  * Aggregates and provides real-time contextual data
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase-server';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const getSupabase = () => createServerClient();
 
 export interface RealtimeStatus {
   crowding?: {
@@ -86,6 +83,7 @@ export class RealtimeIntelligenceService {
     hourOfDay: number
   ): Promise<RealtimeStatus['crowding'] | null> {
     try {
+      const supabase = getSupabase();
       // Try real-time data first
       const { data: recentStatus } = await supabase
         .from('destination_status')
@@ -137,6 +135,7 @@ export class RealtimeIntelligenceService {
     now: Date
   ): Promise<RealtimeStatus['specialHours'] | null> {
     try {
+      const supabase = getSupabase();
       const { data: destination } = await supabase
         .from('destinations')
         .select('opening_hours_json')
@@ -262,6 +261,7 @@ export class RealtimeIntelligenceService {
     currentDayOfWeek: number
   ): Promise<RealtimeStatus['bestTimeToVisit']> {
     try {
+      const supabase = getSupabase();
       // Get crowding data for today
       const { data: todayData } = await supabase
         .from('crowding_data')

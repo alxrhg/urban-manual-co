@@ -39,6 +39,7 @@ import { SessionResume } from '@/components/SessionResume';
 import { ContextCards } from '@/components/ContextCards';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { DestinationBadges } from '@/components/DestinationBadges';
+import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 
 // Dynamically import MapView to avoid SSR issues
@@ -1530,6 +1531,19 @@ export default function Home() {
                       {destination.distance_km && (
                         <div className="mt-2">
                           <DistanceBadge distanceKm={destination.distance_km} compact />
+                        </div>
+                      )}
+
+                      {/* Real-Time Status Badge - Compact */}
+                      {destination.id && (
+                        <div className="mt-2">
+                          <RealtimeStatusBadge
+                            destinationId={destination.id}
+                            compact={true}
+                            showCrowding={true}
+                            showWaitTime={false}
+                            showAvailability={true}
+                          />
                         </div>
                       )}
                     </div>
