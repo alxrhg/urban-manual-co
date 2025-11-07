@@ -74,7 +74,6 @@ function getTimeActivity(hour: number): string | null {
 function getDayContext(day: number): string | null {
   switch (day) {
     case 1: return 'New week, new spots to discover!';
-    case 5: return 'Weekend plans needed?';
     case 0: return 'Lazy Sunday brunch vibes?';
     default: return null;
   }
