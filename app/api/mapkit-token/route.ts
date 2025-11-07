@@ -19,10 +19,16 @@ export async function GET(request: Request) {
   const keyId = process.env.MAPKIT_KEY_ID;
   const privateKeyRaw = process.env.MAPKIT_PRIVATE_KEY;
 
+  // Provide detailed error message about which variables are missing
   if (!teamId || !keyId || !privateKeyRaw) {
+    const missing: string[] = [];
+    if (!teamId) missing.push('MAPKIT_TEAM_ID');
+    if (!keyId) missing.push('MAPKIT_KEY_ID');
+    if (!privateKeyRaw) missing.push('MAPKIT_PRIVATE_KEY');
+    
     return NextResponse.json(
       {
-        error: 'MapKit credentials not configured. Required: MAPKIT_TEAM_ID, MAPKIT_KEY_ID, MAPKIT_PRIVATE_KEY'
+        error: `MapKit credentials not configured. Missing: ${missing.join(', ')}. Please add these environment variables in Vercel (Settings → Environment Variables). These are server-side only (no NEXT_PUBLIC_ prefix needed). After adding, redeploy your application.`
       },
       { status: 500 }
     );
@@ -66,9 +72,18 @@ export async function GET(request: Request) {
     return res;
   } catch (error: any) {
     console.error('Error generating MapKit token:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to generate MapKit token';
+    if (error.message?.includes('private key')) {
+      errorMessage = 'Invalid private key format. Ensure MAPKIT_PRIVATE_KEY includes the full PEM key with headers (-----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY-----)';
+    } else if (error.message?.includes('algorithm')) {
+      errorMessage = 'Token signing failed. Verify MAPKIT_KEY_ID matches your Apple Developer account.';
+    }
+    
     return NextResponse.json(
       {
-        error: 'Failed to generate token',
+        error: errorMessage,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
       { status: 500 }

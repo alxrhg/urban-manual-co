@@ -108,11 +108,7 @@ export default function AppleMap({
                     const errorData = await res.json().catch(() => ({}));
                     const errorMsg = errorData.error || `Token request failed: ${res.status}`;
                     
-                    // Provide helpful message for missing credentials
-                    if (errorMsg.includes('credentials not configured') || res.status === 500) {
-                      throw new Error('MapKit credentials not configured in Vercel. Please add MAPKIT_TEAM_ID, MAPKIT_KEY_ID, and MAPKIT_PRIVATE_KEY to your Vercel environment variables. These are server-side only (no NEXT_PUBLIC_ prefix needed).');
-                    }
-                    
+                    // Use the detailed error message from the API
                     throw new Error(errorMsg);
                   }
 
@@ -308,7 +304,7 @@ export default function AppleMap({
               Retry attempt {retryCount}/3
             </p>
           )}
-          {(error.includes('credentials not configured') || error.includes('Vercel')) && (
+          {(error.includes('credentials not configured') || error.includes('Missing:') || error.includes('Vercel')) && (
             <div className="mt-2 space-y-1">
               <a
                 href="https://developer.apple.com/maps/web/"
@@ -319,7 +315,7 @@ export default function AppleMap({
                 Learn how to set up MapKit →
               </a>
               <p className="text-xs text-gray-500 dark:text-gray-500">
-                Make sure to add the env vars in Vercel: Settings → Environment Variables
+                After adding env vars in Vercel, redeploy your application for changes to take effect.
               </p>
             </div>
           )}
