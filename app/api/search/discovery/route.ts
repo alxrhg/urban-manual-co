@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
+import { getFeatureFlags, getABTestVariant } from '@/lib/discovery-engine/feature-flags';
+import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
+import { withPerformanceMonitoring } from '@/lib/discovery-engine/performance';
 
 /**
  * POST /api/search/discovery
@@ -31,48 +34,57 @@ export async function POST(request: NextRequest) {
     }
 
     const discoveryEngine = getDiscoveryEngineService();
+    const flags = getFeatureFlags();
+
+    // A/B testing: Check if user should use Discovery Engine or fallback
+    let useDiscoveryEngine = flags.useDiscoveryEngine;
+    if (finalUserId && flags.abTests.some((t) => t.name === 'search_quality' && t.enabled)) {
+      const variant = getABTestVariant(finalUserId, 'search_quality');
+      useDiscoveryEngine = variant === 'discovery_engine';
+    }
 
     // Check if Discovery Engine is available
-    if (!discoveryEngine.isAvailable()) {
-      // Fallback to Supabase search if Discovery Engine is not configured
+    if (!discoveryEngine.isAvailable() || !useDiscoveryEngine) {
+      // Fallback to Supabase search if Discovery Engine is not configured or A/B test says so
       return NextResponse.json(
         { 
           error: 'Discovery Engine is not configured',
           fallback: true,
+          abTestVariant: finalUserId ? getABTestVariant(finalUserId, 'search_quality') : null,
         },
         { status: 503 }
       );
     }
 
-    // Get user ID from session if not provided
-    let finalUserId = userId;
-    if (!finalUserId) {
-      try {
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        finalUserId = user?.id;
-      } catch (error) {
-        // User not authenticated - continue without personalization
-      }
-    }
+    // Generate cache key
+    const cache = getDiscoveryEngineCache();
+    const cacheKey = cache.generateSearchKey(query, filters || {}, finalUserId);
 
-    // Perform search
-    const results = await discoveryEngine.search(query, {
-      userId: finalUserId,
-      pageSize: pageSize || 20,
-      pageToken,
-      filters: filters || {},
-      boostSpec: [
-        {
-          condition: 'michelin_stars > 0',
-          boost: 1.5,
-        },
-        {
-          condition: 'rating >= 4.5',
-          boost: 1.2,
-        },
-      ],
-    });
+    // Perform search with caching and performance monitoring
+    const results = await withPerformanceMonitoring(
+      '/api/search/discovery',
+      'POST',
+      () => withCache(
+        cacheKey,
+        () => discoveryEngine.search(query, {
+          userId: finalUserId,
+          pageSize: pageSize || 20,
+          pageToken,
+          filters: filters || {},
+          boostSpec: [
+            {
+              condition: 'michelin_stars > 0',
+              boost: 1.5,
+            },
+            {
+              condition: 'rating >= 4.5',
+              boost: 1.2,
+            },
+          ],
+        }),
+        5 * 60 * 1000 // 5 minute cache
+      )
+    );
 
     // Track search event for personalization
     if (finalUserId) {
