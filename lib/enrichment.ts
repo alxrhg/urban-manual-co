@@ -123,6 +123,7 @@ export async function findPlaceByText(
       website: null,
       google_maps_url: null,
       google_types: [],
+      cuisine_type: null,
     };
   }
 }
