@@ -13,6 +13,8 @@ interface AppleMapProps {
 declare global {
   interface Window {
     mapkit?: any;
+    __mapkitLoading?: Promise<void>;
+    __mapkitInitialized?: boolean;
   }
 }
 
@@ -29,113 +31,180 @@ export default function AppleMap({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  const mapkit1Key = process.env.NEXT_PUBLIC_MAPKIT_JS_KEY || '';
-  const teamId = process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID || '';
+  // Check if MapKit credentials are configured
+  const hasCredentials = !!(
+    process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID ||
+    process.env.MAPKIT_TEAM_ID
+  );
 
   useEffect(() => {
-    // Check if MapKit is already loaded
-    if (window.mapkit && window.mapkit.loaded) {
+    // If no credentials, show error immediately
+    if (!hasCredentials) {
+      setError('MapKit credentials not configured. Please add MAPKIT_TEAM_ID, MAPKIT_KEY_ID, and MAPKIT_PRIVATE_KEY to your environment variables.');
+      return;
+    }
+
+    // Check if MapKit is already loaded and initialized
+    if (window.mapkit && window.mapkit.loaded && window.__mapkitInitialized) {
       setLoaded(true);
       return;
     }
 
-    // Load MapKit JS
-    const script = document.createElement('script');
-    script.src = 'https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js';
-    script.async = true;
-    
-    script.addEventListener('load', () => {
-      if (!window.mapkit) {
-        setError('MapKit JS failed to load');
-        return;
-      }
-
-      try {
-        // Initialize MapKit with authorization callback
-        window.mapkit.init({
-          authorizationCallback: (done: (token: string) => void) => {
-            // Fetch token with retry logic
-            const fetchToken = async (attempt: number = 0): Promise<void> => {
-              try {
-                const res = await fetch('/api/mapkit-token', {
-                  credentials: 'same-origin',
-                  headers: { 'Accept': 'application/json' }
-                });
-
-                if (!res.ok) {
-                  throw new Error(`Token request failed: ${res.status}`);
-                }
-
-                const data = await res.json();
-
-                if (data.token) {
-                  done(data.token);
-                } else {
-                  throw new Error('No token in response');
-                }
-              } catch (err: any) {
-                console.error(`MapKit token fetch error (attempt ${attempt + 1}):`, err);
-
-                // Retry up to 3 times with exponential backoff
-                if (attempt < 2) {
-                  const delay = Math.pow(2, attempt) * 1000; // 1s, 2s
-                  setTimeout(() => fetchToken(attempt + 1), delay);
-                  setRetryCount(attempt + 1);
-                } else {
-                  setError(`Map authentication failed after ${attempt + 1} attempts`);
-                  done(''); // Try without token as last resort
-                }
-              }
-            };
-
-            fetchToken();
-          },
+    // If script is already loading, wait for it
+    if (window.__mapkitLoading) {
+      window.__mapkitLoading
+        .then(() => {
+          if (window.mapkit && window.mapkit.loaded) {
+            setLoaded(true);
+          }
+        })
+        .catch((err) => {
+          setError(`Failed to load MapKit: ${err.message}`);
         });
+      return;
+    }
 
-        // Basic configuration
-        try {
-          window.mapkit.language = navigator.language || 'en-US';
-          window.mapkit.showsPointsOfInterest = true;
-        } catch {}
-
-        // Wait for MapKit to be ready
-        if (window.mapkit.loaded) {
+    // Check if script already exists in DOM
+    const existingScript = document.querySelector('script[src*="mapkit.js"]');
+    if (existingScript) {
+      // Script exists, wait for it to load
+      const checkLoaded = setInterval(() => {
+        if (window.mapkit && window.mapkit.loaded && window.__mapkitInitialized) {
+          clearInterval(checkLoaded);
           setLoaded(true);
-        } else {
-          // MapKit might take a moment to initialize
-          const checkLoaded = setInterval(() => {
-            if (window.mapkit && window.mapkit.loaded) {
-              clearInterval(checkLoaded);
-              setLoaded(true);
-            }
-          }, 100);
-
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            clearInterval(checkLoaded);
-            if (!window.mapkit?.loaded) {
-              setError('MapKit initialization timeout');
-            }
-          }, 5000);
         }
-      } catch (err: any) {
-        console.error('MapKit initialization error:', err);
-        setError(`Failed to initialize MapKit: ${err.message}`);
-      }
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(checkLoaded);
+        if (!window.mapkit?.loaded) {
+          setError('MapKit script exists but failed to initialize');
+        }
+      }, 5000);
+
+      return () => clearInterval(checkLoaded);
+    }
+
+    // Create loading promise
+    const loadingPromise = new Promise<void>((resolve, reject) => {
+      // Load MapKit JS
+      const script = document.createElement('script');
+      script.src = 'https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js';
+      script.async = true;
+      
+      script.addEventListener('load', () => {
+        if (!window.mapkit) {
+          const err = 'MapKit JS failed to load';
+          setError(err);
+          reject(new Error(err));
+          return;
+        }
+
+        try {
+          // Initialize MapKit with authorization callback
+          window.mapkit.init({
+            authorizationCallback: (done: (token: string) => void) => {
+              // Fetch token with retry logic
+              const fetchToken = async (attempt: number = 0): Promise<void> => {
+                try {
+                  const res = await fetch('/api/mapkit-token', {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                  });
+
+                  if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Token request failed: ${res.status}`);
+                  }
+
+                  const data = await res.json();
+
+                  if (data.token) {
+                    done(data.token);
+                  } else {
+                    throw new Error(data.error || 'No token in response');
+                  }
+                } catch (err: any) {
+                  console.error(`MapKit token fetch error (attempt ${attempt + 1}):`, err);
+
+                  // Retry up to 3 times with exponential backoff
+                  if (attempt < 2) {
+                    const delay = Math.pow(2, attempt) * 1000; // 1s, 2s
+                    setTimeout(() => fetchToken(attempt + 1), delay);
+                    setRetryCount(attempt + 1);
+                  } else {
+                    const errorMsg = err.message || `Map authentication failed after ${attempt + 1} attempts`;
+                    setError(errorMsg);
+                    reject(new Error(errorMsg));
+                    done(''); // Try without token as last resort
+                  }
+                }
+              };
+
+              fetchToken();
+            },
+          });
+
+          // Basic configuration
+          try {
+            window.mapkit.language = navigator.language || 'en-US';
+            window.mapkit.showsPointsOfInterest = true;
+          } catch {}
+
+          // Wait for MapKit to be ready
+          if (window.mapkit.loaded) {
+            window.__mapkitInitialized = true;
+            resolve();
+          } else {
+            // MapKit might take a moment to initialize
+            const checkLoaded = setInterval(() => {
+              if (window.mapkit && window.mapkit.loaded) {
+                clearInterval(checkLoaded);
+                window.__mapkitInitialized = true;
+                resolve();
+              }
+            }, 100);
+
+            // Timeout after 10 seconds
+            setTimeout(() => {
+              clearInterval(checkLoaded);
+              if (!window.mapkit?.loaded) {
+                const err = 'MapKit initialization timeout';
+                setError(err);
+                reject(new Error(err));
+              }
+            }, 10000);
+          }
+        } catch (err: any) {
+          console.error('MapKit initialization error:', err);
+          const errorMsg = `Failed to initialize MapKit: ${err.message}`;
+          setError(errorMsg);
+          reject(err);
+        }
+      });
+
+      script.addEventListener('error', () => {
+        const err = 'Failed to load MapKit JS. Please check your network connection.';
+        setError(err);
+        reject(new Error(err));
+      });
+
+      document.head.appendChild(script);
     });
 
-    script.addEventListener('error', () => {
-      setError('Failed to load MapKit JS. Please check your network connection.');
-    });
+    window.__mapkitLoading = loadingPromise;
 
-    document.head.appendChild(script);
+    loadingPromise
+      .then(() => {
+        setLoaded(true);
+      })
+      .catch((err) => {
+        console.error('MapKit loading failed:', err);
+        setError(err.message || 'Failed to load MapKit');
+      });
 
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, [mapkit1Key, teamId]);
+    // No cleanup - we want to keep the script loaded for other instances
+  }, [hasCredentials]);
 
   // Initialize map once MapKit is loaded
   useEffect(() => {
@@ -232,13 +301,23 @@ export default function AppleMap({
         className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 ${className}`}
         style={{ height: getHeightStyle() }}
       >
-        <div className="text-center">
-          <p className="text-sm text-red-600 dark:text-red-400 mb-1">Map unavailable</p>
-          <p className="text-xs text-gray-500 dark:text-gray-500">{error}</p>
+        <div className="text-center max-w-md">
+          <p className="text-sm text-red-600 dark:text-red-400 mb-2 font-medium">Map unavailable</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{error}</p>
           {retryCount > 0 && (
-            <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">
               Retry attempt {retryCount}/3
             </p>
+          )}
+          {error.includes('credentials not configured') && (
+            <a
+              href="https://developer.apple.com/maps/web/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block"
+            >
+              Learn how to set up MapKit →
+            </a>
           )}
         </div>
       </div>
