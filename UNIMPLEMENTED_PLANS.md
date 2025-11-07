@@ -204,7 +204,7 @@
 - ❌ Collaborative Filtering recommendation model
 
 #### Phase 4 (Long Term)
-- ❌ Google Discovery Engine integration
+- ❌ Google Discovery Engine integration - **See [GOOGLE_DISCOVERY_ENGINE_INTEGRATION_PLAN.md](./GOOGLE_DISCOVERY_ENGINE_INTEGRATION_PLAN.md) for detailed implementation plan**
 
 ---
 
@@ -314,7 +314,7 @@
 7. **Social Features** - Real-time trip editing, group planning
 8. **User-Generated Content** - Photo uploads, reviews, travel stories
 9. **Gamification** - Points, badges, leaderboards
-10. **Google Discovery Engine** - Advanced search integration
+10. **Google Discovery Engine** - Advanced search integration - **See [GOOGLE_DISCOVERY_ENGINE_INTEGRATION_PLAN.md](./GOOGLE_DISCOVERY_ENGINE_INTEGRATION_PLAN.md)**
 
 ---
 
