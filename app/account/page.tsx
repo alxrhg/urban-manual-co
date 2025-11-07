@@ -126,8 +126,8 @@ export default function Account() {
         if (destData) {
           // Map saved places
           if (savedResult.data) {
-            setSavedPlaces(savedResult.data.map((item: any) => {
-              const dest = destData.find((d: any) => d.slug === item.destination_slug);
+            setSavedPlaces((savedResult.data as any[]).map((item: any) => {
+              const dest = (destData as any[]).find((d: any) => d.slug === item.destination_slug);
               return dest ? {
                 destination_slug: dest.slug,
                 destination: {
@@ -142,8 +142,8 @@ export default function Account() {
 
           // Map visited places
           if (visitedResult.data) {
-            setVisitedPlaces(visitedResult.data.map((item: any) => {
-              const dest = destData.find((d: any) => d.slug === item.destination_slug);
+            setVisitedPlaces((visitedResult.data as any[]).map((item: any) => {
+              const dest = (destData as any[]).find((d: any) => d.slug === item.destination_slug);
               return dest ? {
                 destination_slug: item.destination_slug,
                 visited_at: item.visited_at,
