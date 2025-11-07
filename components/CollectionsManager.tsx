@@ -60,8 +60,9 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
         .eq('destination_id', destinationId)
         .single();
 
-      if (data?.collection_id) {
-        setSelectedCollectionId(data.collection_id);
+      const savedData = data as any;
+      if (savedData?.collection_id) {
+        setSelectedCollectionId(savedData.collection_id);
       }
     } catch (error) {
       // Destination not saved or no collection assigned
@@ -73,9 +74,9 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
 
     setCreating(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('collections')
-        .insert({
+        .insert as any)({
           user_id: user.id,
           name: newCollectionName.trim(),
           description: newCollectionDescription.trim() || null,
@@ -123,9 +124,9 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
 
     try {
       // Remove collection from all saved destinations
-      await supabase
+      await (supabase
         .from('saved_destinations')
-        .update({ collection_id: null })
+        .update as any)({ collection_id: null })
         .eq('collection_id', collectionId);
 
       // Delete the collection

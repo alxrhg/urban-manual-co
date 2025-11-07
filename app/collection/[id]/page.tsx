@@ -62,10 +62,11 @@ export default function CollectionDetailPage() {
           return;
         }
 
-        setCollection(collectionData);
-        setEditName(collectionData.name);
-        setEditDescription(collectionData.description || '');
-        setEditPublic(collectionData.is_public);
+        const collection = collectionData as any;
+        setCollection(collection);
+        setEditName(collection.name);
+        setEditDescription(collection.description || '');
+        setEditPublic(collection.is_public);
 
         // Fetch collection items (using lists/list_items tables as they exist)
         const { data: listItems, error: itemsError } = await supabase
@@ -76,7 +77,7 @@ export default function CollectionDetailPage() {
         if (itemsError) throw itemsError;
 
         if (listItems && listItems.length > 0) {
-          const slugs = listItems.map(item => item.destination_slug);
+          const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
           const { data: destData } = await supabase
             .from('destinations')
             .select('slug, name, city, category, image')
@@ -101,9 +102,9 @@ export default function CollectionDetailPage() {
 
     setUpdating(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase
         .from('collections')
-        .update({
+        .update as any)({
           name: editName.trim(),
           description: editDescription.trim() || null,
           is_public: editPublic,
@@ -168,9 +169,9 @@ export default function CollectionDetailPage() {
       setDestinations(destinations.filter(d => d.slug !== slug));
 
       // Update count
-      await supabase
+      await (supabase
         .from('collections')
-        .update({ destination_count: Math.max(0, (collection.destination_count || 0) - 1) })
+        .update as any)({ destination_count: Math.max(0, (collection.destination_count || 0) - 1) })
         .eq('id', collectionId);
     } catch (error) {
       console.error('Error removing destination:', error);

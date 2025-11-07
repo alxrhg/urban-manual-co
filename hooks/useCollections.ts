@@ -58,9 +58,9 @@ export function useCollections(userId: string | undefined) {
     if (!userId) return null;
 
     try {
-      const { data, error: err } = await supabase
+      const { data, error: err } = await (supabase
         .from('collections')
-        .insert({
+        .insert as any)({
           user_id: userId,
           name: collection.name,
           description: collection.description || null,
@@ -87,9 +87,9 @@ export function useCollections(userId: string | undefined) {
     if (!userId) return;
 
     try {
-      const { error: err } = await supabase
+      const { error: err } = await (supabase
         .from('collections')
-        .update({
+        .update as any)({
           ...updates,
           updated_at: new Date().toISOString(),
         })
@@ -109,9 +109,9 @@ export function useCollections(userId: string | undefined) {
 
     try {
       // Remove collection from all saved destinations
-      await supabase
+      await (supabase
         .from('saved_destinations')
-        .update({ collection_id: null })
+        .update as any)({ collection_id: null })
         .eq('collection_id', collectionId);
 
       // Delete the collection

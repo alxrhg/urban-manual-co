@@ -93,15 +93,16 @@ export default function ListDetailPage() {
     }
 
     // If list is private and user is not the owner, block access
-    if (!listData.is_public && listData.user_id !== user?.id) {
+    const list = listData as any;
+    if (!list.is_public && list.user_id !== user?.id) {
       router.push('/lists');
       return;
     }
 
-    setList(listData);
-    setEditName(listData.name);
-    setEditDescription(listData.description || "");
-    setEditPublic(listData.is_public);
+    setList(list);
+    setEditName(list.name);
+    setEditDescription(list.description || "");
+    setEditPublic(list.is_public);
 
     // Fetch list items
     const { data: itemsData, error: itemsError } = await supabase
@@ -136,9 +137,9 @@ export default function ListDetailPage() {
     if (!user || !list || !editName.trim()) return;
 
     setIsUpdating(true);
-    const { error } = await supabase
+    const { error } = await (supabase
       .from('lists')
-      .update({
+      .update as any)({
         name: editName.trim(),
         description: editDescription.trim() || null,
         is_public: editPublic,
@@ -191,8 +192,8 @@ export default function ListDetailPage() {
 
     if (!error && data) {
       // Filter out destinations already in the list
-      const existingSlugs = destinations.map(d => d.slug);
-      setSearchResults(data.filter(d => !existingSlugs.includes(d.slug)));
+      const existingSlugs = destinations.map((d: any) => d.slug);
+      setSearchResults((data as any[]).filter((d: any) => !existingSlugs.includes(d.slug)));
     }
     setSearching(false);
   };
@@ -201,9 +202,9 @@ export default function ListDetailPage() {
     if (!user || !list) return;
 
     setAddingDestination(true);
-    const { error } = await supabase
+    const { error } = await (supabase
       .from('list_items')
-      .insert([{
+      .insert as any)([{
         list_id: list.id,
         destination_slug: destination.slug,
       }]);

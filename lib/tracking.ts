@@ -210,7 +210,7 @@ export class PersonalizationTracker {
 
     try {
       // Get the most recent visit for this destination
-      const { data: recentVisit } = await this.supabase
+      const { data: recentVisit } = await (this.supabase as any)
         .from('visit_history')
         .select('id')
         .eq('user_id', this.userId)
@@ -220,10 +220,11 @@ export class PersonalizationTracker {
         .single();
 
       if (recentVisit) {
-        await this.supabase
+        const visit = recentVisit as any;
+        await (this.supabase as any)
           .from('visit_history')
           .update({ duration_seconds: durationSeconds })
-          .eq('id', recentVisit.id);
+          .eq('id', visit.id);
       }
     } catch (error) {
       console.error('Failed to update visit duration:', error);

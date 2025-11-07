@@ -165,8 +165,8 @@ export class MultiDayTripPlanningService {
                 ? parseInt(b.destination_id)
                 : b.destination_id;
               
-              const aOrder = sequenceMap.get(aId) ?? 999;
-              const bOrder = sequenceMap.get(bId) ?? 999;
+              const aOrder = (sequenceMap.get(aId) ?? 999) as number;
+              const bOrder = (sequenceMap.get(bId) ?? 999) as number;
               return aOrder - bOrder;
             });
 
@@ -236,12 +236,12 @@ export class MultiDayTripPlanningService {
   }
 
   private calculateTiming(
-    items: ItineraryItem[]
+    items: Itinerary['items']
   ): MultiDayTripPlan['days'][0]['items'] {
     let currentTime = 9 * 60; // Start at 9 AM (in minutes)
 
-    return items.map((item, idx) => {
-      const duration = item.duration_minutes || 120;
+    return items.map((item: any, idx) => {
+      const duration = (item.duration_minutes || item.duration || 120) as number;
       const startTime = this.minutesToTimeString(currentTime);
       const endTime = this.minutesToTimeString(currentTime + duration);
 
@@ -270,12 +270,12 @@ export class MultiDayTripPlanningService {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
 
-  private estimateTravelTime(items: ItineraryItem[]): number {
+  private estimateTravelTime(items: Itinerary['items']): number {
     // Simplified: 30 minutes between each destination
     return Math.max(0, (items.length - 1) * 30);
   }
 
-  private estimateDayCost(items: ItineraryItem[]): number {
+  private estimateDayCost(items: Itinerary['items']): number {
     // Simplified: estimate based on average price level
     // In production, would fetch actual prices
     return items.length * 50; // Placeholder: $50 per destination

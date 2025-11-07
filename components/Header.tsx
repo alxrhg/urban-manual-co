@@ -33,8 +33,9 @@ export function Header() {
           .eq('user_id', user.id)
           .single();
 
-        if (!error && data?.avatar_url) {
-          setAvatarUrl(data.avatar_url);
+        const profileData = data as any;
+        if (!error && profileData?.avatar_url) {
+          setAvatarUrl(profileData.avatar_url);
         }
       } catch {
         // Ignore errors (table might not exist)

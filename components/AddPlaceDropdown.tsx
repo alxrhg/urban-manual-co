@@ -81,13 +81,13 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
       }
 
       // Add to visited
-      const { error } = await supabase
-        .from('visited_places')
-        .insert({
-          user_id: user.id,
-          destination_slug: destination.slug,
-          visited_at: new Date().toISOString()
-        });
+      const { error } =         await (supabase
+          .from('visited_places')
+          .insert as any)({
+            user_id: user.id,
+            destination_slug: destination.slug,
+            visited_at: new Date().toISOString()
+          });
 
       if (error) throw error;
 

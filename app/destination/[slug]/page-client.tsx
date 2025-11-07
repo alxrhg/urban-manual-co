@@ -189,9 +189,9 @@ export default function DestinationPageClient({ initialDestination }: Destinatio
         setIsVisited(false);
       } else {
         // Add visit with current date
-        const { error } = await supabase
+        const { error } = await (supabase
           .from('visited_places')
-          .insert({
+          .insert as any)({
             user_id: user.id,
             destination_slug: destination.slug,
             visited_at: new Date().toISOString(),

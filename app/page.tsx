@@ -353,10 +353,11 @@ export default function Home() {
         // Store full profile for greeting context
         setUserProfile(data);
         // Also store simplified version for other components
+        const profileData = data as any;
         setUserContext({
-          favoriteCities: data.favorite_cities || [],
-          favoriteCategories: data.favorite_categories || [],
-          travelStyle: data.travel_style,
+          favoriteCities: profileData.favorite_cities || [],
+          favoriteCategories: profileData.favorite_categories || [],
+          travelStyle: profileData.travel_style,
         });
       }
     } catch (error) {
@@ -468,16 +469,16 @@ export default function Home() {
       // Extract unique cities and categories
       const uniqueCities = Array.from(
         new Set(
-          (data || [])
-            .map(d => d.city?.trim())
+          ((data || []) as any[])
+            .map((d: any) => d.city?.trim())
             .filter(Boolean)
         )
       ).sort();
 
       const uniqueCategories = Array.from(
         new Set(
-          (data || [])
-            .map(d => d.category?.trim())
+          ((data || []) as any[])
+            .map((d: any) => d.category?.trim())
             .filter(Boolean)
         )
       ).sort();
@@ -523,16 +524,16 @@ export default function Home() {
       // This ensures we have the complete list after full data loads
       const uniqueCities = Array.from(
         new Set(
-          (data || [])
-            .map(d => d.city?.trim())
+          ((data || []) as any[])
+            .map((d: any) => d.city?.trim())
             .filter(Boolean)
         )
       ).sort();
 
       const uniqueCategories = Array.from(
         new Set(
-          (data || [])
-            .map(d => d.category?.trim())
+          ((data || []) as any[])
+            .map((d: any) => d.category?.trim())
             .filter(Boolean)
         )
       ).sort();
@@ -568,7 +569,7 @@ export default function Home() {
 
       if (error) throw error;
 
-      const slugs = new Set(data?.map(v => v.destination_slug) || []);
+      const slugs = new Set((data as any[])?.map((v: any) => v.destination_slug) || []);
       setVisitedSlugs(slugs);
     } catch (error) {
       console.error('Error fetching visited places:', error);

@@ -102,7 +102,7 @@ export async function fetchEventbriteTrends(
       .map(([category]) => category);
 
     const totalEventAttendance = topEvents.reduce(
-      (sum, event) => sum + event.attendance,
+      (sum: number, event: any) => sum + event.attendance,
       0
     );
 

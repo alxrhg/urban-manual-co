@@ -76,9 +76,9 @@ export function FollowCityButton({
         setIsFollowing(false);
       } else {
         // Follow
-        const { error } = await supabase
+        const { error } =         await (supabase
           .from('follow_cities')
-          .insert({
+          .insert as any)({
             user_id: user.id,
             city_slug: citySlug,
           });

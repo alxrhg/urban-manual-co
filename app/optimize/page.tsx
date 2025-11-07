@@ -73,9 +73,9 @@ export default function RouteOptimizerPage() {
 
       const places: Destination[] = [];
       if (data) {
-        for (const item of data) {
-          if (item.destinations && typeof item.destinations === 'object' && !Array.isArray(item.destinations)) {
-            places.push(item.destinations as Destination);
+        for (const item of data as any[]) {
+          if ((item as any).destinations && typeof (item as any).destinations === 'object' && !Array.isArray((item as any).destinations)) {
+            places.push((item as any).destinations as Destination);
           }
         }
       }

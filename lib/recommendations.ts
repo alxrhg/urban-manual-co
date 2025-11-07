@@ -58,7 +58,7 @@ async function calculateCategoryAffinity(userId: string | null, sessionId: strin
 
   const categoryScores: Record<string, number> = {};
 
-  interactions?.forEach((interaction) => {
+  (interactions as any[])?.forEach((interaction: any) => {
     if (!interaction.category) return;
 
     const category = interaction.category.toLowerCase();
@@ -107,7 +107,7 @@ async function calculateCityAffinity(userId: string | null, sessionId: string) {
 
   const cityScores: Record<string, number> = {};
 
-  interactions?.forEach((interaction) => {
+  (interactions as any[])?.forEach((interaction: any) => {
     if (!interaction.city) return;
 
     const city = interaction.city.toLowerCase();
@@ -157,7 +157,7 @@ export async function getColdStartRecommendations(
   if (!destinations) return [];
 
   // Score destinations based on time of day and quality signals
-  const scored = destinations.map((dest) => {
+  const scored = (destinations as any[]).map((dest: any) => {
     let score = 0;
 
     // Time-based category boost
@@ -199,7 +199,7 @@ export async function getRapidLearningRecommendations(
   if (!destinations) return [];
 
   // Score destinations based on learned preferences
-  const scored = destinations.map((dest) => {
+  const scored = (destinations as any[]).map((dest: any) => {
     let score = 0;
 
     // Category affinity
@@ -247,8 +247,8 @@ export async function getContentBasedRecommendations(
     .eq('user_id', userId);
 
   const userDestinationSlugs = [
-    ...(savedPlaces?.map((s) => s.destination_slug) || []),
-    ...(visitedPlaces?.map((v) => v.destination_slug) || []),
+    ...((savedPlaces as any[])?.map((s: any) => s.destination_slug) || []),
+    ...((visitedPlaces as any[])?.map((v: any) => v.destination_slug) || []),
   ];
 
   if (userDestinationSlugs.length === 0) {
@@ -267,10 +267,10 @@ export async function getContentBasedRecommendations(
 
   // Extract user preferences
   const preferredCategories = Array.from(
-    new Set(userDestinations.map((d) => d.category?.toLowerCase()).filter(Boolean))
+    new Set((userDestinations as any[]).map((d: any) => d.category?.toLowerCase()).filter(Boolean))
   );
   const preferredCities = Array.from(
-    new Set(userDestinations.map((d) => d.city?.toLowerCase()).filter(Boolean))
+    new Set((userDestinations as any[]).map((d: any) => d.city?.toLowerCase()).filter(Boolean))
   );
 
   // Get candidate destinations
@@ -283,7 +283,7 @@ export async function getContentBasedRecommendations(
   if (!candidates) return [];
 
   // Score candidates based on similarity
-  const scored = candidates.map((dest) => {
+  const scored = (candidates as any[]).map((dest: any) => {
     let score = 0;
 
     const category = dest.category?.toLowerCase() || '';
@@ -377,7 +377,7 @@ export async function updateUserPreferences(userId: string) {
     const categoryScores: Record<string, number> = {};
     const cityScores: Record<string, number> = {};
 
-    interactions.forEach((interaction) => {
+    (interactions as any[]).forEach((interaction: any) => {
       // Category scores
       if (interaction.category) {
         const category = interaction.category.toLowerCase();
@@ -427,9 +427,9 @@ export async function updateUserPreferences(userId: string) {
     });
 
     // Update or create user preferences
-    const { error } = await supabase
+    const { error } = await (supabase
       .from('user_preferences')
-      .upsert({
+      .upsert as any)({
         user_id: userId,
         category_scores: categoryScores,
         city_scores: cityScores,

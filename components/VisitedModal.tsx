@@ -42,11 +42,12 @@ export function VisitedModal({
         .eq('destination_slug', destinationSlug)
         .single();
 
-      if (data) {
-        setVisitRating(data.rating || null);
-        setVisitNotes(data.notes || '');
-        if (data.visited_at) {
-          setVisitDate(new Date(data.visited_at).toISOString().split('T')[0]);
+      const visitData = data as any;
+      if (visitData) {
+        setVisitRating(visitData.rating || null);
+        setVisitNotes(visitData.notes || '');
+        if (visitData.visited_at) {
+          setVisitDate(new Date(visitData.visited_at).toISOString().split('T')[0]);
         }
       }
     } catch (error) {
@@ -71,21 +72,21 @@ export function VisitedModal({
 
       if (existing) {
         // Update existing visit
-        const { error } = await supabase
+        const { error } = await (supabase
           .from('visited_places')
-          .update({
+          .update as any)({
             rating: visitRating,
             notes: visitNotes || null,
             visited_at: new Date(visitDate).toISOString(),
           })
-          .eq('id', existing.id);
+          .eq('id', (existing as any).id);
 
         if (error) throw error;
       } else {
         // Create new visit
-        const { error } = await supabase
+        const { error } = await (supabase
           .from('visited_places')
-          .insert({
+          .insert as any)({
             user_id: user.id,
             destination_slug: destinationSlug,
             rating: visitRating,

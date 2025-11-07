@@ -67,7 +67,7 @@ export default function ListsPage() {
     } else if (data) {
       // Fetch counts and cities for each list
       const listsWithCounts = await Promise.all(
-        data.map(async (list) => {
+        (data as any[]).map(async (list: any) => {
           const { count: itemCount } = await supabase
             .from('list_items')
             .select('*', { count: 'exact', head: true })
@@ -86,14 +86,14 @@ export default function ListsPage() {
             .eq('list_id', list.id);
 
           if (listItems && listItems.length > 0) {
-            const slugs = listItems.map(item => item.destination_slug);
+            const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
             const { data: destinations } = await supabase
               .from('destinations')
               .select('city')
               .in('slug', slugs);
 
             if (destinations) {
-              cities = Array.from(new Set(destinations.map(d => d.city)));
+              cities = Array.from(new Set((destinations as any[]).map((d: any) => d.city)));
             }
           }
 
@@ -116,9 +116,9 @@ export default function ListsPage() {
     if (!user || !newListName.trim()) return;
 
     setCreating(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('lists')
-      .insert([
+      .insert as any)([
         {
           user_id: user.id,
           name: newListName.trim(),

@@ -82,7 +82,7 @@ export function ActivityFeed({ userId, followingOnly = false, limit = 20 }: Acti
             .eq('follower_id', user.id);
 
           if (following && following.length > 0) {
-            const followingIds = following.map(f => f.following_id);
+            const followingIds = (following as any[]).map((f: any) => f.following_id);
             query = query.in('user_id', followingIds);
           } else {
             setActivities([]);

@@ -8,7 +8,7 @@ import { cityCountryMap } from '@/data/cityCountryMap';
  */
 export async function checkAndAwardAchievements(userId: string): Promise<UserAchievement[]> {
   try {
-    const { data, error } = await supabase.rpc('check_user_achievements', {
+    const { data, error } = await (supabase.rpc as any)('check_user_achievements', {
       p_user_id: userId,
     });
 
@@ -73,8 +73,8 @@ export async function getUserAchievementsWithProgress(userId: string): Promise<A
     const stats = await getUserStats(userId);
 
     // Combine achievements with progress
-    return (allAchievements || []).map((achievement) => {
-      const unlocked = userAchievements?.find((ua) => ua.achievement_id === achievement.id);
+    return ((allAchievements || []) as any[]).map((achievement: any) => {
+      const unlocked = (userAchievements as any[])?.find((ua: any) => ua.achievement_id === achievement.id);
       const currentProgress = getCurrentProgressForAchievement(achievement, stats);
       const progressPercentage = Math.min(
         (currentProgress / achievement.requirement_value) * 100,
@@ -107,7 +107,7 @@ async function getUserStats(userId: string) {
       .eq('user_id', userId);
 
     // Get destination details for visited places
-    const visitedSlugs = (visitedPlaces || []).map(vp => vp.destination_slug).filter(Boolean);
+    const visitedSlugs = ((visitedPlaces || []) as any[]).map((vp: any) => vp.destination_slug).filter(Boolean);
     let destinations: any[] = [];
     if (visitedSlugs.length > 0) {
       const { data: destData } = await supabase

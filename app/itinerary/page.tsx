@@ -31,7 +31,7 @@ export default function ItineraryPage() {
         if (error) throw error;
 
         const destMap = new Map<string, Destination>();
-        (data || []).forEach(dest => {
+        ((data || []) as any[]).forEach((dest: any) => {
           destMap.set(dest.slug, dest);
         });
 

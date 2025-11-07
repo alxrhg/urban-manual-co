@@ -92,7 +92,7 @@ export class OpportunityDetectionService {
 
     try {
       // Get user's saved destinations with price alerts
-      const { data: alerts } = await this.supabase
+      const { data: alerts } = await (this.supabase as any)
         .from('price_alerts')
         .select('*, destinations(id, name, slug, city, current_price)')
         .eq('user_id', userId)

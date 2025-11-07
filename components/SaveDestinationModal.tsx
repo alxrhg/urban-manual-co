@@ -42,8 +42,9 @@ export function SaveDestinationModal({
         .eq('destination_id', destinationId)
         .single();
 
-      if (data) {
-        setCurrentCollectionId(data.collection_id || null);
+      const savedData = data as any;
+      if (savedData) {
+        setCurrentCollectionId(savedData.collection_id || null);
       }
     } catch (error) {
       // Not saved yet
@@ -65,19 +66,20 @@ export function SaveDestinationModal({
         .eq('destination_id', destinationId)
         .single();
 
-      if (existing) {
+      const existingData = existing as any;
+      if (existingData) {
         // Update collection
-        const { error } = await supabase
+        const { error } = await (supabase
           .from('saved_destinations')
-          .update({ collection_id: collectionId })
-          .eq('id', existing.id);
+          .update as any)({ collection_id: collectionId })
+          .eq('id', existingData.id);
 
         if (error) throw error;
       } else {
         // Insert new save
-        const { error } = await supabase
+        const { error } = await (supabase
           .from('saved_destinations')
-          .insert({
+          .insert as any)({
             user_id: user.id,
             destination_id: destinationId,
             collection_id: collectionId,

@@ -70,9 +70,9 @@ export default function TripsPage() {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('trips')
-        .insert([
+        .insert as any)([
           {
             title: newTrip.title,
             description: newTrip.description || null,
