@@ -187,8 +187,8 @@ export default function Account() {
 
     setCreatingCollection(true);
     try {
-      const { data, error } = await supabase
-        .from('collections')
+      const { data, error } = await (supabase
+        .from('collections') as any)
         .insert([{
           user_id: user.id,
           name: newCollectionName.trim(),
@@ -197,7 +197,7 @@ export default function Account() {
           emoji: '📚',
           color: '#3B82F6',
           destination_count: 0
-        }])
+        }] as any)
         .select()
         .single();
 
