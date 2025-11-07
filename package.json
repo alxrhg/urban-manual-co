@@ -16,7 +16,8 @@
     "enrich:all-places-data": "tsx scripts/enrich-all-places-data.ts",
     "retry:tate-modern": "tsx scripts/retry-tate-modern.ts",
     "enrich:comprehensive": "tsx scripts/enrich-comprehensive.ts",
-    "migrate:026": "tsx scripts/run-migration-026.ts"
+    "migrate:026": "tsx scripts/run-migration-026.ts",
+    "update:google-trends": "tsx scripts/update-google-trends.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.3",
@@ -42,6 +43,7 @@
     "dompurify": "^3.3.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^11.0.0",
+    "google-trends-api": "^4.9.2",
     "graphql": "^16.11.0",
     "isomorphic-dompurify": "^2.30.1",
     "jsonwebtoken": "^9.0.2",

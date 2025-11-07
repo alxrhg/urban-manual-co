@@ -7,20 +7,28 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city');
     const category = searchParams.get('category');
     const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const includeGoogleTrends = searchParams.get('include_google_trends') === 'true';
 
     const supabase = await createServerClient();
 
+    // Build query with enhanced filtering
     let query = supabase
       .from('destinations')
-      .select('*')
+      .select(includeGoogleTrends 
+        ? '*, google_trends_interest, google_trends_direction, google_trends_related_queries'
+        : '*'
+      )
       .gt('trending_score', 0)
       .gte('rating', 4.0);
 
     if (city) query = query.eq('city', city);
     if (category) query = query.eq('category', category);
 
+    // Prioritize destinations with rising Google Trends
     const { data: trending, error } = await query
       .order('trending_score', { ascending: false })
+      .order('google_trends_direction', { ascending: false }) // 'rising' comes before 'stable'/'falling'
+      .order('google_trends_interest', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
@@ -30,7 +38,8 @@ export async function GET(request: NextRequest) {
       meta: {
         filters: { city, category },
         count: trending?.length || 0,
-        period: 'Past 14 days',
+        period: 'Past 14 days (enhanced with Google Trends)',
+        includesGoogleTrends: includeGoogleTrends,
       },
     });
 
