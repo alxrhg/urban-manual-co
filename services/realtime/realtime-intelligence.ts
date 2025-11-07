@@ -53,9 +53,10 @@ export class RealtimeIntelligenceService {
     const hourOfDay = now.getHours();
 
     // Fetch data in parallel
-    const [crowding, openingHours] = await Promise.all([
+    const [crowding, openingHours, userReports] = await Promise.all([
       this.getCrowdingLevel(destinationId, dayOfWeek, hourOfDay),
       this.getOpeningStatus(destinationId, now),
+      this.getRecentUserReports(destinationId),
     ]);
 
     // Aggregate status
@@ -66,12 +67,69 @@ export class RealtimeIntelligenceService {
       status.bestTimeToVisit = await this.predictBestTimes(destinationId, dayOfWeek);
     }
 
+    // Add wait time from user reports
+    if (userReports.waitTime) {
+      status.waitTime = userReports.waitTime;
+    }
+
     if (openingHours) {
       status.specialHours = openingHours;
       status.availability = this.determineAvailability(openingHours, crowding);
     }
 
     return status;
+  }
+
+  /**
+   * Get recent user reports and aggregate wait time data
+   */
+  private async getRecentUserReports(destinationId: number): Promise<{
+    waitTime?: RealtimeStatus['waitTime'];
+  }> {
+    try {
+      const supabase = await getSupabase();
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+      const { data: reports } = await supabase
+        .from('user_reports')
+        .select('report_type, report_data, created_at')
+        .eq('destination_id', destinationId)
+        .eq('verified', true)
+        .in('report_type', ['wait_time'])
+        .gte('created_at', oneHourAgo)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!reports || reports.length === 0) {
+        return {};
+      }
+
+      // Calculate average wait time from recent reports
+      const waitTimeReports = reports.filter((r: any) => r.report_type === 'wait_time' && r.report_data?.wait_time);
+      
+      if (waitTimeReports.length > 0) {
+        const waitTimes = waitTimeReports.map((r: any) => r.report_data.wait_time);
+        const avgWaitTime = Math.round(
+          waitTimes.reduce((sum: number, wt: number) => sum + wt, 0) / waitTimes.length
+        );
+        
+        // Determine trend (simple: compare with older reports if available)
+        const trend: 'increasing' | 'decreasing' | 'stable' = 'stable';
+        
+        return {
+          waitTime: {
+            current: avgWaitTime,
+            historical: avgWaitTime, // Could be enhanced with historical data
+            trend,
+          },
+        };
+      }
+
+      return {};
+    } catch (error) {
+      console.error('Error getting user reports:', error);
+      return {};
+    }
   }
 
   /**
