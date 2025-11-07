@@ -1216,8 +1216,8 @@ export default function AdminPage() {
                     try {
                       if (editingDestination) {
                         // Update existing
-                        const { error } = await supabase
-                          .from('destinations')
+                        const { error } = await (supabase
+                          .from('destinations') as any)
                           .update(data)
                           .eq('slug', editingDestination.slug);
 
