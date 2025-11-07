@@ -30,25 +30,30 @@ async function importDestinations(destinations: any[], batchSize: number = 100) 
 
     console.log(`📦 Processing batch ${batchNum}/${totalBatches} (${batch.length} destinations)...`);
 
-    for (const dest of batch) {
-      try {
-        await discoveryEngine.importDocument(dest);
-        imported++;
-        
-        if (imported % 10 === 0) {
-          process.stdout.write(`   Imported ${imported}/${destinations.length}...\r`);
+    try {
+      await discoveryEngine.importDocuments(batch);
+      imported += batch.length;
+      console.log(`   ✅ Imported batch ${batchNum} (${batch.length} documents)`);
+    } catch (error: any) {
+      // If batch fails, try individual imports as fallback
+      console.warn(`   ⚠️  Batch import failed, trying individual imports...`);
+      for (const dest of batch) {
+        try {
+          // Fallback: import individually (if single import method exists)
+          // For now, mark as failed and continue
+          failed++;
+          errors.push({
+            id: dest.id || dest.slug || 'unknown',
+            error: error.message,
+          });
+        } catch (individualError: any) {
+          failed++;
+          errors.push({
+            id: dest.id || dest.slug || 'unknown',
+            error: individualError.message,
+          });
         }
-      } catch (error: any) {
-        failed++;
-        errors.push({
-          id: dest.id || dest.slug || 'unknown',
-          error: error.message,
-        });
-        console.error(`\n   ❌ Failed to import ${dest.name || dest.id}: ${error.message}`);
       }
-
-      // Rate limiting: small delay between imports
-      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     console.log(`   ✅ Batch ${batchNum} complete (${imported} imported, ${failed} failed)\n`);

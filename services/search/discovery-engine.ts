@@ -228,56 +228,78 @@ export class DiscoveryEngineService {
   }
 
   /**
-   * Import a document (destination) into Discovery Engine
+   * Transform a destination to Discovery Engine document format
    */
-  async importDocument(destination: any): Promise<void> {
+  transformToDocument(destination: any): any {
+    return {
+      id: destination.slug || destination.id?.toString(),
+      name: destination.name || '',
+      content: this.buildContent(destination),
+      structData: {
+        slug: destination.slug || '',
+        name: destination.name || '',
+        description: destination.description || '',
+        city: destination.city || '',
+        category: destination.category || '',
+        tags: destination.tags || [],
+        rating: destination.rating || 0,
+        price_level: destination.price_level || 0,
+        michelin_stars: destination.michelin_stars || 0,
+        coordinates: destination.latitude && destination.longitude
+          ? {
+              latitude: destination.latitude,
+              longitude: destination.longitude,
+            }
+          : undefined,
+        images: destination.images || [],
+        metadata: {
+          trending_score: destination.trending_score || 0,
+          views_count: destination.views_count || 0,
+          saves_count: destination.saves_count || 0,
+          visits_count: destination.visits_count || 0,
+          created_at: destination.created_at || new Date().toISOString(),
+          updated_at: destination.updated_at || new Date().toISOString(),
+        },
+      },
+      uri: `/destination/${destination.slug || destination.id}`,
+    };
+  }
+
+  /**
+   * Import documents in batch to Discovery Engine
+   * Uses inlineSource for batch imports (recommended for < 1000 documents)
+   */
+  async importDocuments(destinations: any[]): Promise<void> {
     if (!this.client || !this.isAvailable()) {
       throw new Error('Discovery Engine is not configured');
     }
 
+    if (destinations.length === 0) {
+      return;
+    }
+
     try {
-      const document = {
-        id: destination.slug || destination.id?.toString(),
-        name: destination.name || '',
-        content: this.buildContent(destination),
-        structData: {
-          slug: destination.slug || '',
-          name: destination.name || '',
-          description: destination.description || '',
-          city: destination.city || '',
-          category: destination.category || '',
-          tags: destination.tags || [],
-          rating: destination.rating || 0,
-          price_level: destination.price_level || 0,
-          michelin_stars: destination.michelin_stars || 0,
-          coordinates: destination.latitude && destination.longitude
-            ? {
-                latitude: destination.latitude,
-                longitude: destination.longitude,
-              }
-            : undefined,
-          images: destination.images || [],
-          metadata: {
-            trending_score: destination.trending_score || 0,
-            views_count: destination.views_count || 0,
-            saves_count: destination.saves_count || 0,
-            visits_count: destination.visits_count || 0,
-            created_at: destination.created_at || new Date().toISOString(),
-            updated_at: destination.updated_at || new Date().toISOString(),
-          },
-        },
-        uri: `/destination/${destination.slug || destination.id}`,
-      };
+      // Transform destinations to documents
+      const documents = destinations.map((dest) => this.transformToDocument(dest));
+
+      // Use branch path for imports
+      const branchPath = `${this.dataStorePath}/branches/default_branch`;
 
       const request = {
-        parent: this.dataStorePath,
-        document,
+        parent: branchPath,
+        inlineSource: {
+          documents,
+        },
+        reconciliationMode: 'INCREMENTAL' as const, // Updates existing, adds new
       };
 
-      await this.client.importDocuments(request);
+      const [operation] = await this.client.importDocuments(request);
+      
+      // Wait for the operation to complete
+      await operation.promise();
     } catch (error: any) {
       console.error('Discovery Engine import error:', error);
-      throw new Error(`Failed to import document: ${error.message}`);
+      throw new Error(`Failed to import documents: ${error.message}`);
     }
   }
 
