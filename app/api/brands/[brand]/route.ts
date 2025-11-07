@@ -34,7 +34,7 @@ export async function GET(
     let userStatuses: Map<string, any> = new Map();
 
     if (user && destinations) {
-      const slugs = destinations.map(d => d.slug);
+      const slugs = (destinations as any[]).map((d: any) => d.slug);
 
       const [{ data: savedPlaces }, { data: visitedPlaces }] = await Promise.all([
         supabase
@@ -49,10 +49,10 @@ export async function GET(
           .in('destination_slug', slugs),
       ]);
 
-      const savedSet = new Set(savedPlaces?.map(s => s.destination_slug) || []);
-      const visitedSet = new Set(visitedPlaces?.map(v => v.destination_slug) || []);
+      const savedSet = new Set((savedPlaces as any[])?.map((s: any) => s.destination_slug) || []);
+      const visitedSet = new Set((visitedPlaces as any[])?.map((v: any) => v.destination_slug) || []);
 
-      destinations.forEach(dest => {
+      (destinations as any[]).forEach((dest: any) => {
         userStatuses.set(dest.slug, {
           is_saved: savedSet.has(dest.slug),
           is_visited: visitedSet.has(dest.slug),
@@ -63,7 +63,7 @@ export async function GET(
     return NextResponse.json({
       brand,
       count: destinations?.length || 0,
-      destinations: destinations?.map(d => ({
+      destinations: (destinations as any[])?.map((d: any) => ({
         ...d,
         user_status: user ? userStatuses.get(d.slug) : undefined,
       })) || [],
