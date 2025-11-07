@@ -20,7 +20,9 @@
     "migrate:026": "tsx scripts/run-migration-026.ts",
     "aggregate:user-data": "tsx scripts/aggregate-user-data.ts",
     "update:google-trends": "tsx scripts/update-google-trends.ts",
-    "update:multi-source-trends": "tsx scripts/update-multi-source-trends.ts"
+    "update:multi-source-trends": "tsx scripts/update-multi-source-trends.ts",
+    "discovery:export": "tsx scripts/discovery-engine-export.ts",
+    "discovery:import": "tsx scripts/discovery-engine-import.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.3",
