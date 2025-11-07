@@ -866,10 +866,10 @@ async function processAIChatRequest(
 
                 // Log search/chat interaction (best-effort)
                 try {
-                  await supabase.from('user_interactions').insert({
-                    interaction_type: 'search',
-                    user_id: userId || null,
-                    destination_id: null,
+                  await (supabase.from('user_interactions').insert as any)({
+                     interaction_type: 'search',
+                     user_id: userId || null,
+                     destination_id: null,
                     metadata: {
                       query,
                       intent,
