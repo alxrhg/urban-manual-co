@@ -56,13 +56,17 @@
   - ✅ `price_alerts` table
   - ✅ `user_reports` table
 - ✅ Backend services (`services/realtime/realtime-intelligence.ts`) - EXISTS
-- ❌ Data collection infrastructure (Google Popular Times, user reports, etc.)
+- ✅ Data collection APIs - IMPLEMENTED
+  - ✅ `/api/realtime/report` - User-reported data
+  - ✅ `/api/realtime/aggregate-crowding` - Crowding data aggregation
+  - ✅ `RealtimeReportForm` component - User submission UI
+- ⚠️ Data collection infrastructure (Google Popular Times integration - future)
 
 #### Phase 2: Data Sources (Week 3-4)
-- ❌ Google Popular Times integration
-- ❌ User-reported wait times
-- ❌ Crowding level aggregation
-- ❌ Real-time availability tracking
+- ✅ User-reported wait times - IMPLEMENTED (API + UI)
+- ✅ Crowding level aggregation - IMPLEMENTED (API)
+- ❌ Google Popular Times integration (requires API access)
+- ⚠️ Real-time availability tracking (partially - uses opening hours)
 
 #### Phase 3: Intelligence Features (Week 5-6)
 - ❌ Best time to visit predictions
