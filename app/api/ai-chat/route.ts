@@ -534,7 +534,7 @@ export async function POST(request: NextRequest) {
     // Create a new request promise
     const requestPromise = (async () => {
       try {
-        return await processAIChatRequest(query, userId, conversationHistory);
+        return await processAIChatRequest(query, userId, conversationHistory, searchMode);
       } finally {
         // Clean up after request completes
         pendingRequests.delete(requestKey);
@@ -558,7 +558,8 @@ export async function POST(request: NextRequest) {
 async function processAIChatRequest(
   query: string,
   userId: string | undefined,
-  conversationHistory: Array<{role: string, content: string}>
+  conversationHistory: Array<{role: string, content: string}>,
+  searchMode: string = 'discovery'
 ) {
   try {
 
