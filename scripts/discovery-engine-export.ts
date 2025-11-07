@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { createClient } from '@supabase/supabase-js';
-import { getDiscoveryEngineService } from '../search/discovery-engine';
+import { getDiscoveryEngineService } from '../services/search/discovery-engine';
 
 // Load environment variables
 config({ path: resolve(process.cwd(), '.env.local') });

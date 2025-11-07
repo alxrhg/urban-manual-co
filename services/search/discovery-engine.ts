@@ -1,11 +1,14 @@
-import { DiscoveryEngineClient } from '@google-cloud/discoveryengine';
+import { DocumentServiceClient, SearchServiceClient, RecommendationServiceClient, UserEventServiceClient } from '@google-cloud/discoveryengine';
 
 /**
  * Google Discovery Engine Service
  * Handles search, recommendations, and data management for Discovery Engine
  */
 export class DiscoveryEngineService {
-  private client: DiscoveryEngineClient | null = null;
+  private documentClient: DocumentServiceClient | null = null;
+  private searchClient: SearchServiceClient | null = null;
+  private recommendationClient: RecommendationServiceClient | null = null;
+  private userEventClient: UserEventServiceClient | null = null;
   private dataStorePath: string;
   private projectId: string;
   private location: string;
@@ -21,18 +24,25 @@ export class DiscoveryEngineService {
     // Format: projects/{project}/locations/{location}/dataStores/{data_store}
     this.dataStorePath = `projects/${this.projectId}/locations/${this.location}/dataStores/${this.dataStoreId}`;
 
-    // Initialize client if credentials are available
+    // Initialize clients if credentials are available
     if (this.projectId) {
       try {
-        this.client = new DiscoveryEngineClient({
+        const clientOptions = {
           // Credentials can be provided via:
           // 1. GOOGLE_APPLICATION_CREDENTIALS env var (path to service account JSON)
           // 2. Default credentials from gcloud CLI
           // 3. Explicit credentials object
-        });
+        };
+        this.documentClient = new DocumentServiceClient(clientOptions);
+        this.searchClient = new SearchServiceClient(clientOptions);
+        this.recommendationClient = new RecommendationServiceClient(clientOptions);
+        this.userEventClient = new UserEventServiceClient(clientOptions);
       } catch (error) {
         console.warn('Discovery Engine client initialization failed:', error);
-        this.client = null;
+        this.documentClient = null;
+        this.searchClient = null;
+        this.recommendationClient = null;
+        this.userEventClient = null;
       }
     }
   }
@@ -41,7 +51,7 @@ export class DiscoveryEngineService {
    * Check if Discovery Engine is configured and available
    */
   isAvailable(): boolean {
-    return this.client !== null && this.projectId !== '';
+    return this.documentClient !== null && this.searchClient !== null && this.projectId !== '';
   }
 
   /**
@@ -69,7 +79,7 @@ export class DiscoveryEngineService {
     totalSize: number;
     nextPageToken?: string;
   }> {
-    if (!this.client || !this.isAvailable()) {
+    if (!this.searchClient || !this.isAvailable()) {
       throw new Error('Discovery Engine is not configured. Please set GOOGLE_CLOUD_PROJECT_ID and DISCOVERY_ENGINE_DATA_STORE_ID');
     }
 
@@ -126,7 +136,7 @@ export class DiscoveryEngineService {
         },
       };
 
-      const [response] = await this.client.search(request);
+      const [response] = await this.searchClient.search(request);
 
       const results = (response.results || []).map((result) => {
         const document = result.document;
@@ -171,7 +181,7 @@ export class DiscoveryEngineService {
       };
     } = {}
   ): Promise<any[]> {
-    if (!this.client || !this.isAvailable()) {
+    if (!this.recommendationClient || !this.isAvailable()) {
       throw new Error('Discovery Engine is not configured');
     }
 
@@ -201,7 +211,7 @@ export class DiscoveryEngineService {
         filter: filterString,
       };
 
-      const [response] = await this.client.recommend(request);
+      const [response] = await this.recommendationClient.recommend(request);
 
       return (response.results || []).map((result) => {
         const document = result.document;
@@ -231,10 +241,10 @@ export class DiscoveryEngineService {
    * Transform a destination to Discovery Engine document format
    */
   transformToDocument(destination: any): any {
-    return {
+    // For structured data, content should be an object with mimeType and rawBytes or uri
+    // Or we can omit it and use structData only
+    const document: any = {
       id: destination.slug || destination.id?.toString(),
-      name: destination.name || '',
-      content: this.buildContent(destination),
       structData: {
         slug: destination.slug || '',
         name: destination.name || '',
@@ -260,9 +270,13 @@ export class DiscoveryEngineService {
           created_at: destination.created_at || new Date().toISOString(),
           updated_at: destination.updated_at || new Date().toISOString(),
         },
+        // Add searchable text content in structData for semantic search
+        content: this.buildContent(destination),
       },
       uri: `/destination/${destination.slug || destination.id}`,
     };
+
+    return document;
   }
 
   /**
@@ -270,7 +284,7 @@ export class DiscoveryEngineService {
    * Uses inlineSource for batch imports (recommended for < 1000 documents)
    */
   async importDocuments(destinations: any[]): Promise<void> {
-    if (!this.client || !this.isAvailable()) {
+    if (!this.documentClient || !this.isAvailable()) {
       throw new Error('Discovery Engine is not configured');
     }
 
@@ -293,7 +307,7 @@ export class DiscoveryEngineService {
         reconciliationMode: 'INCREMENTAL' as const, // Updates existing, adds new
       };
 
-      const [operation] = await this.client.importDocuments(request);
+      const [operation] = await this.documentClient.importDocuments(request);
       
       // Wait for the operation to complete
       await operation.promise();
@@ -312,7 +326,7 @@ export class DiscoveryEngineService {
     documentId?: string;
     searchQuery?: string;
   }): Promise<void> {
-    if (!this.client || !this.isAvailable()) {
+    if (!this.userEventClient || !this.isAvailable()) {
       // Silently fail if not configured - events are optional
       return;
     }
@@ -342,7 +356,7 @@ export class DiscoveryEngineService {
         userEvent,
       };
 
-      await this.client.collectUserEvent(request);
+      await this.userEventClient.collectUserEvent(request);
     } catch (error: any) {
       // Log but don't throw - event tracking shouldn't break the app
       console.warn('Discovery Engine event tracking failed:', error);
