@@ -11,7 +11,7 @@ let supabase: ReturnType<typeof createClient>;
 try {
   const serviceClient = createServiceRoleClient();
   if (serviceClient) {
-    supabase = serviceClient;
+    supabase = serviceClient as ReturnType<typeof createClient>;
   } else {
     // Fallback to anon key if service role not available
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
