@@ -3,34 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
-import { createServiceRoleClient } from '@/lib/supabase-server';
-import { unifiedSearch } from '@/lib/discovery-engine/integration';
 
-// Get Supabase client - prefer service role, fallback to anon key
-let supabase: ReturnType<typeof createClient>;
-try {
-  const serviceClient = createServiceRoleClient();
-  if (serviceClient) {
-    supabase = serviceClient as ReturnType<typeof createClient>;
-  } else {
-    // Fallback to anon key if service role not available
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !supabaseAnonKey || 
-        supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder')) {
-      throw new Error('Supabase configuration missing or invalid');
-    }
-    
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
-  }
-} catch (error) {
-  console.error('[AI Chat] Failed to initialize Supabase client:', error);
-  // Create a dummy client to prevent crashes - API will handle errors gracefully
-  supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
-}
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
+const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Simple in-memory cache for search results
 interface CacheEntry {
@@ -189,27 +166,23 @@ async function understandQuery(
     let userContext = '';
     if (userId) {
       try {
-        const { data: profile, error: profileError } = await (async () => {
-          const query = supabase
-            .from('user_profiles')
-            .select('favorite_cities, favorite_categories, travel_style, interests')
-            .eq('user_id', userId)
-            .single();
-          return await query;
-        })();
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('favorite_cities, favorite_categories, travel_style, interests')
+          .eq('user_id', userId)
+          .single();
         
         // Handle errors gracefully - user_profiles might not exist or RLS might block
         if (!profileError && profile) {
           const contextParts = [];
-          const profileData = profile as any;
-          if (profileData.favorite_cities?.length > 0) {
-            contextParts.push(`Favorite cities: ${profileData.favorite_cities.join(', ')}`);
+          if (profile.favorite_cities?.length > 0) {
+            contextParts.push(`Favorite cities: ${profile.favorite_cities.join(', ')}`);
           }
-          if (profileData.favorite_categories?.length > 0) {
-            contextParts.push(`Favorite categories: ${profileData.favorite_categories.join(', ')}`);
+          if (profile.favorite_categories?.length > 0) {
+            contextParts.push(`Favorite categories: ${profile.favorite_categories.join(', ')}`);
           }
-          if (profileData.travel_style) {
-            contextParts.push(`Travel style: ${profileData.travel_style}`);
+          if (profile.travel_style) {
+            contextParts.push(`Travel style: ${profile.travel_style}`);
           }
           if (contextParts.length > 0) {
             userContext = `\n\nUser Preferences: ${contextParts.join('; ')}`;
@@ -511,7 +484,7 @@ function generateResponse(count: number, city?: string, category?: string): stri
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query, userId, conversationHistory = [], searchMode = 'discovery' } = body;
+    const { query, userId, conversationHistory = [] } = body;
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
@@ -537,7 +510,7 @@ export async function POST(request: NextRequest) {
     // Create a new request promise
     const requestPromise = (async () => {
       try {
-        return await processAIChatRequest(query, userId, conversationHistory, searchMode);
+        return await processAIChatRequest(query, userId, conversationHistory);
       } finally {
         // Clean up after request completes
         pendingRequests.delete(requestKey);
@@ -561,8 +534,7 @@ export async function POST(request: NextRequest) {
 async function processAIChatRequest(
   query: string,
   userId: string | undefined,
-  conversationHistory: Array<{role: string, content: string}>,
-  searchMode: string = 'discovery'
+  conversationHistory: Array<{role: string, content: string}>
 ) {
   try {
 
@@ -597,75 +569,12 @@ async function processAIChatRequest(
     // Parallel search strategies for better performance
     const searchPromises: Promise<any>[] = [];
 
-    // Strategy 0: Discovery Engine (AI-powered semantic search) - highest priority
-    // Only use if searchMode is 'discovery' (default) or not specified
-    if (searchMode === 'discovery' || searchMode === undefined) {
-      searchPromises.push(
-      (async () => {
-        try {
-          const discoveryResults = await unifiedSearch({
-            query,
-            userId,
-            city: intent.city,
-            category: intent.category,
-            priceLevel: intent.filters?.priceLevel,
-            minRating: intent.filters?.rating,
-            pageSize: 100,
-            useCache: true,
-          });
-
-          if (discoveryResults.source === 'discovery_engine' && discoveryResults.results.length > 0) {
-            // Map Discovery Engine results to match expected format
-            const mappedResults = discoveryResults.results.map((r: any) => ({
-              slug: r.slug || r.id,
-              name: r.name,
-              city: r.city,
-              category: r.category,
-              description: r.description,
-              rating: r.rating,
-              price_level: r.priceLevel,
-              tags: r.tags || [],
-              relevanceScore: r.relevanceScore || 0,
-            }));
-
-            // Fetch full destination data from Supabase for enriched fields
-            if (mappedResults.length > 0) {
-              const slugs = mappedResults.map((r: any) => r.slug).filter(Boolean);
-              const { data: fullData } = await (async () => {
-                const query = supabase
-                  .from('destinations')
-                  .select('*')
-                  .in('slug', slugs);
-                return await query;
-              })();
-
-              // Merge Discovery Engine relevance with full data
-              const enrichedResults = mappedResults.map((deResult: any) => {
-                const fullDataItem = fullData?.find((d: any) => d.slug === deResult.slug);
-                if (fullDataItem && typeof fullDataItem === 'object') {
-                  return { ...(fullDataItem as Record<string, any>), relevanceScore: deResult.relevanceScore };
-                }
-                return deResult;
-              }).filter((r: any) => r.slug); // Remove any that don't have slugs
-
-              return { type: 'discovery_engine', data: enrichedResults, error: null };
-            }
-          }
-          return { type: 'discovery_engine', data: [], error: null };
-        } catch (error: any) {
-          console.warn('[AI Chat] Discovery Engine search failed, falling back:', error);
-          return { type: 'discovery_engine', data: [], error };
-        }
-      })()
-      );
-    }
-
     // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
       searchPromises.push(
         (async () => {
           try {
-            const { data, error } = await (supabase.rpc as any)('match_destinations', {
+            const { data, error } = await supabase.rpc('match_destinations', {
               query_embedding: queryEmbedding,
               match_threshold: 0.6,
               match_count: 100,
@@ -733,13 +642,11 @@ async function processAIChatRequest(
     // Execute all search strategies in parallel
     const searchResults = await Promise.all(searchPromises);
 
-    // Use the first successful result
-    // Priority: Discovery Engine (if enabled) > vector > keyword
-    // If searchMode is 'classic', Discovery Engine won't be in the array
+    // Use the first successful result (prefer vector over keyword)
     for (const result of searchResults) {
       if (!result.error && result.data.length > 0) {
         results = result.data;
-        console.log(`[AI Chat] ${result.type} search found ${results.length} results (mode: ${searchMode})`);
+        console.log(`[AI Chat] ${result.type} search found ${results.length} results`);
         break;
       } else if (result.error) {
         console.error(`[AI Chat] ${result.type} search error:`, result.error);
@@ -749,15 +656,12 @@ async function processAIChatRequest(
     // Last resort - show popular destinations in the city
     if (results.length === 0 && intent.city) {
       try {
-        const { data: cityResults } = await (async () => {
-          const query = supabase
-            .from('destinations')
-            .select('*')
-            .ilike('city', `%${intent.city}%`)
-            .order('rating', { ascending: false })
-            .limit(50);
-          return await query;
-        })();
+        const { data: cityResults } = await supabase
+          .from('destinations')
+          .select('*')
+          .ilike('city', `%${intent.city}%`)
+          .order('rating', { ascending: false })
+          .limit(50);
 
         if (cityResults && cityResults.length > 0) {
           results = cityResults;
@@ -776,13 +680,10 @@ async function processAIChatRequest(
                 let enrichmentDataMap = new Map();
                 if (slugsToEnrich.length > 0) {
                   try {
-                    const { data: enrichmentData } = await (async () => {
-                      const query = supabase
-                        .from('destinations')
-                        .select('slug, photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url, currency_code, exchange_rate_to_usd')
-                        .in('slug', slugsToEnrich);
-                      return await query;
-                    })();
+                    const { data: enrichmentData } = await supabase
+                      .from('destinations')
+                      .select('slug, photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url, currency_code, exchange_rate_to_usd')
+                      .in('slug', slugsToEnrich);
 
                     if (enrichmentData) {
                       enrichmentData.forEach((item: any) => {
@@ -878,22 +779,17 @@ async function processAIChatRequest(
 
                 // Log search/chat interaction (best-effort)
                 try {
-                  await (async () => {
-                    const insertQuery = supabase
-                      .from('user_interactions')
-                      .insert({
-                        interaction_type: 'search',
-                        user_id: userId || null,
-                        destination_id: null,
-                        metadata: {
-                          query,
-                          intent,
-                          count: limitedResults.length,
-                          source: 'api/ai-chat',
-                        }
-                      } as any);
-                    return await insertQuery;
-                  })();
+                  await supabase.from('user_interactions').insert({
+                    interaction_type: 'search',
+                    user_id: userId || null,
+                    destination_id: null,
+                    metadata: {
+                      query,
+                      intent,
+                      count: limitedResults.length,
+                      source: 'api/ai-chat',
+                    }
+                  });
                 } catch {}
 
                 // Include enriched metadata in response
