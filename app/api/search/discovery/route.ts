@@ -36,24 +36,23 @@ export async function POST(request: NextRequest) {
     const discoveryEngine = getDiscoveryEngineService();
     const flags = getFeatureFlags();
 
+    // Get user ID from session if not provided
+    let finalUserId = userId;
+    if (!finalUserId) {
+      try {
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        finalUserId = user?.id;
+      } catch (error) {
+        // User not authenticated - continue without personalization
+      }
+    }
+
     // A/B testing: Check if user should use Discovery Engine or fallback
     let useDiscoveryEngine = flags.useDiscoveryEngine;
     if (finalUserId && flags.abTests.some((t) => t.name === 'search_quality' && t.enabled)) {
       const variant = getABTestVariant(finalUserId, 'search_quality');
       useDiscoveryEngine = variant === 'discovery_engine';
-    }
-
-    // Check if Discovery Engine is available
-    if (!discoveryEngine.isAvailable() || !useDiscoveryEngine) {
-      // Fallback to Supabase search if Discovery Engine is not configured or A/B test says so
-      return NextResponse.json(
-        { 
-          error: 'Discovery Engine is not configured',
-          fallback: true,
-          abTestVariant: finalUserId ? getABTestVariant(finalUserId, 'search_quality') : null,
-        },
-        { status: 503 }
-      );
     }
 
     // Generate cache key
