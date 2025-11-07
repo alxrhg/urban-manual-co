@@ -216,9 +216,6 @@ export default function Home() {
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
   
-  // Search mode toggle: 'discovery' (Discovery Engine) or 'classic' (Vector/Keyword)
-  const [searchMode, setSearchMode] = useState<'discovery' | 'classic'>('discovery');
-  
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -397,10 +394,15 @@ export default function Home() {
     // Just scroll to the chat area or show a confirmation
   }
 
-  // CHAT MODE: Explicit Enter submit only (no auto-trigger)
-  // Clear state when search is emptied
+  // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
+  // Works like chat but with convenience of auto-trigger
   useEffect(() => {
-    if (searchTerm.trim().length === 0) {
+    if (searchTerm.trim().length > 0) {
+      const timer = setTimeout(() => {
+        performAISearch(searchTerm);
+      }, 500); // 500ms debounce for auto-trigger
+      return () => clearTimeout(timer);
+    } else {
       // Clear everything when search is empty
       setFilteredDestinations([]);
       setChatResponse('');
@@ -607,7 +609,6 @@ export default function Home() {
           query: query.trim(),
           userId: user?.id,
           conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
-          searchMode: searchMode, // Pass search mode preference
         }),
       });
 
@@ -617,12 +618,8 @@ export default function Home() {
 
       const data = await response.json();
 
-      // Update search tier based on mode
-      if (searchMode === 'discovery') {
-        setSearchTier('discovery-engine');
-      } else {
-        setSearchTier('classic-search');
-      }
+      // Update search tier
+      setSearchTier(data.searchTier || 'ai-chat');
 
       // Update conversation history for API context (not displayed)
       const userMessage = { role: 'user' as const, content: query };
@@ -1000,37 +997,6 @@ export default function Home() {
                           <ContextCards context={userContext} />
                         </div>
                       )}
-
-                      {/* Search Mode Toggle */}
-                      <div className="flex items-center justify-center gap-2 mb-4 px-4">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Search:</span>
-                        <button
-                          onClick={() => setSearchMode('discovery')}
-                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                            searchMode === 'discovery'
-                              ? 'bg-blue-600 text-white shadow-md'
-                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          🚀 AI Search
-                        </button>
-                        <button
-                          onClick={() => setSearchMode('classic')}
-                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                            searchMode === 'classic'
-                              ? 'bg-blue-600 text-white shadow-md'
-                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          🔍 Classic
-                        </button>
-                        {searchMode === 'discovery' && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">(Discovery Engine)</span>
-                        )}
-                        {searchMode === 'classic' && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">(Vector/Keyword)</span>
-                        )}
-                      </div>
 
                       <GreetingHero
                         searchQuery={searchTerm}
