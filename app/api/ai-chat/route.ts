@@ -198,14 +198,15 @@ async function understandQuery(
         // Handle errors gracefully - user_profiles might not exist or RLS might block
         if (!profileError && profile) {
           const contextParts = [];
-          if (profile.favorite_cities?.length > 0) {
-            contextParts.push(`Favorite cities: ${profile.favorite_cities.join(', ')}`);
+          const profileData = profile as any;
+          if (profileData.favorite_cities?.length > 0) {
+            contextParts.push(`Favorite cities: ${profileData.favorite_cities.join(', ')}`);
           }
-          if (profile.favorite_categories?.length > 0) {
-            contextParts.push(`Favorite categories: ${profile.favorite_categories.join(', ')}`);
+          if (profileData.favorite_categories?.length > 0) {
+            contextParts.push(`Favorite categories: ${profileData.favorite_categories.join(', ')}`);
           }
-          if (profile.travel_style) {
-            contextParts.push(`Travel style: ${profile.travel_style}`);
+          if (profileData.travel_style) {
+            contextParts.push(`Travel style: ${profileData.travel_style}`);
           }
           if (contextParts.length > 0) {
             userContext = `\n\nUser Preferences: ${contextParts.join('; ')}`;
