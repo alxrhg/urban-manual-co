@@ -507,7 +507,7 @@ function generateResponse(count: number, city?: string, category?: string): stri
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query, userId, conversationHistory = [] } = body;
+    const { query, userId, conversationHistory = [], searchMode = 'discovery' } = body;
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
@@ -593,7 +593,9 @@ async function processAIChatRequest(
     const searchPromises: Promise<any>[] = [];
 
     // Strategy 0: Discovery Engine (AI-powered semantic search) - highest priority
-    searchPromises.push(
+    // Only use if searchMode is 'discovery' (default) or not specified
+    if (searchMode === 'discovery' || searchMode === undefined) {
+      searchPromises.push(
       (async () => {
         try {
           const discoveryResults = await unifiedSearch({
@@ -644,7 +646,8 @@ async function processAIChatRequest(
           return { type: 'discovery_engine', data: [], error };
         }
       })()
-    );
+      );
+    }
 
     // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
@@ -719,11 +722,13 @@ async function processAIChatRequest(
     // Execute all search strategies in parallel
     const searchResults = await Promise.all(searchPromises);
 
-    // Use the first successful result (prefer Discovery Engine > vector > keyword)
+    // Use the first successful result
+    // Priority: Discovery Engine (if enabled) > vector > keyword
+    // If searchMode is 'classic', Discovery Engine won't be in the array
     for (const result of searchResults) {
       if (!result.error && result.data.length > 0) {
         results = result.data;
-        console.log(`[AI Chat] ${result.type} search found ${results.length} results`);
+        console.log(`[AI Chat] ${result.type} search found ${results.length} results (mode: ${searchMode})`);
         break;
       } else if (result.error) {
         console.error(`[AI Chat] ${result.type} search error:`, result.error);

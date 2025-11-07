@@ -216,6 +216,9 @@ export default function Home() {
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
   
+  // Search mode toggle: 'discovery' (Discovery Engine) or 'classic' (Vector/Keyword)
+  const [searchMode, setSearchMode] = useState<'discovery' | 'classic'>('discovery');
+  
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -603,6 +606,7 @@ export default function Home() {
           query: query.trim(),
           userId: user?.id,
           conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
+          searchMode: searchMode, // Pass search mode preference
         }),
       });
 
