@@ -117,7 +117,7 @@ export function Header() {
     <header className="mt-6 md:mt-8" role="banner">
       {/* Top Bar */}
       <div className="px-6 md:px-12 lg:px-16 pb-6 md:pb-8">
-        <nav className={`max-w-[1920px] mx-auto relative`} aria-label="Main navigation">
+        <nav className={`max-w-[1800px] mx-auto relative`} aria-label="Main navigation">
           {/* Logo - Top Left */}
           <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
             <button
