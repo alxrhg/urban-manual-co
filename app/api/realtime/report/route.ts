@@ -74,12 +74,13 @@ export async function POST(request: NextRequest) {
 
     // If report type is crowding, also update destination_status for immediate use
     if (report_type === 'crowding' && report_data.crowding_level) {
+      const crowdingLevel = report_data.crowding_level as 'quiet' | 'moderate' | 'busy' | 'very_busy';
       const crowdingScore = {
         quiet: 25,
         moderate: 50,
         busy: 75,
         very_busy: 100,
-      }[report_data.crowding_level] || 50;
+      }[crowdingLevel] || 50;
 
       await supabase
         .from('destination_status')
