@@ -171,9 +171,21 @@
 
 ---
 
+### 3. Code Review Issues (CODE_REVIEW.md)
+**Status**: ⚠️ Some items may still be pending
+
+**From CODE_REVIEW.md**:
+- ❌ Filter data loading optimization (`fetchFilterData` function)
+- ❌ Asimov integration removal (may be complete now)
+- ⚠️ Supabase configuration (may be fixed)
+
+**Note**: This was based on commit `16891f5`, may have been addressed since
+
+---
+
 ## 🟢 LOW PRIORITY - FUTURE PLANS
 
-### 8. UX Algorithm Plan (UX_ALGORITHM_PLAN.md)
+### 4. UX Algorithm Plan (UX_ALGORITHM_PLAN.md)
 **Status**: ❌ Phases 2-4 not implemented
 
 #### Phase 2 (Next Quarter)
@@ -190,7 +202,7 @@
 
 ---
 
-### 9. Travel Intelligence Audit (TRAVEL_INTELLIGENCE_AUDIT.md)
+### 5. Travel Intelligence Audit (TRAVEL_INTELLIGENCE_AUDIT.md)
 **Status**: ❌ Critical gaps identified
 
 #### Critical Gaps:
