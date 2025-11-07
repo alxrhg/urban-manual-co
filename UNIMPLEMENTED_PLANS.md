@@ -137,9 +137,29 @@
   - ✅ `RealtimeReportForm` component - User submission UI
 - ⚠️ Data collection infrastructure (Google Popular Times integration - future)
 
+#### Phase 2: Data Sources (Week 3-4)
+- ✅ User-reported wait times - IMPLEMENTED (API + UI)
+- ✅ Crowding level aggregation - IMPLEMENTED (API)
+- ❌ Google Popular Times integration (requires API access)
+- ⚠️ Real-time availability tracking (partially - uses opening hours)
+
+#### Phase 3: Intelligence Features (Week 5-6)
+- ✅ Best time to visit predictions - ENHANCED (week-ahead forecasts)
+- ✅ Dynamic wait time estimates - IMPLEMENTED (from user reports)
+- ✅ Price drop alerts - IMPLEMENTED (API + checking endpoint)
+- ⚠️ Special hours detection - PARTIALLY (uses opening hours)
+
+#### Phase 4: UI Integration (Week 7-8)
+- ✅ Real-time status badges (BASIC - implemented with existing service)
+- ❌ Crowding indicators (full implementation)
+- ❌ Wait time displays (full implementation)
+- ❌ Alert notifications
+
+**Impact**: Transforms discovery into actionable recommendations
+
 ---
 
-### 7. Code Review Issues (CODE_REVIEW.md)
+### 2. Near Me Filter (NEAR_ME_FILTER_PLAN.md)
 **Status**: ⚠️ Some items may still be pending
 
 **From CODE_REVIEW.md**:
