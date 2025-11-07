@@ -54,42 +54,7 @@
 
 ## 🔴 HIGH PRIORITY - PARTIALLY IMPLEMENTED
 
-### 1. Intelligence Expansion Plan (INTELLIGENCE_EXPANSION_PLAN.md)
-**Status**: ✅ FULLY IMPLEMENTED
-**Timeline**: 10 weeks planned (COMPLETED)
-
-#### Phase 1: Foundation (Weeks 1-2)
-- ✅ Enhance collaborative filtering layer - FULLY ENHANCED (recency weighting, temporal features, evaluation, caching)
-- ✅ Set up Python microservice for ML models - FOUNDATION CREATED
-- ✅ Create data aggregation jobs - FULLY IMPLEMENTED (cron jobs + scripts)
-
-#### Phase 2: Core Intelligence (Weeks 3-5)
-- ✅ Collaborative filtering with LightFM - IMPLEMENTED (model + API)
-- ✅ Time-series forecasting with Prophet - IMPLEMENTED (model + API)
-- ✅ Enhanced hybrid recommendations - IMPLEMENTED (API endpoint integrates CF + content + popularity)
-- ✅ Graph-based sequencing - IMPLEMENTED (complete system: model + API + database)
-
-#### Phase 3: Advanced Features (Weeks 6-8)
-- ✅ Sentiment analysis pipeline - IMPLEMENTED (RoBERTa-based, API endpoints)
-- ✅ Topic modeling with BERTopic - IMPLEMENTED (city & destination topics, API endpoints)
-- ✅ Anomaly detection - IMPLEMENTED (traffic & sentiment anomalies, Isolation Forest)
-- ✅ Event correlation enhancement - IMPLEMENTED (event impact analysis, forecast enhancement)
-
-#### Phase 4: Optimization & Polish (Weeks 9-10)
-- ✅ Explainable AI (SHAP/LIME) - IMPLEMENTED (recommendation & forecast explanations, API endpoints)
-- ✅ Bandit algorithms for prompt selection - IMPLEMENTED (ε-Greedy, Thompson Sampling, UCB, API endpoints)
-- ✅ Sequence models for browsing patterns - IMPLEMENTED (Markov chains, pattern analysis, predictions)
-- ✅ Performance optimization - IMPLEMENTED (LRU cache, batching, performance monitoring)
-
-**Files Needed**:
-- `microservices/ml-service/` (entire Python service)
-- Database migrations for ML tables
-- Training pipelines
-- API endpoints
-
----
-
-### 2. Real-Time Intelligence Plan (REALTIME_INTELLIGENCE_PLAN.md)
+### 1. Real-Time Intelligence Plan (REALTIME_INTELLIGENCE_PLAN.md)
 **Status**: ⚠️ MOSTLY IMPLEMENTED (Foundation Complete, UI Enhancements Needed)
 **Timeline**: 6-8 weeks planned
 **Priority**: HIGH
