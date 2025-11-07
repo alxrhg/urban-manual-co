@@ -5,7 +5,7 @@
 
 import { createServerClient } from '@/lib/supabase-server';
 
-const getSupabase = () => createServerClient();
+const getSupabase = async () => await createServerClient();
 
 export interface RealtimeStatus {
   crowding?: {
@@ -83,7 +83,7 @@ export class RealtimeIntelligenceService {
     hourOfDay: number
   ): Promise<RealtimeStatus['crowding'] | null> {
     try {
-      const supabase = getSupabase();
+      const supabase = await getSupabase();
       // Try real-time data first
       const { data: recentStatus } = await supabase
         .from('destination_status')
@@ -135,7 +135,7 @@ export class RealtimeIntelligenceService {
     now: Date
   ): Promise<RealtimeStatus['specialHours'] | null> {
     try {
-      const supabase = getSupabase();
+      const supabase = await getSupabase();
       const { data: destination } = await supabase
         .from('destinations')
         .select('opening_hours_json')
@@ -261,7 +261,7 @@ export class RealtimeIntelligenceService {
     currentDayOfWeek: number
   ): Promise<RealtimeStatus['bestTimeToVisit']> {
     try {
-      const supabase = getSupabase();
+      const supabase = await getSupabase();
       // Get crowding data for today
       const { data: todayData } = await supabase
         .from('crowding_data')
@@ -276,13 +276,13 @@ export class RealtimeIntelligenceService {
 
       // Find quietest times today
       const currentHour = new Date().getHours();
-      const remainingHours = todayData.filter(d => d.hour_of_day >= currentHour);
+      const remainingHours = todayData.filter((d: any) => d.hour_of_day >= currentHour);
 
       const quietTimes = remainingHours
-        .filter(d => d.crowding_level === 'quiet' || d.crowding_level === 'moderate')
-        .sort((a, b) => a.crowding_score - b.crowding_score)
+        .filter((d: any) => d.crowding_level === 'quiet' || d.crowding_level === 'moderate')
+        .sort((a: any, b: any) => a.crowding_score - b.crowding_score)
         .slice(0, 3)
-        .map(d => {
+        .map((d: any) => {
           const startHour = d.hour_of_day.toString().padStart(2, '0');
           const endHour = (d.hour_of_day + 2).toString().padStart(2, '0');
           return `${startHour}:00-${endHour}:00`;
