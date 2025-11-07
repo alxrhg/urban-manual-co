@@ -254,7 +254,7 @@ export class RealtimeIntelligenceService {
   }
 
   /**
-   * Predict best times to visit
+   * Predict best times to visit - Enhanced version with week predictions
    */
   private async predictBestTimes(
     destinationId: number,
@@ -262,6 +262,9 @@ export class RealtimeIntelligenceService {
   ): Promise<RealtimeStatus['bestTimeToVisit']> {
     try {
       const supabase = await getSupabase();
+      const now = new Date();
+      const currentHour = now.getHours();
+      
       // Get crowding data for today
       const { data: todayData } = await supabase
         .from('crowding_data')
@@ -270,27 +273,61 @@ export class RealtimeIntelligenceService {
         .eq('day_of_week', currentDayOfWeek)
         .order('hour_of_day', { ascending: true });
 
-      if (!todayData) {
-        return { today: [], thisWeek: [] };
+      const today: string[] = [];
+      
+      if (todayData && todayData.length > 0) {
+        // Find quietest times today (remaining hours)
+        const remainingHours = todayData.filter((d: any) => d.hour_of_day >= currentHour);
+        
+        // Prioritize quiet times, then moderate
+        const quietTimes = remainingHours
+          .filter((d: any) => d.crowding_level === 'quiet' || d.crowding_level === 'moderate')
+          .sort((a: any, b: any) => a.crowding_score - b.crowding_score)
+          .slice(0, 3)
+          .map((d: any) => {
+            const startHour = d.hour_of_day.toString().padStart(2, '0');
+            const endHour = Math.min(23, d.hour_of_day + 2).toString().padStart(2, '0');
+            return `${startHour}:00-${endHour}:00`;
+          });
+        
+        today.push(...quietTimes);
       }
 
-      // Find quietest times today
-      const currentHour = new Date().getHours();
-      const remainingHours = todayData.filter((d: any) => d.hour_of_day >= currentHour);
+      // Get best times for rest of week
+      const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const thisWeek: Array<{ day: string; hours: string[] }> = [];
 
-      const quietTimes = remainingHours
-        .filter((d: any) => d.crowding_level === 'quiet' || d.crowding_level === 'moderate')
-        .sort((a: any, b: any) => a.crowding_score - b.crowding_score)
-        .slice(0, 3)
-        .map((d: any) => {
-          const startHour = d.hour_of_day.toString().padStart(2, '0');
-          const endHour = (d.hour_of_day + 2).toString().padStart(2, '0');
-          return `${startHour}:00-${endHour}:00`;
-        });
+      for (let i = 1; i <= 6; i++) {
+        const dayIndex = (currentDayOfWeek + i) % 7;
+        const { data: dayData } = await supabase
+          .from('crowding_data')
+          .select('hour_of_day, crowding_level, crowding_score')
+          .eq('destination_id', destinationId)
+          .eq('day_of_week', dayIndex)
+          .order('crowding_score', { ascending: true })
+          .limit(3);
+
+        if (dayData && dayData.length > 0) {
+          const bestHours = dayData
+            .filter((d: any) => d.crowding_level === 'quiet' || d.crowding_level === 'moderate')
+            .slice(0, 2)
+            .map((d: any) => {
+              const hour = d.hour_of_day.toString().padStart(2, '0');
+              return `${hour}:00`;
+            });
+          
+          if (bestHours.length > 0) {
+            thisWeek.push({
+              day: weekDays[dayIndex],
+              hours: bestHours,
+            });
+          }
+        }
+      }
 
       return {
-        today: quietTimes,
-        thisWeek: [],
+        today,
+        thisWeek,
       };
     } catch (error) {
       console.error('Error predicting best times:', error);
