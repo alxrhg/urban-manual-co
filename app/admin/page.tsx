@@ -702,13 +702,13 @@ export default function AdminPage() {
         return;
       }
       
-      const total = data?.length || 0;
-      const enriched = data?.filter(d => d.google_place_id).length || 0;
-      const withAddress = data?.filter(d => d.formatted_address).length || 0;
-      const withPhone = data?.filter(d => d.international_phone_number).length || 0;
-      const withWebsite = data?.filter(d => d.website).length || 0;
-      const withRating = data?.filter(d => d.rating).length || 0;
-      const needsEnrichment = data?.filter(d => !d.google_place_id || !d.formatted_address || !d.international_phone_number || !d.website).length || 0;
+      const total = (data as any[])?.length || 0;
+      const enriched = (data as any[])?.filter((d: any) => d.google_place_id).length || 0;
+      const withAddress = (data as any[])?.filter((d: any) => d.formatted_address).length || 0;
+      const withPhone = (data as any[])?.filter((d: any) => d.international_phone_number).length || 0;
+      const withWebsite = (data as any[])?.filter((d: any) => d.website).length || 0;
+      const withRating = (data as any[])?.filter((d: any) => d.rating).length || 0;
+      const needsEnrichment = (data as any[])?.filter((d: any) => !d.google_place_id || !d.formatted_address || !d.international_phone_number || !d.website).length || 0;
       
       setEnrichmentStats({
         total,
