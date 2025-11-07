@@ -791,7 +791,7 @@ export default function AdminPage() {
       const saves = (interactions as any[])?.filter((i: any) => i.interaction_type === 'save').length || 0;
 
       // Top searches
-      const searchQueries = visits?.map(v => v.search_query).filter(Boolean) || [];
+      const searchQueries = (visits as any[])?.map((v: any) => v.search_query).filter(Boolean) || [];
       const searchCounts: Record<string, number> = {};
       searchQueries.forEach((q: string) => {
         searchCounts[q] = (searchCounts[q] || 0) + 1;
