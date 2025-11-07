@@ -27,6 +27,7 @@ import {
   getSessionId,
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
+import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
@@ -34,12 +35,6 @@ import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
-import { SessionResume } from '@/components/SessionResume';
-import { ContextCards } from '@/components/ContextCards';
-import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
-import { DestinationBadges } from '@/components/DestinationBadges';
-import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
-import { type ExtractedIntent } from '@/app/api/intent/schema';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -253,14 +248,13 @@ export default function Home() {
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
-  const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null); // Store enhanced intent data
+  const [searchIntent, setSearchIntent] = useState<any>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
 
   // Session and context state
   const [lastSession, setLastSession] = useState<any>(null);
   const [userContext, setUserContext] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [showSessionResume, setShowSessionResume] = useState(false);
   // Phase 2 & 3: Enriched greeting context
   const [enrichedGreetingContext, setEnrichedGreetingContext] = useState<any>(null);
 
@@ -324,9 +318,6 @@ export default function Home() {
           // Show session resume if session is less than 24 hours old
           const lastActivity = new Date(data.last_activity || Date.now());
           const hoursSince = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60);
-          if (hoursSince < 24) {
-            setShowSessionResume(true);
-          }
         }
       }
     } catch (error) {
@@ -386,12 +377,6 @@ export default function Home() {
     }
   }
 
-  function handleResumeSession(sessionId: string) {
-    // Load the session
-    setShowSessionResume(false);
-    // The session is already loaded from fetchLastSession
-    // Just scroll to the chat area or show a confirmation
-  }
 
   // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
   // Works like chat but with convenience of auto-trigger
@@ -979,24 +964,6 @@ export default function Home() {
                   {/* Show GreetingHero only when no active search */}
                   {!submittedQuery && (
                     <>
-                      {/* Session Resume - Show if there's a recent session */}
-                      {showSessionResume && lastSession && (
-                        <div className="mb-6">
-                          <SessionResume
-                            session={lastSession}
-                            onResume={handleResumeSession}
-                            onDismiss={() => setShowSessionResume(false)}
-                          />
-                        </div>
-                      )}
-
-                      {/* Context Cards - Show user's saved preferences */}
-                      {userContext && user && !searchTerm && (
-                        <div className="mb-6">
-                          <ContextCards context={userContext} />
-                        </div>
-                      )}
-
                       <GreetingHero
                         searchQuery={searchTerm}
                         onSearchChange={(value) => {
@@ -1082,22 +1049,6 @@ export default function Home() {
                           })()}
                         </h2>
                       </div>
-
-                      {/* Intent Confirmation Chips */}
-                      {searchIntent && !searching && (
-                        <div className="mb-6">
-                          <IntentConfirmationChips
-                            intent={searchIntent}
-                            onChipRemove={(chipType, value) => {
-                              // Modify the search based on what was removed
-                              setSearchTerm('');
-                              setSubmittedQuery('');
-                              setSearchIntent(null);
-                            }}
-                            editable={true}
-                          />
-                        </div>
-                      )}
 
                       {/* Scrollable chat history - Fixed height for about 2 message pairs */}
                       <div
@@ -1563,18 +1514,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Real-Time Status Badge - Compact */}
-                      {destination.id && (
-                        <div className="mt-2">
-                          <RealtimeStatusBadge
-                            destinationId={destination.id}
-                            compact={true}
-                            showCrowding={true}
-                            showWaitTime={false}
-                            showAvailability={true}
-                          />
-                        </div>
-                      )}
                     </div>
                   </button>
                   );
