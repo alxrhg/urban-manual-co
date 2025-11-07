@@ -616,6 +616,13 @@ export default function Home() {
 
       const data = await response.json();
 
+      // Update search tier based on mode
+      if (searchMode === 'discovery') {
+        setSearchTier('discovery-engine');
+      } else {
+        setSearchTier('classic-search');
+      }
+
       // Update conversation history for API context (not displayed)
       const userMessage = { role: 'user' as const, content: query };
       const assistantMessage = { role: 'assistant' as const, content: data.content || '', destinations: data.destinations };
