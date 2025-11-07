@@ -13,26 +13,32 @@ export async function POST(request: NextRequest) {
     const suggestions: string[] = [];
 
     // 1. Search cities
-    const { data: cities } = await supabase
-      .from('destinations')
-      .select('city')
-      .ilike('city', `%${searchTerm}%`)
-      .limit(5);
+    const { data: cities } = await (async () => {
+      const query = supabase
+        .from('destinations')
+        .select('city')
+        .ilike('city', `%${searchTerm}%`)
+        .limit(5);
+      return await query;
+    })();
 
     if (cities) {
-      const uniqueCities = Array.from(new Set(cities.map(c => c.city)));
-      suggestions.push(...uniqueCities.map(c => `📍 ${c}`));
+      const uniqueCities = Array.from(new Set(cities.map((c: any) => c.city)));
+      suggestions.push(...uniqueCities.map((c: string) => `📍 ${c}`));
     }
 
     // 2. Search destinations
-    const { data: destinations } = await supabase
-      .from('destinations')
-      .select('name, city')
-      .or(`name.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
-      .limit(5);
+    const { data: destinations } = await (async () => {
+      const query = supabase
+        .from('destinations')
+        .select('name, city')
+        .or(`name.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
+        .limit(5);
+      return await query;
+    })();
 
     if (destinations) {
-      destinations.forEach(dest => {
+      destinations.forEach((dest: any) => {
         suggestions.push(`🏛️ ${dest.name} - ${dest.city}`);
       });
     }
