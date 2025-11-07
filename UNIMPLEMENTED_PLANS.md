@@ -107,18 +107,18 @@
 ## 🟡 MEDIUM PRIORITY - PARTIALLY IMPLEMENTED
 
 ### 4. Near Me Filter (NEAR_ME_FILTER_PLAN.md)
-**Status**: ⚠️ Needs verification
+**Status**: ⚠️ PARTIALLY IMPLEMENTED
 **Timeline**: 2-3 days planned
 
-**Check if implemented**:
-- [ ] Geolocation hook (`hooks/useGeolocation.ts`)
-- [ ] Near Me filter component (`components/NearMeFilter.tsx`)
-- [ ] Distance badge component (`components/DistanceBadge.tsx`)
-- [ ] Nearby API endpoint (`app/api/nearby/route.ts`)
-- [ ] Database function `destinations_nearby`
-- [ ] Coordinate population script
+**Implementation Status**:
+- ✅ Geolocation hook (`hooks/useGeolocation.ts`) - EXISTS
+- ❌ Near Me filter component (`components/NearMeFilter.tsx`) - MISSING
+- ✅ Distance badge component (`components/DistanceBadge.tsx`) - EXISTS
+- ✅ Nearby API endpoint (`app/api/nearby/route.ts`) - EXISTS
+- ✅ Database function `destinations_nearby` - EXISTS (in migration 500)
+- ⚠️ Coordinate population script - Needs verification
 
-**Note**: Plan exists but needs verification if components are actually implemented
+**Missing**: The main `NearMeFilter` component that provides the UI toggle and radius slider
 
 ---
 
@@ -176,7 +176,7 @@
    - ❌ Transportation cost estimates
 
 4. **Location-Aware Features**
-   - ⚠️ "Near me" real-time geolocation (may be implemented)
+   - ⚠️ "Near me" real-time geolocation (PARTIALLY - backend exists, UI component missing)
    - ❌ Neighborhoods and districts
    - ❌ Map-first browsing experience
 
