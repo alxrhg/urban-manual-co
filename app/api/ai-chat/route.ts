@@ -4,6 +4,7 @@ import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import { unifiedSearch } from '@/lib/discovery-engine/integration';
 
 // Get Supabase client - prefer service role, fallback to anon key
 let supabase: ReturnType<typeof createClient>;
@@ -591,6 +592,60 @@ async function processAIChatRequest(
     // Parallel search strategies for better performance
     const searchPromises: Promise<any>[] = [];
 
+    // Strategy 0: Discovery Engine (AI-powered semantic search) - highest priority
+    searchPromises.push(
+      (async () => {
+        try {
+          const discoveryResults = await unifiedSearch({
+            query,
+            userId,
+            city: intent.city,
+            category: intent.category,
+            priceLevel: intent.filters?.priceLevel,
+            minRating: intent.filters?.rating,
+            pageSize: 100,
+            useCache: true,
+          });
+
+          if (discoveryResults.source === 'discovery_engine' && discoveryResults.results.length > 0) {
+            // Map Discovery Engine results to match expected format
+            const mappedResults = discoveryResults.results.map((r: any) => ({
+              slug: r.slug || r.id,
+              name: r.name,
+              city: r.city,
+              category: r.category,
+              description: r.description,
+              rating: r.rating,
+              price_level: r.priceLevel,
+              tags: r.tags || [],
+              relevanceScore: r.relevanceScore || 0,
+            }));
+
+            // Fetch full destination data from Supabase for enriched fields
+            if (mappedResults.length > 0) {
+              const slugs = mappedResults.map((r: any) => r.slug).filter(Boolean);
+              const { data: fullData } = await supabase
+                .from('destinations')
+                .select('*')
+                .in('slug', slugs);
+
+              // Merge Discovery Engine relevance with full data
+              const enrichedResults = mappedResults.map((deResult: any) => {
+                const fullDataItem = fullData?.find((d: any) => d.slug === deResult.slug);
+                return fullDataItem ? { ...fullDataItem, relevanceScore: deResult.relevanceScore } : deResult;
+              }).filter((r: any) => r.slug); // Remove any that don't have slugs
+
+              return { type: 'discovery_engine', data: enrichedResults, error: null };
+            }
+          }
+          return { type: 'discovery_engine', data: [], error: null };
+        } catch (error: any) {
+          console.warn('[AI Chat] Discovery Engine search failed, falling back:', error);
+          return { type: 'discovery_engine', data: [], error };
+        }
+      })()
+    );
+
     // Strategy 1: Vector similarity search (if embeddings available)
     if (queryEmbedding) {
       searchPromises.push(
@@ -664,7 +719,7 @@ async function processAIChatRequest(
     // Execute all search strategies in parallel
     const searchResults = await Promise.all(searchPromises);
 
-    // Use the first successful result (prefer vector over keyword)
+    // Use the first successful result (prefer Discovery Engine > vector > keyword)
     for (const result of searchResults) {
       if (!result.error && result.data.length > 0) {
         results = result.data;
