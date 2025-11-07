@@ -1000,6 +1000,37 @@ export default function Home() {
                         </div>
                       )}
 
+                      {/* Search Mode Toggle */}
+                      <div className="flex items-center justify-center gap-2 mb-4 px-4">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Search:</span>
+                        <button
+                          onClick={() => setSearchMode('discovery')}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                            searchMode === 'discovery'
+                              ? 'bg-blue-600 text-white shadow-md'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          🚀 AI Search
+                        </button>
+                        <button
+                          onClick={() => setSearchMode('classic')}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                            searchMode === 'classic'
+                              ? 'bg-blue-600 text-white shadow-md'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          🔍 Classic
+                        </button>
+                        {searchMode === 'discovery' && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">(Discovery Engine)</span>
+                        )}
+                        {searchMode === 'classic' && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">(Vector/Keyword)</span>
+                        )}
+                      </div>
+
                       <GreetingHero
                         searchQuery={searchTerm}
                         onSearchChange={(value) => {
