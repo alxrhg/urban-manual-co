@@ -95,6 +95,7 @@ async function main() {
           google_maps_url: enriched.places.google_maps_url,
           tags: enriched.gemini.tags,
           category: enriched.category,
+          cuisine_type: enriched.places.cuisine_type,
           last_enriched_at: new Date().toISOString(),
         })
         .eq('slug', dest.slug);
@@ -107,6 +108,7 @@ async function main() {
       console.log(`     Rating: ${enriched.places.rating || 'N/A'}`);
       console.log(`     Price: ${'$'.repeat(enriched.places.price_level || 0) || 'N/A'}`);
       console.log(`     Category: ${enriched.category}`);
+      console.log(`     Cuisine Type: ${enriched.places.cuisine_type || 'N/A'}`);
       console.log(`     Tags: ${enriched.gemini.tags.join(', ')}`);
       console.log('');
 
