@@ -31,18 +31,10 @@ export default function AppleMap({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Check if MapKit credentials are configured
-  const hasCredentials = !!(
-    process.env.NEXT_PUBLIC_MAPKIT_TEAM_ID ||
-    process.env.MAPKIT_TEAM_ID
-  );
-
+  // Note: Client-side can't check server-side env vars, so we'll try to load
+  // and let the token API handle credential validation
+  // The error will come from the token API if credentials are missing
   useEffect(() => {
-    // If no credentials, show error immediately
-    if (!hasCredentials) {
-      setError('MapKit credentials not configured. Please add MAPKIT_TEAM_ID, MAPKIT_KEY_ID, and MAPKIT_PRIVATE_KEY to your environment variables.');
-      return;
-    }
 
     // Check if MapKit is already loaded and initialized
     if (window.mapkit && window.mapkit.loaded && window.__mapkitInitialized) {
@@ -114,7 +106,14 @@ export default function AppleMap({
 
                   if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Token request failed: ${res.status}`);
+                    const errorMsg = errorData.error || `Token request failed: ${res.status}`;
+                    
+                    // Provide helpful message for missing credentials
+                    if (errorMsg.includes('credentials not configured') || res.status === 500) {
+                      throw new Error('MapKit credentials not configured in Vercel. Please add MAPKIT_TEAM_ID, MAPKIT_KEY_ID, and MAPKIT_PRIVATE_KEY to your Vercel environment variables. These are server-side only (no NEXT_PUBLIC_ prefix needed).');
+                    }
+                    
+                    throw new Error(errorMsg);
                   }
 
                   const data = await res.json();
@@ -204,7 +203,7 @@ export default function AppleMap({
       });
 
     // No cleanup - we want to keep the script loaded for other instances
-  }, [hasCredentials]);
+  }, []);
 
   // Initialize map once MapKit is loaded
   useEffect(() => {
@@ -309,15 +308,20 @@ export default function AppleMap({
               Retry attempt {retryCount}/3
             </p>
           )}
-          {error.includes('credentials not configured') && (
-            <a
-              href="https://developer.apple.com/maps/web/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block"
-            >
-              Learn how to set up MapKit →
-            </a>
+          {(error.includes('credentials not configured') || error.includes('Vercel')) && (
+            <div className="mt-2 space-y-1">
+              <a
+                href="https://developer.apple.com/maps/web/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline block"
+              >
+                Learn how to set up MapKit →
+              </a>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                Make sure to add the env vars in Vercel: Settings → Environment Variables
+              </p>
+            </div>
           )}
         </div>
       </div>
