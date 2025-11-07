@@ -900,7 +900,10 @@ export default function Home() {
   };
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
-  const displayedCities = showAllCities ? cities : cities.slice(0, 20);
+  // Ensure displayedCities is always an array, even if cities is empty
+  const displayedCities = cities.length > 0 
+    ? (showAllCities ? cities : cities.slice(0, 20))
+    : [];
 
   if (loading) {
     return (
@@ -1124,7 +1127,7 @@ export default function Home() {
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
-                    {/* City List */}
+                    {/* City List - Always show, even if cities are loading */}
                     <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                       <button
                         onClick={() => {
@@ -1140,7 +1143,7 @@ export default function Home() {
                       >
                         All Cities
                       </button>
-                      {displayedCities.map((city) => (
+                      {displayedCities.length > 0 && displayedCities.map((city) => (
                         <button
                           key={city}
                           onClick={() => {
@@ -1168,67 +1171,65 @@ export default function Home() {
                       )}
                     </div>
                     
-                    {/* Category List (including Michelin) */}
-                    {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                    {/* Category List (including Michelin) - Always show */}
+                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                      <button
+                        onClick={() => {
+                          setSelectedCategory("");
+                          setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+                          setCurrentPage(1);
+                          trackFilterChange({ filterType: 'category', value: 'all' });
+                        }}
+                        className={`transition-all duration-200 ease-out ${
+                          !selectedCategory && !advancedFilters.michelin
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                        }`}
+                      >
+                        All Categories
+                      </button>
+                      {/* Michelin right after All Categories */}
+                      <button
+                        onClick={() => {
+                          const newValue = !advancedFilters.michelin;
+                          setSelectedCategory("");
+                          setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                          setCurrentPage(1);
+                          trackFilterChange({ filterType: 'michelin', value: newValue });
+                        }}
+                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                          advancedFilters.michelin
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                        }`}
+                      >
+                        <img
+                          src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                          alt="Michelin star"
+                          className="h-3 w-3"
+                        />
+                        Michelin
+                      </button>
+                      {categories.length > 0 && categories.map((category) => (
                         <button
+                          key={category}
                           onClick={() => {
-                            setSelectedCategory("");
-                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+                            const newCategory = category === selectedCategory ? "" : category;
+                            setSelectedCategory(newCategory);
+                            setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
                             setCurrentPage(1);
-                            trackFilterChange({ filterType: 'category', value: 'all' });
+                            trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                           }}
                           className={`transition-all duration-200 ease-out ${
-                            !selectedCategory && !advancedFilters.michelin
+                            selectedCategory === category && !advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          All Categories
+                          {capitalizeCategory(category)}
                         </button>
-                        {/* Michelin right after All Categories */}
-                        <button
-                          onClick={() => {
-                            const newValue = !advancedFilters.michelin;
-                            setSelectedCategory("");
-                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
-                            setCurrentPage(1);
-                            trackFilterChange({ filterType: 'michelin', value: newValue });
-                          }}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                            advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                            alt="Michelin star"
-                            className="h-3 w-3"
-                          />
-                          Michelin
-                        </button>
-                        {categories.map((category) => (
-                          <button
-                            key={category}
-                            onClick={() => {
-                              const newCategory = category === selectedCategory ? "" : category;
-                              setSelectedCategory(newCategory);
-                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
-                              setCurrentPage(1);
-                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                            }}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCategory === category && !advancedFilters.michelin
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
-                          >
-                            {capitalizeCategory(category)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
