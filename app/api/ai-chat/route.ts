@@ -636,7 +636,10 @@ async function processAIChatRequest(
               // Merge Discovery Engine relevance with full data
               const enrichedResults = mappedResults.map((deResult: any) => {
                 const fullDataItem = fullData?.find((d: any) => d.slug === deResult.slug);
-                return fullDataItem ? { ...fullDataItem, relevanceScore: deResult.relevanceScore } : deResult;
+                if (fullDataItem && typeof fullDataItem === 'object') {
+                  return { ...(fullDataItem as Record<string, any>), relevanceScore: deResult.relevanceScore };
+                }
+                return deResult;
               }).filter((r: any) => r.slug); // Remove any that don't have slugs
 
               return { type: 'discovery_engine', data: enrichedResults, error: null };
