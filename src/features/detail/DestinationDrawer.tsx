@@ -707,29 +707,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-            {/* Rating & Price Level */}
-            {((enrichedData?.rating || enrichedData?.price_level) || (destination.rating || destination.price_level)) && (
-              <div className="mt-4 flex items-center gap-4 text-sm">
-                {(enrichedData?.rating || destination.rating) && (
-                  <div className="flex items-center gap-1.5">
-                    <span>⭐</span>
-                    <span className="font-semibold">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Google Rating{enrichedData?.user_ratings_total ? ` (${enrichedData.user_ratings_total.toLocaleString()} reviews)` : ''}
-                    </span>
-                  </div>
-                )}
-                {(enrichedData?.price_level || destination.price_level) && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold">
-                      {'$'.repeat(enrichedData?.price_level || destination.price_level)}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">Price Level</span>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Editorial Summary */}
             {enrichedData?.editorial_summary && (
               <div className="mt-4">

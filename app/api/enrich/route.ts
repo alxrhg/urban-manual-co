@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
         google_maps_url: enriched.places.google_maps_url,
         tags: enriched.gemini.tags,
         category: enriched.category,
+        cuisine_type: enriched.places.cuisine_type,
         last_enriched_at: new Date().toISOString(),
       })
       .eq('slug', slug);

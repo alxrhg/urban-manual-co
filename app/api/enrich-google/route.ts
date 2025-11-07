@@ -81,6 +81,7 @@ async function getPlaceDetails(placeId: string) {
         'editorialSummary',
         'displayName',
         'types',
+        'primaryTypeDisplayName',
         'utcOffset',
         'shortFormattedAddress',
         'adrFormatAddress',
@@ -129,6 +130,7 @@ async function getPlaceDetails(placeId: string) {
     } : null,
     name: place.displayName?.text || '',
     types: place.types || [],
+    primary_type_display_name: place.primaryTypeDisplayName?.text || null,
     utc_offset: place.utcOffset ? place.utcOffset.totalSeconds / 60 : null,
     vicinity: place.shortFormattedAddress || '',
     adr_address: place.adrFormatAddress || '',
@@ -247,6 +249,23 @@ export async function POST(req: Request) {
         reviews_json: reviews.length ? JSON.stringify(reviews) : null,
       }
 
+      // Extract cuisine type from types array
+      const extractCuisineType = (types: string[]): string | null => {
+        if (!types || types.length === 0) return null;
+        const cuisineTypes = types.filter(type => 
+          type.includes('_restaurant') && 
+          type !== 'restaurant' && 
+          type !== 'food' &&
+          !type.includes('fast_food') &&
+          !type.includes('pizza')
+        );
+        if (cuisineTypes.length > 0) {
+          const cuisine = cuisineTypes[0].replace('_restaurant', '');
+          return cuisine.charAt(0).toUpperCase() + cuisine.slice(1);
+        }
+        return null;
+      };
+
       // Try to add extended fields, but don't fail if columns don't exist
       // These fields require the extended migration to be run
       const extendedFields: any = {
@@ -256,6 +275,7 @@ export async function POST(req: Request) {
         editorial_summary: details.editorial_summary?.overview || null,
         google_name: details.name || null,
         place_types_json: details.types ? JSON.stringify(details.types) : null,
+        cuisine_type: extractCuisineType(details.types || []),
         utc_offset: details.utc_offset ?? null,
         vicinity: details.vicinity || null,
         adr_address: details.adr_address || null,

@@ -80,6 +80,7 @@ async function getPlaceDetails(placeId: string) {
         'currentOpeningHours',
         'editorialSummary',
         'types',
+        'primaryTypeDisplayName',
         'photos',
         'location',
       ].join(','),
@@ -109,6 +110,7 @@ async function getPlaceDetails(placeId: string) {
       overview: place.editorialSummary.overview || '',
     } : null,
     types: place.types || [],
+    primary_type_display_name: place.primaryTypeDisplayName?.text || null,
     photos: place.photos || null,
     geometry: place.location ? {
       location: {
@@ -117,6 +119,23 @@ async function getPlaceDetails(placeId: string) {
       },
     } : null,
   };
+}
+
+// Helper to extract cuisine type from types array
+function extractCuisineType(types: string[]): string | null {
+  if (!types || types.length === 0) return null;
+  const cuisineTypes = types.filter(type => 
+    type.includes('_restaurant') && 
+    type !== 'restaurant' && 
+    type !== 'food' &&
+    !type.includes('fast_food') &&
+    !type.includes('pizza')
+  );
+  if (cuisineTypes.length > 0) {
+    const cuisine = cuisineTypes[0].replace('_restaurant', '');
+    return cuisine.charAt(0).toUpperCase() + cuisine.slice(1);
+  }
+  return null;
 }
 
 // Helper to convert price level from enum to number
@@ -239,6 +258,7 @@ export async function POST(request: NextRequest) {
       price_level: details.price_level || null,
       opening_hours: details.current_opening_hours || details.opening_hours || null,
       place_types: details.types || [],
+      cuisine_type: extractCuisineType(details.types || []),
     };
 
     return NextResponse.json(result);

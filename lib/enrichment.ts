@@ -14,6 +14,7 @@ export interface PlacesEnrichmentData {
   website: string | null;
   google_maps_url: string | null;
   google_types: string[];
+  cuisine_type: string | null;
 }
 
 export interface GeminiTagsData {
@@ -79,6 +80,7 @@ export async function findPlaceByText(
         website: null,
         google_maps_url: null,
         google_types: [],
+        cuisine_type: null,
       };
     }
 
@@ -86,6 +88,9 @@ export async function findPlaceByText(
     console.log(`✅ Found place: ${place.displayName?.text || name} (${place.id})`);
     console.log(`   Rating: ${place.rating || 'N/A'}, Types: ${(place.types || []).join(', ')}`);
 
+    // Extract cuisine type from types array
+    // Look for patterns like: italian_restaurant, mexican_restaurant, japanese_restaurant, etc.
+    const cuisineType = extractCuisineType(place.types || []);
 
     // Convert price level from Google's format to 1-4
     const priceLevelMap: Record<string, number> = {
@@ -105,6 +110,7 @@ export async function findPlaceByText(
       website: place.websiteUri || null,
       google_maps_url: place.googleMapsUri || null,
       google_types: place.types || [],
+      cuisine_type: cuisineType,
     };
   } catch (error) {
     console.error('Places API error:', error);
@@ -119,6 +125,32 @@ export async function findPlaceByText(
       google_types: [],
     };
   }
+}
+
+/**
+ * Extract cuisine type from Google Places types array
+ */
+function extractCuisineType(types: string[]): string | null {
+  if (!types || types.length === 0) return null;
+
+  // Look for cuisine-specific restaurant types
+  // Common patterns: {cuisine}_restaurant (e.g., italian_restaurant, mexican_restaurant)
+  const cuisineTypes = types.filter(type => 
+    type.includes('_restaurant') && 
+    type !== 'restaurant' && 
+    type !== 'food' &&
+    !type.includes('fast_food') &&
+    !type.includes('pizza')
+  );
+
+  if (cuisineTypes.length > 0) {
+    // Return the first cuisine type found, removing '_restaurant' suffix for cleaner display
+    const cuisine = cuisineTypes[0].replace('_restaurant', '');
+    // Capitalize first letter
+    return cuisine.charAt(0).toUpperCase() + cuisine.slice(1);
+  }
+
+  return null;
 }
 
 /**
