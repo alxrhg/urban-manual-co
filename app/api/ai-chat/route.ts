@@ -3,11 +3,33 @@ import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
-const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// Get Supabase client - prefer service role, fallback to anon key
+let supabase: ReturnType<typeof createClient>;
+try {
+  const serviceClient = createServiceRoleClient();
+  if (serviceClient) {
+    supabase = serviceClient;
+  } else {
+    // Fallback to anon key if service role not available
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey || 
+        supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder')) {
+      throw new Error('Supabase configuration missing or invalid');
+    }
+    
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+  }
+} catch (error) {
+  console.error('[AI Chat] Failed to initialize Supabase client:', error);
+  // Create a dummy client to prevent crashes - API will handle errors gracefully
+  supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
 
 // Simple in-memory cache for search results
 interface CacheEntry {

@@ -1328,6 +1328,42 @@ export default function Home() {
               />
             )}
 
+            {/* AI-Powered Personalized Recommendations - Show when user is logged in and no active search */}
+            {user && !submittedQuery && !selectedCity && !selectedCategory && (
+              <PersonalizedRecommendations
+                limit={12}
+                title="For You"
+                onDestinationClick={(destination) => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+
+                  // Track destination click
+                  trackDestinationClick({
+                    destinationSlug: destination.slug,
+                    position: 0,
+                    source: 'personalized_recommendations',
+                  });
+
+                  // Also track with new analytics system
+                  if (destination.id) {
+                    import('@/lib/analytics/track').then(({ trackEvent }) => {
+                      trackEvent({
+                        event_type: 'click',
+                        destination_id: destination.id,
+                        destination_slug: destination.slug,
+                        metadata: {
+                          category: destination.category,
+                          city: destination.city,
+                          source: 'personalized_recommendations',
+                        },
+                      });
+                    });
+                  }
+                }}
+                className="mb-12"
+              />
+            )}
+
             {/* Trending Section - Show when no active search */}
             {!submittedQuery && (
               <TrendingSection />
