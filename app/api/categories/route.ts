@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Get unique categories and count
     const categoryMap = new Map<string, number>();
 
-    destinations?.forEach(dest => {
+    destinations?.forEach((dest: any) => {
       if (dest.category) {
         const cat = dest.category.trim();
         categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
