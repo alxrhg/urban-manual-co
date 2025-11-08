@@ -85,12 +85,20 @@ export function createClient() {
   return createBrowserClient(url, key, {
     cookies: {
       getAll() {
+        // Check if we're in a browser environment
+        if (typeof window === 'undefined' || typeof document === 'undefined') {
+          return [];
+        }
         return document.cookie.split('; ').map(cookie => {
           const [name, ...rest] = cookie.split('=');
           return { name, value: rest.join('=') };
         });
       },
       setAll(cookiesToSet) {
+        // Check if we're in a browser environment
+        if (typeof window === 'undefined' || typeof document === 'undefined') {
+          return;
+        }
         cookiesToSet.forEach(({ name, value, options }) => {
           document.cookie = `${name}=${value}; path=${options?.path || '/'}; ${
             options?.maxAge ? `max-age=${options.maxAge};` : ''
