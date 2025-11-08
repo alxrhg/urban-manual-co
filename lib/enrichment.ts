@@ -96,6 +96,18 @@ export async function findPlaceByText(
         google_maps_url: null,
         google_types: [],
         cuisine_type: null,
+        formatted_address: null,
+        international_phone_number: null,
+        latitude: null,
+        longitude: null,
+        user_ratings_total: null,
+        reviews: null,
+        business_status: null,
+        editorial_summary: null,
+        plus_code: null,
+        timezone_id: null,
+        vicinity: null,
+        address_components: null,
       };
     }
 
