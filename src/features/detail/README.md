@@ -12,7 +12,7 @@ Full-featured destination detail drawer/sidebar component.
 - Destination information display
 - Save/visit functionality
 - Recommendations integration
-- Apple Maps integration
+- Google Maps integration
 - Share functionality
 - Lists management
 - Visit history with ratings
@@ -74,7 +74,7 @@ All detail components are dynamically imported to ensure optimal bundle size:
 ## Dependencies
 
 - `@/components/VisitModal` - Visit confirmation modal
-- `@/components/AppleMap` - Map integration
+- `@/components/GoogleMap` - Map integration
 - `@/lib/analytics/track` - Event tracking
 - `@/lib/supabase` - Data fetching
 
