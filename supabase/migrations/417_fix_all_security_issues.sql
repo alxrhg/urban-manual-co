@@ -93,12 +93,13 @@ BEGIN
       opening_hours,
       phone_number,
       website,
-      lat,
-      long,
-      subline,
-      main_image,
-      created_at,
-      updated_at
+      google_maps_url,
+      tags,
+      last_enriched_at,
+      CASE
+        WHEN last_enriched_at IS NOT NULL THEN true
+        ELSE false
+      END as is_enriched
     FROM destinations;
     
     COMMENT ON VIEW enriched_destinations IS 'Enriched destinations view without SECURITY DEFINER - safe for public access';
