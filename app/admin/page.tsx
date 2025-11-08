@@ -1248,6 +1248,11 @@ export default function AdminPage() {
                   onSave={async (data) => {
                     setIsSaving(true);
                     try {
+                      // Ensure Michelin-starred destinations are categorized as Dining
+                      if (data.michelin_stars && data.michelin_stars > 0) {
+                        data.category = 'Dining';
+                      }
+
                       if (editingDestination) {
                         // Update existing
                         const { error } = await (supabase

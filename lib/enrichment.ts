@@ -328,6 +328,9 @@ export async function enrichDestination(
     console.log(`Keeping existing category: ${finalCategory}`);
   }
 
+  // Note: If destination has michelin_stars > 0, category will be enforced at database level
+  // via the trigger created in migration 421_ensure_michelin_is_dining.sql
+
   console.log(`Enrichment complete for ${name}`);
   console.log(`   Place ID: ${placesData.place_id || 'Not found'}`);
   console.log(`   Rating: ${placesData.rating || 'N/A'}`);

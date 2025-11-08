@@ -33,6 +33,20 @@ export async function POST(request: NextRequest) {
     // Enrich with Places API + Gemini
     const enriched = await enrichDestination(name, city, category, content);
 
+    // Check if destination has Michelin stars - if so, ensure category is 'Dining'
+    // First, get current michelin_stars value
+    const { data: currentDestination } = await supabase
+      .from('destinations')
+      .select('michelin_stars')
+      .eq('slug', slug)
+      .single();
+
+    // Determine final category - if michelin_stars > 0, must be 'Dining'
+    let finalCategory = enriched.category;
+    if (currentDestination?.michelin_stars && currentDestination.michelin_stars > 0) {
+      finalCategory = 'Dining';
+    }
+
     // Update database
     const { error: updateError } = await supabase
       .from('destinations')
@@ -45,7 +59,7 @@ export async function POST(request: NextRequest) {
         website: enriched.places.website,
         google_maps_url: enriched.places.google_maps_url,
         tags: enriched.gemini.tags,
-        category: enriched.category,
+        category: finalCategory,
         cuisine_type: enriched.places.cuisine_type,
         last_enriched_at: new Date().toISOString(),
       })
