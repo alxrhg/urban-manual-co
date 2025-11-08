@@ -1378,7 +1378,7 @@ export default function Home() {
     }
 
     return filtered;
-  };
+  }
 
   const filterDestinations = () => {
     const filtered = filterDestinationsWithData(destinations);
