@@ -19,6 +19,7 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
+import { generateText } from '@/lib/llm';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -173,7 +174,52 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [parentDestination, setParentDestination] = useState<Destination | null>(null);
   const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
   const [loadingNested, setLoadingNested] = useState(false);
+  const [reviewSummary, setReviewSummary] = useState<string | null>(null);
+  const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
 
+  // Generate AI summary of reviews
+  const generateReviewSummary = async (reviews: any[], destinationName: string) => {
+    if (!reviews || reviews.length === 0) return;
+    
+    setLoadingReviewSummary(true);
+    try {
+      // Extract review texts (limit to first 10 reviews to avoid token limits)
+      const reviewTexts = reviews
+        .slice(0, 10)
+        .map((r: any) => r.text)
+        .filter((text: string) => text && text.length > 0)
+        .join('\n\n');
+
+      if (!reviewTexts) {
+        setLoadingReviewSummary(false);
+        return;
+      }
+
+      const prompt = `Summarize the following customer reviews for ${destinationName} in 2-3 concise sentences. Focus on:
+- Common themes and highlights
+- What customers love most
+- Any notable concerns or patterns
+- Overall sentiment
+
+Reviews:
+${reviewTexts}
+
+Summary:`;
+
+      const summary = await generateText(prompt, { 
+        temperature: 0.7, 
+        maxTokens: 150 
+      });
+
+      if (summary) {
+        setReviewSummary(summary);
+      }
+    } catch (error) {
+      console.error('Error generating review summary:', error);
+    } finally {
+      setLoadingReviewSummary(false);
+    }
+  };
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -206,6 +252,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setEnrichedData(null);
         setIsSaved(false);
         setIsVisited(false);
+        setReviewSummary(null);
         return;
       }
 
@@ -269,6 +316,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               enriched.reviews = typeof dataObj.reviews_json === 'string'
                 ? JSON.parse(dataObj.reviews_json)
                 : dataObj.reviews_json;
+              
+              // Generate AI summary of reviews
+              if (Array.isArray(enriched.reviews) && enriched.reviews.length > 0) {
+                generateReviewSummary(enriched.reviews, destination.name);
+              }
             } catch (e) {
               console.error('Error parsing reviews_json:', e);
             }
@@ -993,30 +1045,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Reviews */}
+          {/* AI Review Summary */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
-              <div className="space-y-4">
-                {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                  <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <span className="font-medium text-sm">{review.author_name}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating} stars</span>
-                          {review.relative_time_description && (
-                            <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    {review.text && (
-                      <span className="text-sm text-gray-700 dark:text-gray-300 mt-2 line-clamp-3">{review.text}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
+              {loadingReviewSummary ? (
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
+                  <span>Summarizing reviews...</span>
+                </div>
+              ) : reviewSummary ? (
+                <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500 dark:text-gray-400">No summary available</div>
+              )}
             </div>
           )}
 
