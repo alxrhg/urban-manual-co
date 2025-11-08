@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal, Edit, Trash2, Sparkles } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -31,7 +31,6 @@ export type Destination = {
 
 export const createColumns = (
   onEdit: (destination: Destination) => void,
-  onEnrich: (slug: string) => void,
   onDelete: (slug: string, name: string) => void
 ): ColumnDef<Destination>[] => [
   {
@@ -157,12 +156,6 @@ export const createColumns = (
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onEnrich(destination.slug)}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              Enrich
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

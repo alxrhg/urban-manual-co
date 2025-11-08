@@ -707,21 +707,12 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-  const [enrichLimit, setEnrichLimit] = useState(100);
-  const [enrichOffset, setEnrichOffset] = useState(0);
-  const [enrichSlug, setEnrichSlug] = useState('');
-  const [enrichRunning, setEnrichRunning] = useState(false);
-  const [enrichResult, setEnrichResult] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [enrichmentStats, setEnrichmentStats] = useState<any>(null);
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [destinationList, setDestinationList] = useState<any[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [listOffset, setListOffset] = useState(0);
-  const [bulkEnriching, setBulkEnriching] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   
   // Regenerate content state
   const [regenerateRunning, setRegenerateRunning] = useState(false);
@@ -772,13 +763,6 @@ export default function AdminPage() {
     checkAuth();
   }, [router]);
 
-  // Load enrichment statistics
-  useEffect(() => {
-    if (isAdmin && authChecked) {
-      loadEnrichmentStats();
-    }
-  }, [isAdmin, authChecked]);
-
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
   useEffect(() => {
     if (isAdmin && authChecked) {
@@ -808,66 +792,6 @@ export default function AdminPage() {
       document.documentElement.style.overflow = '';
     };
   }, [showCreateModal]);
-
-  const loadEnrichmentStats = async () => {
-    setIsLoadingStats(true);
-    try {
-      // Use select with all fields, but only request what exists (some columns might not exist yet)
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('slug, google_place_id, formatted_address, international_phone_number, website, rating');
-      
-      if (error) {
-        console.error('Supabase error:', error);
-        // If columns don't exist, set empty stats
-        setEnrichmentStats({
-          total: 0,
-          enriched: 0,
-          withAddress: 0,
-          withPhone: 0,
-          withWebsite: 0,
-          withRating: 0,
-          needsEnrichment: 0,
-          percentage: 0,
-        });
-        return;
-      }
-      
-      const total = (data as any[])?.length || 0;
-      const enriched = (data as any[])?.filter((d: any) => d.google_place_id).length || 0;
-      const withAddress = (data as any[])?.filter((d: any) => d.formatted_address).length || 0;
-      const withPhone = (data as any[])?.filter((d: any) => d.international_phone_number).length || 0;
-      const withWebsite = (data as any[])?.filter((d: any) => d.website).length || 0;
-      const withRating = (data as any[])?.filter((d: any) => d.rating).length || 0;
-      const needsEnrichment = (data as any[])?.filter((d: any) => !d.google_place_id || !d.formatted_address || !d.international_phone_number || !d.website).length || 0;
-      
-      setEnrichmentStats({
-        total,
-        enriched,
-        withAddress,
-        withPhone,
-        withWebsite,
-        withRating,
-        needsEnrichment,
-        percentage: total > 0 ? Math.round((enriched / total) * 100) : 0,
-      });
-    } catch (e: any) {
-      console.error('Error loading stats:', e);
-      // Set empty stats on error
-      setEnrichmentStats({
-        total: 0,
-        enriched: 0,
-        withAddress: 0,
-        withPhone: 0,
-        withWebsite: 0,
-        withRating: 0,
-        needsEnrichment: 0,
-        percentage: 0,
-      });
-    } finally {
-      setIsLoadingStats(false);
-    }
-  };
 
   const loadDestinationList = async () => {
     setIsLoadingList(true);
@@ -982,9 +906,8 @@ export default function AdminPage() {
 
           if (error) throw error;
 
-          // Reload the list and stats after deletion
+          // Reload the list after deletion
           await loadDestinationList();
-          await loadEnrichmentStats();
 
           toast.success(`Successfully deleted "${name}"`);
         } catch (e: any) {
@@ -1097,10 +1020,6 @@ export default function AdminPage() {
                 (dest) => {
                   setEditingDestination(dest);
                   setShowCreateModal(true);
-                },
-                (slug) => {
-                  setEnrichSlug(slug);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 handleDeleteDestination
               )}
@@ -1287,7 +1206,6 @@ export default function AdminPage() {
                       setShowCreateModal(false);
                       setEditingDestination(null);
                       await loadDestinationList();
-                      await loadEnrichmentStats();
                       toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
                     } catch (e: any) {
                       toast.error(`Error: ${e.message}`);
