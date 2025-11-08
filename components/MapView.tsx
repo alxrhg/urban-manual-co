@@ -86,6 +86,17 @@ export default function MapView({
     const bounds = new google.maps.LatLngBounds();
     let pendingPlaceIdLookups = 0;
     let completedMarkers = 0;
+    const totalDestinations = destinations.filter(d => d.latitude || d.longitude || d.place_id).length;
+
+    const fitBoundsToMarkers = () => {
+      if (markersRef.current.length > 0 && mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.fitBounds(bounds);
+        } catch (e) {
+          // Ignore bounds errors (e.g., if all markers are at same location)
+        }
+      }
+    };
 
     const createMarker = (dest: Destination, position: google.maps.LatLng) => {
       const marker = new google.maps.Marker({
@@ -113,21 +124,9 @@ export default function MapView({
       bounds.extend(position);
       completedMarkers++;
 
-      // Fit bounds when all markers are created
-      const fitBounds = () => {
-        if (markersRef.current.length > 0 && mapInstanceRef.current) {
-          try {
-            mapInstanceRef.current.fitBounds(bounds);
-          } catch (e) {
-            // Ignore bounds errors (e.g., if all markers are at same location)
-          }
-        }
-      };
-
-      // If this was the last marker, fit bounds immediately
-      // Otherwise, wait a bit for async place_id lookups
-      if (pendingPlaceIdLookups === 0) {
-        setTimeout(fitBounds, 100);
+      // Fit bounds when all markers are created (synchronous ones)
+      if (pendingPlaceIdLookups === 0 && completedMarkers === totalDestinations) {
+        setTimeout(fitBoundsToMarkers, 100);
       }
     };
 
@@ -152,16 +151,8 @@ export default function MapView({
               createMarker(dest, place.geometry.location);
             }
             // Fit bounds when all async lookups complete
-            if (pendingPlaceIdLookups === 0 && completedMarkers > 0) {
-              setTimeout(() => {
-                if (markersRef.current.length > 0 && mapInstanceRef.current) {
-                  try {
-                    mapInstanceRef.current.fitBounds(bounds);
-                  } catch (e) {
-                    // Ignore bounds errors
-                  }
-                }
-              }, 200);
+            if (pendingPlaceIdLookups === 0) {
+              setTimeout(fitBoundsToMarkers, 200);
             }
           }
         );
