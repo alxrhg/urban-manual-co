@@ -837,7 +837,9 @@ export default function Home() {
 
     // Fire-and-forget: Load data in background, don't block render
     // Page renders immediately, data loads asynchronously
+    // Prioritize fetchDestinations first (it also sets cities), then fetchFilterData for enhancement
     void fetchDestinations();
+    // fetchFilterData will enhance cities if it has more, but won't block initial display
     void fetchFilterData();
   }, []);
 
@@ -1233,13 +1235,16 @@ export default function Home() {
       setDestinations(data as Destination[]);
 
       // Extract unique cities and categories from full data
+      // IMPORTANT: Set cities/categories immediately (synchronously) to prevent empty filter flash
       const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(data as any[]);
 
-      // OPTIMIZATION: Batch state updates
-      React.startTransition(() => {
-        if (uniqueCities.length) setCities(uniqueCities);
-        if (uniqueCategories.length) setCategories(uniqueCategories);
-      });
+      // Set cities and categories immediately (no batching) to prevent empty filter flash
+      if (uniqueCities.length) {
+        setCities(uniqueCities);
+      }
+      if (uniqueCategories.length) {
+        setCategories(uniqueCategories);
+      }
       
       // Filter destinations immediately with the new data (no filters on initial load)
       const filtered = filterDestinationsWithData(
