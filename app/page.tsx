@@ -2006,6 +2006,18 @@ export default function Home() {
               </div>
             )}
 
+            {/* Discovery Engine Loading Indicator - Jumping Dots */}
+            {discoveryEngineLoading && filteredDestinations.length > 0 && (
+              <div className="mb-6 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <span>Enhancing results with Discovery Engine</span>
+                <div className="flex gap-1">
+                  <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
+                </div>
+              </div>
+            )}
+
             {/* Destination Grid - Original design */}
             {(() => {
               // Determine which destinations to show
