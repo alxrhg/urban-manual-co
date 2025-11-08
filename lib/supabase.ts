@@ -15,12 +15,16 @@ function getRequiredEnv(key: string): string {
       );
       return '';
     }
-    // Client-side: log error but continue
-    console.error(
-      `❌ Missing required environment variable: ${key}\n` +
-      `This variable must be set during build time in Vercel.\n` +
-      `Please ensure ${key} is set in Vercel environment variables and redeploy.`
-    );
+    // Client-side: log warning but don't spam console (errors are suppressed by global handler)
+    // Only log once to avoid console spam
+    if (!(window as any).__supabase_warned) {
+      console.warn(
+        `⚠️ Supabase not configured: ${key} is missing.\n` +
+        `The app will work but without database features.\n` +
+        `Set ${key} in Vercel environment variables to enable full functionality.`
+      );
+      (window as any).__supabase_warned = true;
+    }
     return '';
   }
 
@@ -34,8 +38,11 @@ function getRequiredEnv(key: string): string {
       );
       return '';
     }
-    // Client-side: log error but continue
-    console.error(`❌ ${key} contains placeholder/invalid value. Please set a real Supabase URL in Vercel and redeploy.`);
+    // Client-side: log warning but don't spam console
+    if (!(window as any).__supabase_warned) {
+      console.warn(`⚠️ Supabase not configured: ${key} contains placeholder/invalid value. Set a real value in Vercel to enable database features.`);
+      (window as any).__supabase_warned = true;
+    }
     return '';
   }
   return value;
@@ -57,11 +64,14 @@ let supabase: ReturnType<typeof createClient>;
 try {
   if (!isSupabaseConfigured) {
     if (typeof window !== 'undefined') {
-      console.error(
-        '❌ Supabase configuration is missing or invalid.\n' +
-        'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel environment variables and redeploy.\n' +
-        'Note: NEXT_PUBLIC_ variables are inlined at build time, so you must rebuild after setting them.'
-      );
+      // Only log once to avoid console spam
+      if (!(window as any).__supabase_warned) {
+        console.warn(
+          '⚠️ Supabase not configured. The app will work but without database features.\n' +
+          'Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel to enable full functionality.'
+        );
+        (window as any).__supabase_warned = true;
+      }
     }
     // Create a dummy client that will fail gracefully
     // Network errors will be suppressed by the global error handler in app/page.tsx
