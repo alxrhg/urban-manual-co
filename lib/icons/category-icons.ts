@@ -43,6 +43,8 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   'bar': 'wine',
   'bars': 'wine',
   'nightlife': 'wine',
+  'bakery': 'coffee',
+  'bakeries': 'coffee',
   
   // Accommodation
   'hotel': 'building-02',
