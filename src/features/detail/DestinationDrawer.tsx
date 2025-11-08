@@ -901,8 +901,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     rel="noopener noreferrer"
                     className="pill-button"
                   >
-                    <span>📍</span>
-                    <span className="pill-separator">•</span>
                     <span>Apple Maps</span>
                   </a>
                 )}
@@ -913,8 +911,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     rel="noopener noreferrer"
                     className="pill-button"
                   >
-                    <span>🌐</span>
-                    <span className="pill-separator">•</span>
                     <span>Website</span>
                   </a>
                 )}
@@ -923,8 +919,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
                     className="pill-button"
                   >
-                    <span>📞</span>
-                    <span className="pill-separator">•</span>
                     <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
                   </a>
                 )}
@@ -935,8 +929,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     rel="noopener noreferrer"
                     className="pill-button"
                   >
-                    <span>📷</span>
-                    <span className="pill-separator">•</span>
                     <span>Instagram</span>
                   </a>
                 )}
@@ -955,8 +947,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       <div>
                         <span className="font-medium text-sm">{review.author_name}</span>
                         <div className="flex items-center gap-2 mt-1">
-                          <span>⭐</span>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating} stars</span>
                           {review.relative_time_description && (
                             <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
                           )}
