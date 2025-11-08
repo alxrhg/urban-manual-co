@@ -462,11 +462,7 @@ export default function Home() {
         .order('city');
 
       if (error) {
-        // Only log unexpected errors (not configuration issues)
-        if (!error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
-          // Use console.warn for non-critical errors
-          console.warn('[Filter Data] Error:', error.message || error);
-        }
+        console.error('[Filter Data] Error:', error);
         setLoading(false); // Set loading false even on error
         return;
       }
@@ -500,11 +496,8 @@ export default function Home() {
         categories: uniqueCategories.length,
         sampleCities: uniqueCities.slice(0, 5)
       });
-    } catch (error: any) {
-      // Only log unexpected errors
-      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
-        console.warn('[Filter Data] Exception:', error?.message || error);
-      }
+    } catch (error) {
+      console.error('[Filter Data] Exception:', error);
       setLoading(false); // Set loading false on exception
     }
   };
@@ -518,10 +511,7 @@ export default function Home() {
         .order('name');
 
       if (error) {
-        // Only log unexpected errors (not configuration issues)
-        if (!error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
-          console.warn('Error fetching destinations:', error.message || error);
-        }
+        console.error('Error fetching destinations:', error);
         setDestinations([]);
         // Don't reset categories here - they're already loaded from fetchFilterData
         // setCategories([]);
@@ -555,11 +545,8 @@ export default function Home() {
         setCities(uniqueCities as string[]);
         setCategories(uniqueCategories as string[]);
       }
-    } catch (error: any) {
-      // Only log unexpected errors
-      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
-        console.warn('Error fetching destinations:', error?.message || error);
-      }
+    } catch (error) {
+      console.error('Error fetching destinations:', error);
       setDestinations([]);
       // Don't reset cities/categories or loading - filters are already shown
     }
