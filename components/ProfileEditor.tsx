@@ -11,6 +11,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ProfileEditorProps {
   userId: string;
@@ -217,11 +228,10 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
             <h3 className="text-sm font-medium text-black dark:text-white mb-4">Personal Information</h3>
             <div className="space-y-4">
               {/* Display Name */}
-              <div>
-                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                  Display Name
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="display_name">Display Name</Label>
                 <Input
+                  id="display_name"
                   type="text"
                   value={profile.display_name}
                   onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
@@ -230,27 +240,25 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
               </div>
 
               {/* Username */}
-              <div>
-                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                  Username
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
                 <Input
+                  id="username"
                   type="text"
                   value={profile.username}
                   onChange={(e) => setProfile({ ...profile, username: e.target.value })}
                   placeholder="username"
                 />
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-500">
                   Your profile URL: urbanmanual.co/user/{profile.username || 'username'}
                 </p>
               </div>
 
               {/* Bio */}
-              <div>
-                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                  Bio
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
                 <Textarea
+                  id="bio"
                   value={profile.bio}
                   onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                   rows={4}
@@ -267,56 +275,56 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
             <h3 className="text-sm font-medium text-black dark:text-white mb-4">Location & Details</h3>
             <div className="space-y-4">
               {/* Location - City Selector */}
-              <div>
-                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                  Main City
-                </label>
-                <select
-                  value={profile.location}
-                  onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                  className="flex h-10 w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-black dark:text-white focus-visible:outline-none focus-visible:border-black dark:focus-visible:border-white transition-colors appearance-none cursor-pointer"
+              <div className="space-y-2">
+                <Label htmlFor="location">Main City</Label>
+                <Select
+                  value={profile.location || undefined}
+                  onValueChange={(value) => setProfile({ ...profile, location: value })}
                 >
-                  <option value="">Select a city</option>
-                  {countryOrder.map((country) => {
-                    const cities = citiesByCountry[country];
-                    if (!cities) return null;
-                    return (
-                      <optgroup key={country} label={country}>
-                        {cities.map((city) => (
-                          <option key={city} value={city}>
-                            {capitalizeCity(city)}
-                          </option>
-                        ))}
-                      </optgroup>
-                    );
-                  })}
-                </select>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
+                  <SelectTrigger id="location" className="w-full">
+                    <SelectValue placeholder="Select a city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryOrder.map((country) => {
+                      const cities = citiesByCountry[country];
+                      if (!cities || cities.length === 0) return null;
+                      return (
+                        <SelectGroup key={country}>
+                          <SelectLabel>{country}</SelectLabel>
+                          {cities.map((city) => (
+                            <SelectItem key={city} value={city}>
+                              {capitalizeCity(city)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 dark:text-gray-500">
                   Select your primary city from our curated list
                 </p>
               </div>
 
               {/* Birthday */}
-              <div>
-                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                  Birthday
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="birthday">Birthday</Label>
                 <Input
+                  id="birthday"
                   type="date"
                   value={profile.birthday}
                   onChange={(e) => setProfile({ ...profile, birthday: e.target.value })}
                 />
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-500">
                   Optional - we'll keep this private
                 </p>
               </div>
 
               {/* Website */}
-              <div>
-                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                  Website
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="website_url">Website</Label>
                 <Input
+                  id="website_url"
                   type="url"
                   value={profile.website_url}
                   onChange={(e) => setProfile({ ...profile, website_url: e.target.value })}
@@ -329,19 +337,18 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
 
         {/* Privacy Setting */}
         <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
-            <input
-              type="checkbox"
+          <div className="flex items-start gap-4 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
+            <Switch
               id="is_public"
               checked={profile.is_public}
-              onChange={(e) => setProfile({ ...profile, is_public: e.target.checked })}
-              className="mt-0.5 w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-0 cursor-pointer"
+              onCheckedChange={(checked) => setProfile({ ...profile, is_public: checked })}
+              className="mt-0.5"
             />
-            <div className="flex-1">
-              <label htmlFor="is_public" className="text-sm font-medium text-black dark:text-white cursor-pointer block">
+            <div className="flex-1 space-y-1">
+              <Label htmlFor="is_public" className="text-sm font-medium text-black dark:text-white cursor-pointer">
                 Make my profile public
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              </Label>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
                 Allow others to view your profile and saved destinations
               </p>
             </div>
