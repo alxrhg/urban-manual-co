@@ -804,23 +804,6 @@ export default function Home() {
   // Fetch filter data (cities and categories) first for faster initial display
   const fetchFilterData = async () => {
     try {
-      // Supabase client is already configured in lib/supabase.ts
-      // No need to check env vars here - just use the client
-      const discoveryBaseline = await fetchDiscoveryBootstrap();
-        if (discoveryBaseline.length) {
-          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          setCities(discoveryCities);
-          setCategories(discoveryCategories);
-          if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
-          }
-        } else {
-          await applyFallbackData({ updateDestinations: destinations.length === 0 });
-        }
-        setLoading(false); // Still set loading false to show UI
-        return;
-      }
-
       console.log('[Filter Data] Starting fetch...');
       const { data, error } = await supabase
         .from('destinations')
