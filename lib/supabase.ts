@@ -100,28 +100,12 @@ try {
 }
 
 // Export a helper to check if Supabase is configured
-// This checks both the build-time config and the actual client URL
+// This checks the build-time configuration (env vars are inlined at build time)
 export const isSupabaseAvailable = () => {
-  // Check build-time configuration
-  if (!isSupabaseConfigured) {
-    return false;
-  }
-  
-  // Also check the actual client URL at runtime (for client-side)
-  if (typeof window !== 'undefined') {
-    try {
-      // Access the Supabase client's URL through its internal structure
-      const clientUrl = (supabase as any).supabaseUrl;
-      if (!clientUrl || clientUrl.includes('invalid') || clientUrl.includes('placeholder')) {
-        return false;
-      }
-    } catch (e) {
-      // If we can't check, assume it's not available
-      return false;
-    }
-  }
-  
-  return true;
+  // Check build-time configuration - this is the source of truth
+  // NEXT_PUBLIC_ variables are inlined at build time, so if they're set correctly
+  // during build, isSupabaseConfigured will be true
+  return isSupabaseConfigured;
 };
 
 export { supabase };

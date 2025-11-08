@@ -549,7 +549,9 @@ export default function Home() {
   const fetchDestinations = async () => {
     try {
       // Use the helper function to check if Supabase is available
-      if (!isSupabaseAvailable()) {
+      const isAvailable = isSupabaseAvailable();
+      console.log('[Destinations] isSupabaseAvailable():', isAvailable);
+      if (!isAvailable) {
         console.warn('[Destinations] Supabase not configured, skipping fetch');
         setDestinations([]);
         return;
