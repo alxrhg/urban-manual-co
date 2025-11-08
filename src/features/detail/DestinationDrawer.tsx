@@ -983,6 +983,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 query={`${destination.name}, ${destination.city}`}
                 height="256px"
                 className="rounded-lg"
+                interactive={false}
               />
             </div>
           </div>

@@ -8,6 +8,7 @@ interface GoogleMapProps {
   longitude?: number;
   height?: number | string; // Accepts both number (pixels) and string (%, vh, etc)
   className?: string;
+  interactive?: boolean; // Whether the map should be interactive (default: true)
 }
 
 export default function GoogleMap({
@@ -15,7 +16,8 @@ export default function GoogleMap({
   latitude,
   longitude,
   height = 256,
-  className = ''
+  className = '',
+  interactive = true
 }: GoogleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -115,9 +117,26 @@ export default function GoogleMap({
                 stylers: [{ visibility: 'off' }],
               },
             ],
+            // Disable interactions if not interactive
+            disableDefaultUI: !interactive,
+            zoomControl: interactive,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: interactive,
+            gestureHandling: interactive ? 'auto' : 'none',
+            draggable: interactive,
+            scrollwheel: interactive,
+            disableDoubleClickZoom: !interactive,
           });
         } else {
           mapInstanceRef.current.setCenter(center);
+          // Update interaction settings if they changed
+          mapInstanceRef.current.setOptions({
+            gestureHandling: interactive ? 'auto' : 'none',
+            draggable: interactive,
+            scrollwheel: interactive,
+            disableDoubleClickZoom: !interactive,
+          });
         }
 
         // Add or update marker
@@ -136,7 +155,7 @@ export default function GoogleMap({
     };
 
     initializeMap();
-  }, [loaded, query, latitude, longitude]);
+  }, [loaded, query, latitude, longitude, interactive]);
 
   if (error) {
     return (
