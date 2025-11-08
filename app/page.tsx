@@ -574,6 +574,7 @@ export default function Home() {
       }
 
       const destinationsData = data || [];
+      console.log('[Destinations] Loaded destinations:', destinationsData.length);
       setDestinations(destinationsData);
 
       // Extract unique cities and categories from full data (for consistency)
@@ -993,6 +994,7 @@ export default function Home() {
       filtered = [...unvisited, ...visited];
     }
 
+    console.log('[Filter] filteredDestinations set to:', filtered.length);
     setFilteredDestinations(filtered);
   };
 
