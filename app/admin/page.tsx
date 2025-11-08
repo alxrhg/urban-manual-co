@@ -36,7 +36,12 @@ function DestinationForm({
     image: destination?.image || '',
     michelin_stars: destination?.michelin_stars || null,
     crown: destination?.crown || false,
+    parent_destination_id: destination?.parent_destination_id || null,
   });
+  const [parentSearchQuery, setParentSearchQuery] = useState('');
+  const [parentSearchResults, setParentSearchResults] = useState<any[]>([]);
+  const [isSearchingParent, setIsSearchingParent] = useState(false);
+  const [selectedParent, setSelectedParent] = useState<any>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -58,9 +63,25 @@ function DestinationForm({
         image: destination.image || '',
         michelin_stars: destination.michelin_stars || null,
         crown: destination.crown || false,
+        parent_destination_id: destination.parent_destination_id || null,
       });
       setImagePreview(destination.image || null);
       setImageFile(null);
+      
+      // Load parent destination if editing
+      if (destination.parent_destination_id) {
+        supabase
+          .from('destinations')
+          .select('id, slug, name, city')
+          .eq('id', destination.parent_destination_id)
+          .single()
+          .then(({ data }) => {
+            if (data) setSelectedParent(data);
+          })
+          .catch(() => setSelectedParent(null));
+      } else {
+        setSelectedParent(null);
+      }
     } else {
       setFormData({
         slug: '',
@@ -72,11 +93,44 @@ function DestinationForm({
         image: '',
         michelin_stars: null,
         crown: false,
+        parent_destination_id: null,
       });
       setImagePreview(null);
       setImageFile(null);
+      setSelectedParent(null);
     }
   }, [destination]);
+
+  // Search for parent destinations
+  useEffect(() => {
+    if (parentSearchQuery.trim()) {
+      const timeoutId = setTimeout(() => {
+        searchParentDestinations(parentSearchQuery);
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setParentSearchResults([]);
+    }
+  }, [parentSearchQuery]);
+
+  const searchParentDestinations = async (query: string) => {
+    setIsSearchingParent(true);
+    try {
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('id, slug, name, city, category')
+        .is('parent_destination_id', null) // Only top-level destinations can be parents
+        .or(`name.ilike.%${query}%,city.ilike.%${query}%,slug.ilike.%${query}%`)
+        .limit(10);
+      if (error) throw error;
+      setParentSearchResults(data || []);
+    } catch (error) {
+      console.error('Error searching parent destinations:', error);
+      setParentSearchResults([]);
+    } finally {
+      setIsSearchingParent(false);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -237,6 +291,7 @@ function DestinationForm({
       ...formData,
       image: imageUrl,
       michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : null,
+      parent_destination_id: selectedParent?.id || null,
     };
     await onSave(data);
   };
@@ -354,6 +409,69 @@ function DestinationForm({
               className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., restaurant, hotel, cafe"
             />
+          </div>
+          
+          {/* Parent Destination Selector */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Parent Destination (Optional)</label>
+            <div className="relative">
+              {selectedParent ? (
+                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                  <div>
+                    <span className="text-sm font-medium">{selectedParent.name}</span>
+                    <span className="text-xs text-gray-500 ml-2">{selectedParent.city}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedParent(null);
+                      setFormData({ ...formData, parent_destination_id: null });
+                    }}
+                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={parentSearchQuery}
+                    onChange={(e) => setParentSearchQuery(e.target.value)}
+                    placeholder="Search for parent destination (e.g., hotel name)..."
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {isSearchingParent && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                  {parentSearchResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {parentSearchResults.map((parent) => (
+                        <button
+                          key={parent.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedParent(parent);
+                            setFormData({ ...formData, parent_destination_id: parent.id });
+                            setParentSearchQuery('');
+                            setParentSearchResults([]);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <div className="font-medium text-sm">{parent.name}</div>
+                          <div className="text-xs text-gray-500">{parent.city} • {parent.category}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Select a parent destination if this venue is located within another (e.g., a bar within a hotel)
+            </div>
           </div>
         </div>
       </div>

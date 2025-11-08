@@ -71,10 +71,31 @@ export default async function DestinationPage({
       longitude,
       photos_json,
       primary_photo_url,
-      photo_count
+      photo_count,
+      parent_destination_id
     `)
     .eq('slug', slug)
     .single();
+
+  // Load parent destination if this is a nested destination
+  let parentDestination: Destination | null = null;
+  if (destination?.parent_destination_id) {
+    const { data: parent } = await supabase
+      .from('destinations')
+      .select('id, slug, name, city, category, image')
+      .eq('id', destination.parent_destination_id)
+      .single();
+    if (parent) parentDestination = parent as Destination;
+  }
+
+  // Load nested destinations if this is a parent
+  let nestedDestinations: Destination[] = [];
+  if (destination?.id) {
+    const { data: nested } = await supabase.rpc('get_nested_destinations', {
+      parent_id: destination.id,
+    });
+    if (nested) nestedDestinations = nested as Destination[];
+  }
 
   // If destination not found, show 404
   if (error || !destination) {
@@ -116,7 +137,13 @@ export default async function DestinationPage({
 
       {/* Render client component with server-fetched data */}
       <Suspense fallback={<DetailSkeleton />}>
-        <DestinationPageClient initialDestination={destination as Destination} />
+        <DestinationPageClient 
+          initialDestination={{
+            ...(destination as Destination),
+            nested_destinations: nestedDestinations,
+          }}
+          parentDestination={parentDestination}
+        />
       </Suspense>
     </>
   );

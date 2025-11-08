@@ -2190,6 +2190,9 @@ export default function Home() {
                           );
                         })()}
                       </div>
+                      
+                      {/* Parent destination indicator - show if nested */}
+                      {/* Note: Parent name will be loaded separately if needed */}
 
                       {/* Distance Badge - Only shows when Near Me is active */}
                       {destination.distance_km && (

@@ -14,6 +14,7 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 
 interface Recommendation {
   slug: string;
@@ -42,9 +43,10 @@ function formatLabel(value: string): string {
 
 interface DestinationPageClientProps {
   initialDestination: Destination;
+  parentDestination?: Destination | null;
 }
 
-export default function DestinationPageClient({ initialDestination }: DestinationPageClientProps) {
+export default function DestinationPageClient({ initialDestination, parentDestination }: DestinationPageClientProps) {
   const router = useRouter();
   const { addToRecentlyViewed } = useRecentlyViewed();
   const { user } = useAuth();
@@ -390,6 +392,14 @@ export default function DestinationPageClient({ initialDestination }: Destinatio
 
             {/* Meta badges */}
             <div className="flex flex-wrap gap-2 text-xs">
+              {/* Parent destination badge - show if this is nested */}
+              {parentDestination && (
+                <LocatedInBadge 
+                  parent={parentDestination}
+                  onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+                />
+              )}
+              
               {destination.category && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
                   {formatLabel(destination.category)}
@@ -500,6 +510,17 @@ export default function DestinationPageClient({ initialDestination }: Destinatio
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Nested Destinations - Show venues within this destination */}
+        {destination.nested_destinations && destination.nested_destinations.length > 0 && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <NestedDestinations
+              destinations={destination.nested_destinations}
+              parentName={destination.name}
+              onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)}
+            />
           </div>
         )}
 

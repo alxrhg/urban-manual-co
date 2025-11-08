@@ -15,6 +15,9 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { RealtimeReportForm } from '@/components/RealtimeReportForm';
+import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
+import { createClient } from '@/lib/supabase/client';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -166,6 +169,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
+  const [parentDestination, setParentDestination] = useState<Destination | null>(null);
+  const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
+  const [loadingNested, setLoadingNested] = useState(false);
 
 
   // Prevent body scroll when drawer is open
@@ -314,6 +320,48 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
     loadDestinationData();
   }, [user, destination]);
+
+  // Load parent and nested destinations
+  useEffect(() => {
+    async function loadNestedData() {
+      if (!destination || !isOpen) {
+        setParentDestination(null);
+        setNestedDestinations([]);
+        return;
+      }
+
+      setLoadingNested(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        setLoadingNested(false);
+        return;
+      }
+
+      try {
+        // Load parent if this is a nested destination
+        if (destination.parent_destination_id) {
+          const parent = await getParentDestination(supabaseClient, destination.id!);
+          setParentDestination(parent);
+        } else {
+          setParentDestination(null);
+        }
+
+        // Load nested destinations if this is a parent
+        if (destination.id) {
+          const nested = await getNestedDestinations(supabaseClient, destination.id, false);
+          setNestedDestinations(nested);
+        } else {
+          setNestedDestinations([]);
+        }
+      } catch (error) {
+        console.warn('[DestinationDrawer] Error loading nested data:', error);
+      } finally {
+        setLoadingNested(false);
+      }
+    }
+
+    loadNestedData();
+  }, [destination, isOpen]);
 
 
   const handleShare = async () => {
@@ -642,6 +690,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Meta badges and action buttons - below title */}
             <div className="flex flex-wrap gap-2 text-xs">
+              {/* Parent destination badge - show if this is nested */}
+              {parentDestination && (
+                <LocatedInBadge 
+                  parent={parentDestination}
+                  onClick={() => {
+                    router.push(`/destination/${parentDestination.slug}`);
+                    onClose();
+                  }}
+                />
+              )}
+              
               {destination.category && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 capitalize">
                   {destination.category}
