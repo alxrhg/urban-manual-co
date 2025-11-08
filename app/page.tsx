@@ -161,6 +161,178 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
+function slugify(value: string): string {
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-\s]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function toTrimmedString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+  if (typeof value === 'number') {
+    return String(value).trim();
+  }
+  return '';
+}
+
+function toNumberOrNull(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function getFirstArrayItem(value: unknown): unknown {
+  return Array.isArray(value) && value.length > 0 ? value[0] : undefined;
+}
+
+function pickString(...sources: Array<unknown | (() => unknown)>): string {
+  for (const source of sources) {
+    const candidate = typeof source === 'function' ? (source as () => unknown)() : source;
+    const text = toTrimmedString(candidate);
+    if (text) {
+      return text;
+    }
+  }
+  return '';
+}
+
+function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | null {
+  if (!isRecord(recordInput)) {
+    return null;
+  }
+
+  const record = recordInput as Record<string, unknown>;
+
+  const name = pickString(record.name, record.title);
+  const city = pickString(
+    record.city,
+    () => (isRecord(record.location) ? record.location.city : undefined),
+    () => (isRecord(record.metadata) ? record.metadata.city : undefined),
+    () => (isRecord(record.structData) ? record.structData.city : undefined),
+    () => {
+      const firstLocation = getFirstArrayItem(record.locations);
+      return isRecord(firstLocation) ? firstLocation.city : firstLocation;
+    }
+  );
+  const category = pickString(
+    record.category,
+    record.category_name,
+    () => (isRecord(record.metadata) ? record.metadata.category : undefined),
+    () => (isRecord(record.structData) ? record.structData.category : undefined),
+    () => {
+      const firstCategory = getFirstArrayItem(record.categories);
+      return isRecord(firstCategory) ? firstCategory.category : firstCategory;
+    }
+  );
+
+  const slugSource = pickString(record.slug, record.id, name);
+  const slug = slugify(slugSource || name);
+
+  if (!slug || !name || !city || !category) {
+    return null;
+  }
+
+  const description = pickString(record.description, record.summary, record.snippet) || undefined;
+  const content = pickString(record.content, record.longDescription, record.body) || undefined;
+
+  const imageCandidate = pickString(
+    record.image,
+    record.imageUrl,
+    record.image_url,
+    record.primaryImage,
+    record.primary_image,
+    record.mainImage,
+    record.main_image,
+    () => {
+      const firstImage = getFirstArrayItem(record.images);
+      if (isRecord(firstImage)) {
+        return firstImage.url;
+      }
+      return firstImage;
+    },
+    () => {
+      const media = record.media;
+      if (isRecord(media)) {
+        const firstMediaImage = getFirstArrayItem(media.images);
+        if (isRecord(firstMediaImage)) {
+          return firstMediaImage.url;
+        }
+        return firstMediaImage;
+      }
+      return undefined;
+    }
+  );
+
+  let tags: string[] | undefined;
+  const rawTags = record.tags;
+  if (Array.isArray(rawTags)) {
+    tags = rawTags
+      .map((tag) => toTrimmedString(tag))
+      .filter((tag): tag is string => Boolean(tag));
+  } else {
+    const tagText = toTrimmedString(rawTags);
+    if (tagText) {
+      tags = tagText.split(',').map(tag => tag.trim()).filter(Boolean);
+    }
+  }
+
+  const ratingValue =
+    toNumberOrNull(record.rating) ??
+    toNumberOrNull(record.ratingValue) ??
+    toNumberOrNull(record.averageRating) ??
+    toNumberOrNull(record.average_rating) ??
+    toNumberOrNull(record.rating_score);
+
+  const priceLevel =
+    toNumberOrNull(record.priceLevel) ??
+    toNumberOrNull(record.price_level) ??
+    toNumberOrNull(record.priceLevelValue);
+
+  const michelin =
+    toNumberOrNull(record.michelin_stars) ??
+    toNumberOrNull(record.michelinStars) ??
+    toNumberOrNull(record.michelin) ??
+    undefined;
+
+  const badges = record.badges;
+  let crown: boolean | undefined;
+  if (typeof record.crown === 'boolean') {
+    crown = record.crown;
+  } else if (Array.isArray(badges)) {
+    crown = badges.some((badge) => toTrimmedString(badge).toLowerCase() === 'crown');
+  }
+
+  return {
+    slug,
+    name,
+    city,
+    category,
+    description,
+    content,
+    image: imageCandidate || undefined,
+    michelin_stars: michelin ?? undefined,
+    crown,
+    tags,
+    rating: ratingValue,
+    price_level: priceLevel,
+  };
+}
+
 function getContextAwareLoadingMessage(searchTerm: string): string {
   const query = searchTerm.toLowerCase();
 
@@ -276,6 +448,181 @@ export default function Home() {
   }>>([]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fallbackDestinationsRef = useRef<Destination[] | null>(null);
+  const discoveryBootstrapRef = useRef<Destination[] | null>(null);
+  const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
+
+  const extractFilterOptions = (rows: Array<{ city?: string | null; category?: string | null }>) => {
+    const citySet = new Set<string>();
+    const categorySet = new Set<string>();
+
+    rows.forEach(row => {
+      const city = (row.city ?? '').toString().trim();
+      const category = (row.category ?? '').toString().trim();
+
+      if (city) {
+        citySet.add(city);
+      }
+      if (category) {
+        categorySet.add(category);
+      }
+    });
+
+    return {
+      cities: Array.from(citySet).sort(),
+      categories: Array.from(categorySet).sort(),
+    };
+  };
+
+  const loadFallbackDestinations = async () => {
+    if (fallbackDestinationsRef.current) {
+      return fallbackDestinationsRef.current;
+    }
+
+    try {
+      const response = await fetch('/destinations.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load fallback destinations: ${response.status}`);
+      }
+
+      const raw = await response.json();
+      const normalized: Destination[] = (Array.isArray(raw) ? raw : [])
+        .map((item: any) => {
+          const slug = slugify(item.slug || item.name || '');
+
+          const tags = Array.isArray(item.tags)
+            ? item.tags
+            : typeof item.cardTags === 'string'
+              ? item.cardTags
+                  .split(',')
+                  .map((tag: string) => tag.trim())
+                  .filter(Boolean)
+              : undefined;
+
+          return {
+            slug,
+            name: (item.name || slug || 'Unknown destination').toString(),
+            city: (item.city || '').toString().trim(),
+            category: (item.category || '').toString().trim(),
+            description: item.description || item.subline || undefined,
+            content: item.content || undefined,
+            image: item.image || item.mainImage || undefined,
+            michelin_stars: item.michelin_stars ?? item.michelinStars ?? undefined,
+            crown: item.crown ?? undefined,
+            tags: tags && tags.length > 0 ? tags : undefined,
+          } as Destination;
+        })
+        .filter((destination: Destination) => Boolean(destination.slug && destination.city && destination.category));
+
+      fallbackDestinationsRef.current = normalized;
+      return normalized;
+    } catch (error) {
+      console.warn('[Fallback] Unable to load static destinations:', error);
+      fallbackDestinationsRef.current = [];
+      return [];
+    }
+  };
+
+  const applyFallbackData = async (options: { updateDestinations?: boolean; ensureFilters?: boolean } = {}) => {
+    const { updateDestinations = false, ensureFilters = true } = options;
+    const fallback = await loadFallbackDestinations();
+
+    if (!fallback.length) {
+      return;
+    }
+
+    if (updateDestinations) {
+      setDestinations(fallback);
+    }
+
+    if (ensureFilters) {
+      const { cities: fallbackCities, categories: fallbackCategories } = extractFilterOptions(fallback);
+      if (fallbackCities.length) {
+        setCities(prev => (fallbackCities.length > prev.length ? fallbackCities : prev));
+      }
+      if (fallbackCategories.length) {
+        setCategories(prev => (fallbackCategories.length > prev.length ? fallbackCategories : prev));
+      }
+    }
+  };
+
+  const fetchDiscoveryBootstrap = async (): Promise<Destination[]> => {
+    if (discoveryBootstrapRef.current !== null) {
+      return discoveryBootstrapRef.current;
+    }
+
+    if (discoveryBootstrapPromiseRef.current) {
+      return discoveryBootstrapPromiseRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const response = await fetch('/api/search/discovery', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: 'top destinations',
+            pageSize: 200,
+            userId: user?.id,
+            filters: {},
+          }),
+        });
+
+        if (!response.ok) {
+          if (response.status === 503) {
+            console.warn('[Discovery Engine] Service unavailable (503) during bootstrap');
+          } else {
+            let errorDetails: Record<string, unknown> | null = null;
+            try {
+              errorDetails = (await response.json()) as Record<string, unknown>;
+            } catch {
+              // Ignore parse errors and fall back to status text
+            }
+            const detailMessage =
+              (typeof errorDetails?.error === 'string' && errorDetails.error) ||
+              (typeof errorDetails?.details === 'string' && errorDetails.details) ||
+              response.statusText;
+            console.warn('[Discovery Engine] Bootstrap request failed:', response.status, detailMessage);
+          }
+
+          discoveryBootstrapRef.current = null;
+          return [];
+        }
+
+        const payload: { results?: unknown } = await response
+          .json()
+          .catch(() => ({ results: [] as unknown[] }));
+
+        const normalized = Array.isArray(payload.results)
+          ? payload.results
+              .map(normalizeDiscoveryEngineRecord)
+              .filter((item): item is Destination => Boolean(item))
+          : [];
+
+        discoveryBootstrapRef.current = normalized;
+
+        if (normalized.length > 0) {
+          console.log(`[Discovery Engine] Bootstrapped ${normalized.length} destinations for homepage.`);
+        } else {
+          console.warn('[Discovery Engine] Bootstrap returned no destinations.');
+        }
+
+        return normalized;
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn('[Discovery Engine] Bootstrap failed:', message);
+        discoveryBootstrapRef.current = null;
+        return [];
+      } finally {
+        discoveryBootstrapPromiseRef.current = null;
+      }
+    })();
+
+    discoveryBootstrapPromiseRef.current = promise;
+    return promise;
+  };
 
   useEffect(() => {
     // Initialize session tracking
@@ -451,6 +798,17 @@ export default function Home() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
         console.error('[Filter Data] Supabase not configured properly');
+        const discoveryBaseline = await fetchDiscoveryBootstrap();
+        if (discoveryBaseline.length) {
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          setCities(discoveryCities);
+          setCategories(discoveryCategories);
+          if (destinations.length === 0) {
+            setDestinations(discoveryBaseline);
+          }
+        } else {
+          await applyFallbackData({ updateDestinations: destinations.length === 0 });
+        }
         setLoading(false); // Still set loading false to show UI
         return;
       }
@@ -461,31 +819,46 @@ export default function Home() {
         .select('city, category')
         .order('city');
 
-      if (error) {
-        console.error('[Filter Data] Error:', error);
+      if (error || !data) {
+        // Only log unexpected errors (not configuration issues)
+        if (error && !error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
+          // Use console.warn for non-critical errors
+          console.warn('[Filter Data] Error:', error.message || error);
+        }
+
+        const discoveryBaseline = await fetchDiscoveryBootstrap();
+        if (discoveryBaseline.length) {
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          setCities(discoveryCities);
+          setCategories(discoveryCategories);
+          if (destinations.length === 0) {
+            setDestinations(discoveryBaseline);
+          }
+        } else {
+          await applyFallbackData({ updateDestinations: destinations.length === 0 });
+        }
         setLoading(false); // Set loading false even on error
         return;
       }
 
-      // Extract unique cities and categories
-      const uniqueCities = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.city?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions((data || []) as any[]);
 
-      const uniqueCategories = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.category?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
+      setCities(uniqueCities);
+      setCategories(uniqueCategories);
 
-      setCities(uniqueCities as string[]);
-      setCategories(uniqueCategories as string[]);
+      const discoveryBaseline = await fetchDiscoveryBootstrap();
+      if (discoveryBaseline.length) {
+        const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+        if (discoveryCities.length > uniqueCities.length) {
+          setCities(discoveryCities);
+        }
+        if (discoveryCategories.length > uniqueCategories.length) {
+          setCategories(discoveryCategories);
+        }
+        if (destinations.length === 0) {
+          setDestinations(discoveryBaseline);
+        }
+      }
 
       // Set loading to false immediately after filter data loads
       // This allows filters to show while destinations load in background
@@ -496,13 +869,49 @@ export default function Home() {
         categories: uniqueCategories.length,
         sampleCities: uniqueCities.slice(0, 5)
       });
-    } catch (error) {
-      console.error('[Filter Data] Exception:', error);
+    } catch (error: any) {
+      // Only log unexpected errors
+      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
+        console.warn('[Filter Data] Exception:', error?.message || error);
+      }
+
+      const discoveryBaseline = await fetchDiscoveryBootstrap();
+      if (discoveryBaseline.length) {
+        const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+        setCities(discoveryCities);
+        setCategories(discoveryCategories);
+        if (destinations.length === 0) {
+          setDestinations(discoveryBaseline);
+        }
+      } else {
+        await applyFallbackData({ updateDestinations: destinations.length === 0 });
+      }
+
       setLoading(false); // Set loading false on exception
     }
   };
 
   const fetchDestinations = async () => {
+    let discoveryBaseline: Destination[] = [];
+
+    try {
+      discoveryBaseline = await fetchDiscoveryBootstrap();
+      if (discoveryBaseline.length) {
+        if (destinations.length === 0) {
+          setDestinations(discoveryBaseline);
+        }
+        const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+        if (discoveryCities.length) {
+          setCities(prev => (discoveryCities.length > prev.length ? discoveryCities : prev));
+        }
+        if (discoveryCategories.length) {
+          setCategories(prev => (discoveryCategories.length > prev.length ? discoveryCategories : prev));
+        }
+      }
+    } catch {
+      // fetchDiscoveryBootstrap already logs internally
+    }
+
     try {
       // Select only essential columns to avoid issues with missing columns
       const { data, error } = await supabase
@@ -510,44 +919,48 @@ export default function Home() {
         .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
         .order('name');
 
-      if (error) {
-        console.error('Error fetching destinations:', error);
-        setDestinations([]);
-        // Don't reset categories here - they're already loaded from fetchFilterData
-        // setCategories([]);
-        // Don't set loading false here - it's already false from fetchFilterData
+      if (error || !data) {
+        // Only log unexpected errors (not configuration issues)
+        if (error && !error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
+          console.warn('Error fetching destinations:', error.message || error);
+        }
+
+        if (!discoveryBaseline.length) {
+          await applyFallbackData({ updateDestinations: true });
+        }
         return;
       }
 
-      setDestinations(data || []);
+      if (!Array.isArray(data) || data.length === 0) {
+        if (!discoveryBaseline.length) {
+          await applyFallbackData({ updateDestinations: true });
+        }
+        return;
+      }
+
+      setDestinations(data as Destination[]);
 
       // Extract unique cities and categories from full data (for consistency)
       // This ensures we have the complete list after full data loads
-      const uniqueCities = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.city?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
-
-      const uniqueCategories = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.category?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(data as any[]);
 
       // Update cities and categories from full data (ensures consistency)
       // Only update if we got more complete data
-      if (uniqueCities.length > cities.length || uniqueCategories.length > categories.length) {
-        setCities(uniqueCities as string[]);
-        setCategories(uniqueCategories as string[]);
+      if (uniqueCities.length) {
+        setCities(uniqueCities);
       }
-    } catch (error) {
-      console.error('Error fetching destinations:', error);
-      setDestinations([]);
+      if (uniqueCategories.length) {
+        setCategories(uniqueCategories);
+      }
+    } catch (error: any) {
+      // Only log unexpected errors
+      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
+        console.warn('Error fetching destinations:', error?.message || error);
+      }
+
+      if (!discoveryBaseline.length) {
+        await applyFallbackData({ updateDestinations: true });
+      }
       // Don't reset cities/categories or loading - filters are already shown
     }
     // Don't set loading false here - it's already false from fetchFilterData
