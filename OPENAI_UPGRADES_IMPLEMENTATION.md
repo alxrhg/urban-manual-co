@@ -70,12 +70,37 @@ const model = getModelForQuery(query, conversationHistory);
 
 **Usage:**
 ```typescript
-import { getOrCreateAssistant, chatWithAssistant } from '@/lib/openai/assistants';
+import { 
+  getOrCreateAssistant, 
+  getOrCreateThread,
+  chatWithAssistant,
+  getAssistantPreferences,
+  updateAssistantPreferences
+} from '@/lib/openai/assistants';
 
-const assistant = await getOrCreateAssistant();
-const threadId = await getOrCreateThread(userId);
+// Thread persistence - automatically stores and retrieves threads from database
+const threadId = await getOrCreateThread(userId); // Reuses existing thread if available
+
+// Chat with assistant (uses preferences if userId provided)
 const result = await chatWithAssistant(threadId, message, userId);
+
+// Get/update preferences
+const preferences = await getAssistantPreferences(userId);
+await updateAssistantPreferences(userId, {
+  assistant_personality: 'professional',
+  response_style: 'detailed',
+  enable_tts: true
+});
 ```
+
+**Database Tables:**
+- `assistant_threads` - Stores thread IDs per user for conversation persistence
+- `assistant_preferences` - Stores per-user assistant customization
+- `assistant_message_history` - Optional message history cache
+
+**API Endpoints:**
+- `GET /api/ai/assistants/preferences?userId=xxx` - Get user preferences
+- `PUT /api/ai/assistants/preferences` - Update user preferences
 
 ---
 
@@ -336,8 +361,8 @@ OPENAI_EMBEDDING_MODEL=text-embedding-3-large
 1. **Integrate Function Calling** - Connect to actual search/save APIs
 2. **Add Visual Search UI** - Image upload for search
 3. **Add Voice Response Toggle** - Let users enable TTS
-4. **Thread Persistence** - Store thread IDs in database
-5. **Assistant Customization** - Per-user assistant preferences
+4. ✅ **Thread Persistence** - Store thread IDs in database (IMPLEMENTED)
+5. ✅ **Assistant Customization** - Per-user assistant preferences (IMPLEMENTED)
 
 ---
 
