@@ -125,7 +125,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
       });
 
     }
-  }, [destination, addToRecentlyViewed]);
+  }, [destination]);
 
   useEffect(() => {
     if (destination) {
