@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Menu, X, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
@@ -15,7 +16,8 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const isHome = pathname === '/';
 
   // Fetch user profile and avatar
@@ -77,37 +79,20 @@ export function Header() {
     fetchBuildVersion();
   }, [isAdmin]);
 
-  // Initialize dark mode from localStorage or system preference
+  // Prevent hydration mismatch
   useEffect(() => {
-    const stored = localStorage.getItem('darkMode');
-    if (stored !== null) {
-      const dark = stored === 'true';
-      setIsDark(dark);
-      if (dark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDark(prefersDark);
-      if (prefersDark) {
-        document.documentElement.classList.add('dark');
-      }
-    }
+    setMounted(true);
   }, []);
 
   const toggleDarkMode = () => {
-    const newDark = !isDark;
-    setIsDark(newDark);
-    localStorage.setItem('darkMode', String(newDark));
-    if (newDark) {
-      document.documentElement.classList.add('dark');
+    if (theme === 'dark') {
+      setTheme('light');
     } else {
-      document.documentElement.classList.remove('dark');
+      setTheme('dark');
     }
   };
+
+  const isDark = theme === 'dark';
 
   const navigate = (path: string) => {
     router.push(path);
@@ -281,8 +266,9 @@ export function Header() {
                 className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                disabled={!mounted}
               >
-                {isDark ? (
+                {mounted && isDark ? (
                   <>
                     <Sun className="h-4 w-4" aria-hidden="true" />
                     <span>Light Mode</span>

@@ -10,6 +10,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { CookieConsent } from "@/components/CookieConsent";
 import { ToastContainer } from "@/components/Toast";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -106,59 +107,31 @@ export default function RootLayout({
             .dark{color-scheme:dark}
           `
         }} />
-        
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                // Prevent flash of wrong theme by checking localStorage before page renders
-                const savedTheme = localStorage.getItem('theme');
-                
-                if (savedTheme) {
-                  // User has explicitly set a preference - use it
-                  const isDark = savedTheme === 'dark';
-                  if (isDark) {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.style.colorScheme = 'dark';
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.style.colorScheme = 'light';
-                  }
-                } else {
-                  // No saved preference - use system preference and save it
-                  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (systemPrefersDark) {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.style.colorScheme = 'dark';
-                    localStorage.setItem('theme', 'dark');
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.style.colorScheme = 'light';
-                    localStorage.setItem('theme', 'light');
-                  }
-                }
-              })();
-            `,
-          }}
-        />
       </head>
       <body className="antialiased">
-        <SplashScreen />
-        <TRPCProvider>
-          <AuthProvider>
-            <ItineraryProvider>
-              <Header />
-              <main className="min-h-screen page-transition">
-                {children}
-              </main>
-              <Footer />
-              <CookieConsent />
-            </ItineraryProvider>
-          </AuthProvider>
-        </TRPCProvider>
-        <ToastContainer />
-        <Analytics />
-        <SpeedInsights />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SplashScreen />
+          <TRPCProvider>
+            <AuthProvider>
+              <ItineraryProvider>
+                <Header />
+                <main className="min-h-screen page-transition">
+                  {children}
+                </main>
+                <Footer />
+                <CookieConsent />
+              </ItineraryProvider>
+            </AuthProvider>
+          </TRPCProvider>
+          <ToastContainer />
+          <Analytics />
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   );
