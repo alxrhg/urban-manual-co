@@ -279,8 +279,6 @@ function SearchPageContent() {
   );
 }
 
-import { Skeleton } from "@/components/ui/skeleton";
-
 export default function SearchPage() {
   return (
     <Suspense fallback={
