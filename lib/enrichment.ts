@@ -307,7 +307,7 @@ export async function enrichDestination(
     console.log(`📂 Category from Gemini: ${geminiData.suggested_category}`);
     finalCategory = geminiData.suggested_category;
   } else {
-    console.log(`📂 Keeping existing category: ${finalCategory}`);
+    console.log(`Keeping existing category: ${finalCategory}`);
   }
 
   console.log(`Enrichment complete for ${name}`);

@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof AuthError) {
       return NextResponse.json({ success: false, error: error.message }, { status: error.status });
     }
-    console.error('❌ Enrichment API error:', error);
+    console.error('Enrichment API error:', error);
     console.error('   Stack:', error.stack);
 
     return NextResponse.json(
