@@ -4,8 +4,9 @@ function getRequiredEnv(key: string): string {
   const value = process.env[key];
 
   if (!value) {
-    // Don't throw on server - allow graceful degradation
-    if (typeof window === 'undefined') {
+    const isServer = typeof window === 'undefined';
+    if (isServer) {
+      // Don't throw on server - allow graceful degradation
       console.warn(
         `⚠️ Missing required environment variable: ${key}. ` +
         `Please set ${key} in your .env.local file or environment variables. ` +
@@ -22,8 +23,9 @@ function getRequiredEnv(key: string): string {
   }
 
   if (value.includes('placeholder') || value.includes('invalid')) {
-    // Don't throw on server - allow graceful degradation
-    if (typeof window === 'undefined') {
+    const isServer = typeof window === 'undefined';
+    if (isServer) {
+      // Don't throw on server - allow graceful degradation
       console.warn(
         `⚠️ Invalid environment variable: ${key} contains placeholder/invalid value. ` +
         `Please set a real ${key} value. The app will continue with a dummy Supabase client.`
