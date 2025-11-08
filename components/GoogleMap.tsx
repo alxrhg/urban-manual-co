@@ -9,6 +9,16 @@ interface GoogleMapProps {
   height?: number | string; // Accepts both number (pixels) and string (%, vh, etc)
   className?: string;
   interactive?: boolean; // Whether the map should be interactive (default: true)
+  // Info window props
+  showInfoWindow?: boolean; // Whether to show info window (default: false)
+  infoWindowContent?: {
+    title?: string;
+    address?: string;
+    category?: string;
+    rating?: number;
+    website?: string;
+  };
+  autoOpenInfoWindow?: boolean; // Whether to auto-open info window (default: false)
 }
 
 export default function GoogleMap({
@@ -17,11 +27,15 @@ export default function GoogleMap({
   longitude,
   height = 256,
   className = '',
-  interactive = true
+  interactive = true,
+  showInfoWindow = false,
+  infoWindowContent,
+  autoOpenInfoWindow = false
 }: GoogleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -146,7 +160,72 @@ export default function GoogleMap({
           markerRef.current = new google.maps.Marker({
             position: center,
             map: mapInstanceRef.current,
+            title: infoWindowContent?.title || query || 'Location',
           });
+        }
+
+        // Create info window if needed
+        if (showInfoWindow && infoWindowContent) {
+          // Create info window content
+          const content = `
+            <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              ${infoWindowContent.title ? `
+                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
+                  ${infoWindowContent.title}
+                </h3>
+              ` : ''}
+              ${infoWindowContent.category ? `
+                <p style="margin: 0 0 4px 0; font-size: 13px; color: #666;">
+                  ${infoWindowContent.category}
+                </p>
+              ` : ''}
+              ${infoWindowContent.address ? `
+                <p style="margin: 4px 0; font-size: 12px; color: #888; line-height: 1.4;">
+                  ${infoWindowContent.address}
+                </p>
+              ` : ''}
+              ${infoWindowContent.rating ? `
+                <div style="margin: 6px 0 0 0; font-size: 12px; color: #666;">
+                  ⭐ ${infoWindowContent.rating.toFixed(1)}
+                </div>
+              ` : ''}
+              ${infoWindowContent.website ? `
+                <a 
+                  href="${infoWindowContent.website}" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style="display: inline-block; margin-top: 8px; font-size: 12px; color: #0066cc; text-decoration: none;"
+                  onmouseover="this.style.textDecoration='underline'"
+                  onmouseout="this.style.textDecoration='none'"
+                >
+                  View on Google Maps →
+                </a>
+              ` : ''}
+            </div>
+          `;
+
+          // Create or update info window
+          if (!infoWindowRef.current) {
+            infoWindowRef.current = new google.maps.InfoWindow({
+              content,
+            });
+          } else {
+            infoWindowRef.current.setContent(content);
+          }
+
+          // Add click listener to marker to open info window
+          if (markerRef.current) {
+            markerRef.current.addListener('click', () => {
+              if (infoWindowRef.current && markerRef.current) {
+                infoWindowRef.current.open(mapInstanceRef.current, markerRef.current);
+              }
+            });
+          }
+
+          // Auto-open info window if requested
+          if (autoOpenInfoWindow && infoWindowRef.current && markerRef.current) {
+            infoWindowRef.current.open(mapInstanceRef.current, markerRef.current);
+          }
         }
       } catch (err: any) {
         console.error('Error initializing Google Map:', err);
@@ -155,7 +234,7 @@ export default function GoogleMap({
     };
 
     initializeMap();
-  }, [loaded, query, latitude, longitude, interactive]);
+  }, [loaded, query, latitude, longitude, interactive, showInfoWindow, infoWindowContent, autoOpenInfoWindow]);
 
   if (error) {
     return (

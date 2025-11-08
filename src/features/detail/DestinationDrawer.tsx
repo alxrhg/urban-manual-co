@@ -1031,9 +1031,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <GoogleMap
                 query={`${destination.name}, ${destination.city}`}
+                latitude={destination.latitude || enrichedData?.latitude}
+                longitude={destination.longitude || enrichedData?.longitude}
                 height="256px"
                 className="rounded-lg"
                 interactive={false}
+                showInfoWindow={true}
+                autoOpenInfoWindow={true}
+                infoWindowContent={{
+                  title: destination.name,
+                  address: enrichedData?.formatted_address || enrichedData?.vicinity || `${destination.city}`,
+                  category: destination.category,
+                  rating: enrichedData?.rating || destination.rating,
+                  website: enrichedData?.website || destination.website || destination.google_maps_url,
+                }}
               />
             </div>
           </div>
