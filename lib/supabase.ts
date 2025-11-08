@@ -20,6 +20,18 @@ function getRequiredEnv(key: string): string {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 
+// Debug: Log what we're actually getting (only in development, and only first few chars for security)
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('[Supabase Debug] Env check:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    urlLength: supabaseUrl?.length || 0,
+    keyLength: supabaseAnonKey?.length || 0,
+    urlPreview: supabaseUrl ? supabaseUrl.substring(0, 20) + '...' : 'empty',
+    // Don't log key preview for security
+  });
+}
+
 // Validate that we have valid values (not empty, not placeholders)
 const isValidUrl = supabaseUrl && 
   supabaseUrl.trim() !== '' && 
@@ -49,14 +61,26 @@ try {
       }
     });
   } else {
-    // Invalid or missing configuration - log error and create dummy client
+    // Invalid or missing configuration - log detailed error
     if (typeof window !== 'undefined') {
-      console.error('❌ Supabase configuration error:', {
-        url: isValidUrl ? 'valid' : 'missing/invalid',
-        key: isValidKey ? 'valid' : 'missing/invalid',
-        urlValue: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'not set',
-        keyValue: supabaseAnonKey ? 'set (' + supabaseAnonKey.length + ' chars)' : 'not set'
-      });
+      const debugInfo: any = {
+        urlStatus: isValidUrl ? 'valid' : (supabaseUrl ? 'invalid format' : 'missing'),
+        keyStatus: isValidKey ? 'valid' : (supabaseAnonKey ? 'invalid format' : 'missing'),
+      };
+      
+      // Only show values in development for debugging
+      if (process.env.NODE_ENV === 'development') {
+        debugInfo.urlValue = supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'not set';
+        debugInfo.keyLength = supabaseAnonKey ? supabaseAnonKey.length : 0;
+        debugInfo.urlStartsWithHttp = supabaseUrl?.startsWith('http');
+        debugInfo.keyMinLength = supabaseAnonKey ? supabaseAnonKey.length > 20 : false;
+      }
+      
+      console.error('❌ Supabase configuration error:', debugInfo);
+      console.error('❌ This usually means env vars are not set or not accessible. Check:');
+      console.error('   1. NEXT_PUBLIC_SUPABASE_URL is set in Vercel');
+      console.error('   2. NEXT_PUBLIC_SUPABASE_ANON_KEY is set in Vercel');
+      console.error('   3. Project was redeployed after setting env vars (NEXT_PUBLIC_ vars are inlined at build time)');
     }
     supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
       auth: { autoRefreshToken: false, persistSession: false }
