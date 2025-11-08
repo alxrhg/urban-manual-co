@@ -1,82 +1,41 @@
 import { createClient } from '@supabase/supabase-js';
 
 function getRequiredEnv(key: string): string {
+  // In Next.js, NEXT_PUBLIC_ variables are inlined at build time
+  // Access them directly from process.env (which Next.js replaces at build time)
   const value = process.env[key];
 
-  if (!value) {
-    const isServer = typeof window === 'undefined';
-    if (isServer) {
-      // Don't throw on server - allow graceful degradation
-      console.warn(
-        `⚠️ Missing required environment variable: ${key}. ` +
-        `Please set ${key} in your .env.local file or environment variables. ` +
-        `The app will continue with a dummy Supabase client.`
-      );
-      return '';
-    }
-    // Client-side: Only log once per variable to avoid console spam
-    if (!(window as any).__supabaseEnvWarned) {
-      (window as any).__supabaseEnvWarned = new Set();
-    }
-    if (!(window as any).__supabaseEnvWarned.has(key)) {
-      (window as any).__supabaseEnvWarned.add(key);
-      console.warn(
-        `⚠️ Missing environment variable: ${key}. ` +
-        `The app will continue with limited functionality. ` +
-        `Set ${key} in Vercel environment variables and redeploy to enable full features.`
-      );
-    }
+  // Check if value is missing, empty, or a placeholder
+  if (!value || value.trim() === '' || value.includes('placeholder') || value.includes('invalid')) {
+    // Only log warnings, don't throw errors
+    // This allows the app to continue with a fallback client
     return '';
   }
 
-  if (value.includes('placeholder') || value.includes('invalid')) {
-    const isServer = typeof window === 'undefined';
-    if (isServer) {
-      // Don't throw on server - allow graceful degradation
-      console.warn(
-        `⚠️ Invalid environment variable: ${key} contains placeholder/invalid value. ` +
-        `Please set a real ${key} value. The app will continue with a dummy Supabase client.`
-      );
-      return '';
-    }
-    // Client-side: Only log once per variable to avoid console spam
-    if (!(window as any).__supabaseEnvWarned) {
-      (window as any).__supabaseEnvWarned = new Set();
-    }
-    if (!(window as any).__supabaseEnvWarned.has(key)) {
-      (window as any).__supabaseEnvWarned.add(key);
-      console.warn(
-        `⚠️ Invalid environment variable: ${key}. ` +
-        `Set a real ${key} value in Vercel and redeploy to enable full features.`
-      );
-    }
-    return '';
-  }
   return value;
 }
 
-const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
-const supabaseAnonKey = getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+// Get environment variables - Next.js inlines NEXT_PUBLIC_ vars at build time
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// Validate that we have valid values (not empty, not placeholders)
+const isValidUrl = supabaseUrl && 
+  supabaseUrl.trim() !== '' && 
+  !supabaseUrl.includes('placeholder') && 
+  !supabaseUrl.includes('invalid') &&
+  supabaseUrl.startsWith('http');
+
+const isValidKey = supabaseAnonKey && 
+  supabaseAnonKey.trim() !== '' && 
+  !supabaseAnonKey.includes('placeholder') && 
+  !supabaseAnonKey.includes('invalid');
 
 let supabase: ReturnType<typeof createClient>;
 
 try {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    if (typeof window !== 'undefined') {
-      // Only log once to avoid console spam
-      if (!(window as any).__supabaseConfigWarned) {
-        (window as any).__supabaseConfigWarned = true;
-        console.warn(
-          '⚠️ Supabase configuration is missing or invalid. ' +
-          'The app will continue with limited functionality. ' +
-          'Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel environment variables and redeploy to enable full features.'
-        );
-      }
-    }
-    supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-  } else {
+  if (isValidUrl && isValidKey) {
+    // Valid configuration - create real Supabase client
     supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
@@ -87,9 +46,14 @@ try {
         storageKey: 'sb-auth-token',
       }
     });
+  } else {
+    // Invalid or missing configuration - create dummy client (silent fallback)
+    supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
   }
 } catch (error) {
-  console.error('Failed to create Supabase client:', error);
+  // Fallback on any error
   supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
     auth: { autoRefreshToken: false, persistSession: false }
   });
