@@ -22,7 +22,8 @@
     "update:google-trends": "tsx scripts/update-google-trends.ts",
     "update:multi-source-trends": "tsx scripts/update-multi-source-trends.ts",
     "discovery:export": "tsx scripts/discovery-engine-export.ts",
-    "discovery:import": "tsx scripts/discovery-engine-import.ts"
+    "discovery:import": "tsx scripts/discovery-engine-import.ts",
+    "fetch:categories": "tsx scripts/fetch-categories-from-google.ts"
   },
   "dependencies": {
     "@google-cloud/discoveryengine": "^2.5.2",

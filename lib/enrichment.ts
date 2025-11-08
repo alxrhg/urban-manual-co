@@ -48,7 +48,9 @@ export async function findPlaceByText(
   name: string,
   city: string
 ): Promise<PlacesEnrichmentData> {
-  if (!GOOGLE_API_KEY) {
+  // Check for API key at runtime, not just module load time
+  const apiKey = GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  if (!apiKey) {
     console.error('NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
     throw new Error('Google API key not configured');
   }
@@ -64,7 +66,7 @@ export async function findPlaceByText(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Goog-Api-Key': GOOGLE_API_KEY,
+          'X-Goog-Api-Key': apiKey,
           'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.priceLevel,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.types',
         },
         body: JSON.stringify({
@@ -180,7 +182,8 @@ export async function findPlaceByText(
  * Fetch detailed place information using Place Details API
  */
 async function getPlaceDetails(placeId: string): Promise<any | null> {
-  if (!GOOGLE_API_KEY) {
+  const apiKey = GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  if (!apiKey) {
     throw new Error('Google API key not configured');
   }
 
@@ -191,8 +194,8 @@ async function getPlaceDetails(placeId: string): Promise<any | null> {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'X-Goog-Api-Key': GOOGLE_API_KEY,
-          'X-Goog-FieldMask': 'id,displayName,formattedAddress,internationalPhoneNumber,websiteUri,rating,userRatingCount,priceLevel,regularOpeningHours,currentOpeningHours,secondaryOpeningHours,location,plusCode,reviews,businessStatus,editorialSummary,types,utcOffset,shortFormattedAddress,adrFormatAddress,addressComponents,iconMaskBaseUri,iconBackgroundColor',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,internationalPhoneNumber,websiteUri,rating,userRatingCount,priceLevel,regularOpeningHours,currentOpeningHours,location,plusCode,reviews,businessStatus,editorialSummary,types,shortFormattedAddress,adrFormatAddress,addressComponents,iconMaskBaseUri,iconBackgroundColor',
         },
       }
     );
@@ -221,7 +224,7 @@ async function getPlaceDetails(placeId: string): Promise<any | null> {
         const timezoneUrl = new URL('https://maps.googleapis.com/maps/api/timezone/json');
         timezoneUrl.searchParams.set('location', `${place.location.latitude},${place.location.longitude}`);
         timezoneUrl.searchParams.set('timestamp', Math.floor(Date.now() / 1000).toString());
-        timezoneUrl.searchParams.set('key', GOOGLE_API_KEY);
+        timezoneUrl.searchParams.set('key', apiKey);
         const timezoneResponse = await fetch(timezoneUrl.toString());
         const timezoneData = await timezoneResponse.json();
         timezoneId = timezoneData?.timeZoneId || null;
@@ -261,7 +264,6 @@ async function getPlaceDetails(placeId: string): Promise<any | null> {
         overview: place.editorialSummary.overview || '',
       } : null,
       types: place.types || [],
-      utc_offset: place.utcOffset ? place.utcOffset.totalSeconds / 60 : null,
       vicinity: place.shortFormattedAddress || null,
       adr_address: place.adrFormatAddress || null,
       address_components: place.addressComponents || null,
@@ -311,7 +313,8 @@ export async function generateGeminiTags(
   description?: string,
   googleTypes?: string[]
 ): Promise<GeminiTagsData> {
-  if (!GOOGLE_API_KEY) {
+  const apiKey = GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  if (!apiKey) {
     console.error('NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
     throw new Error('Google API key not configured');
   }
@@ -338,7 +341,7 @@ Respond ONLY with valid JSON in this exact format:
 Tags should be lowercase, concise, and highly searchable. Categories should be one of: Restaurants, Cafes, Bars, Hotels, Culture, Shopping, Nightlife, Activities, Other.`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -392,7 +395,7 @@ Tags should be lowercase, concise, and highly searchable. Categories should be o
 /**
  * Step 3: Determine best category from Google types
  */
-function categorizePlaceFromTypes(googleTypes: string[]): string | null {
+export function categorizePlaceFromTypes(googleTypes: string[]): string | null {
   const typeMap: Record<string, string> = {
     restaurant: 'Dining',
     meal_takeaway: 'Dining',
