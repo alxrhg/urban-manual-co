@@ -34,9 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch full destination data for suggestions
-    const destinationIds = result.data?.suggestions.map((s: any) => s.destination_id) || [];
-    
-    if (destinationIds.length > 0) {
+    if (result.data?.suggestions && result.data.suggestions.length > 0) {
+      const destinationIds = result.data.suggestions.map((s: any) => s.destination_id);
       const { data: destinations, error: destError } = await supabase
         .from('destinations')
         .select('*')
