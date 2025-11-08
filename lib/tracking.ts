@@ -3,16 +3,8 @@ import type { UserInteraction } from '@/types/personalization';
 
 function getEnv(key: string): string {
   const value = process.env[key];
-  if (!value) {
-    if (typeof window !== 'undefined') {
-      console.error(`❌ Missing required environment variable: ${key}`);
-    }
-    return ''; // Don't throw on client-side
-  }
-  if (value.includes('placeholder')) {
-    if (typeof window !== 'undefined') {
-      console.error(`❌ ${key} contains placeholder value. Please set a real Supabase URL.`);
-    }
+  // Silent fallback - no error logging
+  if (!value || value.trim() === '' || value.includes('placeholder') || value.includes('invalid')) {
     return '';
   }
   return value;
