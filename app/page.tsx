@@ -40,6 +40,7 @@ import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { DestinationBadges } from '@/components/DestinationBadges';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
+import { capitalizeCity } from '@/lib/utils';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -60,12 +61,7 @@ function capitalizeCategory(category: string): string {
     .join(' ');
 }
 
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
+// Use capitalizeCity from lib/utils.ts instead of duplicate function
 
 function slugify(value: string): string {
   return value
@@ -451,6 +447,55 @@ export default function Home() {
         setCategories(prev => (fallbackCategories.length > prev.length ? fallbackCategories : prev));
       }
     }
+  };
+
+  // Helper function to apply Discovery Engine data (reduces code duplication)
+  const applyDiscoveryEngineData = async (
+    discoveryBaseline: Destination[],
+    options: {
+      updateDestinations?: boolean;
+      updateFilters?: boolean;
+      compareWithExisting?: { cities: string[]; categories: string[] };
+    } = {}
+  ) => {
+    const {
+      updateDestinations = false,
+      updateFilters = true,
+      compareWithExisting,
+    } = options;
+
+    if (!discoveryBaseline.length) {
+      return false;
+    }
+
+    if (updateFilters) {
+      const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+      
+      if (compareWithExisting) {
+        // Only update if Discovery Engine has more options
+        if (discoveryCities.length > compareWithExisting.cities.length) {
+          setCities(discoveryCities);
+        }
+        if (discoveryCategories.length > compareWithExisting.categories.length) {
+          setCategories(discoveryCategories);
+        }
+      } else {
+        // Always update if no comparison
+        setCities(discoveryCities);
+        setCategories(discoveryCategories);
+      }
+    }
+
+    if (updateDestinations) {
+      setDestinations(discoveryBaseline);
+      const filtered = filterDestinationsWithData(
+        discoveryBaseline,
+        '', {}, '', '', user, visitedSlugs
+      );
+      setFilteredDestinations(filtered);
+    }
+
+    return true;
   };
 
   const fetchDiscoveryBootstrap = async (): Promise<Destination[]> => {
