@@ -10,6 +10,7 @@ import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { MultiplexAd } from '@/components/GoogleAd';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Destination {
   id: number;
