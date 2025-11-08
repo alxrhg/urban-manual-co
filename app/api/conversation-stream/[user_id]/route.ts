@@ -118,7 +118,7 @@ export async function POST(
                 .from('user_profiles')
                 .select('favorite_cities, favorite_categories, travel_style')
                 .eq('user_id', userId)
-                .single();
+                .maybeSingle();
               if (!profileError && profile) {
                 userContext = {
                   favoriteCities: profile.favorite_cities,

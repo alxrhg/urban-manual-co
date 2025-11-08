@@ -14,9 +14,12 @@ export async function GET(
       .from('user_profiles')
       .select('*')
       .eq('user_id', user_id)
-      .single();
+      .maybeSingle();
 
     if (profileError) throw profileError;
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    }
 
     // Check if profile is public or if it's the current user
     const { data: { user: currentUser } } = await supabase.auth.getUser();

@@ -43,11 +43,15 @@ export async function extractUserProfile(userId: string): Promise<UserBehaviorPr
   const supabase = await createServerClient();
   
   // 1. Get explicit preferences from profile
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
+
+  if (profileError) {
+    console.warn('extractUserProfile: profile lookup failed', profileError.message);
+  }
   
   // 2. Get followed cities (explicit follows - highest priority)
   const { data: followedCitiesData } = await supabase
@@ -222,4 +226,3 @@ export async function extractUserProfile(userId: string): Promise<UserBehaviorPr
     accountAge
   };
 }
-

@@ -106,11 +106,15 @@ export class RichQueryContextService {
 
     try {
       // Get user profile
-      const { data: profile } = await this.supabase
+      const { data: profile, error: profileError } = await this.supabase
         .from('user_profiles')
         .select('favorite_cities, favorite_categories, travel_style, price_preference, dietary_restrictions')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.warn('RichQueryContextService: profile lookup failed', profileError.message);
+      }
 
       if (profile) {
         context.user.profile = {
@@ -301,4 +305,3 @@ export class RichQueryContextService {
 }
 
 export const richQueryContextService = new RichQueryContextService();
-

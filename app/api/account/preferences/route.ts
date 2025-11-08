@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
       .from('user_profiles')
       .select('favorite_cities, favorite_categories, travel_style, interests, dietary_preferences, price_preference')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error fetching preferences:', error);
       return NextResponse.json({ error: 'Failed to fetch preferences' }, { status: 500 });
     }
@@ -93,4 +93,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

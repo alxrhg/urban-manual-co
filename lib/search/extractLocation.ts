@@ -1,4 +1,21 @@
-import { createServerClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
+
+// Get Supabase client (works in both server and client contexts)
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+  const key = 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    '';
+  
+  if (!url || !key) {
+    return createClient('https://placeholder.supabase.co', 'placeholder-key');
+  }
+  
+  return createClient(url, key);
+}
 
 // Cache for location names (refreshed periodically)
 let locationNamesCache: string[] | null = null;
@@ -18,7 +35,7 @@ async function getAllLocationNames(): Promise<string[]> {
   }
 
   try {
-    const supabase = await createServerClient();
+    const supabase = getSupabaseClient();
     
     // Get all locations from locations table (neighborhoods + cities)
     const { data: locations } = await supabase

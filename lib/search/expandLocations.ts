@@ -1,4 +1,21 @@
-import { createServerClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
+
+// Get Supabase client (works in both server and client contexts)
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+  const key = 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    '';
+  
+  if (!url || !key) {
+    return createClient('https://placeholder.supabase.co', 'placeholder-key');
+  }
+  
+  return createClient(url, key);
+}
 
 export interface LocationData {
   name: string;
@@ -16,7 +33,7 @@ export async function expandNearbyLocations(
   maxWalkingMinutes: number = 15
 ): Promise<string[]> {
   try {
-    const supabase = await createServerClient();
+    const supabase = getSupabaseClient();
     
     // Normalize location name (lowercase, trim)
     const normalized = locationName.toLowerCase().trim();
@@ -56,7 +73,7 @@ export async function getLocationContext(
   locationName: string
 ): Promise<LocationData | null> {
   try {
-    const supabase = await createServerClient();
+    const supabase = getSupabaseClient();
     
     const normalized = locationName.toLowerCase().trim();
     
@@ -90,7 +107,7 @@ export async function findLocationByName(
   partialName: string
 ): Promise<string | null> {
   try {
-    const supabase = await createServerClient();
+    const supabase = getSupabaseClient();
     
     const normalized = partialName.toLowerCase().trim();
     

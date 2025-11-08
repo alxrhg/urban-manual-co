@@ -100,11 +100,15 @@ export async function generatePersonalizedPrompt(
       }
 
       // Get user profile
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('display_name, favorite_cities, favorite_categories, travel_style')
         .eq('user_id', context.userId)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.warn('generatePersonalizedPrompt: profile lookup failed', profileError.message);
+      }
 
       if (profile) {
         userData.userName = profile.display_name || context.userName;
@@ -341,4 +345,3 @@ Respond with JSON only:`;
     return null;
   }
 }
-

@@ -95,7 +95,7 @@ export async function POST(
           .from('user_profiles')
           .select('favorite_cities, favorite_categories, travel_style')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
         // Handle errors gracefully - user_profiles might not exist or RLS might block
         if (!profileError && profile) {
           userContext = {
@@ -302,4 +302,3 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to fetch conversation' }, { status: 500 });
   }
 }
-

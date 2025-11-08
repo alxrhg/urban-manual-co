@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@/lib/supabase-server';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * Track user interaction events for intelligence layer
@@ -11,7 +11,7 @@ export async function trackEvent(event: {
   metadata?: any;
 }) {
   try {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) return;

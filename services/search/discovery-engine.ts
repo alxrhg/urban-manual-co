@@ -13,16 +13,18 @@ export class DiscoveryEngineService {
   private projectId: string;
   private location: string;
   private dataStoreId: string;
+  private collectionId: string;
 
   constructor() {
     // Get configuration from environment variables
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GCP_PROJECT_ID || '';
     this.location = process.env.GOOGLE_CLOUD_LOCATION || 'global';
     this.dataStoreId = process.env.DISCOVERY_ENGINE_DATA_STORE_ID || 'urban-manual-destinations';
+    this.collectionId = process.env.DISCOVERY_ENGINE_COLLECTION_ID || 'default_collection';
 
     // Construct data store path
-    // Format: projects/{project}/locations/{location}/dataStores/{data_store}
-    this.dataStorePath = `projects/${this.projectId}/locations/${this.location}/dataStores/${this.dataStoreId}`;
+    // Format: projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}
+    this.dataStorePath = `projects/${this.projectId}/locations/${this.location}/collections/${this.collectionId}/dataStores/${this.dataStoreId}`;
 
     // Initialize clients if credentials are available
     if (this.projectId) {
@@ -401,4 +403,3 @@ export function getDiscoveryEngineService(): DiscoveryEngineService {
   }
   return discoveryEngineService;
 }
-

@@ -3,7 +3,28 @@
  * Provides achievement-based greeting messages
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
+
+// Get Supabase service role client (for admin operations)
+// Note: This should ideally be in an API route, but kept here for backward compatibility
+function getServiceRoleClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+  const key = 
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    '';
+  
+  if (!url || !key) {
+    return createClient('https://placeholder.supabase.co', 'placeholder-key');
+  }
+  
+  return createClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
 
 export interface RecentAchievement {
   id: string;
@@ -18,7 +39,7 @@ export interface RecentAchievement {
  * Get recently unlocked achievements (within 7 days)
  */
 export async function getRecentAchievements(userId: string): Promise<RecentAchievement[]> {
-  const supabase = createServiceRoleClient();
+  const supabase = getServiceRoleClient();
   if (!supabase) return [];
 
   try {
@@ -68,7 +89,7 @@ export async function getRecentAchievements(userId: string): Promise<RecentAchie
 export async function getNextAchievementProgress(
   userId: string
 ): Promise<{ name: string; progress: number; target: number; emoji: string } | null> {
-  const supabase = createServiceRoleClient();
+  const supabase = getServiceRoleClient();
   if (!supabase) return null;
 
   try {

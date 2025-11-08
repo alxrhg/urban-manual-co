@@ -67,11 +67,15 @@ export class IntentAnalysisService {
       // Get user context if available
       let userContext = '';
       if (userId && this.supabase) {
-        const { data: profile } = await this.supabase
+        const { data: profile, error: profileError } = await this.supabase
           .from('user_profiles')
           .select('favorite_cities, favorite_categories, travel_style')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn('IntentAnalysisService: profile lookup failed', profileError.message);
+        }
 
         if (profile) {
           const parts = [];
@@ -190,4 +194,3 @@ export class IntentAnalysisService {
 }
 
 export const intentAnalysisService = new IntentAnalysisService();
-

@@ -693,19 +693,28 @@ export default function Home() {
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!error && data) {
-        // Store full profile for greeting context
-        setUserProfile(data);
-        // Also store simplified version for other components
-        const profileData = data as any;
-        setUserContext({
-          favoriteCities: profileData.favorite_cities || [],
-          favoriteCategories: profileData.favorite_categories || [],
-          travelStyle: profileData.travel_style,
-        });
+      if (error) {
+        console.warn('Error fetching user profile:', error);
+        return;
       }
+
+      if (!data) {
+        setUserProfile(null);
+        setUserContext(null);
+        return;
+      }
+
+      // Store full profile for greeting context
+      setUserProfile(data);
+      // Also store simplified version for other components
+      const profileData = data as any;
+      setUserContext({
+        favoriteCities: profileData.favorite_cities || [],
+        favoriteCategories: profileData.favorite_categories || [],
+        travelStyle: profileData.travel_style,
+      });
     } catch (error) {
       // Expected error if user is not logged in - suppress
       if (user) {

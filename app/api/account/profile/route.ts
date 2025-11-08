@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       .from('user_profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (profileError) {
       console.error('Error fetching profile:', profileError);
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ profile });
+    return NextResponse.json({ profile: profile || null });
   } catch (error) {
     console.error('Unexpected error:', error);
     return NextResponse.json(
@@ -96,12 +96,20 @@ export async function PUT(request: NextRequest) {
 
     // Check if username is already taken (if changing username)
     if (username) {
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: existingUserError } = await supabase
         .from('user_profiles')
         .select('user_id')
         .eq('username', username)
         .neq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (existingUserError) {
+        console.error('Error checking username uniqueness:', existingUserError);
+        return NextResponse.json(
+          { error: 'Failed to validate username' },
+          { status: 500 }
+        );
+      }
 
       if (existingUser) {
         return NextResponse.json(

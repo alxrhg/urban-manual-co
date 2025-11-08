@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         .from('user_profiles')
         .select('favorite_cities, favorite_categories, interests, travel_style')
         .eq('user_id', user.id)
-        .single(),
+        .maybeSingle(),
     ]);
 
     // Handle errors gracefully - tables might not exist or RLS might block
@@ -147,4 +147,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
