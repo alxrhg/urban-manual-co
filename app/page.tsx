@@ -354,6 +354,19 @@ export default function Home() {
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
+  
+  // Loading text variants
+  const loadingTextVariants = [
+    'Finding the perfect spots...',
+    'Searching for amazing places...',
+    'Discovering hidden gems...',
+    'Curating the best destinations...',
+    'Exploring top recommendations...',
+    'Finding your next adventure...',
+    'Locating must-visit places...',
+    'Selecting the finest spots...',
+  ];
+  const [currentLoadingText, setCurrentLoadingText] = useState(loadingTextVariants[0]);
 
   const extractFilterOptions = (rows: Array<{ city?: string | null; category?: string | null }>) => {
     const citySet = new Set<string>();
@@ -1103,6 +1116,10 @@ export default function Home() {
       return;
     }
 
+    // Select a random loading text variant
+    const randomText = loadingTextVariants[Math.floor(Math.random() * loadingTextVariants.length)];
+    setCurrentLoadingText(randomText);
+
     setSearching(true);
     setSearchTier('ai-enhanced');
     setSearchIntent(null);
@@ -1661,7 +1678,7 @@ export default function Home() {
                                   <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
                                 </div>
                               )}
-                              <span>Finding the perfect spots...</span>
+                              <span>{currentLoadingText}</span>
                             </div>
                           </div>
                         )}
