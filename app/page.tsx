@@ -677,7 +677,10 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('Error fetching last session:', error);
+      // Expected error if user is not logged in - suppress
+      if (user) {
+        console.warn('Error fetching last session:', error);
+      }
     }
   }
 
@@ -704,7 +707,10 @@ export default function Home() {
         });
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      // Expected error if user is not logged in - suppress
+      if (user) {
+        console.warn('Error fetching user profile:', error);
+      }
     }
   }
 
@@ -729,7 +735,10 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('Error fetching enriched greeting context:', error);
+      // Expected error if user is not logged in - suppress
+      if (user && userProfile) {
+        console.warn('Error fetching enriched greeting context:', error);
+      }
     }
   }
 
@@ -795,10 +804,9 @@ export default function Home() {
   // Fetch filter data (cities and categories) first for faster initial display
   const fetchFilterData = async () => {
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
-        console.error('[Filter Data] Supabase not configured properly');
-        const discoveryBaseline = await fetchDiscoveryBootstrap();
+      // Supabase client is already configured in lib/supabase.ts
+      // No need to check env vars here - just use the client
+      const discoveryBaseline = await fetchDiscoveryBootstrap();
         if (discoveryBaseline.length) {
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
           setCities(discoveryCities);
@@ -986,7 +994,10 @@ export default function Home() {
       const slugs = new Set((data as any[])?.map((v: any) => v.destination_slug) || []);
       setVisitedSlugs(slugs);
     } catch (error) {
-      console.error('Error fetching visited places:', error);
+      // Expected error if user is not logged in - suppress
+      if (user) {
+        console.warn('Error fetching visited places:', error);
+      }
     }
   };
 
