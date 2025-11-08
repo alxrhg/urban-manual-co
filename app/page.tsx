@@ -396,7 +396,7 @@ export default function Home() {
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showAllCities, setShowAllCities] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
@@ -631,25 +631,12 @@ export default function Home() {
     // Track homepage view
     trackPageView({ pageType: 'home' });
 
-    // Set a timeout to ensure loading doesn't hang forever
-    const loadingTimeout = setTimeout(() => {
-      if (loading) {
-        console.warn('[Homepage] Loading timeout - forcing loading to false');
-        setLoading(false);
-      }
-    }, 10000); // 10 second timeout
-
     // Load filter data first (cities and categories) for faster initial display
-    fetchFilterData().finally(() => {
-      clearTimeout(loadingTimeout);
-    });
+    // Page renders immediately, data loads in background
+    fetchFilterData();
 
     // Then load full destinations in background
     fetchDestinations();
-
-    return () => {
-      clearTimeout(loadingTimeout);
-    };
   }, []);
 
   useEffect(() => {
@@ -835,7 +822,18 @@ export default function Home() {
       const supabaseClient = createClient();
       if (!supabaseClient) {
         console.warn('[Filter Data] Supabase client not available');
-        setLoading(false);
+        // Try Discovery Engine fallback immediately
+        const discoveryBaseline = await fetchDiscoveryBootstrap();
+        if (discoveryBaseline.length) {
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          setCities(discoveryCities);
+          setCategories(discoveryCategories);
+          if (destinations.length === 0) {
+            setDestinations(discoveryBaseline);
+          }
+        } else {
+          await applyFallbackData({ updateDestinations: destinations.length === 0 });
+        }
         return;
       }
       const { data, error } = await supabaseClient
@@ -861,7 +859,6 @@ export default function Home() {
         } else {
           await applyFallbackData({ updateDestinations: destinations.length === 0 });
         }
-        setLoading(false); // Set loading false even on error
         return;
       }
 
@@ -883,10 +880,6 @@ export default function Home() {
           setDestinations(discoveryBaseline);
         }
       }
-
-      // Set loading to false immediately after filter data loads
-      // This allows filters to show while destinations load in background
-      setLoading(false);
 
       console.log('[Filter Data] State updated:', {
         cities: uniqueCities.length,
@@ -918,8 +911,6 @@ export default function Home() {
         setCities([]);
         setCategories([]);
       }
-
-      setLoading(false); // Always set loading false on exception
     }
   };
 
@@ -1373,14 +1364,6 @@ export default function Home() {
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   const displayedCities = showAllCities ? cities : cities.slice(0, 20);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <ErrorBoundary>
