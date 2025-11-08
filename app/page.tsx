@@ -951,34 +951,45 @@ export default function Home() {
   };
 
   const fetchDestinations = async () => {
-    // Start Discovery Engine bootstrap in background (non-blocking)
-    // Don't wait for it - it's just a fallback
-    const discoveryPromise = fetchDiscoveryBootstrap().catch(() => []);
-
-    // Prioritize Supabase query (faster after cold start)
+    // Step 1: Run Supabase query directly (no waiting)
     try {
       // Select only essential columns to avoid issues with missing columns
       const supabaseClient = createClient();
       if (!supabaseClient) {
         console.warn('[Destinations] Supabase client not available');
+        // Fallback to Discovery Engine if Supabase not available
+        const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
+        if (discoveryBaseline.length) {
+          setDestinations(discoveryBaseline);
+          const filtered = filterDestinationsWithData(
+            discoveryBaseline,
+            '', {}, '', '', user, visitedSlugs
+          );
+          setFilteredDestinations(filtered);
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          if (discoveryCities.length) setCities(discoveryCities);
+          if (discoveryCategories.length) setCategories(discoveryCategories);
+        } else {
+          await applyFallbackData({ updateDestinations: true });
+        }
         return;
       }
-      // Optimize query: limit initial results for faster load, then fetch more if needed
-      // Use limit to speed up cold start, but still get enough data
+      
+      // Optimize query: limit initial results for faster load
       const { data, error } = await supabaseClient
         .from('destinations')
         .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
         .limit(500) // Limit initial query for faster load
         .order('name');
 
-      if (error || !data) {
+      if (error || !data || !Array.isArray(data) || data.length === 0) {
         // Only log unexpected errors (not configuration issues)
         if (error && !error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
           console.warn('Error fetching destinations:', error.message || error);
         }
 
-        // Try Discovery Engine as fallback (already started in background)
-        const discoveryBaseline = await discoveryPromise;
+        // Fallback to Discovery Engine if Supabase fails
+        const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
         if (discoveryBaseline.length) {
           setDestinations(discoveryBaseline);
           const filtered = filterDestinationsWithData(
@@ -989,41 +1000,19 @@ export default function Home() {
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
           if (discoveryCities.length) setCities(discoveryCities);
           if (discoveryCategories.length) setCategories(discoveryCategories);
-          return;
+        } else {
+          await applyFallbackData({ updateDestinations: true });
         }
-
-        await applyFallbackData({ updateDestinations: true });
         return;
       }
 
-      if (!Array.isArray(data) || data.length === 0) {
-        // Try Discovery Engine as fallback (already started in background)
-        const discoveryBaseline = await discoveryPromise;
-        if (discoveryBaseline.length) {
-          setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(
-            discoveryBaseline,
-            '', {}, '', '', user, visitedSlugs
-          );
-          setFilteredDestinations(filtered);
-          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          if (discoveryCities.length) setCities(discoveryCities);
-          if (discoveryCategories.length) setCategories(discoveryCategories);
-          return;
-        }
-
-        await applyFallbackData({ updateDestinations: true });
-        return;
-      }
-
+      // Step 2: Show Supabase results immediately
       setDestinations(data as Destination[]);
 
-      // Extract unique cities and categories from full data (for consistency)
-      // This ensures we have the complete list after full data loads
+      // Extract unique cities and categories from full data
       const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(data as any[]);
 
-      // Update cities and categories from full data (ensures consistency)
-      // Only update if we got more complete data
+      // Update cities and categories from full data
       if (uniqueCities.length) {
         setCities(uniqueCities);
       }
@@ -1042,20 +1031,54 @@ export default function Home() {
         visitedSlugs // current visited slugs
       );
       setFilteredDestinations(filtered);
+
+      // Step 3: Run Discovery Engine AFTER Supabase completes (as enhancement/filter)
+      // This runs in background and can enhance the results
+      fetchDiscoveryBootstrap()
+        .then((discoveryBaseline) => {
+          if (discoveryBaseline.length > 0) {
+            // Merge Discovery Engine results with Supabase results
+            // Discovery Engine can provide better ranking/personalization
+            const merged = [...(data as Destination[]), ...discoveryBaseline];
+            const uniqueMerged = merged.filter((dest, index, self) => 
+              index === self.findIndex(d => d.slug === dest.slug)
+            );
+            
+            // Only update if Discovery Engine provides additional value
+            if (uniqueMerged.length > data.length) {
+              setDestinations(uniqueMerged);
+              const filtered = filterDestinationsWithData(
+                uniqueMerged,
+                '', {}, '', '', user, visitedSlugs
+              );
+              setFilteredDestinations(filtered);
+              
+              // Update cities/categories if Discovery Engine has more
+              const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+              if (discoveryCities.length > uniqueCities.length) {
+                setCities(discoveryCities);
+              }
+              if (discoveryCategories.length > uniqueCategories.length) {
+                setCategories(discoveryCategories);
+              }
+            }
+          }
+        })
+        .catch(() => {
+          // Discovery Engine failed - that's fine, we already have Supabase data
+        });
     } catch (error: any) {
       // Only log unexpected errors
       if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
         console.warn('Error fetching destinations:', error?.message || error);
       }
 
-      // Try Discovery Engine as fallback (already started in background)
-      const discoveryBaseline = await discoveryPromise;
+      // Fallback to Discovery Engine if Supabase fails
+      const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
       if (!discoveryBaseline.length) {
         await applyFallbackData({ updateDestinations: true });
       }
-      // Don't reset cities/categories or loading - filters are already shown
     }
-    // Don't set loading false here - it's already false from fetchFilterData
   };
 
   const fetchVisitedPlaces = async () => {
