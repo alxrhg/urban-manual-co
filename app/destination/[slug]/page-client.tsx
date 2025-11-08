@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Bookmark, Check, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';

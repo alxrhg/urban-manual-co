@@ -48,7 +48,7 @@ import { capitalizeCity } from '@/lib/utils';
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
 // Category icons using Untitled UI icons
-function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number }> | null {
+function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {
   return getCategoryIconComponent(category);
 }
 
@@ -951,11 +951,13 @@ export default function Home() {
       } else {
         // If destinations are already loaded, just re-filter (don't re-fetch)
         // This prevents unnecessary re-fetching when visitedSlugs changes after login
+        // Note: filterDestinationsWithData is defined later, but it's a useCallback so it's stable
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         filterDestinations();
       }
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations, filterDestinations]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
 
   // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
   useEffect(() => {
@@ -969,11 +971,11 @@ export default function Home() {
   // Fetch filter data (cities and categories) first for faster initial display
   // OPTIMIZED: Call Discovery Engine once at start, reuse result throughout
   const fetchFilterData = async () => {
+    // OPTIMIZATION: Call Discovery Engine once at the start (cached by ref)
+    const discoveryBaselinePromise = fetchDiscoveryBootstrap();
+    
     try {
       console.log('[Filter Data] Starting fetch...');
-      
-      // OPTIMIZATION: Call Discovery Engine once at the start (cached by ref)
-      const discoveryBaselinePromise = fetchDiscoveryBootstrap();
       
       const supabaseClient = createClient();
       if (!supabaseClient) {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-interface IconProps {
+export interface IconProps {
   className?: string;
   size?: number | string;
   strokeWidth?: number;

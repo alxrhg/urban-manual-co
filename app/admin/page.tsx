@@ -72,15 +72,18 @@ function DestinationForm({
       
       // Load parent destination if editing
       if (destination.parent_destination_id) {
-        supabase
-          .from('destinations')
-          .select('id, slug, name, city')
-          .eq('id', destination.parent_destination_id)
-          .single()
-          .then(({ data }) => {
+        (async () => {
+          try {
+            const { data } = await supabase
+              .from('destinations')
+              .select('id, slug, name, city')
+              .eq('id', destination.parent_destination_id)
+              .single();
             if (data) setSelectedParent(data);
-          })
-          .catch(() => setSelectedParent(null));
+          } catch {
+            setSelectedParent(null);
+          }
+        })();
       } else {
         setSelectedParent(null);
       }
@@ -1101,7 +1104,6 @@ export default function AdminPage() {
               isLoading={isLoadingList}
             />
           )}
-        </div>
         </div>
         </div>
         )}
