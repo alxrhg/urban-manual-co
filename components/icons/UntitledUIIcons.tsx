@@ -182,3 +182,16 @@ export function SparklesIcon({ className = '', size = 16, strokeWidth = 1.5 }: I
   );
 }
 
+export function BreadIcon({ className = '', size = 16, strokeWidth = 1.5 }: IconProps) {
+  return (
+    <svg {...baseProps(size, strokeWidth)} className={className}>
+      <path d="M4 10c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v8c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4v-8Z" />
+      <path d="M8 6v12" />
+      <path d="M12 6v12" />
+      <path d="M16 6v12" />
+      <path d="M6 10h12" />
+      <path d="M6 14h12" />
+    </svg>
+  );
+}
+

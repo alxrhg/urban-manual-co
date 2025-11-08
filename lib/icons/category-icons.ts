@@ -26,6 +26,7 @@ import {
   WavesIcon,
   LandmarkIcon,
   SparklesIcon,
+  BreadIcon,
   type IconProps,
 } from '@/components/icons/UntitledUIIcons';
 
@@ -43,8 +44,8 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   'bar': 'wine',
   'bars': 'wine',
   'nightlife': 'wine',
-  'bakery': 'coffee',
-  'bakeries': 'coffee',
+  'bakery': 'bread',
+  'bakeries': 'bread',
   
   // Accommodation
   'hotel': 'building-02',
@@ -120,6 +121,7 @@ export function getCategoryIconComponent(category: string): IconComponent | null
     'waves': WavesIcon,
     'landmark': LandmarkIcon,
     'sparkles': SparklesIcon,
+    'bread': BreadIcon,
   };
 
   return iconMap[iconName] || null;
