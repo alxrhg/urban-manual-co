@@ -3,7 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
-import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
+import { 
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star,
+  UtensilsCrossed, Coffee, Wine, Hotel, ShoppingBag, Camera, Landmark,
+  Building2, Music, Film, Dumbbell, TreePine, Waves, Sparkles
+} from 'lucide-react';
 // Lazy load drawer (only when opened)
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -45,13 +49,69 @@ import { capitalizeCity } from '@/lib/utils';
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
-// Category icons mapping - comprehensive list
-// Category icons removed - no longer using emojis
-const CATEGORY_ICONS: Record<string, string> = {};
+// Category icons mapping using Lucide React icons
+type LucideIcon = React.ComponentType<{ className?: string; size?: number }>;
 
-function getCategoryIcon(category: string): string {
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  // Food & Dining
+  'dining': UtensilsCrossed,
+  'restaurant': UtensilsCrossed,
+  'restaurants': UtensilsCrossed,
+  'food': UtensilsCrossed,
+  'cafe': Coffee,
+  'cafes': Coffee,
+  'coffee': Coffee,
+  'bar': Wine,
+  'bars': Wine,
+  'nightlife': Wine,
+  
+  // Accommodation
+  'hotel': Hotel,
+  'hotels': Hotel,
+  'accommodation': Hotel,
+  'lodging': Hotel,
+  
+  // Shopping
+  'shopping': ShoppingBag,
+  'shop': ShoppingBag,
+  'store': ShoppingBag,
+  'retail': ShoppingBag,
+  
+  // Culture & Entertainment
+  'culture': Landmark,
+  'museum': Landmark,
+  'museums': Landmark,
+  'gallery': Camera,
+  'galleries': Camera,
+  'art': Camera,
+  'theater': Film,
+  'theatre': Film,
+  'cinema': Film,
+  'music': Music,
+  'concert': Music,
+  'attraction': Building2,
+  'attractions': Building2,
+  'landmark': Building2,
+  'landmarks': Building2,
+  
+  // Activities
+  'activity': Dumbbell,
+  'activities': Dumbbell,
+  'sport': Dumbbell,
+  'sports': Dumbbell,
+  'fitness': Dumbbell,
+  'park': TreePine,
+  'parks': TreePine,
+  'outdoor': TreePine,
+  'beach': Waves,
+  
+  // Other
+  'other': Sparkles,
+};
+
+function getCategoryIcon(category: string): LucideIcon | null {
   const key = category.toLowerCase().trim();
-  return CATEGORY_ICONS[key] || '';
+  return CATEGORY_ICONS[key] || null;
 }
 
 function capitalizeCategory(category: string): string {
@@ -1804,25 +1864,31 @@ export default function Home() {
                           />
                           Michelin
                         </button>
-                        {categories.map((category) => (
-                          <button
-                            key={category}
-                            onClick={() => {
-                              const newCategory = category === selectedCategory ? "" : category;
-                              setSelectedCategory(newCategory);
-                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
-                              setCurrentPage(1);
-                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                            }}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCategory === category && !advancedFilters.michelin
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
-                          >
-                            {capitalizeCategory(category)}
-                          </button>
-                        ))}
+                        {categories.map((category) => {
+                          const IconComponent = getCategoryIcon(category);
+                          return (
+                            <button
+                              key={category}
+                              onClick={() => {
+                                const newCategory = category === selectedCategory ? "" : category;
+                                setSelectedCategory(newCategory);
+                                setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                                setCurrentPage(1);
+                                trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                              }}
+                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                selectedCategory === category && !advancedFilters.michelin
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                              }`}
+                            >
+                              {IconComponent && (
+                                <IconComponent className="h-3 w-3" size={12} />
+                              )}
+                              {capitalizeCategory(category)}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -2106,14 +2172,20 @@ export default function Home() {
                         <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
                           {capitalizeCity(destination.city)}
                         </span>
-                        {destination.category && (
-                          <>
-                            <span className="text-gray-300 dark:text-gray-700">•</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
-                              {destination.category}
-                            </span>
-                          </>
-                        )}
+                        {destination.category && (() => {
+                          const CategoryIcon = getCategoryIcon(destination.category);
+                          return (
+                            <>
+                              <span className="text-gray-300 dark:text-gray-700">•</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1 flex items-center gap-1">
+                                {CategoryIcon && (
+                                  <CategoryIcon className="h-3 w-3" size={12} />
+                                )}
+                                {destination.category}
+                              </span>
+                            </>
+                          );
+                        })()}
                       </div>
 
                       {/* Distance Badge - Only shows when Near Me is active */}
