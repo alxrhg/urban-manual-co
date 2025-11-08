@@ -1872,30 +1872,32 @@ export default function Home() {
                         ref={chatContainerRef}
                         className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
                       >
-                        {chatMessages.map((message, index) => (
-                          <div key={index} className="space-y-2">
-                            {message.type === 'user' ? (
-                              <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                {message.content}
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                <MarkdownRenderer
-                                  content={message.content}
-                                  className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                />
-                                {message.contextPrompt && (
-                                  <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                    {message.contextPrompt}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                        {chatMessages.length > 0 ? (
+                          chatMessages.map((message, index) => (
+                            <div key={index} className="space-y-2">
+                              {message.type === 'user' ? (
+                                <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                  {message.content}
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  <MarkdownRenderer
+                                    content={message.content}
+                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                  />
+                                  {message.contextPrompt && (
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                      {message.contextPrompt}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : null}
 
-                        {/* Loading State */}
-                        {searching && (
+                        {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
+                        {(searching || (submittedQuery && chatMessages.length === 0)) && (
                           <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                             <div className="flex items-center gap-2">
                               {discoveryEngineLoading && (
