@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!isAvailable) {
-      console.warn('[Discovery Engine API] ❌ Discovery Engine is not available - returning 503');
+      console.warn('[Discovery Engine API] Discovery Engine is not available - returning 503');
       return NextResponse.json(
         { 
           error: 'Discovery Engine is not configured',
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     );
     const searchElapsed = Date.now() - searchStartTime;
 
-    console.log('[Discovery Engine API] ✅ Search completed:', {
+    console.log('[Discovery Engine API] Search completed:', {
       resultCount: results.results.length,
       totalSize: results.totalSize,
       elapsed: `${searchElapsed}ms`,

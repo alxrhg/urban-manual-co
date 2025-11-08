@@ -584,8 +584,8 @@ export default function Home() {
 
         if (!response.ok) {
           if (response.status === 503) {
-            console.warn('[Discovery Engine] ❌ Service unavailable (503) - Discovery Engine not configured or unavailable');
-            console.warn('[Discovery Engine] ⚠️  Falling back to Supabase only');
+            console.warn('[Discovery Engine] Service unavailable (503) - Discovery Engine not configured or unavailable');
+            console.warn('[Discovery Engine] Falling back to Supabase only');
           } else {
             let errorDetails: Record<string, unknown> | null = null;
             try {
@@ -597,11 +597,11 @@ export default function Home() {
               (typeof errorDetails?.error === 'string' && errorDetails.error) ||
               (typeof errorDetails?.details === 'string' && errorDetails.details) ||
               response.statusText;
-            console.warn('[Discovery Engine] ❌ Bootstrap request failed:', {
+            console.warn('[Discovery Engine] Bootstrap request failed:', {
               status: response.status,
               message: detailMessage,
             });
-            console.warn('[Discovery Engine] ⚠️  Falling back to Supabase only');
+            console.warn('[Discovery Engine] Falling back to Supabase only');
           }
 
           discoveryBootstrapRef.current = null;
@@ -621,13 +621,13 @@ export default function Home() {
         discoveryBootstrapRef.current = normalized;
 
         if (normalized.length > 0) {
-          console.log(`[Discovery Engine] ✅ Successfully bootstrapped ${normalized.length} destinations`, {
+          console.log(`[Discovery Engine] Successfully bootstrapped ${normalized.length} destinations`, {
             source: payload.source || 'unknown',
             fallback: payload.fallback || false,
             elapsed: `${Date.now() - startTime}ms`,
           });
         } else {
-          console.warn('[Discovery Engine] ⚠️  Bootstrap returned no destinations', {
+          console.warn('[Discovery Engine] Bootstrap returned no destinations', {
             source: payload.source || 'unknown',
             fallback: payload.fallback || false,
           });
@@ -636,10 +636,10 @@ export default function Home() {
         return normalized;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        console.warn('[Discovery Engine] ❌ Bootstrap failed:', message, {
+        console.warn('[Discovery Engine] Bootstrap failed:', message, {
           elapsed: `${Date.now() - startTime}ms`,
         });
-        console.warn('[Discovery Engine] ⚠️  Falling back to Supabase only');
+        console.warn('[Discovery Engine] Falling back to Supabase only');
         discoveryBootstrapRef.current = null;
         return [];
       } finally {
@@ -1480,7 +1480,7 @@ export default function Home() {
         .sort((a, b) => b._score - a._score);
     }
 
-    // 🎯 When user is signed in: separate visited & unvisited, move visited to bottom
+    // When user is signed in: separate visited & unvisited, move visited to bottom
     if (currentUser && currentVisitedSlugs.size > 0) {
       const unvisited = filtered.filter(d => !currentVisitedSlugs.has(d.slug));
       const visited = filtered.filter(d => currentVisitedSlugs.has(d.slug));

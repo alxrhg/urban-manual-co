@@ -36,7 +36,7 @@ export async function findPlaceByText(
   city: string
 ): Promise<PlacesEnrichmentData> {
   if (!GOOGLE_API_KEY) {
-    console.error('❌ NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
+    console.error('NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
     throw new Error('Google API key not configured');
   }
 
@@ -63,14 +63,14 @@ export async function findPlaceByText(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ Places API error ${response.status}:`, errorText);
+      console.error(`Places API error ${response.status}:`, errorText);
       throw new Error(`Places API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
 
     if (!data.places || data.places.length === 0) {
-      console.warn(`⚠️  No place found for: "${searchQuery}"`);
+      console.warn(`No place found for: "${searchQuery}"`);
       return {
         place_id: null,
         rating: null,
@@ -85,7 +85,7 @@ export async function findPlaceByText(
     }
 
     const place = data.places[0];
-    console.log(`✅ Found place: ${place.displayName?.text || name} (${place.id})`);
+    console.log(`Found place: ${place.displayName?.text || name} (${place.id})`);
     console.log(`   Rating: ${place.rating || 'N/A'}, Types: ${(place.types || []).join(', ')}`);
 
     // Extract cuisine type from types array
@@ -165,7 +165,7 @@ export async function generateGeminiTags(
   googleTypes?: string[]
 ): Promise<GeminiTagsData> {
   if (!GOOGLE_API_KEY) {
-    console.error('❌ NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
+    console.error('NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
     throw new Error('Google API key not configured');
   }
 
@@ -211,7 +211,7 @@ Tags should be lowercase, concise, and highly searchable. Categories should be o
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ Gemini API error ${response.status}:`, errorText);
+      console.error(`Gemini API error ${response.status}:`, errorText);
       throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
@@ -221,12 +221,12 @@ Tags should be lowercase, concise, and highly searchable. Categories should be o
     // Extract JSON from response (Gemini sometimes adds markdown)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('❌ No valid JSON in Gemini response:', text);
+      console.error('No valid JSON in Gemini response:', text);
       throw new Error('No valid JSON in Gemini response');
     }
 
     const result = JSON.parse(jsonMatch[0]);
-    console.log(`✅ Generated ${result.tags?.length || 0} tags: ${(result.tags || []).join(', ')}`);
+    console.log(`Generated ${result.tags?.length || 0} tags: ${(result.tags || []).join(', ')}`);
     console.log(`   Suggested category: ${result.suggested_category || 'None'}`);
 
     return {
@@ -310,7 +310,7 @@ export async function enrichDestination(
     console.log(`📂 Keeping existing category: ${finalCategory}`);
   }
 
-  console.log(`✨ Enrichment complete for ${name}`);
+  console.log(`Enrichment complete for ${name}`);
   console.log(`   Place ID: ${placesData.place_id || 'Not found'}`);
   console.log(`   Rating: ${placesData.rating || 'N/A'}`);
   console.log(`   Tags: ${geminiData.tags.length} tags generated`);
