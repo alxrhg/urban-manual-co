@@ -784,7 +784,14 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
-      fetchVisitedPlaces();
+      // Priority: Fetch visited places FIRST (needed for filtering)
+      // Then fetch profile and session in parallel
+      fetchVisitedPlaces().then(() => {
+        // After visited places are loaded, re-filter destinations if they're already loaded
+        if (destinations.length > 0) {
+          filterDestinations();
+        }
+      });
       fetchLastSession();
       fetchUserProfile();
     }
@@ -939,15 +946,17 @@ export default function Home() {
   // Fetch destinations lazily when filters are applied
   useEffect(() => {
     if (!searchTerm.trim()) {
-      // Only fetch destinations if we haven't already or if we need to
+      // Only fetch destinations if we haven't already
       if (destinations.length === 0) {
         fetchDestinations();
       } else {
+        // If destinations are already loaded, just re-filter (don't re-fetch)
+        // This prevents unnecessary re-fetching when visitedSlugs changes after login
         filterDestinations();
       }
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations, filterDestinations]); // Filters only apply when no search
 
   // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
   useEffect(() => {
@@ -1257,7 +1266,7 @@ export default function Home() {
     }
   };
 
-  const fetchVisitedPlaces = async () => {
+  const fetchVisitedPlaces = async (): Promise<void> => {
     if (!user) return;
 
     try {
