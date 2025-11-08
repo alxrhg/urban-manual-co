@@ -951,37 +951,11 @@ export default function Home() {
   };
 
   const fetchDestinations = async () => {
-    let discoveryBaseline: Destination[] = [];
+    // Start Discovery Engine bootstrap in background (non-blocking)
+    // Don't wait for it - it's just a fallback
+    const discoveryPromise = fetchDiscoveryBootstrap().catch(() => []);
 
-    try {
-      discoveryBaseline = await fetchDiscoveryBootstrap();
-        if (discoveryBaseline.length) {
-          if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data (no filters on initial load)
-            const filtered = filterDestinationsWithData(
-              discoveryBaseline,
-              '', // no search term
-              {}, // no advanced filters
-              '', // no selected city
-              '', // no selected category
-              user, // current user
-              visitedSlugs // current visited slugs
-            );
-            setFilteredDestinations(filtered);
-          }
-          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          if (discoveryCities.length) {
-            setCities(prev => (discoveryCities.length > prev.length ? discoveryCities : prev));
-          }
-          if (discoveryCategories.length) {
-            setCategories(prev => (discoveryCategories.length > prev.length ? discoveryCategories : prev));
-          }
-        }
-    } catch {
-      // fetchDiscoveryBootstrap already logs internally
-    }
-
+    // Prioritize Supabase query (faster after cold start)
     try {
       // Select only essential columns to avoid issues with missing columns
       const supabaseClient = createClient();
@@ -1003,16 +977,42 @@ export default function Home() {
           console.warn('Error fetching destinations:', error.message || error);
         }
 
-        if (!discoveryBaseline.length) {
-          await applyFallbackData({ updateDestinations: true });
+        // Try Discovery Engine as fallback (already started in background)
+        const discoveryBaseline = await discoveryPromise;
+        if (discoveryBaseline.length) {
+          setDestinations(discoveryBaseline);
+          const filtered = filterDestinationsWithData(
+            discoveryBaseline,
+            '', {}, '', '', user, visitedSlugs
+          );
+          setFilteredDestinations(filtered);
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          if (discoveryCities.length) setCities(discoveryCities);
+          if (discoveryCategories.length) setCategories(discoveryCategories);
+          return;
         }
+
+        await applyFallbackData({ updateDestinations: true });
         return;
       }
 
       if (!Array.isArray(data) || data.length === 0) {
-        if (!discoveryBaseline.length) {
-          await applyFallbackData({ updateDestinations: true });
+        // Try Discovery Engine as fallback (already started in background)
+        const discoveryBaseline = await discoveryPromise;
+        if (discoveryBaseline.length) {
+          setDestinations(discoveryBaseline);
+          const filtered = filterDestinationsWithData(
+            discoveryBaseline,
+            '', {}, '', '', user, visitedSlugs
+          );
+          setFilteredDestinations(filtered);
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          if (discoveryCities.length) setCities(discoveryCities);
+          if (discoveryCategories.length) setCategories(discoveryCategories);
+          return;
         }
+
+        await applyFallbackData({ updateDestinations: true });
         return;
       }
 
@@ -1048,6 +1048,8 @@ export default function Home() {
         console.warn('Error fetching destinations:', error?.message || error);
       }
 
+      // Try Discovery Engine as fallback (already started in background)
+      const discoveryBaseline = await discoveryPromise;
       if (!discoveryBaseline.length) {
         await applyFallbackData({ updateDestinations: true });
       }
