@@ -8,6 +8,8 @@ import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
+import { DataTable } from "./data-table";
+import { createColumns, type Destination } from "./columns";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -766,12 +768,12 @@ export default function AdminPage() {
     }
   }, [isAdmin, authChecked]);
 
-  // Load destination list when search or offset changes
+  // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
   useEffect(() => {
     if (isAdmin && authChecked) {
       loadDestinationList();
     }
-  }, [isAdmin, authChecked, listOffset, listSearchQuery]);
+  }, [isAdmin, authChecked]);
 
   // Load data when tab changes
   useEffect(() => {
@@ -1074,118 +1076,30 @@ export default function AdminPage() {
               Add Place
             </button>
           </div>
-          <div className="mb-4">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={listSearchQuery}
-                    onChange={(e) => {
-                      setListSearchQuery(e.target.value);
-                      setListOffset(0); // Reset to first page when searching
-                    }}
-                    placeholder="Search by name, city, slug, or category..."
-                    className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none"
-                  />
-                  {listSearchQuery && (
-                    <button
-                      onClick={() => setListSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setListOffset(Math.max(0, listOffset - 20));
-                }}
-                disabled={listOffset === 0 || isLoadingList}
-                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => {
-                  setListOffset(listOffset + 20);
-                }}
-                disabled={isLoadingList || destinationList.length < 20}
-                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
-        <div>
           {isLoadingList ? (
             <div className="text-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
             </div>
-          ) : destinationList.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No destinations found</div>
           ) : (
-            <div className="space-y-2">
-              {destinationList.map((dest: any) => {
-                const isEnriched = !!dest.google_place_id;
-                const hasAddress = !!dest.formatted_address;
-                const hasRating = !!dest.rating;
-
-                return (
-                  <div
-                    key={dest.slug}
-                    className="group flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-200 hover:scale-[1.01]"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{dest.name}</span>
-                        <span className="text-xs text-gray-500">{dest.city}</span>
-                        {isEnriched ? (
-                          <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">Enriched</span>
-                        ) : (
-                          <span className="text-xs bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">Not Enriched</span>
-                        )}
-                      </div>
-                      <div className="flex gap-3 mt-1 text-xs text-gray-500">
-                        {hasAddress && <span className="text-green-600 dark:text-green-400">✓ Address</span>}
-                        {hasRating && <span className="text-green-600 dark:text-green-400">✓ Rating: {dest.rating}</span>}
-                        <span className="text-xs">Slug: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{dest.slug}</code></span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => {
-                          setEditingDestination(dest);
-                          setShowCreateModal(true);
-                        }}
-                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-150 text-xs font-medium flex items-center gap-1"
-                      >
-                        <Edit className="h-3 w-3" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEnrichSlug(dest.slug);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-150 text-xs font-medium"
-                      >
-                        Enrich
-                      </button>
-                      <button
-                        onClick={() => handleDeleteDestination(dest.slug, dest.name)}
-                        className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 hover:shadow-sm transition-all duration-150 text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <DataTable
+              columns={createColumns(
+                (dest) => {
+                  setEditingDestination(dest);
+                  setShowCreateModal(true);
+                },
+                (slug) => {
+                  setEnrichSlug(slug);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+                handleDeleteDestination
+              )}
+              data={destinationList}
+              searchQuery={listSearchQuery}
+              onSearchChange={(query) => {
+                setListSearchQuery(query);
+              }}
+              isLoading={isLoadingList}
+            />
           )}
         </div>
         </div>
