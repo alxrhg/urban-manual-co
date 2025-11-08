@@ -29,7 +29,7 @@ export function ChatInterface({ onSendMessage, placeholder = "Ask about restaura
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
-        <span className="text-sm font-medium">💬 Ask AI about destinations</span>
+        <span className="text-sm font-medium">Ask AI about destinations</span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-gray-400">{isOpen ? 'Hide' : 'Show'}</span>
           <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />

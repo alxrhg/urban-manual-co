@@ -21,12 +21,12 @@ export function IntentConfirmationChips({
   // Primary intent
   if (intent.primaryIntent) {
     const intentLabels: Record<string, string> = {
-      discover: '🔍 Discover',
-      plan: '📅 Plan',
-      compare: '⚖️ Compare',
-      recommend: '✨ Recommend',
-      learn: '📚 Learn',
-      book: '🎫 Book',
+      discover: 'Discover',
+      plan: 'Plan',
+      compare: 'Compare',
+      recommend: 'Recommend',
+      learn: 'Learn',
+      book: 'Book',
     };
     chips.push({
       type: 'intent',
@@ -40,36 +40,26 @@ export function IntentConfirmationChips({
     chips.push({
       type: 'city',
       value: intent.city,
-      label: `📍 ${intent.city}`,
+      label: intent.city,
     });
   }
 
   // Category
   if (intent.category) {
-    const categoryIcons: Record<string, string> = {
-      restaurant: '🍽️',
-      cafe: '☕',
-      hotel: '🏨',
-      bar: '🍸',
-      gallery: '🖼️',
-      museum: '🏛️',
-      park: '🌳',
-      shop: '🛍️',
-    };
     chips.push({
       type: 'category',
       value: intent.category,
-      label: `${categoryIcons[intent.category] || '📍'} ${intent.category}`,
+      label: intent.category,
     });
   }
 
   // Temporal context
   if (intent.temporalContext?.timeframe) {
     const timeLabels: Record<string, string> = {
-      now: '⏰ Right now',
-      soon: '🔜 Soon',
-      future: '📅 Future',
-      flexible: '🔄 Flexible',
+      now: 'Right now',
+      soon: 'Soon',
+      future: 'Future',
+      flexible: 'Flexible',
     };
     chips.push({
       type: 'time',
@@ -81,13 +71,13 @@ export function IntentConfirmationChips({
   // Budget constraints
   if (intent.constraints?.budget) {
     const { min, max, currency = '$' } = intent.constraints.budget;
-    let budgetLabel = '💰 ';
+    let budgetLabel = '';
     if (min && max) {
-      budgetLabel += `${currency}${min}-${currency}${max}`;
+      budgetLabel = `${currency}${min}-${currency}${max}`;
     } else if (min) {
-      budgetLabel += `${currency}${min}+`;
+      budgetLabel = `${currency}${min}+`;
     } else if (max) {
-      budgetLabel += `Under ${currency}${max}`;
+      budgetLabel = `Under ${currency}${max}`;
     }
     chips.push({
       type: 'budget',
@@ -98,16 +88,10 @@ export function IntentConfirmationChips({
 
   // Time of day
   if (intent.constraints?.time?.timeOfDay) {
-    const timeIcons: Record<string, string> = {
-      breakfast: '🌅',
-      lunch: '☀️',
-      dinner: '🌆',
-      'late-night': '🌙',
-    };
     chips.push({
       type: 'timeOfDay',
       value: intent.constraints.time.timeOfDay,
-      label: `${timeIcons[intent.constraints.time.timeOfDay] || '⏰'} ${intent.constraints.time.timeOfDay}`,
+      label: intent.constraints.time.timeOfDay,
     });
   }
 
@@ -117,7 +101,7 @@ export function IntentConfirmationChips({
       chips.push({
         type: 'modifier',
         value: modifier,
-        label: `✨ ${modifier}`,
+        label: modifier,
       });
     });
   }
@@ -128,7 +112,7 @@ export function IntentConfirmationChips({
       chips.push({
         type: 'preference',
         value: pref,
-        label: `👍 ${pref}`,
+        label: pref,
       });
     });
   }
@@ -139,7 +123,7 @@ export function IntentConfirmationChips({
       chips.push({
         type: 'exclusion',
         value: excl,
-        label: `🚫 ${excl}`,
+        label: `Not ${excl}`,
       });
     });
   }
