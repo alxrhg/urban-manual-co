@@ -15,14 +15,15 @@
 | **Shopping** | 🛍️ Shopping Bag | ✅ | Used for all retail stores |
 | **Bakery** | 🍞 Bread | ✅ **NEW** | Previously used coffee icon, now has dedicated bread icon |
 | **Park** | 🌳 Tree | ✅ | Used for parks, outdoor spaces |
-| **Other** | ✨ Sparkles | ✅ | Used for miscellaneous categories (spa, gym, salons, etc.) |
+| **Other** | ❌ None | ✅ | No icon - category name only (spa, gym, salons, etc.) |
 
 ---
 
 ## 📊 Icon Coverage
 
 **Total Categories:** 9  
-**Categories with Icons:** 9 (100%)  
+**Categories with Icons:** 8 (88.9%)  
+**Categories without Icons:** 1 (Other - intentionally no icon)  
 **Icons Available:** 13 unique icons
 
 ### Icon Usage Breakdown
@@ -40,7 +41,7 @@
 11. **DumbbellIcon** - Activity, Activities, Sport, Sports, Fitness
 12. **TreeIcon** - Park, Parks, Outdoor
 13. **WavesIcon** - Beach
-14. **SparklesIcon** - Other
+14. **SparklesIcon** - (Not used - Other category has no icon)
 
 ---
 

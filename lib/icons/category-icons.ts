@@ -87,8 +87,7 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   'outdoor': 'tree',
   'beach': 'waves',
   
-  // Other
-  'other': 'sparkles',
+  // Other - no icon needed (will return null)
 };
 
 /**
