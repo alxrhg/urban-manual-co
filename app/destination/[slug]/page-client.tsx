@@ -354,29 +354,43 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 {destination.name}
               </h1>
               {user && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowSaveModal(true)}
-                    className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
-                      isSaved
-                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
-                    }`}
+                <div className="flex items-center gap-2">
+                  <ToggleGroup
+                    type="multiple"
+                    value={[
+                      ...(isSaved ? ['save'] : []),
+                      ...(isVisited ? ['visit'] : []),
+                    ]}
+                    onValueChange={(values) => {
+                      const wasSaved = isSaved;
+                      const wasVisited = isVisited;
+                      const nowSaved = values.includes('save');
+                      const nowVisited = values.includes('visit');
+
+                      if (wasSaved !== nowSaved) {
+                        if (nowSaved) {
+                          setShowSaveModal(true);
+                        } else {
+                          // Handle unsave if needed
+                          setShowSaveModal(true);
+                        }
+                      }
+
+                      if (wasVisited !== nowVisited) {
+                        handleVisitToggle();
+                      }
+                    }}
+                    spacing={2}
                   >
-                    <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
-                    {isSaved ? 'Saved' : 'Save'}
-                  </button>
-                  <button
-                    onClick={handleVisitToggle}
-                    className={`px-4 py-2 border rounded-2xl text-xs font-medium flex items-center gap-2 transition-colors ${
-                      isVisited
-                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
-                    }`}
-                  >
-                    <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
-                    {isVisited ? 'Visited' : 'Mark as Visited'}
-                  </button>
+                    <ToggleGroupItem value="save" aria-label="Save destination">
+                      <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                      <span className="ml-2">{isSaved ? 'Saved' : 'Save'}</span>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="visit" aria-label="Mark as visited">
+                      <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
+                      <span className="ml-2">{isVisited ? 'Visited' : 'Mark as Visited'}</span>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                   {isVisited && (
                     <button
                       onClick={() => setShowVisitedModal(true)}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -616,48 +617,55 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="flex gap-2 mb-4">
               {user && destination ? (
                 <>
-                  <button
-                    onClick={() => setShowSaveModal(true)}
-                    className={`group flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 ${
-                      isSaved
-                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-sm'
-                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:scale-[1.02]'
-                    }`}
-                  >
-                    <Bookmark
-                      className={`h-4 w-4 transition-all duration-300 ${
-                        isSaved
-                          ? 'fill-current scale-110'
-                          : 'group-hover:scale-110'
-                      }`}
-                    />
-                    <span className={isSaved ? 'animate-in fade-in duration-200' : ''}>
-                      {isSaved ? 'Saved' : 'Save'}
-                    </span>
-                  </button>
-                  <button
-                    onClick={handleVisitToggle}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      if (isVisited) setShowVisitedModal(true);
+                  <ToggleGroup
+                    type="multiple"
+                    value={[
+                      ...(isSaved ? ['save'] : []),
+                      ...(isVisited ? ['visit'] : []),
+                    ]}
+                    onValueChange={(values) => {
+                      const wasSaved = isSaved;
+                      const wasVisited = isVisited;
+                      const nowSaved = values.includes('save');
+                      const nowVisited = values.includes('visit');
+
+                      if (wasSaved !== nowSaved) {
+                        if (nowSaved) {
+                          setShowSaveModal(true);
+                        } else {
+                          // Handle unsave if needed
+                          setShowSaveModal(true);
+                        }
+                      }
+
+                      if (wasVisited !== nowVisited) {
+                        handleVisitToggle();
+                      }
                     }}
-                    className={`group flex-1 px-4 py-3 border rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 ${
-                      isVisited
-                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-sm'
-                        : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:scale-[1.02]'
-                    }`}
+                    spacing={2}
+                    className="flex-1"
                   >
-                    <Check
-                      className={`h-4 w-4 transition-all duration-300 ${
-                        isVisited
-                          ? 'stroke-[3] scale-110 animate-in zoom-in-50 duration-300'
-                          : 'group-hover:scale-110'
-                      }`}
-                    />
-                    <span className={isVisited ? 'animate-in fade-in duration-200' : ''}>
-                      {isVisited ? 'Visited' : 'Mark as Visited'}
-                    </span>
-                  </button>
+                    <ToggleGroupItem value="save" aria-label="Save destination" className="flex-1">
+                      <Bookmark className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : ''}`} />
+                      <span className={`ml-2 ${isSaved ? 'animate-in fade-in duration-200' : ''}`}>
+                        {isSaved ? 'Saved' : 'Save'}
+                      </span>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem 
+                      value="visit" 
+                      aria-label="Mark as visited" 
+                      className="flex-1"
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        if (isVisited) setShowVisitedModal(true);
+                      }}
+                    >
+                      <Check className={`h-4 w-4 transition-all duration-300 ${isVisited ? 'stroke-[3] scale-110 animate-in zoom-in-50 duration-300' : ''}`} />
+                      <span className={`ml-2 ${isVisited ? 'animate-in fade-in duration-200' : ''}`}>
+                        {isVisited ? 'Visited' : 'Mark as Visited'}
+                      </span>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                   {isVisited && (
                     <button
                       onClick={() => setShowVisitedModal(true)}
