@@ -13,7 +13,13 @@ const nextConfig: NextConfig = {
   // Optimize production builds (no source maps for smaller bundles)
   productionBrowserSourceMaps: false,
 
-  // Note: Next.js 16 uses Turbopack by default which handles chunk splitting automatically
+  // Note: Next.js 16 uses SWC (Speedy Web Compiler) by default for:
+  // - TypeScript/JavaScript compilation (20x faster than Babel)
+  // - Minification (faster than Terser)
+  // - Code transformation and optimization
+  // SWC is automatically enabled - no configuration needed!
+  // 
+  // Next.js 16 also uses Turbopack by default which handles chunk splitting automatically
   // Webpack config removed to avoid conflicts with Turbopack
 
   // Security headers
