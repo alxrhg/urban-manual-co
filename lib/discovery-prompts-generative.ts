@@ -10,7 +10,12 @@ import { DiscoveryPrompt } from '@/types/discovery';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Support both new (publishable/secret) and legacy (anon/service_role) key naming
+const SUPABASE_KEY = 
+  process.env.SUPABASE_SECRET_KEY || 
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!GOOGLE_API_KEY) {
   console.warn('Missing GOOGLE_API_KEY for generative personalization');

@@ -11,7 +11,10 @@ function getEnv(key: string): string {
 }
 
 const supabaseUrl = getEnv('NEXT_PUBLIC_SUPABASE_URL');
-const supabaseAnonKey = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+// Support both new (publishable) and legacy (anon) key naming
+const supabaseAnonKey = 
+  getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ||
+  getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
 const hasValidConfig = supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('placeholder') && !supabaseAnonKey.includes('placeholder');
 

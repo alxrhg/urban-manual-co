@@ -57,7 +57,11 @@ function requireEnv(key: string): string {
  */
 export function createClientComponentClient() {
   const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL');
-  const key = requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  // Try new publishable key first, then fall back to legacy anon key
+  const key = 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
   
   // Fallback to dummy client if not configured
   if (!url || !key) {
@@ -80,7 +84,11 @@ export async function createServerClient() {
   // The client-side supabase client automatically sends the session token
   // For server-side, we create a basic client that will work with getUser() calls
   const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL');
-  const key = requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  // Try new publishable key first, then fall back to legacy anon key
+  const key = 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
   
   // Fallback to dummy client if not configured
   if (!url || !key) {

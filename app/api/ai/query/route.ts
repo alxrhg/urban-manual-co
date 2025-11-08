@@ -3,7 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import { generateJSON } from '@/lib/llm';
 
 const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
+// Support both new (publishable/secret) and legacy (anon/service_role) key naming
+const key = (
+  process.env.SUPABASE_SECRET_KEY || 
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+) as string;
 const supabase = createClient(url, key);
 
 export async function POST(req: NextRequest) {
