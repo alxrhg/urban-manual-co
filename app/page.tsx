@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
 // Lazy load drawer (only when opened)
@@ -631,11 +631,25 @@ export default function Home() {
     // Track homepage view
     trackPageView({ pageType: 'home' });
 
+    // Set a timeout to ensure loading doesn't hang forever
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn('[Homepage] Loading timeout - forcing loading to false');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
     // Load filter data first (cities and categories) for faster initial display
-    fetchFilterData();
+    fetchFilterData().finally(() => {
+      clearTimeout(loadingTimeout);
+    });
 
     // Then load full destinations in background
     fetchDestinations();
+
+    return () => {
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   useEffect(() => {
@@ -689,7 +703,11 @@ export default function Home() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        return;
+      }
+      const { data, error } = await supabaseClient
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
@@ -814,7 +832,13 @@ export default function Home() {
   const fetchFilterData = async () => {
     try {
       console.log('[Filter Data] Starting fetch...');
-      const { data, error } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        console.warn('[Filter Data] Supabase client not available');
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabaseClient
         .from('destinations')
         .select('city, category')
         .order('city');
@@ -871,23 +895,31 @@ export default function Home() {
       });
     } catch (error: any) {
       // Only log unexpected errors
-      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
+      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase') && !error?.message?.includes('timeout')) {
         console.warn('[Filter Data] Exception:', error?.message || error);
       }
 
-      const discoveryBaseline = await fetchDiscoveryBootstrap();
-      if (discoveryBaseline.length) {
-        const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-        setCities(discoveryCities);
-        setCategories(discoveryCategories);
-        if (destinations.length === 0) {
-          setDestinations(discoveryBaseline);
+      // Try to get data from Discovery Engine as fallback
+      try {
+        const discoveryBaseline = await fetchDiscoveryBootstrap();
+        if (discoveryBaseline.length) {
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          setCities(discoveryCities);
+          setCategories(discoveryCategories);
+          if (destinations.length === 0) {
+            setDestinations(discoveryBaseline);
+          }
+        } else {
+          await applyFallbackData({ updateDestinations: destinations.length === 0 });
         }
-      } else {
-        await applyFallbackData({ updateDestinations: destinations.length === 0 });
+      } catch (fallbackError) {
+        console.warn('[Filter Data] Fallback also failed:', fallbackError);
+        // At minimum, set empty arrays so UI can render
+        setCities([]);
+        setCategories([]);
       }
 
-      setLoading(false); // Set loading false on exception
+      setLoading(false); // Always set loading false on exception
     }
   };
 
@@ -914,7 +946,12 @@ export default function Home() {
 
     try {
       // Select only essential columns to avoid issues with missing columns
-      const { data, error } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        console.warn('[Destinations] Supabase client not available');
+        return;
+      }
+      const { data, error } = await supabaseClient
         .from('destinations')
         .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
         .order('name');
@@ -970,7 +1007,11 @@ export default function Home() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        return;
+      }
+      const { data, error } = await supabaseClient
         .from('visited_places')
         .select('destination_slug')
         .eq('user_id', user.id);
