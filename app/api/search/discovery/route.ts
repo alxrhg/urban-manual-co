@@ -35,6 +35,28 @@ export async function POST(request: NextRequest) {
 
     const discoveryEngine = getDiscoveryEngineService();
     const flags = getFeatureFlags();
+    
+    // Check if Discovery Engine is available
+    const isAvailable = discoveryEngine.isAvailable();
+    console.log('[Discovery Engine API] Status check:', {
+      isAvailable,
+      useDiscoveryEngine: flags.useDiscoveryEngine,
+      projectId: process.env.DISCOVERY_ENGINE_PROJECT_ID ? 'set' : 'missing',
+      location: process.env.DISCOVERY_ENGINE_LOCATION ? 'set' : 'missing',
+      dataStoreId: process.env.DISCOVERY_ENGINE_DATA_STORE_ID ? 'set' : 'missing',
+    });
+
+    if (!isAvailable) {
+      console.warn('[Discovery Engine API] ❌ Discovery Engine is not available - returning 503');
+      return NextResponse.json(
+        { 
+          error: 'Discovery Engine is not configured',
+          fallback: true,
+          source: 'fallback',
+        },
+        { status: 503 }
+      );
+    }
 
     // Get user ID from session if not provided
     let finalUserId = userId;
@@ -54,12 +76,20 @@ export async function POST(request: NextRequest) {
       const variant = getABTestVariant(finalUserId, 'search_quality');
       useDiscoveryEngine = variant === 'discovery_engine';
     }
+    
+    console.log('[Discovery Engine API] Request:', {
+      query,
+      userId: finalUserId || 'anonymous',
+      useDiscoveryEngine,
+      pageSize: pageSize || 20,
+    });
 
     // Generate cache key
     const cache = getDiscoveryEngineCache();
     const cacheKey = cache.generateSearchKey(query, filters || {}, finalUserId);
 
     // Perform search with caching and performance monitoring
+    const searchStartTime = Date.now();
     const results = await withPerformanceMonitoring(
       '/api/search/discovery',
       'POST',
@@ -84,6 +114,15 @@ export async function POST(request: NextRequest) {
         5 * 60 * 1000 // 5 minute cache
       )
     );
+    const searchElapsed = Date.now() - searchStartTime;
+
+    console.log('[Discovery Engine API] ✅ Search completed:', {
+      resultCount: results.results.length,
+      totalSize: results.totalSize,
+      elapsed: `${searchElapsed}ms`,
+      source: 'discovery_engine',
+      fallback: false,
+    });
 
     // Track search event for personalization
     if (finalUserId) {
@@ -101,6 +140,8 @@ export async function POST(request: NextRequest) {
       totalSize: results.totalSize,
       nextPageToken: results.nextPageToken,
       query,
+      source: 'discovery_engine',
+      fallback: false,
     });
   } catch (error: any) {
     console.error('Discovery Engine search error:', error);

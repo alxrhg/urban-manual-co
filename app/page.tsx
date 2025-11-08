@@ -548,15 +548,19 @@ export default function Home() {
 
   const fetchDiscoveryBootstrap = async (): Promise<Destination[]> => {
     if (discoveryBootstrapRef.current !== null) {
+      console.log('[Discovery Engine] Using cached bootstrap data');
       return discoveryBootstrapRef.current;
     }
 
     if (discoveryBootstrapPromiseRef.current) {
+      console.log('[Discovery Engine] Waiting for existing bootstrap request');
       return discoveryBootstrapPromiseRef.current;
     }
 
     const promise = (async () => {
+      const startTime = Date.now();
       try {
+        console.log('[Discovery Engine] Starting bootstrap request...');
         const response = await fetch('/api/search/discovery', {
           method: 'POST',
           headers: {
@@ -570,9 +574,17 @@ export default function Home() {
           }),
         });
 
+        const elapsed = Date.now() - startTime;
+        console.log(`[Discovery Engine] Response received (${elapsed}ms):`, {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+        });
+
         if (!response.ok) {
           if (response.status === 503) {
-            console.warn('[Discovery Engine] Service unavailable (503) during bootstrap');
+            console.warn('[Discovery Engine] ❌ Service unavailable (503) - Discovery Engine not configured or unavailable');
+            console.warn('[Discovery Engine] ⚠️  Falling back to Supabase only');
           } else {
             let errorDetails: Record<string, unknown> | null = null;
             try {
@@ -584,14 +596,18 @@ export default function Home() {
               (typeof errorDetails?.error === 'string' && errorDetails.error) ||
               (typeof errorDetails?.details === 'string' && errorDetails.details) ||
               response.statusText;
-            console.warn('[Discovery Engine] Bootstrap request failed:', response.status, detailMessage);
+            console.warn('[Discovery Engine] ❌ Bootstrap request failed:', {
+              status: response.status,
+              message: detailMessage,
+            });
+            console.warn('[Discovery Engine] ⚠️  Falling back to Supabase only');
           }
 
           discoveryBootstrapRef.current = null;
           return [];
         }
 
-        const payload: { results?: unknown } = await response
+        const payload: { results?: unknown; source?: string; fallback?: boolean } = await response
           .json()
           .catch(() => ({ results: [] as unknown[] }));
 
@@ -604,15 +620,25 @@ export default function Home() {
         discoveryBootstrapRef.current = normalized;
 
         if (normalized.length > 0) {
-          console.log(`[Discovery Engine] Bootstrapped ${normalized.length} destinations for homepage.`);
+          console.log(`[Discovery Engine] ✅ Successfully bootstrapped ${normalized.length} destinations`, {
+            source: payload.source || 'unknown',
+            fallback: payload.fallback || false,
+            elapsed: `${Date.now() - startTime}ms`,
+          });
         } else {
-          console.warn('[Discovery Engine] Bootstrap returned no destinations.');
+          console.warn('[Discovery Engine] ⚠️  Bootstrap returned no destinations', {
+            source: payload.source || 'unknown',
+            fallback: payload.fallback || false,
+          });
         }
 
         return normalized;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        console.warn('[Discovery Engine] Bootstrap failed:', message);
+        console.warn('[Discovery Engine] ❌ Bootstrap failed:', message, {
+          elapsed: `${Date.now() - startTime}ms`,
+        });
+        console.warn('[Discovery Engine] ⚠️  Falling back to Supabase only');
         discoveryBootstrapRef.current = null;
         return [];
       } finally {
