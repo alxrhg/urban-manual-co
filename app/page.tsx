@@ -693,6 +693,8 @@ export default function Home() {
       // Use the helper function to check if Supabase is available
       if (!isSupabaseAvailable()) {
         console.warn('[Filter Data] Supabase not configured, skipping fetch');
+        setCities([]);
+        setCategories([]);
         setLoading(false); // Still set loading false to show UI
         return;
       }
@@ -701,10 +703,24 @@ export default function Home() {
       const { data, error } = await supabase
         .from('destinations')
         .select('city, category')
-        .order('city');
+        .order('city')
+        .limit(1000); // Add limit
 
       if (error) {
+        // Check if it's a configuration error
+        if (error.message?.includes('Supabase not configured') || 
+            error.message?.includes('invalid.supabase') ||
+            error.message?.includes('hostname')) {
+          console.warn('[Filter Data] Supabase not configured, skipping fetch');
+          setCities([]);
+          setCategories([]);
+          setLoading(false);
+          return;
+        }
+        
         console.error('[Filter Data] Error:', error);
+        setCities([]);
+        setCategories([]);
         setLoading(false); // Set loading false even on error
         // Don't return - try to extract from empty data or wait for fetchDestinations
         return;
@@ -755,6 +771,9 @@ export default function Home() {
       if (!isAvailable) {
         console.warn('[Destinations] Supabase not configured, skipping fetch');
         setDestinations([]);
+        setCities([]);
+        setCategories([]);
+        setLoading(false);
         return;
       }
 
@@ -762,9 +781,22 @@ export default function Home() {
       const { data, error } = await supabase
         .from('destinations')
         .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
-        .order('name');
+        .order('name')
+        .limit(1000); // Add limit to prevent issues
 
       if (error) {
+        // Check if it's a configuration error (not a real Supabase error)
+        if (error.message?.includes('Supabase not configured') || 
+            error.message?.includes('invalid.supabase') ||
+            error.message?.includes('hostname')) {
+          console.warn('[Destinations] Supabase not configured, skipping fetch');
+          setDestinations([]);
+          setCities([]);
+          setCategories([]);
+          setLoading(false);
+          return;
+        }
+        
         console.error('[Destinations] Supabase error:', error);
         console.error('[Destinations] Error details:', {
           message: error.message,
@@ -773,6 +805,7 @@ export default function Home() {
           hint: error.hint
         });
         setDestinations([]);
+        setLoading(false);
         return;
       }
 

@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseAvailable } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -15,23 +15,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let destinationData: Destination[] = [];
   let cities: string[] = [];
 
-  try {
-    // Fetch all destinations and cities
-    const { data: destinations, error } = await supabase
-      .from('destinations')
-      .select('slug, city, category')
-      .order('slug');
+  // Only try to fetch if Supabase is configured
+  if (isSupabaseAvailable()) {
+    try {
+      // Fetch all destinations and cities
+      const { data: destinations, error } = await supabase
+        .from('destinations')
+        .select('slug, city, category')
+        .order('slug');
 
-    if (error) {
-      console.warn('Sitemap: Could not fetch destinations from Supabase:', error.message);
-    } else {
-      destinationData = (destinations || []) as Destination[];
-      // Get unique cities
-      cities = Array.from(new Set(destinationData.map(d => d.city)));
+      if (error) {
+        console.warn('Sitemap: Could not fetch destinations from Supabase:', error.message);
+        // Set empty arrays to prevent errors
+        destinationData = [];
+        cities = [];
+      } else if (destinations && Array.isArray(destinations)) {
+        destinationData = destinations as Destination[];
+        // Get unique cities
+        cities = Array.from(new Set(destinationData.map(d => d.city).filter(Boolean)));
+      } else {
+        // Handle case where data is null or not an array
+        destinationData = [];
+        cities = [];
+      }
+    } catch (error) {
+      console.warn('Sitemap: Could not fetch destinations from Supabase:', error);
+      // This is fine during build without env vars - generate basic sitemap
+      destinationData = [];
+      cities = [];
     }
-  } catch (error) {
-    console.warn('Sitemap: Could not fetch destinations from Supabase:', error);
-    // This is fine during build without env vars - generate basic sitemap
+  } else {
+    // Supabase not configured - generate basic sitemap without destinations
+    console.warn('Sitemap: Supabase not configured, generating basic sitemap');
+    destinationData = [];
+    cities = [];
   }
 
   // Main pages - highest priority

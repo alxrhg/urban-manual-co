@@ -74,9 +74,25 @@ try {
       }
     }
     // Create a dummy client that will fail gracefully
+    // Use a non-existent but valid URL format to prevent actual network requests
     // Network errors will be suppressed by the global error handler in app/page.tsx
     supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
-      auth: { autoRefreshToken: false, persistSession: false }
+      auth: { 
+        autoRefreshToken: false, 
+        persistSession: false,
+        detectSessionInUrl: false
+      },
+      global: {
+        headers: {},
+        fetch: async (url, options = {}) => {
+          // Intercept all fetch requests and return empty response when Supabase is not configured
+          // This prevents actual network requests from being made
+          return new Response(JSON.stringify({ data: null, error: { message: 'Supabase not configured' } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
     });
   } else {
     supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -95,7 +111,21 @@ try {
   // Create a dummy client that will fail gracefully
   // Network errors will be suppressed by the global error handler in app/page.tsx
   supabase = createClient('https://invalid.supabase.co', 'invalid-key', {
-    auth: { autoRefreshToken: false, persistSession: false }
+    auth: { 
+      autoRefreshToken: false, 
+      persistSession: false,
+      detectSessionInUrl: false
+    },
+    global: {
+      headers: {},
+      fetch: async (url, options = {}) => {
+        // Intercept all fetch requests and return empty response when Supabase is not configured
+        return new Response(JSON.stringify({ data: null, error: { message: 'Supabase not configured' } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
   });
 }
 
