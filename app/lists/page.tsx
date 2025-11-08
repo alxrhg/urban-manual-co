@@ -47,12 +47,6 @@ export default function ListsPage() {
     }
   }, [user, authLoading, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchLists();
-    }
-  }, [user, fetchLists]);
-
   const fetchLists = useCallback(async () => {
     if (!user) {
       setLoading(false);
