@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { supabase, isSupabaseAvailable } from '@/lib/supabase';
+import { useEffect, useState, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
 // Lazy load drawer (only when opened)
@@ -30,6 +30,7 @@ import GreetingHero from '@/src/features/search/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
+import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
@@ -277,66 +278,11 @@ export default function Home() {
     // Track homepage view
     trackPageView({ pageType: 'home' });
 
-    // Suppress network errors from invalid Supabase URLs
-    const originalError = window.console.error;
-    const originalWarn = window.console.warn;
-    
-    window.console.error = (...args: any[]) => {
-      const message = args.join(' ');
-      // Suppress CORS and network errors for invalid Supabase URLs
-      if (
-        message.includes('invalid.supabase') ||
-        message.includes('Failed to fetch') ||
-        message.includes('A server with the specified hostname could not be found') ||
-        (message.includes('CORS') && message.includes('supabase'))
-      ) {
-        return; // Suppress these errors
-      }
-      originalError.apply(console, args);
-    };
-
-    window.console.warn = (...args: any[]) => {
-      const message = args.join(' ');
-      // Suppress network warnings for invalid Supabase URLs
-      if (
-        message.includes('invalid.supabase') ||
-        message.includes('Failed to fetch') ||
-        message.includes('hostname')
-      ) {
-        return; // Suppress these warnings
-      }
-      originalWarn.apply(console, args);
-    };
-
-    // Suppress unhandled promise rejections for Supabase errors
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      const reason = event.reason;
-      const message = reason?.message || reason?.toString() || '';
-      if (
-        message.includes('invalid.supabase') ||
-        message.includes('Failed to fetch') ||
-        message.includes('hostname') ||
-        message.includes('CORS')
-      ) {
-        event.preventDefault(); // Suppress the error
-        return;
-      }
-    };
-
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-
     // Load filter data first (cities and categories) for faster initial display
     fetchFilterData();
 
     // Then load full destinations in background
     fetchDestinations();
-
-    // Cleanup
-    return () => {
-      window.console.error = originalError;
-      window.console.warn = originalWarn;
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-    };
   }, []);
 
   useEffect(() => {
@@ -431,8 +377,333 @@ export default function Home() {
     }
   }
 
-  // Pinterest-like recommendation algorithm - must be defined before filterDestinations
-  const getRecommendationScore = useCallback((dest: Destination, index: number): number => {
+
+  // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
+  // Works like chat but with convenience of auto-trigger
+  useEffect(() => {
+    if (searchTerm.trim().length > 0) {
+      const timer = setTimeout(() => {
+        performAISearch(searchTerm);
+      }, 500); // 500ms debounce for auto-trigger
+      return () => clearTimeout(timer);
+    } else {
+      // Clear everything when search is empty
+      setFilteredDestinations([]);
+      setChatResponse('');
+      setConversationHistory([]);
+      setSearching(false);
+      setSubmittedQuery('');
+      setChatMessages([]);
+      // Show all destinations when no search (with filters if set)
+      filterDestinations();
+      setCurrentPage(1);
+    }
+  }, [searchTerm]); // ONLY depend on searchTerm
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  // Separate useEffect for filters (only when NO search term)
+  // Fetch destinations lazily when filters are applied
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      // Only fetch destinations if we haven't already or if we need to
+      if (destinations.length === 0) {
+        fetchDestinations();
+      } else {
+        filterDestinations();
+      }
+    }
+    // Don't reset displayed count here - let the search effect handle it
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
+
+  // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
+  useEffect(() => {
+    setAdvancedFilters(prev => ({
+      ...prev,
+      city: selectedCity && selectedCity.trim() ? selectedCity : undefined,
+      category: selectedCategory && selectedCategory.trim() ? selectedCategory : undefined,
+    }));
+  }, [selectedCity, selectedCategory]);
+
+  // Fetch filter data (cities and categories) first for faster initial display
+  const fetchFilterData = async () => {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
+        console.error('[Filter Data] Supabase not configured properly');
+        setLoading(false); // Still set loading false to show UI
+        return;
+      }
+
+      console.log('[Filter Data] Starting fetch...');
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('city, category')
+        .order('city');
+
+      if (error) {
+        console.error('[Filter Data] Error:', error);
+        setLoading(false); // Set loading false even on error
+        return;
+      }
+
+      // Extract unique cities and categories
+      const uniqueCities = Array.from(
+        new Set(
+          ((data || []) as any[])
+            .map((d: any) => d.city?.trim())
+            .filter(Boolean)
+        )
+      ).sort();
+
+      const uniqueCategories = Array.from(
+        new Set(
+          ((data || []) as any[])
+            .map((d: any) => d.category?.trim())
+            .filter(Boolean)
+        )
+      ).sort();
+
+      setCities(uniqueCities as string[]);
+      setCategories(uniqueCategories as string[]);
+
+      // Set loading to false immediately after filter data loads
+      // This allows filters to show while destinations load in background
+      setLoading(false);
+
+      console.log('[Filter Data] State updated:', {
+        cities: uniqueCities.length,
+        categories: uniqueCategories.length,
+        sampleCities: uniqueCities.slice(0, 5)
+      });
+    } catch (error) {
+      console.error('[Filter Data] Exception:', error);
+      setLoading(false); // Set loading false on exception
+    }
+  };
+
+  const fetchDestinations = async () => {
+    try {
+      // Select only essential columns to avoid issues with missing columns
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching destinations:', error);
+        setDestinations([]);
+        // Don't reset categories here - they're already loaded from fetchFilterData
+        // setCategories([]);
+        // Don't set loading false here - it's already false from fetchFilterData
+        return;
+      }
+
+      setDestinations(data || []);
+
+      // Extract unique cities and categories from full data (for consistency)
+      // This ensures we have the complete list after full data loads
+      const uniqueCities = Array.from(
+        new Set(
+          ((data || []) as any[])
+            .map((d: any) => d.city?.trim())
+            .filter(Boolean)
+        )
+      ).sort();
+
+      const uniqueCategories = Array.from(
+        new Set(
+          ((data || []) as any[])
+            .map((d: any) => d.category?.trim())
+            .filter(Boolean)
+        )
+      ).sort();
+
+      // Update cities and categories from full data (ensures consistency)
+      // Only update if we got more complete data
+      if (uniqueCities.length > cities.length || uniqueCategories.length > categories.length) {
+        setCities(uniqueCities as string[]);
+        setCategories(uniqueCategories as string[]);
+      }
+    } catch (error) {
+      console.error('Error fetching destinations:', error);
+      setDestinations([]);
+      // Don't reset cities/categories or loading - filters are already shown
+    }
+    // Don't set loading false here - it's already false from fetchFilterData
+  };
+
+  const fetchVisitedPlaces = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('visited_places')
+        .select('destination_slug')
+        .eq('user_id', user.id);
+
+      // Handle missing table or RLS errors gracefully
+      if (error && (error.code === 'PGRST116' || error.code === 'PGRST301')) {
+        // Table doesn't exist or RLS blocking - that's fine, just continue
+        return;
+      }
+
+      if (error) throw error;
+
+      const slugs = new Set((data as any[])?.map((v: any) => v.destination_slug) || []);
+      setVisitedSlugs(slugs);
+    } catch (error) {
+      console.error('Error fetching visited places:', error);
+    }
+  };
+
+  // AI Chat-only search - EXACTLY like chat component
+  // Accept ANY query (like chat component), API will validate
+  const performAISearch = async (query: string) => {
+    setSubmittedQuery(query); // Store the submitted query
+    // Match chat component: only check if empty or loading
+    if (!query.trim() || searching) {
+      return;
+    }
+
+    setSearching(true);
+    setSearchTier('ai-enhanced');
+    setSearchIntent(null);
+
+    try {
+      // Match chat component exactly - build history from existing conversation
+      // Chat component maps messages array (which doesn't include current query yet due to async state)
+      const historyForAPI = conversationHistory.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // ALL queries go through AI chat - no exceptions
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query.trim(),
+          userId: user?.id,
+          conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI chat failed');
+      }
+
+      const data = await response.json();
+
+      // Update search tier
+      setSearchTier(data.searchTier || 'ai-chat');
+
+      // Update conversation history for API context (not displayed)
+      const userMessage = { role: 'user' as const, content: query };
+      const assistantMessage = { role: 'assistant' as const, content: data.content || '', destinations: data.destinations };
+      
+      const newHistory = [
+        ...conversationHistory,
+        userMessage,
+        assistantMessage
+      ];
+      setConversationHistory(newHistory.slice(-10)); // Keep last 10 messages for context
+
+      // Store enhanced intent data for intelligent feedback
+      if (data.intent) {
+        setSearchIntent(data.intent);
+        
+        // Fetch seasonal context if city is detected
+        if (data.intent.city) {
+          try {
+            const seasonResponse = await fetch(`/api/seasonality?city=${encodeURIComponent(data.intent.city)}`);
+            if (seasonResponse.ok) {
+              const seasonData = await seasonResponse.json();
+              setSeasonalContext(seasonData);
+            }
+          } catch (error) {
+            // Silently fail - seasonal context is optional
+          }
+        } else {
+          setSeasonalContext(null);
+        }
+      }
+
+      // ONLY show the latest AI response (simple text)
+      setChatResponse(data.content || '');
+
+      // ALWAYS set destinations array
+      const destinations = data.destinations || [];
+      setFilteredDestinations(destinations);
+
+      // Add messages to visual chat history
+      const contextPrompt = getContextAwareLoadingMessage(query);
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: data.content || '', contextPrompt: destinations.length > 0 ? contextPrompt : undefined }
+      ]);
+    } catch (error) {
+      console.error('AI chat error:', error);
+      setChatResponse('Sorry, I encountered an error. Please try again.');
+      setFilteredDestinations([]);
+      setSearchIntent(null);
+      setSeasonalContext(null);
+
+      // Add error message to chat
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'user', content: query },
+        { type: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+      ]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Handle location changes from Near Me filter
+  const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {
+    if (!lat || !lng) {
+      setUserLocation(null);
+      setNearbyDestinations([]);
+      return;
+    }
+
+    setUserLocation({ lat, lng });
+
+    try {
+      console.log(`[Near Me] Fetching destinations within ${radius}km of ${lat}, ${lng}`);
+      const response = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&radius=${radius}&limit=100`);
+      const data = await response.json();
+
+      if (data.error) {
+        console.error('[Near Me] API error:', data.error, data.details);
+        setNearbyDestinations([]);
+        return;
+      }
+
+      console.log(`[Near Me] Found ${data.count} destinations`, data.usesFallback ? '(using fallback)' : '(using database function)');
+
+      if (data.destinations) {
+        setNearbyDestinations(data.destinations);
+      } else {
+        setNearbyDestinations([]);
+      }
+    } catch (error) {
+      console.error('[Near Me] Error fetching nearby destinations:', error);
+      setNearbyDestinations([]);
+    }
+  };
+
+  // Pinterest-like recommendation algorithm
+  const getRecommendationScore = (dest: Destination, index: number): number => {
     let score = 0;
 
     // Priority signals (like Pinterest's quality score)
@@ -448,11 +719,9 @@ export default function Home() {
     score += Math.random() * 30;
 
     return score;
-  }, []);
+  };
 
-  // Filter destinations function - must be defined before useEffects that use it
-  const filterDestinations = useCallback(() => {
-    console.log('[Filter] filterDestinations called, destinations.length:', destinations.length);
+  const filterDestinations = () => {
     let filtered = destinations;
 
     // Apply filters only when there's NO search term (AI chat handles all search)
@@ -627,444 +896,11 @@ export default function Home() {
       filtered = [...unvisited, ...visited];
     }
 
-    console.log('[Filter] filteredDestinations set to:', filtered.length);
     setFilteredDestinations(filtered);
-  }, [destinations, searchTerm, advancedFilters, selectedCity, selectedCategory, visitedSlugs, user, getRecommendationScore]);
-
-  // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
-  // Works like chat but with convenience of auto-trigger
-  useEffect(() => {
-    if (searchTerm.trim().length > 0) {
-      const timer = setTimeout(() => {
-        performAISearch(searchTerm);
-      }, 500); // 500ms debounce for auto-trigger
-      return () => clearTimeout(timer);
-    } else {
-      // Clear everything when search is empty
-      setFilteredDestinations([]);
-      setChatResponse('');
-      setConversationHistory([]);
-      setSearching(false);
-      setSubmittedQuery('');
-      setChatMessages([]);
-      // Show all destinations when no search (with filters if set)
-      if (destinations.length > 0) {
-        filterDestinations();
-      }
-      setCurrentPage(1);
-    }
-  }, [searchTerm, filterDestinations, destinations.length]); // ONLY depend on searchTerm
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
-
-  // Separate useEffect for filters (only when NO search term)
-  // This ensures filteredDestinations is populated when destinations are loaded
-  useEffect(() => {
-    if (!searchTerm.trim() && !submittedQuery) {
-      // Only fetch destinations if we haven't already
-      if (destinations.length === 0) {
-        fetchDestinations();
-      } else {
-        // Always filter when destinations are available and no search is active
-        // This ensures the grid shows up on initial load
-        filterDestinations();
-      }
-    }
-    // Don't reset displayed count here - let the search effect handle it
-  }, [searchTerm, submittedQuery, destinations.length, filterDestinations]); // Filters only apply when no search
-
-  // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
-  useEffect(() => {
-    setAdvancedFilters(prev => ({
-      ...prev,
-      city: selectedCity && selectedCity.trim() ? selectedCity : undefined,
-      category: selectedCategory && selectedCategory.trim() ? selectedCategory : undefined,
-    }));
-  }, [selectedCity, selectedCategory]);
-
-  // Fetch filter data (cities and categories) first for faster initial display
-  const fetchFilterData = async () => {
-    try {
-      // Use the helper function to check if Supabase is available
-      if (!isSupabaseAvailable()) {
-        console.warn('[Filter Data] Supabase not configured, skipping fetch');
-        setCities([]);
-        setCategories([]);
-        setLoading(false); // Still set loading false to show UI
-        return;
-      }
-
-      console.log('[Filter Data] Starting fetch...');
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('city, category')
-        .order('city')
-        .limit(1000); // Add limit
-
-      if (error) {
-        // Check if it's a configuration error
-        if (error.message?.includes('Supabase not configured') || 
-            error.message?.includes('invalid.supabase') ||
-            error.message?.includes('hostname')) {
-          console.warn('[Filter Data] Supabase not configured, skipping fetch');
-          setCities([]);
-          setCategories([]);
-          setLoading(false);
-          return;
-        }
-        
-        console.error('[Filter Data] Error:', error);
-        setCities([]);
-        setCategories([]);
-        setLoading(false); // Set loading false even on error
-        // Don't return - try to extract from empty data or wait for fetchDestinations
-        return;
-      }
-
-      // Extract unique cities and categories
-      const uniqueCities = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.city?.trim())
-            .filter((city: any) => city && city.length > 0)
-        )
-      ).sort();
-
-      const uniqueCategories = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.category?.trim())
-            .filter((cat: any) => cat && cat.length > 0)
-        )
-      ).sort();
-
-      // Always set the state, even if arrays are empty (they'll be populated by fetchDestinations)
-      setCities(uniqueCities as string[]);
-      setCategories(uniqueCategories as string[]);
-
-      // Set loading to false immediately after filter data loads
-      // This allows filters to show while destinations load in background
-      setLoading(false);
-
-      console.log('[Filter Data] State updated:', {
-        cities: uniqueCities.length,
-        categories: uniqueCategories.length,
-        sampleCities: uniqueCities.slice(0, 5),
-        sampleCategories: uniqueCategories.slice(0, 5)
-      });
-    } catch (error) {
-      console.error('[Filter Data] Exception:', error);
-      setLoading(false); // Set loading false on exception
-    }
   };
-
-  const fetchDestinations = async () => {
-    try {
-      // Use the helper function to check if Supabase is available
-      const isAvailable = isSupabaseAvailable();
-      console.log('[Destinations] isSupabaseAvailable():', isAvailable);
-      if (!isAvailable) {
-        console.warn('[Destinations] Supabase not configured, skipping fetch');
-        setDestinations([]);
-        setCities([]);
-        setCategories([]);
-        setLoading(false);
-        return;
-      }
-
-      // Select only essential columns to avoid issues with missing columns
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
-        .order('name')
-        .limit(1000); // Add limit to prevent issues
-
-      if (error) {
-        // Check if it's a configuration error (not a real Supabase error)
-        if (error.message?.includes('Supabase not configured') || 
-            error.message?.includes('invalid.supabase') ||
-            error.message?.includes('hostname')) {
-          console.warn('[Destinations] Supabase not configured, skipping fetch');
-          setDestinations([]);
-          setCities([]);
-          setCategories([]);
-          setLoading(false);
-          return;
-        }
-        
-        console.error('[Destinations] Supabase error:', error);
-        console.error('[Destinations] Error details:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        });
-        setDestinations([]);
-        setLoading(false);
-        return;
-      }
-
-      const destinationsData = data || [];
-      console.log('[Destinations] Loaded destinations:', destinationsData.length);
-      if (destinationsData.length > 0) {
-        const sample = destinationsData[0] as any;
-        console.log('[Destinations] Sample destination:', {
-          slug: sample.slug,
-          name: sample.name,
-          city: sample.city,
-          category: sample.category
-        });
-      }
-      setDestinations(destinationsData);
-
-      // Extract unique cities and categories from full data (for consistency)
-      // This ensures we have the complete list after full data loads
-      const uniqueCities = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.city?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
-
-      const uniqueCategories = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.category?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
-
-      // Always update cities and categories from full data (ensures consistency)
-      // This ensures the lists are populated even if fetchFilterData didn't work
-      // Update regardless of current state to ensure lists are always populated
-      setCities(uniqueCities as string[]);
-      setCategories(uniqueCategories as string[]);
-      
-      if (uniqueCities.length > 0 || uniqueCategories.length > 0) {
-        console.log('[Destinations] Updated filter lists:', {
-          cities: uniqueCities.length,
-          categories: uniqueCategories.length,
-          sampleCities: uniqueCities.slice(0, 5),
-          sampleCategories: uniqueCategories.slice(0, 5)
-        });
-      } else {
-        console.warn('[Destinations] No cities or categories found in data');
-      }
-
-      // Note: filteredDestinations will be populated by the useEffect that watches destinations
-    } catch (error: any) {
-      // Don't log network errors for invalid URLs (they're expected)
-      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
-        console.error('Error fetching destinations:', error);
-      }
-      setDestinations([]);
-      // Don't reset cities/categories or loading - filters are already shown
-    }
-    // Don't set loading false here - it's already false from fetchFilterData
-  };
-
-  const fetchVisitedPlaces = async () => {
-    if (!user) return;
-
-    try {
-      // Use the helper function to check if Supabase is available
-      if (!isSupabaseAvailable()) {
-        console.warn('[Visited Places] Supabase not configured, skipping fetch');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('visited_places')
-        .select('destination_slug')
-        .eq('user_id', user.id);
-
-      // Handle missing table or RLS errors gracefully
-      if (error && (error.code === 'PGRST116' || error.code === 'PGRST301')) {
-        // Table doesn't exist or RLS blocking - that's fine, just continue
-        return;
-      }
-
-      // Don't throw network errors for invalid URLs (they're expected)
-      if (error && (error.message?.includes('hostname') || error.message?.includes('Failed to fetch') || error.message?.includes('invalid.supabase'))) {
-        console.warn('[Visited Places] Supabase not configured, skipping fetch');
-        return;
-      }
-
-      if (error) throw error;
-
-      const slugs = new Set((data as any[])?.map((v: any) => v.destination_slug) || []);
-      setVisitedSlugs(slugs);
-    } catch (error) {
-      console.error('Error fetching visited places:', error);
-    }
-  };
-
-  // AI Chat-only search - EXACTLY like chat component
-  // Accept ANY query (like chat component), API will validate
-  const performAISearch = async (query: string) => {
-    setSubmittedQuery(query); // Store the submitted query
-    // Match chat component: only check if empty or loading
-    if (!query.trim() || searching) {
-      return;
-    }
-
-    setSearching(true);
-    setSearchTier('ai-enhanced');
-    setSearchIntent(null);
-
-    try {
-      // Match chat component exactly - build history from existing conversation
-      // Chat component maps messages array (which doesn't include current query yet due to async state)
-      const historyForAPI = conversationHistory.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-
-      // ALL queries go through AI chat - no exceptions
-      const response = await fetch('/api/ai-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: query.trim(),
-          userId: user?.id,
-          conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('AI chat failed');
-      }
-
-      const data = await response.json();
-
-      // Update search tier
-      setSearchTier(data.searchTier || 'ai-chat');
-
-      // Update conversation history for API context (not displayed)
-      const userMessage = { role: 'user' as const, content: query };
-      const assistantMessage = { role: 'assistant' as const, content: data.content || '', destinations: data.destinations };
-      
-      const newHistory = [
-        ...conversationHistory,
-        userMessage,
-        assistantMessage
-      ];
-      setConversationHistory(newHistory.slice(-10)); // Keep last 10 messages for context
-
-      // Store enhanced intent data for intelligent feedback
-      if (data.intent) {
-        setSearchIntent(data.intent);
-        
-        // Fetch seasonal context if city is detected
-        if (data.intent.city) {
-          try {
-            const seasonResponse = await fetch(`/api/seasonality?city=${encodeURIComponent(data.intent.city)}`);
-            if (seasonResponse.ok) {
-              const seasonData = await seasonResponse.json();
-              setSeasonalContext(seasonData);
-            }
-          } catch (error) {
-            // Silently fail - seasonal context is optional
-          }
-        } else {
-          setSeasonalContext(null);
-        }
-      }
-
-      // ONLY show the latest AI response (simple text)
-      setChatResponse(data.content || '');
-
-      // ALWAYS set destinations array
-      const destinations = data.destinations || [];
-      setFilteredDestinations(destinations);
-
-      // Add messages to visual chat history
-      const contextPrompt = getContextAwareLoadingMessage(query);
-      setChatMessages(prev => [
-        ...prev,
-        { type: 'user', content: query },
-        { type: 'assistant', content: data.content || '', contextPrompt: destinations.length > 0 ? contextPrompt : undefined }
-      ]);
-    } catch (error) {
-      console.error('AI chat error:', error);
-      setChatResponse('Sorry, I encountered an error. Please try again.');
-      setFilteredDestinations([]);
-      setSearchIntent(null);
-      setSeasonalContext(null);
-
-      // Add error message to chat
-      setChatMessages(prev => [
-        ...prev,
-        { type: 'user', content: query },
-        { type: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
-      ]);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  // Handle location changes from Near Me filter
-  const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {
-    if (!lat || !lng) {
-      setUserLocation(null);
-      setNearbyDestinations([]);
-      return;
-    }
-
-    setUserLocation({ lat, lng });
-
-    try {
-      console.log(`[Near Me] Fetching destinations within ${radius}km of ${lat}, ${lng}`);
-      const response = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&radius=${radius}&limit=100`);
-      const data = await response.json();
-
-      if (data.error) {
-        console.error('[Near Me] API error:', data.error, data.details);
-        setNearbyDestinations([]);
-        return;
-      }
-
-      console.log(`[Near Me] Found ${data.count} destinations`, data.usesFallback ? '(using fallback)' : '(using database function)');
-
-      if (data.destinations) {
-        setNearbyDestinations(data.destinations);
-      } else {
-        setNearbyDestinations([]);
-      }
-    } catch (error) {
-      console.error('[Near Me] Error fetching nearby destinations:', error);
-      setNearbyDestinations([]);
-    }
-  };
-
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
-  // Ensure displayedCities is always an array, even if cities is empty
-  // Always show cities if they exist, regardless of showAllCities state initially
-  const displayedCities = cities.length > 0 
-    ? (showAllCities ? cities : cities.slice(0, 20))
-    : [];
-  
-  // Debug logging to help diagnose filter list issues
-  useEffect(() => {
-    if (cities.length > 0 || categories.length > 0) {
-      console.log('[Home] Filter lists state:', {
-        citiesCount: cities.length,
-        categoriesCount: categories.length,
-        displayedCitiesCount: displayedCities.length,
-        sampleCities: cities.slice(0, 5),
-        sampleCategories: categories.slice(0, 5)
-      });
-    }
-  }, [cities, categories, displayedCities.length]);
+  const displayedCities = showAllCities ? cities : cities.slice(0, 20);
 
   if (loading) {
     return (
@@ -1288,7 +1124,7 @@ export default function Home() {
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
-                    {/* City List - Always show, even if cities are loading */}
+                    {/* City List */}
                     <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                       <button
                         onClick={() => {
@@ -1304,7 +1140,7 @@ export default function Home() {
                       >
                         All Cities
                       </button>
-                      {displayedCities.length > 0 && displayedCities.map((city) => (
+                      {displayedCities.map((city) => (
                         <button
                           key={city}
                           onClick={() => {
@@ -1332,65 +1168,67 @@ export default function Home() {
                       )}
                     </div>
                     
-                    {/* Category List (including Michelin) - Always show */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                      <button
-                        onClick={() => {
-                          setSelectedCategory("");
-                          setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
-                          setCurrentPage(1);
-                          trackFilterChange({ filterType: 'category', value: 'all' });
-                        }}
-                        className={`transition-all duration-200 ease-out ${
-                          !selectedCategory && !advancedFilters.michelin
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                        }`}
-                      >
-                        All Categories
-                      </button>
-                      {/* Michelin right after All Categories */}
-                      <button
-                        onClick={() => {
-                          const newValue = !advancedFilters.michelin;
-                          setSelectedCategory("");
-                          setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
-                          setCurrentPage(1);
-                          trackFilterChange({ filterType: 'michelin', value: newValue });
-                        }}
-                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                          advancedFilters.michelin
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                        }`}
-                      >
-                        <img
-                          src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                          alt="Michelin star"
-                          className="h-3 w-3"
-                        />
-                        Michelin
-                      </button>
-                      {categories.length > 0 && categories.map((category) => (
+                    {/* Category List (including Michelin) */}
+                    {categories.length > 0 && (
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
-                          key={category}
                           onClick={() => {
-                            const newCategory = category === selectedCategory ? "" : category;
-                            setSelectedCategory(newCategory);
-                            setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
                             setCurrentPage(1);
-                            trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                            trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
                           className={`transition-all duration-200 ease-out ${
-                            selectedCategory === category && !advancedFilters.michelin
+                            !selectedCategory && !advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          {capitalizeCategory(category)}
+                          All Categories
                         </button>
-                      ))}
-                    </div>
+                        {/* Michelin right after All Categories */}
+                        <button
+                          onClick={() => {
+                            const newValue = !advancedFilters.michelin;
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                            setCurrentPage(1);
+                            trackFilterChange({ filterType: 'michelin', value: newValue });
+                          }}
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                            advancedFilters.michelin
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            className="h-3 w-3"
+                          />
+                          Michelin
+                        </button>
+                        {categories.map((category) => (
+                          <button
+                            key={category}
+                            onClick={() => {
+                              const newCategory = category === selectedCategory ? "" : category;
+                              setSelectedCategory(newCategory);
+                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                              setCurrentPage(1);
+                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                            }}
+                            className={`transition-all duration-200 ease-out ${
+                              selectedCategory === category && !advancedFilters.michelin
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            {capitalizeCategory(category)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1425,6 +1263,54 @@ export default function Home() {
               />
             </div>
 
+            {/* Recently Viewed - Show when no active search */}
+            {!submittedQuery && !selectedCity && !selectedCategory && (
+              <RecentlyViewed
+                onCardClick={(destination) => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+
+                  // Track destination click
+                  trackDestinationClick({
+                    destinationSlug: destination.slug,
+                    position: 0,
+                    source: 'recently_viewed',
+                  });
+
+                  // Also track with new analytics system
+                  if (destination.id) {
+                    import('@/lib/analytics/track').then(({ trackEvent }) => {
+                      trackEvent({
+                        event_type: 'click',
+                        destination_id: destination.id,
+                        destination_slug: destination.slug,
+                        metadata: {
+                          category: destination.category,
+                          city: destination.city,
+                          source: 'recently_viewed',
+                        },
+                      });
+                    });
+                  }
+
+                  // Track click event to Discovery Engine for personalization
+                  if (user?.id) {
+                    fetch('/api/discovery/track-event', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userId: user.id,
+                        eventType: 'click',
+                        documentId: destination.slug,
+                        source: 'recently_viewed',
+                      }),
+                    }).catch((error) => {
+                      console.warn('Failed to track Discovery Engine event:', error);
+                    });
+                  }
+                }}
+              />
+            )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
