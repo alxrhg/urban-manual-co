@@ -124,15 +124,6 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         },
       });
 
-      // Add to recently viewed
-      addToRecentlyViewed({
-        slug: destination.slug,
-        name: destination.name,
-        city: destination.city,
-        image: destination.image || '',
-        category: destination.category,
-        michelin_stars: destination.michelin_stars
-      });
     }
   }, [destination, addToRecentlyViewed]);
 
