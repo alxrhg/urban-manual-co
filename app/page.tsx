@@ -884,6 +884,9 @@ export default function Home() {
         }
         if (destinations.length === 0) {
           setDestinations(discoveryBaseline);
+          // Filter destinations immediately with the new data
+          const filtered = filterDestinationsWithData(discoveryBaseline);
+          setFilteredDestinations(filtered);
         }
       }
 
