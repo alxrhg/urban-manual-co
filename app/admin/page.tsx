@@ -897,46 +897,6 @@ export default function AdminPage() {
     };
   }, [showCreateModal]);
 
-      // Get visit history stats
-      const { data: visits } = await supabase
-        .from('visit_history')
-        .select('destination_id, search_query');
-
-      // Get user count
-      const { count: userCount } = await supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Aggregate stats
-      const views = (interactions as any[])?.filter((i: any) => i.interaction_type === 'view').length || 0;
-      const searches = (visits as any[])?.filter((v: any) => v.search_query).length || 0;
-      const saves = (interactions as any[])?.filter((i: any) => i.interaction_type === 'save').length || 0;
-
-      // Top searches
-      const searchQueries = (visits as any[])?.map((v: any) => v.search_query).filter(Boolean) || [];
-      const searchCounts: Record<string, number> = {};
-      searchQueries.forEach((q: string) => {
-        searchCounts[q] = (searchCounts[q] || 0) + 1;
-      });
-      const topSearches = Object.entries(searchCounts)
-        .map(([query, count]) => ({ query, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-
-      setAnalyticsStats({
-        totalViews: views,
-        totalSearches: searches,
-        totalSaves: saves,
-        totalUsers: userCount || 0,
-        topSearches,
-      });
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-    } finally {
-      setLoadingAnalytics(false);
-    }
-  }, []);
-
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
     try {
