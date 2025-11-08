@@ -830,6 +830,10 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
+            // Immediately filter destinations so they show up right away
+            setTimeout(() => {
+              filterDestinations();
+            }, 0);
           }
         } else {
           await applyFallbackData({ updateDestinations: destinations.length === 0 });
@@ -855,6 +859,10 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
+            // Immediately filter destinations so they show up right away
+            setTimeout(() => {
+              filterDestinations();
+            }, 0);
           }
         } else {
           await applyFallbackData({ updateDestinations: destinations.length === 0 });
@@ -901,6 +909,10 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
+            // Immediately filter destinations so they show up right away
+            setTimeout(() => {
+              filterDestinations();
+            }, 0);
           }
         } else {
           await applyFallbackData({ updateDestinations: destinations.length === 0 });
@@ -919,18 +931,22 @@ export default function Home() {
 
     try {
       discoveryBaseline = await fetchDiscoveryBootstrap();
-      if (discoveryBaseline.length) {
-        if (destinations.length === 0) {
-          setDestinations(discoveryBaseline);
+        if (discoveryBaseline.length) {
+          if (destinations.length === 0) {
+            setDestinations(discoveryBaseline);
+            // Immediately filter destinations so they show up right away
+            setTimeout(() => {
+              filterDestinations();
+            }, 0);
+          }
+          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+          if (discoveryCities.length) {
+            setCities(prev => (discoveryCities.length > prev.length ? discoveryCities : prev));
+          }
+          if (discoveryCategories.length) {
+            setCategories(prev => (discoveryCategories.length > prev.length ? discoveryCategories : prev));
+          }
         }
-        const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-        if (discoveryCities.length) {
-          setCities(prev => (discoveryCities.length > prev.length ? discoveryCities : prev));
-        }
-        if (discoveryCategories.length) {
-          setCategories(prev => (discoveryCategories.length > prev.length ? discoveryCategories : prev));
-        }
-      }
     } catch {
       // fetchDiscoveryBootstrap already logs internally
     }
@@ -980,6 +996,12 @@ export default function Home() {
       if (uniqueCategories.length) {
         setCategories(uniqueCategories);
       }
+      
+      // Immediately filter destinations so they show up right away
+      // Use setTimeout to ensure state has updated
+      setTimeout(() => {
+        filterDestinations();
+      }, 0);
     } catch (error: any) {
       // Only log unexpected errors
       if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
