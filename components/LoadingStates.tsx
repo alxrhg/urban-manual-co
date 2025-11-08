@@ -1,14 +1,15 @@
 'use client';
 
 import { Spinner as UISpinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Skeleton loader for destination cards
 export function DestinationCardSkeleton() {
   return (
-    <div className="animate-pulse">
-      <div className="relative aspect-square rounded-2xl bg-gray-200 dark:bg-gray-800 mb-2" />
-      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full w-3/4 mb-1.5" />
-      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full w-1/2" />
+    <div className="space-y-2">
+      <Skeleton className="aspect-square rounded-2xl mb-2" />
+      <Skeleton className="h-3 rounded-full w-3/4 mb-1.5" />
+      <Skeleton className="h-3 rounded-full w-1/2" />
     </div>
   );
 }
@@ -27,12 +28,12 @@ export function DestinationGridSkeleton({ count = 28 }: { count?: number }) {
 // Skeleton loader for list items (e.g., visited places)
 export function ListItemSkeleton() {
   return (
-    <div className="animate-pulse flex items-center gap-4 p-3 rounded-2xl">
-      <div className="relative w-16 h-16 flex-shrink-0 rounded-xl bg-gray-200 dark:bg-gray-800" />
-      <div className="flex-1 min-w-0">
-        <div className="h-3.5 bg-gray-200 dark:bg-gray-800 rounded-full w-2/3 mb-2" />
-        <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full w-1/2 mb-1.5" />
-        <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full w-1/3" />
+    <div className="flex items-center gap-4 p-3 rounded-2xl">
+      <Skeleton className="w-16 h-16 flex-shrink-0 rounded-xl" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <Skeleton className="h-3.5 rounded-full w-2/3" />
+        <Skeleton className="h-3 rounded-full w-1/2" />
+        <Skeleton className="h-3 rounded-full w-1/3" />
       </div>
     </div>
   );
@@ -52,9 +53,9 @@ export function ListSkeleton({ count = 5 }: { count?: number }) {
 // Skeleton loader for stats cards
 export function StatsCardSkeleton() {
   return (
-    <div className="animate-pulse p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-      <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded-full w-12 mb-2" />
-      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full w-16" />
+    <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl space-y-2">
+      <Skeleton className="h-6 rounded-full w-12" />
+      <Skeleton className="h-3 rounded-full w-16" />
     </div>
   );
 }

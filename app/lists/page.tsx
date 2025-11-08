@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Plus, Lock, Globe, Trash2, Loader2, Heart, MapPin, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface List {
   id: string;
@@ -196,7 +197,7 @@ export default function ListsPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse bg-gray-100 dark:bg-gray-800 rounded-2xl h-48"></div>
+              <Skeleton key={i} className="rounded-2xl h-48" />
             ))}
           </div>
         ) : lists.length === 0 ? (

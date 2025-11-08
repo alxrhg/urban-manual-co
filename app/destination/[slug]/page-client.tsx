@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Bookmark, Check, Plus } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -547,9 +548,9 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
                 {[1, 2, 3].map(i => (
                   <div key={i} className="space-y-2">
-                    <div className="aspect-square rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
-                    <div className="h-3 rounded bg-gray-100 dark:bg-gray-800 w-3/4 animate-pulse" />
-                    <div className="h-2 rounded bg-gray-100 dark:bg-gray-800 w-1/2 animate-pulse" />
+                    <Skeleton className="aspect-square rounded-2xl" />
+                    <Skeleton className="h-3 rounded-full w-3/4" />
+                    <Skeleton className="h-2 rounded-full w-1/2" />
                   </div>
                 ))}
               </div>

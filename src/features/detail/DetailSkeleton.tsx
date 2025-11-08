@@ -1,6 +1,6 @@
 'use client';
 
-import { Skeleton } from '@/src/ui/Skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DetailSkeleton() {
   return (
@@ -12,7 +12,7 @@ export default function DetailSkeleton() {
       </div>
       <div className="px-6 md:px-10">
         <div className="rounded-[32px] overflow-hidden border border-gray-200 dark:border-gray-800">
-          <div className="aspect-[16/9] bg-gray-200 dark:bg-gray-800" />
+          <Skeleton className="aspect-[16/9]" />
         </div>
       </div>
       <div className="px-6 md:px-10 mt-8">
