@@ -1,224 +1,78 @@
-# Database Migration Summary
+# Migration Status Summary
 
-**Date:** November 01, 2025  
-**Status:** ✅ **COMPLETED SUCCESSFULLY**
+## ✅ Applied Migrations (Confirmed)
+- **420**: Nested destinations (parent_destination_id column)
+- **421**: Michelin is Dining (constraint + trigger)
+- **419**: Fix user profiles RLS
+- **418**: Fix additional function security
+- **417**: Fix all security issues
+- **416**: Enable RLS on co_visit_signals
 
----
+## 📋 All Migration Files (40 total)
 
-## Overview
+### Core Features (400-403)
+- `400_collections_system.sql` - Collections/lists system
+- `401_itineraries_system.sql` - Trip planning system
+- `402_achievements_system.sql` - Gamification
+- `403_social_features.sql` - Social features
 
-We successfully completed two major database migrations for Urban Manual:
+### Enhancements (404-411)
+- `404_visited_enhancements.sql` - Enhanced visit tracking
+- `405_collection_comments.sql` - Comments on collections
+- `406_add_birthday_field.sql` - User birthday field
+- `407_add_editorial_summary.sql` - Editorial summaries
+- `408_add_cuisine_type.sql` - Cuisine type field
+- `409_add_google_trends.sql` - Google trends integration
+- `410_add_multi_source_trending.sql` - Multi-source trending
+- `411_add_instagram_tiktok_trending.sql` - Social media trending
 
-1. **Added new columns** to the `destinations` table for architect, brand, and other enrichment data
-2. **Created normalized tables** for cities, categories, profiles, and list_destinations
+### Advanced Features (412-415)
+- `412_create_co_visitation_graph.sql` - Co-visitation graph
+- `413_phase3_advanced_features.sql` - Phase 3 features
+- `414_phase4_optimization.sql` - Phase 4 optimizations
+- `415_travel_intelligence_improvement.sql` - Intelligence improvements
 
----
+### Security & Fixes (416-421)
+- `416_enable_rls_co_visit_signals.sql` ✅ Applied
+- `417_fix_all_security_issues.sql` ✅ Applied
+- `418_fix_additional_function_security.sql` ✅ Applied
+- `419_fix_user_profiles_rls.sql` ✅ Applied
+- `420_add_nested_destinations.sql` ✅ Applied
+- `421_ensure_michelin_is_dining.sql` ✅ Applied
 
-## Migration Results
+### Major Features (500+)
+- `500_complete_travel_intelligence.sql` - Complete intelligence infrastructure
+  - Adds latitude/longitude columns
+  - Creates destination_status, crowding_data, price_alerts, user_reports tables
+  - Adds geolocation functions
 
-### Part 1: New Columns Added to Destinations Table
+### Cleanup (999)
+- `999_cleanup_old_tables.sql` ⚠️ **DANGER** - Only run after full validation
+  - Drops old `saved_destinations` and `visited_destinations` tables
+  - **DO NOT RUN** unless you're 100% sure the new schema works
 
-The following columns were successfully added to the `public.destinations` table:
+## 🔍 How to Check What's Applied
 
-| Column Name | Data Type | Purpose | Index Created |
-|-------------|-----------|---------|---------------|
-| `architect` | TEXT | Architect or interior designer name | ✅ Yes |
-| `brand` | TEXT | Brand or hotel group name | ✅ Yes |
-| `year_opened` | INTEGER | Year the venue opened | ❌ No |
-| `michelin_stars` | INTEGER | Number of Michelin stars (1-3) | ✅ Yes |
-| `neighborhood` | TEXT | Specific neighborhood within city | ❌ No |
-| `gallery` | TEXT[] | Array of additional image URLs | ❌ No |
+Run `CHECK_ALL_MIGRATIONS.sql` in SQL Editor to see:
+- Which migrations are applied
+- Which tables/functions exist
+- Summary of applied migrations
 
-### Part 2: CSV Data Import
+## 📝 Next Steps
 
-**Source:** `TheSpaceManual-Spaces.csv` (586 rows)
+1. **Check migration status**: Run `CHECK_ALL_MIGRATIONS.sql`
+2. **Apply missing migrations**: If any are missing, apply them via SQL Editor
+3. **Migration 500**: Check if travel intelligence features are needed
+4. **Migration 999**: ⚠️ **DO NOT RUN** unless you've validated everything works
 
-**Results:**
-- ✅ **Successfully updated:** 339 destinations
-- ⚠️ **Skipped (not found):** 40 destinations
-- 🔥 **Failed:** 0 destinations
-- 📊 **Total processed:** 379 destinations with new data
+## ⚠️ Important Notes
 
-**Data Coverage:**
-- **98 destinations** (10.6%) now have architect information
-- **163 destinations** (17.7%) now have brand information
-- **139 destinations** (15.1%) now have Michelin star ratings
+- **Migration 999** is a cleanup migration that **drops tables**. Only run it after:
+  - All other migrations are applied
+  - You've verified the new schema works
+  - You have backups
+  - You're confident the old tables aren't needed
 
-### Part 3: Normalized Tables Created
+- Most migrations are **idempotent** (safe to run multiple times) using `IF NOT EXISTS` or `CREATE OR REPLACE`
 
-#### Cities Table
-- **Status:** ✅ Created successfully
-- **Rows:** 2 cities
-  - New York, United States
-  - London, United Kingdom
-- **Schema:**
-  - `id` (UUID, Primary Key)
-  - `name` (TEXT)
-  - `slug` (TEXT, Unique)
-  - `country` (TEXT)
-  - `description` (TEXT)
-  - `image_url` (TEXT)
-  - `created_at`, `updated_at` (TIMESTAMPTZ)
-
-#### Categories Table
-- **Status:** ✅ Created successfully
-- **Rows:** 7 categories
-  - Others
-  - Hotel
-  - Dining
-  - Culture
-  - Cafe
-  - Bar
-  - Bakeries
-- **Schema:**
-  - `id` (UUID, Primary Key)
-  - `name` (TEXT, Unique)
-  - `slug` (TEXT, Unique)
-  - `description` (TEXT)
-  - `icon` (TEXT)
-  - `created_at` (TIMESTAMPTZ)
-
-#### Profiles Table
-- **Status:** ✅ Created successfully
-- **Rows:** 0 (ready for user signups)
-- **Schema:**
-  - `id` (UUID, Primary Key, references `auth.users`)
-  - `username` (TEXT, Unique)
-  - `full_name` (TEXT)
-  - `avatar_url` (TEXT)
-  - `bio` (TEXT)
-  - `website` (TEXT)
-  - `instagram_handle` (TEXT)
-  - `taste_profile` (JSONB) - for UX algorithm
-  - `implicit_interests` (JSONB) - for UX algorithm
-  - `created_at`, `updated_at` (TIMESTAMPTZ)
-
-#### List Destinations Table
-- **Status:** ✅ Created successfully
-- **Rows:** 0 (ready for user lists)
-- **Schema:**
-  - `id` (UUID, Primary Key)
-  - `list_id` (UUID, references `lists`)
-  - `destination_id` (INTEGER, references `destinations`)
-  - `note` (TEXT)
-  - `position` (INTEGER)
-  - `created_at` (TIMESTAMPTZ)
-  - Unique constraint on (`list_id`, `destination_id`)
-
----
-
-## Security & Permissions
-
-All new tables have **Row Level Security (RLS)** enabled with the following policies:
-
-- ✅ **Public read access** for all tables
-- ✅ **Users can update their own profile**
-- ✅ **Users can manage their own list destinations**
-
----
-
-## Sample Data
-
-### Destinations with Architect Information
-
-1. **Oro**
-   - Architect: adam-d-tihany
-   - Gallery: 3 images
-
-2. **Daniel**
-   - Architect: adam-d-tihany
-   - Brand: daniel-boulud
-   - Michelin: ⭐
-
-3. **Per Se**
-   - Architect: adam-d-tihany
-   - Brand: thomas-keller
-   - Michelin: ⭐⭐⭐
-
-4. **Raffles Singapore**
-   - Architect: alexandra-champalimaud
-   - Brand: raffles
-
-5. **The Beverly Hills Hotel**
-   - Architect: alexandra-champalimaud; adam-d-tihany
-   - Brand: dorchester-collection
-
----
-
-## What This Enables
-
-### New Features You Can Build
-
-1. **Filter by Architect**
-   - "Show me all Renzo Piano buildings"
-   - "Explore Jean-Michel Gathy designs"
-
-2. **Brand Pages**
-   - Dedicated pages for Aman, Ritz-Carlton, etc.
-   - "All Aman Properties Worldwide"
-
-3. **Michelin Filter**
-   - "Show only Michelin-starred restaurants"
-   - Sort by star rating
-
-4. **Gallery Views**
-   - Multiple images per destination
-   - Richer detail pages
-
-5. **Personalization**
-   - User profiles with taste preferences
-   - Implicit interest tracking
-   - Custom lists with notes
-
-### SEO Benefits
-
-- **Architect names** are high-value keywords for design-conscious travelers
-- **Brand pages** can rank for "[Brand] hotels in [City]" searches
-- **Michelin stars** are powerful trust signals
-
----
-
-## Next Steps
-
-### Immediate (Optional)
-1. **Populate more cities:** The script only found 2 cities because most destinations in your current database are in New York and London. As you add more destinations from other cities, run the population script again.
-
-2. **Add city descriptions and images:** Manually enrich the `cities` table with descriptions and hero images for better city landing pages.
-
-3. **Add category icons:** Add icon names (e.g., "hotel", "restaurant") to the `categories` table for UI display.
-
-### Future Enhancements
-1. **Normalize architects and brands:** Create separate `architects` and `brands` tables (similar to cities and categories) for better data integrity.
-
-2. **Add foreign key relationships:** Eventually, replace the string-based `city` and `category` columns in `destinations` with foreign keys to the new normalized tables.
-
-3. **Build architect profile pages:** Create dedicated pages showcasing all destinations by a specific architect.
-
-4. **Implement the UX Algorithm:** Use the `taste_profile` and `implicit_interests` fields in the `profiles` table to power personalized recommendations.
-
----
-
-## Files Created
-
-- `/home/ubuntu/urban-manual/migrations/combined_migration.sql` - SQL migration script
-- `/home/ubuntu/urban-manual/scripts/import_architect_data.py` - CSV import script
-- `/home/ubuntu/urban-manual/scripts/002_populate_normalized_tables.py` - Normalization script
-- `/home/ubuntu/urban-manual/scripts/verify_migration.py` - Verification script
-- `/home/ubuntu/urban-manual/DATA_INTEGRATION_PLAN.md` - Integration documentation
-- `/home/ubuntu/urban-manual/MIGRATION_SUMMARY.md` - This file
-
----
-
-## Verification
-
-All migrations have been verified and are working correctly. You can re-run the verification script anytime:
-
-```bash
-cd /home/ubuntu/urban-manual
-python3.11 scripts/verify_migration.py
-```
-
----
-
-**✅ Migration Complete! Your database is now enriched and ready for the next phase of development.**
-
+- Check the migration files for `BEGIN;` and `COMMIT;` - they should be wrapped in transactions

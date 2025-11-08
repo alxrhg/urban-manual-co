@@ -14,6 +14,29 @@ build/
 .env.test.local
 .env.production.local
 
+# Temporary migration check files
+CHECK_*.sql
+APPLY_ALL_REMAINING_MIGRATIONS.sql
+COPY_PASTE_MIGRATION.sql
+QUICK_MIGRATION_CHECK.sql
+
+# Migration backups
+supabase/migrations_backup_*/
+supabase/.temp/
+
+# Temporary cleanup scripts
+CLEANUP_TEMPORARY_FILES.sh
+
+# Large JSON data files (if not needed in repo)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!components.json
+!next.config.ts
+!vercel.json
+!capacitor.config.ts
+
 # IDE and editor files
 .vscode/
 .idea/
