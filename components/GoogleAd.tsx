@@ -22,13 +22,57 @@ export function GoogleAd({
   responsive = true
 }: GoogleAdProps) {
   const adRef = useRef<HTMLModElement>(null);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization (React Strict Mode, re-renders)
+    if (initializedRef.current) return;
+    
+    // Wait for DOM element to be ready
+    if (!adRef.current) {
+      // Retry after a short delay if element isn't ready yet
+      const timer = setTimeout(() => {
+        if (adRef.current && !initializedRef.current) {
+          // Check if ad is already initialized by Google
+          if (adRef.current.getAttribute('data-ad-status')) {
+            initializedRef.current = true;
+            return;
+          }
+
+          try {
+            // @ts-ignore
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            initializedRef.current = true;
+          } catch (err) {
+            // Silently handle duplicate initialization errors
+            if (err instanceof Error && err.message?.includes('already have ads')) {
+              initializedRef.current = true;
+            } else {
+              console.error('AdSense error:', err);
+            }
+          }
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    
+    // Check if ad is already initialized by Google
+    if (adRef.current.getAttribute('data-ad-status')) {
+      initializedRef.current = true;
+      return;
+    }
+
     try {
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
+      initializedRef.current = true;
     } catch (err) {
-      console.error('AdSense error:', err);
+      // Silently handle duplicate initialization errors
+      if (err instanceof Error && err.message?.includes('already have ads')) {
+        initializedRef.current = true;
+      } else {
+        console.error('AdSense error:', err);
+      }
     }
   }, []);
 
@@ -70,11 +114,50 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
 export function MultiplexAd({ slot, className = '' }: { slot: string; className?: string }) {
   const adRef = useRef<HTMLModElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization (React Strict Mode, re-renders)
+    if (initializedRef.current) return;
+    
+    // Wait for DOM element to be ready
+    if (!adRef.current) {
+      // Retry after a short delay if element isn't ready yet
+      const timer = setTimeout(() => {
+        if (adRef.current && !initializedRef.current) {
+          // Check if ad is already initialized by Google
+          if (adRef.current.getAttribute('data-ad-status')) {
+            initializedRef.current = true;
+            return;
+          }
+
+          try {
+            // @ts-ignore
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            initializedRef.current = true;
+          } catch (err) {
+            // Silently handle duplicate initialization errors
+            if (err instanceof Error && err.message?.includes('already have ads')) {
+              initializedRef.current = true;
+            } else {
+              console.error('AdSense error:', err);
+            }
+          }
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    
+    // Check if ad is already initialized by Google
+    if (adRef.current.getAttribute('data-ad-status')) {
+      initializedRef.current = true;
+      return;
+    }
+
     try {
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
+      initializedRef.current = true;
 
       // Check if ad loaded after a delay
       const checkAdLoaded = setTimeout(() => {
@@ -91,10 +174,15 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
 
       return () => clearTimeout(checkAdLoaded);
     } catch (err) {
-      console.error('AdSense error:', err);
-      // Hide on error
-      if (containerRef.current) {
-        containerRef.current.style.display = 'none';
+      // Silently handle duplicate initialization errors
+      if (err instanceof Error && err.message?.includes('already have ads')) {
+        initializedRef.current = true;
+      } else {
+        console.error('AdSense error:', err);
+        // Hide on error
+        if (containerRef.current) {
+          containerRef.current.style.display = 'none';
+        }
       }
     }
   }, []);
