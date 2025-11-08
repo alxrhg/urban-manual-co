@@ -688,9 +688,7 @@ async function processAIChatRequest(
       if (discoveryEngine.isAvailable()) {
         // Use conversational search for follow-up queries
         if (isConversational && conversationHistory.length > 0) {
-        try {
-          const discoveryEngine = getDiscoveryEngineService();
-          if (discoveryEngine.isAvailable()) {
+          try {
             // Build enhanced query with conversation context
             const recentQueries = conversationHistory.slice(-3).map(m => m.content).join(' ');
             const enhancedQuery = `${query} (context: ${recentQueries})`;
@@ -721,11 +719,9 @@ async function processAIChatRequest(
         }
       }
       
-      // Use natural language search for complex queries
-      if (!discoveryResult && isNaturalLanguage) {
-        try {
-          const discoveryEngine = getDiscoveryEngineService();
-          if (discoveryEngine.isAvailable()) {
+        // Use natural language search for complex queries
+        if (!discoveryResult && isNaturalLanguage) {
+          try {
             // Parse natural language filters
             const parsedFilters = parseNaturalLanguageFilters(query);
             const cleanQuery = cleanNaturalLanguageQuery(query);
