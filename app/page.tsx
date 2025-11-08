@@ -276,6 +276,107 @@ export default function Home() {
   }>>([]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fallbackDestinationsRef = useRef<Destination[] | null>(null);
+
+  const extractFilterOptions = (rows: Array<{ city?: string | null; category?: string | null }>) => {
+    const citySet = new Set<string>();
+    const categorySet = new Set<string>();
+
+    rows.forEach(row => {
+      const city = (row.city ?? '').toString().trim();
+      const category = (row.category ?? '').toString().trim();
+
+      if (city) {
+        citySet.add(city);
+      }
+      if (category) {
+        categorySet.add(category);
+      }
+    });
+
+    return {
+      cities: Array.from(citySet).sort(),
+      categories: Array.from(categorySet).sort(),
+    };
+  };
+
+  const loadFallbackDestinations = async () => {
+    if (fallbackDestinationsRef.current) {
+      return fallbackDestinationsRef.current;
+    }
+
+    try {
+      const response = await fetch('/destinations.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load fallback destinations: ${response.status}`);
+      }
+
+      const raw = await response.json();
+      const normalized: Destination[] = (Array.isArray(raw) ? raw : [])
+        .map((item: any) => {
+          const slug = (item.slug || item.name || '')
+            .toString()
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-\s]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+          const tags = Array.isArray(item.tags)
+            ? item.tags
+            : typeof item.cardTags === 'string'
+              ? item.cardTags
+                  .split(',')
+                  .map((tag: string) => tag.trim())
+                  .filter(Boolean)
+              : undefined;
+
+          return {
+            slug,
+            name: (item.name || slug || 'Unknown destination').toString(),
+            city: (item.city || '').toString().trim(),
+            category: (item.category || '').toString().trim(),
+            description: item.description || item.subline || undefined,
+            content: item.content || undefined,
+            image: item.image || item.mainImage || undefined,
+            michelin_stars: item.michelin_stars ?? item.michelinStars ?? undefined,
+            crown: item.crown ?? undefined,
+            tags: tags && tags.length > 0 ? tags : undefined,
+          } as Destination;
+        })
+        .filter((destination: Destination) => Boolean(destination.slug && destination.city && destination.category));
+
+      fallbackDestinationsRef.current = normalized;
+      return normalized;
+    } catch (error) {
+      console.warn('[Fallback] Unable to load static destinations:', error);
+      fallbackDestinationsRef.current = [];
+      return [];
+    }
+  };
+
+  const applyFallbackData = async (options: { updateDestinations?: boolean; ensureFilters?: boolean } = {}) => {
+    const { updateDestinations = false, ensureFilters = true } = options;
+    const fallback = await loadFallbackDestinations();
+
+    if (!fallback.length) {
+      return;
+    }
+
+    if (updateDestinations) {
+      setDestinations(fallback);
+    }
+
+    if (ensureFilters) {
+      const { cities: fallbackCities, categories: fallbackCategories } = extractFilterOptions(fallback);
+      if (fallbackCities.length) {
+        setCities(prev => (fallbackCities.length > prev.length ? fallbackCities : prev));
+      }
+      if (fallbackCategories.length) {
+        setCategories(prev => (fallbackCategories.length > prev.length ? fallbackCategories : prev));
+      }
+    }
+  };
 
   useEffect(() => {
     // Initialize session tracking
@@ -451,6 +552,7 @@ export default function Home() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
         console.error('[Filter Data] Supabase not configured properly');
+        await applyFallbackData({ updateDestinations: destinations.length === 0 });
         setLoading(false); // Still set loading false to show UI
         return;
       }
@@ -467,29 +569,15 @@ export default function Home() {
           // Use console.warn for non-critical errors
           console.warn('[Filter Data] Error:', error.message || error);
         }
+        await applyFallbackData({ updateDestinations: destinations.length === 0 });
         setLoading(false); // Set loading false even on error
         return;
       }
 
-      // Extract unique cities and categories
-      const uniqueCities = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.city?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions((data || []) as any[]);
 
-      const uniqueCategories = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.category?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
-
-      setCities(uniqueCities as string[]);
-      setCategories(uniqueCategories as string[]);
+      setCities(uniqueCities);
+      setCategories(uniqueCategories);
 
       // Set loading to false immediately after filter data loads
       // This allows filters to show while destinations load in background
@@ -505,6 +593,7 @@ export default function Home() {
       if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
         console.warn('[Filter Data] Exception:', error?.message || error);
       }
+      await applyFallbackData({ updateDestinations: destinations.length === 0 });
       setLoading(false); // Set loading false on exception
     }
   };
@@ -522,10 +611,7 @@ export default function Home() {
         if (!error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
           console.warn('Error fetching destinations:', error.message || error);
         }
-        setDestinations([]);
-        // Don't reset categories here - they're already loaded from fetchFilterData
-        // setCategories([]);
-        // Don't set loading false here - it's already false from fetchFilterData
+        await applyFallbackData({ updateDestinations: true });
         return;
       }
 
@@ -533,34 +619,20 @@ export default function Home() {
 
       // Extract unique cities and categories from full data (for consistency)
       // This ensures we have the complete list after full data loads
-      const uniqueCities = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.city?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
-
-      const uniqueCategories = Array.from(
-        new Set(
-          ((data || []) as any[])
-            .map((d: any) => d.category?.trim())
-            .filter(Boolean)
-        )
-      ).sort();
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions((data || []) as any[]);
 
       // Update cities and categories from full data (ensures consistency)
       // Only update if we got more complete data
       if (uniqueCities.length > cities.length || uniqueCategories.length > categories.length) {
-        setCities(uniqueCities as string[]);
-        setCategories(uniqueCategories as string[]);
+        setCities(uniqueCities);
+        setCategories(uniqueCategories);
       }
     } catch (error: any) {
       // Only log unexpected errors
       if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
         console.warn('Error fetching destinations:', error?.message || error);
       }
-      setDestinations([]);
+      await applyFallbackData({ updateDestinations: true });
       // Don't reset cities/categories or loading - filters are already shown
     }
     // Don't set loading false here - it's already false from fetchFilterData
