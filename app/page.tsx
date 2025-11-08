@@ -820,6 +820,7 @@ export default function Home() {
   };
 
   const filterDestinations = () => {
+    console.log('[Filter] filterDestinations called, destinations.length:', destinations.length);
     let filtered = destinations;
 
     // Apply filters only when there's NO search term (AI chat handles all search)
