@@ -1,7 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
   icon?: string; // Emoji
@@ -108,13 +110,23 @@ export function NoAchievementsEmptyState() {
 
 export function ErrorEmptyState({ message = "Something went wrong" }: { message?: string }) {
   return (
-    <EmptyState
-      icon="⚠️"
-      title="Error"
-      description={message}
-      actionLabel="Try Again"
-      onAction={() => window.location.reload()}
-    />
+    <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
+      <div className="w-full max-w-md">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+        <div className="mt-4 flex justify-center">
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

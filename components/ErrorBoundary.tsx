@@ -1,6 +1,9 @@
 'use client';
 
 import { Component, ReactNode } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   children: ReactNode;
@@ -33,21 +36,28 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <div className="p-8 text-center min-h-[60vh] flex items-center justify-center">
-          <div>
-            <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {process.env.NODE_ENV === 'development' && this.state.error?.message}
-            </p>
-            <button
-              onClick={() => {
-                this.setState({ hasError: false });
-                window.location.reload();
-              }}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity"
-            >
-              Try again
-            </button>
+        <div className="p-8 min-h-[60vh] flex items-center justify-center">
+          <div className="w-full max-w-md">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Something went wrong</AlertTitle>
+              <AlertDescription>
+                {process.env.NODE_ENV === 'development' && this.state.error?.message
+                  ? this.state.error.message
+                  : 'An unexpected error occurred. Please try again.'}
+              </AlertDescription>
+            </Alert>
+            <div className="mt-4 flex justify-center">
+              <Button
+                onClick={() => {
+                  this.setState({ hasError: false });
+                  window.location.reload();
+                }}
+                variant="outline"
+              >
+                Try again
+              </Button>
+            </div>
           </div>
         </div>
       );

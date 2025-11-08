@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function LoginForm() {
   const router = useRouter();
@@ -155,16 +156,20 @@ function LoginForm() {
 
           {/* Error Message */}
           {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-red-700 dark:text-red-400">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* Success Message */}
           {success && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-green-700 dark:text-green-400">
-              {success}
-            </div>
+            <Alert variant="default">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
           )}
 
           {/* Submit Button */}
