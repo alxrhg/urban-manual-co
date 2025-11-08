@@ -1654,6 +1654,13 @@ export default function Home() {
                         {searching && (
                           <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                             <div className="flex items-center gap-2">
+                              {discoveryEngineLoading && (
+                                <div className="flex gap-1">
+                                  <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
+                                  <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
+                                  <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
+                                </div>
+                              )}
                               <span>Finding the perfect spots...</span>
                             </div>
                           </div>
@@ -1953,18 +1960,6 @@ export default function Home() {
                   <br />
                   See <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">/DEPLOYMENT_GUIDE.md</code> for setup instructions.
                 </p>
-              </div>
-            )}
-
-            {/* Discovery Engine Loading Indicator - Jumping Dots */}
-            {discoveryEngineLoading && filteredDestinations.length > 0 && (
-              <div className="mb-6 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <span>Enhancing results with Discovery Engine</span>
-                <div className="flex gap-1">
-                  <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
-                  <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
-                  <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
-                </div>
               </div>
             )}
 
