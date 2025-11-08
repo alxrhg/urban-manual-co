@@ -156,6 +156,7 @@ export default function GoogleMap({
         // Add or update marker
         if (markerRef.current) {
           markerRef.current.setPosition(center);
+          markerRef.current.setTitle(infoWindowContent?.title || query || 'Location');
         } else {
           markerRef.current = new google.maps.Marker({
             position: center,
@@ -213,8 +214,9 @@ export default function GoogleMap({
             infoWindowRef.current.setContent(content);
           }
 
-          // Add click listener to marker to open info window
+          // Remove existing click listeners before adding new one (prevent duplicates)
           if (markerRef.current) {
+            google.maps.event.clearListeners(markerRef.current, 'click');
             markerRef.current.addListener('click', () => {
               if (infoWindowRef.current && markerRef.current) {
                 infoWindowRef.current.open(mapInstanceRef.current, markerRef.current);
@@ -224,7 +226,12 @@ export default function GoogleMap({
 
           // Auto-open info window if requested
           if (autoOpenInfoWindow && infoWindowRef.current && markerRef.current) {
-            infoWindowRef.current.open(mapInstanceRef.current, markerRef.current);
+            // Use setTimeout to ensure map is fully rendered
+            setTimeout(() => {
+              if (infoWindowRef.current && markerRef.current && mapInstanceRef.current) {
+                infoWindowRef.current.open(mapInstanceRef.current, markerRef.current);
+              }
+            }, 100);
           }
         }
       } catch (err: any) {
