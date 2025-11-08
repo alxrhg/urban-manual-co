@@ -15,6 +15,19 @@ export interface PlacesEnrichmentData {
   google_maps_url: string | null;
   google_types: string[];
   cuisine_type: string | null;
+  // Additional fields from Place Details API
+  formatted_address: string | null;
+  international_phone_number: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  user_ratings_total: number | null;
+  reviews: any[] | null;
+  business_status: string | null;
+  editorial_summary: string | null;
+  plus_code: string | null;
+  timezone_id: string | null;
+  vicinity: string | null;
+  address_components: any | null;
 }
 
 export interface GeminiTagsData {
@@ -101,16 +114,39 @@ export async function findPlaceByText(
       'PRICE_LEVEL_VERY_EXPENSIVE': 4,
     };
 
+    // Now fetch full place details using Place Details API
+    let placeDetails: any = null;
+    if (place.id) {
+      try {
+        placeDetails = await getPlaceDetails(place.id);
+      } catch (error) {
+        console.warn(`Failed to fetch place details for ${place.id}:`, error);
+      }
+    }
+
     return {
       place_id: place.id || null,
-      rating: place.rating || null,
-      price_level: place.priceLevel ? priceLevelMap[place.priceLevel] || null : null,
-      opening_hours: place.regularOpeningHours || null,
-      phone_number: place.internationalPhoneNumber || null,
-      website: place.websiteUri || null,
+      rating: place.rating || placeDetails?.rating || null,
+      price_level: place.priceLevel ? priceLevelMap[place.priceLevel] : (placeDetails?.price_level ?? null),
+      opening_hours: place.regularOpeningHours || placeDetails?.opening_hours || null,
+      phone_number: place.internationalPhoneNumber || placeDetails?.international_phone_number || null,
+      website: place.websiteUri || placeDetails?.website || null,
       google_maps_url: place.googleMapsUri || null,
       google_types: place.types || [],
       cuisine_type: cuisineType,
+      // Additional fields from Place Details
+      formatted_address: placeDetails?.formatted_address || null,
+      international_phone_number: placeDetails?.international_phone_number || place.internationalPhoneNumber || null,
+      latitude: placeDetails?.geometry?.location?.lat || null,
+      longitude: placeDetails?.geometry?.location?.lng || null,
+      user_ratings_total: placeDetails?.user_ratings_total || null,
+      reviews: placeDetails?.reviews || null,
+      business_status: placeDetails?.business_status || null,
+      editorial_summary: placeDetails?.editorial_summary?.overview || null,
+      plus_code: placeDetails?.plus_code?.global_code || null,
+      timezone_id: placeDetails?.timezone_id || null,
+      vicinity: placeDetails?.vicinity || null,
+      address_components: placeDetails?.address_components || null,
     };
   } catch (error) {
     console.error('Places API error:', error);
@@ -124,7 +160,118 @@ export async function findPlaceByText(
       google_maps_url: null,
       google_types: [],
       cuisine_type: null,
+      formatted_address: null,
+      international_phone_number: null,
+      latitude: null,
+      longitude: null,
+      user_ratings_total: null,
+      reviews: null,
+      business_status: null,
+      editorial_summary: null,
+      plus_code: null,
+      timezone_id: null,
+      vicinity: null,
+      address_components: null,
     };
+  }
+}
+
+/**
+ * Fetch detailed place information using Place Details API
+ */
+async function getPlaceDetails(placeId: string): Promise<any | null> {
+  if (!GOOGLE_API_KEY) {
+    throw new Error('Google API key not configured');
+  }
+
+  try {
+    const response = await fetch(
+      `https://places.googleapis.com/v1/places/${placeId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_API_KEY,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,internationalPhoneNumber,websiteUri,rating,userRatingCount,priceLevel,regularOpeningHours,currentOpeningHours,secondaryOpeningHours,location,plusCode,reviews,businessStatus,editorialSummary,types,utcOffset,shortFormattedAddress,adrFormatAddress,addressComponents,iconMaskBaseUri,iconBackgroundColor',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Place Details API error ${response.status}:`, errorText);
+      return null;
+    }
+
+    const place = await response.json();
+    
+    // Helper to convert price level
+    const priceLevelMap: Record<string, number> = {
+      'PRICE_LEVEL_FREE': 0,
+      'PRICE_LEVEL_INEXPENSIVE': 1,
+      'PRICE_LEVEL_MODERATE': 2,
+      'PRICE_LEVEL_EXPENSIVE': 3,
+      'PRICE_LEVEL_VERY_EXPENSIVE': 4,
+    };
+
+    // Get timezone if location is available
+    let timezoneId: string | null = null;
+    if (place.location?.latitude && place.location?.longitude) {
+      try {
+        const timezoneUrl = new URL('https://maps.googleapis.com/maps/api/timezone/json');
+        timezoneUrl.searchParams.set('location', `${place.location.latitude},${place.location.longitude}`);
+        timezoneUrl.searchParams.set('timestamp', Math.floor(Date.now() / 1000).toString());
+        timezoneUrl.searchParams.set('key', GOOGLE_API_KEY);
+        const timezoneResponse = await fetch(timezoneUrl.toString());
+        const timezoneData = await timezoneResponse.json();
+        timezoneId = timezoneData?.timeZoneId || null;
+      } catch (error) {
+        console.warn('Failed to fetch timezone:', error);
+      }
+    }
+    
+    // Transform to our format
+    return {
+      formatted_address: place.formattedAddress || null,
+      international_phone_number: place.internationalPhoneNumber || null,
+      website: place.websiteUri || null,
+      rating: place.rating ?? null,
+      user_ratings_total: place.userRatingCount ?? null,
+      price_level: place.priceLevel ? priceLevelMap[place.priceLevel] ?? null : null,
+      opening_hours: place.regularOpeningHours || null,
+      current_opening_hours: place.currentOpeningHours || null,
+      secondary_opening_hours: place.secondaryOpeningHours || null,
+      geometry: place.location ? {
+        location: {
+          lat: place.location.latitude,
+          lng: place.location.longitude,
+        },
+      } : null,
+      plus_code: place.plusCode ? {
+        global_code: place.plusCode.globalCode || null,
+      } : null,
+      reviews: place.reviews ? place.reviews.slice(0, 5).map((r: any) => ({
+        author_name: r.authorDisplayName || '',
+        rating: r.rating || null,
+        text: r.text?.text || '',
+        time: r.publishTime ? new Date(r.publishTime).getTime() / 1000 : null,
+      })) : null,
+      business_status: place.businessStatus || null,
+      editorial_summary: place.editorialSummary ? {
+        overview: place.editorialSummary.overview || '',
+      } : null,
+      types: place.types || [],
+      utc_offset: place.utcOffset ? place.utcOffset.totalSeconds / 60 : null,
+      vicinity: place.shortFormattedAddress || null,
+      adr_address: place.adrFormatAddress || null,
+      address_components: place.addressComponents || null,
+      icon_mask_base_uri: place.iconMaskBaseUri || null,
+      icon_background_color: place.iconBackgroundColor || null,
+      timezone_id: timezoneId,
+    };
+  } catch (error) {
+    console.error('Place Details API error:', error);
+    return null;
   }
 }
 
