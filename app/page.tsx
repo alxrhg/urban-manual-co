@@ -900,6 +900,7 @@ export default function Home() {
       const { data, error } = await supabaseClient
         .from('destinations')
         .select('city, category')
+        .is('parent_destination_id', null) // Only top-level destinations for filters
         .limit(1000) // Limit to speed up initial query
         .order('city');
 
@@ -1027,9 +1028,11 @@ export default function Home() {
       }
       
       // Optimize query: limit initial results for faster load
+      // Exclude nested destinations (only show top-level destinations)
       const { data, error } = await supabaseClient
         .from('destinations')
-        .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
+        .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags, parent_destination_id')
+        .is('parent_destination_id', null) // Only top-level destinations
         .limit(500) // Limit initial query for faster load
         .order('name');
 

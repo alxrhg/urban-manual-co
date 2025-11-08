@@ -12,6 +12,9 @@ export interface Destination {
   crown?: boolean;
   brand?: string | null;
   architect?: string | null;
+  // Nested destinations support
+  parent_destination_id?: number | null; // ID of parent destination (e.g., hotel containing this bar)
+  nested_destinations?: Destination[]; // Array of nested destinations (populated by queries)
   // Enrichment fields
   place_id?: string | null;
   rating?: number | null;
