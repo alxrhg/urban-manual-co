@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Destination } from '@/types/destination'
 import dynamic from 'next/dynamic'
-import AppleMap from '@/components/AppleMap'
+import GoogleMap from '@/components/GoogleMap'
 
-// Lazy load drawer only (map uses AppleMap client component)
+// Lazy load drawer only (map uses GoogleMap client component)
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   { ssr: false, loading: () => null }
@@ -61,9 +61,9 @@ export default function MapPage() {
           ))}
         </div>
 
-        {/* Apple Map for selected (or first) destination */}
+        {/* Google Map for selected (or first) destination */}
         <div className="h-[60vh] rounded-2xl overflow-hidden">
-          <AppleMap
+          <GoogleMap
             query={(selectedDestination || destinations[0]) ? `${(selectedDestination || destinations[0])!.name}, ${(selectedDestination || destinations[0])!.city}` : 'Tokyo'}
             height="100%"
             className="w-full"

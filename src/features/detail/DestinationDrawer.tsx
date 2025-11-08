@@ -16,8 +16,8 @@ import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 
-// Dynamically import AppleMap to avoid SSR issues
-const AppleMap = dynamic(() => import('@/components/AppleMap'), { 
+// Dynamically import GoogleMap to avoid SSR issues
+const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
   ssr: false,
   loading: () => (
     <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -975,11 +975,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
 
-          {/* Map Section (Apple Maps) */}
+          {/* Map Section (Google Maps) */}
           <div className="mb-8">
             <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Location</h3>
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-              <AppleMap
+              <GoogleMap
                 query={`${destination.name}, ${destination.city}`}
                 height="256px"
                 className="rounded-lg"
