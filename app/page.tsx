@@ -631,12 +631,15 @@ export default function Home() {
     // Track homepage view
     trackPageView({ pageType: 'home' });
 
-    // Load filter data first (cities and categories) for faster initial display
-    // Page renders immediately, data loads in background
-    fetchFilterData();
-
-    // Then load full destinations in background
+    // Load destinations first (Discovery Engine is fast, shows results immediately)
+    // Then load filter data in background (Supabase can be slow on cold start)
     fetchDestinations();
+    
+    // Load filter data in background (non-blocking, doesn't delay initial render)
+    // Use setTimeout to ensure it doesn't block the initial render
+    setTimeout(() => {
+      fetchFilterData();
+    }, 100); // Small delay to prioritize destinations
   }, []);
 
   useEffect(() => {
@@ -830,8 +833,16 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data
-            const filtered = filterDestinationsWithData(discoveryBaseline);
+            // Filter destinations immediately with the new data (no filters on initial load)
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              '', // no search term
+              {}, // no advanced filters
+              '', // no selected city
+              '', // no selected category
+              user, // current user
+              visitedSlugs // current visited slugs
+            );
             setFilteredDestinations(filtered);
           }
         } else {
@@ -839,9 +850,11 @@ export default function Home() {
         }
         return;
       }
+      // Optimize query: only get distinct city/category pairs, limit to speed up
       const { data, error } = await supabaseClient
         .from('destinations')
         .select('city, category')
+        .limit(1000) // Limit to speed up initial query
         .order('city');
 
       if (error || !data) {
@@ -858,8 +871,16 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data
-            const filtered = filterDestinationsWithData(discoveryBaseline);
+            // Filter destinations immediately with the new data (no filters on initial load)
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              '', // no search term
+              {}, // no advanced filters
+              '', // no selected city
+              '', // no selected category
+              user, // current user
+              visitedSlugs // current visited slugs
+            );
             setFilteredDestinations(filtered);
           }
         } else {
@@ -910,8 +931,16 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data
-            const filtered = filterDestinationsWithData(discoveryBaseline);
+            // Filter destinations immediately with the new data (no filters on initial load)
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              '', // no search term
+              {}, // no advanced filters
+              '', // no selected city
+              '', // no selected category
+              user, // current user
+              visitedSlugs // current visited slugs
+            );
             setFilteredDestinations(filtered);
           }
         } else {
@@ -934,8 +963,16 @@ export default function Home() {
         if (discoveryBaseline.length) {
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data
-            const filtered = filterDestinationsWithData(discoveryBaseline);
+            // Filter destinations immediately with the new data (no filters on initial load)
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              '', // no search term
+              {}, // no advanced filters
+              '', // no selected city
+              '', // no selected category
+              user, // current user
+              visitedSlugs // current visited slugs
+            );
             setFilteredDestinations(filtered);
           }
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
@@ -957,9 +994,12 @@ export default function Home() {
         console.warn('[Destinations] Supabase client not available');
         return;
       }
+      // Optimize query: limit initial results for faster load, then fetch more if needed
+      // Use limit to speed up cold start, but still get enough data
       const { data, error } = await supabaseClient
         .from('destinations')
         .select('slug, name, city, category, description, content, image, michelin_stars, crown, tags')
+        .limit(500) // Limit initial query for faster load
         .order('name');
 
       if (error || !data) {
@@ -996,9 +1036,16 @@ export default function Home() {
         setCategories(uniqueCategories);
       }
       
-      // Filter destinations immediately with the new data
-      // Pass the data directly to avoid stale state issues
-      const filtered = filterDestinationsWithData(data as Destination[]);
+      // Filter destinations immediately with the new data (no filters on initial load)
+      const filtered = filterDestinationsWithData(
+        data as Destination[],
+        '', // no search term
+        {}, // no advanced filters
+        '', // no selected city
+        '', // no selected category
+        user, // current user
+        visitedSlugs // current visited slugs
+      );
       setFilteredDestinations(filtered);
     } catch (error: any) {
       // Only log unexpected errors
@@ -1205,19 +1252,28 @@ export default function Home() {
   };
 
   // Helper function to filter destinations with explicit data (avoids stale state)
-  const filterDestinationsWithData = (dataToFilter: Destination[]) => {
+  // Accepts current filter values to avoid closure issues
+  function filterDestinationsWithData(
+    dataToFilter: Destination[],
+    currentSearchTerm: string = searchTerm,
+    currentAdvancedFilters: typeof advancedFilters = advancedFilters,
+    currentSelectedCity: string = selectedCity,
+    currentSelectedCategory: string = selectedCategory,
+    currentUser: typeof user = user,
+    currentVisitedSlugs: Set<string> = visitedSlugs
+  ) {
     let filtered = dataToFilter;
 
     // Apply filters only when there's NO search term (AI chat handles all search)
-    if (!searchTerm) {
+    if (!currentSearchTerm) {
       // City filter (from advancedFilters or selectedCity)
-      const cityFilter = advancedFilters.city || selectedCity;
+      const cityFilter = currentAdvancedFilters.city || currentSelectedCity;
       if (cityFilter) {
         filtered = filtered.filter(d => d.city === cityFilter);
       }
 
       // Category filter (from advancedFilters or selectedCategory) - enhanced with tags
-      const categoryFilter = advancedFilters.category || selectedCategory;
+      const categoryFilter = currentAdvancedFilters.category || currentSelectedCategory;
       if (categoryFilter) {
         filtered = filtered.filter(d => {
           const categoryMatch = d.category && d.category.toLowerCase().trim() === categoryFilter.toLowerCase().trim();
@@ -1256,36 +1312,36 @@ export default function Home() {
       }
 
       // Michelin filter
-      if (advancedFilters.michelin) {
+      if (currentAdvancedFilters.michelin) {
         filtered = filtered.filter(d => d.michelin_stars && d.michelin_stars > 0);
       }
 
       // Crown filter
-      if (advancedFilters.crown) {
+      if (currentAdvancedFilters.crown) {
         filtered = filtered.filter(d => d.crown === true);
       }
 
       // Price filter
-      if (advancedFilters.minPrice !== undefined) {
+      if (currentAdvancedFilters.minPrice !== undefined) {
         filtered = filtered.filter(d => 
-          d.price_level != null && d.price_level >= advancedFilters.minPrice!
+          d.price_level != null && d.price_level >= currentAdvancedFilters.minPrice!
         );
       }
-      if (advancedFilters.maxPrice !== undefined) {
+      if (currentAdvancedFilters.maxPrice !== undefined) {
         filtered = filtered.filter(d => 
-          d.price_level != null && d.price_level <= advancedFilters.maxPrice!
+          d.price_level != null && d.price_level <= currentAdvancedFilters.maxPrice!
         );
       }
 
       // Rating filter
-      if (advancedFilters.minRating !== undefined) {
+      if (currentAdvancedFilters.minRating !== undefined) {
         filtered = filtered.filter(d => 
-          d.rating != null && d.rating >= advancedFilters.minRating!
+          d.rating != null && d.rating >= currentAdvancedFilters.minRating!
         );
       }
 
       // Open Now filter
-      if (advancedFilters.openNow) {
+      if (currentAdvancedFilters.openNow) {
         filtered = filtered.filter(d => {
           const hours = d.opening_hours;
           if (!hours?.weekday_text) return false;
@@ -1364,7 +1420,7 @@ export default function Home() {
 
     // Pinterest-style recommendation sorting
     // Only apply smart sorting when no search term (natural discovery)
-    if (!searchTerm) {
+    if (!currentSearchTerm) {
       filtered = filtered
         .map((dest, index) => ({
           ...dest,
@@ -1374,9 +1430,9 @@ export default function Home() {
     }
 
     // 🎯 When user is signed in: separate visited & unvisited, move visited to bottom
-    if (user && visitedSlugs.size > 0) {
-      const unvisited = filtered.filter(d => !visitedSlugs.has(d.slug));
-      const visited = filtered.filter(d => visitedSlugs.has(d.slug));
+    if (currentUser && currentVisitedSlugs.size > 0) {
+      const unvisited = filtered.filter(d => !currentVisitedSlugs.has(d.slug));
+      const visited = filtered.filter(d => currentVisitedSlugs.has(d.slug));
       filtered = [...unvisited, ...visited];
     }
 
