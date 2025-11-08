@@ -4,10 +4,9 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star,
-  UtensilsCrossed, Coffee, Wine, Hotel, ShoppingBag, Camera, Landmark,
-  Building2, Music, Film, Dumbbell, TreePine, Waves, Sparkles
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star
 } from 'lucide-react';
+import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -49,69 +48,9 @@ import { capitalizeCity } from '@/lib/utils';
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
-// Category icons mapping using Lucide React icons
-type LucideIcon = React.ComponentType<{ className?: string; size?: number }>;
-
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  // Food & Dining
-  'dining': UtensilsCrossed,
-  'restaurant': UtensilsCrossed,
-  'restaurants': UtensilsCrossed,
-  'food': UtensilsCrossed,
-  'cafe': Coffee,
-  'cafes': Coffee,
-  'coffee': Coffee,
-  'bar': Wine,
-  'bars': Wine,
-  'nightlife': Wine,
-  
-  // Accommodation
-  'hotel': Hotel,
-  'hotels': Hotel,
-  'accommodation': Hotel,
-  'lodging': Hotel,
-  
-  // Shopping
-  'shopping': ShoppingBag,
-  'shop': ShoppingBag,
-  'store': ShoppingBag,
-  'retail': ShoppingBag,
-  
-  // Culture & Entertainment
-  'culture': Landmark,
-  'museum': Landmark,
-  'museums': Landmark,
-  'gallery': Camera,
-  'galleries': Camera,
-  'art': Camera,
-  'theater': Film,
-  'theatre': Film,
-  'cinema': Film,
-  'music': Music,
-  'concert': Music,
-  'attraction': Building2,
-  'attractions': Building2,
-  'landmark': Building2,
-  'landmarks': Building2,
-  
-  // Activities
-  'activity': Dumbbell,
-  'activities': Dumbbell,
-  'sport': Dumbbell,
-  'sports': Dumbbell,
-  'fitness': Dumbbell,
-  'park': TreePine,
-  'parks': TreePine,
-  'outdoor': TreePine,
-  'beach': Waves,
-  
-  // Other
-  'other': Sparkles,
-};
-
-function getCategoryIcon(category: string): LucideIcon | null {
-  const key = category.toLowerCase().trim();
-  return CATEGORY_ICONS[key] || null;
+// Category icons using Untitled UI icons
+function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number }> | null {
+  return getCategoryIconComponent(category);
 }
 
 function capitalizeCategory(category: string): string {
