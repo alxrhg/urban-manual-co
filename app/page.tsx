@@ -463,18 +463,20 @@ export default function Home() {
   }, [chatMessages]);
 
   // Separate useEffect for filters (only when NO search term)
-  // Fetch destinations lazily when filters are applied
+  // This ensures filteredDestinations is populated when destinations are loaded
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      // Only fetch destinations if we haven't already or if we need to
+    if (!searchTerm.trim() && !submittedQuery) {
+      // Only fetch destinations if we haven't already
       if (destinations.length === 0) {
         fetchDestinations();
       } else {
+        // Always filter when destinations are available and no search is active
+        // This ensures the grid shows up on initial load
         filterDestinations();
       }
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations, searchTerm, submittedQuery]); // Filters only apply when no search
 
   // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
   useEffect(() => {
@@ -572,7 +574,8 @@ export default function Home() {
         return;
       }
 
-      setDestinations(data || []);
+      const destinationsData = data || [];
+      setDestinations(destinationsData);
 
       // Extract unique cities and categories from full data (for consistency)
       // This ensures we have the complete list after full data loads
@@ -608,6 +611,8 @@ export default function Home() {
       } else {
         console.warn('[Destinations] No cities or categories found in data');
       }
+
+      // Note: filteredDestinations will be populated by the useEffect that watches destinations
     } catch (error: any) {
       // Don't log network errors for invalid URLs (they're expected)
       if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
