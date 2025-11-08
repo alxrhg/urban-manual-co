@@ -398,6 +398,7 @@ export default function Home() {
   const [showAllCities, setShowAllCities] = useState(false);
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
+  const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -1060,6 +1061,7 @@ export default function Home() {
 
       // Step 3: Run Discovery Engine AFTER Supabase completes (as enhancement/filter)
       // This runs in background and can enhance the results
+      setDiscoveryEngineLoading(true);
       fetchDiscoveryBootstrap()
         .then((discoveryBaseline) => {
           if (discoveryBaseline.length > 0) {
@@ -1092,6 +1094,9 @@ export default function Home() {
         })
         .catch(() => {
           // Discovery Engine failed - that's fine, we already have Supabase data
+        })
+        .finally(() => {
+          setDiscoveryEngineLoading(false);
         });
     } catch (error: any) {
       // Only log unexpected errors
