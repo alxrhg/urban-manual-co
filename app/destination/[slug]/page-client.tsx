@@ -11,7 +11,6 @@ import { Destination } from '@/types/destination';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
 import { trackEvent } from '@/lib/analytics/track';
-import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,7 +48,6 @@ interface DestinationPageClientProps {
 
 export default function DestinationPageClient({ initialDestination, parentDestination }: DestinationPageClientProps) {
   const router = useRouter();
-  const { addToRecentlyViewed } = useRecentlyViewed();
   const { user } = useAuth();
 
   const [destination] = useState<Destination>(initialDestination);
