@@ -797,6 +797,77 @@ export default function AdminPage() {
     }
   }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
 
+  const loadAnalytics = useCallback(async () => {
+    setLoadingAnalytics(true);
+    try {
+      // Get user interactions stats
+      const { data: interactions } = await supabase
+        .from('user_interactions')
+        .select('interaction_type, created_at');
+
+      if (interactions) {
+        const views = interactions.filter(i => i.interaction_type === 'view').length;
+        const searches = interactions.filter(i => i.interaction_type === 'search').length;
+        const saves = interactions.filter(i => i.interaction_type === 'save').length;
+
+        // Get unique users
+        const { data: users } = await supabase
+          .from('user_interactions')
+          .select('user_id')
+          .not('user_id', 'is', null);
+
+        const uniqueUsers = new Set((users || []).map((u: any) => u.user_id));
+        
+        // Get top searches
+        const searchInteractions = interactions.filter(i => i.interaction_type === 'search');
+        const searchCounts = new Map<string, number>();
+        searchInteractions.forEach((i: any) => {
+          const query = i.metadata?.query || 'Unknown';
+          searchCounts.set(query, (searchCounts.get(query) || 0) + 1);
+        });
+
+        const topSearches = Array.from(searchCounts.entries())
+          .map(([query, count]) => ({ query, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+
+        setAnalyticsStats({
+          totalViews: views,
+          totalSearches: searches,
+          totalSaves: saves,
+          totalUsers: uniqueUsers.size,
+          topSearches,
+        });
+      }
+    } catch (error) {
+      console.error('[Admin] Error loading analytics:', error);
+      toast.error('Failed to load analytics');
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  }, [toast]);
+
+  const loadSearchLogs = useCallback(async () => {
+    setLoadingSearches(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_interactions')
+        .select('id, created_at, interaction_type, user_id, metadata')
+        .eq('interaction_type', 'search')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setSearchLogs(data || []);
+    } catch (error) {
+      console.error('[Admin] Error loading search logs:', error);
+      toast.error('Failed to load search logs');
+      setSearchLogs([]);
+    } finally {
+      setLoadingSearches(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     if (isAdmin && authChecked) {
       loadDestinationList();
