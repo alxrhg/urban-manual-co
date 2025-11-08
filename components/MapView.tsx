@@ -76,7 +76,7 @@ export default function MapView({
 
   // Update markers when destinations change
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !loaded) return;
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -84,53 +84,91 @@ export default function MapView({
 
     // Create new markers
     const bounds = new google.maps.LatLngBounds();
+    let pendingPlaceIdLookups = 0;
+    let completedMarkers = 0;
 
-    destinations.forEach(dest => {
-      if (!dest.place_id) return; // Skip destinations without location data
-
-      // Use Google Places API to get place details including coordinates
-      const service = new google.maps.places.PlacesService(mapInstanceRef.current!);
-
-      service.getDetails(
-        {
-          placeId: dest.place_id,
-          fields: ['geometry', 'name'],
+    const createMarker = (dest: Destination, position: google.maps.LatLng) => {
+      const marker = new google.maps.Marker({
+        position,
+        map: mapInstanceRef.current!,
+        title: dest.name,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: dest.crown ? '#fbbf24' : '#3b82f6',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
         },
-        (place, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location) {
-            const marker = new google.maps.Marker({
-              position: place.geometry.location,
-              map: mapInstanceRef.current!,
-              title: dest.name,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: dest.crown ? '#fbbf24' : '#3b82f6',
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWeight: 2,
-              },
-            });
+      });
 
-            // Add click listener
-            marker.addListener('click', () => {
-              if (onMarkerClick) {
-                onMarkerClick(dest);
-              }
-            });
+      // Add click listener
+      marker.addListener('click', () => {
+        if (onMarkerClick) {
+          onMarkerClick(dest);
+        }
+      });
 
-            markersRef.current.push(marker);
-            bounds.extend(place.geometry.location);
+      markersRef.current.push(marker);
+      bounds.extend(position);
+      completedMarkers++;
 
-            // Fit map to show all markers
-            if (markersRef.current.length > 0) {
-              mapInstanceRef.current!.fitBounds(bounds);
-            }
+      // Fit bounds when all markers are created
+      const fitBounds = () => {
+        if (markersRef.current.length > 0 && mapInstanceRef.current) {
+          try {
+            mapInstanceRef.current.fitBounds(bounds);
+          } catch (e) {
+            // Ignore bounds errors (e.g., if all markers are at same location)
           }
         }
-      );
+      };
+
+      // If this was the last marker, fit bounds immediately
+      // Otherwise, wait a bit for async place_id lookups
+      if (pendingPlaceIdLookups === 0) {
+        setTimeout(fitBounds, 100);
+      }
+    };
+
+    destinations.forEach(dest => {
+      // Priority 1: Use latitude/longitude if available (fastest)
+      if (dest.latitude && dest.longitude) {
+        const position = new google.maps.LatLng(dest.latitude, dest.longitude);
+        createMarker(dest, position);
+      }
+      // Priority 2: Use place_id to get coordinates from Google Places API
+      else if (dest.place_id) {
+        pendingPlaceIdLookups++;
+        const service = new google.maps.places.PlacesService(mapInstanceRef.current!);
+        service.getDetails(
+          {
+            placeId: dest.place_id,
+            fields: ['geometry'],
+          },
+          (place, status) => {
+            pendingPlaceIdLookups--;
+            if (status === google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location) {
+              createMarker(dest, place.geometry.location);
+            }
+            // Fit bounds when all async lookups complete
+            if (pendingPlaceIdLookups === 0 && completedMarkers > 0) {
+              setTimeout(() => {
+                if (markersRef.current.length > 0 && mapInstanceRef.current) {
+                  try {
+                    mapInstanceRef.current.fitBounds(bounds);
+                  } catch (e) {
+                    // Ignore bounds errors
+                  }
+                }
+              }, 200);
+            }
+          }
+        );
+      }
+      // No location data available - skip
     });
-  }, [destinations, onMarkerClick]);
+  }, [destinations, onMarkerClick, loaded]);
 
   if (error) {
     return (
