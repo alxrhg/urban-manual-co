@@ -897,14 +897,6 @@ export default function AdminPage() {
     };
   }, [showCreateModal]);
 
-  const loadAnalytics = useCallback(async () => {
-    setLoadingAnalytics(true);
-    try {
-      // Get user interactions stats
-      const { data: interactions } = await supabase
-        .from('user_interactions')
-        .select('interaction_type');
-
       // Get visit history stats
       const { data: visits } = await supabase
         .from('visit_history')
