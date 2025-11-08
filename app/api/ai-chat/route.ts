@@ -673,17 +673,21 @@ async function processAIChatRequest(
     let results: any[] = [];
     let searchTier = 'ai-chat';
 
+    // PRIMARY STRATEGY: Discovery Engine is the primary search method (always try first)
     // Determine if this is a conversational query (follow-up)
     const isConversational = conversationHistory.length > 0;
     const isNaturalLanguage = query.includes('with') || query.includes('under') || query.includes('near') || 
                               query.includes('open now') || query.includes('outdoor') || query.includes('indoor');
 
-    // Strategy 1: Try Discovery Engine with conversational or natural language search (if applicable)
+    // Strategy 1: Try Discovery Engine (PRIMARY - always connected and used first)
     try {
+      const discoveryEngine = getDiscoveryEngineService();
       let discoveryResult;
       
-      // Use conversational search for follow-up queries
-      if (isConversational && conversationHistory.length > 0) {
+      // Check if Discovery Engine is available (primary search method)
+      if (discoveryEngine.isAvailable()) {
+        // Use conversational search for follow-up queries
+        if (isConversational && conversationHistory.length > 0) {
         try {
           const discoveryEngine = getDiscoveryEngineService();
           if (discoveryEngine.isAvailable()) {
@@ -761,43 +765,44 @@ async function processAIChatRequest(
         });
       }
 
-      if (discoveryResult.source === 'discovery_engine' && discoveryResult.results.length > 0) {
-        // Transform Discovery Engine results to match our format
-        results = discoveryResult.results.map((result: any) => ({
-          ...result,
-          // Map Discovery Engine fields to our expected format
-          id: result.id || result.slug,
-          name: result.name,
-          description: result.description,
-          city: result.city,
-          category: result.category,
-          rating: result.rating || 0,
-          price_level: result.priceLevel || result.price_level || 0,
-          michelin_stars: result.michelin_stars || 0,
-          slug: result.slug || result.id,
-          relevanceScore: result.relevanceScore || 0,
-        }));
-        searchTier = 'discovery-engine';
-        console.log(`[AI Chat] Discovery Engine found ${results.length} results`);
-        
-        // Track search event for personalization
-        if (userId) {
-          try {
-            const discoveryEngine = getDiscoveryEngineService();
-            if (discoveryEngine.isAvailable()) {
+        // Process Discovery Engine results (primary search method)
+        if (discoveryResult && discoveryResult.source === 'discovery_engine' && discoveryResult.results.length > 0) {
+          // Transform Discovery Engine results to match our format
+          results = discoveryResult.results.map((result: any) => ({
+            ...result,
+            // Map Discovery Engine fields to our expected format
+            id: result.id || result.slug,
+            name: result.name,
+            description: result.description,
+            city: result.city,
+            category: result.category,
+            rating: result.rating || 0,
+            price_level: result.priceLevel || result.price_level || 0,
+            michelin_stars: result.michelin_stars || 0,
+            slug: result.slug || result.id,
+            relevanceScore: result.relevanceScore || 0,
+          }));
+          searchTier = searchTier === 'ai-chat' ? 'discovery-engine' : searchTier;
+          console.log(`[AI Chat] Discovery Engine (primary) found ${results.length} results`);
+          
+          // Track search event for personalization
+          if (userId) {
+            try {
               await discoveryEngine.trackEvent({
                 userId: userId,
                 eventType: 'search',
                 searchQuery: query,
               });
+            } catch (trackError) {
+              console.warn('[AI Chat] Failed to track search event:', trackError);
             }
-          } catch (trackError) {
-            console.warn('[AI Chat] Failed to track search event:', trackError);
           }
         }
+      } else {
+        console.log('[AI Chat] Discovery Engine not available, using fallback search');
       }
     } catch (discoveryError: any) {
-      console.warn('[AI Chat] Discovery Engine search failed, falling back:', discoveryError);
+      console.warn('[AI Chat] Discovery Engine search failed, falling back to Supabase:', discoveryError);
     }
 
     // Strategy 2: Fallback to Supabase vector search (if Discovery Engine didn't return results)
