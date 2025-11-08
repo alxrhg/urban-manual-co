@@ -16,7 +16,7 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const isHome = pathname === '/';
 
@@ -87,12 +87,16 @@ export function Header() {
   const toggleDarkMode = () => {
     if (theme === 'dark') {
       setTheme('light');
-    } else {
+    } else if (theme === 'light') {
       setTheme('dark');
+    } else {
+      // If theme is 'system', toggle to opposite of current resolved theme
+      setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
     }
   };
 
-  const isDark = theme === 'dark';
+  // Use resolvedTheme to get the actual theme (handles 'system' theme)
+  const isDark = mounted && (resolvedTheme === 'dark');
 
   const navigate = (path: string) => {
     router.push(path);
