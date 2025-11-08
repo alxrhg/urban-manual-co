@@ -16,9 +16,15 @@ function getRequiredEnv(key: string): string {
 }
 
 // Get environment variables - Next.js inlines NEXT_PUBLIC_ vars at build time
-// Try both naming conventions for flexibility
+// Support both legacy (anon) and new (publishable) key naming conventions
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+// Try new publishable key first, then fall back to legacy anon key
+const supabaseAnonKey = 
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+  process.env.SUPABASE_ANON_KEY || 
+  '';
 
 // Debug: Log what we're actually getting (only in development, and only first few chars for security)
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
