@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseAvailable } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star } from 'lucide-react';
 // Lazy load drawer (only when opened)
@@ -488,9 +488,9 @@ export default function Home() {
   // Fetch filter data (cities and categories) first for faster initial display
   const fetchFilterData = async () => {
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
-        console.error('[Filter Data] Supabase not configured properly');
+      // Use the helper function to check if Supabase is available
+      if (!isSupabaseAvailable()) {
+        console.warn('[Filter Data] Supabase not configured, skipping fetch');
         setLoading(false); // Still set loading false to show UI
         return;
       }
@@ -547,9 +547,8 @@ export default function Home() {
 
   const fetchDestinations = async () => {
     try {
-      // Check if Supabase is properly configured before making requests
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
+      // Use the helper function to check if Supabase is available
+      if (!isSupabaseAvailable()) {
         console.warn('[Destinations] Supabase not configured, skipping fetch');
         setDestinations([]);
         return;
@@ -624,9 +623,8 @@ export default function Home() {
     if (!user) return;
 
     try {
-      // Check if Supabase is properly configured before making requests
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('invalid')) {
+      // Use the helper function to check if Supabase is available
+      if (!isSupabaseAvailable()) {
         console.warn('[Visited Places] Supabase not configured, skipping fetch');
         return;
       }

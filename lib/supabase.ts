@@ -90,6 +90,28 @@ try {
 }
 
 // Export a helper to check if Supabase is configured
-export const isSupabaseAvailable = () => isSupabaseConfigured;
+// This checks both the build-time config and the actual client URL
+export const isSupabaseAvailable = () => {
+  // Check build-time configuration
+  if (!isSupabaseConfigured) {
+    return false;
+  }
+  
+  // Also check the actual client URL at runtime (for client-side)
+  if (typeof window !== 'undefined') {
+    try {
+      // Access the Supabase client's URL through its internal structure
+      const clientUrl = (supabase as any).supabaseUrl;
+      if (!clientUrl || clientUrl.includes('invalid') || clientUrl.includes('placeholder')) {
+        return false;
+      }
+    } catch (e) {
+      // If we can't check, assume it's not available
+      return false;
+    }
+  }
+  
+  return true;
+};
 
 export { supabase };
