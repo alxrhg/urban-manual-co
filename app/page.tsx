@@ -30,7 +30,6 @@ import GreetingHero from '@/src/features/search/GreetingHero';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
-import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
@@ -1376,54 +1375,6 @@ export default function Home() {
               />
             </div>
 
-            {/* Recently Viewed - Show when no active search */}
-            {!submittedQuery && !selectedCity && !selectedCategory && (
-              <RecentlyViewed
-                onCardClick={(destination) => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
-
-                  // Track destination click
-                  trackDestinationClick({
-                    destinationSlug: destination.slug,
-                    position: 0,
-                    source: 'recently_viewed',
-                  });
-
-                  // Also track with new analytics system
-                  if (destination.id) {
-                    import('@/lib/analytics/track').then(({ trackEvent }) => {
-                      trackEvent({
-                        event_type: 'click',
-                        destination_id: destination.id,
-                        destination_slug: destination.slug,
-                        metadata: {
-                          category: destination.category,
-                          city: destination.city,
-                          source: 'recently_viewed',
-                        },
-                      });
-                    });
-                  }
-
-                  // Track click event to Discovery Engine for personalization
-                  if (user?.id) {
-                    fetch('/api/discovery/track-event', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        userId: user.id,
-                        eventType: 'click',
-                        documentId: destination.slug,
-                        source: 'recently_viewed',
-                      }),
-                    }).catch((error) => {
-                      console.warn('Failed to track Discovery Engine event:', error);
-                    });
-                  }
-                }}
-              />
-            )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
