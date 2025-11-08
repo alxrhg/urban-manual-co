@@ -1703,7 +1703,6 @@ export default function Home() {
                         {searching && (
                           <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                             <div className="flex items-center gap-2">
-                              <span className="animate-pulse">✨</span>
                               <span>Finding the perfect spots...</span>
                             </div>
                           </div>
