@@ -63,9 +63,8 @@ CREATE POLICY "Allow service role to manage personalization_scores"
 -- 2. FIX SECURITY DEFINER VIEW
 -- ============================================================================
 
--- Check if enriched_destinations view exists and fix it
--- Note: We can't directly alter a view's SECURITY DEFINER property
--- We need to drop and recreate it without SECURITY DEFINER
+-- Fix enriched_destinations view: Remove SECURITY DEFINER
+-- We need to drop and recreate without SECURITY DEFINER
 DO $$
 BEGIN
   IF EXISTS (
@@ -73,17 +72,36 @@ BEGIN
     WHERE table_schema = 'public' 
     AND table_name = 'enriched_destinations'
   ) THEN
-    -- Get the view definition first (we'll need to recreate it)
-    -- For now, we'll just document that it needs to be recreated
-    -- The actual recreation should be done manually or in a separate migration
-    -- that knows the exact view definition
-    RAISE NOTICE 'enriched_destinations view exists. To fix SECURITY DEFINER, recreate the view without SECURITY DEFINER.';
+    -- Drop the view
+    DROP VIEW IF EXISTS enriched_destinations CASCADE;
     
-    -- If you know the view definition, uncomment and adjust:
-    -- DROP VIEW IF EXISTS enriched_destinations CASCADE;
-    -- CREATE VIEW enriched_destinations AS
-    --   SELECT ... (your actual view definition here)
-    --   WITHOUT SECURITY DEFINER;
+    -- Recreate without SECURITY DEFINER
+    -- Based on migrations/destination-enrichment.sql
+    CREATE VIEW enriched_destinations AS
+    SELECT
+      slug,
+      name,
+      city,
+      category,
+      image,
+      content,
+      crown,
+      michelin_stars,
+      place_id,
+      rating,
+      price_level,
+      opening_hours,
+      phone_number,
+      website,
+      lat,
+      long,
+      subline,
+      main_image,
+      created_at,
+      updated_at
+    FROM destinations;
+    
+    COMMENT ON VIEW enriched_destinations IS 'Enriched destinations view without SECURITY DEFINER - safe for public access';
   END IF;
 END $$;
 
