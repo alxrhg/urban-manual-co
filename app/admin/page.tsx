@@ -897,26 +897,6 @@ export default function AdminPage() {
     };
   }, [showCreateModal]);
 
-  const loadSearchLogs = useCallback(async () => {
-    setLoadingSearches(true);
-    try {
-      const { data, error } = await supabase
-        .from('user_interactions')
-        .select('id, created_at, interaction_type, user_id, metadata')
-        .eq('interaction_type', 'search')
-        .order('created_at', { ascending: false })
-        .limit(200);
-
-      if (error) throw error;
-      setSearchLogs(data || []);
-    } catch (error) {
-      console.error('Error loading search logs:', error);
-      setSearchLogs([]);
-    } finally {
-      setLoadingSearches(false);
-    }
-  }, []);
-
   const handleDeleteDestination = (slug: string, name: string) => {
     confirm({
       title: 'Delete Destination',
