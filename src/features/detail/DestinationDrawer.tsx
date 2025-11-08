@@ -961,16 +961,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 }
               `}</style>
               <div className="flex flex-wrap gap-3">
-                {destination.google_maps_url && (
-                  <a
-                    href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button"
-                  >
-                    <span>Apple Maps</span>
-                  </a>
-                )}
                 {(enrichedData?.website || destination.website) && (
                   <a
                     href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
