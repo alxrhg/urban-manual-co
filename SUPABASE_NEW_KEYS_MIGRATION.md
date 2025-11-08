@@ -31,11 +31,23 @@ Supabase is transitioning from legacy keys (`anon` and `service_role`) to new ke
 
 ## How to Get New Keys
 
-1. Go to your Supabase Dashboard
-2. Navigate to **Settings** → **API**
-3. Look for **"Opt-in to new API keys"** or **"New Keys"** section
-4. Generate your new `publishable` and `secret` keys
-5. Copy the keys (they work as drop-in replacements)
+### Step 1: Access Supabase Dashboard
+1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
+2. Select your project: **Urban Manual** (ID: `avdnefdfwvpjkuanhdwk`)
+3. Navigate to **Settings** → **API** (or go directly to: https://supabase.com/dashboard/project/avdnefdfwvpjkuanhdwk/settings/api)
+
+### Step 2: Enable New API Keys
+1. Look for the **"API Keys"** section
+2. Find **"Publishable key"** and **"Secret key"** sections
+3. If you see **"Opt-in to new API keys"** or a toggle, enable it
+4. The new keys will be displayed:
+   - **Publishable key**: Starts with `sb_publishable_...`
+   - **Secret key**: Starts with `sb_secret_...`
+
+### Step 3: Copy the Keys
+- Copy the **Publishable key** (replaces `anon` key)
+- Copy the **Secret key** (replaces `service_role` key)
+- Keep these secure - especially the secret key!
 
 ## Environment Variable Naming
 
@@ -114,9 +126,37 @@ We should add support for:
 
 ## Next Steps
 
-1. Get new keys from Supabase dashboard
-2. Update code to support both old and new key names
-3. Test with new keys
-4. Update Vercel environment variables
-5. Redeploy
+✅ **Step 1: Code is Ready** - Already updated to support both old and new keys (new keys are preferred)
+
+**Step 2: Get New Keys from Supabase Dashboard**
+- Go to: https://supabase.com/dashboard/project/avdnefdfwvpjkuanhdwk/settings/api
+- Copy your new **Publishable key** and **Secret key**
+
+**Step 3: Update Vercel Environment Variables**
+1. Go to your Vercel project settings
+2. Navigate to **Settings** → **Environment Variables**
+3. Add the new keys:
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = (your publishable key)
+   - `SUPABASE_SECRET_KEY` = (your secret key)
+4. **Keep the old keys** during transition for safety
+5. Set for all environments (Production, Preview, Development)
+
+**Step 4: Test Locally (Optional)**
+- Add to `.env.local`:
+  ```
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+  SUPABASE_SECRET_KEY=your-secret-key
+  ```
+- Run `npm run dev` and test Supabase operations
+
+**Step 5: Deploy**
+- Push to trigger a new deployment
+- Vercel will use the new keys automatically
+- The code will prefer new keys, falling back to legacy keys if needed
+
+**Step 6: Verify & Clean Up**
+- After confirming everything works (wait 24-48 hours)
+- Remove legacy keys from Vercel:
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (can be removed)
+  - `SUPABASE_SERVICE_ROLE_KEY` (can be removed)
 
