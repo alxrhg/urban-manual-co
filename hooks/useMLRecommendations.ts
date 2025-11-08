@@ -4,7 +4,7 @@
  * Falls back to existing recommendation system if ML service is unavailable.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface MLRecommendation {
@@ -61,7 +61,7 @@ export function useMLRecommendations(
   const [isMLPowered, setIsMLPowered] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     if (!enabled || !user) {
       setLoading(false);
       return;
@@ -153,11 +153,11 @@ export function useMLRecommendations(
     } finally {
       setLoading(false);
     }
-  };
+  }, [enabled, user, topN, excludeVisited, excludeSaved, fallbackToExisting]);
 
   useEffect(() => {
     fetchRecommendations();
-  }, [user?.id, enabled, topN, excludeVisited, excludeSaved]);
+  }, [fetchRecommendations]);
 
   return {
     recommendations,

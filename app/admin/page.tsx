@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
@@ -764,36 +764,9 @@ export default function AdminPage() {
   }, [router]);
 
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
-  useEffect(() => {
-    if (isAdmin && authChecked) {
-      loadDestinationList();
-    }
-  }, [isAdmin, authChecked]);
-
-  // Load data when tab changes
-  useEffect(() => {
+  const loadDestinationList = useCallback(async () => {
     if (!isAdmin || !authChecked) return;
-
-    if (activeTab === 'analytics' && analyticsStats.totalUsers === 0) {
-      loadAnalytics();
-    } else if (activeTab === 'searches' && searchLogs.length === 0) {
-      loadSearchLogs();
-    }
-  }, [activeTab, isAdmin, authChecked]);
-
-  // Prevent body scroll when drawer is open
-  useEffect(() => {
-    if (showCreateModal) {
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      document.documentElement.style.overflow = '';
-    };
-  }, [showCreateModal]);
-
-  const loadDestinationList = async () => {
+    
     setIsLoadingList(true);
     try {
       let query = supabase
@@ -809,20 +782,51 @@ export default function AdminPage() {
       const { data, error } = await query.range(listOffset, listOffset + 19);
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('[Admin] Supabase error loading destinations:', error);
+        toast.error(`Failed to load destinations: ${error.message}`);
         setDestinationList([]);
         return;
       }
       setDestinationList(data || []);
     } catch (e: any) {
-      console.error('Error loading destinations:', e);
+      console.error('[Admin] Error loading destinations:', e);
+      toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
       setDestinationList([]);
     } finally {
       setIsLoadingList(false);
     }
-  };
+  }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
 
-  const loadAnalytics = async () => {
+  useEffect(() => {
+    if (isAdmin && authChecked) {
+      loadDestinationList();
+    }
+  }, [isAdmin, authChecked, loadDestinationList]);
+
+  // Load data when tab changes
+  useEffect(() => {
+    if (!isAdmin || !authChecked) return;
+
+    if (activeTab === 'analytics' && analyticsStats.totalUsers === 0) {
+      loadAnalytics();
+    } else if (activeTab === 'searches' && searchLogs.length === 0) {
+      loadSearchLogs();
+    }
+  }, [activeTab, isAdmin, authChecked, analyticsStats.totalUsers, searchLogs.length, loadAnalytics, loadSearchLogs]);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (showCreateModal) {
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.documentElement.style.overflow = '';
+    };
+  }, [showCreateModal]);
+
+  const loadAnalytics = useCallback(async () => {
     setLoadingAnalytics(true);
     try {
       // Get user interactions stats
@@ -868,9 +872,9 @@ export default function AdminPage() {
     } finally {
       setLoadingAnalytics(false);
     }
-  };
+  }, []);
 
-  const loadSearchLogs = async () => {
+  const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
     try {
       const { data, error } = await supabase
@@ -888,7 +892,7 @@ export default function AdminPage() {
     } finally {
       setLoadingSearches(false);
     }
-  };
+  }, []);
 
   const handleDeleteDestination = (slug: string, name: string) => {
     confirm({

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
@@ -51,8 +51,7 @@ function SearchPageContent() {
 
   useEffect(() => {
     if (query) performInitialSearch(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, performInitialSearch]);
 
   // Recompute suggestions whenever filtered results or refinements change
   useEffect(() => {
@@ -73,7 +72,7 @@ function SearchPageContent() {
     }
   }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
 
-  async function performInitialSearch(searchQuery: string) {
+  const performInitialSearch = useCallback(async (searchQuery: string) => {
     setSearchState(prev => ({ ...prev, isLoading: true }));
 
     try {
@@ -95,7 +94,7 @@ function SearchPageContent() {
       console.error('Search error:', error);
       setSearchState(prev => ({ ...prev, isLoading: false }));
     }
-  }
+  }, []);
 
   async function handleRefinement(refinement: string) {
     const newRefinements = [...searchState.refinements, refinement];

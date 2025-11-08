@@ -1116,7 +1116,7 @@ export default function Home() {
     }
   };
 
-  const fetchDestinations = async () => {
+  const fetchDestinations = useCallback(async () => {
     // Step 1: Run Supabase query directly (no waiting)
     try {
       // Select only essential columns to avoid issues with missing columns
@@ -1265,7 +1265,7 @@ export default function Home() {
         await applyFallbackData({ updateDestinations: true });
       }
     }
-  };
+  }, [user, visitedSlugs, filterDestinationsWithData]);
 
   const fetchVisitedPlaces = async (): Promise<void> => {
     if (!user) return;
@@ -1300,7 +1300,7 @@ export default function Home() {
 
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
-  const performAISearch = async (query: string) => {
+  const performAISearch = useCallback(async (query: string) => {
     setSubmittedQuery(query); // Store the submitted query
     // Match chat component: only check if empty or loading
     if (!query.trim() || searching) {
@@ -1419,7 +1419,7 @@ export default function Home() {
     } finally {
       setSearching(false);
     }
-  };
+  }, [user, searching, conversationHistory]);
 
   // Handle location changes from Near Me filter
   const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {

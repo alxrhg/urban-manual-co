@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -51,67 +51,77 @@ export default function ListsPage() {
     if (user) {
       fetchLists();
     }
-  }, [user]);
+  }, [user, fetchLists]);
 
-  const fetchLists = async () => {
-    if (!user) return;
+  const fetchLists = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from('lists')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('updated_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('lists')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching lists:', error);
-    } else if (data) {
-      // Fetch counts and cities for each list
-      const listsWithCounts = await Promise.all(
-        (data as any[]).map(async (list: any) => {
-          const { count: itemCount } = await supabase
-            .from('list_items')
-            .select('*', { count: 'exact', head: true })
-            .eq('list_id', list.id);
+      if (error) {
+        console.error('Error fetching lists:', error);
+        setLists([]);
+      } else if (data) {
+        // Fetch counts and cities for each list
+        const listsWithCounts = await Promise.all(
+          (data as any[]).map(async (list: any) => {
+            const { count: itemCount } = await supabase
+              .from('list_items')
+              .select('*', { count: 'exact', head: true })
+              .eq('list_id', list.id);
 
-          const { count: likeCount } = await supabase
-            .from('list_likes')
-            .select('*', { count: 'exact', head: true })
-            .eq('list_id', list.id);
+            const { count: likeCount } = await supabase
+              .from('list_likes')
+              .select('*', { count: 'exact', head: true })
+              .eq('list_id', list.id);
 
-          // Fetch destination cities for this list
-          let cities: string[] = [];
-          const { data: listItems } = await supabase
-            .from('list_items')
-            .select('destination_slug')
-            .eq('list_id', list.id);
+            // Fetch destination cities for this list
+            let cities: string[] = [];
+            const { data: listItems } = await supabase
+              .from('list_items')
+              .select('destination_slug')
+              .eq('list_id', list.id);
 
-          if (listItems && listItems.length > 0) {
-            const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
-            const { data: destinations } = await supabase
-              .from('destinations')
-              .select('city')
-              .in('slug', slugs);
+            if (listItems && listItems.length > 0) {
+              const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
+              const { data: destinations } = await supabase
+                .from('destinations')
+                .select('city')
+                .in('slug', slugs);
 
-            if (destinations) {
-              cities = Array.from(new Set((destinations as any[]).map((d: any) => d.city)));
+              if (destinations) {
+                cities = Array.from(new Set((destinations as any[]).map((d: any) => d.city)));
+              }
             }
-          }
 
-          return {
-            ...list,
-            item_count: itemCount || 0,
-            like_count: likeCount || 0,
-            cities,
-          };
-        })
-      );
+            return {
+              ...list,
+              item_count: itemCount || 0,
+              like_count: likeCount || 0,
+              cities,
+            };
+          })
+        );
 
-      setLists(listsWithCounts);
+        setLists(listsWithCounts);
+      }
+    } catch (error) {
+      console.error('Error fetching lists:', error);
+      setLists([]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-  };
+  }, [user]);
 
   const createList = async () => {
     if (!user || !newListName.trim()) return;

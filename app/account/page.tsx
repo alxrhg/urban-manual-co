@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { MapPin, Heart, Check } from "lucide-react";
@@ -80,7 +80,7 @@ export default function Account() {
   }, []);
 
   // Load user data - extracted as a function to be callable
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     if (!user) {
       setIsLoadingData(false);
       return;
@@ -170,12 +170,12 @@ export default function Account() {
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [user]);
 
   // Load data on mount
   useEffect(() => {
     loadUserData();
-  }, [user?.id]);
+  }, [loadUserData]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -187,30 +187,36 @@ export default function Account() {
 
     setCreatingCollection(true);
     try {
-      const { data, error } = await (supabase
-        .from('collections') as any)
-        .insert([{
-          user_id: user.id,
+      // Use API endpoint for better error handling and RLS compliance
+      const response = await fetch('/api/collections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: newCollectionName.trim(),
           description: newCollectionDescription.trim() || null,
           is_public: newCollectionPublic,
           emoji: '📚',
           color: '#3B82F6',
-          destination_count: 0
-        }] as any)
-        .select()
-        .single();
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create collection');
+      }
+
+      const { collection: data } = await response.json();
 
       setCollections([data, ...collections]);
       setNewCollectionName('');
       setNewCollectionDescription('');
       setNewCollectionPublic(true);
       setShowCreateModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating collection:', error);
-      alert('Failed to create collection');
+      alert(error.message || 'Failed to create collection');
     } finally {
       setCreatingCollection(false);
     }

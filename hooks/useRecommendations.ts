@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Destination } from '@/types/destination';
 
 export interface Recommendation {
@@ -24,8 +24,11 @@ export function useRecommendations(options: UseRecommendationsOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [cached, setCached] = useState(false);
 
-  const fetchRecommendations = async (forceRefresh = false) => {
-    if (!enabled) return;
+  const fetchRecommendations = useCallback(async (forceRefresh = false) => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -45,6 +48,7 @@ export function useRecommendations(options: UseRecommendationsOptions = {}) {
         if (response.status === 401) {
           // User not authenticated - silently fail
           setRecommendations([]);
+          setLoading(false);
           return;
         }
         throw new Error(`Failed to load recommendations: ${response.statusText}`);
@@ -73,13 +77,13 @@ export function useRecommendations(options: UseRecommendationsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [enabled, limit, filterCity, onSuccess]);
 
   useEffect(() => {
     if (enabled) {
       fetchRecommendations();
     }
-  }, [enabled, limit]);
+  }, [enabled, fetchRecommendations]);
 
   return {
     recommendations,

@@ -74,18 +74,27 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
 
     setCreating(true);
     try {
-      const { data, error } = await (supabase
-        .from('collections')
-        .insert as any)({
-          user_id: user.id,
+      // Use API endpoint for better error handling and RLS compliance
+      const response = await fetch('/api/collections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: newCollectionName.trim(),
           description: newCollectionDescription.trim() || null,
           emoji: newCollectionEmoji,
-        })
-        .select()
-        .single();
+          color: '#3B82F6',
+          is_public: false,
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create collection');
+      }
+
+      const { collection: data } = await response.json();
 
       setCollections([data, ...collections]);
       setNewCollectionName('');
@@ -97,9 +106,9 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
         onCollectionSelect(data.id);
         setSelectedCollectionId(data.id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating collection:', error);
-      alert('Failed to create collection. Please try again.');
+      alert(error.message || 'Failed to create collection. Please try again.');
     } finally {
       setCreating(false);
     }

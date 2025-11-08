@@ -58,23 +58,30 @@ export function useCollections(userId: string | undefined) {
     if (!userId) return null;
 
     try {
-      const { data, error: err } = await (supabase
-        .from('collections')
-        .insert as any)({
-          user_id: userId,
+      // Use API endpoint for better error handling and RLS compliance
+      const response = await fetch('/api/collections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: collection.name,
           description: collection.description || null,
           emoji: collection.emoji || '📍',
           color: collection.color || '#3B82F6',
-        })
-        .select()
-        .single();
+          is_public: false,
+        }),
+      });
 
-      if (err) throw err;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create collection');
+      }
 
+      const { collection: data } = await response.json();
       await loadCollections();
       return data;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating collection:', err);
       throw err;
     }
