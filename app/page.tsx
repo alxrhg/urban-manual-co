@@ -45,106 +45,12 @@ import { type ExtractedIntent } from '@/app/api/intent/schema';
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
 // Category icons mapping - comprehensive list
-const CATEGORY_ICONS: Record<string, string> = {
-  // Food & Dining
-  'dining': '🍴',
-  'restaurant': '🍽️',
-  'restaurants': '🍽️',
-  'food': '🍜',
-  'cafe': '☕',
-  'cafes': '☕',
-  'coffee': '☕',
-  'bakery': '🥐',
-  'bakeries': '🥐',
-  'dessert': '🍰',
-  'desserts': '🍰',
-  'patisserie': '🧁',
-  'breakfast': '🥞',
-  'brunch': '🥐',
-  'lunch': '🍱',
-  'dinner': '🍽️',
-  'pizza': '🍕',
-  'italian': '🍝',
-  'french': '🥖',
-  'asian': '🥢',
-  'japanese': '🍜',
-  'sushi': '🍣',
-  'mexican': '🌮',
-  'burger': '🍔',
-  'burgers': '🍔',
-  'seafood': '🦞',
-  'steakhouse': '🥩',
-
-  // Drinks & Nightlife
-  'bar': '🍸',
-  'bars': '🍸',
-  'pub': '🍺',
-  'pubs': '🍺',
-  'cocktail': '🍹',
-  'cocktails': '🍹',
-  'wine': '🍷',
-  'nightlife': '🌙',
-  'club': '💃',
-  'clubs': '💃',
-
-  // Accommodation
-  'hotel': '🏨',
-  'hotels': '🏨',
-  'accommodation': '🛏️',
-  'hostel': '🏠',
-  'lodging': '🏨',
-
-  // Culture & Entertainment
-  'culture': '🎭',
-  'museum': '🏛️',
-  'museums': '🏛️',
-  'art': '🎨',
-  'gallery': '🖼️',
-  'galleries': '🖼️',
-  'theater': '🎭',
-  'theatre': '🎭',
-  'cinema': '🎬',
-  'music': '🎵',
-  'concert': '🎤',
-
-  // Shopping
-  'shopping': '🛍️',
-  'shop': '🛍️',
-  'store': '🏪',
-  'market': '🏪',
-  'boutique': '👗',
-  'retail': '🛍️',
-
-  // Activities & Recreation
-  'activity': '🎯',
-  'activities': '🎯',
-  'sport': '⚽',
-  'sports': '⚽',
-  'fitness': '💪',
-  'gym': '🏋️',
-  'park': '🌳',
-  'parks': '🌳',
-  'outdoor': '🏞️',
-  'beach': '🏖️',
-  'hiking': '🥾',
-
-  // Services
-  'spa': '💆',
-  'wellness': '🧘',
-  'salon': '💇',
-  'beauty': '💄',
-
-  // Other
-  'other': '✨',
-  'attraction': '🎡',
-  'attractions': '🎡',
-  'landmark': '🗿',
-  'landmarks': '🗿',
-};
+// Category icons removed - no longer using emojis
+const CATEGORY_ICONS: Record<string, string> = {};
 
 function getCategoryIcon(category: string): string {
   const key = category.toLowerCase().trim();
-  return CATEGORY_ICONS[key] || '📍';
+  return CATEGORY_ICONS[key] || '';
 }
 
 function capitalizeCategory(category: string): string {
