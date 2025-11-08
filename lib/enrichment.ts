@@ -300,11 +300,11 @@ export async function enrichDestination(
   if (placesData.google_types.length > 0) {
     const googleCategory = categorizePlaceFromTypes(placesData.google_types);
     if (googleCategory) {
-      console.log(`📂 Category from Google types: ${googleCategory}`);
+      console.log(`Category from Google types: ${googleCategory}`);
       finalCategory = googleCategory;
     }
   } else if (geminiData.suggested_category) {
-    console.log(`📂 Category from Gemini: ${geminiData.suggested_category}`);
+    console.log(`Category from Gemini: ${geminiData.suggested_category}`);
     finalCategory = geminiData.suggested_category;
   } else {
     console.log(`Keeping existing category: ${finalCategory}`);
