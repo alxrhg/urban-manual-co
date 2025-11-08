@@ -12,6 +12,7 @@ import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_META, CARD_TITLE } from '@/components/CardStyles';
 import { MultiplexAd } from '@/components/GoogleAd';
+import { CityClock } from '@/components/CityClock';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -216,10 +217,15 @@ export default function CityPageClient() {
 
             <div className="space-y-2">
               {country && <p className="text-xs text-gray-500">{country}</p>}
-              <h1 className="text-3xl sm:text-4xl font-light">{cityDisplayName}</h1>
-              <p className="text-xs text-gray-500">
-                {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
-              </p>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h1 className="text-3xl sm:text-4xl font-light">{cityDisplayName}</h1>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+                  </p>
+                </div>
+                <CityClock citySlug={citySlug} />
+              </div>
             </div>
           </div>
 
