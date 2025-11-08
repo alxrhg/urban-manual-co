@@ -564,19 +564,27 @@ export default function Home() {
         .order('name');
 
       if (error) {
-        // Don't log network errors for invalid URLs (they're expected)
-        if (!error.message?.includes('hostname') && !error.message?.includes('Failed to fetch')) {
-          console.error('Error fetching destinations:', error);
-        }
+        console.error('[Destinations] Supabase error:', error);
+        console.error('[Destinations] Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         setDestinations([]);
-        // Don't reset categories here - they're already loaded from fetchFilterData
-        // setCategories([]);
-        // Don't set loading false here - it's already false from fetchFilterData
         return;
       }
 
       const destinationsData = data || [];
       console.log('[Destinations] Loaded destinations:', destinationsData.length);
+      if (destinationsData.length > 0) {
+        console.log('[Destinations] Sample destination:', {
+          slug: destinationsData[0].slug,
+          name: destinationsData[0].name,
+          city: destinationsData[0].city,
+          category: destinationsData[0].category
+        });
+      }
       setDestinations(destinationsData);
 
       // Extract unique cities and categories from full data (for consistency)
