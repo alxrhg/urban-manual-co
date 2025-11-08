@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
+import { openai, OPENAI_EMBEDDING_MODEL, getModelForQuery } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
+import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key') as string;
@@ -227,9 +228,12 @@ Return only the JSON, no other text.`;
 
     const userPrompt = `Query: "${query}"${conversationContext}${userContext}`;
 
+    // Use appropriate model based on query complexity
+    const model = getModelForQuery(query, conversationHistory);
+    
     const response = await withTimeout(
       openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -537,9 +541,13 @@ ${topResults.slice(0, 5).map((r: any, i: number) => {
 
 Generate a natural, helpful response that incorporates relevant context (weather, events, walking distance) when it adds value. Be conversational and concise.`;
 
+      // Use appropriate model based on query complexity
+      // For response generation, we use simple model unless query is very complex
+      const model = getModelForQuery(query, []);
+      
       const response = await withTimeout(
         openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: model,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
