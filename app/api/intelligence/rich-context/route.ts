@@ -6,6 +6,10 @@ import { richQueryContextService } from '@/services/intelligence/rich-query-cont
  * GET /api/intelligence/rich-context
  * Get rich query context for enhanced understanding
  */
+
+// Mark route as dynamic since it uses searchParams
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerClient();
