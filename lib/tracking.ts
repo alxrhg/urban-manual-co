@@ -3,8 +3,8 @@ import type { UserInteraction } from '@/types/personalization';
 
 function getEnv(key: string): string {
   const value = process.env[key];
-  // Silent fallback - no error logging
   if (!value || value.trim() === '' || value.includes('placeholder') || value.includes('invalid')) {
+    // Only log error if we're actually trying to use it (not just checking)
     return '';
   }
   return value;

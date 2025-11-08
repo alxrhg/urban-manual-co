@@ -9,10 +9,9 @@ function requireEnv(key: string): string {
   const finalValue = value || process.env[fallbackKey] || '';
   
   if (!finalValue || finalValue.trim() === '' || finalValue.includes('placeholder') || finalValue.includes('invalid')) {
-    // Return empty string instead of throwing - let the caller handle gracefully
-    // Only log on server-side for debugging
-    if (typeof window === 'undefined') {
-      console.warn(`[Supabase Server] ${key} not configured, using fallback`);
+    // Log error when env var is actually missing
+    if (typeof window !== 'undefined') {
+      console.error(`❌ Missing required environment variable: ${key}. Please set ${key} in your environment variables.`);
     }
     return '';
   }
@@ -29,6 +28,7 @@ export function createClientComponentClient() {
   
   // Fallback to dummy client if not configured
   if (!url || !key) {
+    console.error('❌ Supabase client component: Missing configuration. URL:', !!url, 'Key:', !!key);
     return createClient('https://invalid.supabase.co', 'invalid-key', {
       auth: { autoRefreshToken: false, persistSession: false }
     });
@@ -51,6 +51,7 @@ export async function createServerClient() {
   
   // Fallback to dummy client if not configured
   if (!url || !key) {
+    console.error('❌ Supabase server client: Missing configuration. URL:', !!url, 'Key:', !!key);
     return createClient('https://invalid.supabase.co', 'invalid-key', {
       auth: { autoRefreshToken: false, persistSession: false }
     });
