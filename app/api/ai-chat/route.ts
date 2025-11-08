@@ -711,14 +711,13 @@ async function processAIChatRequest(
                 totalSize: convResults.totalSize,
               };
               searchTier = 'conversational-search';
-              console.log(`[AI Chat] Conversational search found ${discoveryResult.results.length} results`);
+              console.log(`[AI Chat] Discovery Engine (conversational) found ${discoveryResult.results.length} results`);
             }
+          } catch (convError) {
+            console.warn('[AI Chat] Conversational search failed, trying regular Discovery Engine:', convError);
           }
-        } catch (convError) {
-          console.warn('[AI Chat] Conversational search failed, falling back to regular search:', convError);
         }
-      }
-      
+        
         // Use natural language search for complex queries
         if (!discoveryResult && isNaturalLanguage) {
           try {
@@ -739,27 +738,26 @@ async function processAIChatRequest(
                 totalSize: nlResults.totalSize,
               };
               searchTier = 'natural-language-search';
-              console.log(`[AI Chat] Natural language search found ${discoveryResult.results.length} results`);
+              console.log(`[AI Chat] Discovery Engine (natural language) found ${nlResults.results.length} results`);
             }
+          } catch (nlError) {
+            console.warn('[AI Chat] Natural language search failed, trying regular Discovery Engine:', nlError);
           }
-        } catch (nlError) {
-          console.warn('[AI Chat] Natural language search failed, falling back to regular search:', nlError);
         }
-      }
-      
-      // Fallback to regular Discovery Engine search
-      if (!discoveryResult) {
-        discoveryResult = await unifiedSearch({
-          query: query,
-          userId: userId,
-          city: intent.city,
-          category: intent.category,
-          priceLevel: intent.filters?.priceLevel,
-          minRating: intent.filters?.rating,
-          pageSize: 100,
-          useCache: true,
-        });
-      }
+        
+        // PRIMARY: Always try regular Discovery Engine search (connected as primary method)
+        if (!discoveryResult) {
+          discoveryResult = await unifiedSearch({
+            query: query,
+            userId: userId,
+            city: intent.city,
+            category: intent.category,
+            priceLevel: intent.filters?.priceLevel,
+            minRating: intent.filters?.rating,
+            pageSize: 100,
+            useCache: true,
+          });
+        }
 
         // Process Discovery Engine results (primary search method)
         if (discoveryResult && discoveryResult.source === 'discovery_engine' && discoveryResult.results.length > 0) {
