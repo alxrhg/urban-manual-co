@@ -830,10 +830,9 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Immediately filter destinations so they show up right away
-            setTimeout(() => {
-              filterDestinations();
-            }, 0);
+            // Filter destinations immediately with the new data
+            const filtered = filterDestinationsWithData(discoveryBaseline);
+            setFilteredDestinations(filtered);
           }
         } else {
           await applyFallbackData({ updateDestinations: destinations.length === 0 });
@@ -859,10 +858,9 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Immediately filter destinations so they show up right away
-            setTimeout(() => {
-              filterDestinations();
-            }, 0);
+            // Filter destinations immediately with the new data
+            const filtered = filterDestinationsWithData(discoveryBaseline);
+            setFilteredDestinations(filtered);
           }
         } else {
           await applyFallbackData({ updateDestinations: destinations.length === 0 });
@@ -909,10 +907,9 @@ export default function Home() {
           setCategories(discoveryCategories);
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Immediately filter destinations so they show up right away
-            setTimeout(() => {
-              filterDestinations();
-            }, 0);
+            // Filter destinations immediately with the new data
+            const filtered = filterDestinationsWithData(discoveryBaseline);
+            setFilteredDestinations(filtered);
           }
         } else {
           await applyFallbackData({ updateDestinations: destinations.length === 0 });
@@ -934,10 +931,9 @@ export default function Home() {
         if (discoveryBaseline.length) {
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Immediately filter destinations so they show up right away
-            setTimeout(() => {
-              filterDestinations();
-            }, 0);
+            // Filter destinations immediately with the new data
+            const filtered = filterDestinationsWithData(discoveryBaseline);
+            setFilteredDestinations(filtered);
           }
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
           if (discoveryCities.length) {
@@ -997,11 +993,10 @@ export default function Home() {
         setCategories(uniqueCategories);
       }
       
-      // Immediately filter destinations so they show up right away
-      // Use setTimeout to ensure state has updated
-      setTimeout(() => {
-        filterDestinations();
-      }, 0);
+      // Filter destinations immediately with the new data
+      // Pass the data directly to avoid stale state issues
+      const filtered = filterDestinationsWithData(data as Destination[]);
+      setFilteredDestinations(filtered);
     } catch (error: any) {
       // Only log unexpected errors
       if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
@@ -1206,8 +1201,9 @@ export default function Home() {
     return score;
   };
 
-  const filterDestinations = () => {
-    let filtered = destinations;
+  // Helper function to filter destinations with explicit data (avoids stale state)
+  const filterDestinationsWithData = (dataToFilter: Destination[]) => {
+    let filtered = dataToFilter;
 
     // Apply filters only when there's NO search term (AI chat handles all search)
     if (!searchTerm) {
@@ -1381,6 +1377,11 @@ export default function Home() {
       filtered = [...unvisited, ...visited];
     }
 
+    return filtered;
+  };
+
+  const filterDestinations = () => {
+    const filtered = filterDestinationsWithData(destinations);
     setFilteredDestinations(filtered);
   };
 
