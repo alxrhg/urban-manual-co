@@ -431,6 +431,25 @@ export default function Home() {
     }
   }
 
+  // Pinterest-like recommendation algorithm - must be defined before filterDestinations
+  const getRecommendationScore = useCallback((dest: Destination, index: number): number => {
+    let score = 0;
+
+    // Priority signals (like Pinterest's quality score)
+    if (dest.crown) score += 20; // Crown badge = featured (reduced from 50)
+    if (dest.image) score += 10; // Images get boost
+    // Michelin stars are displayed but don't affect ranking
+
+    // Category diversity bonus (ensures mixed content like Pinterest)
+    const categoryBonus = (index % 7) * 5; // Rotate through categories (increased from 2)
+    score += categoryBonus;
+
+    // Random discovery factor (increased for more serendipity)
+    score += Math.random() * 30;
+
+    return score;
+  }, []);
+
   // Filter destinations function - must be defined before useEffects that use it
   const filterDestinations = useCallback(() => {
     console.log('[Filter] filterDestinations called, destinations.length:', destinations.length);
@@ -610,7 +629,7 @@ export default function Home() {
 
     console.log('[Filter] filteredDestinations set to:', filtered.length);
     setFilteredDestinations(filtered);
-  }, [destinations, searchTerm, advancedFilters, selectedCity, selectedCategory, visitedSlugs, user]);
+  }, [destinations, searchTerm, advancedFilters, selectedCity, selectedCategory, visitedSlugs, user, getRecommendationScore]);
 
   // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
   // Works like chat but with convenience of auto-trigger
@@ -993,24 +1012,6 @@ export default function Home() {
     }
   };
 
-  // Pinterest-like recommendation algorithm
-  const getRecommendationScore = (dest: Destination, index: number): number => {
-    let score = 0;
-
-    // Priority signals (like Pinterest's quality score)
-    if (dest.crown) score += 20; // Crown badge = featured (reduced from 50)
-    if (dest.image) score += 10; // Images get boost
-    // Michelin stars are displayed but don't affect ranking
-
-    // Category diversity bonus (ensures mixed content like Pinterest)
-    const categoryBonus = (index % 7) * 5; // Rotate through categories (increased from 2)
-    score += categoryBonus;
-
-    // Random discovery factor (increased for more serendipity)
-    score += Math.random() * 30;
-
-    return score;
-  };
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Ensure displayedCities is always an array, even if cities is empty
