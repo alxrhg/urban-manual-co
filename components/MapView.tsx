@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Destination } from '@/types/destination';
+import { Spinner } from '@/components/ui/spinner';
 
 interface MapViewProps {
   destinations: Destination[];

@@ -1,5 +1,7 @@
 'use client';
 
+import { Spinner as UISpinner } from "@/components/ui/spinner";
+
 // Skeleton loader for destination cards
 export function DestinationCardSkeleton() {
   return (
@@ -62,7 +64,7 @@ export function PageLoader({ message = "Loading..." }: { message?: string }) {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-gray-300 dark:border-gray-700 border-t-black dark:border-t-white mb-4" />
+        <UISpinner className="size-8 mb-4 mx-auto" />
         <div className="text-sm text-gray-500 dark:text-gray-400">{message}</div>
       </div>
     </div>
@@ -72,24 +74,18 @@ export function PageLoader({ message = "Loading..." }: { message?: string }) {
 // Inline spinner
 export function Spinner({ size = "sm" }: { size?: "xs" | "sm" | "md" | "lg" }) {
   const sizeClasses = {
-    xs: "h-3 w-3 border",
-    sm: "h-4 w-4 border-2",
-    md: "h-6 w-6 border-2",
-    lg: "h-8 w-8 border-2"
+    xs: "size-3",
+    sm: "size-4",
+    md: "size-6",
+    lg: "size-8"
   };
 
   return (
-    <div
-      className={`inline-block animate-spin rounded-full border-gray-300 dark:border-gray-700 border-t-black dark:border-t-white ${sizeClasses[size]}`}
-      role="status"
-      aria-label="Loading"
-    />
+    <UISpinner className={sizeClasses[size]} />
   );
 }
 
 // Button loading state
 export function ButtonSpinner() {
-  return (
-    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-  );
+  return <UISpinner className="size-4" />;
 }

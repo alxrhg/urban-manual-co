@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Plus, Check, Loader2 } from 'lucide-react';
+import { Search, Plus, Check } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
@@ -150,7 +151,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+                <Spinner className="size-6 mx-auto text-gray-400" />
                 <p className="text-xs text-gray-500 mt-2">Searching...</p>
               </div>
             ) : results.length === 0 ? (
@@ -197,7 +198,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
 
                     {/* Add Icon */}
                     {adding === destination.slug ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
+                      <Spinner className="size-4 text-gray-400 flex-shrink-0" />
                     ) : (
                       <Check className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     )}
