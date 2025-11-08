@@ -295,51 +295,204 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
   };
 }
 
-function getContextAwareLoadingMessage(searchTerm: string): string {
-  const query = searchTerm.toLowerCase();
+// Generate context-aware loading message based on query, intent, and user context
+function getContextAwareLoadingMessage(
+  query: string,
+  intent?: {
+    city?: string;
+    category?: string;
+    modifiers?: string[];
+    temporalContext?: { timeframe?: string; timeOfDay?: string };
+    primaryIntent?: string;
+  } | null,
+  seasonalContext?: { season?: string; weather?: string } | null,
+  userContext?: { preferences?: any; visitedCities?: string[] } | null
+): string {
+  const queryLower = query.toLowerCase();
+  const now = new Date();
+  const hour = now.getHours();
+  const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
 
-  // Restaurant/Dining related
-  if (query.match(/restaurant|dining|food|eat/)) {
-    return "French or Japanese? Date night or casual?";
+  // Time-specific messages
+  if (intent?.temporalContext?.timeframe === 'now') {
+    const cityPart = intent.city ? ` in ${intent.city}` : '';
+    return `Finding places open right now${cityPart}...`;
   }
 
-  // Coffee/Cafe related
-  if (query.match(/coffee|cafe|caf[eé]/)) {
-    return "Cozy hideaway or trendy spot?";
+  // Intent-specific messages
+  if (intent?.primaryIntent === 'compare') {
+    return 'Comparing options for you...';
+  }
+  if (intent?.primaryIntent === 'plan') {
+    return 'Planning your perfect itinerary...';
   }
 
-  // Bar/Nightlife related
-  if (query.match(/bar|cocktail|drink|nightlife|pub/)) {
-    return "Cocktails or craft beer? Upbeat or intimate?";
+  // Category + City combinations
+  if (intent?.category && intent?.city) {
+    const category = intent.category.toLowerCase();
+    const city = intent.city;
+    
+    const categoryCityMessages: Record<string, string[]> = {
+      restaurant: [
+        `Discovering ${city}'s finest dining...`,
+        `Curating the best restaurants in ${city}...`,
+        `Finding ${city}'s culinary gems...`,
+        `Exploring ${city}'s food scene...`,
+      ],
+      cafe: [
+        `Locating ${city}'s best cafes...`,
+        `Finding cozy spots in ${city}...`,
+        `Discovering ${city}'s coffee culture...`,
+      ],
+      bar: [
+        `Exploring ${city}'s nightlife...`,
+        `Finding the best bars in ${city}...`,
+        `Discovering ${city}'s cocktail scene...`,
+      ],
+      hotel: [
+        `Curating ${city}'s best stays...`,
+        `Finding perfect accommodations in ${city}...`,
+        `Discovering ${city}'s top hotels...`,
+      ],
+      shopping: [
+        `Exploring ${city}'s shopping scene...`,
+        `Finding the best stores in ${city}...`,
+        `Discovering ${city}'s retail gems...`,
+      ],
+    };
+
+    const messages = categoryCityMessages[category];
+    if (messages) {
+      return messages[Math.floor(Math.random() * messages.length)];
+    }
   }
 
-  // Hotel/Accommodation related
-  if (query.match(/hotel|stay|accommodation|lodging/)) {
-    return "Luxury or boutique? Business or leisure?";
+  // Modifier-specific messages
+  if (intent?.modifiers && intent.modifiers.length > 0) {
+    const modifier = intent.modifiers[0].toLowerCase();
+    if (modifier.includes('romantic')) {
+      return 'Finding intimate spots perfect for two...';
+    }
+    if (modifier.includes('cozy') || modifier.includes('comfortable')) {
+      return 'Seeking warm, welcoming spaces...';
+    }
+    if (modifier.includes('luxury') || modifier.includes('upscale')) {
+      return 'Curating premium experiences...';
+    }
+    if (modifier.includes('budget') || modifier.includes('cheap')) {
+      return 'Finding great value options...';
+    }
+    if (modifier.includes('hidden') || modifier.includes('secret')) {
+      return 'Uncovering hidden gems...';
+    }
+    if (modifier.includes('trendy') || modifier.includes('popular')) {
+      return "Spotting what's hot right now...";
+    }
   }
 
-  // Shopping related
-  if (query.match(/shop|shopping|boutique|store/)) {
-    return "Designer or vintage? Mall or local markets?";
+  // Seasonal context
+  if (seasonalContext?.season) {
+    const season = seasonalContext.season.toLowerCase();
+    if (season === 'spring') {
+      return 'Finding perfect spring destinations...';
+    }
+    if (season === 'summer') {
+      return 'Discovering summer hotspots...';
+    }
+    if (season === 'fall' || season === 'autumn') {
+      return 'Curating autumn experiences...';
+    }
+    if (season === 'winter') {
+      return 'Finding cozy winter spots...';
+    }
   }
 
-  // Activities/Entertainment related
-  if (query.match(/museum|gallery|art|culture|theater|theatre/)) {
-    return "Classic or contemporary? Guided or self-paced?";
+  // Category-specific messages
+  if (intent?.category) {
+    const category = intent.category.toLowerCase();
+    const categoryMessages: Record<string, string[]> = {
+      restaurant: [
+        'Exploring culinary destinations...',
+        'Finding the perfect dining spots...',
+        'Curating restaurant recommendations...',
+        'Discovering amazing food experiences...',
+      ],
+      cafe: [
+        'Locating cozy cafes...',
+        'Finding the best coffee spots...',
+        'Discovering perfect study/work spaces...',
+      ],
+      bar: [
+        'Exploring nightlife options...',
+        'Finding great cocktail bars...',
+        'Discovering vibrant social scenes...',
+      ],
+      hotel: [
+        'Curating accommodation options...',
+        'Finding perfect stays...',
+        'Discovering unique lodgings...',
+      ],
+      shopping: [
+        'Exploring shopping destinations...',
+        'Finding the best retail spots...',
+        'Discovering unique boutiques...',
+      ],
+      attraction: [
+        'Discovering must-see attractions...',
+        'Finding cultural landmarks...',
+        'Exploring iconic destinations...',
+      ],
+    };
+
+    const messages = categoryMessages[category];
+    if (messages) {
+      return messages[Math.floor(Math.random() * messages.length)];
+    }
   }
 
-  // Parks/Outdoor related
-  if (query.match(/park|outdoor|beach|hiking|nature/)) {
-    return "Active adventure or peaceful retreat?";
+  // City-specific messages
+  if (intent?.city) {
+    return `Exploring ${intent.city}'s best spots...`;
   }
 
-  // Spa/Wellness related
-  if (query.match(/spa|wellness|massage|relax/)) {
-    return "Full day retreat or quick escape?";
+  // Time-of-day specific messages
+  if (timeOfDay === 'morning') {
+    return 'Starting your day with perfect recommendations...';
+  }
+  if (timeOfDay === 'afternoon') {
+    return 'Finding your perfect afternoon escape...';
+  }
+  if (timeOfDay === 'evening') {
+    return 'Discovering evening destinations...';
   }
 
-  // No fallback - let AI ask user directly through conversation
-  return "";
+  // Query-based fallback (simple pattern matching)
+  if (queryLower.match(/restaurant|dining|food|eat/)) {
+    return 'Finding the perfect dining experience...';
+  }
+  if (queryLower.match(/coffee|cafe|caf[eé]/)) {
+    return 'Locating cozy coffee spots...';
+  }
+  if (queryLower.match(/bar|cocktail|drink|nightlife/)) {
+    return 'Exploring nightlife options...';
+  }
+  if (queryLower.match(/hotel|stay|accommodation/)) {
+    return 'Curating accommodation options...';
+  }
+
+  // Generic fallback with personality
+  const fallbackMessages = [
+    'Finding the perfect spots...',
+    'Searching for amazing places...',
+    'Discovering hidden gems...',
+    'Curating the best destinations...',
+    'Exploring top recommendations...',
+    'Finding your next adventure...',
+    'Locating must-visit places...',
+    'Selecting the finest spots...',
+  ];
+
+  return fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
 }
 
 export default function Home() {
@@ -1200,9 +1353,8 @@ export default function Home() {
       return;
     }
 
-    // Select a random loading text variant
-    const randomText = loadingTextVariants[Math.floor(Math.random() * loadingTextVariants.length)];
-    setCurrentLoadingText(randomText);
+    // Set initial loading text (will be updated with context-aware message after intent is parsed)
+    setCurrentLoadingText('Finding the perfect spots...');
 
     setSearching(true);
     setSearchTier('ai-enhanced');
@@ -1254,11 +1406,12 @@ export default function Home() {
         setSearchIntent(data.intent);
         
         // Fetch seasonal context if city is detected
+        let seasonData = null;
         if (data.intent.city) {
           try {
             const seasonResponse = await fetch(`/api/seasonality?city=${encodeURIComponent(data.intent.city)}`);
             if (seasonResponse.ok) {
-              const seasonData = await seasonResponse.json();
+              seasonData = await seasonResponse.json();
               setSeasonalContext(seasonData);
             }
           } catch (error) {
@@ -1267,6 +1420,19 @@ export default function Home() {
         } else {
           setSeasonalContext(null);
         }
+
+        // Update loading text with context-aware message based on intent
+        const contextAwareText = getContextAwareLoadingMessage(
+          query,
+          data.intent,
+          seasonData,
+          userContext
+        );
+        setCurrentLoadingText(contextAwareText);
+      } else {
+        // Fallback to context-aware message even without intent
+        const contextAwareText = getContextAwareLoadingMessage(query, null, seasonalContext, userContext);
+        setCurrentLoadingText(contextAwareText);
       }
 
       // ONLY show the latest AI response (simple text)
