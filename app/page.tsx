@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { 
@@ -865,29 +865,31 @@ export default function Home() {
   }, [selectedCity, selectedCategory]);
 
   // Fetch filter data (cities and categories) first for faster initial display
+  // OPTIMIZED: Call Discovery Engine once at start, reuse result throughout
   const fetchFilterData = async () => {
     try {
       console.log('[Filter Data] Starting fetch...');
+      
+      // OPTIMIZATION: Call Discovery Engine once at the start (cached by ref)
+      const discoveryBaselinePromise = fetchDiscoveryBootstrap();
+      
       const supabaseClient = createClient();
       if (!supabaseClient) {
         console.warn('[Filter Data] Supabase client not available');
-        // Try Discovery Engine fallback immediately
-        const discoveryBaseline = await fetchDiscoveryBootstrap();
+        // Use the already-started Discovery Engine call
+        const discoveryBaseline = await discoveryBaselinePromise;
         if (discoveryBaseline.length) {
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          setCities(discoveryCities);
-          setCategories(discoveryCategories);
+          // OPTIMIZATION: Batch state updates
+          React.startTransition(() => {
+            setCities(discoveryCities);
+            setCategories(discoveryCategories);
+          });
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data (no filters on initial load)
             const filtered = filterDestinationsWithData(
               discoveryBaseline,
-              '', // no search term
-              {}, // no advanced filters
-              '', // no selected city
-              '', // no selected category
-              user, // current user
-              visitedSlugs // current visited slugs
+              '', {}, '', '', user, visitedSlugs
             );
             setFilteredDestinations(filtered);
           }
@@ -896,6 +898,7 @@ export default function Home() {
         }
         return;
       }
+      
       // Optimize query: only get distinct city/category pairs, limit to speed up
       const { data, error } = await supabaseClient
         .from('destinations')
@@ -904,29 +907,26 @@ export default function Home() {
         .limit(1000) // Limit to speed up initial query
         .order('city');
 
+      // OPTIMIZATION: Use helper function for error checking
       if (error || !data) {
-        // Only log unexpected errors (not configuration issues)
-        if (error && !error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
-          // Use console.warn for non-critical errors
+        if (error && !isIgnorableSupabaseError(error)) {
           console.warn('[Filter Data] Error:', error.message || error);
         }
 
-        const discoveryBaseline = await fetchDiscoveryBootstrap();
+        // OPTIMIZATION: Reuse the already-started Discovery Engine call
+        const discoveryBaseline = await discoveryBaselinePromise;
         if (discoveryBaseline.length) {
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          setCities(discoveryCities);
-          setCategories(discoveryCategories);
+          // OPTIMIZATION: Batch state updates
+          React.startTransition(() => {
+            setCities(discoveryCities);
+            setCategories(discoveryCategories);
+          });
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data (no filters on initial load)
             const filtered = filterDestinationsWithData(
               discoveryBaseline,
-              '', // no search term
-              {}, // no advanced filters
-              '', // no selected city
-              '', // no selected category
-              user, // current user
-              visitedSlugs // current visited slugs
+              '', {}, '', '', user, visitedSlugs
             );
             setFilteredDestinations(filtered);
           }
@@ -938,21 +938,32 @@ export default function Home() {
 
       const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions((data || []) as any[]);
 
-      setCities(uniqueCities);
-      setCategories(uniqueCategories);
+      // OPTIMIZATION: Batch state updates
+      React.startTransition(() => {
+        setCities(uniqueCities);
+        setCategories(uniqueCategories);
+      });
 
-      const discoveryBaseline = await fetchDiscoveryBootstrap();
+      // OPTIMIZATION: Reuse the already-started Discovery Engine call
+      const discoveryBaseline = await discoveryBaselinePromise;
       if (discoveryBaseline.length) {
         const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+        // OPTIMIZATION: Batch state updates - only update if Discovery Engine has more
+        const updates: { cities?: string[]; categories?: string[] } = {};
         if (discoveryCities.length > uniqueCities.length) {
-          setCities(discoveryCities);
+          updates.cities = discoveryCities;
         }
         if (discoveryCategories.length > uniqueCategories.length) {
-          setCategories(discoveryCategories);
+          updates.categories = discoveryCategories;
+        }
+        if (Object.keys(updates).length > 0) {
+          React.startTransition(() => {
+            if (updates.cities) setCities(updates.cities);
+            if (updates.categories) setCategories(updates.categories);
+          });
         }
         if (destinations.length === 0) {
           setDestinations(discoveryBaseline);
-          // Filter destinations immediately with the new data
           const filtered = filterDestinationsWithData(discoveryBaseline);
           setFilteredDestinations(filtered);
         }
@@ -964,29 +975,26 @@ export default function Home() {
         sampleCities: uniqueCities.slice(0, 5)
       });
     } catch (error: any) {
-      // Only log unexpected errors
-      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase') && !error?.message?.includes('timeout')) {
+      // OPTIMIZATION: Use helper function for error checking
+      if (!isIgnorableSupabaseError(error)) {
         console.warn('[Filter Data] Exception:', error?.message || error);
       }
 
-      // Try to get data from Discovery Engine as fallback
+      // OPTIMIZATION: Reuse Discovery Engine call (already started)
       try {
-        const discoveryBaseline = await fetchDiscoveryBootstrap();
+        const discoveryBaseline = await discoveryBaselinePromise;
         if (discoveryBaseline.length) {
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          setCities(discoveryCities);
-          setCategories(discoveryCategories);
+          // OPTIMIZATION: Batch state updates
+          React.startTransition(() => {
+            setCities(discoveryCities);
+            setCategories(discoveryCategories);
+          });
           if (destinations.length === 0) {
             setDestinations(discoveryBaseline);
-            // Filter destinations immediately with the new data (no filters on initial load)
             const filtered = filterDestinationsWithData(
               discoveryBaseline,
-              '', // no search term
-              {}, // no advanced filters
-              '', // no selected city
-              '', // no selected category
-              user, // current user
-              visitedSlugs // current visited slugs
+              '', {}, '', '', user, visitedSlugs
             );
             setFilteredDestinations(filtered);
           }
@@ -995,9 +1003,11 @@ export default function Home() {
         }
       } catch (fallbackError) {
         console.warn('[Filter Data] Fallback also failed:', fallbackError);
-        // At minimum, set empty arrays so UI can render
-        setCities([]);
-        setCategories([]);
+        // OPTIMIZATION: Batch state updates
+        React.startTransition(() => {
+          setCities([]);
+          setCategories([]);
+        });
       }
     }
   };
@@ -1019,8 +1029,11 @@ export default function Home() {
           );
           setFilteredDestinations(filtered);
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          if (discoveryCities.length) setCities(discoveryCities);
-          if (discoveryCategories.length) setCategories(discoveryCategories);
+          // OPTIMIZATION: Batch state updates
+          React.startTransition(() => {
+            if (discoveryCities.length) setCities(discoveryCities);
+            if (discoveryCategories.length) setCategories(discoveryCategories);
+          });
         } else {
           await applyFallbackData({ updateDestinations: true });
         }
@@ -1037,8 +1050,8 @@ export default function Home() {
         .order('name');
 
       if (error || !data || !Array.isArray(data) || data.length === 0) {
-        // Only log unexpected errors (not configuration issues)
-        if (error && !error.message?.includes('hostname') && !error.message?.includes('Failed to fetch') && !error.message?.includes('invalid.supabase')) {
+        // OPTIMIZATION: Use helper function for error checking
+        if (error && !isIgnorableSupabaseError(error)) {
           console.warn('Error fetching destinations:', error.message || error);
         }
 
@@ -1052,8 +1065,11 @@ export default function Home() {
           );
           setFilteredDestinations(filtered);
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          if (discoveryCities.length) setCities(discoveryCities);
-          if (discoveryCategories.length) setCategories(discoveryCategories);
+          // OPTIMIZATION: Batch state updates
+          React.startTransition(() => {
+            if (discoveryCities.length) setCities(discoveryCities);
+            if (discoveryCategories.length) setCategories(discoveryCategories);
+          });
         } else {
           await applyFallbackData({ updateDestinations: true });
         }
@@ -1066,13 +1082,11 @@ export default function Home() {
       // Extract unique cities and categories from full data
       const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(data as any[]);
 
-      // Update cities and categories from full data
-      if (uniqueCities.length) {
-        setCities(uniqueCities);
-      }
-      if (uniqueCategories.length) {
-        setCategories(uniqueCategories);
-      }
+      // OPTIMIZATION: Batch state updates
+      React.startTransition(() => {
+        if (uniqueCities.length) setCities(uniqueCities);
+        if (uniqueCategories.length) setCategories(uniqueCategories);
+      });
       
       // Filter destinations immediately with the new data (no filters on initial load)
       const filtered = filterDestinationsWithData(
@@ -1108,13 +1122,20 @@ export default function Home() {
               );
               setFilteredDestinations(filtered);
               
-              // Update cities/categories if Discovery Engine has more
+              // OPTIMIZATION: Batch state updates - only update if Discovery Engine has more
               const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
+              const updates: { cities?: string[]; categories?: string[] } = {};
               if (discoveryCities.length > uniqueCities.length) {
-                setCities(discoveryCities);
+                updates.cities = discoveryCities;
               }
               if (discoveryCategories.length > uniqueCategories.length) {
-                setCategories(discoveryCategories);
+                updates.categories = discoveryCategories;
+              }
+              if (Object.keys(updates).length > 0) {
+                React.startTransition(() => {
+                  if (updates.cities) setCities(updates.cities);
+                  if (updates.categories) setCategories(updates.categories);
+                });
               }
             }
           }
@@ -1126,8 +1147,8 @@ export default function Home() {
           setDiscoveryEngineLoading(false);
         });
     } catch (error: any) {
-      // Only log unexpected errors
-      if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch') && !error?.message?.includes('invalid.supabase')) {
+      // OPTIMIZATION: Use helper function for error checking
+      if (!isIgnorableSupabaseError(error)) {
         console.warn('Error fetching destinations:', error?.message || error);
       }
 
@@ -1333,9 +1354,20 @@ export default function Home() {
     return score;
   };
 
+  // Helper function to check if Supabase error should be ignored (common pattern)
+  const isIgnorableSupabaseError = useCallback((error: any): boolean => {
+    if (!error) return false;
+    const message = error.message || String(error);
+    return message.includes('hostname') || 
+           message.includes('Failed to fetch') || 
+           message.includes('invalid.supabase') ||
+           message.includes('timeout');
+  }, []);
+
+  // Memoized filter function to avoid recreating on every render
   // Helper function to filter destinations with explicit data (avoids stale state)
   // Accepts current filter values to avoid closure issues
-  function filterDestinationsWithData(
+  const filterDestinationsWithData = useCallback((
     dataToFilter: Destination[],
     currentSearchTerm: string = searchTerm,
     currentAdvancedFilters: typeof advancedFilters = advancedFilters,
@@ -1343,7 +1375,7 @@ export default function Home() {
     currentSelectedCategory: string = selectedCategory,
     currentUser: typeof user = user,
     currentVisitedSlugs: Set<string> = visitedSlugs
-  ) {
+  ) => {
     let filtered = dataToFilter;
 
     // Apply filters only when there's NO search term (AI chat handles all search)
@@ -1519,12 +1551,24 @@ export default function Home() {
     }
 
     return filtered;
-  }
+  }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs]);
 
-  const filterDestinations = () => {
+  // OPTIMIZATION: Memoize filtered destinations to avoid recalculating on every render
+  const filteredDestinationsMemo = useMemo(() => {
+    return filterDestinationsWithData(destinations);
+  }, [destinations, filterDestinationsWithData]);
+
+  // Update filtered destinations when memoized value changes
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredDestinations(filteredDestinationsMemo);
+    }
+  }, [filteredDestinationsMemo, searchTerm]);
+
+  const filterDestinations = useCallback(() => {
     const filtered = filterDestinationsWithData(destinations);
     setFilteredDestinations(filtered);
-  };
+  }, [destinations, filterDestinationsWithData]);
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   const displayedCities = showAllCities ? cities : cities.slice(0, 20);
