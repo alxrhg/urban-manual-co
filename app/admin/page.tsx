@@ -641,7 +641,15 @@ function DestinationForm({
               min="0"
               max="3"
               value={formData.michelin_stars || ''}
-              onChange={(e) => setFormData({ ...formData, michelin_stars: e.target.value ? Number(e.target.value) : null })}
+              onChange={(e) => {
+                const michelinStars = e.target.value ? Number(e.target.value) : null;
+                const updatedFormData = { ...formData, michelin_stars: michelinStars };
+                // If Michelin stars are set, ensure category is 'Dining'
+                if (michelinStars && michelinStars > 0) {
+                  updatedFormData.category = 'Dining';
+                }
+                setFormData(updatedFormData);
+              }}
               className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0-3"
             />
