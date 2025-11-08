@@ -631,15 +631,10 @@ export default function Home() {
     // Track homepage view
     trackPageView({ pageType: 'home' });
 
-    // Load destinations first (Discovery Engine is fast, shows results immediately)
-    // Then load filter data in background (Supabase can be slow on cold start)
-    fetchDestinations();
-    
-    // Load filter data in background (non-blocking, doesn't delay initial render)
-    // Use setTimeout to ensure it doesn't block the initial render
-    setTimeout(() => {
-      fetchFilterData();
-    }, 100); // Small delay to prioritize destinations
+    // Fire-and-forget: Load data in background, don't block render
+    // Page renders immediately, data loads asynchronously
+    void fetchDestinations();
+    void fetchFilterData();
   }, []);
 
   useEffect(() => {
@@ -1962,8 +1957,21 @@ export default function Home() {
                 ? nearbyDestinations
                 : filteredDestinations;
 
-              if (displayDestinations.length === 0 && !advancedFilters.nearMe) return null;
-              if (displayDestinations.length === 0 && advancedFilters.nearMe) return null; // Message shown above
+              // Always render the grid structure, even if empty (for instant page load)
+              // Show empty state if no destinations
+              if (displayDestinations.length === 0 && !advancedFilters.nearMe) {
+                return (
+                  <div className="text-center py-12 px-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Loading destinations...
+                    </p>
+                  </div>
+                );
+              }
+              
+              if (displayDestinations.length === 0 && advancedFilters.nearMe) {
+                return null; // Message shown above
+              }
 
               return (
               <>
