@@ -12,7 +12,7 @@ export const searchTool: Tool = {
   name: 'search_destinations',
   description: 'Search for destinations by city, category, or query',
   execute: async (params: { query?: string; city?: string; category?: string; limit?: number }) => {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     let query = supabase
       .from('destinations')
       .select('*')
@@ -60,7 +60,7 @@ export const userProfileTool: Tool = {
   name: 'get_user_profile',
   description: 'Get user preferences, saved places, and visit history',
   execute: async (params: { userId: string }) => {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     
     const [savedResult, visitedResult, profileResult] = await Promise.all([
       supabase
@@ -114,7 +114,7 @@ export const openingHoursTool: Tool = {
   name: 'check_opening_hours',
   description: 'Check opening hours and current availability of destinations',
   execute: async (params: { destinationIds: number[]; date?: string }) => {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data, error } = await supabase
       .from('destinations')
       .select('id, name, opening_hours')
@@ -152,7 +152,7 @@ export const nearbyPlacesTool: Tool = {
   name: 'find_nearby_places',
   description: 'Find destinations near a specific location',
   execute: async (params: { lat: number; lng: number; radius?: number; limit?: number }) => {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const radius = params.radius || 5; // km
     const limit = params.limit || 20;
 
