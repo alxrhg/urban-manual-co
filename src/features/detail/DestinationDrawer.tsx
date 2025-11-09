@@ -629,16 +629,18 @@ Summary:`;
         <div className="flex-1 overflow-y-auto p-6">
           {/* Image */}
           {destination.image && (
-            <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-8 bg-gray-100 dark:bg-gray-800">
-              <Image
-                src={destination.image}
-                alt={destination.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, 420px"
-                priority={false}
-                quality={85}
-              />
+            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
+              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
+                <Image
+                  src={destination.image}
+                  alt={destination.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 420px"
+                  priority={false}
+                  quality={85}
+                />
+              </div>
             </div>
           )}
 
@@ -661,22 +663,43 @@ Summary:`;
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl font-light leading-tight">
-              {destination.name}
-            </h1>
+            <h1 className="text-[20px] font-medium">{destination.name}</h1>
             {destination.city && destination.category && (
-              <div className="text-[14px] text-neutral-500 dark:text-neutral-400 mt-1">
+              <div className="text-[14px] text-neutral-500 dark:text-neutral-400 mt-[2px]">
                 {destination.city} • {destination.category}
               </div>
             )}
             {destination.micro_description && (
-              <p className="text-[14px] text-neutral-700 dark:text-neutral-300 leading-relaxed mt-3">
+              <p className="text-[14px] text-neutral-700 dark:text-neutral-300 leading-relaxed mt-[10px]">
                 {destination.micro_description}
               </p>
             )}
 
-            {/* Action Buttons - Prominent position right after title */}
-            <div className="flex gap-2 mb-4">
+            {/* Action Row */}
+            <div className="flex items-center gap-[12px] mt-[14px]">
+              <button className="text-[14px] text-neutral-700 dark:text-neutral-300 hover:opacity-75" onClick={() => {
+                if (user && destination) {
+                  if (isSaved) {
+                    setShowSaveModal(true);
+                  } else {
+                    setShowSaveModal(true);
+                  }
+                } else {
+                  router.push('/auth/login');
+                }
+              }}>
+                Save
+              </button>
+              <button className="text-[14px] text-neutral-700 dark:text-neutral-300 hover:opacity-75" onClick={handleShare}>
+                Share
+              </button>
+              <button className="text-[14px] text-neutral-700 dark:text-neutral-300 hover:opacity-75" onClick={() => router.push(`/destination/${destination.slug}`)}>
+                View Full Page
+              </button>
+            </div>
+
+            {/* Legacy Action Buttons - Keep for backward compatibility but hide */}
+            <div className="flex gap-2 mb-4 hidden">
               {user && destination ? (
                 <>
                   <ToggleGroup
@@ -1182,6 +1205,14 @@ Summary:`;
               )}
             </div>
           )}
+
+          {/* Similar Places Section (to implement later) */}
+          {/* 
+          <div className="mt-[24px]">
+            <div className="text-[14px] text-neutral-500 dark:text-neutral-400 mb-[8px]">Similar Places</div>
+            <SimilarPlaces placeId={destination.id} />
+          </div>
+          */}
 
         </div>
       </div>
