@@ -46,6 +46,14 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --radius: 0.5rem;
+    
+    /* Unified layout container system */
+    --container-max: 1280px;
+    --container-padding-mobile: 16px;
+    --container-padding-tablet: 32px;
+    --container-padding-desktop: 48px;
+    --gutter-nav: 12px;
+    --gutter-grid: 20px;
   }
 
   .dark {

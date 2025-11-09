@@ -106,9 +106,8 @@ export function Header() {
   return (
     <header className="mt-6 md:mt-8" role="banner">
       {/* Top Bar */}
-      <div className="px-6 md:px-12 lg:px-16 pb-6 md:pb-8">
-        <div className="max-w-[1800px] mx-auto">
-          <nav className="relative" aria-label="Main navigation">
+      <div className="container mx-auto px-4 md:px-8 lg:px-12 pb-6 md:pb-8">
+        <nav className="relative" aria-label="Main navigation">
           {/* Logo - Top Left */}
           <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
             <button
@@ -187,7 +186,6 @@ export function Header() {
             </div>
           </div>
           </nav>
-        </div>
       </div>
 
       {/* No full nav bar; all navigation via burger menu */}

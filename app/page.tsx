@@ -1812,7 +1812,7 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-12 lg:px-16 py-24 md:py-28">
+        <section className="min-h-[65vh] flex flex-col container mx-auto px-4 md:px-8 lg:px-12 py-24 md:py-28">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -2177,10 +2177,9 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="px-6 md:px-12 lg:px-16 pb-24 md:pb-32">
-                <div className="max-w-[1800px] mx-auto">
-                  {/* Filter - Top right of grid section */}
-                  <div className="flex justify-end mb-6 relative">
+              <div className="container mx-auto px-4 md:px-8 lg:px-12 pb-24 md:pb-32">
+                {/* Filter - Top right of grid section */}
+                <div className="flex justify-end mb-6 relative">
                     <SearchFiltersComponent
                 filters={advancedFilters}
                 onFiltersChange={(newFilters) => {
@@ -2201,7 +2200,7 @@ export default function Home() {
                 availableCategories={categories}
                 onLocationChange={handleLocationChange}
               />
-            </div>
+                </div>
 
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
@@ -2300,14 +2299,14 @@ export default function Home() {
               }
 
               return (
-              <>
-              {(() => {
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
+                <>
+                  {(() => {
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+                    const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-                return (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
+                    return (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
                     {paginatedDestinations.map((destination, index) => {
                       const isVisited = !!(user && visitedSlugs.has(destination.slug));
                       const globalIndex = startIndex + index;
@@ -2364,80 +2363,80 @@ export default function Home() {
                           showBadges={true}
                         />
                       );
-                    })}
-                  </div>
-                );
-              })()}
+                      })}
+                      </div>
+                    );
+                  })()}
 
-          {/* Pagination */}
-          {(() => {
-            const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
-            if (totalPages <= 1) return null;
-
-            return (
-              <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
+                  {/* Pagination */}
+                  {(() => {
+                    const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
+                    if (totalPages <= 1) return null;
 
                     return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
-                          currentPage === pageNum
-                            ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
-                            : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm font-medium'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
+                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                              <button
+                                key={pageNum}
+                                onClick={() => setCurrentPage(pageNum)}
+                                className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
+                                  currentPage === pageNum
+                                    ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
+                                    : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm font-medium'
+                                }`}
+                              >
+                                {pageNum}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+
+                        <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                      </div>
                     );
-                  })}
-                </div>
+                  })()}
 
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-
-                <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
-                  Page {currentPage} of {totalPages}
-                </span>
-              </div>
-            );
-          })()}
-
-          {/* Ad below pagination */}
-          {displayDestinations.length > 0 && (
-            <div className="mt-8 w-full">
-              <MultiplexAd slot="3271683710" />
-            </div>
-          )}
-          </>
+                  {/* Ad below pagination */}
+                  {displayDestinations.length > 0 && (
+                    <div className="mt-8 w-full">
+                      <MultiplexAd slot="3271683710" />
+                    </div>
+                  )}
+                </>
               );
             })()}
-          </div>
+              </div>
 
           {/* Destination Drawer */}
           <DestinationDrawer
@@ -2448,7 +2447,6 @@ export default function Home() {
               setTimeout(() => setSelectedDestination(null), 300);
             }}
           />
-        </div>
       </main>
     </ErrorBoundary>
   );

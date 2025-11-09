@@ -202,8 +202,7 @@ export default function CityPageClient() {
 
   return (
     <>
-      <main className="px-8 py-20 min-h-screen">
-        <div className="max-w-[1800px] mx-auto space-y-12">
+      <main className="container mx-auto px-4 md:px-8 lg:px-12 py-20 min-h-screen space-y-12">
           {/* Header */}
           <div>
             <button
