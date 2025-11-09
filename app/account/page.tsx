@@ -116,11 +116,11 @@ export default function Account() {
         (visitedResult.data as any[]).forEach((item: any) => allSlugs.add(item.destination_slug));
       }
 
-      // Fetch destinations
+      // Fetch destinations with location data for map
       if (allSlugs.size > 0) {
         const { data: destData } = await supabase
           .from('destinations')
-          .select('slug, name, city, category, image')
+          .select('slug, name, city, category, image, latitude, longitude, country')
           .in('slug', Array.from(allSlugs));
 
         if (destData) {
@@ -153,7 +153,10 @@ export default function Account() {
                   name: dest.name,
                   city: dest.city,
                   category: dest.category,
-                  image: dest.image
+                  image: dest.image,
+                  latitude: dest.latitude,
+                  longitude: dest.longitude,
+                  country: dest.country
                 }
               } : null;
             }).filter((item: any) => item !== null));
@@ -233,6 +236,16 @@ export default function Account() {
       Array.from(uniqueCities).map(city => cityCountryMap[city] || 'Other')
     );
 
+    // Extract visited destinations with coordinates for map
+    const visitedDestinationsWithCoords = visitedPlaces
+      .filter(p => p.destination)
+      .map(p => ({
+        city: p.destination!.city,
+        latitude: p.destination!.latitude,
+        longitude: p.destination!.longitude,
+      }))
+      .filter(d => d.latitude && d.longitude);
+
     const curationCompletionPercentage = totalDestinations > 0
       ? Math.round((visitedPlaces.length / totalDestinations) * 100)
       : 0;
@@ -243,7 +256,8 @@ export default function Account() {
       visitedCount: visitedPlaces.length,
       savedCount: savedPlaces.length,
       collectionsCount: collections.length,
-      curationCompletionPercentage
+      curationCompletionPercentage,
+      visitedDestinationsWithCoords
     };
   }, [savedPlaces, visitedPlaces, collections, totalDestinations]);
 
@@ -384,7 +398,10 @@ export default function Account() {
                     {stats.uniqueCountries.size} {stats.uniqueCountries.size === 1 ? 'country' : 'countries'} • {stats.uniqueCities.size} {stats.uniqueCities.size === 1 ? 'city' : 'cities'}
                   </p>
                 </div>
-                <WorldMapVisualization visitedCountries={stats.uniqueCountries} />
+                <WorldMapVisualization 
+                  visitedCountries={stats.uniqueCountries}
+                  visitedDestinations={stats.visitedDestinationsWithCoords}
+                />
               </div>
             )}
 

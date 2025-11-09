@@ -1,225 +1,160 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { cityCountryMap } from '@/data/cityCountryMap';
 
 interface WorldMapVisualizationProps {
   visitedCountries: Set<string>;
+  visitedDestinations?: Array<{
+    city: string;
+    latitude?: number | null;
+    longitude?: number | null;
+  }>;
 }
 
-// Map country names to ISO 3166-1 alpha-3 codes (3-letter codes used by world-atlas)
-const COUNTRY_TO_ISO: Record<string, string> = {
+// Map country names to ISO 3166-1 alpha-2 codes (2-letter codes used by world-110m.json)
+const COUNTRY_TO_ISO2: Record<string, string> = {
   // North America
-  'USA': 'USA',
-  'United States': 'USA',
-  'United States of America': 'USA',
-  'Canada': 'CAN',
-  'Mexico': 'MEX',
+  'USA': 'US',
+  'United States': 'US',
+  'United States of America': 'US',
+  'Canada': 'CA',
+  'Mexico': 'MX',
   
   // South America
-  'Brazil': 'BRA',
-  'Argentina': 'ARG',
-  'Chile': 'CHL',
-  'Peru': 'PER',
-  'Colombia': 'COL',
-  'Ecuador': 'ECU',
-  'Venezuela': 'VEN',
-  'Uruguay': 'URY',
-  'Paraguay': 'PRY',
-  'Bolivia': 'BOL',
+  'Brazil': 'BR',
+  'Argentina': 'AR',
+  'Chile': 'CL',
+  'Peru': 'PE',
+  'Colombia': 'CO',
+  'Ecuador': 'EC',
+  'Venezuela': 'VE',
+  'Uruguay': 'UY',
+  'Paraguay': 'PY',
+  'Bolivia': 'BO',
   
   // Europe
-  'UK': 'GBR',
-  'United Kingdom': 'GBR',
-  'France': 'FRA',
-  'Spain': 'ESP',
-  'Portugal': 'PRT',
-  'Italy': 'ITA',
-  'Germany': 'DEU',
-  'Netherlands': 'NLD',
-  'Belgium': 'BEL',
-  'Switzerland': 'CHE',
-  'Austria': 'AUT',
-  'Greece': 'GRC',
-  'Turkey': 'TUR',
-  'Poland': 'POL',
-  'Czech Republic': 'CZE',
-  'Hungary': 'HUN',
-  'Romania': 'ROU',
-  'Denmark': 'DNK',
-  'Sweden': 'SWE',
-  'Norway': 'NOR',
-  'Finland': 'FIN',
-  'Ireland': 'IRL',
-  'Iceland': 'ISL',
+  'UK': 'GB',
+  'United Kingdom': 'GB',
+  'France': 'FR',
+  'Spain': 'ES',
+  'Portugal': 'PT',
+  'Italy': 'IT',
+  'Germany': 'DE',
+  'Netherlands': 'NL',
+  'Belgium': 'BE',
+  'Switzerland': 'CH',
+  'Austria': 'AT',
+  'Greece': 'GR',
+  'Turkey': 'TR',
+  'Poland': 'PL',
+  'Czech Republic': 'CZ',
+  'Hungary': 'HU',
+  'Romania': 'RO',
+  'Denmark': 'DK',
+  'Sweden': 'SE',
+  'Norway': 'NO',
+  'Finland': 'FI',
+  'Ireland': 'IE',
+  'Iceland': 'IS',
   
   // Asia
-  'Russia': 'RUS',
-  'China': 'CHN',
-  'Japan': 'JPN',
-  'South Korea': 'KOR',
-  'India': 'IND',
-  'Thailand': 'THA',
-  'Vietnam': 'VNM',
-  'Malaysia': 'MYS',
-  'Singapore': 'SGP',
-  'Indonesia': 'IDN',
-  'Philippines': 'PHL',
-  'UAE': 'ARE',
-  'United Arab Emirates': 'ARE',
-  'Hong Kong': 'HKG',
-  'Taiwan': 'TWN',
-  'Saudi Arabia': 'SAU',
-  'Israel': 'ISR',
-  'Jordan': 'JOR',
-  'Lebanon': 'LBN',
+  'Russia': 'RU',
+  'China': 'CN',
+  'Japan': 'JP',
+  'South Korea': 'KR',
+  'Korea': 'KR',
+  'India': 'IN',
+  'Thailand': 'TH',
+  'Vietnam': 'VN',
+  'Malaysia': 'MY',
+  'Singapore': 'SG',
+  'Indonesia': 'ID',
+  'Philippines': 'PH',
+  'UAE': 'AE',
+  'United Arab Emirates': 'AE',
+  'Hong Kong': 'HK',
+  'Taiwan': 'TW',
+  'Saudi Arabia': 'SA',
+  'Israel': 'IL',
+  'Jordan': 'JO',
+  'Lebanon': 'LB',
   
   // Oceania
-  'Australia': 'AUS',
-  'New Zealand': 'NZL',
+  'Australia': 'AU',
+  'New Zealand': 'NZ',
   
   // Africa
-  'Egypt': 'EGY',
-  'Morocco': 'MAR',
-  'South Africa': 'ZAF',
-  'Kenya': 'KEN',
-  'Tanzania': 'TZA',
-  'Ghana': 'GHA',
-  'Nigeria': 'NGA',
+  'Egypt': 'EG',
+  'Morocco': 'MA',
+  'South Africa': 'ZA',
+  'Kenya': 'KE',
+  'Tanzania': 'TZ',
+  'Ghana': 'GH',
+  'Nigeria': 'NG',
 };
 
-// Continent mapping for grouping
-const CONTINENT_MAP: Record<string, string> = {
-  // North America
-  'USA': 'North America',
-  'United States': 'North America',
-  'United States of America': 'North America',
-  'Canada': 'North America',
-  'Mexico': 'North America',
-  
-  // South America
-  'Brazil': 'South America',
-  'Argentina': 'South America',
-  'Chile': 'South America',
-  'Peru': 'South America',
-  'Colombia': 'South America',
-  'Ecuador': 'South America',
-  'Venezuela': 'South America',
-  'Uruguay': 'South America',
-  'Paraguay': 'South America',
-  'Bolivia': 'South America',
-  
-  // Europe
-  'UK': 'Europe',
-  'United Kingdom': 'Europe',
-  'France': 'Europe',
-  'Spain': 'Europe',
-  'Portugal': 'Europe',
-  'Italy': 'Europe',
-  'Germany': 'Europe',
-  'Netherlands': 'Europe',
-  'Belgium': 'Europe',
-  'Switzerland': 'Europe',
-  'Austria': 'Europe',
-  'Greece': 'Europe',
-  'Turkey': 'Europe',
-  'Poland': 'Europe',
-  'Czech Republic': 'Europe',
-  'Hungary': 'Europe',
-  'Romania': 'Europe',
-  'Denmark': 'Europe',
-  'Sweden': 'Europe',
-  'Norway': 'Europe',
-  'Finland': 'Europe',
-  'Ireland': 'Europe',
-  'Iceland': 'Europe',
-  
-  // Asia
-  'Russia': 'Asia',
-  'China': 'Asia',
-  'Japan': 'Asia',
-  'South Korea': 'Asia',
-  'India': 'Asia',
-  'Thailand': 'Asia',
-  'Vietnam': 'Asia',
-  'Malaysia': 'Asia',
-  'Singapore': 'Asia',
-  'Indonesia': 'Asia',
-  'Philippines': 'Asia',
-  'UAE': 'Asia',
-  'United Arab Emirates': 'Asia',
-  'Hong Kong': 'Asia',
-  'Taiwan': 'Asia',
-  'Saudi Arabia': 'Asia',
-  'Israel': 'Asia',
-  'Jordan': 'Asia',
-  'Lebanon': 'Asia',
-  
-  // Oceania
-  'Australia': 'Oceania',
-  'New Zealand': 'Oceania',
-  
-  // Africa
-  'Egypt': 'Africa',
-  'Morocco': 'Africa',
-  'South Africa': 'Africa',
-  'Kenya': 'Africa',
-  'Tanzania': 'Africa',
-  'Ghana': 'Africa',
-  'Nigeria': 'Africa',
-};
+// World Atlas TopoJSON URL (110m resolution)
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/world-110m.json";
 
-// World Atlas TopoJSON URL (110m resolution for good balance of detail and performance)
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+// Simple mercator projection helper
+function mercatorProjection(
+  lng: number,
+  lat: number,
+  scale: number = 147,
+  center: [number, number] = [0, 20],
+  width: number = 800,
+  height: number = 400
+): [number, number] {
+  // Mercator projection
+  const x = (lng - center[0]) * scale + width / 2;
+  const y = -(lat - center[1]) * scale + height / 2;
+  return [x, y];
+}
 
-export function WorldMapVisualization({ visitedCountries }: WorldMapVisualizationProps) {
-  // Convert country names to ISO codes
-  const visitedISOCodes = useMemo(() => {
+export function WorldMapVisualization({ 
+  visitedCountries,
+  visitedDestinations = []
+}: WorldMapVisualizationProps) {
+  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+
+  // Convert country names to ISO-2 codes
+  const visitedISO2Codes = useMemo(() => {
     const isoSet = new Set<string>();
     visitedCountries.forEach((country) => {
-      const iso = COUNTRY_TO_ISO[country];
-      if (iso) {
-        isoSet.add(iso);
+      const iso2 = COUNTRY_TO_ISO2[country];
+      if (iso2) {
+        isoSet.add(iso2);
       }
     });
     return isoSet;
   }, [visitedCountries]);
 
-  // Group countries by continent for a clean list view
-  const continentGroups = useMemo(() => {
-    const groups: Record<string, string[]> = {
-      'North America': [],
-      'South America': [],
-      'Europe': [],
-      'Asia': [],
-      'Africa': [],
-      'Oceania': [],
-    };
-
-    visitedCountries.forEach((country) => {
-      const continent = CONTINENT_MAP[country];
-      if (continent && groups[continent]) {
-        groups[continent].push(country);
+  // Extract unique city coordinates from visited destinations
+  const cityMarkers = useMemo(() => {
+    const cityMap = new Map<string, { lat: number; lng: number; city: string }>();
+    
+    visitedDestinations.forEach((dest) => {
+      if (dest.latitude && dest.longitude && dest.city) {
+        const cityKey = dest.city.toLowerCase();
+        // Only add if we don't already have this city, or use the first occurrence
+        if (!cityMap.has(cityKey)) {
+          cityMap.set(cityKey, {
+            lat: dest.latitude,
+            lng: dest.longitude,
+            city: dest.city,
+          });
+        }
       }
     });
 
-    // Sort countries within each continent
-    Object.keys(groups).forEach(continent => {
-      groups[continent].sort();
-    });
-
-    return groups;
-  }, [visitedCountries]);
-
-  // Filter out empty continents
-  const nonEmptyContinents = Object.entries(continentGroups).filter(
-    ([_, countries]) => countries.length > 0
-  );
+    return Array.from(cityMap.values());
+  }, [visitedDestinations]);
 
   return (
-    <div className="space-y-6">
-      {/* World Map with React Simple Maps */}
-      <div className="w-full aspect-[2/1] bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div className="w-full">
+      <div className="w-full aspect-[2/1] max-w-full bg-white dark:bg-gray-950 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden" style={{ height: 'auto' }}>
         <ComposableMap
           projection="geoMercator"
           projectionConfig={{
@@ -231,25 +166,30 @@ export function WorldMapVisualization({ visitedCountries }: WorldMapVisualizatio
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies.map((geo) => {
-                const isoCode = geo.properties.ISO_A3 || geo.properties.ISO_A3_EH;
-                const isVisited = isoCode && visitedISOCodes.has(isoCode);
+                // world-110m.json uses ISO_A2 for 2-letter codes
+                const iso2Code = geo.properties.ISO_A2 || geo.properties.ISO_A2_EH;
+                const isVisited = iso2Code && visitedISO2Codes.has(iso2Code);
                 const countryName = geo.properties.NAME || geo.properties.NAME_LONG || 'Unknown';
                 
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill={isVisited ? 'currentColor' : 'transparent'}
-                    stroke="#e5e7eb"
+                    fill={isVisited ? '#CBC8C3' : '#E8E6E3'}
+                    stroke="#BDBAB5"
                     strokeWidth={0.5}
-                    className={
-                      isVisited
-                        ? 'text-black dark:text-white transition-colors duration-300'
-                        : 'dark:stroke-gray-800 opacity-20'
-                    }
                     style={{
                       default: {
                         outline: 'none',
+                        strokeOpacity: 0.6,
+                      },
+                      hover: {
+                        outline: 'none',
+                        strokeOpacity: 0.6,
+                      },
+                      pressed: {
+                        outline: 'none',
+                        strokeOpacity: 0.6,
                       },
                     }}
                   >
@@ -259,31 +199,40 @@ export function WorldMapVisualization({ visitedCountries }: WorldMapVisualizatio
               })
             }
           </Geographies>
+          
+          {/* City markers - using SVG circles with mercator projection */}
+          <g>
+            {cityMarkers.map((city, index) => {
+              const isHovered = hoveredCity === city.city;
+              const radius = isHovered ? 4 : 3;
+              const opacity = isHovered ? 0.9 : 0.8;
+              
+              // Project coordinates using mercator projection
+              const [x, y] = mercatorProjection(city.lng, city.lat, 147, [0, 20], 800, 400);
+              
+              return (
+                <circle
+                  key={`${city.city}-${index}`}
+                  cx={x}
+                  cy={y}
+                  r={radius}
+                  fill="#262626"
+                  fillOpacity={opacity}
+                  stroke="none"
+                  style={{
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={() => setHoveredCity(city.city)}
+                  onMouseLeave={() => setHoveredCity(null)}
+                >
+                  <title>{city.city}</title>
+                </circle>
+              );
+            })}
+          </g>
         </ComposableMap>
       </div>
-
-      {/* Country List by Continent */}
-      {nonEmptyContinents.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {nonEmptyContinents.map(([continent, countries]) => (
-            <div key={continent}>
-              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                {continent}
-              </h3>
-              <ul className="space-y-1">
-                {countries.map((country) => (
-                  <li
-                    key={country}
-                    className="text-xs text-gray-700 dark:text-gray-300"
-                  >
-                    {country}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
