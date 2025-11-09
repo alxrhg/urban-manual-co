@@ -63,9 +63,11 @@ export function ProgressiveGrid({
         <div
           key={index}
           className={`
+            w-full
             transition-opacity duration-500 ease-out
             ${index < visibleCount ? 'opacity-100' : 'opacity-0'}
           `}
+          style={{ minHeight: 0 }}
         >
           {index < visibleCount ? child : skeletonComponent}
         </div>
@@ -73,7 +75,7 @@ export function ProgressiveGrid({
       {/* Additional skeletons for loading state */}
       {skeletonCount > 0 &&
         Array.from({ length: skeletonCount }).map((_, i) => (
-          <div key={`skeleton-${i}`}>{skeletonComponent}</div>
+          <div key={`skeleton-${i}`} className="w-full">{skeletonComponent}</div>
         ))}
     </div>
   );

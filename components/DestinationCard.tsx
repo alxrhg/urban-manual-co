@@ -68,7 +68,7 @@ export function DestinationCard({
       ref={cardRef}
       onClick={onClick}
       className={`
-        group relative transition-all duration-300 ease-out
+        group relative w-full transition-all duration-300 ease-out
         cursor-pointer text-left focus-ring
         ${isVisited ? 'opacity-60' : 'opacity-100'}
         hover:scale-[1.02] hover:shadow-lg

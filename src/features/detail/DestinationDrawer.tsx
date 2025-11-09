@@ -594,25 +594,26 @@ Summary:`;
 
       {/* Slideover Card */}
       <div
-        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
+        className={`fixed right-0 top-0 bottom-0 w-full sm:w-[480px] max-w-[100vw] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
-        <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-end">
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && (
               <Link
                 href={`/destination/${destination.slug}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClose(); // Close drawer when navigating
+                  onClose();
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 title="Open destination page"
                 aria-label="Open destination page"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Link>
             )}
             <button
@@ -620,37 +621,35 @@ Summary:`;
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
               aria-label="Close"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto">
           {/* Image */}
           {destination.image && (
-            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
-              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
-                <Image
-                  src={destination.image}
-                  alt={destination.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 420px"
-                  priority={false}
-                  quality={85}
-                />
-              </div>
+            <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+              <Image
+                src={destination.image}
+                alt={destination.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 480px"
+                priority={false}
+                quality={85}
+              />
             </div>
           )}
 
-          {/* Title */}
-          <div className="mb-8 space-y-3">
-            {/* Location - above title */}
-            <div className="flex items-center gap-2">
+          {/* Identity Block */}
+          <div className="px-6 pt-6 pb-4 space-y-4">
+            {/* Location Badge */}
+            <div>
               <a
                 href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -663,128 +662,59 @@ Summary:`;
             </div>
 
             {/* Title */}
-            <h1 className="text-[20px] font-medium leading-[1.15]">{destination.name}</h1>
-            {destination.city && destination.category && (
-              <div className="mt-[4px] text-[13px] text-neutral-500 dark:text-neutral-400 tracking-wide uppercase">
-                {destination.city} • {destination.category}
-              </div>
-            )}
-            {destination.micro_description && (
-              <p className="text-[14px] text-neutral-700 dark:text-neutral-300 leading-relaxed mt-[10px]">
-                {destination.micro_description}
-              </p>
-            )}
-            <div className="border-b border-neutral-200/60 dark:border-neutral-700/60 my-[16px]" />
-
-            {/* Action Row */}
-            <div className="flex items-center gap-[12px] mt-[14px]">
-              <button className="text-[14px] text-neutral-700 dark:text-neutral-300 hover:opacity-75" onClick={() => {
-                if (user && destination) {
-                  if (isSaved) {
-                    setShowSaveModal(true);
-                  } else {
-                    setShowSaveModal(true);
-                  }
-                } else {
-                  router.push('/auth/login');
-                }
-              }}>
-                Save
-              </button>
-              <button className="text-[14px] text-neutral-700 dark:text-neutral-300 hover:opacity-75" onClick={handleShare}>
-                Share
-              </button>
-              <button className="text-[14px] text-neutral-700 dark:text-neutral-300 hover:opacity-75" onClick={() => router.push(`/destination/${destination.slug}`)}>
-                View Full Page
-              </button>
-            </div>
-
-            {/* Legacy Action Buttons - Keep for backward compatibility but hide */}
-            <div className="flex gap-2 mb-4 hidden">
-              {user && destination ? (
-                <>
-                  <ToggleGroup
-                    type="multiple"
-                    value={[
-                      ...(isSaved ? ['save'] : []),
-                      ...(isVisited ? ['visit'] : []),
-                    ]}
-                    onValueChange={(values) => {
-                      const wasSaved = isSaved;
-                      const wasVisited = isVisited;
-                      const nowSaved = values.includes('save');
-                      const nowVisited = values.includes('visit');
-
-                      if (wasSaved !== nowSaved) {
-                        if (nowSaved) {
-                          setShowSaveModal(true);
-                        } else {
-                          // Handle unsave if needed
-                          setShowSaveModal(true);
-                        }
-                      }
-
-                      if (wasVisited !== nowVisited) {
-                        handleVisitToggle();
-                      }
-                    }}
-                    spacing={2}
-                    className="flex-1"
-                  >
-                    <ToggleGroupItem value="save" aria-label="Save destination" className="flex-1">
-                      <Bookmark className={`h-4 w-4 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : ''}`} />
-                      <span className={`ml-2 ${isSaved ? 'animate-in fade-in duration-200' : ''}`}>
-                        {isSaved ? 'Saved' : 'Save'}
-                      </span>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem 
-                      value="visit" 
-                      aria-label="Mark as visited" 
-                      className="flex-1"
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        if (isVisited) setShowVisitedModal(true);
-                      }}
-                    >
-                      <Check className={`h-4 w-4 transition-all duration-300 ${isVisited ? 'stroke-[3] scale-110 animate-in zoom-in-50 duration-300' : ''}`} />
-                      <span className={`ml-2 ${isVisited ? 'animate-in fade-in duration-200' : ''}`}>
-                        {isVisited ? 'Visited' : 'Mark as Visited'}
-                      </span>
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                  {isVisited && (
-                    <button
-                      onClick={() => setShowVisitedModal(true)}
-                      className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-105 active:scale-95 animate-in fade-in slide-in-from-right-2 duration-200"
-                      title="Add visit details"
-                    >
-                      <Plus className="h-4 w-4 transition-transform group-hover:rotate-90 duration-200" />
-                    </button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => router.push('/auth/login')}
-                    className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
-                  >
-                    <Bookmark className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                    Save
-                  </button>
-                  <button
-                    onClick={() => router.push('/auth/login')}
-                    className="group flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 hover:scale-[1.02] active:scale-95"
-                  >
-                    <Check className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                    Mark as Visited
-                  </button>
-                </>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
+                {destination.name}
+              </h1>
+              {destination.city && destination.category && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  {destination.city} • {destination.category}
+                </div>
+              )}
+              {destination.micro_description && (
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {destination.micro_description}
+                </p>
               )}
             </div>
 
-            {/* Meta badges and action buttons - below title */}
-            <div className="flex flex-wrap gap-2 text-xs">
-              {/* Parent destination badge - show if this is nested */}
+            {/* Action Row */}
+            <div className="flex items-center gap-4 pt-2">
+              <button
+                className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
+                onClick={() => {
+                  if (user && destination) {
+                    setShowSaveModal(true);
+                  } else {
+                    router.push('/auth/login');
+                  }
+                }}
+              >
+                Save
+              </button>
+              <button
+                className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
+                onClick={handleShare}
+              >
+                Share
+              </button>
+              <button
+                className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
+                onClick={() => router.push(`/destination/${destination.slug}`)}
+              >
+                View Full Page
+              </button>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 dark:border-gray-800" />
+
+          {/* Meta & Info Section */}
+          <div className="px-6 py-6 space-y-6">
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2">
+              {/* Parent destination badge */}
               {parentDestination && (
                 <LocatedInBadge 
                   parent={parentDestination}
@@ -796,13 +726,13 @@ Summary:`;
               )}
               
               {destination.category && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 capitalize">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
                   {destination.category}
                 </span>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
@@ -813,14 +743,13 @@ Summary:`;
               )}
 
               {destination.crown && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
                   Crown
                 </span>
               )}
 
-              {/* Google Rating */}
               {(enrichedData?.rating || destination.rating) && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -830,35 +759,15 @@ Summary:`;
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
                 </span>
               )}
-
-              {/* Directions Button */}
-              <a
-                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
-              >
-                <Navigation className="h-3 w-3" />
-                Directions
-              </a>
-
-              {/* Share Button */}
-              <button
-                onClick={handleShare}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
-              >
-                <Share2 className="h-3 w-3" />
-                {copied ? 'Copied!' : 'Share'}
-              </button>
             </div>
 
             {/* AI-Generated Tags */}
             {destination.tags && destination.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
+                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400"
                   >
                     {tag}
                   </span>
@@ -866,9 +775,9 @@ Summary:`;
               </div>
             )}
 
-            {/* Real-Time Status Badge */}
+            {/* Real-Time Status */}
             {destination.id && (
-              <div className="mt-4 space-y-4">
+              <div className="space-y-4">
                 <RealtimeStatusBadge
                   destinationId={destination.id}
                   compact={false}
@@ -876,8 +785,6 @@ Summary:`;
                   showWaitTime={true}
                   showAvailability={true}
                 />
-                
-                {/* User Report Form */}
                 <RealtimeReportForm
                   destinationId={destination.id}
                   destinationName={destination.name}
@@ -885,60 +792,10 @@ Summary:`;
               </div>
             )}
 
-            {/* Editorial Summary */}
-            {enrichedData?.editorial_summary && (
-              <div className="mt-4">
-                <h3 className="text-xs font-medium mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
-                <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {stripHtmlTags(enrichedData.editorial_summary)}
-                </span>
-              </div>
-            )}
-
-            {/* Formatted Address */}
-            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
-              <div className="mt-4">
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Address</div>
-                    {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
-                    )}
-                    {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Place Types */}
-            {enrichedData?.place_types && Array.isArray(enrichedData.place_types) && enrichedData.place_types.length > 0 && (
-              <div className="mt-4">
-                <span className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Types</span>
-                <div className="flex flex-wrap gap-2">
-                  {enrichedData.place_types.slice(0, 5).map((type: string, idx: number) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
-                    >
-                      {type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Opening Hours */}
             {(() => {
               const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
-              // Only render if we have opening hours with weekday_text
               if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
-                // Debug: log why opening hours aren't showing
-                if (hours && !hours.weekday_text) {
-                  console.log('Opening hours data exists but missing weekday_text:', hours);
-                }
                 return null;
               }
               
@@ -949,7 +806,6 @@ Summary:`;
                 enrichedData?.utc_offset
               );
               
-              // Calculate timezone for "today" highlighting using same logic as getOpenStatus
               let now: Date;
               if (enrichedData?.timezone_id) {
                 now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
@@ -963,23 +819,18 @@ Summary:`;
               }
               
               return (
-                <div className="mt-4">
+                <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     {openStatus.todayHours && (
-                      <span className="text-sm font-semibold">
-                        {openStatus.isOpen ? 'Open now' : 'Closed'}
-                      </span>
-                    )}
-                    {openStatus.todayHours && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        · {openStatus.todayHours}
-                      </span>
-                    )}
-                    {enrichedData?.timezone_id && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                        ({enrichedData.timezone_id.replace('_', ' ')})
-                      </span>
+                      <>
+                        <span className="text-sm font-medium text-black dark:text-white">
+                          {openStatus.isOpen ? 'Open now' : 'Closed'}
+                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          · {openStatus.todayHours}
+                        </span>
+                      </>
                     )}
                   </div>
                   {hours.weekday_text && (
@@ -995,7 +846,7 @@ Summary:`;
                           const isToday = index === googleDayIndex;
 
                           return (
-                            <div key={index} className={`flex justify-between ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                            <div key={index} className={`flex justify-between ${isToday ? 'font-medium text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                               <span>{dayName}</span>
                               <span>{hoursText}</span>
                             </div>
@@ -1007,62 +858,90 @@ Summary:`;
                 </div>
               );
             })()}
+
+            {/* Address */}
+            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
+              <div>
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-black dark:text-white mb-1">Address</div>
+                    {enrichedData?.formatted_address && (
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
+                    )}
+                    {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
+                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+              >
+                <Navigation className="h-3 w-3" />
+                Directions
+              </a>
+              <button
+                onClick={handleShare}
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+              >
+                <Share2 className="h-3 w-3" />
+                {copied ? 'Copied!' : 'Share'}
+              </button>
+            </div>
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 dark:border-gray-800" />
 
 
           {/* Description */}
           {destination.description && (
-            <div className="mb-8">
-              <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+            <div className="px-6 py-6">
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(destination.description)}
               </div>
             </div>
           )}
 
-          {/* Contact & Links Section */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
-            <div className="mb-8">
-              <style jsx>{`
-                .pill-button {
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  padding: 8px 16px;
-                  background: rgba(0, 0, 0, 0.6);
-                  backdrop-filter: blur(10px);
-                  color: white;
-                  font-size: 14px;
-                  font-weight: 500;
-                  border-radius: 9999px;
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                  cursor: pointer;
-                  transition: all 0.2s ease;
-                  text-decoration: none;
-                }
-                .pill-button:hover {
-                  background: rgba(0, 0, 0, 0.7);
-                }
-                .pill-separator {
-                  color: rgba(255, 255, 255, 0.6);
-                }
-              `}</style>
-              <div className="flex flex-wrap gap-3">
+          {/* Editorial Summary */}
+          {enrichedData?.editorial_summary && (
+            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {stripHtmlTags(enrichedData.editorial_summary)}
+              </p>
+            </div>
+          )}
+
+          {/* Contact & Links */}
+          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
+            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact</h3>
+              <div className="flex flex-wrap gap-2">
                 {(enrichedData?.website || destination.website) && (
                   <a
                     href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pill-button"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                   >
-                    <span>Website</span>
+                    Website
                   </a>
                 )}
                 {(enrichedData?.international_phone_number || destination.phone_number) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="pill-button"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                   >
-                    <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
+                    {enrichedData?.international_phone_number || destination.phone_number}
                   </a>
                 )}
                 {destination.instagram_url && (
@@ -1070,9 +949,9 @@ Summary:`;
                     href={destination.instagram_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pill-button"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                   >
-                    <span>Instagram</span>
+                    Instagram
                   </a>
                 )}
               </div>
@@ -1081,92 +960,84 @@ Summary:`;
 
           {/* AI Review Summary */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
+            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
               {loadingReviewSummary ? (
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
                   <span>Summarizing reviews...</span>
                 </div>
               ) : reviewSummary ? (
-                <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
                 </div>
-              ) : (
-                <div className="text-xs text-gray-500 dark:text-gray-400">No summary available</div>
-              )}
+              ) : null}
             </div>
           )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
-
-          {/* Map Section (Google Maps) */}
-          <div className="mb-8">
-            <h3 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Location</h3>
-            <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-              <GoogleMap
-                query={`${destination.name}, ${destination.city}`}
-                latitude={destination.latitude || enrichedData?.latitude}
-                longitude={destination.longitude || enrichedData?.longitude}
-                height="256px"
-                className="rounded-lg"
-                interactive={false}
-                staticMode={true}
-                showInfoWindow={false}
-                infoWindowContent={{
-                  title: destination.name,
-                  address: enrichedData?.formatted_address || enrichedData?.vicinity || `${destination.city}`,
-                  category: destination.category,
-                  rating: enrichedData?.rating || destination.rating,
-                  website: enrichedData?.website || destination.website || destination.google_maps_url,
-                }}
-              />
+          {/* Map Section */}
+          {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
+            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
+              <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                <GoogleMap
+                  query={`${destination.name}, ${destination.city}`}
+                  latitude={destination.latitude || enrichedData?.latitude}
+                  longitude={destination.longitude || enrichedData?.longitude}
+                  height="256px"
+                  className="rounded-2xl"
+                  interactive={false}
+                  staticMode={true}
+                  showInfoWindow={false}
+                  infoWindowContent={{
+                    title: destination.name,
+                    address: enrichedData?.formatted_address || enrichedData?.vicinity || `${destination.city}`,
+                    category: destination.category,
+                    rating: enrichedData?.rating || destination.rating,
+                    website: enrichedData?.website || destination.website || destination.google_maps_url,
+                  }}
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
+          )}
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="mb-8">
+            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
               </div>
 
               {loadingRecommendations ? (
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6">
+                <div className="flex gap-4 overflow-x-auto pb-2">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="flex-shrink-0 w-40">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
+                    <div key={i} className="flex-shrink-0 w-32">
+                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 animate-pulse" />
                       <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
                       <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                   {recommendations.map(rec => (
                     <button
                       key={rec.slug}
                       onClick={() => {
-                        // Navigate to recommended destination
                         router.push(`/destination/${rec.slug}`);
                       }}
-                      className="flex-shrink-0 w-40 group text-left"
+                      className="flex-shrink-0 w-32 group text-left"
                     >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (
                           <img
                             src={rec.image}
                             alt={rec.name}
                             className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                             onError={(e) => {
-                              // Silently handle broken images
                               e.currentTarget.style.display = 'none';
                               const parent = e.currentTarget.parentElement;
                               if (parent && !parent.querySelector('.fallback-placeholder')) {
@@ -1182,9 +1053,8 @@ Summary:`;
                             <MapPin className="h-8 w-8 opacity-20" />
                           </div>
                         )}
-                        {/* Crown hidden for now */}
                         {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
                             <img
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"
@@ -1194,10 +1064,10 @@ Summary:`;
                           </div>
                         )}
                       </div>
-                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1">
+                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
                         {rec.name}
                       </h4>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {capitalizeCity(rec.city)}
                       </span>
                     </button>
@@ -1206,14 +1076,6 @@ Summary:`;
               )}
             </div>
           )}
-
-          {/* Similar Places Section (to implement later) */}
-          {/* 
-          <div className="mt-[24px]">
-            <div className="text-[14px] text-neutral-500 dark:text-neutral-400 mb-[8px]">Similar Places</div>
-            <SimilarPlaces placeId={destination.id} />
-          </div>
-          */}
 
         </div>
       </div>

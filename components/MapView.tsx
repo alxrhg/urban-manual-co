@@ -100,17 +100,18 @@ export default function MapView({
     };
 
     const createMarker = (dest: Destination, position: google.maps.LatLng) => {
+      // Minimal neutral dot marker - 9px diameter
       const marker = new google.maps.Marker({
         position,
         map: mapInstanceRef.current!,
         title: dest.name,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: dest.crown ? '#fbbf24' : '#3b82f6',
-          fillOpacity: 1,
+          scale: 4.5, // Approximately 9px diameter
+          fillColor: '#262626', // neutral-800
+          fillOpacity: 0.8,
           strokeColor: '#ffffff',
-          strokeWeight: 2,
+          strokeWeight: 1,
         },
       });
 
