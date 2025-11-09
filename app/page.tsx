@@ -1116,6 +1116,191 @@ export default function Home() {
     }
   };
 
+  const filterDestinationsWithData = useCallback((
+    dataToFilter: Destination[],
+    currentSearchTerm: string = searchTerm,
+    currentAdvancedFilters: typeof advancedFilters = advancedFilters,
+    currentSelectedCity: string = selectedCity,
+    currentSelectedCategory: string = selectedCategory,
+    currentUser: typeof user = user,
+    currentVisitedSlugs: Set<string> = visitedSlugs
+  ) => {
+    let filtered = dataToFilter;
+
+    // Apply filters only when there's NO search term (AI chat handles all search)
+    if (!currentSearchTerm) {
+      // City filter (from advancedFilters or selectedCity)
+      const cityFilter = currentAdvancedFilters.city || currentSelectedCity;
+      if (cityFilter) {
+        filtered = filtered.filter(d => d.city === cityFilter);
+      }
+
+      // Category filter (from advancedFilters or selectedCategory) - enhanced with tags
+      const categoryFilter = currentAdvancedFilters.category || currentSelectedCategory;
+      if (categoryFilter) {
+        filtered = filtered.filter(d => {
+          const categoryMatch = d.category && d.category.toLowerCase().trim() === categoryFilter.toLowerCase().trim();
+          
+          // If category matches, include it
+          if (categoryMatch) return true;
+          
+          // Also check tags for category-related matches
+          const tags = d.tags || [];
+          const categoryLower = categoryFilter.toLowerCase().trim();
+          
+          // Map categories to relevant tag patterns
+          const categoryTagMap: Record<string, string[]> = {
+            'dining': ['restaurant', 'dining', 'fine-dining', 'italian_restaurant', 'mexican_restaurant', 'japanese_restaurant', 'french_restaurant', 'chinese_restaurant', 'thai_restaurant', 'indian_restaurant', 'seafood_restaurant', 'steak_house', 'pizza', 'food'],
+            'cafe': ['cafe', 'coffee_shop', 'coffee', 'bakery', 'pastry'],
+            'bar': ['bar', 'pub', 'cocktail_bar', 'wine_bar', 'beer', 'nightclub', 'lounge'],
+            'hotel': ['hotel', 'lodging', 'resort', 'inn', 'hostel'],
+            'shopping': ['store', 'shopping', 'mall', 'market', 'boutique'],
+            'attraction': ['tourist_attraction', 'museum', 'park', 'landmark', 'monument'],
+            'nightlife': ['nightclub', 'bar', 'pub', 'lounge', 'entertainment'],
+          };
+          
+          // Get relevant tags for this category
+          const relevantTags = categoryTagMap[categoryLower] || [];
+          
+          // Check if any tags match
+          const tagMatch = tags.some(tag => {
+            const tagLower = tag.toLowerCase();
+            return relevantTags.some(relevantTag => 
+              tagLower.includes(relevantTag) || relevantTag.includes(tagLower)
+            );
+          });
+          
+          return tagMatch;
+        });
+      }
+
+      // Michelin filter
+      if (currentAdvancedFilters.michelin) {
+        filtered = filtered.filter(d => d.michelin_stars && d.michelin_stars > 0);
+      }
+
+      // Crown filter
+      if (currentAdvancedFilters.crown) {
+        filtered = filtered.filter(d => d.crown === true);
+      }
+
+      // Price filter
+      if (currentAdvancedFilters.minPrice !== undefined) {
+        filtered = filtered.filter(d => 
+          d.price_level != null && d.price_level >= currentAdvancedFilters.minPrice!
+        );
+      }
+      if (currentAdvancedFilters.maxPrice !== undefined) {
+        filtered = filtered.filter(d => 
+          d.price_level != null && d.price_level <= currentAdvancedFilters.maxPrice!
+        );
+      }
+
+      // Rating filter
+      if (currentAdvancedFilters.minRating !== undefined) {
+        filtered = filtered.filter(d => 
+          d.rating != null && d.rating >= currentAdvancedFilters.minRating!
+        );
+      }
+
+      // Open Now filter
+      if (currentAdvancedFilters.openNow) {
+        filtered = filtered.filter(d => {
+          const hours = d.opening_hours;
+          if (!hours?.weekday_text) return false;
+          
+          try {
+            // Get current time in destination's timezone
+            const cityKey = d.city.toLowerCase().replace(/\s+/g, '-');
+            const CITY_TIMEZONES: Record<string, string> = {
+              'tokyo': 'Asia/Tokyo',
+              'new-york': 'America/New_York',
+              'london': 'Europe/London',
+              'paris': 'Europe/Paris',
+              'los-angeles': 'America/Los_Angeles',
+              'singapore': 'Asia/Singapore',
+              'hong-kong': 'Asia/Hong_Kong',
+              'sydney': 'Australia/Sydney',
+              'dubai': 'Asia/Dubai',
+              'bangkok': 'Asia/Bangkok',
+            };
+            
+            let now: Date;
+            if (CITY_TIMEZONES[cityKey]) {
+              now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[cityKey] }));
+            } else {
+              now = new Date();
+            }
+            
+            const dayOfWeek = now.getDay();
+            const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const todayText = hours.weekday_text[googleDayIndex];
+            if (!todayText) return false;
+            
+            const hoursText = todayText.substring(todayText.indexOf(':') + 1).trim();
+            
+            if (!hoursText || hoursText.toLowerCase().includes('closed')) {
+              return false;
+            }
+            
+            if (hoursText.toLowerCase().includes('24 hours')) {
+              return true;
+            }
+            
+            const timeRanges = hoursText.split(',').map((range: string) => range.trim());
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            for (const range of timeRanges) {
+              const times = range.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi);
+              if (times && times.length >= 2) {
+                const parseTime = (timeStr: string): number => {
+                  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                  if (!match) return 0;
+                  let hours = parseInt(match[1]);
+                  const minutes = parseInt(match[2]);
+                  const period = match[3].toUpperCase();
+                  if (period === 'PM' && hours !== 12) hours += 12;
+                  if (period === 'AM' && hours === 12) hours = 0;
+                  return hours * 60 + minutes;
+                };
+                
+                const openTime = parseTime(times[0]);
+                const closeTime = parseTime(times[1]);
+                if (currentTime >= openTime && currentTime < closeTime) {
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          } catch {
+            return false;
+          }
+        });
+      }
+    }
+    // When searchTerm exists, AI chat handles all filtering - don't apply text search here
+
+    // Pinterest-style recommendation sorting
+    // Only apply smart sorting when no search term (natural discovery)
+    if (!currentSearchTerm) {
+      filtered = filtered
+        .map((dest, index) => ({
+          ...dest,
+          _score: getRecommendationScore(dest, index)
+        }))
+        .sort((a, b) => b._score - a._score);
+    }
+
+    // When user is signed in: separate visited & unvisited, move visited to bottom
+    if (currentUser && currentVisitedSlugs.size > 0) {
+      const unvisited = filtered.filter(d => !currentVisitedSlugs.has(d.slug));
+      const visited = filtered.filter(d => currentVisitedSlugs.has(d.slug));
+      filtered = [...unvisited, ...visited];
+    }
+
+    return filtered;
+  }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs]);
   const fetchDestinations = useCallback(async () => {
     // Step 1: Run Supabase query directly (no waiting)
     try {
@@ -1488,191 +1673,6 @@ export default function Home() {
   // Helper function to filter destinations with explicit data (avoids stale state)
   // Accepts current filter values to avoid closure issues
   // MOVED BEFORE fetchDestinations to fix "used before declaration" error
-  const filterDestinationsWithData = useCallback((
-    dataToFilter: Destination[],
-    currentSearchTerm: string = searchTerm,
-    currentAdvancedFilters: typeof advancedFilters = advancedFilters,
-    currentSelectedCity: string = selectedCity,
-    currentSelectedCategory: string = selectedCategory,
-    currentUser: typeof user = user,
-    currentVisitedSlugs: Set<string> = visitedSlugs
-  ) => {
-    let filtered = dataToFilter;
-
-    // Apply filters only when there's NO search term (AI chat handles all search)
-    if (!currentSearchTerm) {
-      // City filter (from advancedFilters or selectedCity)
-      const cityFilter = currentAdvancedFilters.city || currentSelectedCity;
-      if (cityFilter) {
-        filtered = filtered.filter(d => d.city === cityFilter);
-      }
-
-      // Category filter (from advancedFilters or selectedCategory) - enhanced with tags
-      const categoryFilter = currentAdvancedFilters.category || currentSelectedCategory;
-      if (categoryFilter) {
-        filtered = filtered.filter(d => {
-          const categoryMatch = d.category && d.category.toLowerCase().trim() === categoryFilter.toLowerCase().trim();
-          
-          // If category matches, include it
-          if (categoryMatch) return true;
-          
-          // Also check tags for category-related matches
-          const tags = d.tags || [];
-          const categoryLower = categoryFilter.toLowerCase().trim();
-          
-          // Map categories to relevant tag patterns
-          const categoryTagMap: Record<string, string[]> = {
-            'dining': ['restaurant', 'dining', 'fine-dining', 'italian_restaurant', 'mexican_restaurant', 'japanese_restaurant', 'french_restaurant', 'chinese_restaurant', 'thai_restaurant', 'indian_restaurant', 'seafood_restaurant', 'steak_house', 'pizza', 'food'],
-            'cafe': ['cafe', 'coffee_shop', 'coffee', 'bakery', 'pastry'],
-            'bar': ['bar', 'pub', 'cocktail_bar', 'wine_bar', 'beer', 'nightclub', 'lounge'],
-            'hotel': ['hotel', 'lodging', 'resort', 'inn', 'hostel'],
-            'shopping': ['store', 'shopping', 'mall', 'market', 'boutique'],
-            'attraction': ['tourist_attraction', 'museum', 'park', 'landmark', 'monument'],
-            'nightlife': ['nightclub', 'bar', 'pub', 'lounge', 'entertainment'],
-          };
-          
-          // Get relevant tags for this category
-          const relevantTags = categoryTagMap[categoryLower] || [];
-          
-          // Check if any tags match
-          const tagMatch = tags.some(tag => {
-            const tagLower = tag.toLowerCase();
-            return relevantTags.some(relevantTag => 
-              tagLower.includes(relevantTag) || relevantTag.includes(tagLower)
-            );
-          });
-          
-          return tagMatch;
-        });
-      }
-
-      // Michelin filter
-      if (currentAdvancedFilters.michelin) {
-        filtered = filtered.filter(d => d.michelin_stars && d.michelin_stars > 0);
-      }
-
-      // Crown filter
-      if (currentAdvancedFilters.crown) {
-        filtered = filtered.filter(d => d.crown === true);
-      }
-
-      // Price filter
-      if (currentAdvancedFilters.minPrice !== undefined) {
-        filtered = filtered.filter(d => 
-          d.price_level != null && d.price_level >= currentAdvancedFilters.minPrice!
-        );
-      }
-      if (currentAdvancedFilters.maxPrice !== undefined) {
-        filtered = filtered.filter(d => 
-          d.price_level != null && d.price_level <= currentAdvancedFilters.maxPrice!
-        );
-      }
-
-      // Rating filter
-      if (currentAdvancedFilters.minRating !== undefined) {
-        filtered = filtered.filter(d => 
-          d.rating != null && d.rating >= currentAdvancedFilters.minRating!
-        );
-      }
-
-      // Open Now filter
-      if (currentAdvancedFilters.openNow) {
-        filtered = filtered.filter(d => {
-          const hours = d.opening_hours;
-          if (!hours?.weekday_text) return false;
-          
-          try {
-            // Get current time in destination's timezone
-            const cityKey = d.city.toLowerCase().replace(/\s+/g, '-');
-            const CITY_TIMEZONES: Record<string, string> = {
-              'tokyo': 'Asia/Tokyo',
-              'new-york': 'America/New_York',
-              'london': 'Europe/London',
-              'paris': 'Europe/Paris',
-              'los-angeles': 'America/Los_Angeles',
-              'singapore': 'Asia/Singapore',
-              'hong-kong': 'Asia/Hong_Kong',
-              'sydney': 'Australia/Sydney',
-              'dubai': 'Asia/Dubai',
-              'bangkok': 'Asia/Bangkok',
-            };
-            
-            let now: Date;
-            if (CITY_TIMEZONES[cityKey]) {
-              now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[cityKey] }));
-            } else {
-              now = new Date();
-            }
-            
-            const dayOfWeek = now.getDay();
-            const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-            const todayText = hours.weekday_text[googleDayIndex];
-            if (!todayText) return false;
-            
-            const hoursText = todayText.substring(todayText.indexOf(':') + 1).trim();
-            
-            if (!hoursText || hoursText.toLowerCase().includes('closed')) {
-              return false;
-            }
-            
-            if (hoursText.toLowerCase().includes('24 hours')) {
-              return true;
-            }
-            
-            const timeRanges = hoursText.split(',').map((range: string) => range.trim());
-            const currentTime = now.getHours() * 60 + now.getMinutes();
-            
-            for (const range of timeRanges) {
-              const times = range.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi);
-              if (times && times.length >= 2) {
-                const parseTime = (timeStr: string): number => {
-                  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-                  if (!match) return 0;
-                  let hours = parseInt(match[1]);
-                  const minutes = parseInt(match[2]);
-                  const period = match[3].toUpperCase();
-                  if (period === 'PM' && hours !== 12) hours += 12;
-                  if (period === 'AM' && hours === 12) hours = 0;
-                  return hours * 60 + minutes;
-                };
-                
-                const openTime = parseTime(times[0]);
-                const closeTime = parseTime(times[1]);
-                if (currentTime >= openTime && currentTime < closeTime) {
-                  return true;
-                }
-              }
-            }
-            
-            return false;
-          } catch {
-            return false;
-          }
-        });
-      }
-    }
-    // When searchTerm exists, AI chat handles all filtering - don't apply text search here
-
-    // Pinterest-style recommendation sorting
-    // Only apply smart sorting when no search term (natural discovery)
-    if (!currentSearchTerm) {
-      filtered = filtered
-        .map((dest, index) => ({
-          ...dest,
-          _score: getRecommendationScore(dest, index)
-        }))
-        .sort((a, b) => b._score - a._score);
-    }
-
-    // When user is signed in: separate visited & unvisited, move visited to bottom
-    if (currentUser && currentVisitedSlugs.size > 0) {
-      const unvisited = filtered.filter(d => !currentVisitedSlugs.has(d.slug));
-      const visited = filtered.filter(d => currentVisitedSlugs.has(d.slug));
-      filtered = [...unvisited, ...visited];
-    }
-
-    return filtered;
-  }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs]);
 
   // OPTIMIZATION: Memoize filtered destinations to avoid recalculating on every render
   const filteredDestinationsMemo = useMemo(() => {
