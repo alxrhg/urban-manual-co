@@ -92,7 +92,8 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create collection');
+        const errorMessage = errorData.error || errorData.details || 'Failed to create collection';
+        throw new Error(errorMessage);
       }
 
       const { collection: data } = await response.json();
