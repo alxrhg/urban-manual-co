@@ -32,7 +32,7 @@ export default function MapPage() {
         // Exclude nested destinations from map view (only show top-level)
         const { data, error } = await supabaseClient
           .from('destinations')
-          .select('id, slug, name, city, category, description, content, image, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id')
+          .select('id, slug, name, city, neighborhood, category, description, content, image, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id')
           .is('parent_destination_id', null) // Only top-level destinations
           .or('latitude.not.is.null,longitude.not.is.null,place_id.not.is.null')
           .order('name')

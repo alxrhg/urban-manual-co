@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Fetch destinations in the area
     let query = supabase
       .from('destinations')
-      .select('slug, name, latitude, longitude, city, category')
+      .select('slug, name, latitude, longitude, city, neighborhood, category')
       .not('latitude', 'is', null)
       .not('longitude', 'is', null);
 

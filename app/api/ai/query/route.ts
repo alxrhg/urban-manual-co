@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const limit = 50;
     let q = supabase
       .from('destinations')
-      .select('slug, name, city, category, rating, price_level, image, rank_score, is_open_now')
+      .select('slug, name, city, neighborhood, category, rating, price_level, image, rank_score, is_open_now')
       .order('rank_score', { ascending: false })
       .limit(limit);
 
