@@ -594,8 +594,8 @@ Summary:`;
 
       {/* Slideover Card */}
       <div
-        className={`fixed right-0 top-0 bottom-0 w-full sm:w-[480px] max-w-[100vw] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
@@ -627,24 +627,26 @@ Summary:`;
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Image */}
           {destination.image && (
-            <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800">
-              <Image
-                src={destination.image}
-                alt={destination.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, 480px"
-                priority={false}
-                quality={85}
-              />
+            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
+              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
+                <Image
+                  src={destination.image}
+                  alt={destination.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 420px"
+                  priority={false}
+                  quality={85}
+                />
+              </div>
             </div>
           )}
 
           {/* Identity Block */}
-          <div className="px-6 pt-6 pb-4 space-y-4">
+          <div className="space-y-4 mt-6">
             {/* Location Badge */}
             <div>
               <a
@@ -708,10 +710,10 @@ Summary:`;
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
           {/* Meta & Info Section */}
-          <div className="px-6 py-6 space-y-6">
+          <div className="space-y-6">
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
               {/* Parent destination badge */}
@@ -899,12 +901,12 @@ Summary:`;
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
 
           {/* Description */}
           {destination.description && (
-            <div className="px-6 py-6">
+            <div>
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(destination.description)}
               </div>
@@ -913,7 +915,7 @@ Summary:`;
 
           {/* Editorial Summary */}
           {enrichedData?.editorial_summary && (
-            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(enrichedData.editorial_summary)}
@@ -923,7 +925,7 @@ Summary:`;
 
           {/* Contact & Links */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
-            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact</h3>
               <div className="flex flex-wrap gap-2">
                 {(enrichedData?.website || destination.website) && (
@@ -960,7 +962,7 @@ Summary:`;
 
           {/* AI Review Summary */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
               {loadingReviewSummary ? (
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -977,7 +979,7 @@ Summary:`;
 
           {/* Map Section */}
           {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
-            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
               <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
                 <GoogleMap
@@ -1003,7 +1005,7 @@ Summary:`;
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
