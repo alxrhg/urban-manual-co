@@ -98,7 +98,7 @@ export function DestinationCard({
         {isInView && destination.image && !imageError ? (
           <Image
             src={destination.image}
-            alt={destination.name}
+            alt={`${destination.name} in ${capitalizeCity(destination.city)}${destination.category ? ` - ${destination.category}` : ''}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`

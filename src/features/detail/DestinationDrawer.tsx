@@ -663,9 +663,9 @@ Summary:`;
             </div>
 
             {/* Title */}
-            <h1 className="text-[20px] font-medium">{destination.name}</h1>
+            <h1 className="text-[20px] font-medium leading-[1.15]">{destination.name}</h1>
             {destination.city && destination.category && (
-              <div className="text-[14px] text-neutral-500 dark:text-neutral-400 mt-[2px]">
+              <div className="mt-[4px] text-[13px] text-neutral-500 dark:text-neutral-400 tracking-wide uppercase">
                 {destination.city} • {destination.category}
               </div>
             )}
@@ -674,6 +674,7 @@ Summary:`;
                 {destination.micro_description}
               </p>
             )}
+            <div className="border-b border-neutral-200/60 dark:border-neutral-700/60 my-[16px]" />
 
             {/* Action Row */}
             <div className="flex items-center gap-[12px] mt-[14px]">

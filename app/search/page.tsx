@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
-import { LovablyDestinationCard, LOVABLY_BORDER_COLORS } from '@/components/LovablyDestinationCard';
+import { DestinationCard, LazyDestinationCard } from '@/components/DestinationCard';
+import { ProgressiveGrid } from '@/components/ProgressiveGrid';
+import { DestinationCardSkeleton } from '@/components/skeletons/DestinationCardSkeleton';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
@@ -251,16 +253,23 @@ function SearchPageContent() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
+          <ProgressiveGrid
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6"
+            skeletonComponent={<DestinationCardSkeleton />}
+            skeletonCount={searchState.isLoading ? 10 : 0}
+            threshold={0.1}
+            rootMargin="100px"
+          >
             {searchState.filteredResults.map((d, idx) => (
-              <LovablyDestinationCard
+              <LazyDestinationCard
                 key={d.id}
                 destination={d as any}
-                borderColor={LOVABLY_BORDER_COLORS[idx % LOVABLY_BORDER_COLORS.length]}
                 onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+                index={idx}
+                showBadges={true}
               />
             ))}
-          </div>
+          </ProgressiveGrid>
 
           {searchState.refinements.length > 0 && (
             <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">

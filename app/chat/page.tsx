@@ -104,7 +104,10 @@ export default function ChatPage() {
         }),
       });
 
-      if (!response.ok) throw new Error('Streaming conversation failed');
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Streaming conversation failed');
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -138,9 +141,10 @@ export default function ChatPage() {
                   break;
 
                 case 'error':
-                  console.error('Streaming error:', data.error);
-                  fullResponse = "Sorry, I encountered an error. Please try again.";
+                  console.error('Streaming error:', data.error, data.details);
+                  fullResponse = data.error || "Sorry, I encountered an error. Please try again.";
                   setStreamingContent(fullResponse);
+                  setIsStreaming(false);
                   break;
               }
             } catch (e) {

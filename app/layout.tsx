@@ -11,6 +11,7 @@ import { TRPCProvider } from "@/lib/trpc/provider";
 import { CookieConsent } from "@/components/CookieConsent";
 import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SkipNavigation } from "@/components/SkipNavigation";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -115,6 +116,7 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="urban-manual-theme"
         >
+          <SkipNavigation />
           <SplashScreen />
           <TRPCProvider>
             <AuthProvider>

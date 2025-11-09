@@ -15,7 +15,6 @@ const DestinationDrawer = dynamic(
     loading: () => null
   }
 );
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -44,6 +43,10 @@ import { DestinationBadges } from '@/components/DestinationBadges';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
+import { isOpenNow } from '@/lib/utils/opening-hours';
+import { DestinationCard, LazyDestinationCard } from '@/components/DestinationCard';
+import { ProgressiveGrid } from '@/components/ProgressiveGrid';
+import { DestinationCardSkeleton } from '@/components/skeletons/DestinationCardSkeleton';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -1211,79 +1214,19 @@ export default function Home() {
         );
       }
 
-      // Open Now filter
+      // Open Now filter - uses timezone_id, utc_offset, or city mapping
       if (currentAdvancedFilters.openNow) {
         filtered = filtered.filter(d => {
-          const hours = d.opening_hours;
-          if (!hours?.weekday_text) return false;
+          // Try opening_hours_json first (from database), then opening_hours (normalized)
+          const hours = (d as any).opening_hours_json || d.opening_hours;
+          if (!hours) return false;
           
-          try {
-            // Get current time in destination's timezone
-            const cityKey = d.city.toLowerCase().replace(/\s+/g, '-');
-            const CITY_TIMEZONES: Record<string, string> = {
-              'tokyo': 'Asia/Tokyo',
-              'new-york': 'America/New_York',
-              'london': 'Europe/London',
-              'paris': 'Europe/Paris',
-              'los-angeles': 'America/Los_Angeles',
-              'singapore': 'Asia/Singapore',
-              'hong-kong': 'Asia/Hong_Kong',
-              'sydney': 'Australia/Sydney',
-              'dubai': 'Asia/Dubai',
-              'bangkok': 'Asia/Bangkok',
-            };
-            
-            let now: Date;
-            if (CITY_TIMEZONES[cityKey]) {
-              now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[cityKey] }));
-            } else {
-              now = new Date();
-            }
-            
-            const dayOfWeek = now.getDay();
-            const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-            const todayText = hours.weekday_text[googleDayIndex];
-            if (!todayText) return false;
-            
-            const hoursText = todayText.substring(todayText.indexOf(':') + 1).trim();
-            
-            if (!hoursText || hoursText.toLowerCase().includes('closed')) {
-              return false;
-            }
-            
-            if (hoursText.toLowerCase().includes('24 hours')) {
-              return true;
-            }
-            
-            const timeRanges = hoursText.split(',').map((range: string) => range.trim());
-            const currentTime = now.getHours() * 60 + now.getMinutes();
-            
-            for (const range of timeRanges) {
-              const times = range.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi);
-              if (times && times.length >= 2) {
-                const parseTime = (timeStr: string): number => {
-                  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-                  if (!match) return 0;
-                  let hours = parseInt(match[1]);
-                  const minutes = parseInt(match[2]);
-                  const period = match[3].toUpperCase();
-                  if (period === 'PM' && hours !== 12) hours += 12;
-                  if (period === 'AM' && hours === 12) hours = 0;
-                  return hours * 60 + minutes;
-                };
-                
-                const openTime = parseTime(times[0]);
-                const closeTime = parseTime(times[1]);
-                if (currentTime >= openTime && currentTime < closeTime) {
-                  return true;
-                }
-              }
-            }
-            
-            return false;
-          } catch {
-            return false;
-          }
+          return isOpenNow(
+            hours,
+            d.city,
+            (d as any).timezone_id || undefined,
+            (d as any).utc_offset || undefined
+          );
         });
       }
     }
@@ -1341,7 +1284,7 @@ export default function Home() {
       // Exclude nested destinations (only show top-level destinations)
       const { data, error } = await supabaseClient
         .from('destinations')
-        .select('slug, name, city, neighborhood, category, description, content, image, michelin_stars, crown, tags, parent_destination_id')
+        .select('slug, name, city, neighborhood, category, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
         .is('parent_destination_id', null) // Only top-level destinations
         .limit(500) // Limit initial query for faster load
         .order('name');
@@ -1867,7 +1810,7 @@ export default function Home() {
           }),
         }}
       />
-      <main className="relative min-h-screen bg-white dark:bg-gray-900 dark:text-white">
+      <main id="main-content" className="relative min-h-screen bg-white dark:bg-gray-900 dark:text-white" role="main">
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
@@ -2360,17 +2303,26 @@ export default function Home() {
 
               return (
               <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
+              <ProgressiveGrid
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start"
+                skeletonComponent={<DestinationCardSkeleton />}
+                skeletonCount={searching || discoveryEngineLoading ? itemsPerPage : 0}
+                threshold={0.1}
+                rootMargin="100px"
+              >
                 {(() => {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
                   const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
                   return paginatedDestinations.map((destination, index) => {
-                    const isVisited = user && visitedSlugs.has(destination.slug);
+                    const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                    const globalIndex = startIndex + index;
+                    
                     return (
-                      <button
+                      <LazyDestinationCard
                         key={destination.slug}
+                        destination={destination}
                         onClick={() => {
                           setSelectedDestination(destination);
                           setIsDrawerOpen(true);
@@ -2378,133 +2330,50 @@ export default function Home() {
                           // Track destination click
                           trackDestinationClick({
                             destinationSlug: destination.slug,
-                            position: index,
+                            position: globalIndex,
                             source: 'grid',
                           });
                       
-                      // Also track with new analytics system
-                      if (destination.id) {
-                        import('@/lib/analytics/track').then(({ trackEvent }) => {
-                          trackEvent({
-                            event_type: 'click',
-                            destination_id: destination.id,
-                            destination_slug: destination.slug,
-                            metadata: {
-                              category: destination.category,
-                              city: destination.city,
-                              source: 'homepage_grid',
-                              position: index,
-                            },
-                          });
-                        });
-                      }
+                          // Also track with new analytics system
+                          if (destination.id) {
+                            import('@/lib/analytics/track').then(({ trackEvent }) => {
+                              trackEvent({
+                                event_type: 'click',
+                                destination_id: destination.id,
+                                destination_slug: destination.slug,
+                                metadata: {
+                                  category: destination.category,
+                                  city: destination.city,
+                                  source: 'homepage_grid',
+                                  position: globalIndex,
+                                },
+                              });
+                            });
+                          }
                       
-                      // Track click event to Discovery Engine for personalization
-                      if (user?.id) {
-                        fetch('/api/discovery/track-event', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            userId: user.id,
-                            eventType: 'click',
-                            documentId: destination.slug,
-                          }),
-                        }).catch((error) => {
-                          console.warn('Failed to track click event:', error);
-                        });
-                      }
-                    }}
-                    className={`${CARD_WRAPPER} cursor-pointer text-left focus-ring`}
-                  >
-                    {/* Image Container */}
-                    <div className={`${CARD_MEDIA} mb-3 relative overflow-hidden`}>
-                      {destination.image ? (
-                        <Image
-                          src={destination.image}
-                          alt={destination.name}
-                          fill
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          quality={80}
-                          loading={index < 6 ? 'eager' : 'lazy'}
-                          fetchPriority={index === 0 ? 'high' : 'auto'}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                          <MapPin className="h-12 w-12 opacity-20" />
-                        </div>
-                      )}
-
-                      {/* Crown Badge */}
-                      {/* Feature badge hidden for now */}
-
-                      {/* Michelin Stars */}
-                      {destination.michelin_stars && typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5 z-10">
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                            alt="Michelin star"
-                            className="h-3 w-3"
-                          />
-                          <span>{destination.michelin_stars}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="space-y-0.5">
-                      <h3 className={`${CARD_TITLE}`}>
-                        {destination.name}
-                      </h3>
-
-                      <div className={`${CARD_META}`}>
-                        <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-                          {capitalizeCity(destination.city)}
-                        </span>
-                        {destination.category && (() => {
-                          const CategoryIcon = getCategoryIcon(destination.category);
-                          return (
-                            <>
-                              <span className="text-gray-300 dark:text-gray-700">•</span>
-                              <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1 flex items-center gap-1">
-                                {CategoryIcon && (
-                                  <CategoryIcon className="h-3 w-3" size={12} />
-                                )}
-                                {destination.category}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                      
-                      {/* Parent destination indicator - show if nested */}
-                      {/* Note: Parent name will be loaded separately if needed */}
-
-                      {/* Distance Badge - Only shows when Near Me is active */}
-                      {destination.distance_km && (
-                        <div className="mt-2">
-                          <DistanceBadge distanceKm={destination.distance_km} compact />
-                        </div>
-                      )}
-
-                      {/* Real-Time Status Badge - Compact */}
-                      {destination.id && (
-                        <div className="mt-2">
-                          <RealtimeStatusBadge
-                            destinationId={destination.id}
-                            compact={true}
-                            showCrowding={true}
-                            showWaitTime={false}
-                            showAvailability={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                  );
+                          // Track click event to Discovery Engine for personalization
+                          if (user?.id) {
+                            fetch('/api/discovery/track-event', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                userId: user.id,
+                                eventType: 'click',
+                                documentId: destination.slug,
+                              }),
+                            }).catch((error) => {
+                              console.warn('Failed to track click event:', error);
+                            });
+                          }
+                        }}
+                        index={globalIndex}
+                        isVisited={isVisited}
+                        showBadges={true}
+                      />
+                    );
                   });
                 })()}
-          </div>
+              </ProgressiveGrid>
 
           {/* Pagination */}
           {(() => {
