@@ -602,7 +602,7 @@ Summary:`;
         <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
           <div className="flex items-center gap-2">
-            {destination?.slug && (
+            {destination?.slug && destination.slug.trim() && (
               <Link
                 href={`/destination/${destination.slug}`}
                 onClick={(e) => {
@@ -700,12 +700,19 @@ Summary:`;
               >
                 Share
               </button>
-              <button
-                className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
-                onClick={() => router.push(`/destination/${destination.slug}`)}
-              >
-                View Full Page
-              </button>
+              {destination.slug && destination.slug.trim() ? (
+                <button
+                  className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
+                  onClick={() => {
+                    onClose();
+                    setTimeout(() => {
+                      router.push(`/destination/${destination.slug}`);
+                    }, 100);
+                  }}
+                >
+                  View Full Page
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -721,8 +728,10 @@ Summary:`;
                 <LocatedInBadge 
                   parent={parentDestination}
                   onClick={() => {
-                    router.push(`/destination/${parentDestination.slug}`);
-                    onClose();
+                    if (parentDestination.slug && parentDestination.slug.trim()) {
+                      router.push(`/destination/${parentDestination.slug}`);
+                      onClose();
+                    }
                   }}
                 />
               )}
@@ -1029,7 +1038,9 @@ Summary:`;
                     <button
                       key={rec.slug}
                       onClick={() => {
-                        router.push(`/destination/${rec.slug}`);
+                        if (rec.slug && rec.slug.trim()) {
+                          router.push(`/destination/${rec.slug}`);
+                        }
                       }}
                       className="flex-shrink-0 w-32 group text-left"
                     >
