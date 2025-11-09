@@ -371,7 +371,6 @@ export default function CityPageClient() {
               <MultiplexAd slot="3271683710" />
             </div>
           )}
-        </div>
       </main>
 
       <DestinationDrawer
