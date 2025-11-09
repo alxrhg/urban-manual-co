@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
@@ -74,6 +74,7 @@ function DestinationForm({
       if (destination.parent_destination_id) {
         (async () => {
           try {
+            const supabase = createClient();
             const { data } = await supabase
               .from('destinations')
               .select('id, slug, name, city')
@@ -121,6 +122,7 @@ function DestinationForm({
   const searchParentDestinations = async (query: string) => {
     setIsSearchingParent(true);
     try {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('destinations')
         .select('id, slug, name, city, category')
@@ -187,6 +189,7 @@ function DestinationForm({
       formDataToSend.append('file', imageFile);
       formDataToSend.append('slug', formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 
+      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -225,6 +228,7 @@ function DestinationForm({
 
     setFetchingGoogle(true);
     try {
+      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -318,6 +322,7 @@ function DestinationForm({
                     setFetchingGoogle(true);
                     try {
                       // Get user email from session
+                      const supabase = createClient();
                       const { data: { session } } = await supabase.auth.getSession();
                       const token = session?.access_token;
                       if (!token) {
@@ -743,6 +748,7 @@ export default function AdminPage() {
   // Check authentication
   useEffect(() => {
     async function checkAuth() {
+      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -769,6 +775,7 @@ export default function AdminPage() {
     
     setIsLoadingList(true);
     try {
+      const supabase = createClient();
       let query = supabase
         .from('destinations')
         .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating')
@@ -800,6 +807,7 @@ export default function AdminPage() {
   const loadAnalytics = useCallback(async () => {
     setLoadingAnalytics(true);
     try {
+      const supabase = createClient();
       // Get user interactions stats
       const { data: interactions } = await supabase
         .from('user_interactions')
@@ -850,6 +858,7 @@ export default function AdminPage() {
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
     try {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('user_interactions')
         .select('id, created_at, interaction_type, user_id, metadata')
@@ -906,6 +915,7 @@ export default function AdminPage() {
       cancelText: 'Cancel',
       onConfirm: async () => {
         try {
+          const supabase = createClient();
           const { error } = await supabase
             .from('destinations')
             .delete()
@@ -929,6 +939,7 @@ export default function AdminPage() {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('destinations')
         .select('slug, name, city')
@@ -1187,10 +1198,11 @@ export default function AdminPage() {
                         data.category = 'Dining';
                       }
 
+                      const supabase = createClient();
                       if (editingDestination) {
                         // Update existing
-                        const { error } = await (supabase
-                          .from('destinations') as any)
+                        const { error } = await supabase
+                          .from('destinations')
                           .update(data)
                           .eq('slug', editingDestination.slug);
 

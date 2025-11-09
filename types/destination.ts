@@ -4,7 +4,9 @@ export interface Destination {
   name: string;
   city: string;
   country?: string;
+  neighborhood?: string | null; // Specific neighborhood within city
   category: string;
+  micro_description?: string; // Short 1-line description for cards
   description?: string;
   content?: string;
   image?: string;

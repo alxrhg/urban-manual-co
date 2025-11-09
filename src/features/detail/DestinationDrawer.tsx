@@ -664,6 +664,16 @@ Summary:`;
             <h1 className="text-3xl font-light leading-tight">
               {destination.name}
             </h1>
+            {destination.city && destination.category && (
+              <div className="text-[14px] text-neutral-500 dark:text-neutral-400 mt-1">
+                {destination.city} • {destination.category}
+              </div>
+            )}
+            {destination.micro_description && (
+              <p className="text-[14px] text-neutral-700 dark:text-neutral-300 leading-relaxed mt-3">
+                {destination.micro_description}
+              </p>
+            )}
 
             {/* Action Buttons - Prominent position right after title */}
             <div className="flex gap-2 mb-4">

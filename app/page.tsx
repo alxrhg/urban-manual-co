@@ -39,6 +39,7 @@ import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
 import { SessionResume } from '@/components/SessionResume';
 import { ContextCards } from '@/components/ContextCards';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
+import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
 import { DestinationBadges } from '@/components/DestinationBadges';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
@@ -518,6 +519,13 @@ export default function Home() {
     'Selecting the finest spots...',
   ];
   const [currentLoadingText, setCurrentLoadingText] = useState(loadingTextVariants[0]);
+  const [inferredTags, setInferredTags] = useState<{
+    neighborhoods?: string[];
+    styleTags?: string[];
+    priceLevel?: string;
+    modifiers?: string[];
+  } | null>(null);
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const extractFilterOptions = (rows: Array<{ city?: string | null; category?: string | null }>) => {
     const citySet = new Set<string>();
@@ -1544,6 +1552,13 @@ export default function Home() {
       if (data.intent) {
         setSearchIntent(data.intent);
         
+        // Store inferred tags for refinement chips
+        if (data.inferredTags) {
+          setInferredTags(data.inferredTags);
+        } else {
+          setInferredTags(null);
+        }
+        
         // Fetch seasonal context if city is detected
         let seasonData = null;
         if (data.intent.city) {
@@ -1605,6 +1620,123 @@ export default function Home() {
       setSearching(false);
     }
   }, [user, searching, conversationHistory]);
+
+  // Convert inferredTags to RefinementTag array
+  const convertInferredTagsToRefinementTags = useCallback((
+    tags: { neighborhoods?: string[]; styleTags?: string[]; priceLevel?: string; modifiers?: string[] },
+    activeFilters: Set<string>,
+    activeOnly: boolean
+  ): RefinementTag[] => {
+    const result: RefinementTag[] = [];
+    
+    if (tags.neighborhoods) {
+      tags.neighborhoods.forEach((neighborhood) => {
+        const key = `neighborhood-${neighborhood}`;
+        const isActive = activeFilters.has(key);
+        if (activeOnly ? isActive : !isActive) {
+          result.push({
+            type: 'neighborhood',
+            value: neighborhood,
+            label: neighborhood,
+          });
+        }
+      });
+    }
+    
+    if (tags.styleTags) {
+      tags.styleTags.forEach((style) => {
+        const key = `style-${style}`;
+        const isActive = activeFilters.has(key);
+        if (activeOnly ? isActive : !isActive) {
+          result.push({
+            type: 'style',
+            value: style,
+            label: style,
+          });
+        }
+      });
+    }
+    
+    if (tags.priceLevel) {
+      const key = `price-${tags.priceLevel}`;
+      const isActive = activeFilters.has(key);
+      if (activeOnly ? isActive : !isActive) {
+        result.push({
+          type: 'price',
+          value: tags.priceLevel,
+          label: tags.priceLevel,
+        });
+      }
+    }
+    
+    if (tags.modifiers) {
+      tags.modifiers.forEach((modifier) => {
+        const key = `modifier-${modifier}`;
+        const isActive = activeFilters.has(key);
+        if (activeOnly ? isActive : !isActive) {
+          result.push({
+            type: 'modifier',
+            value: modifier,
+            label: modifier,
+          });
+        }
+      });
+    }
+    
+    return result;
+  }, []);
+
+  // Handle chip click - add filter and rebuild search
+  const handleChipClick = useCallback((tag: RefinementTag) => {
+    const key = `${tag.type}-${tag.value}`;
+    const newActiveFilters = new Set(activeFilters);
+    
+    if (newActiveFilters.has(key)) {
+      newActiveFilters.delete(key);
+    } else {
+      newActiveFilters.add(key);
+    }
+    
+    setActiveFilters(newActiveFilters);
+    
+    // Rebuild search query with active filters
+    if (submittedQuery) {
+      const filterParts: string[] = [];
+      newActiveFilters.forEach((filterKey) => {
+        const [type, value] = filterKey.split('-', 2);
+        filterParts.push(value);
+      });
+      
+      const enhancedQuery = filterParts.length > 0
+        ? `${submittedQuery} ${filterParts.join(' ')}`
+        : submittedQuery;
+      
+      performAISearch(enhancedQuery);
+    }
+  }, [activeFilters, submittedQuery, performAISearch]);
+
+  // Handle chip remove - remove filter and rebuild search
+  const handleChipRemove = useCallback((tag: RefinementTag) => {
+    const key = `${tag.type}-${tag.value}`;
+    const newActiveFilters = new Set(activeFilters);
+    newActiveFilters.delete(key);
+    setActiveFilters(newActiveFilters);
+    
+    // Rebuild search query without removed filter
+    if (submittedQuery) {
+      const filterParts: string[] = [];
+      newActiveFilters.forEach((filterKey) => {
+        const [type, value] = filterKey.split('-', 2);
+        filterParts.push(value);
+      });
+      
+      const enhancedQuery = filterParts.length > 0
+        ? `${submittedQuery} ${filterParts.join(' ')}`
+        : submittedQuery;
+      
+      performAISearch(enhancedQuery);
+    }
+  }, [activeFilters, submittedQuery, performAISearch]);
 
   // Handle location changes from Near Me filter
   const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {
@@ -1862,11 +1994,46 @@ export default function Home() {
                               setSearchTerm('');
                               setSubmittedQuery('');
                               setSearchIntent(null);
+                              setInferredTags(null);
+                              setActiveFilters(new Set());
                             }}
                             editable={true}
                           />
                         </div>
                       )}
+
+                      {/* Refinement Chips - Active Filters */}
+                      {inferredTags && !searching && (() => {
+                        const activeTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
+                        if (activeTags.length === 0) return null;
+                        return (
+                          <div className="mb-4">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Filtered by:</div>
+                            <RefinementChips
+                              tags={activeTags}
+                              onChipClick={(tag) => handleChipClick(tag)}
+                              onChipRemove={(tag) => handleChipRemove(tag)}
+                              activeTags={activeFilters}
+                            />
+                          </div>
+                        );
+                      })()}
+
+                      {/* Refinement Chips - Suggestions */}
+                      {inferredTags && !searching && (() => {
+                        const suggestionTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, false);
+                        if (suggestionTags.length === 0) return null;
+                        return (
+                          <div className="mb-6">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggestions:</div>
+                            <RefinementChips
+                              tags={suggestionTags}
+                              onChipClick={(tag) => handleChipClick(tag)}
+                              activeTags={activeFilters}
+                            />
+                          </div>
+                        );
+                      })()}
 
                       {/* Scrollable chat history - Fixed height for about 2 message pairs */}
                       <div

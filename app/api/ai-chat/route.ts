@@ -152,6 +152,12 @@ async function understandQuery(
   intent?: string; // User's apparent intent (e.g., "find", "compare", "recommend")
   confidence?: number; // 0-1 confidence score
   clarifications?: string[]; // Questions to clarify ambiguous queries
+  inferredTags?: {
+    neighborhoods?: string[];
+    styleTags?: string[];
+    priceLevel?: string; // e.g., "$", "$$", "$$$", "$$$$"
+    modifiers?: string[];
+  };
 }> {
   if (!openai?.chat) {
     return parseQueryFallback(query);
@@ -218,14 +224,23 @@ async function understandQuery(
   },
   "intent": "brief description of user intent (e.g., 'finding romantic dinner spots', 'comparing hotels', 'discovering hidden gems')",
   "confidence": 0.0-1.0,
-  "clarifications": ["array", "of", "suggested", "questions", "if", "query", "is", "ambiguous"]
+  "clarifications": ["array", "of", "suggested", "questions", "if", "query", "is", "ambiguous"],
+  "inferredTags": {
+    "neighborhoods": ["array", "of", "neighborhood", "names", "if", "mentioned", "or", "inferred"],
+    "styleTags": ["array", "of", "style", "descriptors", "e.g.", "minimalist", "contemporary", "traditional", "luxury"],
+    "priceLevel": "price", "symbol", "like", "$", "$$", "$$$", "or", "$$$$", "based", "on", "query", "or", "null",
+    "modifiers": ["array", "of", "descriptive", "modifiers", "e.g.", "quiet", "romantic", "trendy", "hidden", "gem"]
+  }
 }
 
 Guidelines:
 - Use conversation history to resolve pronouns and references (e.g., "show me more like this" refers to previous results)
 - Use "more", "another", "similar" to expand on previous queries
 - If query is ambiguous (e.g., just "hotels" without city), set clarifications with helpful questions
-- Extract descriptive modifiers: romantic, cozy, luxury, budget, hidden, trendy, etc. as keywords
+- Extract descriptive modifiers: romantic, cozy, luxury, budget, hidden, trendy, etc. as keywords AND in inferredTags.modifiers
+- For neighborhoods: Extract specific neighborhood names (e.g., "Daikanyama", "Aoyama", "Shinjuku") from query or infer from context
+- For styleTags: Extract design/style descriptors (e.g., "minimalist", "contemporary", "traditional", "wood", "natural materials", "modern")
+- For priceLevel: Infer from words like "budget" ($), "affordable" ($$), "mid-range" ($$$), "luxury" ($$$$) or use filters.priceLevel if numeric
 - Detect weather-related queries: "rainy day", "outdoor", "indoor", "weather" → suggest weather-aware recommendations
 - Detect event-related queries: "events", "happening", "festival", "concert" → boost places near events
 - Confidence should reflect how clear the query intent is
@@ -1037,6 +1052,7 @@ async function processAIChatRequest(
                     resultCount: limitedResults.length,
                     hasResults: limitedResults.length > 0
                   },
+                  inferredTags: intent.inferredTags || undefined, // Include inferred tags for refinement chips
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
                 };
