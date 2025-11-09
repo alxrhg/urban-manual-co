@@ -49,29 +49,6 @@ function SearchPageContent() {
     suggestions: [],
   });
 
-  useEffect(() => {
-    if (query) performInitialSearch(query);
-  }, [query, performInitialSearch]);
-
-  // Recompute suggestions whenever filtered results or refinements change
-  useEffect(() => {
-    async function updateSuggestions() {
-      const newSuggestions = await generateSuggestions({
-        query: searchState.originalQuery,
-        results: searchState.filteredResults,
-        refinements: searchState.refinements,
-        filters: { /* could pass openNow/price if present */ },
-      });
-      setSearchState((prev) => ({
-        ...prev,
-        suggestions: newSuggestions,
-      }));
-    }
-    if (searchState.filteredResults.length > 0) {
-      updateSuggestions();
-    }
-  }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
-
   const performInitialSearch = useCallback(async (searchQuery: string) => {
     setSearchState(prev => ({ ...prev, isLoading: true }));
 
@@ -95,6 +72,29 @@ function SearchPageContent() {
       setSearchState(prev => ({ ...prev, isLoading: false }));
     }
   }, []);
+
+  useEffect(() => {
+    if (query) performInitialSearch(query);
+  }, [query, performInitialSearch]);
+
+  // Recompute suggestions whenever filtered results or refinements change
+  useEffect(() => {
+    async function updateSuggestions() {
+      const newSuggestions = await generateSuggestions({
+        query: searchState.originalQuery,
+        results: searchState.filteredResults,
+        refinements: searchState.refinements,
+        filters: { /* could pass openNow/price if present */ },
+      });
+      setSearchState((prev) => ({
+        ...prev,
+        suggestions: newSuggestions,
+      }));
+    }
+    if (searchState.filteredResults.length > 0) {
+      updateSuggestions();
+    }
+  }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
 
   async function handleRefinement(refinement: string) {
     const newRefinements = [...searchState.refinements, refinement];
