@@ -44,9 +44,7 @@ import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
-import { DestinationCard, LazyDestinationCard } from '@/components/DestinationCard';
-import { ProgressiveGrid } from '@/components/ProgressiveGrid';
-import { DestinationCardSkeleton } from '@/components/skeletons/DestinationCardSkeleton';
+import { DestinationCard } from '@/components/DestinationCard';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -2303,77 +2301,73 @@ export default function Home() {
 
               return (
               <>
-              <ProgressiveGrid
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start"
-                skeletonComponent={<DestinationCardSkeleton />}
-                skeletonCount={searching || discoveryEngineLoading ? itemsPerPage : 0}
-                threshold={0.1}
-                rootMargin="100px"
-              >
-                {(() => {
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
-                  const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
+              {(() => {
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-                  return paginatedDestinations.map((destination, index) => {
-                    const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                    const globalIndex = startIndex + index;
-                    
-                    return (
-                      <LazyDestinationCard
-                        key={destination.slug}
-                        destination={destination}
-                        onClick={() => {
-                          setSelectedDestination(destination);
-                          setIsDrawerOpen(true);
-
-                          // Track destination click
-                          trackDestinationClick({
-                            destinationSlug: destination.slug,
-                            position: globalIndex,
-                            source: 'grid',
-                          });
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
+                    {paginatedDestinations.map((destination, index) => {
+                      const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                      const globalIndex = startIndex + index;
                       
-                          // Also track with new analytics system
-                          if (destination.id) {
-                            import('@/lib/analytics/track').then(({ trackEvent }) => {
-                              trackEvent({
-                                event_type: 'click',
-                                destination_id: destination.id,
-                                destination_slug: destination.slug,
-                                metadata: {
-                                  category: destination.category,
-                                  city: destination.city,
-                                  source: 'homepage_grid',
-                                  position: globalIndex,
-                                },
+                      return (
+                        <DestinationCard
+                          key={destination.slug}
+                          destination={destination}
+                          onClick={() => {
+                            setSelectedDestination(destination);
+                            setIsDrawerOpen(true);
+
+                            // Track destination click
+                            trackDestinationClick({
+                              destinationSlug: destination.slug,
+                              position: globalIndex,
+                              source: 'grid',
+                            });
+                        
+                            // Also track with new analytics system
+                            if (destination.id) {
+                              import('@/lib/analytics/track').then(({ trackEvent }) => {
+                                trackEvent({
+                                  event_type: 'click',
+                                  destination_id: destination.id,
+                                  destination_slug: destination.slug,
+                                  metadata: {
+                                    category: destination.category,
+                                    city: destination.city,
+                                    source: 'homepage_grid',
+                                    position: globalIndex,
+                                  },
+                                });
                               });
-                            });
-                          }
-                      
-                          // Track click event to Discovery Engine for personalization
-                          if (user?.id) {
-                            fetch('/api/discovery/track-event', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                userId: user.id,
-                                eventType: 'click',
-                                documentId: destination.slug,
-                              }),
-                            }).catch((error) => {
-                              console.warn('Failed to track click event:', error);
-                            });
-                          }
-                        }}
-                        index={globalIndex}
-                        isVisited={isVisited}
-                        showBadges={true}
-                      />
-                    );
-                  });
-                })()}
-              </ProgressiveGrid>
+                            }
+                        
+                            // Track click event to Discovery Engine for personalization
+                            if (user?.id) {
+                              fetch('/api/discovery/track-event', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  userId: user.id,
+                                  eventType: 'click',
+                                  documentId: destination.slug,
+                                }),
+                              }).catch((error) => {
+                                console.warn('Failed to track click event:', error);
+                              });
+                            }
+                          }}
+                          index={globalIndex}
+                          isVisited={isVisited}
+                          showBadges={true}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
           {/* Pagination */}
           {(() => {

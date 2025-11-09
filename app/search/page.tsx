@@ -4,9 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
-import { DestinationCard, LazyDestinationCard } from '@/components/DestinationCard';
-import { ProgressiveGrid } from '@/components/ProgressiveGrid';
-import { DestinationCardSkeleton } from '@/components/skeletons/DestinationCardSkeleton';
+import { DestinationCard } from '@/components/DestinationCard';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
@@ -42,6 +40,9 @@ function SearchPageContent() {
   const router = useRouter();
   const query = searchParams.get('q') || '';
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 28;
+
   const [searchState, setSearchState] = useState<SearchState>({
     originalQuery: query,
     refinements: [],
@@ -69,6 +70,7 @@ function SearchPageContent() {
         intent: data.intent,
         isLoading: false,
       });
+      setCurrentPage(1); // Reset to first page on new search
     } catch (error) {
       console.error('Search error:', error);
       setSearchState(prev => ({ ...prev, isLoading: false }));
@@ -122,6 +124,7 @@ function SearchPageContent() {
       ]) as Message[],
       // Keep initial suggestions for now; can evolve to state-driven
     }));
+    setCurrentPage(1); // Reset to first page on filter change
   }
 
   async function handleFollowUp(message: string): Promise<string> {
@@ -158,6 +161,7 @@ function SearchPageContent() {
         ] as Message[],
         suggestions: data.suggestions || prev.suggestions,
       }));
+      setCurrentPage(1); // Reset to first page on follow-up
 
       return data.contextResponse || '';
     } catch (error) {
@@ -180,6 +184,7 @@ function SearchPageContent() {
         { role: 'assistant' as const, content: `Filters cleared. Showing all ${prev.allResults.length} results.` },
       ]) as Message[],
     }));
+    setCurrentPage(1); // Reset to first page when clearing filters
   }
 
   function handleIntentChipRemove(chipType: string, value: string) {
@@ -253,29 +258,88 @@ function SearchPageContent() {
             )}
           </div>
 
-          <ProgressiveGrid
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6"
-            skeletonComponent={<DestinationCardSkeleton />}
-            skeletonCount={searchState.isLoading ? 10 : 0}
-            threshold={0.1}
-            rootMargin="100px"
-          >
-            {searchState.filteredResults.map((d, idx) => (
-              <LazyDestinationCard
-                key={d.id}
-                destination={d as any}
-                onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
-                index={idx}
-                showBadges={true}
-              />
-            ))}
-          </ProgressiveGrid>
+          {(() => {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedResults = searchState.filteredResults.slice(startIndex, endIndex);
+            const totalPages = Math.ceil(searchState.filteredResults.length / itemsPerPage);
 
-          {searchState.refinements.length > 0 && (
-            <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
-              Clear all filters
-            </button>
-          )}
+            return (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
+                  {paginatedResults.map((d, idx) => (
+                    <DestinationCard
+                      key={d.id}
+                      destination={d as any}
+                      onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+                      index={startIndex + idx}
+                      showBadges={true}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
+                              currentPage === pageNum
+                                ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
+                                : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm font-medium'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+
+                    <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                  </div>
+                )}
+
+                {searchState.refinements.length > 0 && (
+                  <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
+                    Clear all filters
+                  </button>
+                )}
+              </>
+            );
+          })()}
 
           {/* Ad after grid */}
           <div className="mt-8">

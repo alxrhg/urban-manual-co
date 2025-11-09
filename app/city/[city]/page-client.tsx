@@ -9,9 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
-import { DestinationCard, LazyDestinationCard } from '@/components/DestinationCard';
-import { ProgressiveGrid } from '@/components/ProgressiveGrid';
-import { DestinationCardSkeleton } from '@/components/skeletons/DestinationCardSkeleton';
+import { DestinationCard } from '@/components/DestinationCard';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 
@@ -299,17 +297,12 @@ export default function CityPageClient() {
             </div>
           ) : (
             <div className="space-y-8">
-              <ProgressiveGrid
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6"
-                skeletonComponent={<DestinationCardSkeleton />}
-                threshold={0.1}
-                rootMargin="100px"
-              >
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
                 {paginatedDestinations.map((destination, index) => {
                   const isVisited = !!(user && visitedSlugs.has(destination.slug));
 
                   return (
-                    <LazyDestinationCard
+                    <DestinationCard
                       key={destination.slug}
                       destination={destination}
                       onClick={() => {
@@ -322,7 +315,7 @@ export default function CityPageClient() {
                     />
                   );
                 })}
-              </ProgressiveGrid>
+              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
