@@ -181,11 +181,11 @@ export async function POST(request: NextRequest) {
     
     // Map category synonyms to database categories
     const categorySynonyms: Record<string, string> = {
-      'restaurant': 'Dining',
-      'dining': 'Dining',
-      'food': 'Dining',
-      'eat': 'Dining',
-      'meal': 'Dining',
+      'restaurant': 'Restaurant',
+      'dining': 'Restaurant',
+      'food': 'Restaurant',
+      'eat': 'Restaurant',
+      'meal': 'Restaurant',
       'hotel': 'Hotel',
       'stay': 'Hotel',
       'accommodation': 'Hotel',

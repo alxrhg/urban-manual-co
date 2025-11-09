@@ -22,7 +22,7 @@ export const FUNCTION_DEFINITIONS = [
           },
           category: {
             type: 'string',
-            description: 'Category (e.g., "Dining", "Hotel", "Culture", "Bar", "Cafe")'
+            description: 'Category (e.g., "Restaurant", "Hotel", "Culture", "Bar", "Cafe")'
           },
           priceLevel: {
             type: 'number',

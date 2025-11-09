@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
     // Apply category filter
     if (intent.category) {
       const categoryMap: Record<string, string> = {
-        'restaurant': 'Dining',
+        'restaurant': 'Restaurant',
         'hotel': 'Hotel',
         'cafe': 'Cafe',
         'bar': 'Bar',

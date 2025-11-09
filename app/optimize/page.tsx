@@ -96,7 +96,7 @@ export default function RouteOptimizerPage() {
   const getVisitDuration = (category: string): number => {
     // Estimated visit durations in minutes
     const durations: Record<string, number> = {
-      'Dining': 90,
+      'Restaurant': 90,
       'Restaurants': 90,
       'Hotels': 30,
       'Culture': 120,
@@ -168,7 +168,7 @@ export default function RouteOptimizerPage() {
           'Cafes': 1,
           'Bakeries': 1,
           'Culture': 2,
-          'Dining': 3,
+          'Restaurant': 3,
           'Restaurants': 3,
           'Bars': 4,
           'Hotels': 5,
@@ -181,11 +181,10 @@ export default function RouteOptimizerPage() {
 
         // Check if we should insert lunch
         if (shouldInsertMeal(currentTime, lastMealTime, 'lunch') &&
-            !place.category.includes('Dining') &&
             !place.category.includes('Restaurant')) {
           const lunchPlace = savedPlaces.find(p =>
             p.city === selectedCity &&
-            (p.category.includes('Dining') || p.category.includes('Restaurant'))
+            (p.category.includes('Restaurant'))
           );
 
           if (lunchPlace) {

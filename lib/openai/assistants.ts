@@ -84,7 +84,7 @@ Guidelines:
                 },
                 category: {
                   type: 'string',
-                  description: 'Category (e.g., "Dining", "Hotel", "Culture", "Bar")'
+                  description: 'Category (e.g., "Restaurant", "Hotel", "Culture", "Bar")'
                 },
                 priceLevel: {
                   type: 'number',

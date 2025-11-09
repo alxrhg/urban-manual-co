@@ -75,11 +75,11 @@ function setInCache(key: string, data: any): void {
 
 // Category synonym mapping
 const CATEGORY_SYNONYMS: Record<string, string> = {
-  'restaurant': 'Dining',
-  'dining': 'Dining',
-  'food': 'Dining',
-  'eat': 'Dining',
-  'meal': 'Dining',
+  'restaurant': 'Restaurant',
+  'dining': 'Restaurant',
+  'food': 'Restaurant',
+  'eat': 'Restaurant',
+  'meal': 'Restaurant',
   'hotel': 'Hotel',
   'stay': 'Hotel',
   'accommodation': 'Hotel',
@@ -292,7 +292,7 @@ Return only the JSON, no other text.`;
               if (cityMatch) parsed.city = cityMatch[1].trim();
             }
             if (!parsed.category && (lastContent.includes('place') || lastContent.includes('restaurant') || lastContent.includes('hotel'))) {
-              if (lastContent.includes('restaurant')) parsed.category = 'Dining';
+              if (lastContent.includes('restaurant')) parsed.category = 'Restaurant';
               else if (lastContent.includes('hotel')) parsed.category = 'Hotel';
               else if (lastContent.includes('cafe')) parsed.category = 'Cafe';
             }
@@ -351,7 +351,7 @@ function parseNaturalLanguageFilters(query: string): {
 
   // Category detection (basic)
   const categoryKeywords: { [key: string]: string } = {
-    restaurant: 'Dining',
+    restaurant: 'Restaurant',
     cafe: 'Cafe',
     museum: 'Culture',
     gallery: 'Culture',

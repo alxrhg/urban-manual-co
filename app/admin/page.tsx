@@ -649,9 +649,9 @@ function DestinationForm({
               onChange={(e) => {
                 const michelinStars = e.target.value ? Number(e.target.value) : null;
                 const updatedFormData = { ...formData, michelin_stars: michelinStars };
-                // If Michelin stars are set, ensure category is 'Dining'
+                // If Michelin stars are set, ensure category is 'Restaurant'
                 if (michelinStars && michelinStars > 0) {
-                  updatedFormData.category = 'Dining';
+                  updatedFormData.category = 'Restaurant';
                 }
                 setFormData(updatedFormData);
               }}
@@ -1193,9 +1193,9 @@ export default function AdminPage() {
                   onSave={async (data) => {
                     setIsSaving(true);
                     try {
-                      // Ensure Michelin-starred destinations are categorized as Dining
+                      // Ensure Michelin-starred destinations are categorized as Restaurant
                       if (data.michelin_stars && data.michelin_stars > 0) {
-                        data.category = 'Dining';
+                        data.category = 'Restaurant';
                       }
 
                       const supabase = createClient();

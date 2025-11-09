@@ -142,10 +142,10 @@ export class ProactiveRecommendationAgent extends BaseAgent {
       // Would search for these categories
     } else if (timeOfDay === 'afternoon') {
       // Suggest lunch spots, museums, activities
-      const afternoonCategories = ['Dining', 'Culture', 'Museum'];
+      const afternoonCategories = ['Restaurant', 'Culture', 'Museum'];
     } else if (timeOfDay === 'evening') {
       // Suggest dinner, bars, nightlife
-      const eveningCategories = ['Dining', 'Bar', 'Nightlife'];
+      const eveningCategories = ['Restaurant', 'Bar', 'Nightlife'];
     }
 
     // Location-based suggestions

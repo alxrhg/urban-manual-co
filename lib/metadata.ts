@@ -154,7 +154,7 @@ export function generateDestinationSchema(destination: Destination) {
         : undefined,
       priceRange: '$'.repeat(destination.price_level || 2),
     };
-  } else if (['restaurant', 'dining', 'cafe', 'bar'].includes(category)) {
+  } else if (['restaurant', 'Restaurant', 'cafe', 'bar'].includes(category)) {
     const restaurantSchema: any = {
       ...baseSchema,
       '@type': 'Restaurant',
@@ -292,7 +292,7 @@ export function generateDestinationFAQ(destination: Destination) {
         answer: `${destination.name} is a ${priceDesc} hotel with a price level of ${'$'.repeat(destination.price_level)}.`,
       });
     }
-  } else if (['restaurant', 'dining', 'cafe', 'bar'].includes(category)) {
+  } else if (['restaurant', 'Restaurant', 'cafe', 'bar'].includes(category)) {
     faqs.push({
       question: `Where is ${destination.name} located?`,
       answer: `${destination.name} is a ${destination.category} located in ${cityName}${destination.country ? `, ${destination.country}` : ''}.`,

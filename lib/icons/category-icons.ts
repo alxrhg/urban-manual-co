@@ -33,7 +33,7 @@ import {
 type IconComponent = React.ComponentType<IconProps>;
 
 export const CATEGORY_ICON_MAP: Record<string, string> = {
-  // Food & Dining
+  // Food & Restaurant
   'dining': 'utensils',
   'restaurant': 'utensils',
   'restaurants': 'utensils',

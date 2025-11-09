@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
     if (!category && intent?.category) {
       // Normalize intent category to match our database categories
       const categorySynonyms: Record<string, string> = {
-        'restaurant': 'Dining',
-        'dining': 'Dining',
+        'restaurant': 'Restaurant',
+        'dining': 'Restaurant',
         'hotel': 'Hotel',
         'cafe': 'Cafe',
         'bar': 'Bar',
@@ -292,7 +292,7 @@ function combineQueries(
 function extractCategoryFromFollowUp(followUp: string): string | undefined {
   const lower = followUp.toLowerCase();
   const categoryMap: Record<string, string> = {
-    'restaurant': 'Dining',
+    'restaurant': 'Restaurant',
     'hotel': 'Hotel',
     'cafe': 'Cafe',
     'bar': 'Bar',
