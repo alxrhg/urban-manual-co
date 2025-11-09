@@ -1487,6 +1487,7 @@ export default function Home() {
   // Memoized filter function to avoid recreating on every render
   // Helper function to filter destinations with explicit data (avoids stale state)
   // Accepts current filter values to avoid closure issues
+  // MOVED BEFORE fetchDestinations to fix "used before declaration" error
   const filterDestinationsWithData = useCallback((
     dataToFilter: Destination[],
     currentSearchTerm: string = searchTerm,
