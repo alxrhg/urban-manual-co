@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Spinner } from '@/components/ui/spinner';
+import { ExternalLink } from 'lucide-react';
 
 interface GoogleMapProps {
   query?: string;
@@ -20,6 +21,8 @@ interface GoogleMapProps {
     website?: string;
   };
   autoOpenInfoWindow?: boolean; // Whether to auto-open info window (default: false)
+  // Static map props
+  staticMode?: boolean; // If true, shows static map with info overlay and click-to-open link
 }
 
 export default function GoogleMap({
@@ -31,7 +34,8 @@ export default function GoogleMap({
   interactive = true,
   showInfoWindow = false,
   infoWindowContent,
-  autoOpenInfoWindow = false
+  autoOpenInfoWindow = false,
+  staticMode = false
 }: GoogleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -39,6 +43,7 @@ export default function GoogleMap({
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleMapsUrl, setGoogleMapsUrl] = useState<string>('');
 
   // Get height style
   const getHeightStyle = () => {
@@ -120,8 +125,15 @@ export default function GoogleMap({
           center = { lat: 35.6762, lng: 139.6503 };
         }
 
+        // Generate Google Maps URL for click-to-open
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          infoWindowContent?.address || query || `${center.lat},${center.lng}`
+        )}`;
+        setGoogleMapsUrl(mapsUrl);
+
         // Create map
         if (!mapInstanceRef.current) {
+          const isStatic = staticMode || !interactive;
           mapInstanceRef.current = new google.maps.Map(mapRef.current!, {
             center,
             zoom: 15,
@@ -132,25 +144,28 @@ export default function GoogleMap({
                 stylers: [{ visibility: 'off' }],
               },
             ],
-            // Disable interactions if not interactive
-            disableDefaultUI: !interactive,
-            zoomControl: interactive,
+            // Disable all interactions for static mode
+            disableDefaultUI: isStatic,
+            zoomControl: !isStatic && interactive,
             mapTypeControl: false,
             streetViewControl: false,
-            fullscreenControl: interactive,
-            gestureHandling: interactive ? 'auto' : 'none',
-            draggable: interactive,
-            scrollwheel: interactive,
-            disableDoubleClickZoom: !interactive,
+            fullscreenControl: !isStatic && interactive,
+            gestureHandling: isStatic ? 'none' : (interactive ? 'auto' : 'none'),
+            draggable: !isStatic && interactive,
+            scrollwheel: !isStatic && interactive,
+            disableDoubleClickZoom: isStatic || !interactive,
+            keyboardShortcuts: !isStatic && interactive,
           });
         } else {
           mapInstanceRef.current.setCenter(center);
           // Update interaction settings if they changed
+          const isStatic = staticMode || !interactive;
           mapInstanceRef.current.setOptions({
-            gestureHandling: interactive ? 'auto' : 'none',
-            draggable: interactive,
-            scrollwheel: interactive,
-            disableDoubleClickZoom: !interactive,
+            gestureHandling: isStatic ? 'none' : (interactive ? 'auto' : 'none'),
+            draggable: !isStatic && interactive,
+            scrollwheel: !isStatic && interactive,
+            disableDoubleClickZoom: isStatic || !interactive,
+            keyboardShortcuts: !isStatic && interactive,
           });
         }
 
@@ -242,7 +257,7 @@ export default function GoogleMap({
     };
 
     initializeMap();
-  }, [loaded, query, latitude, longitude, interactive, showInfoWindow, infoWindowContent, autoOpenInfoWindow]);
+  }, [loaded, query, latitude, longitude, interactive, showInfoWindow, infoWindowContent, autoOpenInfoWindow, staticMode]);
 
   if (error) {
     return (
@@ -272,12 +287,73 @@ export default function GoogleMap({
     );
   }
 
+  const isStatic = staticMode || !interactive;
+
   return (
     <div
-      ref={mapRef}
-      className={`w-full rounded-2xl overflow-hidden ${className}`}
+      className={`w-full rounded-2xl overflow-hidden relative ${className}`}
       style={{ height: getHeightStyle() }}
-    />
+    >
+      <div
+        ref={mapRef}
+        className="w-full h-full"
+        style={{ 
+          height: getHeightStyle(),
+          pointerEvents: isStatic ? 'none' : 'auto',
+          cursor: isStatic ? 'pointer' : 'default'
+        }}
+      />
+      
+      {/* Static mode: Info overlay in top left and click-to-open link */}
+      {isStatic && googleMapsUrl && (
+        <>
+          {/* Info overlay in top left */}
+          {infoWindowContent && (
+            <div className="absolute top-3 left-3 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-3 max-w-[280px] z-10 pointer-events-none">
+              {infoWindowContent.title && (
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                  {infoWindowContent.title}
+                </h4>
+              )}
+              {infoWindowContent.category && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                  {infoWindowContent.category}
+                </p>
+              )}
+              {infoWindowContent.address && (
+                <p className="text-xs text-gray-500 dark:text-gray-500 mb-1 line-clamp-2">
+                  {infoWindowContent.address}
+                </p>
+              )}
+              {infoWindowContent.rating && (
+                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  ⭐ {infoWindowContent.rating.toFixed(1)}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Click-to-open overlay */}
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
+            onClick={(e) => {
+              // Track click if needed
+              e.stopPropagation();
+            }}
+          >
+            <div className="opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-900 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 transition-opacity pointer-events-none">
+              <ExternalLink className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Open in Google Maps
+              </span>
+            </div>
+          </a>
+        </>
+      )}
+    </div>
   );
 }
 

@@ -1078,8 +1078,8 @@ Summary:`;
                 height="256px"
                 className="rounded-lg"
                 interactive={false}
-                showInfoWindow={true}
-                autoOpenInfoWindow={true}
+                staticMode={true}
+                showInfoWindow={false}
                 infoWindowContent={{
                   title: destination.name,
                   address: enrichedData?.formatted_address || enrichedData?.vicinity || `${destination.city}`,
