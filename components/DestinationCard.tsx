@@ -66,7 +66,7 @@ export function DestinationCard({
         group relative w-full transition-all duration-300 ease-out
         cursor-pointer text-left focus-ring
         ${isVisited ? 'opacity-60' : 'opacity-100'}
-        hover:scale-[1.02] hover:shadow-lg
+        hover:scale-[1.02]
         active:scale-[0.98]
         ${className}
       `}
@@ -78,8 +78,8 @@ export function DestinationCard({
           relative aspect-square overflow-hidden rounded-2xl
           bg-gray-100 dark:bg-gray-800
           border border-gray-200 dark:border-gray-800
-          shadow-sm group-hover:shadow-md
-          transition-all duration-300 ease-out
+          transition-shadow duration-300
+          group-hover:shadow-lg
           mb-3
           ${isLoaded ? 'opacity-100' : 'opacity-0'}
         `}
