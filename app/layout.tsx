@@ -107,12 +107,13 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body className="antialiased">
+      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          storageKey="urban-manual-theme"
         >
           <SplashScreen />
           <TRPCProvider>

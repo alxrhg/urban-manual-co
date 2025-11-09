@@ -77,6 +77,15 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
+  html.dark {
+    color-scheme: dark;
+  }
+  
+  html.light {
+    color-scheme: light;
   }
 }
 
