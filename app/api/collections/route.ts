@@ -43,7 +43,33 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[API] Error creating collection:', error);
+      console.error('[API] Error creating collection:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      
+      // Provide more specific error messages
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { error: 'A collection with this name already exists' },
+          { status: 409 }
+        );
+      }
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Collections table not found. Please contact support.' },
+          { status: 500 }
+        );
+      }
+      if (error.code === 'PGRST301' || error.message?.includes('RLS')) {
+        return NextResponse.json(
+          { error: 'Permission denied. Please check your account permissions.' },
+          { status: 403 }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Failed to create collection', details: error.message },
         { status: 500 }

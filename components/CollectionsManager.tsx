@@ -34,13 +34,14 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
-        .from('collections')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Use API endpoint for better RLS compliance
+      const response = await fetch('/api/collections');
+      
+      if (!response.ok) {
+        throw new Error('Failed to load collections');
+      }
 
-      if (error) throw error;
+      const { collections: data } = await response.json();
       setCollections(data || []);
     } catch (error) {
       console.error('Error loading collections:', error);
