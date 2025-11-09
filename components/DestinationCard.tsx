@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { Destination } from '@/types/destination';
-import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 
@@ -58,10 +57,6 @@ export function DestinationCard({
       observer.disconnect();
     };
   }, []);
-
-  const CategoryIcon = destination.category
-    ? getCategoryIconComponent(destination.category)
-    : null;
 
   return (
     <button
@@ -182,13 +177,11 @@ export function DestinationCard({
           {destination.name}
         </h3>
 
-        {destination.micro_description && (
-          <div className="text-[13px] text-neutral-600 dark:text-neutral-400 whitespace-nowrap overflow-hidden text-ellipsis line-clamp-1 mt-[2px]">
+        {destination.micro_description ? (
+          <div className="text-[13px] text-neutral-600 dark:text-neutral-400 line-clamp-1 mt-[2px]">
             {destination.micro_description}
           </div>
-        )}
-
-        {/* removed from homepage grid */}
+        ) : null}
       </div>
 
       {/* Focus Ring for Accessibility */}
