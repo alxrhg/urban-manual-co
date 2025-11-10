@@ -18,6 +18,7 @@ import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
+import { AddToTripModal } from '@/components/AddToTripModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -174,6 +175,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [isVisited, setIsVisited] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
+  const [showAddToTripModal, setShowAddToTripModal] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -828,9 +830,7 @@ Summary:`;
                   router.push('/auth/login');
                   return;
                 }
-                // Navigate to trips page - user can add to existing trip or create new one
-                router.push('/trips');
-                onClose();
+                setShowAddToTripModal(true);
               }}
               className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -1474,9 +1474,7 @@ Summary:`;
                   router.push('/auth/login');
                   return;
                 }
-                // Navigate to trips page - user can add to existing trip or create new one
-                router.push('/trips');
-                onClose();
+                setShowAddToTripModal(true);
               }}
               className="flex items-center justify-center gap-1.5 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -1566,6 +1564,20 @@ Summary:`;
           isOpen={showVisitedModal}
           onClose={() => setShowVisitedModal(false)}
           onUpdate={handleVisitedModalUpdate}
+        />
+      )}
+
+      {/* Add to Trip Modal */}
+      {destination && (
+        <AddToTripModal
+          destinationSlug={destination.slug}
+          destinationName={destination.name}
+          isOpen={showAddToTripModal}
+          onClose={() => setShowAddToTripModal(false)}
+          onAdd={(tripId) => {
+            // Optionally show a success message or refresh data
+            console.log(`Added ${destination.name} to trip ${tripId}`);
+          }}
         />
       )}
     </>
