@@ -181,7 +181,12 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   }, [user, destination]);
 
   const handleVisitToggle = async () => {
-    if (!user || !destination) return;
+    if (!user || !destination) {
+      if (!user) {
+        router.push('/auth/login');
+      }
+      return;
+    }
 
     try {
       if (isVisited) {
@@ -192,26 +197,19 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           .eq('user_id', user.id)
           .eq('destination_slug', destination.slug);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing visit:', error);
+          throw error;
+        }
 
         setIsVisited(false);
       } else {
-        // Add visit with current date
-        const { error } = await (supabase
-          .from('visited_places')
-          .insert as any)({
-            user_id: user.id,
-            destination_slug: destination.slug,
-            visited_at: new Date().toISOString(),
-          });
-
-        if (error) throw error;
-
-        setIsVisited(true);
+        // Open visited modal to add details (date, rating, notes)
+        setShowVisitedModal(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling visit:', error);
-      alert('Failed to update visit status. Please try again.');
+      alert(`Failed to update visit status: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -219,14 +217,22 @@ export default function DestinationPageClient({ initialDestination, parentDestin
     // Reload visited status after modal updates
     if (!user || !destination) return;
 
-    const { data: visitedData } = await supabase
-      .from('visited_places')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('destination_slug', destination.slug)
-      .single();
+    try {
+      const { data: visitedData, error } = await supabase
+        .from('visited_places')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('destination_slug', destination.slug)
+        .maybeSingle();
 
-    setIsVisited(!!visitedData);
+      if (error) {
+        console.error('Error checking visited status:', error);
+      }
+
+      setIsVisited(!!visitedData);
+    } catch (error) {
+      console.error('Error updating visited status:', error);
+    }
   };
 
   const loadRecommendations = async () => {
@@ -368,7 +374,15 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       }
 
                       if (wasVisited !== nowVisited) {
-                        handleVisitToggle();
+                        if (nowVisited && !wasVisited) {
+                          // Opening visited modal will handle the visit creation
+                          // Make optimistic update - will be confirmed when modal saves
+                          setIsVisited(true);
+                          setShowVisitedModal(true);
+                        } else if (!nowVisited && wasVisited) {
+                          // Remove visit directly
+                          handleVisitToggle();
+                        }
                       }
                     }}
                     spacing={2}
@@ -650,7 +664,11 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           destinationSlug={destination.slug}
           destinationName={destination.name}
           isOpen={showVisitedModal}
-          onClose={() => setShowVisitedModal(false)}
+          onClose={() => {
+            setShowVisitedModal(false);
+            // Refresh visited status - will revert to false if modal was cancelled without saving
+            handleVisitedModalUpdate();
+          }}
           onUpdate={handleVisitedModalUpdate}
         />
       )}
