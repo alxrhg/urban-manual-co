@@ -219,9 +219,9 @@ export function WorldMapVisualization({
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill={isVisited ? '#1C1C1C' : '#E8E6E3'}
-                    stroke={isVisited ? '#1C1C1C' : '#BDBAB5'}
-                    strokeWidth={isVisited ? 0.8 : 0.5}
+                    fill={isVisited ? '#000000' : '#E8E6E3'}
+                    stroke={isVisited ? '#000000' : '#BDBAB5'}
+                    strokeWidth={isVisited ? 1 : 0.5}
                     style={{
                       default: {
                         outline: 'none',
