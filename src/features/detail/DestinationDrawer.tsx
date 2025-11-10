@@ -681,9 +681,9 @@ Summary:`;
             </div>
 
             {/* Action Row */}
-            <div className="flex items-center gap-4 pt-2">
+            <div className="flex items-center gap-4 mt-2">
               <button
-                className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
+                className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors px-0 py-1"
                 onClick={() => {
                   if (user && destination) {
                     setShowSaveModal(true);
@@ -695,14 +695,14 @@ Summary:`;
                 Save
               </button>
               <button
-                className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
+                className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors px-0 py-1"
                 onClick={handleShare}
               >
                 Share
               </button>
               {destination.slug && destination.slug.trim() ? (
                 <button
-                  className="text-sm text-gray-700 dark:text-gray-300 hover:opacity-60 transition-opacity"
+                  className="text-sm text-neutral-400 hover:text-neutral-200 transition-colors px-0 py-1"
                   onClick={() => {
                     onClose();
                     setTimeout(() => {
