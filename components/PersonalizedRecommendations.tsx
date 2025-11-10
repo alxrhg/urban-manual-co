@@ -144,7 +144,7 @@ function PersonalizedRecommendationsComponent({
               {/* Info */}
               <div className="space-y-0.5">
                 <h3 className={CARD_TITLE}>{destination.name}</h3>
-                <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
                   {destination.micro_description || 
                    (destination.category && destination.city 
                      ? `${destination.category} in ${destination.city

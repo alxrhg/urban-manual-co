@@ -173,7 +173,7 @@ export function DestinationCard({
         </h3>
 
         {/* Micro Description - Always show with fallback */}
-        <div className="text-[13px] text-neutral-600 dark:text-neutral-400 line-clamp-1 mt-[2px]">
+        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1 mt-[2px]">
           {destination.micro_description || 
            (destination.category && destination.city 
              ? `${destination.category} in ${capitalizeCity(destination.city)}`
