@@ -163,8 +163,8 @@ export default function MapPage() {
 
   if (loading) {
     return (
-      <main className="fixed inset-0 bg-white text-gray-900">
-        <div className="flex items-center justify-center h-full">
+      <main className="min-h-screen bg-white text-gray-900">
+        <div className="flex items-center justify-center h-screen">
           <div className="text-sm text-neutral-500">Loading map…</div>
         </div>
       </main>
@@ -172,9 +172,9 @@ export default function MapPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-white text-gray-900 overflow-hidden">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* Filters Bar - Top (below header) - Uses default container */}
-      <div className="absolute top-[112px] left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 safe-area-top">
+      <div className="sticky top-[112px] left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 safe-area-top">
         <div className="w-full px-6 md:px-10 lg:px-12 py-2 md:py-3">
           <div className="flex flex-col gap-2 md:gap-3">
             {/* Search Bar */}
@@ -236,7 +236,7 @@ export default function MapPage() {
 
       {/* List Panel - Left (Desktop) */}
       {showListPanel && (
-        <div className="hidden md:block absolute left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-white/95 backdrop-blur-sm border-r border-gray-200 z-20 overflow-y-auto">
+        <div className="hidden md:block fixed left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-white/95 backdrop-blur-sm border-r border-gray-200 z-20 overflow-y-auto">
           <div className="p-4 space-y-2">
             <div className="text-xs text-neutral-500 mb-4">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
@@ -278,8 +278,8 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Map - Full Bleed, 100vh, no border radius */}
-      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)] bottom-0 safe-area-bottom z-10`} style={{ borderRadius: 0 }}>
+      {/* Map - Scrollable with page */}
+      <div className={`w-full ${showListPanel ? 'md:ml-[380px]' : ''} mt-[73px]`} style={{ height: 'calc(100vh - 112px - 73px)', minHeight: '600px' }}>
         <MapView
           destinations={filteredDestinations}
           onMarkerClick={handleMarkerClick}
