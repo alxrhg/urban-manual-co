@@ -88,6 +88,19 @@ export function SaveDestinationModal({
           });
 
         if (error) throw error;
+
+        // Also save to saved_places for simple save functionality
+        const { error: placesError } = await supabase
+          .from('saved_places')
+          .upsert({
+            user_id: user.id,
+            destination_slug: destinationSlug,
+          });
+
+        if (placesError) {
+          console.warn('Error saving to saved_places:', placesError);
+          // Don't throw - saved_destinations save succeeded
+        }
       }
 
       setCurrentCollectionId(collectionId);
@@ -123,13 +136,26 @@ export function SaveDestinationModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      // Delete from saved_destinations
+      const { error: destError } = await supabase
         .from('saved_destinations')
         .delete()
         .eq('user_id', user.id)
         .eq('destination_id', destinationId);
 
-      if (error) throw error;
+      if (destError) throw destError;
+
+      // Also delete from saved_places for consistency
+      const { error: placesError } = await supabase
+        .from('saved_places')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('destination_slug', destinationSlug);
+
+      if (placesError) {
+        console.warn('Error removing from saved_places:', placesError);
+        // Don't throw - saved_destinations deletion succeeded
+      }
 
       setCurrentCollectionId(null);
       if (onSave) onSave(null);

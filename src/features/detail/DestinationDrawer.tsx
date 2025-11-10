@@ -1204,9 +1204,24 @@ Summary:`;
           destinationSlug={destination.slug}
           isOpen={showSaveModal}
           onClose={() => setShowSaveModal(false)}
-          onSave={(collectionId) => {
-            setIsSaved(true);
-            if (onSaveToggle) onSaveToggle(destination.slug, true);
+          onSave={async (collectionId) => {
+            // Also save to saved_places for simple save functionality
+            if (destination.slug && user) {
+              try {
+                const { error } = await supabase
+                  .from('saved_places')
+                  .upsert({
+                    user_id: user.id,
+                    destination_slug: destination.slug,
+                  });
+                if (!error) {
+                  setIsSaved(true);
+                  if (onSaveToggle) onSaveToggle(destination.slug, true);
+                }
+              } catch (error) {
+                console.error('Error saving to saved_places:', error);
+              }
+            }
           }}
         />
       )}
