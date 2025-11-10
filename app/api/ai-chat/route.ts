@@ -616,7 +616,7 @@ export async function POST(request: NextRequest) {
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
-        content: 'Please enter a search query.',
+        content: 'What are you looking for? Try searching for a place, city, or experience.',
         destinations: []
       });
     }

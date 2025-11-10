@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
     
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
-        context: 'Please enter a search query.',
+        context: 'What would you like to discover? Try searching for a place, city, or experience.',
         results: [],
         noModifierMatches: false,
       });
