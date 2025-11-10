@@ -123,13 +123,17 @@ export function WorldMapVisualization({
   // Convert country names to ISO-2 codes
   const visitedISO2Codes = useMemo(() => {
     const isoSet = new Set<string>();
+    const unmappedCountries: string[] = [];
+    
     visitedCountries.forEach((country) => {
+      if (!country) return;
+      
       // Try exact match first
       let iso2 = COUNTRY_TO_ISO2[country];
       
       // If no exact match, try case-insensitive match
       if (!iso2) {
-        const countryLower = country.toLowerCase();
+        const countryLower = country.toLowerCase().trim();
         for (const [key, value] of Object.entries(COUNTRY_TO_ISO2)) {
           if (key.toLowerCase() === countryLower) {
             iso2 = value;
@@ -142,9 +146,16 @@ export function WorldMapVisualization({
         isoSet.add(iso2);
       } else {
         // Log unmapped countries for debugging
-        console.log('[WorldMap] Unmapped country:', country);
+        unmappedCountries.push(country);
       }
     });
+    
+    // Log all unmapped countries at once for easier debugging
+    if (unmappedCountries.length > 0) {
+      console.warn('[WorldMap] Unmapped countries (will not appear on map):', unmappedCountries);
+      console.warn('[WorldMap] Available country mappings:', Object.keys(COUNTRY_TO_ISO2));
+    }
+    
     return isoSet;
   }, [visitedCountries]);
 
@@ -181,40 +192,59 @@ export function WorldMapVisualization({
           className="w-full h-full"
         >
           <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
+            {({ geographies }) => {
+              // Debug: Log visited ISO codes in development
+              if (process.env.NODE_ENV === 'development' && visitedISO2Codes.size > 0) {
+                console.log('[WorldMap] Visited ISO2 codes:', Array.from(visitedISO2Codes));
+              }
+              
+              return geographies.map((geo) => {
                 // world-110m.json uses ISO_A2 for 2-letter codes
+                // Some territories use ISO_A2_EH (Western Sahara, etc.)
                 const iso2Code = geo.properties.ISO_A2 || geo.properties.ISO_A2_EH;
                 const isVisited = iso2Code && visitedISO2Codes.has(iso2Code);
                 const countryName = geo.properties.NAME || geo.properties.NAME_LONG || geo.properties.NAME_EN || 'Unknown';
+                
+                // Debug: Log first few countries to verify matching
+                if (process.env.NODE_ENV === 'development' && geo.rsmKey === '0') {
+                  console.log('[WorldMap] Sample geography:', {
+                    name: countryName,
+                    iso2: iso2Code,
+                    isVisited,
+                    hasVisitedCodes: visitedISO2Codes.size > 0
+                  });
+                }
                 
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
                     fill={isVisited ? '#1C1C1C' : '#E8E6E3'}
-                    stroke="#BDBAB5"
-                    strokeWidth={0.5}
+                    stroke={isVisited ? '#1C1C1C' : '#BDBAB5'}
+                    strokeWidth={isVisited ? 0.8 : 0.5}
                     style={{
                       default: {
                         outline: 'none',
-                        strokeOpacity: 0.6,
+                        strokeOpacity: isVisited ? 0.8 : 0.6,
+                        fillOpacity: isVisited ? 1 : 0.8,
                       },
                       hover: {
                         outline: 'none',
-                        strokeOpacity: 0.6,
+                        strokeOpacity: 0.8,
+                        fillOpacity: isVisited ? 1 : 0.9,
                       },
                       pressed: {
                         outline: 'none',
-                        strokeOpacity: 0.6,
+                        strokeOpacity: 0.8,
+                        fillOpacity: isVisited ? 1 : 0.9,
                       },
                     }}
                   >
-                    <title>{countryName}</title>
+                    <title>{countryName} {isVisited ? '(Visited)' : ''}</title>
                   </Geography>
                 );
-              })
-            }
+              });
+            }}
           </Geographies>
           
           {/* City markers - using SVG circles with mercator projection */}

@@ -263,14 +263,43 @@ export default function Account() {
     ]);
     
     // Also get countries from city mapping for destinations without country field
+    // Normalize city names to match cityCountryMap format (lowercase, hyphenated)
     const countriesFromCities = Array.from(uniqueCities)
-      .map(city => cityCountryMap[city])
+      .map(city => {
+        if (!city) return null;
+        // Try exact match first
+        let country = cityCountryMap[city];
+        if (country) return country;
+        
+        // Try lowercase match
+        const cityLower = city.toLowerCase();
+        country = cityCountryMap[cityLower];
+        if (country) return country;
+        
+        // Try hyphenated version (e.g., "New York" -> "new-york")
+        const cityHyphenated = cityLower.replace(/\s+/g, '-');
+        country = cityCountryMap[cityHyphenated];
+        if (country) return country;
+        
+        // Try without hyphens (e.g., "new-york" -> "newyork" - less common but possible)
+        const cityNoHyphens = cityLower.replace(/-/g, '');
+        country = cityCountryMap[cityNoHyphens];
+        
+        return country || null;
+      })
       .filter(Boolean);
     
     const uniqueCountries = new Set([
       ...Array.from(countriesFromDestinations),
       ...countriesFromCities
     ]);
+    
+    // Debug logging to help diagnose map issues
+    if (uniqueCountries.size > 0 && process.env.NODE_ENV === 'development') {
+      console.log('[Account] Countries found:', Array.from(uniqueCountries));
+      console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
+      console.log('[Account] Countries from cities:', countriesFromCities);
+    }
 
     // Extract visited destinations with coordinates for map
     const visitedDestinationsWithCoords = visitedPlaces
