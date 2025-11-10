@@ -131,6 +131,62 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Search Input with Typing Cursor Indicator */
+  .um-input-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .um-input-wrap::before {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 1em;
+    background: #9A9A9A;
+    margin-right: 6px;
+    animation: umBlinkCursor 1s steps(1) infinite;
+    pointer-events: none;
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .um-input-wrap.um-input-empty::before {
+    opacity: 1;
+  }
+
+  .um-input {
+    flex: 1;
+    width: 100%;
+    font-size: 14px;
+    padding: 12px 16px;
+    border: 1px solid #E6E6E6;
+    border-radius: 6px;
+    background: #FFFFFF;
+  }
+
+  .um-input::placeholder {
+    color: #9A9A9A;
+    font-weight: 300;
+  }
+
+  @keyframes umBlinkCursor {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
 }
 
 @layer utilities {
