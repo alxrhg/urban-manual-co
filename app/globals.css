@@ -48,18 +48,47 @@
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
+    --radius: 0;
+    
+    /* Design System: Typography */
+    --font-default: 'Inter', system-ui, sans-serif;
+    --font-weight-regular: 300;
+    --font-weight-medium: 400;
+    --font-size-hero: 48px;
+    --font-size-title: 32px;
+    --font-size-section-title: 24px;
+    --font-size-body: 16px;
+    --font-size-caption: 13px;
+    --line-height-relaxed: 1.6;
+    --line-height-standard: 1.45;
+    
+    /* Design System: Spacing */
+    --spacing-unit: 8px;
+    --spacing-xs: 8px;
+    --spacing-sm: 16px;
+    --spacing-md: 24px;
+    --spacing-lg: 48px;
+    --spacing-xl: 96px;
+    
+    /* Design System: Colors */
+    --color-text-strong: #111111;
+    --color-text-soft: #555555;
+    --color-text-faint: #9A9A9A;
+    --color-text-caption: #777777;
+    --color-text-footer: #999999;
+    --color-text-legal: #aaaaaa;
+    --color-border-light: #E6E6E6;
     
     /* Unified layout container system */
-    --container-max: 1280px;
-    --container-padding-mobile: 16px;
-    --container-padding-tablet: 32px;
-    --container-padding-desktop: 48px;
+    --container-max: 1320px;
+    --container-padding-mobile: 20px;
+    --container-padding-tablet: 24px;
+    --container-padding-desktop: 96px;
     --gutter-nav: 12px;
-    --gutter-grid: 20px;
+    --gutter-grid: 24px;
     
-    /* Ensure container uses 1280px max-width */
-    --tw-container-max-width: 1280px;
+    /* Ensure container uses 1320px max-width */
+    --tw-container-max-width: 1320px;
   }
 
   .dark {
@@ -89,9 +118,44 @@
   }
 
   body {
+    font-family: var(--font-default);
+    font-weight: var(--font-weight-regular);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-relaxed);
     background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    color: var(--color-text-strong);
     transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
+  /* Typography System */
+  h1 {
+    font-size: var(--font-size-title);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-standard);
+    letter-spacing: -0.2px;
+    color: var(--color-text-strong);
+  }
+  
+  h2 {
+    font-size: var(--font-size-section-title);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-standard);
+    letter-spacing: -0.1px;
+    color: var(--color-text-strong);
+  }
+  
+  p, body {
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-relaxed);
+    color: var(--color-text-strong);
+  }
+  
+  .caption {
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-standard);
+    color: var(--color-text-caption);
   }
   
   html.dark {
