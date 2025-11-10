@@ -70,16 +70,16 @@ export function AddLocationToTrip({ onAdd, onClose }: AddLocationToTripProps) {
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white w-full max-w-2xl max-h-[80vh] overflow-hidden border border-neutral-200 flex flex-col">
-        <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-[11px] text-neutral-400 tracking-[0.2em] uppercase">
+      <div className="relative bg-white dark:bg-gray-950 w-full max-w-2xl max-h-[80vh] overflow-hidden border border-neutral-200 dark:border-neutral-800 flex flex-col">
+        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <h2 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
             Add Location
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-neutral-100 transition-colors"
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
           >
-            <XIcon className="w-4 h-4 text-neutral-900" />
+            <XIcon className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
           </button>
         </div>
 
@@ -91,7 +91,7 @@ export function AddLocationToTrip({ onAdd, onClose }: AddLocationToTripProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search destinations..."
-              className="w-full pl-10 pr-4 py-3 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 transition-colors"
+              className="w-full pl-10 pr-4 py-3 border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
               autoFocus
             />
           </div>
@@ -116,10 +116,10 @@ export function AddLocationToTrip({ onAdd, onClose }: AddLocationToTripProps) {
                 <button
                   key={destination.slug}
                   onClick={() => handleSelectDestination(destination)}
-                  className="w-full flex items-center gap-4 p-4 border border-neutral-200 hover:border-neutral-300 transition-colors text-left group"
+                  className="w-full flex items-center gap-4 p-4 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 bg-white dark:bg-gray-900 hover:bg-neutral-50 dark:hover:bg-gray-800 transition-colors text-left group"
                 >
                   {destination.image && (
-                    <div className="w-16 h-16 flex-shrink-0 overflow-hidden bg-neutral-100">
+                    <div className="w-16 h-16 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                       <img
                         src={destination.image}
                         alt={destination.name}
@@ -128,10 +128,10 @@ export function AddLocationToTrip({ onAdd, onClose }: AddLocationToTripProps) {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-normal text-neutral-900 truncate">
+                    <h4 className="text-sm font-normal text-neutral-900 dark:text-neutral-100 truncate">
                       {destination.name}
                     </h4>
-                    <p className="text-[11px] text-neutral-500 tracking-wide">
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 tracking-wide">
                       {destination.category}
                       {destination.city && ` • ${destination.city}`}
                     </p>

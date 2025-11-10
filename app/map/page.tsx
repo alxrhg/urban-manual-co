@@ -172,9 +172,9 @@ export default function MapPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Filters Bar - Top (below header) - Uses default container */}
-      <div className="sticky top-[112px] left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 safe-area-top">
+      <div className="sticky top-[112px] left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 safe-area-top">
         <div className="w-full px-6 md:px-10 lg:px-12 py-2 md:py-3">
           <div className="flex flex-col gap-2 md:gap-3">
             {/* Search Bar */}
@@ -185,7 +185,7 @@ export default function MapPage() {
                 value={filters.searchQuery}
                 onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
                 placeholder="Search cities, places, vibes…"
-                className="w-full pl-10 pr-10 py-2.5 md:py-2 bg-gray-100 border border-gray-200 rounded-xl text-base md:text-sm text-gray-900 placeholder-neutral-500 focus:outline-none focus:border-gray-300"
+                className="w-full pl-10 pr-10 py-2.5 md:py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-base md:text-sm text-gray-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:border-gray-300 dark:focus:border-gray-600"
               />
               {filters.searchQuery && (
                 <button
@@ -205,8 +205,8 @@ export default function MapPage() {
                   onClick={() => handleCategoryToggle(category)}
                   className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
                     filters.categories.has(category.toLowerCase())
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-gray-100 border-gray-200 text-gray-700 active:bg-gray-200'
+                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
+                      : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-700'
                   }`}
                 >
                   {category}
@@ -218,8 +218,8 @@ export default function MapPage() {
                 onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
                 className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
                   filters.michelin
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-gray-100 border-gray-200 text-gray-700 active:bg-gray-200'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
+                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-700'
                 }`}
               >
                 <img
@@ -236,9 +236,9 @@ export default function MapPage() {
 
       {/* List Panel - Left (Desktop) */}
       {showListPanel && (
-        <div className="hidden md:block fixed left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-white/95 backdrop-blur-sm border-r border-gray-200 z-20 overflow-y-auto">
+        <div className="hidden md:block fixed left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-800 z-20 overflow-y-auto">
           <div className="p-4 space-y-2">
-            <div className="text-xs text-neutral-500 mb-4">
+            <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
             </div>
             {sortedDestinations.map((dest) => (
@@ -247,8 +247,8 @@ export default function MapPage() {
                 onClick={() => handleListItemClick(dest)}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
                   selectedDestination?.slug === dest.slug
-                    ? 'bg-gray-100 border border-gray-200'
-                    : 'bg-gray-50/50 hover:bg-gray-100 border border-transparent'
+                    ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                    : 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
                 }`}
               >
                 {dest.image && (
@@ -263,8 +263,8 @@ export default function MapPage() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">{dest.name}</div>
-                  <div className="text-xs text-neutral-500 mt-0.5">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{dest.name}</div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                     {dest.category && <span>{dest.category}</span>}
                     {dest.city && (
                       <span className="ml-1">• {dest.city}</span>
@@ -297,16 +297,16 @@ export default function MapPage() {
             onClick={() => setShowListPanel(false)}
           />
           {/* Panel - Takes up max 50% of screen, shows map above */}
-          <div className="md:hidden fixed inset-x-0 bottom-0 bg-white border-t border-gray-200 z-30 overflow-hidden rounded-t-2xl shadow-2xl safe-area-bottom"
+          <div className="md:hidden fixed inset-x-0 bottom-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 z-30 overflow-hidden rounded-t-2xl shadow-2xl safe-area-bottom"
             style={{ 
               height: 'min(50vh, 400px)',
               maxHeight: '50vh'
             }}>
             {/* Handle bar with close button */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 z-10 px-4 py-3 flex items-center justify-between">
+            <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 z-10 px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-1 bg-gray-300 rounded-full" />
-                <span className="text-xs font-medium text-gray-700">
+                <div className="w-8 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   {filteredDestinations.length} {filteredDestinations.length === 1 ? 'place' : 'places'}
                 </span>
               </div>
@@ -328,22 +328,22 @@ export default function MapPage() {
                     handleListItemClick(dest);
                     setShowListPanel(false);
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 active:bg-gray-100 transition-colors text-left min-h-[72px] touch-manipulation"
-                >
-                  {dest.image && (
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                      <Image
-                        src={dest.image}
-                        alt={dest.name}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{dest.name}</div>
-                    <div className="text-xs text-neutral-500 mt-0.5">
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left min-h-[72px] touch-manipulation"
+                  >
+                    {dest.image && (
+                      <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
+                        <Image
+                          src={dest.image}
+                          alt={dest.name}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{dest.name}</div>
+                      <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                       {dest.category && <span>{dest.category}</span>}
                       {dest.city && (
                         <span className="ml-1">• {dest.city}</span>
@@ -363,7 +363,7 @@ export default function MapPage() {
       {!showListPanel && (
         <button
           onClick={() => setShowListPanel(true)}
-          className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-gray-900 border border-gray-900 rounded-xl text-sm font-medium text-white active:bg-gray-800 transition-all duration-200 shadow-lg min-h-[44px] safe-area-bottom hover:scale-105"
+          className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-gray-900 dark:bg-gray-100 border border-gray-900 dark:border-gray-100 rounded-xl text-sm font-medium text-white dark:text-gray-900 active:bg-gray-800 dark:active:bg-gray-200 transition-all duration-200 shadow-lg min-h-[44px] safe-area-bottom hover:scale-105"
           style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
         >
           <div className="flex items-center gap-2">
