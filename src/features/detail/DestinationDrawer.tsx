@@ -488,9 +488,14 @@ Summary:`;
         if (onVisitToggle) onVisitToggle(destination.slug, false);
       } else {
         // Add visit with current date (no modal needed - just mark as visited)
-        const { error } = await (supabase
+        if (!destination.slug) {
+          alert('Invalid destination. Please try again.');
+          return;
+        }
+
+        const { error } = await supabase
           .from('visited_places')
-          .insert as any)({
+          .upsert({
             user_id: user.id,
             destination_slug: destination.slug,
             visited_at: new Date().toISOString(),
