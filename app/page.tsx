@@ -2546,6 +2546,12 @@ export default function Home() {
               setTimeout(() => setSelectedDestination(null), 300);
             }}
           />
+
+          {/* Trip Planner Modal */}
+          <TripPlanner
+            isOpen={showTripPlanner}
+            onClose={() => setShowTripPlanner(false)}
+          />
       </main>
     </ErrorBoundary>
   );
