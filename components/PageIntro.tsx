@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { PageContainer } from './PageContainer';
+
+const WIDTH_MAP: Record<'narrow' | 'standard' | 'wide', string> = {
+  narrow: 'max-w-4xl',
+  standard: 'max-w-5xl',
+  wide: 'max-w-6xl',
+};
 
 interface PageIntroProps {
   eyebrow?: string;
