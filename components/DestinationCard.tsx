@@ -75,7 +75,7 @@ export function DestinationCard({
       {/* Image Container with Progressive Loading */}
       <div
         className={`
-          relative aspect-square overflow-hidden rounded-2xl
+          relative aspect-video overflow-hidden rounded-2xl
           bg-gray-100 dark:bg-gray-800
           border border-gray-200 dark:border-gray-800
           transition-shadow duration-300
