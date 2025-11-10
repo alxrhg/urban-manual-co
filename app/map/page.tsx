@@ -173,6 +173,9 @@ export default function MapPage() {
 
   return (
     <div className="fixed inset-0 bg-white text-gray-900 overflow-hidden">
+      {/* Header spacing - account for header height */}
+      <div className="absolute top-0 left-0 right-0 h-[112px] z-40 pointer-events-none" />
+      
       {/* Filters Bar - Top (below header) - Uses default container */}
       <div className="absolute top-[112px] left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 safe-area-top">
         <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-2 md:py-3">

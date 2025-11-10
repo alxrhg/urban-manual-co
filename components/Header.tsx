@@ -95,7 +95,7 @@ export function Header() {
 
   return (
     <header 
-      className="mt-6 md:mt-8" 
+      className="mt-6 md:mt-8 relative z-50" 
       role="banner"
     >
       {/* Primary Nav: Brand + Menu */}
