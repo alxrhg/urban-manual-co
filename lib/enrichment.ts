@@ -476,8 +476,13 @@ export async function enrichDestination(
   // Step 3: Determine final category
   let finalCategory = existingCategory || '';
 
+  // Special rule: Places starting with "apple" should be Shopping (retail stores)
+  if (name.toLowerCase().startsWith('apple')) {
+    console.log(`Category from name rule: Shopping (Apple store)`);
+    finalCategory = 'Shopping';
+  }
   // Priority: Google types > Gemini suggestion > existing
-  if (placesData.google_types.length > 0) {
+  else if (placesData.google_types.length > 0) {
     const googleCategory = categorizePlaceFromTypes(placesData.google_types);
     if (googleCategory) {
       console.log(`Category from Google types: ${googleCategory}`);

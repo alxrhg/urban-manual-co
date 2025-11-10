@@ -1210,8 +1210,12 @@ export default function AdminPage() {
                   onSave={async (data) => {
                     setIsSaving(true);
                     try {
+                      // Special rule: Places starting with "apple" should be Shopping (retail stores)
+                      if (data.name && data.name.toLowerCase().startsWith('apple')) {
+                        data.category = 'Shopping';
+                      }
                       // Ensure Michelin-starred destinations are categorized as Restaurant
-                      if (data.michelin_stars && data.michelin_stars > 0) {
+                      else if (data.michelin_stars && data.michelin_stars > 0) {
                         data.category = 'Restaurant';
                       }
 
