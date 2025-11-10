@@ -315,43 +315,44 @@ export default function MapPage() {
               <div className="w-12 h-1 bg-gray-700 rounded-full" />
             </div>
             <div className="p-4 space-y-2 pb-6">
-            <div className="text-xs text-neutral-400 mb-4">
-              {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+              <div className="text-xs text-neutral-400 mb-4">
+                {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+              </div>
+              {sortedDestinations.map((dest) => (
+                <button
+                  key={dest.slug}
+                  onClick={() => {
+                    handleListItemClick(dest);
+                    setShowListPanel(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-800/50 active:bg-gray-800 transition-colors text-left min-h-[72px] touch-manipulation"
+                >
+                  {dest.image && (
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-800">
+                      <Image
+                        src={dest.image}
+                        alt={dest.name}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-white truncate">{dest.name}</div>
+                    <div className="text-xs text-neutral-400 mt-0.5">
+                      {dest.category && <span>{dest.category}</span>}
+                      {dest.city && (
+                        <span className="ml-1">• {dest.city}</span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
+                </button>
+              ))}
             </div>
-            {sortedDestinations.map((dest) => (
-              <button
-                key={dest.slug}
-                onClick={() => {
-                  handleListItemClick(dest);
-                  setShowListPanel(false);
-                }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-800/50 active:bg-gray-800 transition-colors text-left min-h-[72px] touch-manipulation"
-              >
-                {dest.image && (
-                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-800">
-                    <Image
-                      src={dest.image}
-                      alt={dest.name}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-white truncate">{dest.name}</div>
-                  <div className="text-xs text-neutral-400 mt-0.5">
-                    {dest.category && <span>{dest.category}</span>}
-                    {dest.city && (
-                      <span className="ml-1">• {dest.city}</span>
-                    )}
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
-              </button>
-            ))}
           </div>
-        </div>
+        </>
       )}
 
       {/* Details Panel - Right (Desktop) - Using Drawer for now */}
