@@ -201,6 +201,35 @@
     width: 100%;
     box-sizing: border-box;
   }
+
+  /* Map Page Layout - Structured page container for map */
+  .um-map-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding-top: 48px;
+    background: #FAFAFA;
+  }
+
+  .um-map-toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 0 24px;
+    margin-bottom: 16px;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .um-map-canvas {
+    flex: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    margin: 0 24px 24px;
+  }
 }
 
 @layer utilities {
