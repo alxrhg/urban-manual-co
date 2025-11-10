@@ -173,9 +173,9 @@ export default function MapPage() {
 
   return (
     <div className="fixed inset-0 bg-neutral-900 text-white overflow-hidden">
-      {/* Filters Bar - Top (below header) */}
+      {/* Filters Bar - Top (below header) - Uses default container */}
       <div className="absolute top-[112px] left-0 right-0 z-30 bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-800">
-        <div className="container mx-auto px-4 md:px-8 lg:px-12 py-3">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-8 lg:px-12 py-3">
           <div className="flex flex-col gap-3">
             {/* Search Bar */}
             <div className="relative">
@@ -197,8 +197,8 @@ export default function MapPage() {
               )}
             </div>
 
-            {/* Category Chips */}
-            <div className="flex flex-wrap gap-2 overflow-x-auto">
+            {/* Category Chips - itemGap: 8px, rowGap: 12px */}
+            <div className="flex flex-wrap gap-2 overflow-x-auto" style={{ gap: '8px 8px', rowGap: '12px' }}>
               {categories.map(category => (
                 <button
                   key={category}
@@ -278,8 +278,8 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Map - Full Bleed */}
-      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)]`}>
+      {/* Map - Full Bleed, 100vh, no border radius */}
+      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)]`} style={{ height: '100vh', borderRadius: 0 }}>
         <MapView
           destinations={filteredDestinations}
           onMarkerClick={handleMarkerClick}

@@ -237,8 +237,8 @@ export default function MapView({
   return (
     <div
       ref={mapRef}
-      className="w-full h-full rounded-2xl overflow-hidden"
-      style={{ minHeight: '400px' }}
+      className="w-full h-full overflow-hidden"
+      style={{ minHeight: '400px', borderRadius: 0 }}
     />
   );
 }
