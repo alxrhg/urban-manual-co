@@ -91,8 +91,20 @@ export default function CityPageClient() {
       const results = (data || []) as any[];
       setDestinations(results);
 
-      const uniqueCategories = Array.from(new Set(results.map((d: any) => d.category).filter(Boolean))) as string[];
-      setCategories(uniqueCategories);
+      // Count destinations per category and only show categories with at least 2 destinations
+      const categoryCounts = new Map<string, number>();
+      results.forEach((d: any) => {
+        if (d.category) {
+          categoryCounts.set(d.category, (categoryCounts.get(d.category) || 0) + 1);
+        }
+      });
+
+      // Filter out quiet categories (categories with less than 2 destinations)
+      const activeCategories = Array.from(categoryCounts.entries())
+        .filter(([_, count]) => count >= 2)
+        .map(([category, _]) => category);
+
+      setCategories(activeCategories);
 
       applyFilters(results, selectedCategory, advancedFilters);
     } catch (err) {
