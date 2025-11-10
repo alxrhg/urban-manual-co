@@ -1013,17 +1013,36 @@ export default function Home() {
       }
       
       // Optimize query: only get distinct city/category pairs, limit to speed up
-      const { data, error } = await supabaseClient
-        .from('destinations')
-        .select('city, category')
-        .is('parent_destination_id', null) // Only top-level destinations for filters
-        .limit(1000) // Limit to speed up initial query
-        .order('city');
+      let data, error;
+      try {
+        const queryPromise = supabaseClient
+          .from('destinations')
+          .select('city, category')
+          .is('parent_destination_id', null) // Only top-level destinations for filters
+          .limit(1000) // Limit to speed up initial query
+          .order('city');
+        
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Network timeout')), 30000)
+        );
+        
+        const result = await Promise.race([queryPromise, timeoutPromise]);
+        data = result.data;
+        error = result.error;
+      } catch (networkError: any) {
+        // Handle network errors (connection lost, timeout, etc.)
+        console.warn('[Filter Data] Network error:', networkError?.message || networkError);
+        error = networkError;
+        data = null;
+      }
 
       // OPTIMIZATION: Use helper function for error checking
       if (error || !data) {
         if (error && !isIgnorableSupabaseError(error)) {
-          console.warn('[Filter Data] Error:', error.message || error);
+          // Don't log network errors as warnings - they're expected in poor connectivity
+          if (!error.message?.includes('Network') && !error.message?.includes('timeout')) {
+            console.warn('[Filter Data] Error:', error.message || error);
+          }
         }
 
         // OPTIMIZATION: Reuse the already-started Discovery Engine call
@@ -1280,17 +1299,36 @@ export default function Home() {
       
       // Optimize query: limit initial results for faster load
       // Exclude nested destinations (only show top-level destinations)
-      const { data, error } = await supabaseClient
-        .from('destinations')
-        .select('slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
-        .is('parent_destination_id', null) // Only top-level destinations
-        .limit(500) // Limit initial query for faster load
-        .order('name');
+      let data, error;
+      try {
+        const queryPromise = supabaseClient
+          .from('destinations')
+          .select('slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
+          .is('parent_destination_id', null) // Only top-level destinations
+          .limit(500) // Limit initial query for faster load
+          .order('name');
+        
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Network timeout')), 30000)
+        );
+        
+        const result = await Promise.race([queryPromise, timeoutPromise]);
+        data = result.data;
+        error = result.error;
+      } catch (networkError: any) {
+        // Handle network errors (connection lost, timeout, etc.)
+        console.warn('[Destinations] Network error:', networkError?.message || networkError);
+        error = networkError;
+        data = null;
+      }
 
       if (error || !data || !Array.isArray(data) || data.length === 0) {
         // OPTIMIZATION: Use helper function for error checking
         if (error && !isIgnorableSupabaseError(error)) {
-          console.warn('Error fetching destinations:', error.message || error);
+          // Don't log network errors as warnings - they're expected in poor connectivity
+          if (!error.message?.includes('Network') && !error.message?.includes('timeout')) {
+            console.warn('Error fetching destinations:', error.message || error);
+          }
         }
 
         // Fallback to Discovery Engine if Supabase fails
@@ -1739,7 +1777,11 @@ export default function Home() {
     return message.includes('hostname') || 
            message.includes('Failed to fetch') || 
            message.includes('invalid.supabase') ||
-           message.includes('timeout');
+           message.includes('timeout') ||
+           message.includes('Network') ||
+           message.includes('connection') ||
+           message.includes('Connection lost') ||
+           message.includes('network connection was lost');
   }, []);
 
   // Memoized filter function to avoid recreating on every render
