@@ -7,6 +7,12 @@ import { unifiedSearch } from '@/lib/discovery-engine/integration';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Initialize Gemini as fallback
+const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 
 // Support both new (publishable/secret) and legacy (anon/service_role) key naming
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
@@ -253,26 +259,61 @@ Return only the JSON, no other text.`;
     // Use appropriate model based on query complexity
     const model = getModelForQuery(query, conversationHistory);
     
-    const response = await withTimeout(
-      openai.chat.completions.create({
-        model: model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
-      }),
-      4000, // 4 second timeout for intent parsing
-      null
-    ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
+    let text = '';
+    
+    // Try OpenAI first
+    if (openai?.chat) {
+      try {
+        const response = await withTimeout(
+          openai.chat.completions.create({
+            model: model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
+          }),
+          4000, // 4 second timeout for intent parsing
+          null
+        ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
-    if (!response) {
-      console.warn('[AI Chat] Intent parsing timed out, using fallback');
-      return parseQueryFallback(query);
+        if (response) {
+          text = response.choices?.[0]?.message?.content || '';
+        }
+      } catch (error) {
+        console.error('[AI Chat] OpenAI intent parsing error, falling back to Gemini:', error);
+      }
     }
 
-    const text = response.choices?.[0]?.message?.content || '';
+    // Fallback to Gemini if OpenAI failed or not configured
+    if (!text && genAI) {
+      try {
+        const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\nReturn only the JSON, no other text.`;
+        const geminiModel = genAI.getGenerativeModel({ 
+          model: GEMINI_MODEL,
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+          }
+        });
+        const result = await withTimeout(
+          geminiModel.generateContent(fullPrompt),
+          4000,
+          null
+        );
+        if (result) {
+          text = result.response.text();
+        }
+      } catch (error) {
+        console.error('[AI Chat] Gemini intent parsing error:', error);
+      }
+    }
+
+    if (!text) {
+      console.warn('[AI Chat] Intent parsing failed, using fallback');
+      return parseQueryFallback(query);
+    }
     
     if (text) {
       try {
@@ -519,10 +560,7 @@ async function generateIntelligentResponse(
     contextInfo += `\n🚶 Walking time from city center: ~${walkingTime} minutes`;
   }
 
-  // Generate response using OpenAI if available
-  if (openai?.chat) {
-    try {
-      const systemPrompt = `You are Urban Manual's intelligent travel assistant. You help users discover amazing places with rich, contextual insights.
+  const systemPrompt = `You are Urban Manual's intelligent travel assistant. You help users discover amazing places with rich, contextual insights.
 
 AVAILABLE DATA FOR EACH DESTINATION:
 - Photos: High-quality images from Google Places
@@ -541,7 +579,7 @@ GUIDELINES:
 
 ${contextInfo}`;
 
-      const userPrompt = `User searched: "${query}"
+  const userPrompt = `User searched: "${query}"
 Found ${results.length} results.
 
 Top results:
@@ -563,6 +601,9 @@ ${topResults.slice(0, 5).map((r: any, i: number) => {
 
 Generate a natural, helpful response that incorporates relevant context (weather, events, walking distance) when it adds value. Be conversational and concise.`;
 
+  // Try OpenAI first
+  if (openai?.chat) {
+    try {
       // Use appropriate model based on query complexity
       // For response generation, we use simple model unless query is very complex
       const model = getModelForQuery(query, []);
@@ -586,7 +627,34 @@ Generate a natural, helpful response that incorporates relevant context (weather
         return aiResponse.trim();
       }
     } catch (error) {
-      console.error('[AI Chat] Error generating intelligent response:', error);
+      console.error('[AI Chat] OpenAI response generation error, falling back to Gemini:', error);
+    }
+  }
+
+  // Fallback to Gemini if OpenAI failed or not configured
+  if (genAI) {
+    try {
+      const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+      const geminiModel = genAI.getGenerativeModel({ 
+        model: GEMINI_MODEL,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 150,
+        }
+      });
+      const result = await withTimeout(
+        geminiModel.generateContent(fullPrompt),
+        5000,
+        null
+      );
+      if (result) {
+        const aiResponse = result.response.text();
+        if (aiResponse) {
+          return aiResponse.trim();
+        }
+      }
+    } catch (error) {
+      console.error('[AI Chat] Gemini response generation error:', error);
     }
   }
 
