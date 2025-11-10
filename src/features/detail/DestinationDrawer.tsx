@@ -762,7 +762,12 @@ Summary:`;
                 } else {
                   // Quick unsave
                   try {
-                    const { error } = await supabase
+                    const supabaseClient = createClient();
+                    if (!supabaseClient) {
+                      alert('Failed to connect to database. Please try again.');
+                      return;
+                    }
+                    const { error } = await supabaseClient
                       .from('saved_places')
                       .delete()
                       .eq('user_id', user.id)
@@ -1490,13 +1495,18 @@ Summary:`;
             // Reload saved status after modal closes
             if (user && destination?.slug) {
               try {
-                const { data } = await supabase
-                  .from('saved_places')
-                  .select('id')
-                  .eq('user_id', user.id)
-                  .eq('destination_slug', destination.slug)
-                  .single();
-                setIsSaved(!!data);
+                const supabaseClient = createClient();
+                if (supabaseClient) {
+                  const { data } = await supabaseClient
+                    .from('saved_places')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('destination_slug', destination.slug)
+                    .single();
+                  setIsSaved(!!data);
+                } else {
+                  setIsSaved(false);
+                }
               } catch {
                 setIsSaved(false);
               }
@@ -1506,14 +1516,17 @@ Summary:`;
             // If collectionId is null, user unsaved - remove from saved_places
             if (collectionId === null && destination.slug && user) {
               try {
-                const { error } = await supabase
-                  .from('saved_places')
-                  .delete()
-                  .eq('user_id', user.id)
-                  .eq('destination_slug', destination.slug);
-                if (!error) {
-                  setIsSaved(false);
-                  if (onSaveToggle) onSaveToggle(destination.slug, false);
+                const supabaseClient = createClient();
+                if (supabaseClient) {
+                  const { error } = await supabaseClient
+                    .from('saved_places')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('destination_slug', destination.slug);
+                  if (!error) {
+                    setIsSaved(false);
+                    if (onSaveToggle) onSaveToggle(destination.slug, false);
+                  }
                 }
               } catch (error) {
                 console.error('Error removing from saved_places:', error);
@@ -1521,15 +1534,18 @@ Summary:`;
             } else if (collectionId !== null && destination.slug && user) {
               // Also save to saved_places for simple save functionality
               try {
-                const { error } = await supabase
-                  .from('saved_places')
-                  .upsert({
-                    user_id: user.id,
-                    destination_slug: destination.slug,
-                  });
-                if (!error) {
-                  setIsSaved(true);
-                  if (onSaveToggle) onSaveToggle(destination.slug, true);
+                const supabaseClient = createClient();
+                if (supabaseClient) {
+                  const { error } = await supabaseClient
+                    .from('saved_places')
+                    .upsert({
+                      user_id: user.id,
+                      destination_slug: destination.slug,
+                    });
+                  if (!error) {
+                    setIsSaved(true);
+                    if (onSaveToggle) onSaveToggle(destination.slug, true);
+                  }
                 }
               } catch (error) {
                 console.error('Error saving to saved_places:', error);
@@ -1548,11 +1564,6 @@ Summary:`;
           onClose={() => setShowVisitedModal(false)}
           onUpdate={handleVisitedModalUpdate}
         />
-      )}
-    </>
-  );
-}
-
       )}
     </>
   );
