@@ -1019,14 +1019,17 @@ Summary:`;
                       // Unsave from saved_places
                       if (destination?.slug && user) {
                         try {
-                          const { error } = await supabase
-                            .from('saved_places')
-                            .delete()
-                            .eq('user_id', user.id)
-                            .eq('destination_slug', destination.slug);
-                          if (!error) {
-                            setIsSaved(false);
-                            if (onSaveToggle) onSaveToggle(destination.slug, false);
+                          const supabaseClient = createClient();
+                          if (supabaseClient) {
+                            const { error } = await supabaseClient
+                              .from('saved_places')
+                              .delete()
+                              .eq('user_id', user.id)
+                              .eq('destination_slug', destination.slug);
+                            if (!error) {
+                              setIsSaved(false);
+                              if (onSaveToggle) onSaveToggle(destination.slug, false);
+                            }
                           }
                         } catch (error) {
                           console.error('Error unsaving:', error);
