@@ -93,21 +93,12 @@ export function Header() {
     setIsMenuOpen(false);
   };
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-    }
-  };
-
   return (
     <header 
       className="mt-6 md:mt-8" 
       role="banner"
     >
-      {/* Primary Nav: Brand + Search */}
+      {/* Primary Nav: Brand + Menu */}
       <div className="container mx-auto px-4 md:px-8 lg:px-12">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo - Left */}
@@ -118,17 +109,6 @@ export function Header() {
           >
             Urban Manual®
           </button>
-          
-          {/* Search - Center */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md mx-4">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search destinations..."
-              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-black"
-            />
-          </form>
           
           {/* Profile picture / Menu dropdown on right */}
           <div className="flex items-center gap-4 shrink-0">
