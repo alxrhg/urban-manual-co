@@ -58,8 +58,8 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
 
       {/* Text Overlay (Centered) */}
       <div className="absolute inset-0 flex items-center justify-center p-6 z-10">
-        <div className="text-center">
-          <h3 className="text-xl md:text-2xl font-medium text-white mb-2 line-clamp-2">
+        <div className="text-center space-y-0">
+          <h3 className="text-xl md:text-2xl font-medium text-white line-clamp-2">
             {destination.name}
           </h3>
           <p className="text-xs text-white/80 line-clamp-1">

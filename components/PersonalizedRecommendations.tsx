@@ -142,7 +142,7 @@ function PersonalizedRecommendationsComponent({
               </div>
 
               {/* Info */}
-              <div className="space-y-0.5">
+              <div className="space-y-0">
                 <h3 className={CARD_TITLE}>{destination.name}</h3>
                 <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
                   {destination.micro_description || 

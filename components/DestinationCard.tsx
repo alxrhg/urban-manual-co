@@ -160,11 +160,11 @@ export function DestinationCard({
       </div>
 
       {/* Info Section */}
-      <div className="space-y-0.5">
+      <div className="space-y-0">
         <h3
           className={`
             text-sm font-medium text-gray-900 dark:text-white
-            line-clamp-2 min-h-[2.5rem]
+            line-clamp-2
             transition-colors duration-200
             group-hover:text-gray-700 dark:group-hover:text-gray-200
           `}
@@ -172,8 +172,8 @@ export function DestinationCard({
           {destination.name}
         </h3>
 
-        {/* Micro Description - Always show with fallback */}
-        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1 mt-[2px]">
+        {/* Micro Description - Always show with fallback, stuck to title */}
+        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1">
           {destination.micro_description || 
            (destination.category && destination.city 
              ? `${destination.category} in ${capitalizeCity(destination.city)}`

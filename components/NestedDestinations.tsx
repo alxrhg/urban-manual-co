@@ -63,7 +63,7 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
               )}
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0">
               <h4 className={`${CARD_TITLE} line-clamp-2`}>{dest.name}</h4>
               <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
                 {dest.micro_description || 

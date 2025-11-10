@@ -29,7 +29,7 @@ export function DestinationCardList({
               : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-dark-blue-700'
           }`}
         >
-          <div className="font-medium text-sm mb-1">{d.name}</div>
+          <div className="font-medium text-sm">{d.name}</div>
           <div className="text-[10px] text-gray-500 line-clamp-1">
             {d.micro_description || 
              (d.category && d.city 
