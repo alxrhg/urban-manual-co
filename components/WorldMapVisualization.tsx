@@ -193,10 +193,10 @@ export function WorldMapVisualization({
         >
           <Geographies geography={geoUrl}>
             {({ geographies }) => {
-              // Debug: Log visited ISO codes in development
-              if (process.env.NODE_ENV === 'development' && visitedISO2Codes.size > 0) {
-                console.log('[WorldMap] Visited ISO2 codes:', Array.from(visitedISO2Codes));
-              }
+              // Debug: Log visited ISO codes
+              console.log('[WorldMap] Visited countries:', Array.from(visitedCountries));
+              console.log('[WorldMap] Visited ISO2 codes:', Array.from(visitedISO2Codes));
+              console.log('[WorldMap] City markers:', cityMarkers.length);
               
               return geographies.map((geo) => {
                 // world-110m.json uses ISO_A2 for 2-letter codes

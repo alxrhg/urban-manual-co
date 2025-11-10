@@ -295,11 +295,12 @@ export default function Account() {
     ]);
     
     // Debug logging to help diagnose map issues
-    if (uniqueCountries.size > 0 && process.env.NODE_ENV === 'development') {
-      console.log('[Account] Countries found:', Array.from(uniqueCountries));
-      console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
-      console.log('[Account] Countries from cities:', countriesFromCities);
-    }
+    console.log('[Account] Countries found:', Array.from(uniqueCountries));
+    console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
+    console.log('[Account] Countries from cities:', countriesFromCities);
+    console.log('[Account] Unique cities:', Array.from(uniqueCities));
+    console.log('[Account] Visited places count:', visitedPlaces.length);
+    console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
 
     // Extract visited destinations with coordinates for map
     const visitedDestinationsWithCoords = visitedPlaces
@@ -455,12 +456,14 @@ export default function Account() {
             </div>
 
             {/* World Map */}
-            {(stats.uniqueCountries.size > 0 || stats.uniqueCities.size > 0) && (
+            {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Travel Map</h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {stats.uniqueCountries.size} {stats.uniqueCountries.size === 1 ? 'country' : 'countries'} • {stats.uniqueCities.size} {stats.uniqueCities.size === 1 ? 'city' : 'cities'}
+                    {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'country' : 'countries'}`}
+                    {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' • '}
+                    {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
                   </p>
                 </div>
                 <WorldMapVisualization 
