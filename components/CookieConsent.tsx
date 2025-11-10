@@ -19,7 +19,7 @@ export function CookieConsent() {
 
   return (
     visible && (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-xl border border-neutral-800 bg-neutral-900/80 backdrop-blur-sm text-sm text-neutral-300 max-w-sm shadow-lg transition-all">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-xl border border-dark-blue-600 bg-dark-blue-900/80 backdrop-blur-sm text-sm text-neutral-300 max-w-sm shadow-lg transition-all">
         <div className="space-y-3">
           <div className="flex items-start gap-3">
             <Cookie className="h-5 w-5 text-neutral-400 flex-shrink-0 mt-0.5" />
@@ -45,7 +45,7 @@ export function CookieConsent() {
           </div>
 
           {manage && (
-            <div className="border-t border-neutral-800 pt-3 space-y-2">
+            <div className="border-t border-dark-blue-600 pt-3 space-y-2">
               <label className="flex items-center justify-between text-neutral-400">
                 Required cookies
                 <input type="checkbox" checked readOnly className="opacity-60" />

@@ -53,7 +53,7 @@ export function ListSkeleton({ count = 5 }: { count?: number }) {
 // Skeleton loader for stats cards
 export function StatsCardSkeleton() {
   return (
-    <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl space-y-2">
+    <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl space-y-2">
       <Skeleton className="h-6 rounded-full w-12" />
       <Skeleton className="h-3 rounded-full w-16" />
     </div>

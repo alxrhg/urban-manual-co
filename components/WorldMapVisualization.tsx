@@ -171,7 +171,7 @@ export function WorldMapVisualization({
 
   return (
     <div className="w-full">
-      <div className="w-full aspect-[2/1] max-w-full bg-white dark:bg-gray-950 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden" style={{ height: 'auto' }}>
+      <div className="w-full aspect-[2/1] max-w-full bg-white dark:bg-gray-950 rounded-2xl border border-gray-200 dark:border-dark-blue-600 overflow-hidden" style={{ height: 'auto' }}>
         <ComposableMap
           projection="geoMercator"
           projectionConfig={{

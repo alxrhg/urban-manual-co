@@ -128,12 +128,12 @@ export function VisitedModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4">
+      <div className="bg-white dark:bg-dark-blue-900 rounded-2xl shadow-2xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">Visit Details</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -152,7 +152,7 @@ export function VisitedModal({
                 type="date"
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
-                className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
+                className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-dark-blue-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-sm"
               />
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
@@ -189,7 +189,7 @@ export function VisitedModal({
               onChange={(e) => setVisitNotes(e.target.value)}
               placeholder="Share your experience, tips, or memories..."
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 resize-none text-sm"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-dark-blue-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 resize-none text-sm"
             />
           </div>
         </div>
@@ -197,7 +197,7 @@ export function VisitedModal({
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
+            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
           >
             Cancel
           </button>

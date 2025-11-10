@@ -110,7 +110,7 @@ export function LocatedInBadge({ parent, onClick }: LocatedInBadgeProps) {
   return (
     <button
       onClick={handleClick}
-      className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+      className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors group"
     >
       <MapPin className="h-3 w-3" />
       <span>Located in</span>

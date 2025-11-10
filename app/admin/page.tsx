@@ -309,7 +309,7 @@ function DestinationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information Section */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
+      <div className="border-b border-gray-200 dark:border-dark-blue-600 pb-4">
         <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
         <div className="space-y-4">
           <div>
@@ -363,14 +363,14 @@ function DestinationForm({
                   }
                 }}
                 placeholder="Start typing a place name... (autocomplete enabled)"
-                className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
                 types="establishment"
               />
               <button
                 type="button"
                 onClick={fetchFromGoogle}
                 disabled={fetchingGoogle || !formData.name.trim()}
-                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className="px-4 py-2 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 {fetchingGoogle ? (
                   <>
@@ -395,7 +395,7 @@ function DestinationForm({
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 placeholder="auto-generated if empty"
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -405,7 +405,7 @@ function DestinationForm({
                 required
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., Tokyo"
               />
             </div>
@@ -417,7 +417,7 @@ function DestinationForm({
               required
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., restaurant, hotel, cafe"
             />
           </div>
@@ -427,7 +427,7 @@ function DestinationForm({
             <label className="block text-sm font-medium mb-1.5">Parent Destination (Optional)</label>
             <div className="relative">
               {selectedParent ? (
-                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700">
                   <div>
                     <span className="text-sm font-medium">{selectedParent.name}</span>
                     <span className="text-xs text-gray-500 ml-2">{selectedParent.city}</span>
@@ -450,7 +450,7 @@ function DestinationForm({
                     value={parentSearchQuery}
                     onChange={(e) => setParentSearchQuery(e.target.value)}
                     placeholder="Search for parent destination (e.g., hotel name)..."
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   {isSearchingParent && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -458,7 +458,7 @@ function DestinationForm({
                     </div>
                   )}
                   {parentSearchResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       {parentSearchResults.map((parent) => (
                         <button
                           key={parent.id}
@@ -469,7 +469,7 @@ function DestinationForm({
                             setParentSearchQuery('');
                             setParentSearchResults([]);
                           }}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors"
                         >
                           <div className="font-medium text-sm">{parent.name}</div>
                           <div className="text-xs text-gray-500">{parent.city} • {parent.category}</div>
@@ -488,7 +488,7 @@ function DestinationForm({
       </div>
 
       {/* Image Section */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
+      <div className="border-b border-gray-200 dark:border-dark-blue-600 pb-4">
         <h3 className="text-lg font-semibold mb-4">Image</h3>
         <div className="space-y-3">
           {/* Drag and Drop Zone */}
@@ -499,7 +499,7 @@ function DestinationForm({
             className={`relative border-2 border-dashed rounded-2xl p-6 transition-colors ${
               isDragging
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50'
+                : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-dark-blue-900/50'
             }`}
           >
             <input
@@ -560,7 +560,7 @@ function DestinationForm({
                 className="hidden"
                 id="image-upload-button"
               />
-              <span className="inline-flex items-center justify-center w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
+              <span className="inline-flex items-center justify-center w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
                 📁 {imageFile ? 'Change Image' : 'Choose File'}
               </span>
             </label>
@@ -588,7 +588,7 @@ function DestinationForm({
               }
             }}
             placeholder="Enter image URL"
-            className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
           />
           {imagePreview && (
             <div className="mt-3">
@@ -610,7 +610,7 @@ function DestinationForm({
       </div>
 
       {/* Content Section */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
+      <div className="border-b border-gray-200 dark:border-dark-blue-600 pb-4">
         <h3 className="text-lg font-semibold mb-4">Content</h3>
         <div className="space-y-4">
           <div>
@@ -619,7 +619,7 @@ function DestinationForm({
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               placeholder="A brief, punchy description (1-2 sentences)"
             />
           </div>
@@ -629,7 +629,7 @@ function DestinationForm({
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               rows={8}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
               placeholder="A detailed description of the destination, what makes it special, atmosphere, best time to visit, etc."
             />
           </div>
@@ -637,7 +637,7 @@ function DestinationForm({
       </div>
 
       {/* Additional Details */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
+      <div className="border-b border-gray-200 dark:border-dark-blue-600 pb-4">
         <h3 className="text-lg font-semibold mb-4">Additional Details</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -656,7 +656,7 @@ function DestinationForm({
                 }
                 setFormData(updatedFormData);
               }}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0-3"
             />
           </div>
@@ -681,7 +681,7 @@ function DestinationForm({
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
@@ -993,7 +993,7 @@ export default function AdminPage() {
 
         {/* Tab Navigation - Matches account page style */}
         <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-3">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-dark-blue-600 pb-3">
             {['destinations', 'analytics', 'searches', 'discover'].map((tab) => (
               <button
                 key={tab}
@@ -1066,19 +1066,19 @@ export default function AdminPage() {
               <>
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
                     <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
                     <div className="text-xs text-gray-500">Total Views</div>
                   </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
                     <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
                     <div className="text-xs text-gray-500">Total Searches</div>
                   </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
                     <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
                     <div className="text-xs text-gray-500">Total Saves</div>
                   </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
                     <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
                     <div className="text-xs text-gray-500">Total Users</div>
                   </div>
@@ -1090,7 +1090,7 @@ export default function AdminPage() {
                     <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
                     <div className="space-y-2">
                       {analyticsStats.topSearches.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
                           <span className="text-sm font-medium">{item.query}</span>
                           <span className="text-xs text-gray-500">{item.count} searches</span>
                         </div>
@@ -1116,7 +1116,7 @@ export default function AdminPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-left border-b border-gray-200 dark:border-gray-800">
+                    <tr className="text-left border-b border-gray-200 dark:border-dark-blue-600">
                       <th className="py-2 pr-4 font-medium text-gray-500">Time</th>
                       <th className="py-2 pr-4 font-medium text-gray-500">User</th>
                       <th className="py-2 pr-4 font-medium text-gray-500">Query</th>
@@ -1134,7 +1134,7 @@ export default function AdminPage() {
                       const count = log.metadata?.count ?? '';
                       const source = log.metadata?.source || '';
                       return (
-                        <tr key={log.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                        <tr key={log.id} className="border-b border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors">
                           <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
                           <td className="py-2 pr-4">{log.user_id ? log.user_id.substring(0, 8) : 'anon'}</td>
                           <td className="py-2 pr-4 max-w-[360px] truncate" title={q}>{q}</td>
@@ -1178,7 +1178,7 @@ export default function AdminPage() {
               } overflow-y-auto`}
             >
               {/* Header */}
-              <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-dark-blue-600 px-6 py-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-bold">
                   {editingDestination ? 'Edit Destination' : 'Create New Destination'}
                 </h2>
@@ -1187,7 +1187,7 @@ export default function AdminPage() {
                     setShowCreateModal(false);
                     setEditingDestination(null);
                   }}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>

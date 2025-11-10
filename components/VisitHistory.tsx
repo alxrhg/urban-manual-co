@@ -97,7 +97,7 @@ export function VisitHistoryComponent({ userId, limit = 20 }: VisitHistoryProps)
           <div
             key={item.id}
             onClick={() => router.push(`/destination/${dest.slug}`)}
-            className="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer transition-colors group"
+            className="flex items-center gap-4 p-3 bg-white dark:bg-dark-blue-800 rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer transition-colors group"
           >
             {dest.image ? (
               <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden">

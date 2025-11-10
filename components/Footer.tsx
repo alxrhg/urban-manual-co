@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="mt-12 border-t border-neutral-800 dark:border-neutral-800 pt-12 pb-16 text-sm text-neutral-500 dark:text-neutral-500">
+    <footer className="mt-12 border-t border-dark-blue-600 dark:border-dark-blue-600 pt-12 pb-16 text-sm text-neutral-500 dark:text-neutral-500">
       <div className="container mx-auto px-4 flex flex-col gap-12">
         {/* Brand / Tagline */}
         <div className="flex flex-col gap-1">
@@ -39,7 +39,7 @@ export function Footer() {
         </div>
 
         {/* Legal */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-neutral-800 dark:border-neutral-800">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-dark-blue-600 dark:border-dark-blue-600">
           <div>© {new Date().getFullYear()} The Urban Manual. All rights reserved.</div>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-neutral-200 dark:hover:text-neutral-200 transition-colors">

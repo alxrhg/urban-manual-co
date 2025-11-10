@@ -168,7 +168,7 @@ export function ActivityFeed({ userId, followingOnly = false, limit = 20 }: Acti
     return (
       <div className="space-y-4">
         {[1, 2, 3].map(i => (
-          <div key={i} className="animate-pulse bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-20"></div>
+          <div key={i} className="animate-pulse bg-gray-100 dark:bg-dark-blue-800 rounded-2xl p-4 h-20"></div>
         ))}
       </div>
     );
@@ -191,7 +191,7 @@ export function ActivityFeed({ userId, followingOnly = false, limit = 20 }: Acti
       {activities.map((activity) => (
         <div
           key={activity.id}
-          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+          className="bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 hover:shadow-md transition-shadow cursor-pointer"
           onClick={() => {
             if (activity.destination_slug && activity.destinations) {
               router.push(`/destination/${activity.destination_slug}`);

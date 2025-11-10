@@ -64,7 +64,7 @@ export default function DiscoverCollectionsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search collections..."
-              className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
             />
           </div>
 
@@ -72,7 +72,7 @@ export default function DiscoverCollectionsPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+            className="px-4 py-3 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
           >
             <option value="recent">Most Recent</option>
             <option value="popular">Most Popular</option>
@@ -94,7 +94,7 @@ export default function DiscoverCollectionsPage() {
               <button
                 key={collection.id}
                 onClick={() => router.push(`/collection/${collection.id}`)}
-                className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group"
+                className="text-left p-6 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors group"
               >
                 {/* Collection Header */}
                 <div className="flex items-start gap-3 mb-4">

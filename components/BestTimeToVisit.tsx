@@ -24,7 +24,7 @@ export function BestTimeToVisit({ destinationId, compact = false }: Props) {
   }
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-3">
+    <div className="border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 space-y-3">
       <h3 className="text-sm font-medium flex items-center gap-2">
         <Clock className="h-4 w-4" />
         Best Time to Visit
@@ -46,7 +46,7 @@ export function BestTimeToVisit({ destinationId, compact = false }: Props) {
         </div>
       </div>
 
-      <div className="text-xs text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-800">
+      <div className="text-xs text-gray-500 pt-2 border-t border-gray-200 dark:border-dark-blue-600">
         Based on historical patterns
       </div>
     </div>

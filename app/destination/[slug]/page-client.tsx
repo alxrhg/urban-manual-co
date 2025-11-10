@@ -363,7 +363,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             <div className="flex items-center gap-2">
               <a
                 href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5 text-xs"
+                className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors flex items-center gap-1.5 text-xs"
               >
                 <MapPin className="h-3 w-3" />
                 {destination.country ? `${cityName}, ${destination.country}` : cityName}
@@ -383,10 +383,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                         setShowSaveModal(true);
                       }
                     }}
-                    className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
                       isSaved
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                        ? 'bg-gray-100 dark:bg-dark-blue-800 text-gray-900 dark:text-gray-100'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
                     }`}
                   >
                     <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
@@ -397,10 +397,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
                           isVisited
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                            ? 'bg-gray-100 dark:bg-dark-blue-800 text-gray-900 dark:text-gray-100'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
                         }`}
                         onClick={(e) => {
                           if (!isVisited) {
@@ -449,12 +449,12 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               )}
               
               {destination.category && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400">
                   {formatLabel(destination.category)}
                 </span>
               )}
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <Image
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
@@ -466,12 +466,12 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </span>
               )}
               {destination.crown && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400">
                   Crown
                 </span>
               )}
               {(enrichedData?.rating || destination.rating) && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -490,7 +490,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* Image */}
         {destination.image && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-dark-blue-600 bg-gray-100 dark:bg-dark-blue-900">
             <Image
               src={destination.image}
               alt={`${destination.name} - ${destination.category} in ${destination.city}`}
@@ -505,7 +505,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* About */}
         {destination.content && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-8">
             <h2 className="text-sm font-medium mb-4">About</h2>
             <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
               {stripHtmlTags(destination.content)}
@@ -515,7 +515,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* Opening Hours */}
         {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-8">
             <h2 className="text-sm font-medium mb-4">Opening Hours</h2>
             <div className="space-y-2 text-sm">
               {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
@@ -533,11 +533,11 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* Reviews */}
         {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-8">
             <h2 className="text-sm font-medium mb-4">Top Reviews</h2>
             <div className="space-y-4">
               {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                <div key={idx} className="border border-gray-200 dark:border-dark-blue-600 rounded-lg p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <span className="font-medium text-sm">{review.author_name}</span>
@@ -563,7 +563,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* Nested Destinations - Show venues within this destination */}
         {destination.nested_destinations && destination.nested_destinations.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-8">
             <NestedDestinations
               destinations={destination.nested_destinations}
               parentName={destination.name}
@@ -574,7 +574,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* Similar Destinations */}
         {(loadingRecommendations || recommendations.length > 0) && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-8">
             <h2 className="text-sm font-medium mb-6">Similar Destinations</h2>
 
             {loadingRecommendations ? (
@@ -628,7 +628,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       )}
 
                       {rec.michelin_stars && rec.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm flex items-center gap-1.5">
                           <img
                             src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                             alt="Michelin star"
@@ -657,10 +657,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         )}
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-dark-blue-600">
           <button
             onClick={() => router.push('/')}
-            className="flex-1 min-w-[160px] px-6 py-2 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            className="flex-1 min-w-[160px] px-6 py-2 text-xs font-medium border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
           >
             Back to catalogue
           </button>

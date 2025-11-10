@@ -82,7 +82,7 @@ export function RealtimeStatusBadge({
       case 'moderate': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
       case 'busy': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
       case 'very_busy': return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      default: return 'text-gray-600 bg-gray-50 dark:bg-gray-900/20';
+      default: return 'text-gray-600 bg-gray-50 dark:bg-dark-blue-900/20';
     }
   };
 
@@ -116,7 +116,7 @@ export function RealtimeStatusBadge({
           </div>
         )}
         {showAvailability && status.availability && status.availability.status === 'closed' && (
-          <div className="px-2 py-0.5 rounded-full text-xs font-medium text-gray-600 bg-gray-100 dark:bg-gray-800">
+          <div className="px-2 py-0.5 rounded-full text-xs font-medium text-gray-600 bg-gray-100 dark:bg-dark-blue-800">
             Closed
           </div>
         )}
@@ -130,7 +130,7 @@ export function RealtimeStatusBadge({
   }
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-3">
+    <div className="border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 space-y-3">
       <h3 className="text-sm font-medium flex items-center gap-2">
         <Clock className="h-4 w-4" />
         Right Now
@@ -175,7 +175,7 @@ export function RealtimeStatusBadge({
         <div className="flex items-center justify-between text-xs">
           <span className="text-gray-600 dark:text-gray-400">Status</span>
           <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-            status.availability.status === 'closed' ? 'text-gray-600 bg-gray-100 dark:bg-gray-800' :
+            status.availability.status === 'closed' ? 'text-gray-600 bg-gray-100 dark:bg-dark-blue-800' :
             status.availability.status === 'limited' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' :
             status.availability.status === 'full' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' :
             'text-green-600 bg-green-50 dark:bg-green-900/20'

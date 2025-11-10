@@ -131,9 +131,9 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl shadow-2xl z-50 overflow-hidden">
           {/* Search Input */}
-          <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+          <div className="p-3 border-b border-gray-200 dark:border-dark-blue-600">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -142,7 +142,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search places..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-dark-blue-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
               />
             </div>
           </div>
@@ -167,10 +167,10 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
                     key={destination.slug}
                     onClick={() => handleAddPlace(destination)}
                     disabled={adding === destination.slug}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left disabled:opacity-50"
+                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors text-left disabled:opacity-50"
                   >
                     {/* Image */}
-                    <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-dark-blue-800">
                       {destination.image ? (
                         <Image
                           src={destination.image}

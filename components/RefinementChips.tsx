@@ -40,9 +40,9 @@ export function RefinementChips({
       case 'price':
         return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300';
       case 'modifier':
-        return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300';
+        return 'bg-gray-50 dark:bg-dark-blue-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300';
       default:
-        return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300';
+        return 'bg-gray-50 dark:bg-dark-blue-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300';
     }
   };
 

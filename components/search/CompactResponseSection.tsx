@@ -104,7 +104,7 @@ export function CompactResponseSection({
             <button
               key={i}
               onClick={() => onChipClick(suggestion.refinement)}
-              className="px-3 py-1.5 text-xs font-medium border border-neutral-300 rounded-full hover:border-neutral-900 hover:bg-neutral-900 hover:text-white transition-all duration-200 active:scale-95"
+              className="px-3 py-1.5 text-xs font-medium border border-neutral-300 rounded-full hover:border-neutral-900 hover:bg-dark-blue-900 hover:text-white transition-all duration-200 active:scale-95"
             >
               {suggestion.label}
             </button>

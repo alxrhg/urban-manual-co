@@ -72,7 +72,7 @@ export default function DiscoverTab() {
         {items.map((p) => (
           <div 
             key={p.place_id} 
-            className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:shadow-sm transition-shadow"
+            className="border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 hover:shadow-sm transition-shadow"
           >
             <div className="text-sm font-medium mb-1">{p.name}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{p.city}</div>

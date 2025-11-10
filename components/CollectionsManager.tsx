@@ -182,7 +182,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
         {!showCreateForm && (
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-dark-blue-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
           >
             <Plus className="h-4 w-4" />
             New
@@ -191,7 +191,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
       </div>
 
       {showCreateForm && (
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl space-y-3">
+        <div className="p-4 bg-gray-50 dark:bg-dark-blue-900 rounded-2xl space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium">Create Collection</h4>
             <button
@@ -213,7 +213,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
               value={newCollectionName}
               onChange={(e) => setNewCollectionName(e.target.value)}
               placeholder="e.g., Tokyo Favorites"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-dark-blue-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
@@ -224,7 +224,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
               onChange={(e) => setNewCollectionDescription(e.target.value)}
               placeholder="Optional description..."
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-dark-blue-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
@@ -235,7 +235,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
               value={newCollectionEmoji}
               onChange={(e) => setNewCollectionEmoji(e.target.value)}
               maxLength={2}
-              className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+              className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-dark-blue-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
             />
           </div>
 
@@ -266,8 +266,8 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
           onClick={() => selectCollection(null)}
           className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${
             selectedCollectionId === null
-              ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
-              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
+              ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-dark-blue-800'
+              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-dark-blue-800'
           }`}
         >
           <Folder className="h-5 w-5 text-gray-400" />
@@ -280,12 +280,12 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
             onClick={() => selectCollection(collection.id)}
             className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all group ${
               selectedCollectionId === collection.id
-                ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
+                ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-dark-blue-800'
+                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-dark-blue-800'
             }`}
           >
             <div
-              className="w-8 h-8 rounded-2xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center text-lg"
+              className="w-8 h-8 rounded-2xl bg-gray-100 dark:bg-dark-blue-900 flex items-center justify-center text-lg"
             >
               {collection.emoji}
             </div>

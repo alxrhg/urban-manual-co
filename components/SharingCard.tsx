@@ -73,7 +73,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm"
+        className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors text-sm"
       >
         <Share2 className="h-4 w-4" />
         <span>Share</span>
@@ -86,7 +86,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-lg"
+            className="bg-white dark:bg-dark-blue-900 rounded-2xl p-6 w-full max-w-lg"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -167,7 +167,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
 
               <button
                 onClick={handleShare}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm font-medium"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors text-sm font-medium"
               >
                 <Share2 className="h-4 w-4" />
                 <span>Share Link</span>

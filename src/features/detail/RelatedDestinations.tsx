@@ -83,7 +83,7 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
                     </div>
                   )}
                   {dest.michelin_stars && dest.michelin_stars > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                    <div className="absolute bottom-2 left-2 bg-white dark:bg-dark-blue-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
                       <span>⭐</span>
                       <span>{dest.michelin_stars}</span>
                     </div>
@@ -147,7 +147,7 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
                     </div>
                   )}
                   {dest.michelin_stars && dest.michelin_stars > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                    <div className="absolute bottom-2 left-2 bg-white dark:bg-dark-blue-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
                       <span>⭐</span>
                       <span>{dest.michelin_stars}</span>
                     </div>

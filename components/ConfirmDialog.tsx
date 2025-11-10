@@ -95,7 +95,7 @@ export function ConfirmDialog({
                 ease: [0.4, 0, 0.2, 1]
               }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200 dark:border-gray-800"
+              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200 dark:border-dark-blue-600"
               role="dialog"
               aria-modal="true"
               aria-labelledby="dialog-title"
@@ -126,11 +126,11 @@ export function ConfirmDialog({
               </div>
 
               {/* Actions */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-gray-800">
+              <div className="bg-gray-50 dark:bg-dark-blue-900/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-dark-blue-600">
                 <button
                   onClick={onClose}
                   disabled={isLoading}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {cancelText}
                 </button>

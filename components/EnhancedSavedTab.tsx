@@ -198,7 +198,7 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
               className="group relative text-left"
             >
-              <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
+              <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-dark-blue-800 border border-gray-200 dark:border-dark-blue-600 mb-2">
                 {place.destination.image && (
                   <Image
                     src={place.destination.image}
@@ -208,7 +208,7 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
                     sizes="(max-width: 768px) 50vw, 25vw"
                   />
                 )}
-                <div className="absolute top-2 right-2 w-6 h-6 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center">
+                <div className="absolute top-2 right-2 w-6 h-6 bg-white dark:bg-dark-blue-900 rounded-full flex items-center justify-center">
                   <Heart className="w-3 h-3 fill-current" />
                 </div>
               </div>
@@ -230,10 +230,10 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
             <button
               key={place.destination_slug}
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
-              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-2xl transition-colors text-left"
+              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-dark-blue-800 rounded-2xl transition-colors text-left"
             >
               {place.destination.image && (
-                <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-blue-800">
                   <Image
                     src={place.destination.image}
                     alt={place.destination.name}

@@ -203,7 +203,7 @@ export default function TripsPage() {
             {trips.map(trip => (
               <article
                 key={trip.id}
-                className="flex flex-col overflow-hidden rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 shadow-sm transition-transform duration-300 hover:-translate-y-1"
+                className="flex flex-col overflow-hidden rounded-[28px] border border-gray-200 dark:border-dark-blue-600 bg-white dark:bg-gray-950/70 shadow-sm transition-transform duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600">
                   {trip.cover_image && (
@@ -242,13 +242,13 @@ export default function TripsPage() {
                     )}
                   </div>
 
-                  <div className="mt-auto flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+                  <div className="mt-auto flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-dark-blue-600">
                     <button
                       onClick={e => {
                         e.stopPropagation();
                         router.push(`/trips/${trip.id}`);
                       }}
-                      className="flex-1 text-sm font-medium py-2 px-3 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="flex-1 text-sm font-medium py-2 px-3 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-dark-blue-700"
                     >
                       View details
                     </button>
@@ -272,12 +272,12 @@ export default function TripsPage() {
 
       {showCreateDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-[28px] border border-gray-200 dark:border-dark-blue-600 bg-white dark:bg-gray-950/90 p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Create new trip</h2>
               <button
                 onClick={() => setShowCreateDialog(false)}
-                className="p-1.5 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+                className="p-1.5 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-blue-700 transition-colors"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -292,7 +292,7 @@ export default function TripsPage() {
                   value={newTrip.title}
                   onChange={e => setNewTrip({ ...newTrip, title: e.target.value })}
                   placeholder="e.g., Summer in Paris"
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-blue-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 />
               </div>
 
@@ -303,7 +303,7 @@ export default function TripsPage() {
                   onChange={e => setNewTrip({ ...newTrip, description: e.target.value })}
                   placeholder="What's this trip about?"
                   rows={3}
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-blue-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 />
               </div>
 
@@ -314,7 +314,7 @@ export default function TripsPage() {
                   value={newTrip.destination}
                   onChange={e => setNewTrip({ ...newTrip, destination: e.target.value })}
                   placeholder="e.g., Paris, France"
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-blue-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 />
               </div>
 
@@ -325,7 +325,7 @@ export default function TripsPage() {
                     type="date"
                     value={newTrip.start_date}
                     onChange={e => setNewTrip({ ...newTrip, start_date: e.target.value })}
-                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-blue-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                   />
                 </div>
 
@@ -335,7 +335,7 @@ export default function TripsPage() {
                     type="date"
                     value={newTrip.end_date}
                     onChange={e => setNewTrip({ ...newTrip, end_date: e.target.value })}
-                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-blue-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                   />
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default function TripsPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowCreateDialog(false)}
-                  className="flex-1 rounded-full border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                  className="flex-1 rounded-full border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-dark-blue-700"
                 >
                   Cancel
                 </button>

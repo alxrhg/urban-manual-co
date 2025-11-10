@@ -131,7 +131,7 @@ export const createColumns = (
     accessorKey: 'slug',
     header: 'Slug',
     cell: ({ row }) => (
-      <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+      <code className="text-xs bg-gray-100 dark:bg-dark-blue-800 px-1.5 py-0.5 rounded">
         {row.getValue('slug')}
       </code>
     ),

@@ -226,7 +226,7 @@ export default function GooglePlacesAutocomplete({
       />
       
       {showPredictions && predictions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg max-h-60 overflow-y-auto">
           {loading && (
             <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
               Loading...
@@ -240,8 +240,8 @@ export default function GooglePlacesAutocomplete({
               onMouseEnter={() => setSelectedIndex(index)}
               className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                 index === selectedIndex
-                  ? 'bg-gray-100 dark:bg-gray-800'
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'bg-gray-100 dark:bg-dark-blue-800'
+                  : 'hover:bg-gray-50 dark:hover:bg-dark-blue-700'
               }`}
             >
               <div className="flex items-start gap-2">
@@ -260,7 +260,7 @@ export default function GooglePlacesAutocomplete({
                       {prediction.types.slice(0, 2).map((type: string) => (
                         <span
                           key={type}
-                          className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded"
+                          className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-dark-blue-800 text-gray-600 dark:text-gray-400 rounded"
                         >
                           {type.replace(/_/g, ' ')}
                         </span>

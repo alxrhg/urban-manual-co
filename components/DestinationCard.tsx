@@ -76,8 +76,8 @@ export function DestinationCard({
       <div
         className={`
           relative aspect-square overflow-hidden rounded-2xl
-          bg-gray-100 dark:bg-gray-800
-          border border-gray-200 dark:border-gray-800
+          bg-gray-100 dark:bg-dark-blue-800
+          border border-gray-200 dark:border-dark-blue-600
           transition-shadow duration-300
           group-hover:shadow-lg
           mb-3
@@ -138,9 +138,9 @@ export function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 left-2 z-10
-                    px-3 py-1 border border-gray-200 dark:border-gray-800
+                    px-3 py-1 border border-gray-200 dark:border-dark-blue-600
                     rounded-2xl text-gray-600 dark:text-gray-400 text-xs
-                    bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
+                    bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm
                     flex items-center gap-1.5
                     transform scale-100 group-hover:scale-105
                     transition-transform duration-300

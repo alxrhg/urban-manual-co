@@ -214,7 +214,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
 
       <div className="space-y-6">
         {/* Avatar Upload */}
-        <div className="flex justify-center py-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex justify-center py-6 border-b border-gray-200 dark:border-dark-blue-600">
           <AvatarUpload
             currentAvatarUrl={profile.avatar_url}
             displayName={profile.display_name || 'User'}
@@ -270,7 +270,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
         </div>
 
         {/* Location & Details Section */}
-        <div className="space-y-5 pt-6 border-t border-gray-200 dark:border-gray-800">
+        <div className="space-y-5 pt-6 border-t border-gray-200 dark:border-dark-blue-600">
           <div>
             <h3 className="text-sm font-medium text-black dark:text-white mb-4">Location & Details</h3>
             <div className="space-y-4">
@@ -336,8 +336,8 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
         </div>
 
         {/* Privacy Setting */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-start gap-4 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
+        <div className="pt-6 border-t border-gray-200 dark:border-dark-blue-600">
+          <div className="flex items-start gap-4 p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl bg-gray-50/50 dark:bg-dark-blue-900/50">
             <Switch
               id="is_public"
               checked={profile.is_public}
@@ -356,7 +356,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-dark-blue-600">
           <Button
             onClick={handleSave}
             disabled={saving}

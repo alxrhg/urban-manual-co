@@ -1808,7 +1808,7 @@ export default function Home() {
           }),
         }}
       />
-      <main id="main-content" className="relative min-h-screen bg-white dark:bg-gray-900 dark:text-white" role="main">
+      <main id="main-content" className="relative min-h-screen bg-white dark:bg-dark-blue-900 dark:text-white" role="main">
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
@@ -2270,7 +2270,7 @@ export default function Home() {
                 <p className="text-xs text-gray-500 dark:text-gray-500 max-w-md mx-auto">
                   This feature requires destination coordinates to be populated.
                   <br />
-                  See <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">/DEPLOYMENT_GUIDE.md</code> for setup instructions.
+                  See <code className="bg-gray-100 dark:bg-dark-blue-800 px-1 rounded">/DEPLOYMENT_GUIDE.md</code> for setup instructions.
                 </p>
               </div>
             )}
@@ -2378,7 +2378,7 @@ export default function Home() {
                         <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Previous
                         </button>
@@ -2403,7 +2403,7 @@ export default function Home() {
                                 className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
                                   currentPage === pageNum
                                     ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
-                                    : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm font-medium'
+                                    : 'border border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800 hover:shadow-sm font-medium'
                                 }`}
                               >
                                 {pageNum}
@@ -2415,7 +2415,7 @@ export default function Home() {
                         <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Next
                         </button>

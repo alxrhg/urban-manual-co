@@ -103,7 +103,7 @@ export function AvatarUpload({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="absolute bottom-0 right-0 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          className="absolute bottom-0 right-0 w-10 h-10 bg-white dark:bg-dark-blue-800 rounded-full shadow-lg flex items-center justify-center border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           aria-label="Change profile picture"
         >
           {uploading ? (

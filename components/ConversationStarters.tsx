@@ -115,7 +115,7 @@ export function ConversationStarters({ onStarterClick, city, category }: Convers
           <button
             key={index}
             onClick={() => onStarterClick(starter)}
-            className="group text-left px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200"
+            className="group text-left px-4 py-3 bg-gray-50 dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-blue-700 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200"
           >
             <span className="group-hover:text-black dark:group-hover:text-white transition-colors">
               "{starter}"

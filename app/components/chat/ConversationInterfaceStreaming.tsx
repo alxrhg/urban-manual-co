@@ -239,7 +239,7 @@ export function ConversationInterfaceStreaming({
     >
       <div className="w-full max-w-3xl mb-4 px-4 pointer-events-auto">
         {/* Chat Container */}
-        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 dark:border-white/10">
+        <div className="bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 dark:border-white/10">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ export function ConversationInterfaceStreaming({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors"
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl transition-colors"
             >
               <X className="h-4 w-4 text-gray-500" />
             </button>
@@ -288,7 +288,7 @@ export function ConversationInterfaceStreaming({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about restaurants, hotels, cities..."
-                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-gray-900 dark:text-gray-100"
+                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-dark-blue-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-gray-900 dark:text-gray-100"
                 disabled={isLoading || isStreaming}
               />
               <button

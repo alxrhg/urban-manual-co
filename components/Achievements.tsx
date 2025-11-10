@@ -83,7 +83,7 @@ export function Achievements({ className }: AchievementsProps) {
             className={`px-4 py-2 rounded-2xl text-sm font-medium transition-colors ${
               activeCategory === category
                 ? 'bg-black dark:bg-white text-white dark:text-black'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                : 'bg-gray-100 dark:bg-dark-blue-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -107,8 +107,8 @@ export function Achievements({ className }: AchievementsProps) {
                 key={achievement.id}
                 className={`relative p-4 rounded-xl border-2 transition-all ${
                   unlocked
-                    ? `${RARITY_BORDERS[achievement.rarity]} bg-white dark:bg-gray-900`
-                    : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 opacity-60'
+                    ? `${RARITY_BORDERS[achievement.rarity]} bg-white dark:bg-dark-blue-900`
+                    : 'border-gray-200 dark:border-dark-blue-600 bg-gray-50 dark:bg-gray-950 opacity-60'
                 }`}
               >
                 {/* Achievement Badge */}
@@ -153,7 +153,7 @@ export function Achievements({ className }: AchievementsProps) {
                           </span>
                         )}
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-gray-200 dark:bg-dark-blue-800 rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
                           unlocked ? '' : 'bg-gray-400'

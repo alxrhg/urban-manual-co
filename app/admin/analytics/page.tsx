@@ -79,7 +79,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 px-6 md:px-12 lg:px-16 py-12">
+    <div className="min-h-screen bg-white dark:bg-dark-blue-900 px-6 md:px-12 lg:px-16 py-12">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Search Analytics</h1>
@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-dark-blue-800 text-gray-900 dark:text-white"
             />
           </div>
           <div>
@@ -109,14 +109,14 @@ export default function AnalyticsPage() {
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-dark-blue-800 text-gray-900 dark:text-white"
             />
           </div>
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-dark-blue-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <Search className="h-5 w-5 text-gray-400" />
               <span className="text-xs text-gray-500 dark:text-gray-400">Searches</span>
@@ -126,7 +126,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-dark-blue-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <Eye className="h-5 w-5 text-gray-400" />
               <span className="text-xs text-gray-500 dark:text-gray-400">Views</span>
@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-dark-blue-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <MousePointerClick className="h-5 w-5 text-gray-400" />
               <span className="text-xs text-gray-500 dark:text-gray-400">CTR</span>
@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-dark-blue-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <BarChart3 className="h-5 w-5 text-gray-400" />
               <span className="text-xs text-gray-500 dark:text-gray-400">Discovery Engine</span>
@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Popular Queries */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-8">
+        <div className="bg-white dark:bg-dark-blue-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Popular Search Queries</h2>
           <div className="space-y-2">
             {analytics.popularQueries.slice(0, 10).map((item, index) => (
@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Popular Destinations */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-8">
+        <div className="bg-white dark:bg-dark-blue-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Popular Destinations</h2>
           <div className="space-y-2">
             {analytics.popularDestinations.slice(0, 10).map((item, index) => (
@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Search Trends */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-dark-blue-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Search Trends (Last 30 Days)</h2>
           <div className="space-y-2">
             {analytics.searchTrends.slice(-10).map((item, index) => (

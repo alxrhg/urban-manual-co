@@ -11,7 +11,7 @@ export default function DetailSkeleton() {
         <Skeleton className="h-4 w-64" />
       </div>
       <div className="px-6 md:px-10">
-        <div className="rounded-[32px] overflow-hidden border border-gray-200 dark:border-gray-800">
+        <div className="rounded-[32px] overflow-hidden border border-gray-200 dark:border-dark-blue-600">
           <Skeleton className="aspect-[16/9]" />
         </div>
       </div>

@@ -38,14 +38,14 @@ export default function VisitModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div className="bg-white dark:bg-dark-blue-900 rounded-2xl p-6 w-full max-w-md shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">
             {isCurrentlyVisited ? 'Update Visit' : 'Mark as Visited'}
           </h2>
           <button
             onClick={handleCancel}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -98,7 +98,7 @@ export default function VisitModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Share your experience, tips, or memories..."
               rows={4}
-              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+              className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
             />
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function VisitModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleCancel}
-            className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
+            className="flex-1 px-4 py-2 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors font-medium"
           >
             Cancel
           </button>

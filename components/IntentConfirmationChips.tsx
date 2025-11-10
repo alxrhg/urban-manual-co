@@ -137,7 +137,7 @@ export function IntentConfirmationChips({
       {chips.map((chip, index) => (
         <div
           key={`${chip.type}-${chip.value}-${index}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 transition-all hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-dark-blue-800 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 transition-all hover:bg-gray-200 dark:hover:bg-gray-700"
         >
           <span>{chip.label}</span>
           {editable && onChipRemove && (
