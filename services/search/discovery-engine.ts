@@ -15,6 +15,9 @@ export class DiscoveryEngineService {
   private dataStoreId: string;
   private collectionId: string;
 
+  private clientsInitialized = false;
+  private initializationError: Error | null = null;
+
   constructor() {
     // Get configuration from environment variables
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GCP_PROJECT_ID || '';
@@ -26,26 +29,66 @@ export class DiscoveryEngineService {
     // Format: projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}
     this.dataStorePath = `projects/${this.projectId}/locations/${this.location}/collections/${this.collectionId}/dataStores/${this.dataStoreId}`;
 
-    // Initialize clients if credentials are available
-    if (this.projectId) {
-      try {
-        const clientOptions = {
-          // Credentials can be provided via:
-          // 1. GOOGLE_APPLICATION_CREDENTIALS env var (path to service account JSON)
-          // 2. Default credentials from gcloud CLI
-          // 3. Explicit credentials object
-        };
-        this.documentClient = new DocumentServiceClient(clientOptions);
-        this.searchClient = new SearchServiceClient(clientOptions);
-        this.recommendationClient = new RecommendationServiceClient(clientOptions);
-        this.userEventClient = new UserEventServiceClient(clientOptions);
-      } catch (error) {
-        console.warn('Discovery Engine client initialization failed:', error);
-        this.documentClient = null;
-        this.searchClient = null;
-        this.recommendationClient = null;
-        this.userEventClient = null;
+    // Don't initialize clients in constructor - do it lazily when needed
+    // This prevents unhandled promise rejections from credential loading
+  }
+
+  /**
+   * Lazy initialization of clients - only when needed
+   */
+  private async initializeClients(): Promise<void> {
+    if (this.clientsInitialized || this.initializationError) {
+      return;
+    }
+
+    if (!this.projectId) {
+      this.initializationError = new Error('GOOGLE_CLOUD_PROJECT_ID is not set');
+      return;
+    }
+
+    try {
+      // Check if we have explicit credentials
+      const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      const credentialsJson = process.env.GOOGLE_CLOUD_CREDENTIALS_JSON;
+
+      const clientOptions: any = {};
+
+      // If we have explicit credentials JSON, use it
+      if (credentialsJson) {
+        try {
+          clientOptions.credentials = JSON.parse(credentialsJson);
+        } catch (parseError) {
+          console.warn('[Discovery Engine] Failed to parse GOOGLE_CLOUD_CREDENTIALS_JSON:', parseError);
+        }
+      } else if (credentialsPath) {
+        // If we have a path to credentials, the client will load it automatically
+        // Just set the path in the options
+        clientOptions.keyFilename = credentialsPath;
       }
+      // Otherwise, let it try default credentials (but we'll catch the error)
+
+      // Initialize clients - they will load credentials lazily on first use
+      // We create them here but errors will be caught when they're actually used
+      this.documentClient = new DocumentServiceClient(clientOptions);
+      this.searchClient = new SearchServiceClient(clientOptions);
+      this.recommendationClient = new RecommendationServiceClient(clientOptions);
+      this.userEventClient = new UserEventServiceClient(clientOptions);
+
+      // Test that credentials work by making a simple call (but catch errors)
+      // We'll test with a simple operation that doesn't require actual API calls
+      // Just verify the client can be created without immediate credential errors
+
+      this.clientsInitialized = true;
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error';
+      console.warn('[Discovery Engine] Client initialization failed:', errorMessage);
+      this.initializationError = error instanceof Error ? error : new Error(errorMessage);
+      
+      // Set all clients to null to indicate failure
+      this.documentClient = null;
+      this.searchClient = null;
+      this.recommendationClient = null;
+      this.userEventClient = null;
     }
   }
 
@@ -53,7 +96,20 @@ export class DiscoveryEngineService {
    * Check if Discovery Engine is configured and available
    */
   isAvailable(): boolean {
-    return this.documentClient !== null && this.searchClient !== null && this.projectId !== '';
+    // Check if we have the required configuration
+    if (!this.projectId || !this.dataStoreId) {
+      return false;
+    }
+
+    // If clients haven't been initialized yet, they're not available
+    // (but we don't want to trigger initialization here as it's async)
+    // Return false if we know initialization failed
+    if (this.initializationError) {
+      return false;
+    }
+
+    // If clients are initialized and exist, we're available
+    return this.clientsInitialized && this.documentClient !== null && this.searchClient !== null;
   }
 
   /**
@@ -81,6 +137,9 @@ export class DiscoveryEngineService {
     totalSize: number;
     nextPageToken?: string;
   }> {
+    // Initialize clients if not already done
+    await this.initializeClients();
+
     if (!this.searchClient || !this.isAvailable()) {
       throw new Error('Discovery Engine is not configured. Please set GOOGLE_CLOUD_PROJECT_ID and DISCOVERY_ENGINE_DATA_STORE_ID');
     }
@@ -138,7 +197,22 @@ export class DiscoveryEngineService {
         },
       };
 
-      const [response] = await this.searchClient.search(request);
+      const [response] = await this.searchClient.search(request).catch((error: any) => {
+        // Check if it's a credential error
+        if (error?.message?.includes('Could not load the default credentials') || 
+            error?.message?.includes('credentials') ||
+            error?.code === 'UNKNOWN') {
+          // Mark initialization as failed
+          this.initializationError = error;
+          this.clientsInitialized = false;
+          this.documentClient = null;
+          this.searchClient = null;
+          this.recommendationClient = null;
+          this.userEventClient = null;
+          throw new Error('Discovery Engine credentials not available. Please configure GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CLOUD_CREDENTIALS_JSON');
+        }
+        throw error;
+      });
 
       const results = ((response as any).results || []).map((result: any) => {
         const document = result.document;
@@ -166,8 +240,12 @@ export class DiscoveryEngineService {
         nextPageToken: (response as any).nextPageToken,
       };
     } catch (error: any) {
-      console.error('Discovery Engine search error:', error);
-      throw new Error(`Discovery Engine search failed: ${error.message}`);
+      // If it's a credential error, we've already handled it above
+      if (error?.message?.includes('credentials not available')) {
+        throw error;
+      }
+      console.error('[Discovery Engine] Search error:', error?.message || error);
+      throw new Error(`Discovery Engine search failed: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -184,6 +262,9 @@ export class DiscoveryEngineService {
       };
     } = {}
   ): Promise<any[]> {
+    // Initialize clients if not already done
+    await this.initializeClients();
+
     if (!this.recommendationClient || !this.isAvailable()) {
       throw new Error('Discovery Engine is not configured');
     }
@@ -288,6 +369,9 @@ export class DiscoveryEngineService {
    * Uses inlineSource for batch imports (recommended for < 1000 documents)
    */
   async importDocuments(destinations: any[]): Promise<void> {
+    // Initialize clients if not already done
+    await this.initializeClients();
+
     if (!this.documentClient || !this.isAvailable()) {
       throw new Error('Discovery Engine is not configured');
     }
@@ -330,6 +414,14 @@ export class DiscoveryEngineService {
     documentId?: string;
     searchQuery?: string;
   }): Promise<void> {
+    // Initialize clients if not already done (but don't throw if it fails)
+    try {
+      await this.initializeClients();
+    } catch (error) {
+      // Silently fail - event tracking is optional
+      return;
+    }
+
     if (!this.userEventClient || !this.isAvailable()) {
       // Silently fail if not configured - events are optional
       return;
