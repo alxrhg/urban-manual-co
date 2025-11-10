@@ -81,7 +81,7 @@ export default function CityPageClient() {
       const { data, error } = await supabase
         .from('destinations')
         .select(
-          'slug, name, city, neighborhood, category, description, content, image, michelin_stars, crown, opening_hours, rating, tags'
+          'slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, opening_hours, rating, tags'
         )
         .eq('city', citySlug)
         .order('name');

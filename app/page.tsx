@@ -1282,7 +1282,7 @@ export default function Home() {
       // Exclude nested destinations (only show top-level destinations)
       const { data, error } = await supabaseClient
         .from('destinations')
-        .select('slug, name, city, neighborhood, category, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
+        .select('slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
         .is('parent_destination_id', null) // Only top-level destinations
         .limit(500) // Limit initial query for faster load
         .order('name');

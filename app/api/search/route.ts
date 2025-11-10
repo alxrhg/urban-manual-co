@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
       try {
         let fullTextQuery = supabase
           .from('destinations')
-          .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, brand')
+          .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, brand')
           .limit(PAGE_SIZE);
 
         // Full-text search - use ILIKE on search_text as fallback (textSearch requires tsvector column)
@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
           const slugs = aiFieldResults.map((r: any) => r.slug);
           const { data: fullData } = await supabase
             .from('destinations')
-            .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, brand')
+            .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, brand')
             .in('slug', slugs)
             .limit(PAGE_SIZE);
 
@@ -360,7 +360,7 @@ export async function POST(request: NextRequest) {
     if (results.length === 0) {
       let fallbackQuery = supabase
         .from('destinations')
-        .select('slug, name, city, category, description, content, image, michelin_stars, crown, rating, price_level, brand')
+        .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, brand')
         .limit(PAGE_SIZE);
 
       // Apply filters
