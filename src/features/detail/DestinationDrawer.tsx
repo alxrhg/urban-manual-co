@@ -815,8 +815,8 @@ Summary:`;
           isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
         } overflow-hidden flex-col`}
       >
-        {/* Header */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
+        {/* Header with Close Button */}
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
           <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && destination.slug.trim() && (
@@ -833,14 +833,15 @@ Summary:`;
                 <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Link>
             )}
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-            </button>
           </div>
+          {/* Close Button - Top Right */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+          </button>
         </div>
 
         {/* Content */}
