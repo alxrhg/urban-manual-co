@@ -22,6 +22,8 @@ import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
 import { DestinationCard } from '@/components/DestinationCard';
 import { capitalizeCity } from '@/lib/utils';
+import { TripDay } from '@/components/TripDay';
+import { AddToTripModal } from '@/components/AddToTripModal';
 
 interface Trip {
   id: string;
@@ -63,6 +65,8 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showAddLocationModal, setShowAddLocationModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -196,6 +200,50 @@ export default function TripDetailPage() {
     return acc;
   }, {} as Record<number, ItineraryItem[]>);
 
+  // Calculate date for a specific day based on trip start_date
+  const getDateForDay = (dayNumber: number): string => {
+    if (!trip?.start_date) {
+      // If no start date, use today as base
+      const date = new Date();
+      date.setDate(date.getDate() + dayNumber - 1);
+      return date.toISOString().split('T')[0];
+    }
+    const startDate = new Date(trip.start_date);
+    startDate.setDate(startDate.getDate() + dayNumber - 1);
+    return startDate.toISOString().split('T')[0];
+  };
+
+  // Transform itinerary items to TripLocation format
+  const transformItemsToLocations = (items: ItineraryItem[]) => {
+    return items.map((item) => {
+      const destination = item.destination_slug
+        ? destinations.get(item.destination_slug)
+        : null;
+
+      return {
+        id: parseInt(item.id) || 0,
+        name: destination?.name || item.title,
+        city: destination?.city || '',
+        category: destination?.category || '',
+        image: destination?.image || '/placeholder-image.jpg',
+        time: item.time || undefined,
+        notes: item.notes || undefined,
+      };
+    });
+  };
+
+  const handleAddLocation = (dayNumber: number) => {
+    setSelectedDay(dayNumber);
+    setShowAddLocationModal(true);
+  };
+
+  const handleRemoveLocation = async (locationId: number) => {
+    const itemId = itineraryItems.find(item => parseInt(item.id) === locationId)?.id;
+    if (itemId) {
+      await deleteItineraryItem(itemId);
+    }
+  };
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null;
     try {
@@ -288,107 +336,25 @@ export default function TripDetailPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-12">
             {Object.entries(itemsByDay)
               .sort(([a], [b]) => Number(a) - Number(b))
-              .map(([day, items]) => (
-                <div key={day} className="space-y-4">
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                    Day {day}
-                  </h2>
-                  <div className="space-y-3">
-                    {items.map((item) => {
-                      const destination = item.destination_slug
-                        ? destinations.get(item.destination_slug)
-                        : null;
+              .map(([day, items]) => {
+                const dayNumber = Number(day);
+                const dayDate = getDateForDay(dayNumber);
+                const locations = transformItemsToLocations(items);
 
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-start gap-4 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-950/70 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-                        >
-                          {destination ? (
-                            <div className="flex-1">
-                              <div
-                                className="cursor-pointer"
-                                onClick={() => {
-                                  setSelectedDestination(destination);
-                                  setIsDrawerOpen(true);
-                                }}
-                              >
-                                <div className="flex items-start gap-4">
-                                  {destination.image && (
-                                    <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                                      <Image
-                                        src={destination.image}
-                                        alt={destination.name}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium text-gray-900 dark:text-white mb-1">
-                                      {destination.name}
-                                    </h3>
-                                    {destination.city && (
-                                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                        {capitalizeCity(destination.city)}
-                                      </p>
-                                    )}
-                                    {item.time && (
-                                      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                                        <Clock className="h-3 w-3" />
-                                        <span>{item.time}</span>
-                                      </div>
-                                    )}
-                                    {item.notes && (
-                                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                        {item.notes}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex-1">
-                              <h3 className="font-medium text-gray-900 dark:text-white mb-1">
-                                {item.title}
-                              </h3>
-                              {item.description && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                  {item.description}
-                                </p>
-                              )}
-                              {item.time && (
-                                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{item.time}</span>
-                                </div>
-                              )}
-                              {item.notes && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                  {item.notes}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          {trip.user_id === user?.id && (
-                            <button
-                              onClick={() => deleteItineraryItem(item.id)}
-                              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              aria-label="Remove item"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+                return (
+                  <TripDay
+                    key={day}
+                    dayNumber={dayNumber}
+                    date={dayDate}
+                    locations={locations}
+                    onAddLocation={() => handleAddLocation(dayNumber)}
+                    onRemoveLocation={handleRemoveLocation}
+                  />
+                );
+              })}
           </div>
         )}
       </PageContainer>
@@ -424,6 +390,25 @@ export default function TripDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Location Modal */}
+      {trip && selectedDay !== null && (
+        <AddToTripModal
+          destinationSlug=""
+          destinationName=""
+          isOpen={showAddLocationModal}
+          onClose={() => {
+            setShowAddLocationModal(false);
+            setSelectedDay(null);
+          }}
+          onAdd={async (tripId) => {
+            // After adding, refresh the trip data
+            await fetchTripDetails();
+            setShowAddLocationModal(false);
+            setSelectedDay(null);
+          }}
+        />
       )}
     </div>
   );
