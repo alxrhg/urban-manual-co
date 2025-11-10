@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -606,6 +606,9 @@ Summary:`;
 
   if (!destination) return null;
 
+  // Get rating for display
+  const rating = enrichedData?.rating || destination.rating;
+
   return (
     <>
       {/* Backdrop */}
@@ -616,11 +619,181 @@ Summary:`;
         onClick={onClose}
       />
 
-      {/* Slideover Card */}
+      {/* Mobile-Optimized Popup (inspired by simple mobile design) */}
       <div
-        className={`fixed right-4 top-4 bottom-4 w-full sm:w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
+        className={`md:hidden fixed inset-x-0 bottom-0 top-[10vh] bg-white dark:bg-gray-950 z-50 rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-y-0' : 'translate-y-full'
         } overflow-hidden flex flex-col`}
+      >
+        {/* Close Button - Top Right */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+        </button>
+
+        {/* Large Header Image (40% of viewport) */}
+        {destination.image && (
+          <div className="relative w-full h-[40vh] flex-shrink-0">
+            <Image
+              src={destination.image}
+              alt={destination.name}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+              quality={90}
+            />
+          </div>
+        )}
+
+        {/* Content Area - Scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Hotel Summary Section (30%) */}
+          <div className="px-6 pt-6 pb-4 space-y-3">
+            {/* Name */}
+            <h1 className="text-2xl font-semibold text-black dark:text-white leading-tight">
+              {destination.name}
+            </h1>
+
+            {/* Location & Rating Row */}
+            <div className="flex items-center gap-4 flex-wrap">
+              {destination.city && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {capitalizeCity(destination.city)}
+                  </span>
+                </div>
+              )}
+              {rating && (
+                <div className="flex items-center gap-1.5">
+                  <svg className="h-4 w-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {rating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+              {destination.category && (
+                <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-400">
+                  {destination.category}
+                </span>
+              )}
+            </div>
+
+            {/* Description */}
+            {destination.micro_description && (
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {destination.micro_description}
+              </p>
+            )}
+          </div>
+
+          {/* Details Section (20%) */}
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+            <h3 className="text-sm font-semibold text-black dark:text-white mb-3">Details</h3>
+            <div className="space-y-2 text-sm">
+              {destination.category && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Type:</span>
+                  <span className="text-gray-900 dark:text-white">{destination.category}</span>
+                </div>
+              )}
+              {destination.city && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Location:</span>
+                  <span className="text-gray-900 dark:text-white">{capitalizeCity(destination.city)}</span>
+                </div>
+              )}
+              {destination.category && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                  <span className="text-gray-900 dark:text-white">{destination.category}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons (Bottom 10%) */}
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+          {/* Favorite and Share Buttons */}
+          <div className="flex items-center justify-end gap-3 mb-4">
+            {/* Favorite Button */}
+            <button
+              onClick={async () => {
+                if (!user) {
+                  router.push('/auth/login');
+                  return;
+                }
+                if (!isSaved) {
+                  setShowSaveModal(true);
+                } else {
+                  // Quick unsave
+                  try {
+                    const { error } = await supabase
+                      .from('saved_places')
+                      .delete()
+                      .eq('user_id', user.id)
+                      .eq('destination_slug', destination.slug);
+                    if (!error) {
+                      setIsSaved(false);
+                      if (onSaveToggle) onSaveToggle(destination.slug, false);
+                    }
+                  } catch (error) {
+                    console.error('Error unsaving:', error);
+                  }
+                }
+              }}
+              className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors ${
+                isSaved
+                  ? 'bg-black dark:bg-white border-black dark:border-white'
+                  : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700'
+              }`}
+              aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart className={`h-5 w-5 ${
+                isSaved
+                  ? 'fill-white dark:fill-black text-white dark:text-black'
+                  : 'text-gray-900 dark:text-gray-100'
+              }`} />
+            </button>
+
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center justify-center transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+              aria-label="Share"
+            >
+              <Share2 className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+            </button>
+          </div>
+
+          {/* View More Details Button - Full Width */}
+          {destination.slug && (
+            <Link
+              href={`/destination/${destination.slug}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              className="block w-full bg-black dark:bg-white text-white dark:text-black text-center py-3.5 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
+            >
+              View More Details
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Slideover Card (existing design) */}
+      <div
+        className={`hidden md:flex fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
+        } overflow-hidden flex-col`}
       >
         {/* Header */}
         <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
