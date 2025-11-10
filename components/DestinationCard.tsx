@@ -75,18 +75,18 @@ export function DestinationCard({
       {/* Image Container with Progressive Loading */}
       <div
         className={`
-          relative overflow-hidden
-          bg-gray-100
-          transition-opacity duration-[240ms] ease
-          group-hover:opacity-[0.88]
-          mb-4
+          relative aspect-square overflow-hidden rounded-2xl
+          bg-gray-100 dark:bg-gray-800
+          border border-gray-200 dark:border-gray-800
+          transition-shadow duration-300
+          group-hover:shadow-lg
+          mb-3
           ${isLoaded ? 'opacity-100' : 'opacity-0'}
         `}
-        style={{ aspectRatio: '4 / 5' }}
       >
         {/* Skeleton while loading */}
         {!isLoaded && isInView && (
-          <div className="absolute inset-0 animate-pulse bg-gray-200" />
+          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
         )}
 
         {/* Actual Image */}
@@ -98,7 +98,8 @@ export function DestinationCard({
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`
               object-cover
-              transition-opacity duration-[240ms] ease
+              transition-all duration-500 ease-out
+              group-hover:scale-110
               ${isLoaded ? 'opacity-100' : 'opacity-0'}
             `}
             quality={80}
@@ -111,10 +112,21 @@ export function DestinationCard({
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <MapPin className="h-12 w-12 opacity-20" />
+          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+            <MapPin className="h-12 w-12 opacity-20 transition-transform duration-300 group-hover:scale-110" />
           </div>
         )}
+
+        {/* Hover Overlay */}
+        <div
+          className={`
+            absolute inset-0
+            bg-gradient-to-t from-black/60 via-transparent to-transparent
+            opacity-0 group-hover:opacity-100
+            transition-opacity duration-300
+            pointer-events-none
+          `}
+        />
 
         {/* Badges - Animated on hover */}
         {showBadges && (
@@ -126,10 +138,13 @@ export function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 left-2 z-10
-                    px-3 py-1 border border-[#E6E6E6]
-                    text-[#111111] text-xs
-                    bg-white/90 backdrop-blur-sm
+                    px-3 py-1 border border-gray-200 dark:border-gray-800
+                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
+                    bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
                     flex items-center gap-1.5
+                    transform scale-100 group-hover:scale-105
+                    transition-transform duration-300
+                    shadow-sm group-hover:shadow-md
                   `}
                 >
                   <img
@@ -145,20 +160,20 @@ export function DestinationCard({
       </div>
 
       {/* Info Section */}
-      <div className="mt-4">
+      <div className="space-y-0.5">
         <h3
           className={`
-            text-[24px] font-light leading-[1.45]
-            text-[#111111]
-            line-clamp-2
-            tracking-[-0.2px]
+            text-sm font-medium text-gray-900 dark:text-white
+            line-clamp-2 min-h-[2.5rem]
+            transition-colors duration-200
+            group-hover:text-gray-700 dark:group-hover:text-gray-200
           `}
         >
           {destination.name}
         </h3>
 
         {destination.micro_description ? (
-          <div className="text-[13px] text-[#777] leading-[1.45] mt-2 line-clamp-1">
+          <div className="text-[13px] text-neutral-600 dark:text-neutral-400 line-clamp-1 mt-[2px]">
             {destination.micro_description}
           </div>
         ) : null}
@@ -167,7 +182,7 @@ export function DestinationCard({
       {/* Focus Ring for Accessibility */}
       <div
         className={`
-          absolute inset-0
+          absolute inset-0 rounded-2xl
           ring-2 ring-offset-2 ring-blue-500
           opacity-0 focus-within:opacity-100
           transition-opacity duration-200
