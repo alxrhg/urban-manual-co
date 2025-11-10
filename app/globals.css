@@ -23,6 +23,7 @@
 }
 
 @import "tailwindcss";
+@import "../styles/layout.css";
 
 @layer base {
   :root {
