@@ -11,6 +11,7 @@ import { ContextualLoadingState } from '@/components/ContextualLoadingState';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useItemsPerPage } from '@/hooks/useGridColumns';
 
 interface Destination {
   id: number;
@@ -41,7 +42,7 @@ function SearchPageContent() {
   const query = searchParams.get('q') || '';
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 28;
+  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
   const [searchState, setSearchState] = useState<SearchState>({
     originalQuery: query,

@@ -10,6 +10,7 @@ import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
 import Image from 'next/image';
 import { MultiplexAd } from '@/components/GoogleAd';
+import { useItemsPerPage } from '@/hooks/useGridColumns';
 
 interface CityStats {
   city: string;
@@ -33,7 +34,7 @@ export default function CitiesPage() {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 28; // 4 rows at 7 columns (2xl screens)
+  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   const [advancedFilters, setAdvancedFilters] = useState<{
     city?: string;
     category?: string;

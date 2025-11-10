@@ -45,6 +45,7 @@ import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
+import { useItemsPerPage } from '@/hooks/useGridColumns';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -460,7 +461,8 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 28; // 4 rows at 7 columns (2xl screens)
+  // Calculate items per page based on 4 full rows × current grid columns
+  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<{
     city?: string;

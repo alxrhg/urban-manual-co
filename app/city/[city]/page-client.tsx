@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DestinationCard } from '@/components/DestinationCard';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
+import { useItemsPerPage } from '@/hooks/useGridColumns';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -55,7 +56,7 @@ export default function CityPageClient() {
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = 28;
+  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
   useEffect(() => {
     setLoading(true);
