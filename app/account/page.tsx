@@ -205,21 +205,32 @@ export default function Account() {
         }),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create collection');
+        const errorMessage = responseData.error || responseData.details || 'Failed to create collection';
+        throw new Error(errorMessage);
       }
 
-      const { collection: data } = await response.json();
+      // Response is ok, extract collection data
+      const data = responseData.collection;
 
+      if (!data) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Add new collection to list and reload to ensure consistency
       setCollections([data, ...collections]);
       setNewCollectionName('');
       setNewCollectionDescription('');
       setNewCollectionPublic(true);
       setShowCreateModal(false);
+      
+      // Reload collections to ensure we have the latest data
+      await loadUserData();
     } catch (error: any) {
       console.error('Error creating collection:', error);
-      alert(error.message || 'Failed to create collection');
+      alert(error.message || 'Failed to create collection. Please try again.');
     } finally {
       setCreatingCollection(false);
     }
