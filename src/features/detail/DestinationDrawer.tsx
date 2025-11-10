@@ -499,9 +499,14 @@ Summary:`;
             user_id: user.id,
             destination_slug: destination.slug,
             visited_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id,destination_slug',
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error adding visit:', error);
+          throw error;
+        }
 
         setIsVisited(true);
         if (onVisitToggle) onVisitToggle(destination.slug, true);
