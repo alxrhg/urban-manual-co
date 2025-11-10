@@ -3,9 +3,14 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Bookmark, Check, Plus } from 'lucide-react';
+import { ArrowLeft, MapPin, Bookmark, Check, Plus, ChevronDown, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -59,6 +64,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
+  const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
 
   // Parse enriched JSON fields from initial destination
   const enrichedData = useState(() => {
@@ -204,8 +210,22 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         setIsVisited(false);
       } else {
-        // Open visited modal to add details (date, rating, notes)
-        setShowVisitedModal(true);
+        // Add visit with current date (no modal needed - just mark as visited)
+        const { error } = await (supabase
+          .from('visited_places')
+          .insert as any)({
+            user_id: user.id,
+            destination_slug: destination.slug,
+            visited_at: new Date().toISOString(),
+          });
+
+        if (error) {
+          console.error('Error adding visit:', error);
+          alert('Failed to mark as visited. Please try again.');
+          return;
+        }
+
+        setIsVisited(true);
       }
     } catch (error: any) {
       console.error('Error toggling visit:', error);
@@ -352,59 +372,69 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               </h1>
               {user && (
                 <div className="flex items-center gap-2">
-                  <ToggleGroup
-                    type="multiple"
-                    value={[
-                      ...(isSaved ? ['save'] : []),
-                      ...(isVisited ? ['visit'] : []),
-                    ]}
-                    onValueChange={(values) => {
-                      const wasSaved = isSaved;
-                      const wasVisited = isVisited;
-                      const nowSaved = values.includes('save');
-                      const nowVisited = values.includes('visit');
-
-                      if (wasSaved !== nowSaved) {
-                        if (nowSaved) {
-                          setShowSaveModal(true);
-                        } else {
-                          // Handle unsave if needed
-                          setShowSaveModal(true);
-                        }
-                      }
-
-                      if (wasVisited !== nowVisited) {
-                        if (nowVisited && !wasVisited) {
-                          // Opening visited modal will handle the visit creation
-                          // Make optimistic update - will be confirmed when modal saves
-                          setIsVisited(true);
-                          setShowVisitedModal(true);
-                        } else if (!nowVisited && wasVisited) {
-                          // Remove visit directly
-                          handleVisitToggle();
-                        }
+                  <button
+                    onClick={() => {
+                      if (!isSaved) {
+                        setShowSaveModal(true);
                       }
                     }}
-                    spacing={2}
+                    className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                      isSaved
+                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    }`}
                   >
-                    <ToggleGroupItem value="save" aria-label="Save destination">
-                      <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
-                      <span className="ml-2">{isSaved ? 'Saved' : 'Save'}</span>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="visit" aria-label="Mark as visited">
-                      <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
-                      <span className="ml-2">{isVisited ? 'Visited' : 'Mark as Visited'}</span>
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                  {isVisited && (
-                    <button
-                      onClick={() => setShowVisitedModal(true)}
-                      className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                      title="Add visit details"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  )}
+                    <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+
+                  {/* Visited Button with Dropdown */}
+                  <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                    <div className="flex items-center gap-0">
+                      <button
+                        className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-l-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                          isVisited
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                        }`}
+                        onClick={handleVisitToggle}
+                      >
+                        <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
+                        {isVisited ? 'Visited' : 'Mark Visited'}
+                      </button>
+                      {isVisited && (
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className={`px-1.5 py-1.5 border-l-0 border border-gray-200 dark:border-gray-800 rounded-r-2xl text-xs transition-colors ${
+                              isVisited
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                            }`}
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                      )}
+                    </div>
+                    {isVisited && (
+                      <DropdownMenuContent align="start" className="w-48">
+                        <DropdownMenuItem onClick={() => {
+                          setShowVisitedModal(true);
+                          setShowVisitedDropdown(false);
+                        }}>
+                          <Plus className="h-3 w-3 mr-2" />
+                          Add Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          handleVisitToggle();
+                          setShowVisitedDropdown(false);
+                        }}>
+                          <X className="h-3 w-3 mr-2" />
+                          Remove Visit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    )}
+                  </DropdownMenu>
                 </div>
               )}
             </div>
