@@ -303,26 +303,6 @@ export function Header() {
                   Sign In
                 </button>
               )}
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 transition-colors w-full"
-                role="menuitem"
-                aria-label={mounted && isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                disabled={!mounted}
-              >
-                {mounted && isDark ? (
-                  <>
-                    <Sun className="h-4 w-4" aria-hidden="true" />
-                    <span>Light Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-4 w-4" aria-hidden="true" />
-                    <span>Dark Mode</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </>
