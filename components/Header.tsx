@@ -171,6 +171,10 @@ export function Header() {
                       fill
                       className="object-cover"
                       sizes="40px"
+                      onError={() => {
+                        // If image fails to load, clear the avatar URL to show fallback
+                        setAvatarUrl(null);
+                      }}
                     />
                   </div>
                 ) : (

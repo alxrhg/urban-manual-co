@@ -9,6 +9,7 @@ export default function ProfileAvatar({ avatarUrl, initials, onUpload }: {
   onUpload?: (file: File) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -24,8 +25,14 @@ export default function ProfileAvatar({ avatarUrl, initials, onUpload }: {
         className="relative group w-36 h-36 rounded-[6px] overflow-hidden bg-neutral-800 border border-neutral-700 um-transition cursor-pointer"
         onClick={() => setOpen(true)}
       >
-        {avatarUrl ? (
-          <Image src={avatarUrl} alt="" fill className="object-cover um-image" />
+        {avatarUrl && !imageError ? (
+          <Image 
+            src={avatarUrl} 
+            alt="" 
+            fill 
+            className="object-cover um-image"
+            onError={() => setImageError(true)}
+          />
         ) : (
           <div className="flex items-center justify-center h-full text-neutral-400 text-3xl font-medium">
             {initials}
