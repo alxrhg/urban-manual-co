@@ -29,7 +29,7 @@ export function Header() {
       }
 
       try {
-        // Try profiles table first (standard Supabase structure)
+        // Use profiles table (standard Supabase structure)
         const { data, error } = await supabase
           .from('profiles')
           .select('avatar_url')
@@ -38,21 +38,11 @@ export function Header() {
 
         if (!error && data?.avatar_url) {
           setAvatarUrl(data.avatar_url);
-          return;
-        }
-
-        // Fallback to user_profiles table if it exists
-        const { data: userProfileData, error: userProfileError } = await supabase
-          .from('user_profiles')
-          .select('avatar_url')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (!userProfileError && userProfileData?.avatar_url) {
-          setAvatarUrl(userProfileData.avatar_url);
+        } else {
+          setAvatarUrl(null);
         }
       } catch {
-        // Ignore errors (table might not exist)
+        // Ignore errors (table might not exist or RLS blocking)
         setAvatarUrl(null);
       }
     }

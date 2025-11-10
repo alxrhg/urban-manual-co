@@ -96,7 +96,8 @@ const COUNTRY_TO_ISO2: Record<string, string> = {
 };
 
 // World Atlas TopoJSON URL (110m resolution)
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/world-110m.json";
+// Using the correct file from world-atlas@2 package
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 // Simple mercator projection helper
 function mercatorProjection(
