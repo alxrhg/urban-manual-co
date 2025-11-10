@@ -92,6 +92,17 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     transition: background-color 0.2s ease, color 0.2s ease;
+    /* iPhone optimizations */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent text size adjustment on iOS */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Safe area insets for iPhone notches */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   
   html.dark {
@@ -105,6 +116,49 @@
   /* Ensure container max-width is 1280px site-wide */
   .container {
     max-width: 1280px;
+  }
+
+  /* iPhone and mobile optimizations */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS-specific styles */
+    body {
+      /* Better touch scrolling on iOS */
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Minimum touch target size (44x44px for iOS) */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better tap highlight on iOS */
+  a, button {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  @media (max-width: 640px) {
+    /* Mobile-specific optimizations */
+    body {
+      font-size: 16px; /* Better readability on mobile */
+    }
+    
+    /* Ensure readable text sizes on mobile */
+    h1 { font-size: clamp(24px, 8vw, 32px); }
+    h2 { font-size: clamp(20px, 6vw, 24px); }
+    h3 { font-size: clamp(18px, 5vw, 20px); }
+    
+    /* Better spacing on mobile */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
   }
 }
 
