@@ -371,23 +371,23 @@ Summary:`;
       if (supabaseClient) {
         if (destination.slug) {
           const { data: savedData } = await supabaseClient
-            .from('saved_places')
+        .from('saved_places')
             .select('id')
-            .eq('user_id', user.id)
-            .eq('destination_slug', destination.slug)
+        .eq('user_id', user.id)
+        .eq('destination_slug', destination.slug)
             .maybeSingle();
 
-          setIsSaved(!!savedData);
+      setIsSaved(!!savedData);
         }
 
         const { data: visitedData } = await supabaseClient
-          .from('visited_places')
+        .from('visited_places')
           .select('id')
-          .eq('user_id', user.id)
-          .eq('destination_slug', destination.slug)
+        .eq('user_id', user.id)
+        .eq('destination_slug', destination.slug)
           .maybeSingle();
 
-        setIsVisited(!!visitedData);
+      setIsVisited(!!visitedData);
       } else {
         setIsSaved(false);
         setIsVisited(false);
@@ -418,7 +418,7 @@ Summary:`;
         if (destination.parent_destination_id) {
           const parent = await getParentDestination(supabaseClient, destination.id!);
           setParentDestination(parent);
-        } else {
+      } else {
           setParentDestination(null);
         }
 
@@ -426,14 +426,14 @@ Summary:`;
         if (destination.id) {
           const nested = await getNestedDestinations(supabaseClient, destination.id, false);
           setNestedDestinations(nested);
-        } else {
+      } else {
           setNestedDestinations([]);
-        }
-      } catch (error) {
-        console.warn('[DestinationDrawer] Error loading nested data:', error);
-      } finally {
-        setLoadingNested(false);
       }
+    } catch (error) {
+        console.warn('[DestinationDrawer] Error loading nested data:', error);
+    } finally {
+        setLoadingNested(false);
+    }
     }
 
     loadNestedData();
@@ -497,18 +497,18 @@ Summary:`;
         // Remove visit
         const { error } = await supabaseClient
           .from('visited_places')
-          .delete()
+        .delete()
           .eq('user_id', user.id)
-          .eq('destination_slug', destination.slug);
+        .eq('destination_slug', destination.slug);
 
-        if (error) {
+      if (error) {
           console.error('Error removing visit:', error);
           throw error;
-        }
+      }
 
         setIsVisited(false);
         if (onVisitToggle) onVisitToggle(destination.slug, false);
-      } else {
+    } else {
         // Add visit with current date (no modal needed - just mark as visited)
         if (!destination.slug) {
           alert('Invalid destination. Please try again.');
@@ -519,13 +519,13 @@ Summary:`;
           .from('visited_places')
           .upsert({
             user_id: user.id,
-            destination_slug: destination.slug,
+          destination_slug: destination.slug,
             visited_at: new Date().toISOString(),
           }, {
             onConflict: 'user_id,destination_slug',
-          });
+        });
 
-        if (error) {
+      if (error) {
           console.error('Error adding visit:', error);
           throw error;
         }
@@ -655,7 +655,7 @@ Summary:`;
         } overflow-hidden flex flex-col`}
       >
         {/* Close Button - Top Right */}
-        <button
+              <button
           onClick={onClose}
           className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm"
           aria-label="Close"
@@ -831,12 +831,12 @@ Summary:`;
                   return;
                 }
                 setShowAddToTripModal(true);
-              }}
+                }}
               className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
+              >
               <Plus className="h-4 w-4" />
               <span>Add to Trip</span>
-            </button>
+              </button>
           </div>
         </div>
       </div>
@@ -867,13 +867,13 @@ Summary:`;
             )}
           </div>
           {/* Close Button - Top Right */}
-          <button
-            onClick={onClose}
+            <button
+              onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             aria-label="Close"
-          >
+            >
             <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-          </button>
+            </button>
         </div>
 
         {/* Content */}
@@ -913,15 +913,15 @@ Summary:`;
               </a>
             </div>
 
-            {/* Title */}
+          {/* Title */}
             <div className="space-y-3">
               <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
-              {destination.name}
-            </h1>
+                {destination.name}
+              </h1>
 
               {/* Pills: Category, Crown, Michelin, Google Rating */}
               <div className="flex flex-wrap gap-2">
-                {destination.category && (
+              {destination.category && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
                     {destination.category}
                     </span>
@@ -941,10 +941,10 @@ Summary:`;
                     className="h-3 w-3"
                   />
                   {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
-                </span>
-              )}
+                  </span>
+            )}
 
-              {(enrichedData?.rating || destination.rating) && (
+                {(enrichedData?.rating || destination.rating) && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -953,16 +953,16 @@ Summary:`;
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
-                </span>
+                    </span>
               )}
-              </div>
+                  </div>
 
               {destination.micro_description && (
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {destination.micro_description}
                 </p>
-              )}
-            </div>
+                )}
+              </div>
 
             {/* Action Row - Pill Buttons */}
             <div className="flex items-center gap-2 mt-4 flex-wrap">
@@ -1111,8 +1111,8 @@ Summary:`;
                   View Full Page
                 </button>
               ) : null}
-              </div>
-          </div>
+                  </div>
+                </div>
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
@@ -1245,7 +1245,7 @@ Summary:`;
                     {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
                       <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
                     )}
-                  </div>
+              </div>
               </div>
             </div>
           )}
@@ -1269,7 +1269,7 @@ Summary:`;
                 {copied ? 'Copied!' : 'Share'}
               </button>
             </div>
-          </div>
+            </div>
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
@@ -1365,7 +1365,7 @@ Summary:`;
                   }}
                   zoom={15}
                   isDark={false}
-                />
+              />
             </div>
           </div>
           )}
@@ -1448,7 +1448,7 @@ Summary:`;
             </div>
           )}
 
-        </div>
+      </div>
 
         {/* Desktop Action Buttons - Bottom */}
         <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
@@ -1460,30 +1460,30 @@ Summary:`;
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose();
-                }}
+                  }}
                 className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
-              >
+                    >
                 View More Details
               </Link>
-            )}
+                      )}
             
             {/* Add to Trip Button */}
-            <button
-              onClick={() => {
+                <button
+                  onClick={() => {
                 if (!user) {
                   router.push('/auth/login');
                   return;
                 }
                 setShowAddToTripModal(true);
-              }}
+                  }}
               className="flex items-center justify-center gap-1.5 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
+                >
               <Plus className="h-4 w-4" />
               <span>Add to Trip</span>
-            </button>
+                </button>
           </div>
         </div>
-      </div>
+            </div>
 
       {/* Save Destination Modal */}
       {destination?.id && (

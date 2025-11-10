@@ -168,19 +168,19 @@ export function DestinationCard({
       {/* Info Section */}
       <div className="flex-1 flex flex-col">
         <div>
-          <h3
-            className={`
-              text-sm font-medium text-gray-900 dark:text-white
+        <h3
+          className={`
+            text-sm font-medium text-gray-900 dark:text-white
               line-clamp-2
-              transition-colors duration-200
-              group-hover:text-gray-700 dark:group-hover:text-gray-200
-            `}
-          >
-            {destination.name}
-          </h3>
+            transition-colors duration-200
+            group-hover:text-gray-700 dark:group-hover:text-gray-200
+          `}
+        >
+          {destination.name}
+        </h3>
 
-          {/* Micro Description - Always show with fallback, stuck to title */}
-          <div className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1">
+        {/* Micro Description - Always show with fallback, stuck to title */}
+        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1">
           {destination.micro_description || 
            (destination.category && destination.city 
              ? `${destination.category} in ${capitalizeCity(destination.city)}`
@@ -188,7 +188,7 @@ export function DestinationCard({
                ? `Located in ${capitalizeCity(destination.city)}`
                : destination.category || '')}
         </div>
-      </div>
+        </div>
       </div>
 
       {/* Focus Ring for Accessibility */}

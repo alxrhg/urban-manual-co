@@ -19,7 +19,7 @@ export function PageContainer({ children, width = 'wide', className }: PageConta
   return (
     <div className={cn('w-full px-6 md:px-10 lg:px-12', className)}>
       <div className={cn('mx-auto', WIDTH_MAP[width])}>
-        {children}
+      {children}
       </div>
     </div>
   );

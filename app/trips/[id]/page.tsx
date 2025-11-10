@@ -25,6 +25,7 @@ import { capitalizeCity } from '@/lib/utils';
 
 interface Trip {
   id: string;
+  user_id: string;
   title: string;
   description: string | null;
   destination: string | null;

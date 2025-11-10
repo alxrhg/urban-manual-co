@@ -33,27 +33,27 @@ export function Footer() {
             {/* Copyright */}
             <div>
               © {new Date().getFullYear()} The Manual Company. All Rights Reserved.
-            </div>
+        </div>
 
             {/* Navigation Links */}
             <div className="flex items-center gap-6">
               <Link href="/newsletter" className="hover:text-gray-900 dark:hover:text-white transition-colors">
                 Newsletter
-              </Link>
+          </Link>
               <Link href="/about" className="hover:text-gray-900 dark:hover:text-white transition-colors">
                 About
-              </Link>
+          </Link>
               <Link href="/contact" className="hover:text-gray-900 dark:hover:text-white transition-colors">
                 Contact
-              </Link>
-            </div>
+          </Link>
+        </div>
 
             {/* Privacy Policy */}
             <div>
               <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white transition-colors">
                 Privacy Policy
               </Link>
-            </div>
+        </div>
           </div>
         </div>
       </div>

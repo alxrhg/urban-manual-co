@@ -249,15 +249,15 @@ function SearchPageContent() {
       {/* Results */}
       {!searchState.isLoading && searchState.filteredResults.length > 0 && (
         <>
-          <div className="mb-4 text-sm text-neutral-500">
-            Showing {searchState.filteredResults.length}
-            {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
-              <span> of {searchState.allResults.length}</span>
-            )}
-            {searchState.refinements.length > 0 && (
-              <span> (filtered by: {searchState.refinements.join(', ')})</span>
-            )}
-          </div>
+      <div className="mb-4 text-sm text-neutral-500">
+        Showing {searchState.filteredResults.length}
+        {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
+          <span> of {searchState.allResults.length}</span>
+        )}
+        {searchState.refinements.length > 0 && (
+          <span> (filtered by: {searchState.refinements.join(', ')})</span>
+        )}
+      </div>
 
           {(() => {
             const startIndex = (currentPage - 1) * itemsPerPage;
@@ -270,14 +270,14 @@ function SearchPageContent() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                   {paginatedResults.map((d, idx) => (
                     <DestinationCard
-                      key={d.id}
-                      destination={d as any}
-                      onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+            key={d.id}
+            destination={d as any}
+            onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
                       index={startIndex + idx}
                       showBadges={true}
-                    />
-                  ))}
-                </div>
+          />
+        ))}
+      </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
@@ -333,10 +333,10 @@ function SearchPageContent() {
                   </div>
                 )}
 
-                {searchState.refinements.length > 0 && (
-                  <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
-                    Clear all filters
-                  </button>
+      {searchState.refinements.length > 0 && (
+        <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
+          Clear all filters
+        </button>
                 )}
               </>
             );
@@ -360,9 +360,9 @@ export default function SearchPage() {
         <Skeleton className="h-4 w-48 rounded mb-6" />
         <Skeleton className="h-5 w-80 rounded mb-8" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-          {Array.from({ length: 10 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton key={i} className="aspect-square rounded-2xl" />
-          ))}
+      ))}
         </div>
       </div>
     }>

@@ -320,39 +320,39 @@ export default function MapPage() {
             </div>
             {/* Scrollable list */}
             <div className="overflow-y-auto h-[calc(100%-57px)]">
-              <div className="p-4 space-y-2 pb-6">
-                {sortedDestinations.map((dest) => (
-                  <button
-                    key={dest.slug}
-                    onClick={() => {
-                      handleListItemClick(dest);
-                      setShowListPanel(false);
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 active:bg-gray-100 transition-colors text-left min-h-[72px] touch-manipulation"
-                  >
-                    {dest.image && (
-                      <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                        <Image
-                          src={dest.image}
-                          alt={dest.name}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">{dest.name}</div>
-                      <div className="text-xs text-neutral-500 mt-0.5">
-                        {dest.category && <span>{dest.category}</span>}
-                        {dest.city && (
-                          <span className="ml-1">• {dest.city}</span>
-                        )}
-                      </div>
+            <div className="p-4 space-y-2 pb-6">
+              {sortedDestinations.map((dest) => (
+                <button
+                  key={dest.slug}
+                  onClick={() => {
+                    handleListItemClick(dest);
+                    setShowListPanel(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 active:bg-gray-100 transition-colors text-left min-h-[72px] touch-manipulation"
+                >
+                  {dest.image && (
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                      <Image
+                        src={dest.image}
+                        alt={dest.name}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
                     </div>
-                    <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
-                  </button>
-                ))}
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">{dest.name}</div>
+                    <div className="text-xs text-neutral-500 mt-0.5">
+                      {dest.category && <span>{dest.category}</span>}
+                      {dest.city && (
+                        <span className="ml-1">• {dest.city}</span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
+                </button>
+              ))}
               </div>
             </div>
           </div>

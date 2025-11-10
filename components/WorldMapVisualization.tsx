@@ -195,7 +195,7 @@ export function WorldMapVisualization({
             {({ geographies }) => {
               // Debug: Log visited ISO codes
               console.log('[WorldMap] Visited countries:', Array.from(visitedCountries));
-              console.log('[WorldMap] Visited ISO2 codes:', Array.from(visitedISO2Codes));
+                console.log('[WorldMap] Visited ISO2 codes:', Array.from(visitedISO2Codes));
               console.log('[WorldMap] City markers:', cityMarkers.length);
               
               return geographies.map((geo) => {
