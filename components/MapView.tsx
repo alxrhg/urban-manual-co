@@ -130,7 +130,7 @@ export default function MapView({
     };
 
     const createMarker = (dest: Destination, position: google.maps.LatLng) => {
-      // Circle marker with hover effects - #1C1C1C default, #FFFFFF on hover
+      // Circle marker with hover effects - dark blue default, #FFFFFF on hover
       const marker = new google.maps.Marker({
         position,
         map: mapInstanceRef.current!,
@@ -152,7 +152,7 @@ export default function MapView({
           scale: 7, // 1.4x size on hover
           fillColor: '#FFFFFF',
           fillOpacity: 0.9,
-          strokeColor: '#1C1C1C',
+          strokeColor: '#0a1628',
           strokeWeight: 1,
         });
       });
