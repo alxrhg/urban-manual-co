@@ -6,8 +6,8 @@ export function Footer() {
     <footer className="mt-20 border-t border-gray-200 dark:border-gray-800">
       {/* Main Content Area */}
       <div className="w-full px-6 md:px-10 lg:px-12 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 max-w-6xl mx-auto">
-          {/* Left Column - Contact */}
+        <div className="max-w-6xl mx-auto">
+          {/* Contact */}
           <div className="flex flex-col gap-4">
             <div className="text-sm text-gray-500 dark:text-gray-400">
               contact@avmlo.com
@@ -22,19 +22,6 @@ export function Footer() {
               Contact Us
               <ArrowRight className="h-4 w-4" />
             </Link>
-          </div>
-
-          {/* Right Column - Message */}
-          <div className="flex flex-col gap-2">
-            <div className="text-sm text-gray-900 dark:text-white">
-              Interested? Tell us why.
-            </div>
-            <div className="text-sm text-gray-900 dark:text-white">
-              With love from around the world,
-            </div>
-            <div className="text-sm font-medium text-gray-900 dark:text-white mt-2">
-              The Urban Manual
-            </div>
           </div>
         </div>
       </div>
