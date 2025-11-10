@@ -1972,24 +1972,6 @@ export default function Home() {
                         </h2>
                       </div>
 
-                      {/* Intent Confirmation Chips */}
-                      {searchIntent && !searching && (
-                        <div className="mb-6">
-                          <IntentConfirmationChips
-                            intent={searchIntent}
-                            onChipRemove={(chipType, value) => {
-                              // Modify the search based on what was removed
-                              setSearchTerm('');
-                              setSubmittedQuery('');
-                              setSearchIntent(null);
-                              setInferredTags(null);
-                              setActiveFilters(new Set());
-                            }}
-                            editable={true}
-                          />
-                        </div>
-                      )}
-
                       {/* Refinement Chips - Active Filters */}
                       {inferredTags && !searching && (() => {
                         const activeTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
@@ -2086,6 +2068,24 @@ export default function Home() {
                               }
                             }}
                             className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                          />
+                        </div>
+                      )}
+
+                      {/* Intent Confirmation Chips - Always under text input */}
+                      {searchIntent && !searching && (
+                        <div className="mt-4">
+                          <IntentConfirmationChips
+                            intent={searchIntent}
+                            onChipRemove={(chipType, value) => {
+                              // Modify the search based on what was removed
+                              setSearchTerm('');
+                              setSubmittedQuery('');
+                              setSearchIntent(null);
+                              setInferredTags(null);
+                              setActiveFilters(new Set());
+                            }}
+                            editable={true}
                           />
                         </div>
                       )}
