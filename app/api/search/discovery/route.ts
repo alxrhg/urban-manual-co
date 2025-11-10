@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (!isAvailable) {
-      console.warn('[Discovery Engine API] Discovery Engine is not available - returning 503');
+      // Discovery Engine not configured is expected - use debug log
+      console.debug('[Discovery Engine API] Discovery Engine is not available - returning 503 (expected fallback)');
       return NextResponse.json(
         { 
           error: 'Discovery Engine is not configured',

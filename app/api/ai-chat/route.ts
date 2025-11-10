@@ -818,7 +818,7 @@ async function processAIChatRequest(
         console.log('[AI Chat] Discovery Engine not available, using fallback search');
       }
     } catch (discoveryError: any) {
-      console.warn('[AI Chat] Discovery Engine search failed, falling back to Supabase:', discoveryError);
+      console.debug('[AI Chat] Discovery Engine search failed (expected if not configured), falling back to Supabase:', discoveryError?.message || discoveryError);
     }
 
     // Strategy 2: Fallback to Supabase vector search (if Discovery Engine didn't return results)

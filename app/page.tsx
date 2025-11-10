@@ -708,8 +708,8 @@ export default function Home() {
 
         if (!response.ok) {
           if (response.status === 503) {
-            console.warn('[Discovery Engine] Service unavailable (503) - Discovery Engine not configured or unavailable');
-            console.warn('[Discovery Engine] Falling back to Supabase only');
+            // 503 is expected when Discovery Engine is not configured - use debug log instead of warn
+            console.debug('[Discovery Engine] Service unavailable (503) - Discovery Engine not configured, using Supabase fallback');
           } else {
             let errorDetails: Record<string, unknown> | null = null;
             try {
@@ -725,7 +725,7 @@ export default function Home() {
               status: response.status,
               message: detailMessage,
             });
-            console.warn('[Discovery Engine] Falling back to Supabase only');
+            console.debug('[Discovery Engine] Falling back to Supabase only');
           }
 
           discoveryBootstrapRef.current = null;
@@ -760,10 +760,15 @@ export default function Home() {
         return normalized;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        console.warn('[Discovery Engine] Bootstrap failed:', message, {
-          elapsed: `${Date.now() - startTime}ms`,
-        });
-        console.warn('[Discovery Engine] Falling back to Supabase only');
+        // Only warn if it's not a 503/configuration error
+        if (!message.includes('503') && !message.includes('not configured')) {
+          console.warn('[Discovery Engine] Bootstrap failed:', message, {
+            elapsed: `${Date.now() - startTime}ms`,
+          });
+        } else {
+          console.debug('[Discovery Engine] Bootstrap failed (expected):', message);
+        }
+        console.debug('[Discovery Engine] Falling back to Supabase only');
         discoveryBootstrapRef.current = null;
         return [];
       } finally {
