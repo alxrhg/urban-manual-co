@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { MapPin } from 'lucide-react';
+import { MapPin, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
@@ -128,6 +128,13 @@ export function DestinationCard({
           `}
         />
 
+        {/* Visited Check Badge - Top Right */}
+        {isVisited && (
+          <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center shadow-sm">
+            <Check className="w-3 h-3 text-gray-900 dark:text-white" />
+          </div>
+        )}
+
         {/* Badges - Animated on hover */}
         {showBadges && (
           <>
@@ -182,6 +189,7 @@ export function DestinationCard({
                ? `Located in ${capitalizeCity(destination.city)}`
                : destination.category || '')}
         </div>
+      </div>
       </div>
 
       {/* Focus Ring for Accessibility */}
