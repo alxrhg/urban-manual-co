@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Cookie } from "lucide-react";
 
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
@@ -20,9 +21,12 @@ export function CookieConsent() {
     visible && (
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-xl border border-neutral-800 bg-neutral-900/80 backdrop-blur-sm text-sm text-neutral-300 max-w-sm shadow-lg transition-all">
         <div className="space-y-3">
-          <p className="leading-relaxed">
-            We use minimal cookies to maintain your session and saved places. No tracking or marketing.
-          </p>
+          <div className="flex items-start gap-3">
+            <Cookie className="h-5 w-5 text-neutral-400 flex-shrink-0 mt-0.5" />
+            <p className="leading-relaxed flex-1">
+              We use minimal cookies to maintain your session and saved places. No tracking or marketing.
+            </p>
+          </div>
 
           <div className="flex items-center gap-4">
             <button
