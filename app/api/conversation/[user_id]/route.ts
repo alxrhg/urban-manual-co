@@ -46,16 +46,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 
 export async function POST(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ user_id: string }> }
 ) {
   try {
     // Get user context first for rate limiting
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const paramsValue = context?.params && typeof context.params.then === 'function'
-      ? await context.params
-      : context?.params;
-    const { user_id } = paramsValue || {};
+    const params = await context.params;
+    const { user_id } = params || {};
     const userId = user?.id || user_id || undefined;
 
     // Rate limiting: 5 requests per 10 seconds for conversation
@@ -271,7 +269,7 @@ export async function POST(
  */
 export async function GET(
   _request: NextRequest,
-  context: any
+  context: { params: Promise<{ user_id: string }> }
 ) {
   try {
     const { searchParams } = new URL(_request.url);
@@ -279,10 +277,8 @@ export async function GET(
 
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const paramsValue = context?.params && typeof context.params.then === 'function'
-      ? await context.params
-      : context?.params;
-    const { user_id } = paramsValue || {};
+    const params = await context.params;
+    const { user_id } = params || {};
     const userId = user?.id || user_id || undefined;
 
     const session = await getOrCreateSession(userId, session_token);

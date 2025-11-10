@@ -362,20 +362,20 @@ Summary:`;
       if (destination.slug) {
         const { data: savedData } = await supabase
           .from('saved_places')
-          .select('*')
+          .select('id')
           .eq('user_id', user.id)
           .eq('destination_slug', destination.slug)
-          .single();
+          .maybeSingle();
 
         setIsSaved(!!savedData);
       }
 
       const { data: visitedData } = await supabase
         .from('visited_places')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
         .eq('destination_slug', destination.slug)
-        .single();
+        .maybeSingle();
 
       setIsVisited(!!visitedData);
     }

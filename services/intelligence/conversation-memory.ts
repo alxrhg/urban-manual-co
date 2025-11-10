@@ -160,7 +160,7 @@ export class ExtendedConversationMemoryService {
     }
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
       
       const conversationText = messages
         .map(m => `${m.role}: ${m.content}`)

@@ -40,7 +40,7 @@ export async function generateContext(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       generationConfig: {
         temperature: 0.3,
         maxOutputTokens: 200,
@@ -113,7 +113,7 @@ export async function generateDiscoveryPrompt(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       generationConfig: {
         temperature: 0.5, // Slightly more creative for discovery prompts
         maxOutputTokens: 150,

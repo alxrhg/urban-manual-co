@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import { Destination } from '@/types/destination';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -47,13 +46,14 @@ export default function MapView({
     // Initialize map
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/dark-v11', // Dark theme to match site
+      style: isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11',
       center: [center.lng, center.lat],
       zoom: zoom,
       attributionControl: false,
     });
 
-    mapRef.current = map;
+    // Add navigation controls
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
       setLoaded(true);
@@ -64,14 +64,12 @@ export default function MapView({
       setError('Failed to load map. Please check your access token and network connection.');
     });
 
-    // Cleanup
+    mapRef.current = map;
+
     return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
+      map.remove();
     };
-  }, [center.lat, center.lng, zoom]);
+  }, [center.lat, center.lng, zoom, isDark]);
 
   // Update markers when destinations change
   useEffect(() => {
@@ -82,12 +80,20 @@ export default function MapView({
     markersRef.current = [];
 
     // Create markers for each destination
+    const bounds = new mapboxgl.LngLatBounds();
+    let hasValidMarkers = false;
+
     destinations.forEach((dest) => {
       if (!dest.latitude || !dest.longitude) return;
 
-      // Create custom marker element
+      const lng = dest.longitude;
+      const lat = dest.latitude;
+      bounds.extend([lng, lat]);
+      hasValidMarkers = true;
+
+      // Create marker element
       const el = document.createElement('div');
-      el.className = 'map-marker';
+      el.className = 'marker';
       el.style.width = '12px';
       el.style.height = '12px';
       el.style.borderRadius = '50%';
@@ -95,12 +101,25 @@ export default function MapView({
       el.style.border = '1.5px solid #FFFFFF';
       el.style.cursor = 'pointer';
       el.style.transition = 'all 0.2s ease';
-      el.style.touchAction = 'manipulation';
-      // Larger touch target for mobile
-      if (window.innerWidth < 768) {
-        el.style.width = '16px';
-        el.style.height = '16px';
-      }
+
+      // Create marker
+      const marker = new mapboxgl.Marker({
+        element: el,
+        anchor: 'center',
+      })
+        .setLngLat([lng, lat])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25, closeButton: false })
+            .setHTML(`<div style="font-weight: 500; font-size: 14px;">${dest.name}</div>`)
+        )
+        .addTo(mapRef.current!);
+
+      // Add click handler
+      el.addEventListener('click', () => {
+        if (onMarkerClick) {
+          onMarkerClick(dest);
+        }
+      });
 
       // Hover effect (desktop only)
       if (window.innerWidth >= 768) {
@@ -119,38 +138,21 @@ export default function MapView({
         });
       }
 
-      // Create marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([dest.longitude, dest.latitude])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 })
-            .setHTML(`<div class="text-sm font-medium">${dest.name}</div>`)
-        )
-        .addTo(mapRef.current!);
-
-      // Add click handler
-      el.addEventListener('click', () => {
-        if (onMarkerClick) {
-          onMarkerClick(dest);
-        }
-      });
-
       markersRef.current.push(marker);
     });
 
     // Fit bounds to show all markers
-    if (destinations.length > 0 && markersRef.current.length > 0) {
-      const bounds = new mapboxgl.LngLatBounds();
-      markersRef.current.forEach(marker => {
-        const lngLat = marker.getLngLat();
-        bounds.extend([lngLat.lng, lngLat.lat]);
-      });
+    if (hasValidMarkers && markersRef.current.length > 0) {
       mapRef.current.fitBounds(bounds, {
         padding: 50,
         maxZoom: 15,
       });
+    } else if (mapRef.current) {
+      // If no markers, center on provided center
+      mapRef.current.setCenter([center.lng, center.lat]);
+      mapRef.current.setZoom(zoom);
     }
-  }, [destinations, loaded, onMarkerClick]);
+  }, [destinations, loaded, onMarkerClick, center.lat, center.lng, zoom]);
 
   if (error) {
     return (

@@ -124,7 +124,7 @@ export async function generatePersonalizedPrompt(
     const prompt = buildPersonalizationPrompt(userData);
 
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       generationConfig: {
         temperature: 0.7, // More creative for personalized prompts
         topP: 0.9,
@@ -315,7 +315,7 @@ Example: "Loved cherry blossoms in Tokyo? Try jacaranda season in Lisbon this Ma
 Respond with JSON only:`;
 
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       generationConfig: {
         temperature: 0.6,
         maxOutputTokens: 300,

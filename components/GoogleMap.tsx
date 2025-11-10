@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
 import { Spinner } from '@/components/ui/spinner';
 import { ExternalLink } from 'lucide-react';
 
@@ -8,11 +9,10 @@ interface GoogleMapProps {
   query?: string;
   latitude?: number;
   longitude?: number;
-  height?: number | string; // Accepts both number (pixels) and string (%, vh, etc)
+  height?: number | string;
   className?: string;
-  interactive?: boolean; // Whether the map should be interactive (default: true)
-  // Info window props
-  showInfoWindow?: boolean; // Whether to show info window (default: false)
+  interactive?: boolean;
+  showInfoWindow?: boolean;
   infoWindowContent?: {
     title?: string;
     address?: string;
@@ -20,9 +20,8 @@ interface GoogleMapProps {
     rating?: number;
     website?: string;
   };
-  autoOpenInfoWindow?: boolean; // Whether to auto-open info window (default: false)
-  // Static map props
-  staticMode?: boolean; // If true, shows static map with info overlay and click-to-open link
+  autoOpenInfoWindow?: boolean;
+  staticMode?: boolean;
 }
 
 export default function GoogleMap({
@@ -38,12 +37,12 @@ export default function GoogleMap({
   staticMode = false
 }: GoogleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const mapInstanceRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const popupRef = useRef<mapboxgl.Popup | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [googleMapsUrl, setGoogleMapsUrl] = useState<string>('');
+  const [mapboxUrl, setMapboxUrl] = useState<string>('');
 
   // Get height style
   const getHeightStyle = () => {
@@ -53,137 +52,93 @@ export default function GoogleMap({
     return height;
   };
 
-  // Use only the canonical env var
-  const getApiKey = () => process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+  // Get Mapbox access token
+  const getAccessToken = () => process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
-  // Load Google Maps script
+  // Initialize Mapbox map
   useEffect(() => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError('Google Maps API key is not configured. Please add NEXT_PUBLIC_GOOGLE_API_KEY to your environment variables.');
-      console.error('Google Maps API key is not configured');
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      setError('Mapbox access token is not configured. Please add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to your environment variables.');
+      console.error('Mapbox access token is not configured');
       return;
     }
 
-    // Check if script is already loaded
-    if (window.google && window.google.maps) {
-      setLoaded(true);
-      return;
-    }
+    if (!mapRef.current) return;
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.addEventListener('load', () => setLoaded(true));
-    script.addEventListener('error', () => {
-      setError('Failed to load Google Maps. Please check your API key and network connection.');
-    });
-    document.head.appendChild(script);
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
-
-  // Initialize map and geocode
-  useEffect(() => {
-    if (!loaded || !mapRef.current) return;
+    mapboxgl.accessToken = accessToken;
 
     const initializeMap = async () => {
       try {
-        let center: google.maps.LatLngLiteral;
+        let center: [number, number];
 
         // If we have explicit coordinates, use them
         if (latitude !== undefined && longitude !== undefined) {
-          center = { lat: latitude, lng: longitude };
+          center = [longitude, latitude];
         } else if (query) {
-          // Geocode the query string
-          const geocoder = new google.maps.Geocoder();
-          const result = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
-            geocoder.geocode({ address: query }, (results, status) => {
-              if (status === 'OK' && results) {
-                resolve(results);
-              } else {
-                reject(new Error(`Geocoding failed: ${status}`));
-              }
-            });
-          });
+          // Geocode using Mapbox Geocoding API
+          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${accessToken}&limit=1`;
+          const response = await fetch(geocodeUrl);
+          const data = await response.json();
 
-          if (result.length > 0) {
-            center = {
-              lat: result[0].geometry.location.lat(),
-              lng: result[0].geometry.location.lng(),
-            };
+          if (data.features && data.features.length > 0) {
+            center = data.features[0].center;
           } else {
             throw new Error('No results found for query');
           }
         } else {
           // Default to Tokyo
-          center = { lat: 35.6762, lng: 139.6503 };
+          center = [139.6503, 35.6762];
         }
 
-        // Generate Google Maps URL for click-to-open
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          infoWindowContent?.address || query || `${center.lat},${center.lng}`
-        )}`;
-        setGoogleMapsUrl(mapsUrl);
+        // Generate Mapbox URL for click-to-open
+        const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+1C1C1C(${center[0]},${center[1]})/${center[0]},${center[1]},15/400x300@2x?access_token=${accessToken}`;
+        setMapboxUrl(`https://www.mapbox.com/maps?lon=${center[0]}&lat=${center[1]}&zoom=15`);
 
         // Create map
         if (!mapInstanceRef.current) {
           const isStatic = staticMode || !interactive;
-          mapInstanceRef.current = new google.maps.Map(mapRef.current!, {
-            center,
+          mapInstanceRef.current = new mapboxgl.Map({
+            container: mapRef.current!,
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: center,
             zoom: 15,
-            styles: [
-              {
-                featureType: 'poi',
-                elementType: 'labels',
-                stylers: [{ visibility: 'off' }],
-              },
-            ],
-            // Disable all interactions for static mode
-            disableDefaultUI: isStatic,
-            zoomControl: !isStatic && interactive,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: !isStatic && interactive,
-            gestureHandling: isStatic ? 'none' : (interactive ? 'auto' : 'none'),
-            draggable: !isStatic && interactive,
-            scrollwheel: !isStatic && interactive,
-            disableDoubleClickZoom: isStatic || !interactive,
-            keyboardShortcuts: !isStatic && interactive,
+            interactive: !isStatic && interactive,
+            attributionControl: false,
           });
+
+          // Add navigation controls if interactive
+          if (!isStatic && interactive) {
+            mapInstanceRef.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+          }
         } else {
           mapInstanceRef.current.setCenter(center);
-          // Update interaction settings if they changed
-          const isStatic = staticMode || !interactive;
-          mapInstanceRef.current.setOptions({
-            gestureHandling: isStatic ? 'none' : (interactive ? 'auto' : 'none'),
-            draggable: !isStatic && interactive,
-            scrollwheel: !isStatic && interactive,
-            disableDoubleClickZoom: isStatic || !interactive,
-            keyboardShortcuts: !isStatic && interactive,
-          });
         }
 
         // Add or update marker
         if (markerRef.current) {
-          markerRef.current.setPosition(center);
-          markerRef.current.setTitle(infoWindowContent?.title || query || 'Location');
+          markerRef.current.setLngLat(center);
         } else {
-          markerRef.current = new google.maps.Marker({
-            position: center,
-            map: mapInstanceRef.current,
-            title: infoWindowContent?.title || query || 'Location',
-          });
+          // Create marker element
+          const el = document.createElement('div');
+          el.className = 'marker';
+          el.style.width = '20px';
+          el.style.height = '20px';
+          el.style.borderRadius = '50%';
+          el.style.backgroundColor = '#1C1C1C';
+          el.style.border = '2px solid #FFFFFF';
+          el.style.cursor = 'pointer';
+
+          markerRef.current = new mapboxgl.Marker({
+            element: el,
+            anchor: 'center',
+          })
+            .setLngLat(center)
+            .addTo(mapInstanceRef.current);
         }
 
-        // Create info window if needed
+        // Create popup if needed
         if (showInfoWindow && infoWindowContent) {
-          // Create info window content
           const content = `
             <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
               ${infoWindowContent.title ? `
@@ -212,52 +167,64 @@ export default function GoogleMap({
                   target="_blank" 
                   rel="noopener noreferrer"
                   style="display: inline-block; margin-top: 8px; font-size: 12px; color: #0066cc; text-decoration: none;"
-                  onmouseover="this.style.textDecoration='underline'"
-                  onmouseout="this.style.textDecoration='none'"
                 >
-                  View on Google Maps →
+                  Visit Website →
                 </a>
               ` : ''}
             </div>
           `;
 
-          // Create or update info window
-          if (!infoWindowRef.current) {
-            infoWindowRef.current = new google.maps.InfoWindow({
-              content,
-            });
+          if (!popupRef.current) {
+            popupRef.current = new mapboxgl.Popup({
+              offset: 25,
+              closeButton: true,
+            }).setHTML(content);
           } else {
-            infoWindowRef.current.setContent(content);
+            popupRef.current.setHTML(content);
           }
 
-          // Remove existing click listeners before adding new one (prevent duplicates)
-          if (markerRef.current) {
-            google.maps.event.clearListeners(markerRef.current, 'click');
-            markerRef.current.addListener('click', () => {
-              if (infoWindowRef.current && markerRef.current) {
-                infoWindowRef.current.open(mapInstanceRef.current, markerRef.current);
+          // Add click handler to marker
+          if (markerRef.current && markerRef.current.getElement()) {
+            const markerEl = markerRef.current.getElement();
+            markerEl.addEventListener('click', () => {
+              if (popupRef.current && markerRef.current) {
+                popupRef.current.setLngLat(center).addTo(mapInstanceRef.current!);
               }
             });
           }
 
-          // Auto-open info window if requested
-          if (autoOpenInfoWindow && infoWindowRef.current && markerRef.current) {
-            // Use setTimeout to ensure map is fully rendered
+          // Auto-open popup if requested
+          if (autoOpenInfoWindow && popupRef.current && markerRef.current) {
             setTimeout(() => {
-              if (infoWindowRef.current && markerRef.current && mapInstanceRef.current) {
-                infoWindowRef.current.open(mapInstanceRef.current, markerRef.current);
+              if (popupRef.current && markerRef.current && mapInstanceRef.current) {
+                popupRef.current.setLngLat(center).addTo(mapInstanceRef.current);
               }
             }, 100);
           }
         }
+
+        mapInstanceRef.current.on('load', () => {
+          setLoaded(true);
+        });
+
+        mapInstanceRef.current.on('error', (e) => {
+          console.error('Mapbox error:', e);
+          setError('Failed to initialize map');
+        });
       } catch (err: any) {
-        console.error('Error initializing Google Map:', err);
+        console.error('Error initializing Mapbox map:', err);
         setError(err.message || 'Failed to initialize map');
       }
     };
 
     initializeMap();
-  }, [loaded, query, latitude, longitude, interactive, showInfoWindow, infoWindowContent, autoOpenInfoWindow, staticMode]);
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+      }
+    };
+  }, [query, latitude, longitude, interactive, showInfoWindow, infoWindowContent, autoOpenInfoWindow, staticMode]);
 
   if (error) {
     return (
@@ -305,7 +272,7 @@ export default function GoogleMap({
       />
       
       {/* Static mode: Info overlay in top left and click-to-open link */}
-      {isStatic && googleMapsUrl && (
+      {isStatic && mapboxUrl && (
         <>
           {/* Info overlay in top left */}
           {infoWindowContent && (
@@ -335,19 +302,18 @@ export default function GoogleMap({
           
           {/* Click-to-open overlay */}
           <a
-            href={googleMapsUrl}
+            href={mapboxUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="absolute inset-0 z-20 flex items-center justify-center bg-black/0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
             onClick={(e) => {
-              // Track click if needed
               e.stopPropagation();
             }}
           >
             <div className="opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-900 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 transition-opacity pointer-events-none">
               <ExternalLink className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Open in Google Maps
+                Open in Mapbox
               </span>
             </div>
           </a>
@@ -356,4 +322,3 @@ export default function GoogleMap({
     </div>
   );
 }
-

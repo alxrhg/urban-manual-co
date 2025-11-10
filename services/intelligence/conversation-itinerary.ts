@@ -127,7 +127,7 @@ export class ConversationItineraryService {
     }
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
       const conversationText = request.conversationHistory
         .map(m => `${m.role}: ${m.content}`)

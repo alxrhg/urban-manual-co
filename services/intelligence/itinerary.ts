@@ -116,7 +116,7 @@ export class ItineraryIntelligenceService {
     destinations: any[],
     preferences?: any
   ): Promise<Itinerary> {
-    const model = this.genAI!.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = this.genAI!.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
     const destinationsSummary = destinations.slice(0, 50).map(d => ({
       id: d.id,

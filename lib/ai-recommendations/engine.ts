@@ -37,7 +37,7 @@ export class AIRecommendationEngine {
       // 4. Call Gemini AI
       console.log('[AI] Calling Gemini API...');
       const model = genAI.getGenerativeModel({ 
-        model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+        model: process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest',
         generationConfig: {
           temperature: 0.3, // Lower = more consistent
           topP: 0.8,
