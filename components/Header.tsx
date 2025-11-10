@@ -19,6 +19,7 @@ export function Header() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const isHome = pathname === '/';
+  const isMap = pathname === '/map';
 
   // Fetch user profile and avatar
   useEffect(() => {
@@ -104,9 +105,12 @@ export function Header() {
   };
 
   return (
-    <header className="mt-6 md:mt-8" role="banner">
+    <header 
+      className={`${isMap ? 'fixed top-0 left-0 right-0 z-40 bg-transparent' : 'mt-6 md:mt-8'}`} 
+      role="banner"
+    >
       {/* Primary Nav: Brand + Search */}
-      <div className="container mx-auto px-4 md:px-8 lg:px-12">
+      <div className={`container mx-auto px-4 md:px-8 lg:px-12 ${isMap ? 'bg-neutral-900/80 backdrop-blur-sm' : ''}`}>
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo - Left */}
           <button
@@ -196,8 +200,8 @@ export function Header() {
         </nav>
       </div>
 
-      {/* Secondary Nav: Cities & Collections */}
-      <nav className="container mx-auto px-4 md:px-8 lg:px-12 flex items-center gap-4 text-sm text-neutral-400 overflow-x-auto whitespace-nowrap border-t border-gray-200 dark:border-gray-800">
+              {/* Secondary Nav: Cities & Collections */}
+              <nav className={`container mx-auto px-4 md:px-8 lg:px-12 flex items-center gap-4 text-sm text-neutral-400 overflow-x-auto whitespace-nowrap border-t border-gray-200 dark:border-gray-800 ${isMap ? 'bg-neutral-900/80 backdrop-blur-sm' : ''}`}>
         <button
           onClick={() => navigate('/cities')}
           className="py-3 hover:text-neutral-200 dark:hover:text-neutral-200 transition-colors"

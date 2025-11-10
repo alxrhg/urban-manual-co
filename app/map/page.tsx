@@ -1,27 +1,45 @@
 'use client';
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Destination } from '@/types/destination'
-import dynamic from 'next/dynamic'
-import MapView from '@/components/MapView'
-import MapDrawer from '@/components/MapDrawer'
-import { DestinationCardList } from '@/components/DestinationCardList'
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { Destination } from '@/types/destination';
+import dynamic from 'next/dynamic';
+import MapView from '@/components/MapView';
+import { Search, X, List, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 
-// Lazy load drawer
+// Lazy load components
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   { ssr: false, loading: () => null }
-)
+);
+
+interface FilterState {
+  categories: Set<string>;
+  michelin: boolean;
+  searchQuery: string;
+}
 
 export default function MapPage() {
-  const [destinations, setDestinations] = useState<Destination[]>([])
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<FilterState>({
+    categories: new Set(),
+    michelin: false,
+    searchQuery: '',
+  });
+  const [showListPanel, setShowListPanel] = useState(true);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6762, lng: 139.6503 });
+  const [mapZoom, setMapZoom] = useState(10);
 
+  // Fetch destinations and categories
   useEffect(() => {
-    async function fetchAll() {
+    async function fetchData() {
       try {
         const supabaseClient = createClient();
         if (!supabaseClient) {
@@ -30,105 +48,306 @@ export default function MapPage() {
           return;
         }
 
-        // Fetch destinations with location data (latitude, longitude, or place_id)
-        // Exclude nested destinations from map view (only show top-level)
-        const { data, error } = await supabaseClient
+        // Fetch destinations with location data
+        const { data: destData, error: destError } = await supabaseClient
           .from('destinations')
-          .select('id, slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id')
-          .is('parent_destination_id', null) // Only top-level destinations
+          .select('id, slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id, rating')
+          .is('parent_destination_id', null)
           .or('latitude.not.is.null,longitude.not.is.null,place_id.not.is.null')
           .order('name')
-          .limit(1000); // Limit to prevent too many markers
+          .limit(1000);
 
-        if (error) {
-          console.warn('[Map Page] Error fetching destinations:', error);
+        if (destError) {
+          console.warn('[Map Page] Error fetching destinations:', destError);
           setDestinations([]);
         } else {
-          setDestinations((data || []) as Destination[]);
+          setDestinations((destData || []) as Destination[]);
+          
+          // Extract unique categories
+          const uniqueCategories = Array.from(
+            new Set((destData || []).map((d: any) => d.category).filter(Boolean))
+          ) as string[];
+          setCategories(uniqueCategories.sort());
         }
       } catch (error) {
-        console.warn('[Map Page] Exception fetching destinations:', error);
+        console.warn('[Map Page] Exception fetching data:', error);
         setDestinations([]);
       } finally {
         setLoading(false);
       }
     }
-    fetchAll()
-  }, [])
+    fetchData();
+  }, []);
 
-  // Calculate center from destinations with coordinates
-  const getMapCenter = () => {
-    const destinationsWithCoords = destinations.filter(d => d.latitude && d.longitude);
-    if (destinationsWithCoords.length === 0) {
-      return { lat: 35.6762, lng: 139.6503 }; // Default to Tokyo
+  // Filter destinations
+  const filteredDestinations = useMemo(() => {
+    let filtered = [...destinations];
+
+    // Category filter
+    if (filters.categories.size > 0) {
+      filtered = filtered.filter(d => 
+        d.category && filters.categories.has(d.category.toLowerCase())
+      );
     }
 
-    // Calculate average center
-    const avgLat = destinationsWithCoords.reduce((sum, d) => sum + (d.latitude || 0), 0) / destinationsWithCoords.length;
-    const avgLng = destinationsWithCoords.reduce((sum, d) => sum + (d.longitude || 0), 0) / destinationsWithCoords.length;
-    return { lat: avgLat, lng: avgLng };
+    // Michelin filter
+    if (filters.michelin) {
+      filtered = filtered.filter(d => d.michelin_stars && d.michelin_stars > 0);
+    }
+
+    // Search filter
+    if (filters.searchQuery.trim()) {
+      const query = filters.searchQuery.toLowerCase();
+      filtered = filtered.filter(d => 
+        d.name?.toLowerCase().includes(query) ||
+        d.city?.toLowerCase().includes(query) ||
+        d.category?.toLowerCase().includes(query) ||
+        d.neighborhood?.toLowerCase().includes(query) ||
+        d.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
+  }, [destinations, filters]);
+
+  // Calculate map center from filtered destinations
+  useEffect(() => {
+    const destinationsWithCoords = filteredDestinations.filter(d => d.latitude && d.longitude);
+    if (destinationsWithCoords.length > 0) {
+      const avgLat = destinationsWithCoords.reduce((sum, d) => sum + (d.latitude || 0), 0) / destinationsWithCoords.length;
+      const avgLng = destinationsWithCoords.reduce((sum, d) => sum + (d.longitude || 0), 0) / destinationsWithCoords.length;
+      setMapCenter({ lat: avgLat, lng: avgLng });
+    }
+  }, [filteredDestinations]);
+
+  const handleCategoryToggle = (category: string) => {
+    setFilters(prev => {
+      const newCategories = new Set(prev.categories);
+      if (newCategories.has(category.toLowerCase())) {
+        newCategories.delete(category.toLowerCase());
+      } else {
+        newCategories.add(category.toLowerCase());
+      }
+      return { ...prev, categories: newCategories };
+    });
   };
+
+  const handleMarkerClick = useCallback((dest: Destination) => {
+    setSelectedDestination(dest);
+    setIsDrawerOpen(true);
+  }, []);
+
+  const handleListItemClick = useCallback((dest: Destination) => {
+    setSelectedDestination(dest);
+    setIsDrawerOpen(true);
+    // Focus marker on map (would need map ref for this)
+  }, []);
+
+  // Calculate distance from map center (simplified)
+  const getDistanceFromCenter = (dest: Destination): number => {
+    if (!dest.latitude || !dest.longitude) return Infinity;
+    // Simple distance calculation (Haversine would be more accurate)
+    const latDiff = Math.abs(dest.latitude - mapCenter.lat);
+    const lngDiff = Math.abs(dest.longitude - mapCenter.lng);
+    return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
+  };
+
+  // Sort destinations by distance from center
+  const sortedDestinations = useMemo(() => {
+    return [...filteredDestinations].sort((a, b) => {
+      const distA = getDistanceFromCenter(a);
+      const distB = getDistanceFromCenter(b);
+      return distA - distB;
+    });
+  }, [filteredDestinations, mapCenter]);
 
   if (loading) {
     return (
-      <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-        <div className="max-w-[1920px] mx-auto">
-          <div className="flex items-center justify-center min-h-[60vh] text-gray-500">Loading map…</div>
+      <main className="fixed inset-0 bg-neutral-900 text-white">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-sm text-neutral-400">Loading map…</div>
         </div>
       </main>
-    )
+    );
   }
 
   return (
-    <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-      <div className="max-w-[1920px] mx-auto space-y-6">
-        {/* Map with all destination pins */}
-        <div className="relative h-[65vh] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-          <MapView
-            destinations={destinations}
-            onMarkerClick={(dest) => {
-              setSelectedDestination(dest);
-              setIsDrawerOpen(true);
-            }}
-            center={getMapCenter()}
-            zoom={destinations.length > 0 ? 10 : 12}
-          />
-          <MapDrawer>
-            <DestinationCardList
-              destinations={destinations}
-              selectedDestination={selectedDestination}
-              onDestinationClick={(dest) => {
-                setSelectedDestination(dest);
-                setIsDrawerOpen(true);
-              }}
-            />
-          </MapDrawer>
-        </div>
+    <div className="fixed inset-0 bg-neutral-900 text-white overflow-hidden">
+      {/* Filters Bar - Top (below header) */}
+      <div className="absolute top-[112px] left-0 right-0 z-30 bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-800">
+        <div className="container mx-auto px-4 md:px-8 lg:px-12 py-3">
+          <div className="flex flex-col gap-3">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <input
+                type="search"
+                value={filters.searchQuery}
+                onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
+                placeholder="Search cities, places, vibes…"
+                className="w-full pl-10 pr-4 py-2 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+              />
+              {filters.searchQuery && (
+                <button
+                  onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
 
-        {/* Destination count and info */}
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          Showing {destinations.length} {destinations.length === 1 ? 'destination' : 'destinations'} on the map
-        </div>
-
-        {destinations.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No destinations with location data found. Destinations need latitude/longitude or place_id to appear on the map.
-            </p>
+            {/* Category Chips */}
+            <div className="flex flex-wrap gap-2 overflow-x-auto">
+              {categories.map(category => (
+                <button
+                  key={category}
+                  onClick={() => handleCategoryToggle(category)}
+                  className={`px-3 py-1.5 rounded-xl text-xs border transition-colors whitespace-nowrap ${
+                    filters.categories.has(category.toLowerCase())
+                      ? 'bg-white text-neutral-900 border-white'
+                      : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:border-neutral-600'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+              
+              {/* Michelin Filter */}
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
+                className={`px-3 py-1.5 rounded-xl text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  filters.michelin
+                    ? 'bg-white text-neutral-900 border-white'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:border-neutral-600'
+                }`}
+              >
+                <img
+                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                  alt="Michelin"
+                  className="h-3 w-3"
+                />
+                Michelin
+              </button>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
+      {/* List Panel - Left (Desktop) */}
+      {showListPanel && (
+        <div className="hidden md:block absolute left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-neutral-900/95 backdrop-blur-sm border-r border-neutral-800 z-20 overflow-y-auto">
+          <div className="p-4 space-y-2">
+            <div className="text-xs text-neutral-400 mb-4">
+              {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+            </div>
+            {sortedDestinations.map((dest) => (
+              <button
+                key={dest.slug}
+                onClick={() => handleListItemClick(dest)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+                  selectedDestination?.slug === dest.slug
+                    ? 'bg-neutral-800 border border-neutral-700'
+                    : 'bg-neutral-800/50 hover:bg-neutral-800 border border-transparent'
+                }`}
+              >
+                {dest.image && (
+                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-neutral-800">
+                    <Image
+                      src={dest.image}
+                      alt={dest.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">{dest.name}</div>
+                  <div className="text-xs text-neutral-400 mt-0.5">
+                    {dest.category && <span>{dest.category}</span>}
+                    {dest.city && (
+                      <span className="ml-1">• {dest.city}</span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Map - Full Bleed */}
+      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)]`}>
+        <MapView
+          destinations={filteredDestinations}
+          onMarkerClick={handleMarkerClick}
+          center={mapCenter}
+          zoom={mapZoom}
+        />
+      </div>
+
+      {/* List Toggle Button - Mobile */}
+      <button
+        onClick={() => setShowListPanel(!showListPanel)}
+        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-white hover:bg-neutral-700 transition-colors"
+      >
+        {showListPanel ? 'Hide List' : 'Show List'}
+      </button>
+
+      {/* List Panel - Mobile (Slideover) */}
+      {showListPanel && (
+        <div className="md:hidden fixed inset-x-0 bottom-0 top-[calc(112px+73px)] bg-neutral-900 border-t border-neutral-800 z-20 overflow-y-auto">
+          <div className="p-4 space-y-2">
+            <div className="text-xs text-neutral-400 mb-4">
+              {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+            </div>
+            {sortedDestinations.map((dest) => (
+              <button
+                key={dest.slug}
+                onClick={() => {
+                  handleListItemClick(dest);
+                  setShowListPanel(false);
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-neutral-800/50 hover:bg-neutral-800 transition-colors text-left"
+              >
+                {dest.image && (
+                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-neutral-800">
+                    <Image
+                      src={dest.image}
+                      alt={dest.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">{dest.name}</div>
+                  <div className="text-xs text-neutral-400 mt-0.5">
+                    {dest.category && <span>{dest.category}</span>}
+                    {dest.city && (
+                      <span className="ml-1">• {dest.city}</span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Details Panel - Right (Desktop) - Using Drawer for now */}
       <DestinationDrawer
         destination={selectedDestination}
         isOpen={isDrawerOpen}
         onClose={() => {
-          setIsDrawerOpen(false)
-          setTimeout(() => setSelectedDestination(null), 300)
+          setIsDrawerOpen(false);
+          setTimeout(() => setSelectedDestination(null), 300);
         }}
       />
-    </main>
-  )
+    </div>
+  );
 }
-
-

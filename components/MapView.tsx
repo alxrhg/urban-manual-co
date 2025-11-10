@@ -62,6 +62,7 @@ export default function MapView({
   useEffect(() => {
     if (!loaded || !mapRef.current || mapInstanceRef.current) return;
 
+    // Soft neutral map style to avoid competing with photography
     mapInstanceRef.current = new google.maps.Map(mapRef.current, {
       center,
       zoom,
@@ -71,7 +72,32 @@ export default function MapView({
           elementType: 'labels',
           stylers: [{ visibility: 'off' }],
         },
+        {
+          featureType: 'all',
+          elementType: 'geometry',
+          stylers: [{ saturation: -20 }, { lightness: 10 }],
+        },
+        {
+          featureType: 'water',
+          elementType: 'geometry',
+          stylers: [{ color: '#1a1a1a' }],
+        },
+        {
+          featureType: 'road',
+          elementType: 'geometry',
+          stylers: [{ color: '#2a2a2a' }],
+        },
+        {
+          featureType: 'landscape',
+          elementType: 'geometry',
+          stylers: [{ color: '#1c1c1c' }],
+        },
       ],
+      disableDefaultUI: false,
+      zoomControl: true,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
     });
   }, [loaded, center, zoom]);
 
@@ -100,19 +126,42 @@ export default function MapView({
     };
 
     const createMarker = (dest: Destination, position: google.maps.LatLng) => {
-      // Minimal neutral dot marker - 9px diameter
+      // Circle marker with hover effects - #1C1C1C default, #FFFFFF on hover
       const marker = new google.maps.Marker({
         position,
         map: mapInstanceRef.current!,
         title: dest.name,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 4.5, // Approximately 9px diameter
-          fillColor: '#262626', // neutral-800
-          fillOpacity: 0.8,
-          strokeColor: '#ffffff',
+          scale: 5, // Circle marker
+          fillColor: '#1C1C1C', // Default color
+          fillOpacity: 0.9,
+          strokeColor: '#FFFFFF',
           strokeWeight: 1,
         },
+      });
+
+      // Hover highlight effect
+      marker.addListener('mouseover', () => {
+        marker.setIcon({
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7, // 1.4x size on hover
+          fillColor: '#FFFFFF',
+          fillOpacity: 0.9,
+          strokeColor: '#1C1C1C',
+          strokeWeight: 1,
+        });
+      });
+
+      marker.addListener('mouseout', () => {
+        marker.setIcon({
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 5,
+          fillColor: '#1C1C1C',
+          fillOpacity: 0.9,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 1,
+        });
       });
 
       // Add click listener
