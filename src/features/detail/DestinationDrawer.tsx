@@ -3,7 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
@@ -167,6 +174,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [isVisited, setIsVisited] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false);
+  const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -457,7 +466,12 @@ Summary:`;
   };
 
   const handleVisitToggle = async () => {
-    if (!user || !destination) return;
+    if (!user || !destination) {
+      if (!user) {
+        router.push('/auth/login');
+      }
+      return;
+    }
 
     try {
       if (isVisited) {
@@ -473,14 +487,14 @@ Summary:`;
         setIsVisited(false);
         if (onVisitToggle) onVisitToggle(destination.slug, false);
       } else {
-        // Add visit with current date
-        const { error } =           await (supabase
-            .from('visited_places')
-            .insert as any)({
-              user_id: user.id,
-              destination_slug: destination.slug,
-              visited_at: new Date().toISOString(),
-            });
+        // Add visit with current date (no modal needed - just mark as visited)
+        const { error } = await (supabase
+          .from('visited_places')
+          .insert as any)({
+            user_id: user.id,
+            destination_slug: destination.slug,
+            visited_at: new Date().toISOString(),
+          });
 
         if (error) throw error;
 
@@ -632,15 +646,15 @@ Summary:`;
           {destination.image && (
             <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
               <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
-                <Image
-                  src={destination.image}
-                  alt={destination.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 420px"
-                  priority={false}
-                  quality={85}
-                />
+              <Image
+                src={destination.image}
+                alt={destination.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 420px"
+                priority={false}
+                quality={85}
+              />
               </div>
             </div>
           )}
@@ -666,45 +680,45 @@ Summary:`;
             {/* Title */}
             <div className="space-y-3">
               <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
-                {destination.name}
-              </h1>
-              
+              {destination.name}
+            </h1>
+
               {/* Pills: Category, Crown, Michelin, Google Rating */}
               <div className="flex flex-wrap gap-2">
                 {destination.category && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
                     {destination.category}
-                  </span>
+                    </span>
                 )}
 
                 {destination.crown && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
                     Crown
-                  </span>
-                )}
+                </span>
+              )}
 
-                {destination.michelin_stars && destination.michelin_stars > 0 && (
+              {destination.michelin_stars && destination.michelin_stars > 0 && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                    <img
-                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                      alt="Michelin star"
-                      className="h-3 w-3"
-                    />
-                    {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
-                  </span>
-                )}
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                  />
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
+                </span>
+              )}
 
-                {(enrichedData?.rating || destination.rating) && (
+              {(enrichedData?.rating || destination.rating) && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  </span>
-                )}
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  {(enrichedData?.rating || destination.rating).toFixed(1)}
+                </span>
+              )}
               </div>
 
               {destination.micro_description && (
@@ -716,19 +730,58 @@ Summary:`;
 
             {/* Action Row - Pill Buttons */}
             <div className="flex items-center gap-2 mt-4 flex-wrap">
-              <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
-                onClick={() => {
-                  if (user && destination) {
-                    setShowSaveModal(true);
-                  } else {
-                    router.push('/auth/login');
-                  }
-                }}
-              >
-                <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
-                {isSaved ? 'Saved' : 'Save'}
-              </button>
+              {/* Save Button with Dropdown */}
+              <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+                    onClick={(e) => {
+                      if (!user) {
+                        e.preventDefault();
+                        router.push('/auth/login');
+                        return;
+                      }
+                      if (!isSaved) {
+                        // Quick save without opening dropdown
+                        e.preventDefault();
+                        setShowSaveModal(true);
+                        setShowSaveDropdown(false);
+                      }
+                    }}
+                  >
+                    <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                    {isSaved && <ChevronDown className="h-3 w-3 ml-0.5" />}
+                  </button>
+                </DropdownMenuTrigger>
+                {isSaved && (
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => {
+                      setShowSaveModal(true);
+                      setShowSaveDropdown(false);
+                    }}>
+                      <List className="h-3 w-3 mr-2" />
+                      Save to List
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      router.push('/trips');
+                      setShowSaveDropdown(false);
+                    }}>
+                      <Map className="h-3 w-3 mr-2" />
+                      Save to Trip
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
+                      router.push('/account?tab=collections');
+                      setShowSaveDropdown(false);
+                    }}>
+                      <Plus className="h-3 w-3 mr-2" />
+                      Create a List
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                )}
+              </DropdownMenu>
+
               <button
                 className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
                 onClick={handleShare}
@@ -736,21 +789,57 @@ Summary:`;
                 <Share2 className="h-3 w-3" />
                 {copied ? 'Copied!' : 'Share'}
               </button>
+
+              {/* Visited Button with Dropdown */}
               {user && (
-                <button
-                  className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
-                    isVisited
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
-                  }`}
-                  onClick={() => {
-                    setShowVisitedModal(true);
-                  }}
-                >
-                  <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
-                  {isVisited ? 'Visited' : 'Mark Visited'}
-                </button>
+                <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                  <div className="flex items-center gap-0">
+                    <button
+                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-l-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                        isVisited
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                      }`}
+                      onClick={handleVisitToggle}
+                    >
+                      <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
+                      {isVisited ? 'Visited' : 'Mark Visited'}
+                    </button>
+                    {isVisited && (
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={`px-1.5 py-1.5 border-l-0 border border-gray-200 dark:border-gray-800 rounded-r-2xl text-xs transition-colors ${
+                            isVisited
+                              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                          }`}
+                        >
+                          <ChevronDown className="h-3 w-3" />
+                        </button>
+                      </DropdownMenuTrigger>
+                    )}
+                  </div>
+                  {isVisited && (
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onClick={() => {
+                        setShowVisitedModal(true);
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <Plus className="h-3 w-3 mr-2" />
+                        Add Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        handleVisitToggle();
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <X className="h-3 w-3 mr-2" />
+                        Remove Visit
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  )}
+                </DropdownMenu>
               )}
+
               {destination.slug && destination.slug.trim() ? (
                 <button
                   className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
@@ -765,7 +854,7 @@ Summary:`;
                   View Full Page
                 </button>
               ) : null}
-            </div>
+              </div>
           </div>
 
           {/* Divider */}
@@ -790,16 +879,16 @@ Summary:`;
 
             {/* AI-Generated Tags */}
             {destination.tags && destination.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                 {destination.tags.map((tag, index) => (
-                  <span
+                    <span
                     key={index}
                     className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400"
-                  >
+                    >
                     {tag}
-                  </span>
-                ))}
-              </div>
+                    </span>
+                  ))}
+                </div>
             )}
 
             {/* Real-Time Status */}
@@ -852,11 +941,11 @@ Summary:`;
                     {openStatus.todayHours && (
                       <>
                         <span className="text-sm font-medium text-black dark:text-white">
-                          {openStatus.isOpen ? 'Open now' : 'Closed'}
-                        </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          · {openStatus.todayHours}
-                        </span>
+                        {openStatus.isOpen ? 'Open now' : 'Closed'}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        · {openStatus.todayHours}
+                      </span>
                       </>
                     )}
                   </div>
@@ -900,16 +989,16 @@ Summary:`;
                       <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
                     )}
                   </div>
-                </div>
               </div>
-            )}
+            </div>
+          )}
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
               <a
                 href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                 className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1.5"
               >
                 <Navigation className="h-3 w-3" />
@@ -993,11 +1082,11 @@ Summary:`;
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
                   <span>Summarizing reviews...</span>
-                </div>
+                        </div>
               ) : reviewSummary ? (
                 <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
-                </div>
+                      </div>
               ) : null}
             </div>
           )}
@@ -1008,10 +1097,10 @@ Summary:`;
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
               <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
                 <GoogleMap
-                  query={`${destination.name}, ${destination.city}`}
+                query={`${destination.name}, ${destination.city}`}
                   latitude={destination.latitude || enrichedData?.latitude}
                   longitude={destination.longitude || enrichedData?.longitude}
-                  height="256px"
+                height="256px"
                   className="rounded-2xl"
                   interactive={false}
                   staticMode={true}
@@ -1023,9 +1112,9 @@ Summary:`;
                     rating: enrichedData?.rating || destination.rating,
                     website: enrichedData?.website || destination.website || destination.google_maps_url,
                   }}
-                />
-              </div>
+              />
             </div>
+          </div>
           )}
 
           {/* AI Recommendations */}
@@ -1055,7 +1144,7 @@ Summary:`;
                       key={rec.slug}
                       onClick={() => {
                         if (rec.slug && rec.slug.trim()) {
-                          router.push(`/destination/${rec.slug}`);
+                        router.push(`/destination/${rec.slug}`);
                         }
                       }}
                       className="flex-shrink-0 w-32 group text-left"
