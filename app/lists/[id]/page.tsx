@@ -363,10 +363,10 @@ export default function ListDetailPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 items-start">
             {destinations.map((destination) => (
-              <div key={destination.slug} className={`${CARD_WRAPPER} group`}>
-                <Link href={`/destination/${destination.slug}`}>
+              <div key={destination.slug} className={`${CARD_WRAPPER} group flex flex-col`}>
+                <Link href={`/destination/${destination.slug}`} className="flex flex-col flex-1">
                   <div className={`${CARD_MEDIA} mb-2 hover-lift`}>
                     {destination.image ? (
                       <Image
@@ -382,8 +382,8 @@ export default function ListDetailPage() {
                       </div>
                     )}
                   </div>
-                  <div className="space-y-0">
-                    <h3 className={CARD_TITLE}>
+                  <div className="space-y-0 flex-1 flex flex-col">
+                    <h3 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>
                       {destination.name}
                     </h3>
                     <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">

@@ -44,7 +44,7 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
           <button
             key={dest.slug}
             onClick={() => handleClick(dest)}
-            className={`${CARD_WRAPPER} text-left group cursor-pointer`}
+            className={`${CARD_WRAPPER} text-left group cursor-pointer flex flex-col`}
           >
             <div className={`${CARD_MEDIA} mb-3 relative`}>
               {dest.image ? (
@@ -63,8 +63,8 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
               )}
             </div>
 
-            <div className="space-y-0">
-              <h4 className={`${CARD_TITLE} line-clamp-2`}>{dest.name}</h4>
+            <div className="space-y-0 flex-1 flex flex-col">
+              <h4 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>{dest.name}</h4>
               <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
                 {dest.micro_description || 
                  (dest.category && dest.city 

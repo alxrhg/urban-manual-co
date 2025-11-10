@@ -63,7 +63,7 @@ export function DestinationCard({
       ref={cardRef}
       onClick={onClick}
       className={`
-        group relative w-full transition-all duration-300 ease-out
+        group relative w-full flex flex-col transition-all duration-300 ease-out
         cursor-pointer text-left focus-ring
         ${isVisited ? 'opacity-60' : 'opacity-100'}
         hover:scale-[1.02]
@@ -160,11 +160,11 @@ export function DestinationCard({
       </div>
 
       {/* Info Section */}
-      <div className="space-y-0">
+      <div className="space-y-0 flex-1 flex flex-col">
         <h3
           className={`
             text-sm font-medium text-gray-900 dark:text-white
-            line-clamp-2
+            line-clamp-2 min-h-[2.5rem]
             transition-colors duration-200
             group-hover:text-gray-700 dark:group-hover:text-gray-200
           `}
