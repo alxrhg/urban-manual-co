@@ -111,10 +111,7 @@ export default function RootLayout({
       <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-          storageKey="urban-manual-theme"
+          defaultTheme="dark"
         >
           <SkipNavigation />
           <SplashScreen />

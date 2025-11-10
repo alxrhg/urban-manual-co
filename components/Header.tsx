@@ -86,17 +86,6 @@ export function Header() {
     setMounted(true);
   }, []);
 
-  const toggleDarkMode = () => {
-    if (theme === 'dark') {
-      setTheme('light');
-    } else if (theme === 'light') {
-      setTheme('dark');
-    } else {
-      // If theme is 'system', toggle to opposite of current resolved theme
-      setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-    }
-  };
-
   // Use resolvedTheme to get the actual theme (handles 'system' theme)
   const isDark = mounted && (resolvedTheme === 'dark');
 
@@ -265,10 +254,10 @@ export function Header() {
               )}
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               <button
-                onClick={toggleDarkMode}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation flex items-center gap-2 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 transition-colors w-full"
                 role="menuitem"
-                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-label={mounted && isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                 disabled={!mounted}
               >
                 {mounted && isDark ? (
