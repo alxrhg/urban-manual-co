@@ -36,7 +36,18 @@ export default function Account() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>('profile');
+  
+  // Get initial tab from URL query param
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings'].includes(tab)) {
+        return tab as any;
+      }
+    }
+    return 'profile';
+  });
   const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state
