@@ -267,7 +267,13 @@ Summary:`;
 
       // Fetch enriched data from database
       try {
-        const { data, error } = await supabase
+        const supabaseClient = createClient();
+        if (!supabaseClient) {
+          console.warn('Supabase client not available');
+          return;
+        }
+
+        const { data, error } = await supabaseClient
           .from('destinations')
           .select(`
             formatted_address,
@@ -359,25 +365,31 @@ Summary:`;
         return;
       }
 
-      if (destination.slug) {
-        const { data: savedData } = await supabase
-          .from('saved_places')
+      const supabaseClient = createClient();
+      if (supabaseClient) {
+        if (destination.slug) {
+          const { data: savedData } = await supabaseClient
+            .from('saved_places')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('destination_slug', destination.slug)
+            .maybeSingle();
+
+          setIsSaved(!!savedData);
+        }
+
+        const { data: visitedData } = await supabaseClient
+          .from('visited_places')
           .select('id')
           .eq('user_id', user.id)
           .eq('destination_slug', destination.slug)
           .maybeSingle();
 
-        setIsSaved(!!savedData);
+        setIsVisited(!!visitedData);
+      } else {
+        setIsSaved(false);
+        setIsVisited(false);
       }
-
-      const { data: visitedData } = await supabase
-        .from('visited_places')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('destination_slug', destination.slug)
-        .maybeSingle();
-
-      setIsVisited(!!visitedData);
     }
 
     loadDestinationData();
@@ -1536,6 +1548,11 @@ Summary:`;
           onClose={() => setShowVisitedModal(false)}
           onUpdate={handleVisitedModalUpdate}
         />
+      )}
+    </>
+  );
+}
+
       )}
     </>
   );
