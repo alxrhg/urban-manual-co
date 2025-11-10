@@ -773,19 +773,39 @@ Summary:`;
             </button>
           </div>
 
-          {/* View More Details Button - Full Width */}
-          {destination.slug && (
-            <Link
-              href={`/destination/${destination.slug}`}
-              onClick={(e) => {
-                e.stopPropagation();
+          {/* Action Buttons - Side by Side */}
+          <div className="flex gap-3">
+            {/* View More Details Button */}
+            {destination.slug && (
+              <Link
+                href={`/destination/${destination.slug}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3.5 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
+              >
+                View More Details
+              </Link>
+            )}
+            
+            {/* Add to Trip Button */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  router.push('/auth/login');
+                  return;
+                }
+                // Navigate to trips page - user can add to existing trip or create new one
+                router.push('/trips');
                 onClose();
               }}
-              className="block w-full bg-black dark:bg-white text-white dark:text-black text-center py-3.5 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
+              className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              View More Details
-            </Link>
-          )}
+              <Plus className="h-4 w-4" />
+              <span>Add to Trip</span>
+            </button>
+          </div>
         </div>
       </div>
 
