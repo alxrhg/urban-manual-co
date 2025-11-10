@@ -34,8 +34,8 @@ export default function MapPage() {
     searchQuery: '',
   });
   const [showListPanel, setShowListPanel] = useState(true);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6762, lng: 139.6503 });
-  const [mapZoom, setMapZoom] = useState(10);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
+  const [mapZoom, setMapZoom] = useState(8);
 
   // Fetch destinations and categories
   useEffect(() => {
@@ -279,7 +279,7 @@ export default function MapPage() {
       )}
 
       {/* Map - Full Bleed, 100vh, no border radius */}
-      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)]`} style={{ height: '100vh', borderRadius: 0 }}>
+      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)] bottom-0`} style={{ borderRadius: 0 }}>
         <MapView
           destinations={filteredDestinations}
           onMarkerClick={handleMarkerClick}

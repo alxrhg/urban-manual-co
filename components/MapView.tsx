@@ -14,8 +14,8 @@ interface MapViewProps {
 export default function MapView({
   destinations,
   onMarkerClick,
-  center = { lat: 48.8566, lng: 2.3522 }, // Default to Paris
-  zoom = 12,
+  center = { lat: 23.5, lng: 121.0 }, // Default to Taiwan center
+  zoom = 8,
 }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -242,7 +242,7 @@ export default function MapView({
     <div
       ref={mapRef}
       className="w-full h-full overflow-hidden"
-      style={{ minHeight: '400px', borderRadius: 0 }}
+      style={{ width: '100%', height: '100%', borderRadius: 0 }}
     />
   );
 }
