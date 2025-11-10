@@ -253,7 +253,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
                 setNewCollectionName('');
                 setNewCollectionDescription('');
               }}
-              className="px-4 py-2 bg-gray-200 dark:bg-dark-blue-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-2xl transition-colors"
+              className="px-4 py-2 bg-gray-200 dark:bg-dark-blue-700 hover:bg-gray-300 dark:hover:bg-dark-blue-700 rounded-2xl transition-colors"
             >
               Cancel
             </button>

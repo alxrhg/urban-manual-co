@@ -250,7 +250,7 @@ export default function ChatPage() {
                       <button
                         key={suggestion}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-dark-blue-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-dark-blue-700 hover:bg-gray-200 dark:hover:bg-dark-blue-700 rounded-lg transition-colors"
                       >
                         {suggestion}
                       </button>

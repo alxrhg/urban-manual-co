@@ -151,9 +151,9 @@ export function ContextualLoadingState({ intent, query }: ContextualLoadingState
 
         {/* Progress dots */}
         <div className="flex justify-center gap-2">
-          <div className="h-2 w-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
-          <div className="h-2 w-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
-          <div className="h-2 w-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-bounce" />
+          <div className="h-2 w-2 bg-gray-400 dark:bg-dark-blue-700 rounded-full animate-bounce [animation-delay:-0.3s]" />
+          <div className="h-2 w-2 bg-gray-400 dark:bg-dark-blue-700 rounded-full animate-bounce [animation-delay:-0.15s]" />
+          <div className="h-2 w-2 bg-gray-400 dark:bg-dark-blue-700 rounded-full animate-bounce" />
         </div>
       </div>
     </div>
