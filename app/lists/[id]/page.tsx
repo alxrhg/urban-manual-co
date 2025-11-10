@@ -386,10 +386,13 @@ export default function ListDetailPage() {
                     <h3 className={`${CARD_TITLE} min-h-[2.5rem]`}>
                       {destination.name}
                     </h3>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-                        {capitalizeCity(destination.city)}
-                      </span>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                      {destination.micro_description || 
+                       (destination.category && destination.city 
+                         ? `${destination.category} in ${capitalizeCity(destination.city)}`
+                         : destination.city 
+                           ? capitalizeCity(destination.city)
+                           : destination.category || '')}
                     </div>
                   </div>
                 </Link>

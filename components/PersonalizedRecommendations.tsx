@@ -144,21 +144,19 @@ function PersonalizedRecommendationsComponent({
               {/* Info */}
               <div className="space-y-0.5">
                 <h3 className={CARD_TITLE}>{destination.name}</h3>
-                <div className={CARD_META}>
-                  <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-                    {destination.city
-                      .split('-')
-                      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                      .join(' ')}
-                  </span>
-                  {destination.category && (
-                    <>
-                      <span className="text-gray-300 dark:text-gray-700">•</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
-                        {destination.category}
-                      </span>
-                    </>
-                  )}
+                <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                  {destination.micro_description || 
+                   (destination.category && destination.city 
+                     ? `${destination.category} in ${destination.city
+                         .split('-')
+                         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                         .join(' ')}`
+                     : destination.city 
+                       ? destination.city
+                         .split('-')
+                         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                         .join(' ')
+                       : destination.category || '')}
                 </div>
               </div>
 

@@ -63,8 +63,12 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
             {destination.name}
           </h3>
           <p className="text-sm text-white/80 line-clamp-1">
-            {destination.city && destination.city.charAt(0).toUpperCase() + destination.city.slice(1)}
-            {destination.category && ` • ${destination.category}`}
+            {destination.micro_description || 
+             (destination.category && destination.city 
+               ? `${destination.category} in ${destination.city.charAt(0).toUpperCase() + destination.city.slice(1)}`
+               : destination.city 
+                 ? destination.city.charAt(0).toUpperCase() + destination.city.slice(1)
+                 : destination.category || '')}
           </p>
         </div>
       </div>

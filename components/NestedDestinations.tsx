@@ -65,18 +65,13 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
 
             <div className="space-y-1">
               <h4 className={`${CARD_TITLE} line-clamp-2`}>{dest.name}</h4>
-              <div className={CARD_META}>
-                <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-                  {capitalizeCity(dest.city)}
-                </span>
-                {dest.category && (
-                  <>
-                    <span className="text-gray-300 dark:text-gray-700">•</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-500 capitalize line-clamp-1">
-                      {dest.category}
-                    </span>
-                  </>
-                )}
+              <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                {dest.micro_description || 
+                 (dest.category && dest.city 
+                   ? `${dest.category} in ${capitalizeCity(dest.city)}`
+                   : dest.city 
+                     ? capitalizeCity(dest.city)
+                     : dest.category || '')}
               </div>
             </div>
 
