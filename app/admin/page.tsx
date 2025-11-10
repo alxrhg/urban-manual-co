@@ -1210,12 +1210,15 @@ export default function AdminPage() {
                   onSave={async (data) => {
                     setIsSaving(true);
                     try {
-                      // Special rule: Places starting with "apple" should be Shopping (retail stores)
-                      if (data.name && data.name.toLowerCase().startsWith('apple')) {
-                        data.category = 'Shopping';
+                      // Special rules: Places starting with "apple" or "aesop"/"aēsop" should be Shopping (retail stores)
+                      if (data.name) {
+                        const nameLower = data.name.toLowerCase();
+                        if (nameLower.startsWith('apple') || nameLower.startsWith('aesop') || nameLower.startsWith('aēsop')) {
+                          data.category = 'Shopping';
+                        }
                       }
                       // Ensure Michelin-starred destinations are categorized as Restaurant
-                      else if (data.michelin_stars && data.michelin_stars > 0) {
+                      if (data.michelin_stars && data.michelin_stars > 0) {
                         data.category = 'Restaurant';
                       }
 
