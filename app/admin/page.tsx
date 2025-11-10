@@ -969,7 +969,7 @@ export default function AdminPage() {
   if (!authChecked) {
     return (
       <main className="px-6 md:px-10 py-20">
-        <div className="max-w-[1800px] mx-auto flex items-center justify-center h-[50vh]">
+        <div className="max-w-[1280px] mx-auto flex items-center justify-center h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
       </main>
@@ -982,7 +982,7 @@ export default function AdminPage() {
 
   return (
     <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="max-w-[1800px] mx-auto">
+      <div className="max-w-[1280px] mx-auto">
         {/* Header - Matches account page spacing and style */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">

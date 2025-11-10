@@ -347,7 +347,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
   return (
     <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="max-w-[1800px] mx-auto space-y-12">
+      <div className="max-w-[1280px] mx-auto space-y-12">
         {/* Header */}
         <div>
           <button

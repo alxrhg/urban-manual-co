@@ -267,7 +267,7 @@ export default function RouteOptimizerPage() {
 
   return (
     <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-      <div className="max-w-[1800px] mx-auto">
+      <div className="max-w-[1280px] mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
