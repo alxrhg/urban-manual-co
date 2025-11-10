@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Calendar, MapPin, Trash2, X } from 'lucide-react';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
+import { TripPlanner } from '@/components/TripPlanner';
 
 interface Trip {
   id: string;
