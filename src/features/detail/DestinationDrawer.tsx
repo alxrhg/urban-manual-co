@@ -848,7 +848,7 @@ Summary:`;
         <div className="flex-1 overflow-y-auto p-8 md:p-10">
           {/* Image */}
           {destination.image && (
-            <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-10 bg-gray-100 dark:bg-gray-800">
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-10 bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
                 alt={destination.name}
