@@ -59,7 +59,9 @@ export default function GreetingHero({
   availableCategories = [],
 }: GreetingHeroProps) {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get current time
   const now = new Date();
@@ -136,12 +138,38 @@ export default function GreetingHero({
     }
   };
 
+  const handleInputChange = (value: string) => {
+    onSearchChange(value);
+    
+    // Show typing indicator when user is typing
+    setIsTyping(true);
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Hide typing indicator after 1 second of no typing
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 1000);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
         {/* Greeting above search - Enhanced with context */}
         <div className="text-left mb-8">
-          <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+          <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
             {greeting}
           </h1>
         </div>
@@ -159,7 +187,7 @@ export default function GreetingHero({
               placeholder={isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
               value={searchQuery}
               onChange={(e) => {
-                onSearchChange(e.target.value);
+                handleInputChange(e.target.value);
               }}
               onKeyDown={(e) => {
                 handleKeyDown(e);
@@ -171,11 +199,37 @@ export default function GreetingHero({
                   }
                 }
               }}
-              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 focus:outline-none bg-transparent border-none text-black transition-all duration-300 placeholder:opacity-60"
               style={{
                 paddingLeft: isSearching ? '32px' : '0'
               }}
             />
+            {/* Typing Indicator - Minimal, editorial style */}
+            {isTyping && searchQuery.length > 0 && !isSearching && (
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                <span 
+                  className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
+                  style={{ 
+                    animation: 'typing-dot 1.4s ease-in-out infinite',
+                    animationDelay: '0ms'
+                  }} 
+                />
+                <span 
+                  className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
+                  style={{ 
+                    animation: 'typing-dot 1.4s ease-in-out infinite',
+                    animationDelay: '200ms'
+                  }} 
+                />
+                <span 
+                  className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
+                  style={{ 
+                    animation: 'typing-dot 1.4s ease-in-out infinite',
+                    animationDelay: '400ms'
+                  }} 
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
