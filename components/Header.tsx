@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,8 @@ export function Header() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const isHome = pathname === '/';
   const isMap = pathname === '/map';
 
@@ -145,7 +147,17 @@ export function Header() {
             )}
             {user ? (
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                ref={menuButtonRef}
+                onClick={() => {
+                  if (menuButtonRef.current) {
+                    const rect = menuButtonRef.current.getBoundingClientRect();
+                    setDropdownPosition({
+                      top: rect.bottom + 4, // Small gap for visual separation
+                      right: window.innerWidth - rect.right,
+                    });
+                  }
+                  setIsMenuOpen(!isMenuOpen);
+                }}
                 className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-full ml-4 shrink-0"
                 aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={isMenuOpen}
@@ -178,7 +190,17 @@ export function Header() {
               </button>
             ) : (
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                ref={menuButtonRef}
+                onClick={() => {
+                  if (menuButtonRef.current) {
+                    const rect = menuButtonRef.current.getBoundingClientRect();
+                    setDropdownPosition({
+                      top: rect.bottom + 4, // Small gap for visual separation
+                      right: window.innerWidth - rect.right,
+                    });
+                  }
+                  setIsMenuOpen(!isMenuOpen);
+                }}
                 className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-3 px-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg ml-4 shrink-0"
                 aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={isMenuOpen}
@@ -228,7 +250,11 @@ export function Header() {
           />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed right-4 top-16 z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              right: `${dropdownPosition.right}px`,
+            }}
             role="menu"
             aria-label="Main menu"
           >
