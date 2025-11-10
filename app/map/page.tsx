@@ -174,9 +174,9 @@ export default function MapPage() {
   return (
     <div className="fixed inset-0 bg-gray-900 text-white overflow-hidden">
       {/* Filters Bar - Top (below header) - Uses default container */}
-      <div className="absolute top-[112px] left-0 right-0 z-30 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
-        <div className="max-w-[1280px] mx-auto px-6 md:px-8 lg:px-12 py-3">
-          <div className="flex flex-col gap-3">
+      <div className="absolute top-[112px] left-0 right-0 z-30 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 safe-area-top">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-2 md:py-3">
+          <div className="flex flex-col gap-2 md:gap-3">
             {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -185,7 +185,7 @@ export default function MapPage() {
                 value={filters.searchQuery}
                 onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
                 placeholder="Search cities, places, vibes…"
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-800 rounded-xl text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+                className="w-full pl-10 pr-10 py-2.5 md:py-2 bg-gray-800 border border-gray-800 rounded-xl text-base md:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
               />
               {filters.searchQuery && (
                 <button
@@ -197,16 +197,16 @@ export default function MapPage() {
               )}
             </div>
 
-            {/* Category Chips - itemGap: 8px, rowGap: 12px */}
-            <div className="flex flex-wrap gap-2 overflow-x-auto" style={{ gap: '8px 8px', rowGap: '12px' }}>
+            {/* Category Chips - Scrollable on mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible md:pb-0 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {categories.map(category => (
                 <button
                   key={category}
                   onClick={() => handleCategoryToggle(category)}
-                  className={`px-3 py-1.5 rounded-xl text-xs border transition-colors whitespace-nowrap ${
+                  className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
                     filters.categories.has(category.toLowerCase())
                       ? 'bg-white text-neutral-900 border-white'
-                      : 'bg-gray-800 border-gray-800 text-neutral-300 hover:border-neutral-600'
+                      : 'bg-gray-800 border-gray-800 text-neutral-300 active:bg-gray-700'
                   }`}
                 >
                   {category}
@@ -216,10 +216,10 @@ export default function MapPage() {
               {/* Michelin Filter */}
               <button
                 onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
-                className={`px-3 py-1.5 rounded-xl text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
                   filters.michelin
                     ? 'bg-white text-neutral-900 border-white'
-                    : 'bg-gray-800 border-gray-800 text-neutral-300 hover:border-neutral-600'
+                    : 'bg-gray-800 border-gray-800 text-neutral-300 active:bg-gray-700'
                 }`}
               >
                 <img
@@ -279,7 +279,7 @@ export default function MapPage() {
       )}
 
       {/* Map - Full Bleed, 100vh, no border radius */}
-      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)] bottom-0`} style={{ borderRadius: 0 }}>
+      <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : ''} top-[calc(112px+73px)] bottom-0 safe-area-bottom`} style={{ borderRadius: 0 }}>
         <MapView
           destinations={filteredDestinations}
           onMarkerClick={handleMarkerClick}
@@ -291,15 +291,30 @@ export default function MapPage() {
       {/* List Toggle Button - Mobile */}
       <button
         onClick={() => setShowListPanel(!showListPanel)}
-        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-gray-800 border border-gray-800 rounded-xl text-sm text-white hover:bg-neutral-700 transition-colors"
+        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-gray-800 border border-gray-800 rounded-xl text-sm font-medium text-white active:bg-gray-700 transition-colors shadow-lg min-h-[44px] safe-area-bottom"
+        style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
       >
-        {showListPanel ? 'Hide List' : 'Show List'}
+        <div className="flex items-center gap-2">
+          <List className="h-4 w-4" />
+          <span>{showListPanel ? 'Hide List' : `Show List (${filteredDestinations.length})`}</span>
+        </div>
       </button>
 
       {/* List Panel - Mobile (Slideover) */}
       {showListPanel && (
-        <div className="md:hidden fixed inset-x-0 bottom-0 top-[calc(112px+73px)] bg-gray-900 border-t border-gray-800 z-20 overflow-y-auto">
-          <div className="p-4 space-y-2">
+        <>
+          {/* Backdrop */}
+          <div 
+            className="md:hidden fixed inset-0 bg-black/50 z-20 top-[calc(112px+73px)]"
+            onClick={() => setShowListPanel(false)}
+          />
+          {/* Panel */}
+          <div className="md:hidden fixed inset-x-0 bottom-0 top-[calc(112px+73px+60px)] bg-gray-900 border-t border-gray-800 z-30 overflow-y-auto safe-area-bottom rounded-t-2xl shadow-2xl">
+            {/* Handle bar */}
+            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 z-10 py-2 flex items-center justify-center">
+              <div className="w-12 h-1 bg-gray-700 rounded-full" />
+            </div>
+            <div className="p-4 space-y-2 pb-6">
             <div className="text-xs text-neutral-400 mb-4">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
             </div>
@@ -310,7 +325,7 @@ export default function MapPage() {
                   handleListItemClick(dest);
                   setShowListPanel(false);
                 }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-800/50 hover:bg-gray-800 transition-colors text-left"
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-800/50 active:bg-gray-800 transition-colors text-left min-h-[72px] touch-manipulation"
               >
                 {dest.image && (
                   <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-800">

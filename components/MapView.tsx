@@ -86,28 +86,36 @@ export default function MapView({
       // Create custom marker element
       const el = document.createElement('div');
       el.className = 'map-marker';
-      el.style.width = '10px';
-      el.style.height = '10px';
+      el.style.width = '12px';
+      el.style.height = '12px';
       el.style.borderRadius = '50%';
       el.style.backgroundColor = '#1C1C1C';
-      el.style.border = '1px solid #FFFFFF';
+      el.style.border = '1.5px solid #FFFFFF';
       el.style.cursor = 'pointer';
       el.style.transition = 'all 0.2s ease';
+      el.style.touchAction = 'manipulation';
+      // Larger touch target for mobile
+      if (window.innerWidth < 768) {
+        el.style.width = '16px';
+        el.style.height = '16px';
+      }
 
-      // Hover effect
-      el.addEventListener('mouseenter', () => {
-        el.style.width = '14px';
-        el.style.height = '14px';
-        el.style.backgroundColor = '#FFFFFF';
-        el.style.borderColor = '#1C1C1C';
-      });
+      // Hover effect (desktop only)
+      if (window.innerWidth >= 768) {
+        el.addEventListener('mouseenter', () => {
+          el.style.width = '16px';
+          el.style.height = '16px';
+          el.style.backgroundColor = '#FFFFFF';
+          el.style.borderColor = '#1C1C1C';
+        });
 
-      el.addEventListener('mouseleave', () => {
-        el.style.width = '10px';
-        el.style.height = '10px';
-        el.style.backgroundColor = '#1C1C1C';
-        el.style.borderColor = '#FFFFFF';
-      });
+        el.addEventListener('mouseleave', () => {
+          el.style.width = '12px';
+          el.style.height = '12px';
+          el.style.backgroundColor = '#1C1C1C';
+          el.style.borderColor = '#FFFFFF';
+        });
+      }
 
       // Create marker
       const marker = new mapboxgl.Marker(el)
