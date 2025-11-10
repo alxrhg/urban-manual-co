@@ -28,7 +28,44 @@ function checkRateLimit(userId: string): boolean {
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Authenticate user
+    // 1. Get query parameters first (for slug-based recommendations)
+    const searchParams = request.nextUrl.searchParams;
+    const slug = searchParams.get('slug');
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    
+    // If slug is provided, use related destinations endpoint instead
+    if (slug) {
+      try {
+        const supabase = await createServerClient();
+        const { data: destination } = await supabase
+          .from('destinations')
+          .select('id, city, category')
+          .eq('slug', slug)
+          .single();
+        
+        if (!destination) {
+          return NextResponse.json({ recommendations: [], count: 0 });
+        }
+        
+        // Get related destinations
+        const { data: related } = await supabase
+          .from('destinations')
+          .select('*')
+          .or(`city.eq.${destination.city},category.eq.${destination.category}`)
+          .neq('slug', slug)
+          .limit(limit);
+        
+        return NextResponse.json({
+          recommendations: (related || []).map(d => ({ destination: d })),
+          count: related?.length || 0
+        });
+      } catch (error: any) {
+        console.error('[API] Related destinations error:', error);
+        return NextResponse.json({ recommendations: [], count: 0 });
+      }
+    }
+    
+    // 2. Authenticate user for personalized recommendations
     const supabase = await createServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
@@ -39,7 +76,7 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // 2. Check rate limit
+    // 3. Check rate limit
     if (!checkRateLimit(user.id)) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Try again later.' },
@@ -47,9 +84,6 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // 3. Get query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
     const forceRefresh = searchParams.get('refresh') === 'true';
     const filterCity = searchParams.get('city');
     
@@ -90,10 +124,19 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    const { data: destinations } = await supabase
+    const { data: destinations, error: destError } = await supabase
       .from('destinations')
       .select('*')
       .in('id', destinationIds);
+    
+    if (destError) {
+      console.error('[API] Error fetching destinations:', destError);
+      return NextResponse.json({
+        recommendations: [],
+        cached: !needsRefresh,
+        count: 0
+      });
+    }
     
     // 7. Combine scores with destinations
     let result = recommendations.map(rec => {

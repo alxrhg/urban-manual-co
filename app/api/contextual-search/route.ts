@@ -132,7 +132,7 @@ async function extractIntent(query: string): Promise<{
   // Use AI for better extraction if available
   if (genAI && foundModifiers.size === 0) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
       const prompt = `Extract descriptive modifiers from this travel search query. Return ONLY valid JSON:
 {
   "modifiers": ["array", "of", "modifiers", "like", "romantic", "michelin", "vegetarian", "cute-cafe"]

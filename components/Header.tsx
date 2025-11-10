@@ -29,15 +29,27 @@ export function Header() {
       }
 
       try {
+        // Try profiles table first (standard Supabase structure)
         const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!error && data?.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+          return;
+        }
+
+        // Fallback to user_profiles table if it exists
+        const { data: userProfileData, error: userProfileError } = await supabase
           .from('user_profiles')
           .select('avatar_url')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        const profileData = data as any;
-        if (!error && profileData?.avatar_url) {
-          setAvatarUrl(profileData.avatar_url);
+        if (!userProfileError && userProfileData?.avatar_url) {
+          setAvatarUrl(userProfileData.avatar_url);
         }
       } catch {
         // Ignore errors (table might not exist)
