@@ -77,17 +77,17 @@ export default function MapView({
       {
         featureType: 'water',
         elementType: 'geometry',
-        stylers: [{ color: '#1a1a1a' }],
+        stylers: [{ color: '#0f1f35' }],
       },
       {
         featureType: 'road',
         elementType: 'geometry',
-        stylers: [{ color: '#2a2a2a' }],
+        stylers: [{ color: '#1a2a3a' }],
       },
       {
         featureType: 'landscape',
         elementType: 'geometry',
-        stylers: [{ color: '#1c1c1c' }],
+        stylers: [{ color: '#0a1628' }],
       },
     ];
 
@@ -138,7 +138,7 @@ export default function MapView({
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 5, // Circle marker
-          fillColor: '#1C1C1C', // Default color
+          fillColor: '#0a1628', // Default dark blue color
           fillOpacity: 0.9,
           strokeColor: '#FFFFFF',
           strokeWeight: 1,
@@ -161,7 +161,7 @@ export default function MapView({
         marker.setIcon({
           path: google.maps.SymbolPath.CIRCLE,
           scale: 5,
-          fillColor: '#1C1C1C',
+          fillColor: '#0a1628',
           fillOpacity: 0.9,
           strokeColor: '#FFFFFF',
           strokeWeight: 1,
