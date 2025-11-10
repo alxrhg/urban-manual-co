@@ -271,94 +271,14 @@ export default function TripsPage() {
         )}
       </PageContainer>
 
-      {showCreateDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Create new trip</h2>
-              <button
-                onClick={() => setShowCreateDialog(false)}
-                className="p-1.5 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-blue-700 transition-colors"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Trip title *</label>
-                <input
-                  type="text"
-                  value={newTrip.title}
-                  onChange={e => setNewTrip({ ...newTrip, title: e.target.value })}
-                  placeholder="e.g., Summer in Paris"
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea
-                  value={newTrip.description}
-                  onChange={e => setNewTrip({ ...newTrip, description: e.target.value })}
-                  placeholder="What's this trip about?"
-                  rows={3}
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Destination</label>
-                <input
-                  type="text"
-                  value={newTrip.destination}
-                  onChange={e => setNewTrip({ ...newTrip, destination: e.target.value })}
-                  placeholder="e.g., Paris, France"
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Start date</label>
-                  <input
-                    type="date"
-                    value={newTrip.start_date}
-                    onChange={e => setNewTrip({ ...newTrip, start_date: e.target.value })}
-                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">End date</label>
-                  <input
-                    type="date"
-                    value={newTrip.end_date}
-                    onChange={e => setNewTrip({ ...newTrip, end_date: e.target.value })}
-                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setShowCreateDialog(false)}
-                  className="flex-1 rounded-full border border-gray-300 dark:border-gray-800 px-4 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-dark-blue-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createTrip}
-                  className="flex-1 rounded-full bg-black text-white dark:bg-white dark:text-black px-4 py-2 text-sm font-medium transition-opacity hover:opacity-80"
-                >
-                  Create trip
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Trip Planner Modal */}
+      <TripPlanner
+        isOpen={showCreateDialog}
+        onClose={() => {
+          setShowCreateDialog(false);
+          setNewTrip({ title: '', description: '', destination: '', start_date: '', end_date: '' });
+        }}
+      />
     </div>
   );
 }
