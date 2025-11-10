@@ -108,86 +108,83 @@ export function Header() {
   return (
     <header className="mt-6 md:mt-8" role="banner">
       {/* Top Bar */}
-      <div className="container mx-auto px-4 md:px-8 lg:px-12 pb-6 md:pb-8">
-        <nav className="relative" aria-label="Main navigation">
-          {/* Logo - Top Left */}
-          <div className={`absolute left-0 top-1/2 -translate-y-1/2`}>
-            <button
-              onClick={() => navigate("/")}
-              className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg px-3 py-2 -m-2"
-              aria-label="Go to homepage"
-            >
-              Urban Manual®
-            </button>
-          </div>
+      <div className="container mx-auto px-4 md:px-8 lg:px-12">
+        <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
+          {/* Logo - Left */}
+          <button
+            onClick={() => navigate("/")}
+            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg px-3 py-2 -m-2 shrink-0"
+            aria-label="Go to homepage"
+          >
+            Urban Manual®
+          </button>
+          
           {/* Profile picture / Menu dropdown on right */}
-          <div className={`absolute right-0 top-1/2 -translate-y-1/2`}>
-            <div className="flex items-center gap-4">
-              {isAdmin && buildVersion && (
-                <span
-                  className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
-                  title="Build version"
-                  aria-label={`Build version ${buildVersion}`}
+          <div className="flex items-center gap-4 shrink-0">
+            {isAdmin && buildVersion && (
+              <span
+                className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
+                title="Build version"
+                aria-label={`Build version ${buildVersion}`}
+              >
+                {buildVersion}
+              </span>
+            )}
+            {user ? (
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-full ml-4 shrink-0"
+                aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={isMenuOpen}
+                aria-haspopup="true"
+              >
+                {avatarUrl ? (
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                    <Image
+                      src={avatarUrl}
+                      alt={user.email || 'Profile'}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {user.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
+                <svg
+                  className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
                 >
-                  {buildVersion}
-                </span>
-              )}
-              {user ? (
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-full"
-                  aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-                  aria-expanded={isMenuOpen}
-                  aria-haspopup="true"
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-3 px-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg ml-4 shrink-0"
+                aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={isMenuOpen}
+                aria-haspopup="true"
+              >
+                Menu
+                <svg
+                  className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
                 >
-                  {avatarUrl ? (
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
-                      <Image
-                        src={avatarUrl}
-                        alt={user.email || 'Profile'}
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {user.email?.[0]?.toUpperCase() || 'U'}
-                    </div>
-                  )}
-                  <svg
-                    className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-3 px-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg"
-                  aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-                  aria-expanded={isMenuOpen}
-                  aria-haspopup="true"
-                >
-                  Menu
-                  <svg
-                    className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              )}
-            </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
           </div>
-          </nav>
+        </nav>
       </div>
 
       {/* No full nav bar; all navigation via burger menu */}
