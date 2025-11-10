@@ -230,6 +230,9 @@ export default function CityPageClient() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h1 className="text-3xl sm:text-4xl font-light">{cityDisplayName}</h1>
+                  <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
+                    A city shaped by rhythm, craft, and atmosphere. Best explored slowly.
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
                   </p>

@@ -94,9 +94,18 @@ export function Header() {
     setIsMenuOpen(false);
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <header className="mt-6 md:mt-8" role="banner">
-      {/* Top Bar */}
+      {/* Primary Nav: Brand + Search */}
       <div className="container mx-auto px-4 md:px-8 lg:px-12">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo - Left */}
@@ -107,6 +116,17 @@ export function Header() {
           >
             Urban Manual®
           </button>
+          
+          {/* Search - Center */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-md mx-4">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search destinations..."
+              className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:border-black dark:focus:border-white"
+            />
+          </form>
           
           {/* Profile picture / Menu dropdown on right */}
           <div className="flex items-center gap-4 shrink-0">
@@ -175,6 +195,22 @@ export function Header() {
           </div>
         </nav>
       </div>
+
+      {/* Secondary Nav: Cities & Collections */}
+      <nav className="container mx-auto px-4 md:px-8 lg:px-12 flex items-center gap-4 text-sm text-neutral-400 overflow-x-auto whitespace-nowrap border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => navigate('/cities')}
+          className="py-3 hover:text-neutral-200 dark:hover:text-neutral-200 transition-colors"
+        >
+          Cities
+        </button>
+        <button
+          onClick={() => navigate('/discover')}
+          className="py-3 hover:text-neutral-200 dark:hover:text-neutral-200 transition-colors"
+        >
+          Collections
+        </button>
+      </nav>
 
       {/* No full nav bar; all navigation via burger menu */}
 
