@@ -783,6 +783,30 @@ Summary:`;
                       <Plus className="h-3 w-3 mr-2" />
                       Create a List
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={async () => {
+                      // Unsave from saved_places
+                      if (destination?.slug && user) {
+                        try {
+                          const { error } = await supabase
+                            .from('saved_places')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('destination_slug', destination.slug);
+                          if (!error) {
+                            setIsSaved(false);
+                            if (onSaveToggle) onSaveToggle(destination.slug, false);
+                          }
+                        } catch (error) {
+                          console.error('Error unsaving:', error);
+                          alert('Failed to unsave. Please try again.');
+                        }
+                      }
+                      setShowSaveDropdown(false);
+                    }}>
+                      <X className="h-3 w-3 mr-2" />
+                      Remove from Saved
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 )}
               </DropdownMenu>
@@ -1203,10 +1227,41 @@ Summary:`;
           destinationId={destination.id}
           destinationSlug={destination.slug}
           isOpen={showSaveModal}
-          onClose={() => setShowSaveModal(false)}
+          onClose={async () => {
+            setShowSaveModal(false);
+            // Reload saved status after modal closes
+            if (user && destination?.slug) {
+              try {
+                const { data } = await supabase
+                  .from('saved_places')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('destination_slug', destination.slug)
+                  .single();
+                setIsSaved(!!data);
+              } catch {
+                setIsSaved(false);
+              }
+            }
+          }}
           onSave={async (collectionId) => {
-            // Also save to saved_places for simple save functionality
-            if (destination.slug && user) {
+            // If collectionId is null, user unsaved - remove from saved_places
+            if (collectionId === null && destination.slug && user) {
+              try {
+                const { error } = await supabase
+                  .from('saved_places')
+                  .delete()
+                  .eq('user_id', user.id)
+                  .eq('destination_slug', destination.slug);
+                if (!error) {
+                  setIsSaved(false);
+                  if (onSaveToggle) onSaveToggle(destination.slug, false);
+                }
+              } catch (error) {
+                console.error('Error removing from saved_places:', error);
+              }
+            } else if (collectionId !== null && destination.slug && user) {
+              // Also save to saved_places for simple save functionality
               try {
                 const { error } = await supabase
                   .from('saved_places')

@@ -130,19 +130,14 @@ export function DestinationCard({
 
         {/* Badges - Animated on hover */}
         {showBadges && (
-          <div
-            className={`
-              absolute top-2 right-2 flex flex-col gap-2 z-10
-              transform translate-y-0 group-hover:translate-y-0
-              transition-transform duration-300
-            `}
-          >
-            {/* Michelin Stars */}
+          <>
+            {/* Michelin Stars - Bottom Left */}
             {destination.michelin_stars &&
               typeof destination.michelin_stars === 'number' &&
               destination.michelin_stars > 0 && (
                 <div
                   className={`
+                    absolute bottom-2 left-2 z-10
                     px-3 py-1 border border-gray-200 dark:border-gray-800
                     rounded-2xl text-gray-600 dark:text-gray-400 text-xs
                     bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
@@ -160,7 +155,7 @@ export function DestinationCard({
                   <span>{destination.michelin_stars}</span>
                 </div>
               )}
-          </div>
+          </>
         )}
       </div>
 
