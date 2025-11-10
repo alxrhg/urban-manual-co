@@ -288,71 +288,89 @@ export default function MapPage() {
         />
       </div>
 
-      {/* List Toggle Button - Mobile */}
-      <button
-        onClick={() => setShowListPanel(!showListPanel)}
-        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-gray-900 border border-gray-900 rounded-xl text-sm font-medium text-white active:bg-gray-800 transition-colors shadow-lg min-h-[44px] safe-area-bottom"
-        style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
-      >
-        <div className="flex items-center gap-2">
-          <List className="h-4 w-4" />
-          <span>{showListPanel ? 'Hide List' : `Show List (${filteredDestinations.length})`}</span>
-        </div>
-      </button>
-
-      {/* List Panel - Mobile (Slideover) */}
+      {/* List Panel - Mobile (Bottom Sheet - Compact) */}
       {showListPanel && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - Lighter, allows map interaction */}
           <div 
-            className="md:hidden fixed inset-0 bg-black/50 z-20 top-[calc(112px+73px)]"
+            className="md:hidden fixed inset-0 bg-black/20 z-20 top-[calc(112px+73px)]"
             onClick={() => setShowListPanel(false)}
           />
-          {/* Panel */}
-          <div className="md:hidden fixed inset-x-0 bottom-0 top-[calc(112px+73px+60px)] bg-white border-t border-gray-200 z-30 overflow-y-auto safe-area-bottom rounded-t-2xl shadow-2xl">
-            {/* Handle bar */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 z-10 py-2 flex items-center justify-center">
-              <div className="w-12 h-1 bg-gray-300 rounded-full" />
-            </div>
-            <div className="p-4 space-y-2 pb-6">
-              <div className="text-xs text-neutral-500 mb-4">
-                {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+          {/* Panel - Takes up max 50% of screen, shows map above */}
+          <div className="md:hidden fixed inset-x-0 bottom-0 bg-white border-t border-gray-200 z-30 overflow-hidden rounded-t-2xl shadow-2xl safe-area-bottom"
+            style={{ 
+              height: 'min(50vh, 400px)',
+              maxHeight: '50vh'
+            }}>
+            {/* Handle bar with close button */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 z-10 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-1 bg-gray-300 rounded-full" />
+                <span className="text-xs font-medium text-gray-700">
+                  {filteredDestinations.length} {filteredDestinations.length === 1 ? 'place' : 'places'}
+                </span>
               </div>
-              {sortedDestinations.map((dest) => (
-                <button
-                  key={dest.slug}
-                  onClick={() => {
-                    handleListItemClick(dest);
-                    setShowListPanel(false);
-                  }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 active:bg-gray-100 transition-colors text-left min-h-[72px] touch-manipulation"
-                >
-                  {dest.image && (
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                      <Image
-                        src={dest.image}
-                        alt={dest.name}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
+              <button
+                onClick={() => setShowListPanel(false)}
+                className="p-1.5 -mr-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                aria-label="Close list"
+              >
+                <X className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+            {/* Scrollable list */}
+            <div className="overflow-y-auto h-[calc(100%-57px)]">
+              <div className="p-4 space-y-2 pb-6">
+                {sortedDestinations.map((dest) => (
+                  <button
+                    key={dest.slug}
+                    onClick={() => {
+                      handleListItemClick(dest);
+                      setShowListPanel(false);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 active:bg-gray-100 transition-colors text-left min-h-[72px] touch-manipulation"
+                  >
+                    {dest.image && (
+                      <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                        <Image
+                          src={dest.image}
+                          alt={dest.name}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">{dest.name}</div>
+                      <div className="text-xs text-neutral-500 mt-0.5">
+                        {dest.category && <span>{dest.category}</span>}
+                        {dest.city && (
+                          <span className="ml-1">• {dest.city}</span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{dest.name}</div>
-                    <div className="text-xs text-neutral-500 mt-0.5">
-                      {dest.category && <span>{dest.category}</span>}
-                      {dest.city && (
-                        <span className="ml-1">• {dest.city}</span>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
-                </button>
-              ))}
+                    <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </>
+      )}
+
+      {/* List Toggle Button - Mobile (Floating, always visible when list is closed) */}
+      {!showListPanel && (
+        <button
+          onClick={() => setShowListPanel(true)}
+          className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-gray-900 border border-gray-900 rounded-xl text-sm font-medium text-white active:bg-gray-800 transition-all duration-200 shadow-lg min-h-[44px] safe-area-bottom hover:scale-105"
+          style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
+        >
+          <div className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            <span>Show List ({filteredDestinations.length})</span>
+          </div>
+        </button>
       )}
 
       {/* Details Panel - Right (Desktop) - Using Drawer for now */}

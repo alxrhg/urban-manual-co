@@ -116,7 +116,7 @@ function TrendingSectionComponent({ city }: { city?: string }) {
   if (!destinations.length) return null;
 
   return (
-    <section ref={sectionRef} className="mb-12">
+    <section ref={sectionRef}>
       <div className="flex items-center gap-2 mb-4">
         <h2 className="text-sm tracking-wide uppercase text-neutral-500">
           Trending This Week

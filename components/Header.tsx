@@ -99,7 +99,7 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav: Brand + Menu */}
-      <div className="container mx-auto px-4 md:px-8 lg:px-12">
+      <div className="w-full px-6 md:px-10 lg:px-12">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo - Left */}
           <button

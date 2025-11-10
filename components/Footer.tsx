@@ -1,56 +1,72 @@
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="mt-12 border-t border-[#E6E6E6] dark:border-[#E6E6E6] py-12 text-[13px] text-[#999] dark:text-[#999]">
-      <div className="container mx-auto px-4 md:px-8 lg:px-12 flex flex-col gap-12">
-        {/* Brand / Tagline */}
-        <div className="flex flex-col gap-1">
-          <div className="text-[#aaa] dark:text-[#aaa] font-medium">The Urban Manual</div>
-          <div className="text-[#999] dark:text-[#999]">A curated index of places worth your time.</div>
-        </div>
-
-        {/* Explore */}
-        <div className="flex flex-col gap-2 text-[#aaa] dark:text-[#aaa]">
-          <Link href="/cities" className="hover:opacity-60 transition-opacity">
-            Cities
-          </Link>
-          <Link href="/collections" className="hover:opacity-60 transition-opacity">
-            Collections
-          </Link>
-          <Link href="/recent" className="hover:opacity-60 transition-opacity">
-            Recent
-          </Link>
-          <Link href="/saved" className="hover:opacity-60 transition-opacity">
-            Saved
-          </Link>
-        </div>
-
-        {/* Social (Instagram only) */}
-        <div className="flex flex-col gap-2 text-[#aaa] dark:text-[#aaa]">
-          <a
-            href="https://instagram.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:opacity-60 transition-opacity"
-          >
-            Instagram
-          </a>
-        </div>
-
-        {/* Legal */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-[#E6E6E6] dark:border-[#E6E6E6]">
-          <div>© {new Date().getFullYear()} The Urban Manual. All rights reserved.</div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Link href="/privacy" className="hover:opacity-60 transition-opacity">
-              Privacy
+    <footer className="mt-20 border-t border-gray-200 dark:border-gray-800">
+      {/* Main Content Area */}
+      <div className="w-full px-6 md:px-10 lg:px-12 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 max-w-6xl mx-auto">
+          {/* Left Column - Contact */}
+          <div className="flex flex-col gap-4">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              contact@avmlo.com
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              @urbanmanual
+            </div>
+            <Link 
+              href="/contact" 
+              className="inline-flex items-center gap-2 text-orange-600 dark:text-orange-500 hover:opacity-80 transition-opacity text-sm font-medium mt-2"
+            >
+              Contact Us
+              <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/terms" className="hover:opacity-60 transition-opacity">
-              Terms
-            </Link>
-            <Link href="/submit" className="hover:opacity-60 transition-opacity">
-              Submit a Place
-            </Link>
+          </div>
+
+          {/* Right Column - Message */}
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-gray-900 dark:text-white">
+              Interested? Tell us why.
+            </div>
+            <div className="text-sm text-gray-900 dark:text-white">
+              With love from around the world,
+            </div>
+            <div className="text-sm font-medium text-gray-900 dark:text-white mt-2">
+              The Urban Manual
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Section - Legal & Navigation */}
+      <div className="border-t border-gray-200 dark:border-gray-800">
+        <div className="w-full px-6 md:px-10 lg:px-12 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            {/* Copyright */}
+            <div>
+              © {new Date().getFullYear()} The Manual Company. All Rights Reserved.
+            </div>
+
+            {/* Navigation Links */}
+            <div className="flex items-center gap-6">
+              <Link href="/newsletter" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+                Newsletter
+              </Link>
+              <Link href="/about" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+                About
+              </Link>
+              <Link href="/contact" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+                Contact
+              </Link>
+            </div>
+
+            {/* Privacy Policy */}
+            <div>
+              <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+            </div>
           </div>
         </div>
       </div>

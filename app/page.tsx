@@ -1861,7 +1861,7 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col container mx-auto px-4 md:px-8 lg:px-12 py-24 md:py-28">
+        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 lg:px-12 py-16 md:py-24">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -2226,9 +2226,10 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="container mx-auto px-4 md:px-8 lg:px-12 pb-24 md:pb-32">
+              <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32">
+                <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
-                <div className="flex justify-end items-center gap-3 mb-6 relative">
+                <div className="flex justify-end items-center gap-3 mb-8 md:mb-10 relative">
                   {/* Grid/Map Toggle */}
                   <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
                     <button
@@ -2284,7 +2285,8 @@ export default function Home() {
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
-              <SmartRecommendations
+              <div className="mb-12 md:mb-16">
+                <SmartRecommendations
                 onCardClick={(destination) => {
                   setSelectedDestination(destination);
                   setIsDrawerOpen(true);
@@ -2329,11 +2331,14 @@ export default function Home() {
                   }
                 }}
               />
+              </div>
             )}
 
             {/* Trending Section - Show when no active search */}
             {!submittedQuery && (
-              <TrendingSection />
+              <div className="mb-12 md:mb-16">
+                <TrendingSection />
+              </div>
             )}
 
             {/* Near Me - No Results Message */}
@@ -2527,6 +2532,7 @@ export default function Home() {
                 </>
               );
             })()}
+                </div>
               </div>
 
           {/* Destination Drawer */}
