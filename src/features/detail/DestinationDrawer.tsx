@@ -900,7 +900,7 @@ Summary:`;
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-sm flex items-center gap-1.5 font-semibold">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
