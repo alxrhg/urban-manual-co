@@ -363,7 +363,7 @@ function DestinationForm({
                   }
                 }}
                 placeholder="Start typing a place name... (autocomplete enabled)"
-                className="flex-1 px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500"
                 types="establishment"
               />
               <button
@@ -395,7 +395,7 @@ function DestinationForm({
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 placeholder="auto-generated if empty"
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -405,7 +405,7 @@ function DestinationForm({
                 required
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., Tokyo"
               />
             </div>
@@ -417,7 +417,7 @@ function DestinationForm({
               required
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., restaurant, hotel, cafe"
             />
           </div>
@@ -427,7 +427,7 @@ function DestinationForm({
             <label className="block text-sm font-medium mb-1.5">Parent Destination (Optional)</label>
             <div className="relative">
               {selectedParent ? (
-                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600">
                   <div>
                     <span className="text-sm font-medium">{selectedParent.name}</span>
                     <span className="text-xs text-gray-500 ml-2">{selectedParent.city}</span>
@@ -450,7 +450,7 @@ function DestinationForm({
                     value={parentSearchQuery}
                     onChange={(e) => setParentSearchQuery(e.target.value)}
                     placeholder="Search for parent destination (e.g., hotel name)..."
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   {isSearchingParent && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -458,7 +458,7 @@ function DestinationForm({
                     </div>
                   )}
                   {parentSearchResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       {parentSearchResults.map((parent) => (
                         <button
                           key={parent.id}
@@ -499,7 +499,7 @@ function DestinationForm({
             className={`relative border-2 border-dashed rounded-2xl p-6 transition-colors ${
               isDragging
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-dark-blue-900/50'
+                : 'border-gray-300 dark:border-dark-blue-600 bg-gray-50 dark:bg-dark-blue-900/50'
             }`}
           >
             <input
@@ -560,7 +560,7 @@ function DestinationForm({
                 className="hidden"
                 id="image-upload-button"
               />
-              <span className="inline-flex items-center justify-center w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
+              <span className="inline-flex items-center justify-center w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 border border-gray-200 dark:border-dark-blue-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
                 📁 {imageFile ? 'Change Image' : 'Choose File'}
               </span>
             </label>
@@ -588,14 +588,14 @@ function DestinationForm({
               }
             }}
             placeholder="Enter image URL"
-            className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500"
           />
           {imagePreview && (
             <div className="mt-3">
               <img
                 src={imagePreview}
                 alt="Preview"
-                className="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
+                className="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-dark-blue-600 shadow-sm"
                 onError={() => setImagePreview(null)}
               />
             </div>
@@ -619,7 +619,7 @@ function DestinationForm({
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               placeholder="A brief, punchy description (1-2 sentences)"
             />
           </div>
@@ -629,7 +629,7 @@ function DestinationForm({
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               rows={8}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
               placeholder="A detailed description of the destination, what makes it special, atmosphere, best time to visit, etc."
             />
           </div>
@@ -656,7 +656,7 @@ function DestinationForm({
                 }
                 setFormData(updatedFormData);
               }}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded border border-gray-200 dark:border-dark-blue-600 outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0-3"
             />
           </div>

@@ -164,7 +164,7 @@ export function Header() {
                 aria-haspopup="true"
               >
                 {avatarUrl ? (
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-dark-blue-600">
                     <Image
                       src={avatarUrl}
                       alt={user.email || 'Profile'}
@@ -174,7 +174,7 @@ export function Header() {
                     />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-dark-blue-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
                     {user.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}

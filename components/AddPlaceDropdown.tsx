@@ -142,7 +142,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search places..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-dark-blue-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-dark-blue-800 border border-gray-200 dark:border-dark-blue-600 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
               />
             </div>
           </div>

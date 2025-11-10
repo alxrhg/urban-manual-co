@@ -98,7 +98,7 @@ export default function VisitModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Share your experience, tips, or memories..."
               rows={4}
-              className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded-2xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+              className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded-2xl border border-gray-200 dark:border-dark-blue-600 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
             />
           </div>
         </div>

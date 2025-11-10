@@ -125,7 +125,7 @@ export default function DiscoverCollectionsPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">
+                      <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-dark-blue-700 flex items-center justify-center text-xs">
                         {(collection.user_profiles.display_name || collection.user_profiles.username)?.charAt(0).toUpperCase()}
                       </div>
                     )}

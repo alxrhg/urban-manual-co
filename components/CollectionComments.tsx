@@ -183,7 +183,7 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
                         />
                       </div>
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-dark-blue-700 flex items-center justify-center text-sm">
                         {(comment.user_profiles.display_name || comment.user_profiles.username)?.charAt(0).toUpperCase()}
                       </div>
                     )}

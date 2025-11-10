@@ -154,7 +154,7 @@ export default function ItineraryPage() {
                         type="date"
                         value={item.date || ''}
                         onChange={(e) => updateItem(item.listingId, { date: e.target.value || null })}
-                        className="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-dark-blue-800 text-sm"
+                        className="border border-gray-300 dark:border-dark-blue-600 rounded px-2 py-1 bg-white dark:bg-dark-blue-800 text-sm"
                       />
                     </div>
                     {item.date && (
@@ -164,7 +164,7 @@ export default function ItineraryPage() {
                           type="time"
                           value={item.time || ''}
                           onChange={(e) => updateItem(item.listingId, { time: e.target.value })}
-                          className="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-dark-blue-800 text-sm"
+                          className="border border-gray-300 dark:border-dark-blue-600 rounded px-2 py-1 bg-white dark:bg-dark-blue-800 text-sm"
                         />
                       </div>
                     )}

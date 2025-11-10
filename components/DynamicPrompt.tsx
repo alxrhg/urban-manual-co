@@ -94,7 +94,7 @@ export default function DynamicPrompt({ city, category, className = '' }: Dynami
   }
 
   return (
-    <div className={`bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 ${className}`}>
+    <div className={`bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 ${className}`}>
       <div className="flex items-start gap-2">
         <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-400 mt-0.5 flex-shrink-0" />
         <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed italic">

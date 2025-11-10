@@ -129,7 +129,7 @@ export function VisitedModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-dark-blue-900 rounded-2xl shadow-2xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-blue-600">
           <h2 className="text-xl font-semibold">Visit Details</h2>
           <button
             onClick={onClose}
@@ -194,7 +194,7 @@ export function VisitedModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+        <div className="p-4 border-t border-gray-200 dark:border-dark-blue-600 flex gap-2">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"

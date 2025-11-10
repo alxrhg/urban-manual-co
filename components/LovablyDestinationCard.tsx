@@ -48,7 +48,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
           />
         </div>
       ) : (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-200 dark:bg-dark-blue-700 flex items-center justify-center">
           <span className="text-4xl opacity-20">📍</span>
         </div>
       )}

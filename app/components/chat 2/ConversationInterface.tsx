@@ -142,7 +142,7 @@ export function ConversationInterface({
         {/* Chat Container */}
         <div className="bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 dark:border-white/10">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-dark-blue-600/50">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -181,7 +181,7 @@ export function ConversationInterface({
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
+          <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200/50 dark:border-dark-blue-600/50">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
@@ -189,7 +189,7 @@ export function ConversationInterface({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about restaurants, hotels, cities..."
-                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-dark-blue-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-gray-900 dark:text-gray-100"
+                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-dark-blue-800 border border-gray-200 dark:border-dark-blue-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-gray-900 dark:text-gray-100"
                 disabled={isLoading}
               />
               <button

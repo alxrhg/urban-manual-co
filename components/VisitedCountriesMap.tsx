@@ -151,7 +151,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
               return (
                 <div
                   key={country}
-                  className="flex flex-col items-center justify-center bg-white dark:bg-dark-blue-800 rounded-2xl p-2 shadow-sm border border-gray-200 dark:border-gray-700"
+                  className="flex flex-col items-center justify-center bg-white dark:bg-dark-blue-800 rounded-2xl p-2 shadow-sm border border-gray-200 dark:border-dark-blue-600"
                   style={{
                     animation: `fadeIn 0.3s ease-out ${idx * 0.05}s both`
                   }}
@@ -167,7 +167,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
         </div>
 
         {visitedCountries.length > 12 && (
-          <div className="absolute bottom-2 right-2 bg-white dark:bg-dark-blue-800 px-3 py-1 rounded-full shadow-md border border-gray-200 dark:border-gray-700">
+          <div className="absolute bottom-2 right-2 bg-white dark:bg-dark-blue-800 px-3 py-1 rounded-full shadow-md border border-gray-200 dark:border-dark-blue-600">
             <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
               +{visitedCountries.length - 12} more
             </span>

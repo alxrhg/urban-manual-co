@@ -145,7 +145,7 @@ export function RealtimeStatusBadge({
               {getCrowdingLabel(status.crowding.level)}
             </div>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-dark-blue-700 rounded-full h-2">
             <div
               className={`h-2 rounded-full transition-all ${
                 status.crowding.level === 'quiet' ? 'bg-green-500' :

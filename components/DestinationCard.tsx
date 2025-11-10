@@ -86,7 +86,7 @@ export function DestinationCard({
       >
         {/* Skeleton while loading */}
         {!isLoaded && isInView && (
-          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
+          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-dark-blue-700" />
         )}
 
         {/* Actual Image */}

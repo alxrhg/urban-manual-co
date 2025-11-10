@@ -101,7 +101,7 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
                 <button
                   key={index}
                   onClick={() => onAlternativeClick(alt)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-all"
+                  className="px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-dark-blue-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-all"
                 >
                   {alt}
                 </button>
