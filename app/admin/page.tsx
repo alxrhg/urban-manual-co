@@ -778,7 +778,7 @@ export default function AdminPage() {
       const supabase = createClient();
       let query = supabase
         .from('destinations')
-        .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating')
+        .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating, michelin_stars, crown')
         .order('slug', { ascending: true });
 
       // Apply search filter if present
