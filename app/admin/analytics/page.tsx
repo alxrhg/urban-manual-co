@@ -80,7 +80,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 px-6 md:px-12 lg:px-16 py-12">
-      <div className="max-w-[1280px] mx-auto">
+      <div className="container mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Search Analytics</h1>
           <p className="text-gray-600 dark:text-gray-400">

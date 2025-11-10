@@ -86,7 +86,7 @@ export default function UserProfilePage() {
   if (!profile) {
     return (
       <main className="px-6 md:px-10 py-20">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="container mx-auto text-center">
           <h1 className="text-2xl font-light mb-4">User not found</h1>
           <button
             onClick={() => router.push('/')}
@@ -103,7 +103,7 @@ export default function UserProfilePage() {
 
   return (
     <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="max-w-4xl mx-auto">
+      <div className="container mx-auto">
         {/* Profile Header */}
         <div className="mb-12">
           <div className="flex items-start gap-6 mb-6">

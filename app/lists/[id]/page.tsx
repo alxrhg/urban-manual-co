@@ -262,7 +262,7 @@ export default function ListDetailPage() {
 
   return (
     <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-      <div className="max-w-[1280px] mx-auto">
+      <div className="container mx-auto">
         {/* Header - Improved responsive layout */}
         <div className="mb-8">
           <button
