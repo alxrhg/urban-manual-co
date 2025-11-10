@@ -679,22 +679,21 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           destinationId={destination.id}
           destinationSlug={destination.slug}
           isOpen={showSaveModal}
-          onClose={() => {
+          onClose={async () => {
             setShowSaveModal(false);
             // Reload saved status after modal closes
             if (user && destination?.slug) {
-              supabase
-                .from('saved_places')
-                .select('id')
-                .eq('user_id', user.id)
-                .eq('destination_slug', destination.slug)
-                .single()
-                .then(({ data }) => {
-                  setIsSaved(!!data);
-                })
-                .catch(() => {
-                  setIsSaved(false);
-                });
+              try {
+                const { data } = await supabase
+                  .from('saved_places')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('destination_slug', destination.slug)
+                  .single();
+                setIsSaved(!!data);
+              } catch {
+                setIsSaved(false);
+              }
             }
           }}
           onSave={async (collectionId) => {
