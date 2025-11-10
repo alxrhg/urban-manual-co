@@ -88,13 +88,13 @@ export function ForYouSectionML() {
           >
             <div className={`${CARD_MEDIA} mb-3`}>
               {/* Image would be fetched from destination data */}
-              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700 bg-gray-100 dark:bg-gray-800">
                 <MapPin className="h-8 w-8 opacity-20" />
               </div>
 
               {/* ML Score Badge (for high-confidence recommendations) */}
               {isMLPowered && rec.score > 0.8 && (
-                <div className="absolute top-2 right-2 bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-2 py-1 rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                   {Math.round(rec.score * 100)}%
                 </div>
               )}

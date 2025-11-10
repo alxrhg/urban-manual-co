@@ -17,7 +17,7 @@ export const LOVABLY_BORDER_COLORS = [
   'border-red-500',
   'border-green-500',
   'border-yellow-500',
-  'border-purple-500',
+  'border-gray-500',
   'border-orange-500',
   'border-pink-500',
   'border-cyan-500',

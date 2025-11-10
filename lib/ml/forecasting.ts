@@ -160,7 +160,7 @@ export function getTrendingBadge(trendDirection: 'rising' | 'stable' | 'falling'
 } | null {
   switch (trendDirection) {
     case 'rising':
-      return { text: 'Trending', emoji: '↗', color: 'text-purple-600 dark:text-purple-400' };
+      return { text: 'Trending', emoji: '↗', color: 'text-gray-600 dark:text-gray-400' };
     case 'falling':
       return { text: 'Less popular', emoji: '↘', color: 'text-gray-600 dark:text-gray-400' };
     case 'stable':

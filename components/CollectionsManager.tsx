@@ -213,7 +213,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
               value={newCollectionName}
               onChange={(e) => setNewCollectionName(e.target.value)}
               placeholder="e.g., Tokyo Favorites"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100"
             />
           </div>
 
@@ -224,7 +224,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
               onChange={(e) => setNewCollectionDescription(e.target.value)}
               placeholder="Optional description..."
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100"
             />
           </div>
 
