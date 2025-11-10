@@ -63,41 +63,45 @@ export default function MapView({
     if (!loaded || !mapRef.current || mapInstanceRef.current) return;
 
     // Soft neutral map style to avoid competing with photography
+    const YOUR_CUSTOM_MAP_STYLE = [
+      {
+        featureType: 'poi',
+        elementType: 'labels',
+        stylers: [{ visibility: 'off' }],
+      },
+      {
+        featureType: 'all',
+        elementType: 'geometry',
+        stylers: [{ saturation: -20 }, { lightness: 10 }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#1a1a1a' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'geometry',
+        stylers: [{ color: '#2a2a2a' }],
+      },
+      {
+        featureType: 'landscape',
+        elementType: 'geometry',
+        stylers: [{ color: '#1c1c1c' }],
+      },
+    ];
+
     mapInstanceRef.current = new google.maps.Map(mapRef.current, {
       center,
       zoom,
-      styles: [
-        {
-          featureType: 'poi',
-          elementType: 'labels',
-          stylers: [{ visibility: 'off' }],
-        },
-        {
-          featureType: 'all',
-          elementType: 'geometry',
-          stylers: [{ saturation: -20 }, { lightness: 10 }],
-        },
-        {
-          featureType: 'water',
-          elementType: 'geometry',
-          stylers: [{ color: '#1a1a1a' }],
-        },
-        {
-          featureType: 'road',
-          elementType: 'geometry',
-          stylers: [{ color: '#2a2a2a' }],
-        },
-        {
-          featureType: 'landscape',
-          elementType: 'geometry',
-          stylers: [{ color: '#1c1c1c' }],
-        },
-      ],
+      styles: YOUR_CUSTOM_MAP_STYLE, // ensure imported or defined above
       disableDefaultUI: false,
       zoomControl: true,
       mapTypeControl: false,
       streetViewControl: false,
-      fullscreenControl: true,
+      fullscreenControl: false,
+      rotateControl: false,
+      mapTypeId: google.maps.MapTypeId.ROADMAP, // locked to single mode
     });
   }, [loaded, center, zoom]);
 
