@@ -845,11 +845,10 @@ Summary:`;
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-8 md:p-10">
           {/* Image */}
           {destination.image && (
-            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
-              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
+            <div className="aspect-square rounded-lg overflow-hidden mb-10 bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
                 alt={destination.name}
@@ -859,12 +858,11 @@ Summary:`;
                 priority={false}
                 quality={85}
               />
-              </div>
             </div>
           )}
 
           {/* Identity Block */}
-          <div className="space-y-4 mt-6">
+          <div className="space-y-4 mb-10">
             {/* Location Badge */}
             <div>
               <a
@@ -882,8 +880,8 @@ Summary:`;
             </div>
 
             {/* Title */}
-            <div className="space-y-3">
-              <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
+            <div className="space-y-3 mb-10">
+              <h1 className="text-4xl md:text-5xl font-bold leading-[1.1] tracking-tight text-black dark:text-white">
               {destination.name}
             </h1>
 
@@ -1080,10 +1078,10 @@ Summary:`;
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-12" />
 
           {/* Meta & Info Section */}
-          <div className="space-y-6">
+          <div className="space-y-10">
             {/* Badges - Only parent destination badge remains here */}
             {parentDestination && (
               <div className="flex flex-wrap gap-2">
@@ -1105,7 +1103,7 @@ Summary:`;
                 {destination.tags.map((tag, index) => (
                     <span
                     key={index}
-                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400"
+                    className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700"
                     >
                     {tag}
                     </span>
@@ -1130,90 +1128,96 @@ Summary:`;
               </div>
             )}
 
-            {/* Opening Hours */}
+            {/* Address and Hours - Side by Side */}
             {(() => {
+              const hasAddress = enrichedData?.formatted_address || enrichedData?.vicinity;
               const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
-              if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
-                return null;
-              }
+              const hasHours = hours && hours.weekday_text && Array.isArray(hours.weekday_text) && hours.weekday_text.length > 0;
               
-              const openStatus = getOpenStatus(
+              if (!hasAddress && !hasHours) return null;
+              
+              const openStatus = hasHours ? getOpenStatus(
                 hours, 
                 destination.city, 
                 enrichedData?.timezone_id, 
                 enrichedData?.utc_offset
-              );
+              ) : null;
               
               let now: Date;
-              if (enrichedData?.timezone_id) {
-                now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
-              } else if (CITY_TIMEZONES[destination.city]) {
-                now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[destination.city] }));
-              } else if (enrichedData?.utc_offset !== null && enrichedData?.utc_offset !== undefined) {
-                const utcNow = new Date();
-                now = new Date(utcNow.getTime() + (enrichedData.utc_offset * 60 * 1000));
-              } else {
-                now = new Date();
+              if (hasHours) {
+                if (enrichedData?.timezone_id) {
+                  now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
+                } else if (CITY_TIMEZONES[destination.city]) {
+                  now = new Date(new Date().toLocaleString('en-US', { timeZone: CITY_TIMEZONES[destination.city] }));
+                } else if (enrichedData?.utc_offset !== null && enrichedData?.utc_offset !== undefined) {
+                  const utcNow = new Date();
+                  now = new Date(utcNow.getTime() + (enrichedData.utc_offset * 60 * 1000));
+                } else {
+                  now = new Date();
+                }
               }
               
+              const formatHoursDisplay = () => {
+                if (!openStatus?.todayHours) return null;
+                const statusText = openStatus.isOpen ? 'Open today' : 'Closed';
+                return `${statusText} • ${openStatus.todayHours}`;
+              };
+              
               return (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    {openStatus.todayHours && (
-                      <>
-                        <span className="text-sm font-medium text-black dark:text-white">
-                        {openStatus.isOpen ? 'Open now' : 'Closed'}
-                      </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        · {openStatus.todayHours}
-                      </span>
-                      </>
-                    )}
-                  </div>
-                  {hours.weekday_text && (
-                    <details className="text-sm">
-                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                        View all hours
-                      </summary>
-                      <div className="mt-2 space-y-1 pl-6">
-                        {hours.weekday_text.map((day: string, index: number) => {
-                          const [dayName, hoursText] = day.split(': ');
-                          const dayOfWeek = now.getDay();
-                          const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                          const isToday = index === googleDayIndex;
-
-                          return (
-                            <div key={index} className={`flex justify-between ${isToday ? 'font-medium text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-                              <span>{dayName}</span>
-                              <span>{hoursText}</span>
-                            </div>
-                          );
-                        })}
+                <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                  {/* Address Section */}
+                  {hasAddress && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">ADDRESS</div>
+                        {enrichedData?.formatted_address && (
+                          <div className="text-sm text-gray-900 dark:text-white leading-relaxed">{enrichedData.formatted_address}</div>
+                        )}
+                        {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{enrichedData.vicinity}</div>
+                        )}
                       </div>
-                    </details>
+                    </div>
+                  )}
+                  
+                  {/* Hours Section */}
+                  {hasHours && (
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">HOURS</div>
+                        {formatHoursDisplay() && (
+                          <div className="text-sm text-gray-900 dark:text-white leading-relaxed">{formatHoursDisplay()}</div>
+                        )}
+                        {hours.weekday_text && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                              View all hours
+                            </summary>
+                            <div className="mt-2 space-y-1">
+                              {hours.weekday_text.map((day: string, index: number) => {
+                                const [dayName, hoursText] = day.split(': ');
+                                const dayOfWeek = now.getDay();
+                                const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                                const isToday = index === googleDayIndex;
+
+                                return (
+                                  <div key={index} className={`flex justify-between text-xs ${isToday ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                                    <span>{dayName}</span>
+                                    <span>{hoursText}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               );
             })()}
-
-            {/* Address */}
-            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
-              <div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-black dark:text-white mb-1">Address</div>
-                    {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
-                    )}
-                    {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
-                    )}
-                  </div>
-              </div>
-            </div>
-          )}
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
@@ -1237,7 +1241,7 @@ Summary:`;
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-12" />
 
 
           {/* Description */}
@@ -1251,9 +1255,9 @@ Summary:`;
 
           {/* Editorial Summary */}
           {enrichedData?.editorial_summary && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="mt-10">
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-4 text-gray-500 dark:text-gray-400">From Google</h3>
+              <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(enrichedData.editorial_summary)}
               </p>
             </div>
