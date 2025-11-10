@@ -791,10 +791,13 @@ export default function AdminPage() {
 
       if (error) {
         console.error('[Admin] Supabase error loading destinations:', error);
+        console.error('[Admin] Error details:', JSON.stringify(error, null, 2));
         toast.error(`Failed to load destinations: ${error.message}`);
         setDestinationList([]);
         return;
       }
+      
+      console.log('[Admin] Loaded destinations:', data?.length || 0);
       setDestinationList(data || []);
     } catch (e: any) {
       console.error('[Admin] Error loading destinations:', e);
@@ -878,11 +881,17 @@ export default function AdminPage() {
     }
   }, [toast]);
 
+  // Load destinations when admin/auth is ready, or when search/offset changes
   useEffect(() => {
     if (isAdmin && authChecked) {
+      // Reset offset when search query changes
+      if (listSearchQuery !== '' && listOffset !== 0) {
+        setListOffset(0);
+        return; // Will trigger another effect run with offset=0
+      }
       loadDestinationList();
     }
-  }, [isAdmin, authChecked, loadDestinationList]);
+  }, [isAdmin, authChecked, listSearchQuery, listOffset, loadDestinationList]);
 
   // Load data when tab changes
   useEffect(() => {
