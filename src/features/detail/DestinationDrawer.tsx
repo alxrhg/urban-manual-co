@@ -474,15 +474,23 @@ Summary:`;
     }
 
     try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        throw new Error('Supabase client not available');
+      }
+
       if (isVisited) {
         // Remove visit
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('visited_places')
           .delete()
           .eq('user_id', user.id)
           .eq('destination_slug', destination.slug);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing visit:', error);
+          throw error;
+        }
 
         setIsVisited(false);
         if (onVisitToggle) onVisitToggle(destination.slug, false);
@@ -493,7 +501,7 @@ Summary:`;
           return;
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('visited_places')
           .upsert({
             user_id: user.id,
@@ -511,9 +519,10 @@ Summary:`;
         setIsVisited(true);
         if (onVisitToggle) onVisitToggle(destination.slug, true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling visit:', error);
-      alert('Failed to update visit status. Please try again.');
+      const errorMessage = error?.message || 'Failed to update visit status. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -521,12 +530,18 @@ Summary:`;
     // Reload visited status after modal updates
     if (!user || !destination) return;
 
-    const { data: visitedData } = await supabase
-      .from('visited_places')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('destination_slug', destination.slug)
-      .single();
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        setIsVisited(false);
+        return;
+      }
+
+      const { data: visitedData } = await supabaseClient
+        .from('visited_places')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('destination_slug', destination.slug)
+        .single();
 
     setIsVisited(!!visitedData);
     if (onVisitToggle && visitedData) onVisitToggle(destination.slug, true);
