@@ -44,7 +44,7 @@ export function ContextCards({ context }: ContextCardsProps) {
       icon: <TrendingUp className="h-4 w-4" />,
       label: 'Your style',
       value: context.travelStyle,
-      color: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
+      color: 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
     });
   }
 

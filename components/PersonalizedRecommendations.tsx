@@ -41,7 +41,7 @@ function PersonalizedRecommendationsComponent({
       <div className={className}>
         {showTitle && (
           <div className="flex items-center gap-2 mb-6">
-            <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            <Sparkles className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             <h2 className="text-2xl font-bold">{title}</h2>
           </div>
         )}

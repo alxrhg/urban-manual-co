@@ -14,7 +14,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
@@ -1356,7 +1356,7 @@ Summary:`;
                   ))}
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 items-start">
                   {recommendations.map(rec => (
                     <button
                       key={rec.slug}
@@ -1365,7 +1365,7 @@ Summary:`;
                         router.push(`/destination/${rec.slug}`);
                         }
                       }}
-                      className="flex-shrink-0 w-32 group text-left"
+                      className="group text-left w-full flex flex-col"
                     >
                       <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (

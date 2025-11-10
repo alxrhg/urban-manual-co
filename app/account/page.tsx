@@ -294,14 +294,6 @@ export default function Account() {
       ...countriesFromCities
     ]);
     
-    // Debug logging to help diagnose map issues
-    console.log('[Account] Countries found:', Array.from(uniqueCountries));
-    console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
-    console.log('[Account] Countries from cities:', countriesFromCities);
-    console.log('[Account] Unique cities:', Array.from(uniqueCities));
-    console.log('[Account] Visited places count:', visitedPlaces.length);
-    console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
-
     // Extract visited destinations with coordinates for map
     const visitedDestinationsWithCoords = visitedPlaces
       .filter(p => p.destination)
@@ -311,6 +303,14 @@ export default function Account() {
         longitude: p.destination!.longitude,
       }))
       .filter(d => d.latitude && d.longitude);
+
+    // Debug logging to help diagnose map issues
+    console.log('[Account] Countries found:', Array.from(uniqueCountries));
+    console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
+    console.log('[Account] Countries from cities:', countriesFromCities);
+    console.log('[Account] Unique cities:', Array.from(uniqueCities));
+    console.log('[Account] Visited places count:', visitedPlaces.length);
+    console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
 
     const curationCompletionPercentage = totalDestinations > 0
       ? Math.round((visitedPlaces.length / totalDestinations) * 100)
