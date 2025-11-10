@@ -65,7 +65,6 @@ export function DestinationCard({
       className={`
         group relative w-full flex flex-col transition-all duration-300 ease-out
         cursor-pointer text-left focus-ring
-        ${isVisited ? 'opacity-60' : 'opacity-100'}
         hover:scale-[1.02]
         active:scale-[0.98]
         ${className}
