@@ -243,9 +243,21 @@ export default function Account() {
       ...visitedPlaces.filter(p => p.destination).map(p => p.destination!.city)
     ]);
 
-    const uniqueCountries = new Set(
-      Array.from(uniqueCities).map(city => cityCountryMap[city] || 'Other')
-    );
+    // Get countries from destination.country field first, fallback to cityCountryMap
+    const countriesFromDestinations = new Set([
+      ...savedPlaces.map(p => p.destination?.country).filter(Boolean),
+      ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country)
+    ]);
+    
+    // Also get countries from city mapping for destinations without country field
+    const countriesFromCities = Array.from(uniqueCities)
+      .map(city => cityCountryMap[city])
+      .filter(Boolean);
+    
+    const uniqueCountries = new Set([
+      ...Array.from(countriesFromDestinations),
+      ...countriesFromCities
+    ]);
 
     // Extract visited destinations with coordinates for map
     const visitedDestinationsWithCoords = visitedPlaces

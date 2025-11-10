@@ -124,9 +124,25 @@ export function WorldMapVisualization({
   const visitedISO2Codes = useMemo(() => {
     const isoSet = new Set<string>();
     visitedCountries.forEach((country) => {
-      const iso2 = COUNTRY_TO_ISO2[country];
+      // Try exact match first
+      let iso2 = COUNTRY_TO_ISO2[country];
+      
+      // If no exact match, try case-insensitive match
+      if (!iso2) {
+        const countryLower = country.toLowerCase();
+        for (const [key, value] of Object.entries(COUNTRY_TO_ISO2)) {
+          if (key.toLowerCase() === countryLower) {
+            iso2 = value;
+            break;
+          }
+        }
+      }
+      
       if (iso2) {
         isoSet.add(iso2);
+      } else {
+        // Log unmapped countries for debugging
+        console.log('[WorldMap] Unmapped country:', country);
       }
     });
     return isoSet;
@@ -170,13 +186,13 @@ export function WorldMapVisualization({
                 // world-110m.json uses ISO_A2 for 2-letter codes
                 const iso2Code = geo.properties.ISO_A2 || geo.properties.ISO_A2_EH;
                 const isVisited = iso2Code && visitedISO2Codes.has(iso2Code);
-                const countryName = geo.properties.NAME || geo.properties.NAME_LONG || 'Unknown';
+                const countryName = geo.properties.NAME || geo.properties.NAME_LONG || geo.properties.NAME_EN || 'Unknown';
                 
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill={isVisited ? '#CBC8C3' : '#E8E6E3'}
+                    fill={isVisited ? '#1C1C1C' : '#E8E6E3'}
                     stroke="#BDBAB5"
                     strokeWidth={0.5}
                     style={{
