@@ -679,9 +679,41 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           destinationId={destination.id}
           destinationSlug={destination.slug}
           isOpen={showSaveModal}
-          onClose={() => setShowSaveModal(false)}
-          onSave={(collectionId) => {
-            setIsSaved(true);
+          onClose={() => {
+            setShowSaveModal(false);
+            // Reload saved status after modal closes
+            if (user && destination?.slug) {
+              supabase
+                .from('saved_places')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('destination_slug', destination.slug)
+                .single()
+                .then(({ data }) => {
+                  setIsSaved(!!data);
+                })
+                .catch(() => {
+                  setIsSaved(false);
+                });
+            }
+          }}
+          onSave={async (collectionId) => {
+            // Also save to saved_places for simple save functionality
+            if (destination.slug && user) {
+              try {
+                const { error } = await supabase
+                  .from('saved_places')
+                  .upsert({
+                    user_id: user.id,
+                    destination_slug: destination.slug,
+                  });
+                if (!error) {
+                  setIsSaved(true);
+                }
+              } catch (error) {
+                console.error('Error saving to saved_places:', error);
+              }
+            }
             setShowSaveModal(false);
           }}
         />
