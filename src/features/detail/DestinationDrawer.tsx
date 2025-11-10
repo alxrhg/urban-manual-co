@@ -798,32 +798,26 @@ Summary:`;
               {/* Visited Button with Dropdown */}
               {user && (
                 <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
-                  <div className="flex items-center gap-0">
+                  <DropdownMenuTrigger asChild>
                     <button
-                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-l-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
                         isVisited
                           ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
                       }`}
-                      onClick={handleVisitToggle}
+                      onClick={(e) => {
+                        if (!isVisited) {
+                          e.preventDefault();
+                          handleVisitToggle();
+                        }
+                        // If already visited, let the dropdown handle the click
+                      }}
                     >
                       <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
                       {isVisited ? 'Visited' : 'Mark Visited'}
+                      {isVisited && <ChevronDown className="h-3 w-3 ml-0.5" />}
                     </button>
-                    {isVisited && (
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className={`px-1.5 py-1.5 border-l-0 border border-gray-200 dark:border-gray-800 rounded-r-2xl text-xs transition-colors ${
-                            isVisited
-                              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
-                          }`}
-                        >
-                          <ChevronDown className="h-3 w-3" />
-                        </button>
-                      </DropdownMenuTrigger>
-                    )}
-                  </div>
+                  </DropdownMenuTrigger>
                   {isVisited && (
                     <DropdownMenuContent align="start" className="w-48">
                       <DropdownMenuItem onClick={() => {
