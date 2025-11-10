@@ -190,7 +190,7 @@ export default function MapPage() {
               {filters.searchQuery && (
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 hover:text-gray-900 dark:hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>

@@ -85,7 +85,7 @@ export function AddLocationToTrip({ onAdd, onClose }: AddLocationToTripProps) {
 
         <div className="p-6 flex-shrink-0">
           <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
             <input
               type="text"
               value={searchQuery}
@@ -100,15 +100,15 @@ export function AddLocationToTrip({ onAdd, onClose }: AddLocationToTripProps) {
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-neutral-400 dark:text-neutral-500" />
             </div>
           ) : destinations.length === 0 && searchQuery.trim().length >= 2 ? (
             <div className="text-center py-12">
-              <p className="text-sm text-neutral-500">No destinations found</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">No destinations found</p>
             </div>
           ) : destinations.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-sm text-neutral-400">Start typing to search destinations</p>
+              <p className="text-sm text-neutral-400 dark:text-neutral-500">Start typing to search destinations</p>
             </div>
           ) : (
             <div className="space-y-2">
