@@ -172,8 +172,8 @@ export function SaveDestinationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-dark-blue-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-blue-600">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-xl font-semibold">Save Destination</h2>
           <button
             onClick={onClose}
@@ -190,19 +190,19 @@ export function SaveDestinationModal({
           />
         </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-dark-blue-600 flex gap-2">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex gap-2">
           {currentCollectionId && (
             <button
               onClick={handleUnsave}
               disabled={saving}
-              className="flex-1 px-4 py-2 border border-gray-200 dark:border-dark-blue-600 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl disabled:opacity-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl disabled:opacity-50 transition-colors"
             >
               {saving ? 'Removing...' : 'Remove from Saved'}
             </button>
           )}
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
           >
             Close
           </button>

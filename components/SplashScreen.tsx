@@ -39,7 +39,7 @@ export function SplashScreen() {
 
   return (
     <div 
-      className={`fixed inset-0 bg-white dark:bg-dark-blue-900 z-[9999] transition-opacity duration-300 ${
+      className={`fixed inset-0 bg-white dark:bg-gray-900 z-[9999] transition-opacity duration-300 ${
         isFading ? 'opacity-0' : 'opacity-100'
       }`}
       style={{ willChange: 'opacity' }}

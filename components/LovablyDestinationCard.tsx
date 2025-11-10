@@ -32,7 +32,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
         border-4 ${borderColor}
         transition-all duration-300
         hover:scale-[1.02]
-        bg-gray-100 dark:bg-dark-blue-800
+        bg-gray-100 dark:bg-gray-800
       `}
     >
       {/* Image */}
@@ -48,7 +48,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
           />
         </div>
       ) : (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-dark-blue-700 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
           <span className="text-4xl opacity-20">📍</span>
         </div>
       )}
@@ -73,7 +73,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
       <div className="absolute top-2 right-2 flex flex-col gap-2 z-20">
         {/* Michelin Stars Badge (if any) */}
         {destination.michelin_stars && destination.michelin_stars > 0 && (
-          <div className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm flex items-center gap-1.5">
+          <div className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
             <img
               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
               alt="Michelin star"

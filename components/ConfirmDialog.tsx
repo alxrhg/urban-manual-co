@@ -95,7 +95,7 @@ export function ConfirmDialog({
                 ease: [0.4, 0, 0.2, 1]
               }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200 dark:border-dark-blue-600"
+              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200 dark:border-gray-800"
               role="dialog"
               aria-modal="true"
               aria-labelledby="dialog-title"
@@ -126,7 +126,7 @@ export function ConfirmDialog({
               </div>
 
               {/* Actions */}
-              <div className="bg-gray-50 dark:bg-dark-blue-900/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-dark-blue-600">
+              <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-gray-800">
                 <button
                   onClick={onClose}
                   disabled={isLoading}

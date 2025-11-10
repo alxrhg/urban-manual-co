@@ -43,7 +43,7 @@ export function BookingLinks({
             href={googleMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-full text-xs font-medium hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <ExternalLink className="h-3 w-3" />
             <span>View on Maps</span>
@@ -54,7 +54,7 @@ export function BookingLinks({
   }
 
   return (
-    <div className="border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 space-y-3">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-3">
       <h3 className="text-sm font-medium">Book & Visit</h3>
 
       <div className="space-y-2">
@@ -64,7 +64,7 @@ export function BookingLinks({
             href={opentableUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between p-3 border border-gray-200 dark:border-dark-blue-600 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors group"
+            className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -79,7 +79,7 @@ export function BookingLinks({
             href={resyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between p-3 border border-gray-200 dark:border-dark-blue-600 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors group"
+            className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -93,7 +93,7 @@ export function BookingLinks({
         {phoneNumber && (
           <a
             href={`tel:${phoneNumber}`}
-            className="flex items-center justify-between p-3 border border-gray-200 dark:border-dark-blue-600 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors group"
+            className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -108,7 +108,7 @@ export function BookingLinks({
             href={website}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between p-3 border border-gray-200 dark:border-dark-blue-600 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors group"
+            className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
             <div className="flex items-center gap-2">
               <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -124,7 +124,7 @@ export function BookingLinks({
             href={googleMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between p-3 border border-gray-200 dark:border-dark-blue-600 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors group"
+            className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
             <div className="flex items-center gap-2">
               <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />

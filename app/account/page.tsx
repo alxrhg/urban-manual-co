@@ -1,5 +1,6 @@
 'use client';
 
+import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +14,7 @@ import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
+import ProfileAvatar from "@/components/ProfileAvatar";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -355,7 +357,7 @@ export default function Account() {
         {activeTab === 'profile' && (
           <div className="space-y-12 fade-in">
             {/* Curation Completion - Prominent gamification stat */}
-            <div className="p-6 border border-gray-200 dark:border-dark-blue-600 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
@@ -366,7 +368,7 @@ export default function Account() {
                 </div>
               </div>
               {/* Progress bar */}
-              <div className="w-full h-2 bg-gray-200 dark:bg-dark-blue-800 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
                   style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
@@ -394,19 +396,19 @@ export default function Account() {
 
             {/* Stats Grid - Minimal, like homepage cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
                 <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
                 <div className="text-xs text-gray-500">Visited</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
                 <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
                 <div className="text-xs text-gray-500">Saved</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
                 <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
                 <div className="text-xs text-gray-500">Cities</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl">
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
                 <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
                 <div className="text-xs text-gray-500">Countries</div>
               </div>
@@ -437,10 +439,10 @@ export default function Account() {
                     <button
                       key={place.destination_slug}
                       onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-dark-blue-800 rounded-2xl transition-colors text-left"
+                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
                     >
                       {place.destination.image && (
-                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-dark-blue-800">
+                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                           <Image
                             src={place.destination.image}
                             alt={place.destination.name}
@@ -504,7 +506,7 @@ export default function Account() {
                     <button
                       key={collection.id}
                       onClick={() => router.push(`/collection/${collection.id}`)}
-                      className="text-left p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+                      className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">{collection.emoji || '📚'}</span>
@@ -558,7 +560,7 @@ export default function Account() {
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className="bg-white dark:bg-dark-blue-900 rounded-2xl p-6 w-full max-w-md"
+            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -579,7 +581,7 @@ export default function Account() {
                   value={newCollectionName}
                   onChange={(e) => setNewCollectionName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2.5 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
                   autoFocus
                   maxLength={50}
                 />
@@ -592,7 +594,7 @@ export default function Account() {
                   onChange={(e) => setNewCollectionDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
                   maxLength={200}
                 />
               </div>
@@ -613,7 +615,7 @@ export default function Account() {
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
                   disabled={creatingCollection}
                 >
                   Cancel

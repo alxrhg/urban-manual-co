@@ -163,7 +163,7 @@ export default function MapPage() {
 
   if (loading) {
     return (
-      <main className="fixed inset-0 bg-dark-blue-900 text-white">
+      <main className="fixed inset-0 bg-gray-900 text-white">
         <div className="flex items-center justify-center h-full">
           <div className="text-sm text-neutral-400">Loading map…</div>
         </div>
@@ -172,9 +172,9 @@ export default function MapPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-dark-blue-900 text-white overflow-hidden">
+    <div className="fixed inset-0 bg-gray-900 text-white overflow-hidden">
       {/* Filters Bar - Top (below header) - Uses default container */}
-      <div className="absolute top-[112px] left-0 right-0 z-30 bg-dark-blue-900/80 backdrop-blur-sm border-b border-dark-blue-600">
+      <div className="absolute top-[112px] left-0 right-0 z-30 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
         <div className="max-w-[1280px] mx-auto px-6 md:px-8 lg:px-12 py-3">
           <div className="flex flex-col gap-3">
             {/* Search Bar */}
@@ -185,7 +185,7 @@ export default function MapPage() {
                 value={filters.searchQuery}
                 onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
                 placeholder="Search cities, places, vibes…"
-                className="w-full pl-10 pr-4 py-2 bg-dark-blue-800 border border-dark-blue-600 rounded-xl text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-800 rounded-xl text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
               />
               {filters.searchQuery && (
                 <button
@@ -206,7 +206,7 @@ export default function MapPage() {
                   className={`px-3 py-1.5 rounded-xl text-xs border transition-colors whitespace-nowrap ${
                     filters.categories.has(category.toLowerCase())
                       ? 'bg-white text-neutral-900 border-white'
-                      : 'bg-dark-blue-800 border-dark-blue-600 text-neutral-300 hover:border-neutral-600'
+                      : 'bg-gray-800 border-gray-800 text-neutral-300 hover:border-neutral-600'
                   }`}
                 >
                   {category}
@@ -219,7 +219,7 @@ export default function MapPage() {
                 className={`px-3 py-1.5 rounded-xl text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                   filters.michelin
                     ? 'bg-white text-neutral-900 border-white'
-                    : 'bg-dark-blue-800 border-dark-blue-600 text-neutral-300 hover:border-neutral-600'
+                    : 'bg-gray-800 border-gray-800 text-neutral-300 hover:border-neutral-600'
                 }`}
               >
                 <img
@@ -236,7 +236,7 @@ export default function MapPage() {
 
       {/* List Panel - Left (Desktop) */}
       {showListPanel && (
-        <div className="hidden md:block absolute left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-dark-blue-900/95 backdrop-blur-sm border-r border-dark-blue-600 z-20 overflow-y-auto">
+        <div className="hidden md:block absolute left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-gray-900/95 backdrop-blur-sm border-r border-gray-800 z-20 overflow-y-auto">
           <div className="p-4 space-y-2">
             <div className="text-xs text-neutral-400 mb-4">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
@@ -247,12 +247,12 @@ export default function MapPage() {
                 onClick={() => handleListItemClick(dest)}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
                   selectedDestination?.slug === dest.slug
-                    ? 'bg-dark-blue-800 border border-dark-blue-600'
-                    : 'bg-dark-blue-800/50 hover:bg-dark-blue-800 border border-transparent'
+                    ? 'bg-gray-800 border border-gray-800'
+                    : 'bg-gray-800/50 hover:bg-gray-800 border border-transparent'
                 }`}
               >
                 {dest.image && (
-                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-dark-blue-800">
+                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-800">
                     <Image
                       src={dest.image}
                       alt={dest.name}
@@ -291,14 +291,14 @@ export default function MapPage() {
       {/* List Toggle Button - Mobile */}
       <button
         onClick={() => setShowListPanel(!showListPanel)}
-        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-dark-blue-800 border border-dark-blue-600 rounded-xl text-sm text-white hover:bg-neutral-700 transition-colors"
+        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-gray-800 border border-gray-800 rounded-xl text-sm text-white hover:bg-neutral-700 transition-colors"
       >
         {showListPanel ? 'Hide List' : 'Show List'}
       </button>
 
       {/* List Panel - Mobile (Slideover) */}
       {showListPanel && (
-        <div className="md:hidden fixed inset-x-0 bottom-0 top-[calc(112px+73px)] bg-dark-blue-900 border-t border-dark-blue-600 z-20 overflow-y-auto">
+        <div className="md:hidden fixed inset-x-0 bottom-0 top-[calc(112px+73px)] bg-gray-900 border-t border-gray-800 z-20 overflow-y-auto">
           <div className="p-4 space-y-2">
             <div className="text-xs text-neutral-400 mb-4">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
@@ -310,10 +310,10 @@ export default function MapPage() {
                   handleListItemClick(dest);
                   setShowListPanel(false);
                 }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-dark-blue-800/50 hover:bg-dark-blue-800 transition-colors text-left"
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-800/50 hover:bg-gray-800 transition-colors text-left"
               >
                 {dest.image && (
-                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-dark-blue-800">
+                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-800">
                     <Image
                       src={dest.image}
                       alt={dest.name}

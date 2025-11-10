@@ -40,7 +40,7 @@ export function TrendingSectionML({
           <Flame className="h-4 w-4 text-orange-500" />
           Trending Now
           <span
-            className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
+            className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs"
             title="Powered by demand forecasting"
           >
             AI Forecast
@@ -77,13 +77,13 @@ export function TrendingSectionML({
               </div>
 
               {/* Trending Badge */}
-              <div className="absolute top-2 left-2 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm flex items-center gap-1.5">
+              <div className="absolute top-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
                 <TrendingUp className="h-3 w-3" />
                 {index < 3 && '#' + (index + 1)}
               </div>
 
               {/* Growth Rate */}
-              <div className="absolute bottom-2 right-2 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm">
+              <div className="absolute bottom-2 right-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm">
                 +{Math.round(dest.growth_rate * 100)}%
               </div>
             </div>

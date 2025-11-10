@@ -48,9 +48,9 @@ function PersonalizedRecommendationsComponent({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
           {Array.from({ length: limit }).map((_, i) => (
             <div key={i} className={CARD_WRAPPER}>
-              <div className={`${CARD_MEDIA} mb-2 bg-gray-200 dark:bg-dark-blue-800 animate-pulse`} />
-              <div className="h-4 bg-gray-200 dark:bg-dark-blue-800 rounded animate-pulse mb-2" />
-              <div className="h-3 bg-gray-200 dark:bg-dark-blue-800 rounded animate-pulse w-2/3" />
+              <div className={`${CARD_MEDIA} mb-2 bg-gray-200 dark:bg-gray-800 animate-pulse`} />
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-2" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-2/3" />
             </div>
           ))}
         </div>
@@ -102,7 +102,7 @@ function PersonalizedRecommendationsComponent({
             >
               {/* AI Match Badge */}
               {rec && rec.score > 0.7 && (
-                <div className="absolute top-2 right-2 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm z-20 flex items-center gap-1.5">
+                <div className="absolute top-2 right-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm z-20 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3" />
                   <span>Match</span>
                 </div>
@@ -128,7 +128,7 @@ function PersonalizedRecommendationsComponent({
 
                 {/* Michelin Stars */}
                 {destination.michelin_stars && destination.michelin_stars > 0 && (
-                  <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm flex items-center gap-1.5 z-10">
+                  <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5 z-10">
                     <Image
                       src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                       alt="Michelin star"
@@ -164,7 +164,7 @@ function PersonalizedRecommendationsComponent({
 
               {/* AI Reason (tooltip on hover) */}
               {rec && rec.reason && (
-                <div className="absolute inset-0 bg-black/80 dark:bg-dark-blue-900/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center p-4 z-30">
+                <div className="absolute inset-0 bg-black/80 dark:bg-gray-900/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center p-4 z-30">
                   <p className="text-white text-xs text-center font-medium">{rec.reason}</p>
                 </div>
               )}

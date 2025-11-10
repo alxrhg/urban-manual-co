@@ -138,7 +138,7 @@ export function ContextualLoadingState({ intent, query }: ContextualLoadingState
           <div className="relative">
             <Sparkles className="h-10 w-10 text-gray-400 dark:text-gray-600 animate-pulse" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-12 w-12 border-2 border-gray-300 dark:border-dark-blue-600 border-t-transparent rounded-full animate-spin" />
+              <div className="h-12 w-12 border-2 border-gray-300 dark:border-gray-800 border-t-transparent rounded-full animate-spin" />
             </div>
           </div>
         </div>
@@ -151,9 +151,9 @@ export function ContextualLoadingState({ intent, query }: ContextualLoadingState
 
         {/* Progress dots */}
         <div className="flex justify-center gap-2">
-          <div className="h-2 w-2 bg-gray-400 dark:bg-dark-blue-700 rounded-full animate-bounce [animation-delay:-0.3s]" />
-          <div className="h-2 w-2 bg-gray-400 dark:bg-dark-blue-700 rounded-full animate-bounce [animation-delay:-0.15s]" />
-          <div className="h-2 w-2 bg-gray-400 dark:bg-dark-blue-700 rounded-full animate-bounce" />
+          <div className="h-2 w-2 bg-gray-400 dark:bg-gray-700 rounded-full animate-bounce [animation-delay:-0.3s]" />
+          <div className="h-2 w-2 bg-gray-400 dark:bg-gray-700 rounded-full animate-bounce [animation-delay:-0.15s]" />
+          <div className="h-2 w-2 bg-gray-400 dark:bg-gray-700 rounded-full animate-bounce" />
         </div>
       </div>
     </div>

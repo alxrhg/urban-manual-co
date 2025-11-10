@@ -45,7 +45,7 @@ export function ConversationBubble({
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400">AI</span>
         </div>
 
-        <div className="bg-white/50 dark:bg-dark-blue-900/50 backdrop-blur-sm rounded-2xl px-4 py-3 border border-gray-200/50 dark:border-dark-blue-600/50">
+        <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl px-4 py-3 border border-gray-200/50 dark:border-gray-800/50">
           {isTyping ? (
             <TypingIndicator />
           ) : (
@@ -104,7 +104,7 @@ function QuickReplyChip({ text, onClick }: QuickReplyChipProps) {
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-dark-blue-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-dark-blue-600"
+      className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-800"
     >
       {text}
     </motion.button>

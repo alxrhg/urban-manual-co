@@ -6,7 +6,7 @@ export function SimpleFooter() {
   const router = useRouter();
 
   return (
-    <footer className="border-t border-gray-200 dark:border-dark-blue-600 dark:bg-dark-blue-900 py-8 px-6 md:px-10">
+    <footer className="border-t border-gray-200 dark:border-gray-800 dark:bg-gray-900 py-8 px-6 md:px-10">
       <div className="max-w-[1920px] mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-xs text-gray-600 dark:text-gray-400">

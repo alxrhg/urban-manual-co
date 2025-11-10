@@ -218,7 +218,7 @@ export default function MapView({
 
   if (error) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-dark-blue-800 rounded-2xl p-8">
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-8">
         <div className="text-center max-w-md">
           <span className="text-red-600 dark:text-red-400 mb-2 font-medium">Map Loading Failed</span>
           <span className="text-sm text-gray-600 dark:text-gray-400">{error}</span>
@@ -229,7 +229,7 @@ export default function MapView({
 
   if (!loaded) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-dark-blue-800 rounded-2xl">
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
           <span className="text-sm text-gray-600 dark:text-gray-400">Loading map...</span>

@@ -221,7 +221,7 @@ export default function ListsPage() {
               <div
                 key={list.id}
                 onClick={() => router.push(`/lists/${list.id}`)}
-                className="group bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -264,7 +264,7 @@ export default function ListsPage() {
                 </div>
 
                 {(list.like_count || 0) > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-blue-600 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                     <Heart className="h-4 w-4 fill-red-500 text-red-500" />
                     <span>{list.like_count} {list.like_count === 1 ? 'like' : 'likes'}</span>
                   </div>
@@ -278,7 +278,7 @@ export default function ListsPage() {
       {/* Create List Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-dark-blue-900 rounded-2xl p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Create New List</h2>
               <button
@@ -297,7 +297,7 @@ export default function ListsPage() {
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                   autoFocus
                 />
               </div>
@@ -309,7 +309,7 @@ export default function ListsPage() {
                   onChange={(e) => setNewListDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                 />
               </div>
 
@@ -329,7 +329,7 @@ export default function ListsPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors"
                   disabled={creating}
                 >
                   Cancel

@@ -75,7 +75,7 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
       <div className="max-w-md mx-auto">
         {/* Icon */}
         <div className="mb-6 flex justify-center">
-          <div className="p-4 bg-gray-100 dark:bg-dark-blue-800 rounded-full">
+          <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full">
             <Search className="h-8 w-8 text-gray-400 dark:text-gray-600" />
           </div>
         </div>
@@ -101,7 +101,7 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
                 <button
                   key={index}
                   onClick={() => onAlternativeClick(alt)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-dark-blue-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-all"
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-all"
                 >
                   {alt}
                 </button>

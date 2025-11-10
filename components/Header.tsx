@@ -112,7 +112,7 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav: Brand + Search */}
-      <div className={`container mx-auto px-4 md:px-8 lg:px-12 ${isMap ? 'bg-dark-blue-900/80 backdrop-blur-sm' : ''}`}>
+      <div className={`container mx-auto px-4 md:px-8 lg:px-12 ${isMap ? 'bg-gray-900/80 backdrop-blur-sm' : ''}`}>
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo - Left */}
           <button
@@ -130,7 +130,7 @@ export function Header() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search destinations..."
-              className="w-full px-4 py-2 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-sm focus:outline-none focus:border-black dark:focus:border-white"
+              className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:border-black dark:focus:border-white"
             />
           </form>
           
@@ -138,7 +138,7 @@ export function Header() {
           <div className="flex items-center gap-4 shrink-0">
             {isAdmin && buildVersion && (
               <span
-                className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-dark-blue-800 rounded"
+                className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
                 title="Build version"
                 aria-label={`Build version ${buildVersion}`}
               >
@@ -164,7 +164,7 @@ export function Header() {
                 aria-haspopup="true"
               >
                 {avatarUrl ? (
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-dark-blue-600">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-800">
                     <Image
                       src={avatarUrl}
                       alt={user.email || 'Profile'}
@@ -174,7 +174,7 @@ export function Header() {
                     />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-dark-blue-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
                     {user.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}
@@ -223,7 +223,7 @@ export function Header() {
       </div>
 
               {/* Secondary Nav: Cities & Collections */}
-              <nav className={`container mx-auto px-4 md:px-8 lg:px-12 flex items-center gap-4 text-sm text-neutral-400 overflow-x-auto whitespace-nowrap border-t border-gray-200 dark:border-dark-blue-600 ${isMap ? 'bg-dark-blue-900/80 backdrop-blur-sm' : ''}`}>
+              <nav className={`container mx-auto px-4 md:px-8 lg:px-12 flex items-center gap-4 text-sm text-neutral-400 overflow-x-auto whitespace-nowrap border-t border-gray-200 dark:border-gray-800 ${isMap ? 'bg-gray-900/80 backdrop-blur-sm' : ''}`}>
         <button
           onClick={() => navigate('/cities')}
           className="py-3 hover:text-neutral-200 dark:hover:text-neutral-200 transition-colors"
@@ -250,7 +250,7 @@ export function Header() {
           />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed z-50 w-72 rounded-2xl border border-gray-200 dark:border-dark-blue-600 bg-white dark:bg-dark-blue-900 shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
             style={{
               top: `${dropdownPosition.top}px`,
               right: `${dropdownPosition.right}px`,
@@ -259,7 +259,7 @@ export function Header() {
             aria-label="Main menu"
           >
             {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-dark-blue-900 border-t border-l border-gray-200 dark:border-dark-blue-600" aria-hidden="true" />
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
             <div className="py-2">
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
@@ -282,7 +282,7 @@ export function Header() {
               >
                 Discover Collections
               </button>
-              <div className="my-2 border-t border-gray-200 dark:border-dark-blue-600" role="separator" />
+              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               {user ? (
                 <>
                   <button
@@ -318,7 +318,7 @@ export function Header() {
                   Sign In
                 </button>
               )}
-              <div className="my-2 border-t border-gray-200 dark:border-dark-blue-600" role="separator" />
+              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 transition-colors w-full"

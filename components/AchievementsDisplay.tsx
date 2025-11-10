@@ -198,7 +198,7 @@ export function AchievementsDisplay({
   return (
     <div className="space-y-6">
       {/* Summary */}
-      <div className="text-center pb-6 border-b border-gray-200 dark:border-dark-blue-600">
+      <div className="text-center pb-6 border-b border-gray-200 dark:border-gray-800">
         <div className="text-3xl font-light mb-2">{unlockedAchievements.length}</div>
         <div className="text-xs text-gray-500 dark:text-gray-400">
           {unlockedAchievements.length} of {achievements.length} achievements unlocked
@@ -213,7 +213,7 @@ export function AchievementsDisplay({
             {unlockedAchievements.map(achievement => (
               <div
                 key={achievement.id}
-                className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10"
+                className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10"
               >
                 <div className="text-3xl mb-2">{achievement.emoji}</div>
                 <h4 className="text-xs font-medium mb-1">{achievement.name}</h4>
@@ -234,7 +234,7 @@ export function AchievementsDisplay({
             {lockedAchievements.map(achievement => (
               <div
                 key={achievement.id}
-                className="p-4 border border-gray-200 dark:border-dark-blue-600 rounded-2xl opacity-50"
+                className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl opacity-50"
               >
                 <div className="text-3xl mb-2 grayscale">{achievement.emoji}</div>
                 <h4 className="text-xs font-medium mb-1">{achievement.name}</h4>
@@ -243,7 +243,7 @@ export function AchievementsDisplay({
                 </p>
                 {achievement.progress !== undefined && achievement.total !== undefined && (
                   <div className="mt-2">
-                    <div className="w-full bg-gray-200 dark:bg-dark-blue-800 rounded-full h-1.5 mb-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mb-1">
                       <div
                         className="bg-black dark:bg-white h-1.5 rounded-full transition-all"
                         style={{ width: `${Math.min(100, (achievement.progress / achievement.total) * 100)}%` }}

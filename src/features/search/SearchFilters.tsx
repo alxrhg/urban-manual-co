@@ -121,9 +121,9 @@ export function SearchFiltersComponent({
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-black border border-gray-200 dark:border-dark-blue-600 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-blue-600">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
               <div className="text-sm font-medium">Filters</div>
               {hasActiveFilters && (
                 <button
@@ -237,7 +237,7 @@ export function SearchFiltersComponent({
               </div>
 
               {/* Near Me Filter */}
-              <div className="pt-4 border-t border-gray-200 dark:border-dark-blue-600">
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
@@ -247,7 +247,7 @@ export function SearchFiltersComponent({
                     onClick={() => toggleNearMe(!filters.nearMe)}
                     disabled={loading}
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                      filters.nearMe ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-dark-blue-800'
+                      filters.nearMe ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'
                     }`}
                   >
                     <span
@@ -284,7 +284,7 @@ export function SearchFiltersComponent({
                       step="0.5"
                       value={nearMeRadius}
                       onChange={(e) => updateRadius(parseFloat(e.target.value))}
-                      className="w-full h-1 bg-gray-200 dark:bg-dark-blue-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
+                      className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
                     />
                     <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
                       <span>500m</span>

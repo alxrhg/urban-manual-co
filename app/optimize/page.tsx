@@ -309,7 +309,7 @@ export default function RouteOptimizerPage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         selectedCity === city
                           ? 'bg-black dark:bg-white text-white dark:text-black'
-                          : 'bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 hover:shadow-md'
+                          : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md'
                       }`}
                     >
                       {city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -325,7 +325,7 @@ export default function RouteOptimizerPage() {
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 />
               </div>
 
@@ -344,7 +344,7 @@ export default function RouteOptimizerPage() {
                         className={`w-full text-left p-4 rounded-2xl border transition-all ${
                           isSelected
                             ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                            : 'bg-white dark:bg-dark-blue-900 border-gray-200 dark:border-dark-blue-600 hover:shadow-md'
+                            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:shadow-md'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -389,7 +389,7 @@ export default function RouteOptimizerPage() {
             </div>
 
             {/* Right: Optimized Route */}
-            <div className="bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">Your Optimized Route</h2>
                 {optimizedRoute.length > 0 && (
@@ -427,7 +427,7 @@ export default function RouteOptimizerPage() {
                             )}
                           </div>
                           {index < optimizedRoute.length - 1 && (
-                            <div className="w-0.5 flex-1 bg-gray-200 dark:bg-dark-blue-800 min-h-[60px]" />
+                            <div className="w-0.5 flex-1 bg-gray-200 dark:bg-gray-800 min-h-[60px]" />
                           )}
                         </div>
 
@@ -459,7 +459,7 @@ export default function RouteOptimizerPage() {
                   ))}
 
                   {/* Summary */}
-                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-dark-blue-600">
+                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">Total Duration</span>
                       <span className="font-bold">

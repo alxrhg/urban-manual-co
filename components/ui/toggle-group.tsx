@@ -23,7 +23,7 @@ const toggleGroupVariants = cva(
     variants: {
       variant: {
         default: "bg-transparent",
-        outline: "border border-gray-200 dark:border-dark-blue-600",
+        outline: "border border-gray-200 dark:border-gray-800",
       },
       size: {
         default: "h-auto",
@@ -52,7 +52,7 @@ const toggleGroupItemVariants = cva(
     variants: {
       variant: {
         default: "bg-transparent",
-        outline: "border border-gray-200 dark:border-dark-blue-600",
+        outline: "border border-gray-200 dark:border-gray-800",
       },
       size: {
         default: "px-4 py-2",

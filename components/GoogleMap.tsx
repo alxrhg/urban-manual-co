@@ -262,7 +262,7 @@ export default function GoogleMap({
   if (error) {
     return (
       <div
-        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-dark-blue-800 rounded-2xl p-4 ${className}`}
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 ${className}`}
         style={{ height: getHeightStyle() }}
       >
         <div className="text-center max-w-md">
@@ -276,7 +276,7 @@ export default function GoogleMap({
   if (!loaded) {
     return (
       <div
-        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-dark-blue-800 rounded-2xl ${className}`}
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl ${className}`}
         style={{ height: getHeightStyle() }}
       >
         <div className="text-center">
@@ -309,7 +309,7 @@ export default function GoogleMap({
         <>
           {/* Info overlay in top left */}
           {infoWindowContent && (
-            <div className="absolute top-3 left-3 bg-white dark:bg-dark-blue-900 rounded-lg shadow-lg p-3 max-w-[280px] z-10 pointer-events-none">
+            <div className="absolute top-3 left-3 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-3 max-w-[280px] z-10 pointer-events-none">
               {infoWindowContent.title && (
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
                   {infoWindowContent.title}
@@ -344,7 +344,7 @@ export default function GoogleMap({
               e.stopPropagation();
             }}
           >
-            <div className="opacity-0 group-hover:opacity-100 bg-white dark:bg-dark-blue-900 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 transition-opacity pointer-events-none">
+            <div className="opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-900 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 transition-opacity pointer-events-none">
               <ExternalLink className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Open in Google Maps

@@ -32,7 +32,7 @@ import { generateText } from '@/lib/llm';
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
   ssr: false,
   loading: () => (
-    <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-dark-blue-800 rounded-lg">
+    <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
       <div className="text-center">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
         <span className="text-xs text-gray-600 dark:text-gray-400">Loading map...</span>
@@ -618,7 +618,7 @@ Summary:`;
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-dark-blue-600 px-6 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && destination.slug.trim() && (
@@ -650,7 +650,7 @@ Summary:`;
           {/* Image */}
           {destination.image && (
             <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
-              <div className="relative w-full h-full bg-gray-100 dark:bg-dark-blue-800">
+              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
                 alt={destination.name}
@@ -670,7 +670,7 @@ Summary:`;
             <div>
               <a
                 href={`/city/${destination.city}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -691,19 +691,19 @@ Summary:`;
               {/* Pills: Category, Crown, Michelin, Google Rating */}
               <div className="flex flex-wrap gap-2">
                 {destination.category && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
                     {destination.category}
                     </span>
                 )}
 
                 {destination.crown && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
                     Crown
                 </span>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
@@ -714,7 +714,7 @@ Summary:`;
               )}
 
               {(enrichedData?.rating || destination.rating) && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -739,7 +739,7 @@ Summary:`;
               <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                     onClick={(e) => {
                       if (!user) {
                         e.preventDefault();
@@ -812,7 +812,7 @@ Summary:`;
               </DropdownMenu>
 
               <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                 onClick={handleShare}
               >
                 <Share2 className="h-3 w-3" />
@@ -824,10 +824,10 @@ Summary:`;
                 <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
                         isVisited
-                          ? 'bg-gray-100 dark:bg-dark-blue-800 text-gray-900 dark:text-gray-100'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                       onClick={(e) => {
                         if (!isVisited) {
@@ -865,7 +865,7 @@ Summary:`;
 
               {destination.slug && destination.slug.trim() ? (
                 <button
-                  className="px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                   onClick={() => {
                     onClose();
                     setTimeout(() => {
@@ -881,7 +881,7 @@ Summary:`;
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-dark-blue-600 my-6" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
           {/* Meta & Info Section */}
           <div className="space-y-6">
@@ -906,7 +906,7 @@ Summary:`;
                 {destination.tags.map((tag, index) => (
                     <span
                     key={index}
-                    className="px-3 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400"
+                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400"
                     >
                     {tag}
                     </span>
@@ -1022,14 +1022,14 @@ Summary:`;
                 href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                className="px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
                 <Navigation className="h-3 w-3" />
                 Directions
               </a>
               <button
                 onClick={handleShare}
-                className="px-3 py-1.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
                 <Share2 className="h-3 w-3" />
                 {copied ? 'Copied!' : 'Share'}
@@ -1038,7 +1038,7 @@ Summary:`;
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-dark-blue-600 my-6" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
 
           {/* Description */}
@@ -1052,7 +1052,7 @@ Summary:`;
 
           {/* Editorial Summary */}
           {enrichedData?.editorial_summary && (
-            <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-6 mt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(enrichedData.editorial_summary)}
@@ -1062,7 +1062,7 @@ Summary:`;
 
           {/* Contact & Links */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
-            <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-6 mt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact</h3>
               <div className="flex flex-wrap gap-2">
                 {(enrichedData?.website || destination.website) && (
@@ -1070,7 +1070,7 @@ Summary:`;
                     href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-dark-blue-600 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Website
                   </a>
@@ -1078,7 +1078,7 @@ Summary:`;
                 {(enrichedData?.international_phone_number || destination.phone_number) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="px-4 py-2 border border-gray-200 dark:border-dark-blue-600 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     {enrichedData?.international_phone_number || destination.phone_number}
                   </a>
@@ -1088,7 +1088,7 @@ Summary:`;
                     href={destination.instagram_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-dark-blue-600 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Instagram
                   </a>
@@ -1099,7 +1099,7 @@ Summary:`;
 
           {/* AI Review Summary */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-6 mt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
               {loadingReviewSummary ? (
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -1107,7 +1107,7 @@ Summary:`;
                   <span>Summarizing reviews...</span>
                         </div>
               ) : reviewSummary ? (
-                <div className="border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 bg-gray-50 dark:bg-dark-blue-900/50">
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
                       </div>
               ) : null}
@@ -1116,9 +1116,9 @@ Summary:`;
 
           {/* Map Section */}
           {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
-            <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-6 mt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
-              <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-blue-600 bg-gray-100 dark:bg-dark-blue-800">
+              <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
                 <GoogleMap
                 query={`${destination.name}, ${destination.city}`}
                   latitude={destination.latitude || enrichedData?.latitude}
@@ -1142,7 +1142,7 @@ Summary:`;
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="border-t border-gray-200 dark:border-dark-blue-600 pt-6 mt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
@@ -1154,9 +1154,9 @@ Summary:`;
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex-shrink-0 w-32">
-                      <div className="aspect-square bg-gray-200 dark:bg-dark-blue-800 rounded-2xl mb-2 animate-pulse" />
-                      <div className="h-4 bg-gray-200 dark:bg-dark-blue-800 rounded mb-1 animate-pulse" />
-                      <div className="h-3 bg-gray-200 dark:bg-dark-blue-800 rounded w-2/3 animate-pulse" />
+                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 animate-pulse" />
+                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
+                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
                     </div>
                   ))}
                 </div>
@@ -1172,7 +1172,7 @@ Summary:`;
                       }}
                       className="flex-shrink-0 w-32 group text-left"
                     >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-dark-blue-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-dark-blue-600">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (
                           <img
                             src={rec.image}
@@ -1195,7 +1195,7 @@ Summary:`;
                           </div>
                         )}
                         {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm flex items-center gap-1">
+                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
                             <img
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"

@@ -25,8 +25,8 @@ export function DestinationCardList({
           onClick={() => onDestinationClick(d)}
           className={`text-left border rounded-xl p-3 transition-colors ${
             selectedDestination?.slug === d.slug
-              ? 'border-black dark:border-white bg-gray-50 dark:bg-dark-blue-800'
-              : 'border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-700'
+              ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800'
+              : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-dark-blue-700'
           }`}
         >
           <div className="font-medium text-sm mb-1">{d.name}</div>

@@ -284,7 +284,7 @@ function SearchPageContent() {
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
@@ -309,7 +309,7 @@ function SearchPageContent() {
                             className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
                               currentPage === pageNum
                                 ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
-                                : 'border border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800 hover:shadow-sm font-medium'
+                                : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm font-medium'
                             }`}
                           >
                             {pageNum}
@@ -321,7 +321,7 @@ function SearchPageContent() {
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>

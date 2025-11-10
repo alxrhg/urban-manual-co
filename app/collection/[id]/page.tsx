@@ -246,7 +246,7 @@ export default function CollectionDetailPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 bg-gray-100 dark:bg-dark-blue-800 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
               >
                 <Edit2 className="h-3 w-3" />
                 Edit
@@ -279,7 +279,7 @@ export default function CollectionDetailPage() {
                   onClick={() => router.push(`/destination/${destination.slug}`)}
                   className="w-full text-left"
                 >
-                  <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-blue-800 border border-gray-200 dark:border-dark-blue-600 mb-2">
+                  <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
                     {destination.image ? (
                       <Image
                         src={destination.image}
@@ -306,7 +306,7 @@ export default function CollectionDetailPage() {
                     e.stopPropagation();
                     handleRemoveDestination(destination.slug);
                   }}
-                  className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-dark-blue-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
+                  className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
                   title="Remove from collection"
                 >
                   <Trash2 className="h-3 w-3 text-red-600" />
@@ -324,7 +324,7 @@ export default function CollectionDetailPage() {
           onClick={() => setShowEditModal(false)}
         >
           <div
-            className="bg-white dark:bg-dark-blue-900 rounded-2xl p-6 w-full max-w-md"
+            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -344,7 +344,7 @@ export default function CollectionDetailPage() {
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
                   maxLength={50}
                 />
               </div>
@@ -355,7 +355,7 @@ export default function CollectionDetailPage() {
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
                   maxLength={200}
                 />
               </div>
@@ -376,7 +376,7 @@ export default function CollectionDetailPage() {
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
                   disabled={updating}
                 >
                   Cancel

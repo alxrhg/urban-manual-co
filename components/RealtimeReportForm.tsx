@@ -96,7 +96,7 @@ export function RealtimeReportForm({
   }
 
   return (
-    <div className="border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 space-y-4">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-4">
       <div>
         <h3 className="text-sm font-medium mb-1">Report Current Status</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -118,7 +118,7 @@ export function RealtimeReportForm({
             className={`flex-1 px-3 py-2 text-xs border rounded-xl transition-colors ${
               reportType === 'wait_time'
                 ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                : 'border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
+                : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             <Clock className="h-4 w-4 mx-auto mb-1" />
@@ -132,7 +132,7 @@ export function RealtimeReportForm({
             className={`flex-1 px-3 py-2 text-xs border rounded-xl transition-colors ${
               reportType === 'crowding'
                 ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                : 'border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
+                : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             <Users className="h-4 w-4 mx-auto mb-1" />
@@ -153,7 +153,7 @@ export function RealtimeReportForm({
             max="300"
             value={waitTime || ''}
             onChange={(e) => setWaitTime(parseInt(e.target.value) || 0)}
-            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-dark-blue-600 rounded-xl bg-white dark:bg-black"
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black"
             placeholder="e.g., 15"
           />
         </div>
@@ -173,7 +173,7 @@ export function RealtimeReportForm({
                 className={`px-3 py-2 text-xs border rounded-xl transition-colors capitalize ${
                   crowdingLevel === level
                     ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                    : 'border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
+                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
                 {level.replace('_', ' ')}

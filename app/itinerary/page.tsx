@@ -59,7 +59,7 @@ export default function ItineraryPage() {
       <div className="min-h-screen px-6 md:px-10 py-20">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-semibold mb-8">My Itinerary</h1>
-          <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-dark-blue-600 rounded-2xl">
+          <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400 mb-2">Your itinerary is empty</p>
             <p className="text-sm text-gray-400 dark:text-gray-500">
@@ -99,7 +99,7 @@ export default function ItineraryPage() {
             return (
               <div
                 key={`${item.listingId}-${index}`}
-                className="bg-white dark:bg-dark-blue-900 border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 flex gap-4"
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex gap-4"
               >
                 {/* Image */}
                 <div className="relative w-24 h-24 flex-shrink-0 rounded overflow-hidden">
@@ -111,7 +111,7 @@ export default function ItineraryPage() {
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-100 dark:bg-dark-blue-800 flex items-center justify-center">
+                    <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                       <MapPin className="h-6 w-6 text-gray-400" />
                     </div>
                   )}
@@ -154,7 +154,7 @@ export default function ItineraryPage() {
                         type="date"
                         value={item.date || ''}
                         onChange={(e) => updateItem(item.listingId, { date: e.target.value || null })}
-                        className="border border-gray-300 dark:border-dark-blue-600 rounded px-2 py-1 bg-white dark:bg-dark-blue-800 text-sm"
+                        className="border border-gray-300 dark:border-gray-800 rounded px-2 py-1 bg-white dark:bg-gray-800 text-sm"
                       />
                     </div>
                     {item.date && (
@@ -164,7 +164,7 @@ export default function ItineraryPage() {
                           type="time"
                           value={item.time || ''}
                           onChange={(e) => updateItem(item.listingId, { time: e.target.value })}
-                          className="border border-gray-300 dark:border-dark-blue-600 rounded px-2 py-1 bg-white dark:bg-dark-blue-800 text-sm"
+                          className="border border-gray-300 dark:border-gray-800 rounded px-2 py-1 bg-white dark:bg-gray-800 text-sm"
                         />
                       </div>
                     )}
@@ -176,7 +176,7 @@ export default function ItineraryPage() {
         </div>
 
         {/* Future: Add itinerary optimization button */}
-        <div className="mt-8 p-4 bg-gray-50 dark:bg-dark-blue-900 rounded-2xl border border-gray-200 dark:border-dark-blue-600">
+        <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             <strong>Coming soon:</strong> Smart itinerary optimization will arrange these places by location and suggest the best visiting order.
           </p>

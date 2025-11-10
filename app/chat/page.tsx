@@ -215,7 +215,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-blue-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
@@ -227,9 +227,9 @@ export default function ChatPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-dark-blue-800 rounded-2xl shadow-lg border border-gray-200 dark:border-dark-blue-600 overflow-hidden flex flex-col h-[calc(100vh-12rem)]">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col h-[calc(100vh-12rem)]">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-blue-600">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -250,7 +250,7 @@ export default function ChatPage() {
                       <button
                         key={suggestion}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-dark-blue-700 hover:bg-gray-200 dark:hover:bg-dark-blue-700 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-dark-blue-700 rounded-lg transition-colors"
                       >
                         {suggestion}
                       </button>
@@ -278,7 +278,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-dark-blue-600">
+            <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-800">
               <div className="flex gap-2">
                 <input
                   ref={inputRef}
@@ -286,7 +286,7 @@ export default function ChatPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask about restaurants, hotels, cities..."
-                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-dark-blue-800 border border-gray-200 dark:border-dark-blue-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-gray-900 dark:text-gray-100"
+                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 text-gray-900 dark:text-gray-100"
                   disabled={isLoading || isStreaming}
                 />
                 <button

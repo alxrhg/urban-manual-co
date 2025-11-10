@@ -272,7 +272,7 @@ export default function CitiesPage() {
                         <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Previous
                         </button>
@@ -297,7 +297,7 @@ export default function CitiesPage() {
                                 className={`px-2.5 sm:px-3 py-2 text-xs rounded-2xl transition-colors ${
                                   currentPage === pageNum
                                     ? 'bg-black dark:bg-white text-white dark:text-black font-medium'
-                                    : 'border border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
+                                    : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                                 }`}
                               >
                                 {pageNum}
@@ -309,7 +309,7 @@ export default function CitiesPage() {
                         <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="px-3 sm:px-4 py-2 text-xs border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Next
                         </button>
@@ -324,7 +324,7 @@ export default function CitiesPage() {
                   {/* Horizontal Ad below pagination */}
                   {filteredCities.length > 0 && (
                     <div className="mt-8 w-full">
-                      <div className="max-w-4xl mx-auto border border-gray-200 dark:border-dark-blue-600 rounded-2xl p-4 bg-gray-50/50 dark:bg-dark-blue-900/50">
+                      <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
                         <div className="text-xs text-gray-400 mb-2 text-center">Sponsored</div>
                         <ins
                           className="adsbygoogle"

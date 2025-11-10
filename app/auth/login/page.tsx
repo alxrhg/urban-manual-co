@@ -67,7 +67,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-blue-900 px-6 md:px-10 py-20">
+    <div className="min-h-screen bg-white dark:bg-gray-900 px-6 md:px-10 py-20">
       <div className="w-full max-w-md mx-auto">
         {/* Back Button */}
         <button
@@ -105,7 +105,7 @@ function LoginForm() {
         {/* Divider */}
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200 dark:border-dark-blue-600"></div>
+            <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
           </div>
           <div className="relative flex justify-center text-xs">
             <span className="px-3 bg-white dark:bg-gray-950 text-gray-400 dark:text-gray-500">
@@ -127,7 +127,7 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-200 dark:border-dark-blue-600 rounded-2xl bg-white dark:bg-dark-blue-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               placeholder="you@example.com"
             />
           </div>
@@ -144,7 +144,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-dark-blue-600 rounded-2xl bg-white dark:bg-dark-blue-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               placeholder="••••••••"
             />
             {isSignUp && (

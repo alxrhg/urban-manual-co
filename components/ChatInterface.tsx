@@ -23,11 +23,11 @@ export function ChatInterface({ onSendMessage, placeholder = "Ask about restaura
   };
 
   return (
-    <div className="border border-gray-200 dark:border-dark-blue-600 rounded-2xl overflow-hidden">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 dark:bg-dark-blue-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
         <span className="text-sm font-medium">Ask AI about destinations</span>
         <div className="flex items-center gap-2">
@@ -38,7 +38,7 @@ export function ChatInterface({ onSendMessage, placeholder = "Ask about restaura
 
       {/* Chat Area */}
       {isOpen && (
-        <div className="p-6 bg-white dark:bg-dark-blue-900">
+        <div className="p-6 bg-white dark:bg-gray-900">
           <div className="flex gap-3">
             <input
               type="text"
@@ -51,7 +51,7 @@ export function ChatInterface({ onSendMessage, placeholder = "Ask about restaura
                 }
               }}
               placeholder={placeholder}
-              className="flex-1 px-4 py-3 border border-gray-200 dark:border-dark-blue-600 rounded-2xl text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-dark-blue-800 text-black dark:text-white"
+              className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-800 text-black dark:text-white"
             />
             <button
               onClick={handleSend}

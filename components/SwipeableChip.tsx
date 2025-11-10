@@ -85,7 +85,7 @@ export function SwipeableChip({ suggestion, onAccept, onDismiss, children }: Swi
     if (isDismissed) return 'bg-red-100 dark:bg-red-900/30';
     if (swipeOffset > minSwipeDistance) return 'bg-green-50 dark:bg-green-900/20';
     if (swipeOffset < -minSwipeDistance) return 'bg-red-50 dark:bg-red-900/20';
-    return 'bg-gray-50 dark:bg-dark-blue-900';
+    return 'bg-gray-50 dark:bg-gray-900';
   };
 
   if (isAccepted || isDismissed) {

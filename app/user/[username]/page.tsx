@@ -108,7 +108,7 @@ export default function UserProfilePage() {
         <div className="mb-12">
           <div className="flex items-start gap-6 mb-6">
             {/* Avatar */}
-            <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-dark-blue-800 flex-shrink-0">
+            <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
               {profile.avatar_url ? (
                 <Image
                   src={profile.avatar_url}
@@ -133,7 +133,7 @@ export default function UserProfilePage() {
                     disabled={followLoading}
                     className={`px-6 py-2 text-sm font-medium rounded-2xl transition-all ${
                       isFollowing
-                        ? 'border border-gray-200 dark:border-dark-blue-600 hover:bg-gray-50 dark:hover:bg-dark-blue-800'
+                        ? 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                         : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-80'
                     }`}
                   >
@@ -143,7 +143,7 @@ export default function UserProfilePage() {
                 {isOwnProfile && (
                   <button
                     onClick={() => router.push('/account')}
-                    className="px-6 py-2 text-sm font-medium border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+                    className="px-6 py-2 text-sm font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Edit Profile
                   </button>
@@ -204,7 +204,7 @@ export default function UserProfilePage() {
                 <button
                   key={collection.id}
                   onClick={() => router.push(`/collection/${collection.id}`)}
-                  className="text-left p-6 border border-gray-200 dark:border-dark-blue-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-blue-800 transition-colors"
+                  className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-3xl">{collection.emoji || '📚'}</span>
