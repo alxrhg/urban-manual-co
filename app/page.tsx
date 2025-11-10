@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -2227,28 +2227,58 @@ export default function Home() {
 
               {/* Content Section - Grid directly below hero */}
               <div className="container mx-auto px-4 md:px-8 lg:px-12 pb-24 md:pb-32">
-                {/* Filter - Top right of grid section */}
-                <div className="flex justify-end mb-6 relative">
-                    <SearchFiltersComponent
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                availableCities={cities}
-                availableCategories={categories}
-                onLocationChange={handleLocationChange}
-              />
+                {/* Filter and View Toggle - Top right of grid section */}
+                <div className="flex justify-end items-center gap-3 mb-6 relative">
+                  {/* Grid/Map Toggle */}
+                  <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                        viewMode === 'grid'
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      aria-label="Grid view"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>Grid</span>
+                    </button>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-800" />
+                    <button
+                      onClick={() => setViewMode('map')}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                        viewMode === 'map'
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      aria-label="Map view"
+                    >
+                      <Map className="h-4 w-4" />
+                      <span>Map</span>
+                    </button>
+                  </div>
+
+                  {/* Filter Button */}
+                  <SearchFiltersComponent
+                    filters={advancedFilters}
+                    onFiltersChange={(newFilters) => {
+                      setAdvancedFilters(newFilters);
+                      if (newFilters.city !== undefined) {
+                        setSelectedCity(newFilters.city || '');
+                      }
+                      if (newFilters.category !== undefined) {
+                        setSelectedCategory(newFilters.category || '');
+                      }
+                      Object.entries(newFilters).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null && value !== '') {
+                          trackFilterChange({ filterType: key, value });
+                        }
+                      });
+                    }}
+                    availableCities={cities}
+                    availableCategories={categories}
+                    onLocationChange={handleLocationChange}
+                  />
                 </div>
 
 
@@ -2349,13 +2379,24 @@ export default function Home() {
 
               return (
                 <>
-                  {(() => {
-                    const startIndex = (currentPage - 1) * itemsPerPage;
-                    const endIndex = startIndex + itemsPerPage;
-                    const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
+                  {viewMode === 'map' ? (
+                    <div className="w-full h-[calc(100vh-20rem)] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                      <MapView
+                        destinations={displayDestinations}
+                        onMarkerClick={(dest) => {
+                          setSelectedDestination(dest);
+                          setIsDrawerOpen(true);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    (() => {
+                      const startIndex = (currentPage - 1) * itemsPerPage;
+                      const endIndex = startIndex + itemsPerPage;
+                      const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-                    return (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
+                      return (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
                     {paginatedDestinations.map((destination, index) => {
                       const isVisited = !!(user && visitedSlugs.has(destination.slug));
                       const globalIndex = startIndex + index;
@@ -2413,12 +2454,13 @@ export default function Home() {
                         />
                       );
                       })}
-                      </div>
-                    );
-                  })()}
+                        </div>
+                      );
+                    })()
+                  )}
 
-                  {/* Pagination */}
-                  {(() => {
+                  {/* Pagination - Only show in grid view */}
+                  {viewMode === 'grid' && (() => {
                     const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
                     if (totalPages <= 1) return null;
 
