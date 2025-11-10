@@ -55,6 +55,9 @@
     --container-padding-desktop: 48px;
     --gutter-nav: 12px;
     --gutter-grid: 20px;
+    
+    /* Ensure container uses 1280px max-width */
+    --tw-container-max-width: 1280px;
   }
 
   .dark {
@@ -95,6 +98,11 @@
   
   html.light {
     color-scheme: light;
+  }
+  
+  /* Ensure container max-width is 1280px site-wide */
+  .container {
+    max-width: 1280px;
   }
 }
 
