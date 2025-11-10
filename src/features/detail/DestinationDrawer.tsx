@@ -28,14 +28,14 @@ import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nest
 import { createClient } from '@/lib/supabase/client';
 import { generateText } from '@/lib/llm';
 
-// Dynamically import GoogleMap to avoid SSR issues
-const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
+// Dynamically import MapView to avoid SSR issues
+const MapView = dynamic(() => import('@/components/MapView'), { 
   ssr: false,
   loading: () => (
-    <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
+    <div className="w-full h-64 flex items-center justify-center bg-gray-100 rounded-lg">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
-        <span className="text-xs text-gray-600 dark:text-gray-400">Loading map...</span>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto mb-2"></div>
+        <span className="text-xs text-gray-600">Loading map...</span>
       </div>
     </div>
   )
@@ -1119,23 +1119,19 @@ Summary:`;
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
               <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-                <GoogleMap
-                query={`${destination.name}, ${destination.city}`}
-                  latitude={destination.latitude || enrichedData?.latitude}
-                  longitude={destination.longitude || enrichedData?.longitude}
-                height="256px"
-                  className="rounded-2xl"
-                  interactive={false}
-                  staticMode={true}
-                  showInfoWindow={false}
-                  infoWindowContent={{
-                    title: destination.name,
-                    address: enrichedData?.formatted_address || enrichedData?.vicinity || `${destination.city}`,
-                    category: destination.category,
-                    rating: enrichedData?.rating || destination.rating,
-                    website: enrichedData?.website || destination.website || destination.google_maps_url,
+                <MapView
+                  destinations={[{
+                    ...destination,
+                    latitude: destination.latitude || enrichedData?.latitude,
+                    longitude: destination.longitude || enrichedData?.longitude,
+                  }].filter(d => d.latitude && d.longitude) as Destination[]}
+                  center={{
+                    lat: destination.latitude || enrichedData?.latitude || 0,
+                    lng: destination.longitude || enrichedData?.longitude || 0,
                   }}
-              />
+                  zoom={15}
+                  isDark={false}
+                />
             </div>
           </div>
           )}

@@ -2,8 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
@@ -16,7 +15,6 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -89,8 +87,6 @@ export function Header() {
     setMounted(true);
   }, []);
 
-  // Use resolvedTheme to get the actual theme (handles 'system' theme)
-  const isDark = mounted && (resolvedTheme === 'dark');
 
   const navigate = (path: string) => {
     router.push(path);
@@ -108,11 +104,11 @@ export function Header() {
 
   return (
     <header 
-      className={`${isMap ? 'fixed top-0 left-0 right-0 z-40 bg-transparent' : 'mt-6 md:mt-8'}`} 
+      className="mt-6 md:mt-8" 
       role="banner"
     >
       {/* Primary Nav: Brand + Search */}
-      <div className={`container mx-auto px-4 md:px-8 lg:px-12 ${isMap ? 'bg-gray-900/80 backdrop-blur-sm' : ''}`}>
+      <div className="container mx-auto px-4 md:px-8 lg:px-12">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo - Left */}
           <button
@@ -130,7 +126,7 @@ export function Header() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search destinations..."
-              className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:border-black dark:focus:border-white"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-black"
             />
           </form>
           
@@ -138,7 +134,7 @@ export function Header() {
           <div className="flex items-center gap-4 shrink-0">
             {isAdmin && buildVersion && (
               <span
-                className="text-[10px] text-gray-400 dark:text-gray-600 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
+                className="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-100 rounded"
                 title="Build version"
                 aria-label={`Build version ${buildVersion}`}
               >
@@ -158,13 +154,13 @@ export function Header() {
                   }
                   setIsMenuOpen(!isMenuOpen);
                 }}
-                className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-full ml-4 shrink-0"
+                className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-full ml-4 shrink-0"
                 aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={isMenuOpen}
                 aria-haspopup="true"
               >
                 {avatarUrl ? (
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-800">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
                     <Image
                       src={avatarUrl}
                       alt={user.email || 'Profile'}
@@ -178,12 +174,12 @@ export function Header() {
                     />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
                     {user.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}
                 <svg
-                  className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 text-gray-600 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -205,7 +201,7 @@ export function Header() {
                   }
                   setIsMenuOpen(!isMenuOpen);
                 }}
-                className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-3 px-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg ml-4 shrink-0"
+                className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-black transition-colors font-normal py-3 px-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-lg ml-4 shrink-0"
                 aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={isMenuOpen}
                 aria-haspopup="true"
@@ -226,21 +222,6 @@ export function Header() {
         </nav>
       </div>
 
-              {/* Secondary Nav: Cities & Collections */}
-              <nav className={`container mx-auto px-4 md:px-8 lg:px-12 flex items-center gap-4 text-sm text-neutral-400 overflow-x-auto whitespace-nowrap border-t border-gray-200 dark:border-gray-800 ${isMap ? 'bg-gray-900/80 backdrop-blur-sm' : ''}`}>
-        <button
-          onClick={() => navigate('/cities')}
-          className="py-3 hover:text-neutral-200 dark:hover:text-neutral-200 transition-colors"
-        >
-          Cities
-        </button>
-        <button
-          onClick={() => navigate('/discover')}
-          className="py-3 hover:text-neutral-200 dark:hover:text-neutral-200 transition-colors"
-        >
-          Collections
-        </button>
-      </nav>
 
       {/* No full nav bar; all navigation via burger menu */}
 
@@ -254,7 +235,7 @@ export function Header() {
           />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed z-50 w-72 rounded-2xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
             style={{
               top: `${dropdownPosition.top}px`,
               right: `${dropdownPosition.right}px`,
@@ -263,7 +244,7 @@ export function Header() {
             aria-label="Main menu"
           >
             {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white border-t border-l border-gray-200" aria-hidden="true" />
             <div className="py-2">
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}

@@ -11,6 +11,7 @@ interface MapViewProps {
   onMarkerClick?: (destination: Destination) => void;
   center?: { lat: number; lng: number };
   zoom?: number;
+  isDark?: boolean;
 }
 
 export default function MapView({
@@ -18,6 +19,7 @@ export default function MapView({
   onMarkerClick,
   center = { lat: 23.5, lng: 121.0 }, // Default to Taiwan center
   zoom = 8,
+  isDark = true,
 }: MapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
