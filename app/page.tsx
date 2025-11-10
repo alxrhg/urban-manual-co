@@ -1808,7 +1808,7 @@ export default function Home() {
           }),
         }}
       />
-      <main id="main-content" className="relative min-h-screen bg-white dark:bg-dark-blue-900 dark:text-white" role="main">
+      <main id="main-content" className="relative min-h-screen dark:text-white" role="main">
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}

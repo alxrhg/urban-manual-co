@@ -108,7 +108,7 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body className="antialiased bg-white dark:bg-dark-blue-900 text-gray-900 dark:text-white">
+      <body className="antialiased bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
