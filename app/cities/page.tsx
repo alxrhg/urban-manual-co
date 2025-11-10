@@ -189,7 +189,7 @@ export default function CitiesPage() {
 
         {/* Grid - Right below filter lists */}
         <div className="mt-8 pb-8 px-6 md:px-10">
-            <div className="max-w-[1800px] mx-auto">
+            <div className="container mx-auto px-4 md:px-8 lg:px-12">
               {filteredCities.length === 0 ? (
                 <div className="text-center py-16">
                   <span className="text-gray-500">No cities found</span>
