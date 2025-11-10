@@ -10,6 +10,7 @@ import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
 import { createColumns, type Destination } from "./columns";
+import DiscoverTab from '@/components/admin/DiscoverTab';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -729,7 +730,7 @@ export default function AdminPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches'>('destinations');
+  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover'>('destinations');
 
   // Analytics state
   const [analyticsStats, setAnalyticsStats] = useState({
@@ -992,14 +993,14 @@ export default function AdminPage() {
 
         {/* Tab Navigation - Matches account page style */}
         <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {['destinations', 'analytics', 'searches'].map((tab) => (
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-3">
+            {['destinations', 'analytics', 'searches', 'discover'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`transition-all ${
+                className={`transition-all pb-1 ${
                   activeTab === tab
-                    ? "font-medium text-black dark:text-white"
+                    ? "font-medium text-black dark:text-white border-b-2 border-black dark:border-white"
                     : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                 }`}
               >
@@ -1148,6 +1149,13 @@ export default function AdminPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Discover Tab */}
+        {activeTab === 'discover' && (
+          <div className="fade-in">
+            <DiscoverTab />
           </div>
         )}
 
