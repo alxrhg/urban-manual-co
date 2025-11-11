@@ -522,53 +522,72 @@ Summary:`;
           return;
         }
 
-        // First try to insert, if it fails due to conflict, update instead
-        const { data: insertData, error: insertError } = await supabaseClient
+        // Use upsert to handle both insert and update cases
+        const visitedAt = new Date().toISOString();
+        const { data: upsertData, error: upsertError } = await supabaseClient
           .from('visited_places')
-          .insert({
+          .upsert({
             user_id: user.id,
             destination_slug: destination.slug,
-            visited_at: new Date().toISOString(),
+            visited_at: visitedAt,
+          }, {
+            onConflict: 'user_id,destination_slug',
           })
           .select()
           .single();
 
-        if (insertError) {
-          // If it's a unique constraint violation, try to update instead
-          if (insertError.code === '23505' || insertError.message?.includes('duplicate') || insertError.message?.includes('unique')) {
-            console.log('Visit already exists, updating instead...');
-            const { error: updateError } = await supabaseClient
-              .from('visited_places')
-              .update({
-                visited_at: new Date().toISOString(),
-              })
-              .eq('user_id', user.id)
-              .eq('destination_slug', destination.slug);
+        if (upsertError) {
+          console.error('Upsert error:', upsertError);
+          
+          // If upsert fails, try insert then update as fallback
+          const { error: insertError } = await supabaseClient
+            .from('visited_places')
+            .insert({
+              user_id: user.id,
+              destination_slug: destination.slug,
+              visited_at: visitedAt,
+            });
 
-            if (updateError) {
-              console.error('Error updating visit:', updateError);
+          if (insertError) {
+            // If insert fails due to conflict, try update
+            if (insertError.code === '23505' || insertError.message?.includes('duplicate') || insertError.message?.includes('unique')) {
+              console.log('Visit already exists, updating instead...');
+              const { error: updateError } = await supabaseClient
+                .from('visited_places')
+                .update({
+                  visited_at: visitedAt,
+                })
+                .eq('user_id', user.id)
+                .eq('destination_slug', destination.slug);
+
+              if (updateError) {
+                console.error('Error updating visit:', updateError);
+                // Check if error is related to activity_feed RLS policy
+                if (updateError.message && updateError.message.includes('activity_feed') && updateError.message.includes('row-level security')) {
+                  // Visit was updated but activity_feed insert failed - this is okay, continue
+                  console.warn('Visit updated but activity_feed insert failed due to RLS policy. Visit status updated successfully.');
+                  setIsVisited(true);
+                  if (onVisitToggle) onVisitToggle(destination.slug, true);
+                  return;
+                }
+                throw updateError;
+              }
+            } else {
+              console.error('Error adding visit:', insertError);
               // Check if error is related to activity_feed RLS policy
-              if (updateError.message && updateError.message.includes('activity_feed') && updateError.message.includes('row-level security')) {
-                // Visit was updated but activity_feed insert failed - this is okay, continue
-                console.warn('Visit updated but activity_feed insert failed due to RLS policy. Visit status updated successfully.');
+              if (insertError.message && insertError.message.includes('activity_feed') && insertError.message.includes('row-level security')) {
+                // Visit was created but activity_feed insert failed - this is okay, continue
+                console.warn('Visit created but activity_feed insert failed due to RLS policy. Visit status updated successfully.');
                 setIsVisited(true);
                 if (onVisitToggle) onVisitToggle(destination.slug, true);
                 return;
               }
-              throw updateError;
+              throw insertError;
             }
-          } else {
-            console.error('Error adding visit:', insertError);
-            // Check if error is related to activity_feed RLS policy
-            if (insertError.message && insertError.message.includes('activity_feed') && insertError.message.includes('row-level security')) {
-              // Visit was created but activity_feed insert failed - this is okay, continue
-              console.warn('Visit created but activity_feed insert failed due to RLS policy. Visit status updated successfully.');
-              setIsVisited(true);
-              if (onVisitToggle) onVisitToggle(destination.slug, true);
-              return;
-            }
-            throw insertError;
           }
+        } else {
+          // Verify the data was saved
+          console.log('Visit saved successfully:', upsertData);
         }
 
         setIsVisited(true);
