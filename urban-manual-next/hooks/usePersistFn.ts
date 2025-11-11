@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 
 type Noop<Args extends unknown[] = unknown[], Result = unknown> = (
   ...args: Args
@@ -10,9 +10,7 @@ type Noop<Args extends unknown[] = unknown[], Result = unknown> = (
 export function usePersistFn<T extends Noop>(fn: T): T {
   const fnRef = useRef(fn);
 
-  useEffect(() => {
-    fnRef.current = fn;
-  }, [fn]);
+  fnRef.current = fn;
 
   const persistFn = useCallback((...args: Parameters<T>) => {
     return fnRef.current(...args);
