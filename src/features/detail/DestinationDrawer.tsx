@@ -514,234 +514,64 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   };
 
   const handleVisitToggle = async () => {
-    if (!user || !destination) {
-      if (!user) {
-        router.push('/auth/login');
-      }
+    if (!destination) {
       return;
     }
 
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (!destination.slug) {
+      alert('Invalid destination. Please try again.');
+      return;
+    }
+
+    const countryInfo = resolveCountryInfo(destination);
+    const payload = {
+      action: isVisited ? 'remove' : 'add',
+      destination_slug: destination.slug,
+      visited_at: new Date().toISOString(),
+      country_name: countryInfo?.name,
+      country_iso2: countryInfo?.iso2,
+      country_iso3: countryInfo?.iso3,
+    };
+
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        throw new Error('Supabase client not available');
-      }
+      const response = await fetch('/api/visited-places/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-      const countryInfo = resolveCountryInfo(destination);
-      const syncVisitedCountry = async (action: 'add' | 'remove') => {
-        if (!countryInfo) return;
-        try {
-          if (action === 'add') {
-            await fetch('/api/visited-countries', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({
-                country_code: countryInfo.iso3,
-                country_name: countryInfo.name,
-              }),
-            });
-          } else {
-            await fetch(`/api/visited-countries/${countryInfo.iso3}`, {
-              method: 'DELETE',
-              credentials: 'include',
-            });
-          }
-        } catch (syncError) {
-          console.warn('Failed to sync visited country record:', syncError);
-        }
-      };
+      const result = await response
+        .json()
+        .catch(() => ({} as { visited?: boolean; error?: string }));
 
-      if (isVisited) {
-        // Remove visit
-        const { error } = await supabaseClient
-          .from('visited_places')
-        .delete()
-          .eq('user_id', user.id)
-        .eq('destination_slug', destination.slug);
-
-      if (error) {
-          console.error('Error removing visit:', error);
-          throw error;
-      }
-
-        await syncVisitedCountry('remove');
-
-        setIsVisited(false);
-        if (onVisitToggle) onVisitToggle(destination.slug, false);
-    } else {
-        // Add visit with current date (no modal needed - just mark as visited)
-        if (!destination.slug) {
-          alert('Invalid destination. Please try again.');
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/auth/login');
           return;
         }
 
-        const visitedAt = new Date().toISOString();
-        let saved = false;
-        let savedData = null;
+        const message =
+          (typeof result.error === 'string' && result.error.trim()) ||
+          'Failed to update visit status. Please try again.';
+        throw new Error(message);
+      }
 
-        // Try upsert first
-        const { data: upsertData, error: upsertError } = await supabaseClient
-          .from('visited_places')
-          .upsert({
-            user_id: user.id,
-          destination_slug: destination.slug,
-            visited_at: visitedAt,
-          }, {
-            onConflict: 'user_id,destination_slug',
-          })
-          .select()
-          .single();
-
-        if (!upsertError && upsertData) {
-          console.log('Visit saved via upsert:', upsertData);
-          saved = true;
-          savedData = upsertData;
-        } else if (upsertError) {
-          // Check if error is related to activity_feed RLS policy (from trigger)
-          if (upsertError.message && upsertError.message.includes('activity_feed') && upsertError.message.includes('row-level security')) {
-            // Visit was saved but activity_feed insert failed - verify the visit exists
-            console.warn('Visit saved via upsert but activity_feed insert failed due to RLS policy. Verifying visit...');
-            const { data: verifyData } = await supabaseClient
-              .from('visited_places')
-              .select('*')
-              .eq('user_id', user.id)
-              .eq('destination_slug', destination.slug)
-              .maybeSingle();
-            
-            if (verifyData) {
-              console.log('Visit verified after RLS error:', verifyData);
-              saved = true;
-              savedData = verifyData;
-            } else {
-              // If verification fails, continue to fallback logic
-              console.error('Upsert error (RLS) but visit not found, trying fallback:', upsertError);
-            }
-          } else {
-            console.error('Upsert error:', upsertError);
-          }
-        }
-        
-        // If upsert failed (and not handled by RLS check above), try insert as fallback
-        if (!saved) {
-          // If upsert fails, try insert
-          const { data: insertData, error: insertError } = await supabaseClient
-            .from('visited_places')
-            .insert({
-              user_id: user.id,
-              destination_slug: destination.slug,
-              visited_at: visitedAt,
-            })
-            .select()
-            .single();
-
-          if (!insertError && insertData) {
-            console.log('Visit saved via insert:', insertData);
-            saved = true;
-            savedData = insertData;
-          } else if (insertError) {
-            // If insert fails due to conflict, try update
-            if (insertError.code === '23505' || insertError.message?.includes('duplicate') || insertError.message?.includes('unique')) {
-              console.log('Visit already exists, updating instead...');
-              const { data: updateData, error: updateError } = await supabaseClient
-                .from('visited_places')
-                .update({
-                  visited_at: visitedAt,
-                })
-                .eq('user_id', user.id)
-                .eq('destination_slug', destination.slug)
-                .select()
-                .single();
-
-              if (!updateError && updateData) {
-                console.log('Visit saved via update:', updateData);
-                saved = true;
-                savedData = updateData;
-              } else if (updateError) {
-                console.error('Error updating visit:', updateError);
-                // Check if error is related to activity_feed RLS policy
-                if (updateError.message && updateError.message.includes('activity_feed') && updateError.message.includes('row-level security')) {
-                  // Visit was updated but activity_feed insert failed - verify the visit exists
-                  console.warn('Visit updated but activity_feed insert failed due to RLS policy. Verifying visit...');
-                  // Verify the visit was actually saved
-                  const { data: verifyData } = await supabaseClient
-                    .from('visited_places')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .eq('destination_slug', destination.slug)
-                    .maybeSingle();
-                  
-                  if (verifyData) {
-                    console.log('Visit verified after RLS error:', verifyData);
-                    saved = true;
-                    savedData = verifyData;
-                  } else {
-                    throw updateError;
-                  }
-                } else {
-                  throw updateError;
-                }
-              }
-            } else {
-              console.error('Error adding visit:', insertError);
-              // Check if error is related to activity_feed RLS policy
-              if (insertError.message && insertError.message.includes('activity_feed') && insertError.message.includes('row-level security')) {
-                // Visit was created but activity_feed insert failed - verify the visit exists
-                console.warn('Visit created but activity_feed insert failed due to RLS policy. Verifying visit...');
-                // Verify the visit was actually saved
-                const { data: verifyData } = await supabaseClient
-                  .from('visited_places')
-                  .select('*')
-                  .eq('user_id', user.id)
-                  .eq('destination_slug', destination.slug)
-                  .maybeSingle();
-                
-                if (verifyData) {
-                  console.log('Visit verified after RLS error:', verifyData);
-                  saved = true;
-                  savedData = verifyData;
-                } else {
-                  throw insertError;
-                }
-              } else {
-                throw insertError;
-              }
-            }
-          }
-        }
-
-        // Verify the data was actually saved before updating UI
-        if (saved && savedData) {
-          // Double-check by querying the database
-          const { data: verifyData, error: verifyError } = await supabaseClient
-            .from('visited_places')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('destination_slug', destination.slug)
-            .maybeSingle();
-
-          if (verifyError && verifyError.code !== 'PGRST116') {
-            console.error('Verification error:', verifyError);
-            throw new Error('Failed to verify visit was saved');
-          }
-
-          if (verifyData) {
-            console.log('Visit verified in database:', verifyData);
-            await syncVisitedCountry('add');
-            setIsVisited(true);
-            if (onVisitToggle) onVisitToggle(destination.slug, true);
-          } else {
-            throw new Error('Visit was not found in database after save');
-          }
-        } else {
-          throw new Error('Failed to save visit');
-        }
+      const visitedState = Boolean(result.visited);
+      setIsVisited(visitedState);
+      if (onVisitToggle) {
+        onVisitToggle(destination.slug, visitedState);
       }
     } catch (error: any) {
       console.error('Error toggling visit:', error);
-      const errorMessage = error?.message || 'Failed to update visit status. Please try again.';
+      const errorMessage =
+        error?.message || 'Failed to update visit status. Please try again.';
       alert(errorMessage);
     }
   };
