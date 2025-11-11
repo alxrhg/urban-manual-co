@@ -54,12 +54,15 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
     if (!user) return;
     
     try {
-      const { data } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      
+      const { data } = await supabaseClient
         .from('saved_destinations')
         .select('collection_id')
         .eq('user_id', user.id)
         .eq('destination_id', destinationId)
-        .single();
+        .maybeSingle();
 
       const savedData = data as any;
       if (savedData?.collection_id) {

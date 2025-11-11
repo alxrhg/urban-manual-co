@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,6 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
-import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
@@ -1522,8 +1521,7 @@ Summary:`;
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <div className="mb-4">
                 <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
