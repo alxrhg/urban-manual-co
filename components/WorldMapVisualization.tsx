@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
-import { cityCountryMap } from '@/data/cityCountryMap';
+import { getCountryInfo } from '@/data/countryCodes';
 
 interface WorldMapVisualizationProps {
   visitedCountries: Set<string>;
@@ -12,88 +12,6 @@ interface WorldMapVisualizationProps {
     longitude?: number | null;
   }>;
 }
-
-// Map country names to ISO 3166-1 alpha-2 codes (2-letter codes used by world-110m.json)
-const COUNTRY_TO_ISO2: Record<string, string> = {
-  // North America
-  'USA': 'US',
-  'United States': 'US',
-  'United States of America': 'US',
-  'Canada': 'CA',
-  'Mexico': 'MX',
-  
-  // South America
-  'Brazil': 'BR',
-  'Argentina': 'AR',
-  'Chile': 'CL',
-  'Peru': 'PE',
-  'Colombia': 'CO',
-  'Ecuador': 'EC',
-  'Venezuela': 'VE',
-  'Uruguay': 'UY',
-  'Paraguay': 'PY',
-  'Bolivia': 'BO',
-  
-  // Europe
-  'UK': 'GB',
-  'United Kingdom': 'GB',
-  'France': 'FR',
-  'Spain': 'ES',
-  'Portugal': 'PT',
-  'Italy': 'IT',
-  'Germany': 'DE',
-  'Netherlands': 'NL',
-  'Belgium': 'BE',
-  'Switzerland': 'CH',
-  'Austria': 'AT',
-  'Greece': 'GR',
-  'Turkey': 'TR',
-  'Poland': 'PL',
-  'Czech Republic': 'CZ',
-  'Hungary': 'HU',
-  'Romania': 'RO',
-  'Denmark': 'DK',
-  'Sweden': 'SE',
-  'Norway': 'NO',
-  'Finland': 'FI',
-  'Ireland': 'IE',
-  'Iceland': 'IS',
-  
-  // Asia
-  'Russia': 'RU',
-  'China': 'CN',
-  'Japan': 'JP',
-  'South Korea': 'KR',
-  'Korea': 'KR',
-  'India': 'IN',
-  'Thailand': 'TH',
-  'Vietnam': 'VN',
-  'Malaysia': 'MY',
-  'Singapore': 'SG',
-  'Indonesia': 'ID',
-  'Philippines': 'PH',
-  'UAE': 'AE',
-  'United Arab Emirates': 'AE',
-  'Hong Kong': 'HK',
-  'Taiwan': 'TW',
-  'Saudi Arabia': 'SA',
-  'Israel': 'IL',
-  'Jordan': 'JO',
-  'Lebanon': 'LB',
-  
-  // Oceania
-  'Australia': 'AU',
-  'New Zealand': 'NZ',
-  
-  // Africa
-  'Egypt': 'EG',
-  'Morocco': 'MA',
-  'South Africa': 'ZA',
-  'Kenya': 'KE',
-  'Tanzania': 'TZ',
-  'Ghana': 'GH',
-  'Nigeria': 'NG',
-};
 
 // World Atlas TopoJSON URL (110m resolution)
 // Using the correct file from world-atlas@2 package
@@ -127,25 +45,11 @@ export function WorldMapVisualization({
     
     visitedCountries.forEach((country) => {
       if (!country) return;
-      
-      // Try exact match first
-      let iso2 = COUNTRY_TO_ISO2[country];
-      
-      // If no exact match, try case-insensitive match
-      if (!iso2) {
-        const countryLower = country.toLowerCase().trim();
-        for (const [key, value] of Object.entries(COUNTRY_TO_ISO2)) {
-          if (key.toLowerCase() === countryLower) {
-            iso2 = value;
-            break;
-          }
-        }
-      }
-      
-      if (iso2) {
-        isoSet.add(iso2);
+
+      const countryInfo = getCountryInfo(country);
+      if (countryInfo?.iso2) {
+        isoSet.add(countryInfo.iso2);
       } else {
-        // Log unmapped countries for debugging
         unmappedCountries.push(country);
       }
     });

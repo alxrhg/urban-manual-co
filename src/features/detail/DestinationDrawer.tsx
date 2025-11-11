@@ -26,6 +26,8 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
+import { cityCountryMap } from '@/data/cityCountryMap';
+import { getCountryInfo } from '@/data/countryCodes';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { 
@@ -79,6 +81,39 @@ const CITY_TIMEZONES: Record<string, string> = {
   'bangkok': 'Asia/Bangkok',
   // Add more as needed
 };
+
+function resolveCountryInfo(destination: Destination | null) {
+  if (!destination) return null;
+
+  // Prefer explicit country on destination
+  const directCountry = getCountryInfo(destination.country);
+  if (directCountry) {
+    return directCountry;
+  }
+
+  const city = destination.city;
+  if (!city) return null;
+
+  const candidates = [
+    city,
+    city.toLowerCase(),
+    city.toLowerCase().replace(/\s+/g, '-'),
+    city.toLowerCase().replace(/-/g, ''),
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const mappedCountry = cityCountryMap[candidate];
+    if (mappedCountry) {
+      const info = getCountryInfo(mappedCountry);
+      if (info) {
+        return info;
+      }
+    }
+  }
+
+  return null;
+}
 
 function getOpenStatus(openingHours: any, city: string, timezoneId?: string | null, utcOffset?: number | null): { isOpen: boolean; currentDay?: string; todayHours?: string } {
   if (!openingHours || !openingHours.weekday_text) {
@@ -486,6 +521,33 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         throw new Error('Supabase client not available');
       }
 
+      const countryInfo = resolveCountryInfo(destination);
+      const syncVisitedCountry = async (action: 'add' | 'remove') => {
+        if (!countryInfo) return;
+        try {
+          if (action === 'add') {
+            await fetch('/api/visited-countries', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                country_code: countryInfo.iso3,
+                country_name: countryInfo.name,
+              }),
+            });
+          } else {
+            await fetch(`/api/visited-countries/${countryInfo.iso3}`, {
+              method: 'DELETE',
+              credentials: 'include',
+            });
+          }
+        } catch (syncError) {
+          console.warn('Failed to sync visited country record:', syncError);
+        }
+      };
+
       if (isVisited) {
         // Remove visit
         const { error } = await supabaseClient
@@ -498,6 +560,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           console.error('Error removing visit:', error);
           throw error;
       }
+
+        await syncVisitedCountry('remove');
 
         setIsVisited(false);
         if (onVisitToggle) onVisitToggle(destination.slug, false);
@@ -659,6 +723,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           if (verifyData) {
             console.log('Visit verified in database:', verifyData);
+            await syncVisitedCountry('add');
             setIsVisited(true);
             if (onVisitToggle) onVisitToggle(destination.slug, true);
           } else {

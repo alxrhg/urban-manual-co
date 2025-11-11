@@ -15,6 +15,7 @@ import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import ProfileAvatar from "@/components/ProfileAvatar";
+import { getCountryInfo, getCountryName } from "@/data/countryCodes";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,7 @@ export default function Account() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [visitedCountriesApi, setVisitedCountriesApi] = useState<Array<{ country_code: string; country_name: string }>>([]);
   
   // Get initial tab from URL query param
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>(() => {
@@ -103,7 +105,7 @@ export default function Account() {
       setIsLoadingData(true);
 
       // Load saved, visited, and collections
-      const [savedResult, visitedResult, collectionsResult] = await Promise.all([
+      const [savedResult, visitedResult, collectionsResult, countriesResponse] = await Promise.all([
         supabase
           .from('saved_places')
           .select('destination_slug')
@@ -117,7 +119,15 @@ export default function Account() {
           .from('collections')
           .select('*')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
+          .order('created_at', { ascending: false }),
+        fetch('/api/visited-countries', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        }).catch((error) => {
+          console.error('Error fetching visited countries API:', error);
+          return null;
+        }),
       ]);
 
       // Collect all unique slugs
@@ -180,6 +190,17 @@ export default function Account() {
       // Set collections
       if (collectionsResult.data) {
         setCollections(collectionsResult.data);
+      }
+
+      if (countriesResponse && 'ok' in countriesResponse) {
+        if (countriesResponse.ok) {
+          const { countries } = await countriesResponse.json();
+          setVisitedCountriesApi(countries || []);
+        } else if (countriesResponse.status === 401) {
+          setVisitedCountriesApi([]);
+        } else {
+          console.warn('Failed to load visited countries API:', countriesResponse.statusText);
+        }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -257,10 +278,15 @@ export default function Account() {
     ]);
 
     // Get countries from destination.country field first, fallback to cityCountryMap
-    const countriesFromDestinations = new Set([
-      ...savedPlaces.map(p => p.destination?.country).filter(Boolean),
-      ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country)
-    ]);
+    const countriesFromDestinations = new Set<string>();
+    savedPlaces.forEach((place) => {
+      const countryName = getCountryName(place.destination?.country);
+      if (countryName) countriesFromDestinations.add(countryName);
+    });
+    visitedPlaces.forEach((place) => {
+      const countryName = getCountryName(place.destination?.country);
+      if (countryName) countriesFromDestinations.add(countryName);
+    });
     
     // Also get countries from city mapping for destinations without country field
     // Normalize city names to match cityCountryMap format (lowercase, hyphenated)
@@ -269,29 +295,38 @@ export default function Account() {
         if (!city) return null;
         // Try exact match first
         let country = cityCountryMap[city];
-        if (country) return country;
+        if (country) return getCountryName(country);
         
         // Try lowercase match
         const cityLower = city.toLowerCase();
         country = cityCountryMap[cityLower];
-        if (country) return country;
+        if (country) return getCountryName(country);
         
         // Try hyphenated version (e.g., "New York" -> "new-york")
         const cityHyphenated = cityLower.replace(/\s+/g, '-');
         country = cityCountryMap[cityHyphenated];
-        if (country) return country;
+        if (country) return getCountryName(country);
         
         // Try without hyphens (e.g., "new-york" -> "newyork" - less common but possible)
         const cityNoHyphens = cityLower.replace(/-/g, '');
         country = cityCountryMap[cityNoHyphens];
         
-        return country || null;
+        return getCountryName(country) || null;
       })
       .filter(Boolean);
     
+    const countriesFromApi = new Set<string>();
+    visitedCountriesApi.forEach(({ country_code, country_name }) => {
+      const fromCode = getCountryInfo(country_code)?.name;
+      const fromName = getCountryName(country_name);
+      const canonical = fromCode || fromName || country_name;
+      if (canonical) countriesFromApi.add(canonical);
+    });
+
     const uniqueCountries = new Set([
       ...Array.from(countriesFromDestinations),
-      ...countriesFromCities
+      ...countriesFromCities,
+      ...Array.from(countriesFromApi),
     ]);
     
     // Extract visited destinations with coordinates for map
@@ -305,12 +340,15 @@ export default function Account() {
       .filter(d => d.latitude && d.longitude);
 
     // Debug logging to help diagnose map issues
-    console.log('[Account] Countries found:', Array.from(uniqueCountries));
-    console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
-    console.log('[Account] Countries from cities:', countriesFromCities);
-    console.log('[Account] Unique cities:', Array.from(uniqueCities));
-    console.log('[Account] Visited places count:', visitedPlaces.length);
-    console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Account] Countries found:', Array.from(uniqueCountries));
+      console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
+      console.log('[Account] Countries from cities:', countriesFromCities);
+      console.log('[Account] Countries from API:', Array.from(countriesFromApi));
+      console.log('[Account] Unique cities:', Array.from(uniqueCities));
+      console.log('[Account] Visited places count:', visitedPlaces.length);
+      console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
+    }
 
     const curationCompletionPercentage = totalDestinations > 0
       ? Math.round((visitedPlaces.length / totalDestinations) * 100)
@@ -325,7 +363,7 @@ export default function Account() {
       curationCompletionPercentage,
       visitedDestinationsWithCoords
     };
-  }, [savedPlaces, visitedPlaces, collections, totalDestinations]);
+  }, [savedPlaces, visitedPlaces, collections, totalDestinations, visitedCountriesApi]);
 
   // Show loading
   if (!authChecked || isLoadingData) {
