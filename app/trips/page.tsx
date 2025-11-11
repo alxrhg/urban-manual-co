@@ -277,6 +277,10 @@ export default function TripsPage() {
         onClose={() => {
           setShowCreateDialog(false);
           setNewTrip({ title: '', description: '', destination: '', start_date: '', end_date: '' });
+          // Refresh trips list after closing
+          if (user) {
+            fetchTrips();
+          }
         }}
       />
     </div>

@@ -220,14 +220,27 @@ export default function TripDetailPage() {
         ? destinations.get(item.destination_slug)
         : null;
 
+      // Parse notes for additional data (cost, duration, mealType)
+      let notesData: any = {};
+      if (item.notes) {
+        try {
+          notesData = JSON.parse(item.notes);
+        } catch {
+          notesData = { raw: item.notes };
+        }
+      }
+
       return {
-        id: parseInt(item.id) || 0,
+        id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
         name: destination?.name || item.title,
-        city: destination?.city || '',
-        category: destination?.category || '',
-        image: destination?.image || '/placeholder-image.jpg',
+        city: destination?.city || notesData.city || '',
+        category: destination?.category || item.description || '',
+        image: destination?.image || notesData.image || '/placeholder-image.jpg',
         time: item.time || undefined,
-        notes: item.notes || undefined,
+        notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+        cost: notesData.cost || undefined,
+        duration: notesData.duration || undefined,
+        mealType: notesData.mealType || undefined,
       };
     });
   };

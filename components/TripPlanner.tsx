@@ -305,7 +305,16 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       if (deleteError) throw deleteError;
 
       // Insert all itinerary items
-      const itemsToInsert = [];
+      const itemsToInsert: Array<{
+        trip_id: string;
+        destination_slug: string;
+        day: number;
+        order_index: number;
+        time: string | null;
+        title: string;
+        description: string;
+        notes: string;
+      }> = [];
       days.forEach((day, dayIndex) => {
         day.locations.forEach((location, locationIndex) => {
           // Store additional data in notes as JSON
