@@ -585,8 +585,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             <h2 className="text-sm font-medium mb-6">Similar Destinations</h2>
 
             {loadingRecommendations ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-                {[1, 2, 3].map(i => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
+                {[1, 2, 3, 4, 5, 6].slice(0, 6).map(i => (
                   <div key={i} className="space-y-2">
                     <Skeleton className="aspect-square rounded-2xl" />
                     <Skeleton className="h-3 rounded-full w-3/4" />
@@ -599,8 +599,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 No similar destinations found
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-                {recommendations.map(rec => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
+                {recommendations.slice(0, 6).map(rec => (
                   <button
                     key={rec.slug}
                     onClick={() => {
