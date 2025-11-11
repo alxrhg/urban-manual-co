@@ -735,7 +735,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 <TripBudgetTracker
                   days={days}
                   totalBudget={totalBudget}
-                  onBudgetChange={setTotalBudget}
+                  onUpdateBudget={setTotalBudget}
                 />
               )}
               {activeTab === 'weather' && (
