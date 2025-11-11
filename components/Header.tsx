@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 
 export function Header() {
@@ -31,7 +31,8 @@ export function Header() {
 
       try {
         // Use profiles table (standard Supabase structure)
-        const { data, error } = await supabase
+        const supabaseClient = createClient();
+        const { data, error } = await supabaseClient
           .from('profiles')
           .select('avatar_url')
           .eq('id', user.id)

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Collection } from '@/types/personalization';
 import { Plus, X, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';

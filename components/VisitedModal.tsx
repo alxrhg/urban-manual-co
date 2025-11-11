@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { X, Star, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -34,15 +34,15 @@ export function VisitedModal({
 
   async function loadVisitedData() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const supabaseClient = createClient();
 
-      const { data } = await supabase
+      const { data } = await supabaseClient
         .from('visited_places')
         .select('rating, notes, visited_at')
         .eq('user_id', user.id)
         .eq('destination_slug', destinationSlug)
-        .single();
+        .maybeSingle();
 
       const visitData = data as any;
       if (visitData) {
@@ -61,34 +61,34 @@ export function VisitedModal({
   async function handleSave() {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const supabaseClient = createClient();
 
       // Check if visit already exists
-      const { data: existing } = await supabase
+      const { data: existing } = await supabaseClient
         .from('visited_places')
         .select('id')
         .eq('user_id', user.id)
         .eq('destination_slug', destinationSlug)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         // Update existing visit
-        const { error } = await (supabase
+        const { error } = await supabaseClient
           .from('visited_places')
-          .update as any)({
+          .update({
             rating: visitRating,
             notes: visitNotes || null,
             visited_at: new Date(visitDate).toISOString(),
           })
-          .eq('id', (existing as any).id);
+          .eq('id', existing.id);
 
         if (error) throw error;
       } else {
         // Create new visit
-        const { error } = await (supabase
+        const { error } = await supabaseClient
           .from('visited_places')
-          .insert as any)({
+          .insert({
             user_id: user.id,
             destination_slug: destinationSlug,
             rating: visitRating,

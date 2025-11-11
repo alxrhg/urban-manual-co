@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Collection } from '@/types/personalization';
 import { CollectionsManager } from './CollectionsManager';
 import { X } from 'lucide-react';
@@ -34,15 +34,15 @@ export function SaveDestinationModal({
 
   async function loadCurrentSave() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const supabaseClient = createClient();
 
-      const { data } = await supabase
+      const { data } = await supabaseClient
         .from('saved_destinations')
         .select('collection_id')
         .eq('user_id', user.id)
         .eq('destination_id', destinationId)
-        .single();
+        .maybeSingle();
 
       const savedData = data as any;
       if (savedData) {
@@ -57,31 +57,30 @@ export function SaveDestinationModal({
   async function handleSave(collectionId: string | null) {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const supabaseClient = createClient();
 
       // Check if already saved
-      const { data: existing } = await supabase
+      const { data: existing } = await supabaseClient
         .from('saved_destinations')
         .select('id')
         .eq('user_id', user.id)
         .eq('destination_id', destinationId)
-        .single();
+        .maybeSingle();
 
-      const existingData = existing as any;
-      if (existingData) {
+      if (existing) {
         // Update collection
-        const { error } = await (supabase
+        const { error } = await supabaseClient
           .from('saved_destinations')
-          .update as any)({ collection_id: collectionId })
-          .eq('id', existingData.id);
+          .update({ collection_id: collectionId })
+          .eq('id', existing.id);
 
         if (error) throw error;
       } else {
         // Insert new save
-        const { error } = await (supabase
+        const { error } = await supabaseClient
           .from('saved_destinations')
-          .insert as any)({
+          .insert({
             user_id: user.id,
             destination_id: destinationId,
             collection_id: collectionId,
@@ -90,7 +89,7 @@ export function SaveDestinationModal({
         if (error) throw error;
 
         // Also save to saved_places for simple save functionality
-        const { error: placesError } = await supabase
+        const { error: placesError } = await supabaseClient
           .from('saved_places')
           .upsert({
             user_id: user.id,
@@ -133,11 +132,11 @@ export function SaveDestinationModal({
   async function handleUnsave() {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const supabaseClient = createClient();
 
       // Delete from saved_destinations
-      const { error: destError } = await supabase
+      const { error: destError } = await supabaseClient
         .from('saved_destinations')
         .delete()
         .eq('user_id', user.id)
@@ -146,7 +145,7 @@ export function SaveDestinationModal({
       if (destError) throw destError;
 
       // Also delete from saved_places for consistency
-      const { error: placesError } = await supabase
+      const { error: placesError } = await supabaseClient
         .from('saved_places')
         .delete()
         .eq('user_id', user.id)
