@@ -18,14 +18,14 @@ export type Destination = {
   name: string;
   city: string;
   category: string;
-  description?: string;
-  content?: string;
-  image?: string;
-  google_place_id?: string;
-  formatted_address?: string;
-  rating?: number;
-  michelin_stars?: number;
-  crown?: boolean;
+  description?: string | null;
+  content?: string | null;
+  image?: string | null;
+  google_place_id?: string | null;
+  formatted_address?: string | null;
+  rating?: number | null;
+  michelin_stars?: number | null;
+  crown?: boolean | null;
   parent_destination_id?: number | null;
 };
 
@@ -53,7 +53,9 @@ export const createColumns = (
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm">{destination.name}</span>
           {destination.crown && (
-            <Badge variant="default" className="text-xs">Crown</Badge>
+            <Badge variant="default" className="text-xs">
+              Crown
+            </Badge>
           )}
           {destination.michelin_stars && destination.michelin_stars > 0 && (
             <Badge variant="outline" className="text-xs">
@@ -151,9 +153,7 @@ export const createColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => onEdit(destination)}
-            >
+            <DropdownMenuItem onClick={() => onEdit(destination)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
@@ -171,4 +171,3 @@ export const createColumns = (
     },
   },
 ];
-

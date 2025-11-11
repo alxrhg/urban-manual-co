@@ -52,17 +52,22 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
-  // Custom filter function for multi-column search
-  const globalFilterFn: FilterFn<any> = React.useCallback((row, columnId, filterValue) => {
+  const globalFilterFn: FilterFn<TData> = React.useCallback((row, columnId, filterValue) => {
     if (!filterValue) return true;
     const search = String(filterValue).toLowerCase();
     const name = String(row.getValue('name') || '').toLowerCase();
     const city = String(row.getValue('city') || '').toLowerCase();
     const slug = String(row.getValue('slug') || '').toLowerCase();
     const category = String(row.getValue('category') || '').toLowerCase();
-    return name.includes(search) || city.includes(search) || slug.includes(search) || category.includes(search);
+    return (
+      name.includes(search) ||
+      city.includes(search) ||
+      slug.includes(search) ||
+      category.includes(search)
+    );
   }, []);
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -73,7 +78,7 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    globalFilterFn: globalFilterFn,
+    globalFilterFn,
     state: {
       sorting,
       columnFilters,
@@ -84,7 +89,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {/* Search and Column Visibility */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -111,9 +115,7 @@ export function DataTable<TData, TValue>({
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
+                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
@@ -123,7 +125,6 @@ export function DataTable<TData, TValue>({
         </DropdownMenu>
       </div>
 
-      {/* Table */}
       <div className="rounded-md border border-gray-200 dark:border-gray-800">
         <Table>
           <TableHeader>
@@ -134,10 +135,7 @@ export function DataTable<TData, TValue>({
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   );
                 })}
@@ -147,10 +145,7 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Spinner className="size-4" />
                     <span>Loading...</span>
@@ -159,26 +154,17 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -187,7 +173,6 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} destination(s) found.
@@ -203,8 +188,7 @@ export function DataTable<TData, TValue>({
             Previous
           </Button>
           <div className="text-sm text-gray-500">
-            Page {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount()}
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
           </div>
           <Button
             variant="outline"
@@ -220,4 +204,3 @@ export function DataTable<TData, TValue>({
     </div>
   );
 }
-
