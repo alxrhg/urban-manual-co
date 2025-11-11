@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   XIcon,
   CalendarIcon,
@@ -10,7 +10,12 @@ import {
   SparklesIcon,
   WalletIcon,
   PrinterIcon,
+  SaveIcon,
+  Loader2,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripBudgetTracker } from './TripBudgetTracker';
@@ -21,6 +26,7 @@ import { TripShareModal } from './TripShareModal';
 interface TripPlannerProps {
   isOpen: boolean;
   onClose: () => void;
+  tripId?: string; // If provided, load existing trip
 }
 
 interface TripLocation {
@@ -43,7 +49,9 @@ interface DayItinerary {
   notes?: string;
 }
 
-export function TripPlanner({ isOpen, onClose }: TripPlannerProps) {
+export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [tripName, setTripName] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -57,33 +65,293 @@ export function TripPlanner({ isOpen, onClose }: TripPlannerProps) {
   const [activeTab, setActiveTab] = useState<
     'itinerary' | 'budget' | 'weather' | 'packing'
   >('itinerary');
+  const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleCreateTrip = () => {
-    if (!tripName || !destination || !startDate || !endDate) return;
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const dayCount =
-      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-    const newDays: DayItinerary[] = [];
-
-    for (let i = 0; i < dayCount; i++) {
-      const date = new Date(start);
-      date.setDate(start.getDate() + i);
-
-      newDays.push({
-        date: date.toISOString().split('T')[0],
-        locations: [],
-        budget: 0,
-      });
+  // Load existing trip if tripId is provided
+  useEffect(() => {
+    if (isOpen && tripId && user) {
+      loadTrip(tripId);
+    } else if (isOpen && !tripId) {
+      // Reset form for new trip
+      resetForm();
     }
+  }, [isOpen, tripId, user]);
 
-    setDays(newDays);
-    setStep('plan');
+  const resetForm = () => {
+    setTripName('');
+    setDestination('');
+    setStartDate('');
+    setEndDate('');
+    setDays([]);
+    setTotalBudget(0);
+    setHotelLocation('');
+    setStep('create');
+    setCurrentTripId(null);
   };
 
-  const handleAddLocation = (dayIndex: number, location: TripLocation) => {
+  const loadTrip = async (id: string) => {
+    setLoading(true);
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient || !user) return;
+
+      // Load trip
+      const { data: trip, error: tripError } = await supabaseClient
+        .from('trips')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (tripError || !trip) {
+        console.error('Error loading trip:', tripError);
+        alert('Failed to load trip');
+        return;
+      }
+
+      setTripName(trip.title);
+      setDestination(trip.destination || '');
+      setStartDate(trip.start_date || '');
+      setEndDate(trip.end_date || '');
+      setHotelLocation(trip.description || ''); // Using description for hotel location
+      setCurrentTripId(trip.id);
+
+      // Load itinerary items
+      const { data: items, error: itemsError } = await supabaseClient
+        .from('itinerary_items')
+        .select('*')
+        .eq('trip_id', id)
+        .order('day', { ascending: true })
+        .order('order_index', { ascending: true });
+
+      if (itemsError) {
+        console.error('Error loading itinerary items:', itemsError);
+      }
+
+      // Group items by day
+      if (items && items.length > 0) {
+        const daysMap = new Map<number, TripLocation[]>();
+        items.forEach((item) => {
+          const day = item.day;
+          if (!daysMap.has(day)) {
+            daysMap.set(day, []);
+          }
+
+          // Parse notes for additional data (cost, duration, mealType)
+          let notesData: any = {};
+          if (item.notes) {
+            try {
+              notesData = JSON.parse(item.notes);
+            } catch {
+              notesData = { raw: item.notes };
+            }
+          }
+
+          const location: TripLocation = {
+            id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+            name: item.title,
+            city: destination || '',
+            category: item.description || '',
+            image: notesData.image || '/placeholder-image.jpg',
+            time: item.time || undefined,
+            notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+            cost: notesData.cost || undefined,
+            duration: notesData.duration || undefined,
+            mealType: notesData.mealType || undefined,
+          };
+
+          daysMap.get(day)!.push(location);
+        });
+
+        // Create days array
+        const start = new Date(trip.start_date || Date.now());
+        const end = new Date(trip.end_date || Date.now());
+        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+        const newDays: DayItinerary[] = [];
+        for (let i = 0; i < dayCount; i++) {
+          const date = new Date(start);
+          date.setDate(start.getDate() + i);
+          const dayNum = i + 1;
+          newDays.push({
+            date: date.toISOString().split('T')[0],
+            locations: daysMap.get(dayNum) || [],
+            budget: 0,
+          });
+        }
+
+        setDays(newDays);
+      } else {
+        // No items, create empty days
+        const start = new Date(trip.start_date || Date.now());
+        const end = new Date(trip.end_date || Date.now());
+        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+        const newDays: DayItinerary[] = [];
+        for (let i = 0; i < dayCount; i++) {
+          const date = new Date(start);
+          date.setDate(start.getDate() + i);
+          newDays.push({
+            date: date.toISOString().split('T')[0],
+            locations: [],
+            budget: 0,
+          });
+        }
+        setDays(newDays);
+      }
+
+      setStep('plan');
+    } catch (error) {
+      console.error('Error loading trip:', error);
+      alert('Failed to load trip');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTrip = async () => {
+    if (!tripName || !destination || !startDate || !endDate || !user) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      // Create trip in database
+      const { data: trip, error: tripError } = await supabaseClient
+        .from('trips')
+        .insert({
+          title: tripName,
+          description: hotelLocation || null,
+          destination: destination,
+          start_date: startDate,
+          end_date: endDate,
+          status: 'planning',
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (tripError) throw tripError;
+
+      setCurrentTripId(trip.id);
+
+      // Create days array
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const dayCount =
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+      const newDays: DayItinerary[] = [];
+
+      for (let i = 0; i < dayCount; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+
+        newDays.push({
+          date: date.toISOString().split('T')[0],
+          locations: [],
+          budget: 0,
+        });
+      }
+
+      setDays(newDays);
+      setStep('plan');
+    } catch (error: any) {
+      console.error('Error creating trip:', error);
+      alert(error?.message || 'Failed to create trip. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveTrip = async () => {
+    if (!currentTripId || !user) {
+      alert('No trip to save');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      // Update trip
+      const { error: tripError } = await supabaseClient
+        .from('trips')
+        .update({
+          title: tripName,
+          description: hotelLocation || null,
+          destination: destination,
+          start_date: startDate,
+          end_date: endDate,
+        })
+        .eq('id', currentTripId)
+        .eq('user_id', user.id);
+
+      if (tripError) throw tripError;
+
+      // Delete all existing itinerary items
+      const { error: deleteError } = await supabaseClient
+        .from('itinerary_items')
+        .delete()
+        .eq('trip_id', currentTripId);
+
+      if (deleteError) throw deleteError;
+
+      // Insert all itinerary items
+      const itemsToInsert = [];
+      days.forEach((day, dayIndex) => {
+        day.locations.forEach((location, locationIndex) => {
+          // Store additional data in notes as JSON
+          const notesData: any = {
+            raw: location.notes || '',
+            cost: location.cost,
+            duration: location.duration,
+            mealType: location.mealType,
+            image: location.image,
+            city: location.city,
+            category: location.category,
+          };
+
+          itemsToInsert.push({
+            trip_id: currentTripId,
+            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
+            day: dayIndex + 1,
+            order_index: locationIndex,
+            time: location.time || null,
+            title: location.name,
+            description: location.category,
+            notes: JSON.stringify(notesData),
+          });
+        });
+      });
+
+      if (itemsToInsert.length > 0) {
+        const { error: insertError } = await supabaseClient
+          .from('itinerary_items')
+          .insert(itemsToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      alert('Trip saved successfully!');
+      // Optionally redirect to trip detail page
+      // router.push(`/trips/${currentTripId}`);
+    } catch (error: any) {
+      console.error('Error saving trip:', error);
+      alert(error?.message || 'Failed to save trip. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddLocation = async (dayIndex: number, location: TripLocation) => {
     setDays((prev) =>
       prev.map((day, idx) =>
         idx === dayIndex
@@ -95,9 +363,14 @@ export function TripPlanner({ isOpen, onClose }: TripPlannerProps) {
       )
     );
     setShowAddLocation(null);
+
+    // Auto-save if trip exists
+    if (currentTripId) {
+      await handleSaveTrip();
+    }
   };
 
-  const handleRemoveLocation = (dayIndex: number, locationId: number) => {
+  const handleRemoveLocation = async (dayIndex: number, locationId: number) => {
     setDays((prev) =>
       prev.map((day, idx) =>
         idx === dayIndex
@@ -108,9 +381,14 @@ export function TripPlanner({ isOpen, onClose }: TripPlannerProps) {
           : day
       )
     );
+
+    // Auto-save if trip exists
+    if (currentTripId) {
+      await handleSaveTrip();
+    }
   };
 
-  const handleReorderLocations = (
+  const handleReorderLocations = async (
     dayIndex: number,
     locations: TripLocation[]
   ) => {
@@ -124,6 +402,11 @@ export function TripPlanner({ isOpen, onClose }: TripPlannerProps) {
           : day
       )
     );
+
+    // Auto-save if trip exists
+    if (currentTripId) {
+      await handleSaveTrip();
+    }
   };
 
   const handleDuplicateDay = (dayIndex: number) => {
@@ -285,6 +568,21 @@ export function TripPlanner({ isOpen, onClose }: TripPlannerProps) {
           <div className="flex items-center gap-3">
             {step === 'plan' && (
               <>
+                {currentTripId && (
+                  <button
+                    onClick={handleSaveTrip}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-4 py-2 text-xs border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Save trip"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <SaveIcon className="w-3 h-3" />
+                    )}
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                )}
                 <button
                   onClick={() => setShowShare(true)}
                   className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
@@ -402,10 +700,17 @@ export function TripPlanner({ isOpen, onClose }: TripPlannerProps) {
 
                 <button
                   onClick={handleCreateTrip}
-                  disabled={!tripName || !destination || !startDate || !endDate}
-                  className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
+                  className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Create Trip
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Trip'
+                  )}
                 </button>
               </div>
             </div>

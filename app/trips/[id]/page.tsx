@@ -352,6 +352,79 @@ export default function TripDetailPage() {
                     locations={locations}
                     onAddLocation={() => handleAddLocation(dayNumber)}
                     onRemoveLocation={handleRemoveLocation}
+                    onReorderLocations={async (reorderedLocations) => {
+                      // Handle reordering - update order_index in database
+                      try {
+                        const supabaseClient = createClient();
+                        if (!supabaseClient || !user) return;
+
+                        // Delete existing items for this day
+                        await supabaseClient
+                          .from('itinerary_items')
+                          .delete()
+                          .eq('trip_id', tripId)
+                          .eq('day', dayNumber);
+
+                        // Insert reordered items - match by title/name
+                        const itemsToInsert = reorderedLocations.map((loc, idx) => {
+                          const originalItem = items.find(
+                            (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
+                          );
+                          
+                          // Parse notes if it contains JSON data
+                          let notesData: any = {};
+                          if (originalItem?.notes) {
+                            try {
+                              notesData = JSON.parse(originalItem.notes);
+                            } catch {
+                              notesData = { raw: originalItem.notes };
+                            }
+                          }
+
+                          // Update notes with location data
+                          const updatedNotes = JSON.stringify({
+                            raw: loc.notes || notesData.raw || '',
+                            cost: loc.cost || notesData.cost,
+                            duration: loc.duration || notesData.duration,
+                            mealType: loc.mealType || notesData.mealType,
+                            image: loc.image || notesData.image,
+                            city: loc.city || notesData.city,
+                            category: loc.category || notesData.category,
+                          });
+
+                          return {
+                            trip_id: tripId,
+                            destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
+                            day: dayNumber,
+                            order_index: idx,
+                            time: loc.time || originalItem?.time || null,
+                            title: loc.name,
+                            description: loc.category || originalItem?.description || '',
+                            notes: updatedNotes,
+                          };
+                        });
+
+                        if (itemsToInsert.length > 0) {
+                          await supabaseClient
+                            .from('itinerary_items')
+                            .insert(itemsToInsert);
+                        }
+
+                        // Reload trip data
+                        fetchTripDetails();
+                      } catch (error) {
+                        console.error('Error reordering locations:', error);
+                        alert('Failed to reorder locations. Please try again.');
+                      }
+                    }}
+                    onDuplicateDay={async () => {
+                      // Duplicate day functionality
+                      alert('Duplicate day feature coming soon');
+                    }}
+                    onOptimizeRoute={async () => {
+                      // Optimize route functionality
+                      alert('Route optimization feature coming soon');
+                    }}
                   />
                 );
               })}
