@@ -65,7 +65,7 @@ export function DestinationCard({
       className={`
         group relative w-full flex flex-col transition-all duration-300 ease-out
         cursor-pointer text-left focus-ring
-        hover:scale-[1.02]
+        hover:scale-[1.01]
         active:scale-[0.98]
         ${className}
       `}
@@ -98,7 +98,7 @@ export function DestinationCard({
             className={`
               object-cover
               transition-all duration-500 ease-out
-              group-hover:scale-110
+              group-hover:scale-105
               ${isLoaded ? 'opacity-100' : 'opacity-0'}
             `}
             quality={80}
@@ -112,7 +112,7 @@ export function DestinationCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-            <MapPin className="h-12 w-12 opacity-20 transition-transform duration-300 group-hover:scale-110" />
+            <MapPin className="h-12 w-12 opacity-20 transition-transform duration-300 group-hover:scale-105" />
           </div>
         )}
 
@@ -148,7 +148,7 @@ export function DestinationCard({
                     rounded-2xl text-gray-600 dark:text-gray-400 text-xs
                     bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
                     flex items-center gap-1.5
-                    transform scale-100 group-hover:scale-105
+                    transform scale-100 group-hover:scale-[1.02]
                     transition-transform duration-300
                     shadow-sm group-hover:shadow-md
                   `}

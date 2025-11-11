@@ -31,7 +31,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
         group relative aspect-square overflow-hidden
         border-4 ${borderColor}
         transition-all duration-300
-        hover:scale-[1.02]
+        hover:scale-[1.01]
         bg-gray-100 dark:bg-gray-800
       `}
     >
