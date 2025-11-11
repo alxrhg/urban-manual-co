@@ -2304,20 +2304,21 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         </button>
                       ))}
 
-                      {cities.length > 12 && (
+                      {!showAllCities && cities.length > 12 && (
                         <button
-                          onClick={() => {
-                            setShowAllCities((prev) => !prev);
-                          }}
-                          aria-label={showAllCities ? 'Show fewer cities' : 'Show more cities'}
-                          className={`flex items-center gap-1 rounded-full border px-3.5 py-2 font-medium transition-all duration-200 ease-out ${
-                            showAllCities
-                              ? 'border-gray-300 text-black dark:border-gray-700 dark:text-white'
-                              : 'border-gray-200 text-black/60 hover:border-black hover:text-black dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-200'
-                          }`}
-                          style={{ order: 999 }}
+                          onClick={() => setShowAllCities(true)}
+                          className="flex items-center gap-1 font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out ml-auto"
                         >
-                          {showAllCities ? '− Show Less' : '+ Show More'}
+                          + Show More
+                        </button>
+                      )}
+
+                      {showAllCities && cities.length > 12 && (
+                        <button
+                          onClick={() => setShowAllCities(false)}
+                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
+                        >
+                          − Show Less
                         </button>
                       )}
                     </div>

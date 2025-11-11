@@ -27,13 +27,73 @@ export default function MapView({
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [useFallback, setUseFallback] = useState(false);
+
+  const googleMapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  const fallbackDestination = destinations.find(
+    (dest) => dest.latitude !== null && dest.latitude !== undefined && dest.longitude !== null && dest.longitude !== undefined
+  );
+
+  const fallbackCenter = fallbackDestination
+    ? { lat: fallbackDestination.latitude!, lng: fallbackDestination.longitude! }
+    : center;
+
+  const renderFallbackMap = () => {
+    if (!googleMapsKey) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
+          <div className="text-center p-6 space-y-2">
+            <p className="text-sm font-medium">Unable to load map</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Mapbox is unavailable and `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is not configured.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    const markerParams = destinations
+      .filter((dest) => dest.latitude && dest.longitude)
+      .slice(0, 50)
+      .map((dest) => `${dest.latitude},${dest.longitude}`)
+      .join('|');
+
+    const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?key=${googleMapsKey}&size=1280x720&scale=2&maptype=roadmap${
+      markerParams ? `&markers=color:red|${markerParams}` : ''
+    }&center=${fallbackCenter.lat},${fallbackCenter.lng}&zoom=${Math.max(0, Math.min(zoom + 2, 16))}`;
+
+    const embedUrl = `https://www.google.com/maps/embed/v1/view?key=${googleMapsKey}&center=${fallbackCenter.lat},${fallbackCenter.lng}&zoom=${zoom}&maptype=roadmap`;
+
+    return (
+      <div className="relative w-full h-full bg-gray-100 dark:bg-gray-900 rounded-3xl overflow-hidden">
+        <iframe
+          title="Google Maps fallback"
+          src={embedUrl}
+          className="absolute inset-0 w-full h-full border-0"
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+        <img
+          src={staticMapUrl}
+          alt="Static map fallback"
+          className="w-full h-full object-cover"
+          loading="lazy"
+          style={{ opacity: 0, pointerEvents: 'none' }}
+        />
+      </div>
+    );
+  };
 
   // Initialize Mapbox map
   useEffect(() => {
+    if (useFallback) return;
     const { accessToken, styles } = getMapboxConfig();
     if (!accessToken) {
-      setError('Mapbox access token is not configured. Please add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to your environment variables.');
-      console.error('Mapbox access token is not configured');
+      console.error('Mapbox access token is not configured. Falling back to Google Maps.');
+      setUseFallback(true);
+      setError(null);
       return;
     }
 
@@ -78,7 +138,8 @@ export default function MapView({
 
     map.on('error', (e) => {
       console.error('Mapbox error:', e);
-      setError('Failed to load map. Please check your access token and network connection.');
+      setUseFallback(true);
+      setError(null);
     });
 
     mapRef.current = map;
@@ -86,10 +147,11 @@ export default function MapView({
     return () => {
       map.remove();
     };
-  }, [center.lat, center.lng, zoom, isDark]);
+  }, [center.lat, center.lng, zoom, isDark, useFallback]);
 
   // Update markers when destinations change
   useEffect(() => {
+    if (useFallback) return;
     if (!mapRef.current || !loaded) return;
 
     // Clear existing markers
@@ -171,21 +233,24 @@ export default function MapView({
     }
   }, [destinations, loaded, onMarkerClick, center.lat, center.lng, zoom]);
 
+  if (useFallback) {
+    return renderFallbackMap();
+  }
+
+  if (!loaded && !error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <Spinner />
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
         <div className="text-center p-6">
           <p className="text-sm mb-2">{error}</p>
-          <p className="text-xs text-gray-500">Please configure NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment variables.</p>
         </div>
-      </div>
-    );
-  }
-
-  if (!loaded) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <Spinner />
       </div>
     );
   }
