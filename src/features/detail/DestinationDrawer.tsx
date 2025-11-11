@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
-import { AddToTripModal } from '@/components/AddToTripModal';
+import { TripPlanner } from '@/components/TripPlanner';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -208,9 +208,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [isVisited, setIsVisited] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
-  const [showAddToTripModal, setShowAddToTripModal] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
+  const [showTripPlanner, setShowTripPlanner] = useState(false);
+  const [tripPlannerDestination, setTripPlannerDestination] = useState<{
+    slug: string;
+    name: string;
+    city?: string | null;
+    category?: string | null;
+  } | null>(null);
   const [copied, setCopied] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -1030,13 +1036,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   router.push('/auth/login');
                   return;
                 }
-                setShowAddToTripModal(true);
-                }}
+                if (!destination.slug) return;
+                setTripPlannerDestination({
+                  slug: destination.slug,
+                  name: destination.name,
+                  city: destination.city,
+                  category: destination.category,
+                });
+                setShowTripPlanner(true);
+              }}
               className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-              >
+            >
               <Plus className="h-4 w-4" />
               <span>Add to Trip</span>
-              </button>
+            </button>
           </div>
         </div>
       </div>
@@ -1667,19 +1680,26 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       )}
             
             {/* Add to Trip Button */}
-                <button
-                  onClick={() => {
+            <button
+              onClick={() => {
                 if (!user) {
                   router.push('/auth/login');
                   return;
                 }
-                setShowAddToTripModal(true);
-                  }}
+                if (!destination.slug) return;
+                setTripPlannerDestination({
+                  slug: destination.slug,
+                  name: destination.name,
+                  city: destination.city,
+                  category: destination.category,
+                });
+                setShowTripPlanner(true);
+              }}
               className="flex items-center justify-center gap-1.5 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-                >
+            >
               <Plus className="h-4 w-4" />
               <span>Add to Trip</span>
-                </button>
+            </button>
           </div>
         </div>
             </div>
@@ -1766,19 +1786,23 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         />
       )}
 
-      {/* Add to Trip Modal */}
-      {destination && (
-        <AddToTripModal
-          destinationSlug={destination.slug}
-          destinationName={destination.name}
-          isOpen={showAddToTripModal}
-          onClose={() => setShowAddToTripModal(false)}
-          onAdd={(tripId) => {
-            // Optionally show a success message or refresh data
-            console.log(`Added ${destination.name} to trip ${tripId}`);
-          }}
-        />
-      )}
+      <TripPlanner
+        isOpen={showTripPlanner}
+        onClose={() => {
+          setShowTripPlanner(false);
+          setTripPlannerDestination(null);
+        }}
+        initialDestination={
+          tripPlannerDestination
+            ? {
+                slug: tripPlannerDestination.slug,
+                name: tripPlannerDestination.name,
+                city: tripPlannerDestination.city,
+                category: tripPlannerDestination.category,
+              }
+            : undefined
+        }
+      />
     </>
   );
 }

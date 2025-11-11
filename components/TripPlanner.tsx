@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   XIcon,
   CalendarIcon,
@@ -12,6 +12,7 @@ import {
   PrinterIcon,
   SaveIcon,
   Loader2,
+  Plus,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -27,6 +28,22 @@ interface TripPlannerProps {
   isOpen: boolean;
   onClose: () => void;
   tripId?: string; // If provided, load existing trip
+  initialDestination?: {
+    slug: string;
+    name: string;
+    city?: string | null;
+    category?: string | null;
+  };
+}
+
+interface TripSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  destination: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  updated_at: string;
 }
 
 interface TripLocation {
@@ -49,7 +66,7 @@ interface DayItinerary {
   notes?: string;
 }
 
-export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
+export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: TripPlannerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [tripName, setTripName] = useState('');
@@ -58,7 +75,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [endDate, setEndDate] = useState('');
   const [days, setDays] = useState<DayItinerary[]>([]);
   const [showAddLocation, setShowAddLocation] = useState<number | null>(null);
-  const [step, setStep] = useState<'create' | 'plan'>('create');
+  const [step, setStep] = useState<'select' | 'create' | 'plan'>('create');
   const [totalBudget, setTotalBudget] = useState<number>(0);
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
@@ -68,16 +85,62 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [tripSummaries, setTripSummaries] = useState<TripSummary[]>([]);
+  const [loadingTripSummaries, setLoadingTripSummaries] = useState(false);
+  const [addingToTripId, setAddingToTripId] = useState<string | null>(null);
+  const [bypassSelection, setBypassSelection] = useState(false);
 
-  // Load existing trip if tripId is provided
-  useEffect(() => {
-    if (isOpen && tripId && user) {
-      loadTrip(tripId);
-    } else if (isOpen && !tripId) {
-      // Reset form for new trip
-      resetForm();
+  const fetchTripSummaries = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoadingTripSummaries(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      const { data, error } = await supabaseClient
+        .from('trips')
+        .select('id,title,description,destination,start_date,end_date,updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      setTripSummaries(data || []);
+    } catch (error) {
+      console.error('Error loading trips:', error);
+      setTripSummaries([]);
+    } finally {
+      setLoadingTripSummaries(false);
     }
-  }, [isOpen, tripId, user]);
+  }, [user]);
+
+  // Initialize drawer state based on provided props
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (tripId && user) {
+      resetForm();
+      setStep('plan');
+      loadTrip(tripId);
+      return;
+    }
+
+    if (initialDestination) {
+      if (bypassSelection || step === 'plan') return;
+      if (step !== 'select') {
+        resetForm();
+        setStep('select');
+        fetchTripSummaries();
+      }
+      return;
+    }
+
+    resetForm();
+    setStep('create');
+  }, [isOpen, tripId, user, initialDestination, step, bypassSelection, fetchTripSummaries]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setBypassSelection(false);
+    }
+  }, [isOpen]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -91,7 +154,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     };
   }, [isOpen]);
 
-  const resetForm = () => {
+  const resetForm = (options?: { preserveTrip?: boolean }) => {
     setTripName('');
     setDestination('');
     setStartDate('');
@@ -99,8 +162,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setDays([]);
     setTotalBudget(0);
     setHotelLocation('');
-    setStep('create');
-    setCurrentTripId(null);
+    setActiveTab('itinerary');
+    if (!options?.preserveTrip) {
+      setCurrentTripId(null);
+    }
   };
 
   const loadTrip = async (id: string) => {
@@ -241,6 +306,95 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     }
   };
 
+  const handleAddDestinationToTrip = async (targetTripId: string) => {
+    if (!user) return;
+    if (!initialDestination) {
+      await loadTrip(targetTripId);
+      setCurrentTripId(targetTripId);
+      setStep('plan');
+      setActiveTab('itinerary');
+      setShowAddLocation(null);
+      return;
+    }
+
+    setAddingToTripId(targetTripId);
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { data: trip, error: tripError } = await supabaseClient
+        .from('trips')
+        .select('id')
+        .eq('id', targetTripId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (tripError || !trip) {
+        throw new Error('Trip not found or you do not have permission to add items to this trip');
+      }
+
+      let nextDay = 1;
+      let nextOrder = 0;
+      const { data: nextPositionData, error: nextPositionError } = await supabaseClient.rpc(
+        'get_next_itinerary_position',
+        { p_trip_id: targetTripId }
+      );
+
+      if (nextPositionError) {
+        console.warn('get_next_itinerary_position RPC failed, falling back to defaults:', nextPositionError);
+        if (
+          nextPositionError.code !== 'PGRST116' &&
+          !(nextPositionError.message && nextPositionError.message.includes('infinite recursion'))
+        ) {
+          throw nextPositionError;
+        }
+      } else if (nextPositionData && typeof nextPositionData === 'object') {
+        if (typeof nextPositionData.next_day === 'number') {
+          nextDay = Math.max(1, nextPositionData.next_day);
+        }
+        if (typeof nextPositionData.next_order === 'number') {
+          nextOrder = Math.max(0, nextPositionData.next_order);
+        }
+      }
+
+      const notesData = {
+        raw: '',
+        cost: undefined,
+        duration: undefined,
+        mealType: undefined,
+        image: undefined,
+        city: initialDestination.city || undefined,
+        category: initialDestination.category || undefined,
+      };
+
+      const { error: insertError } = await supabaseClient
+        .from('itinerary_items')
+        .insert({
+          trip_id: targetTripId,
+          destination_slug: initialDestination.slug,
+          day: nextDay,
+          order_index: nextOrder,
+          title: initialDestination.name,
+          description: initialDestination.category || '',
+          notes: JSON.stringify(notesData),
+        });
+
+      if (insertError) throw insertError;
+
+      await loadTrip(targetTripId);
+      setCurrentTripId(targetTripId);
+      setStep('plan');
+      setActiveTab('itinerary');
+      setShowAddLocation(null);
+      fetchTripSummaries();
+    } catch (error: any) {
+      console.error('Error adding destination to trip:', error);
+      alert(error?.message || 'Failed to add destination to trip. Please try again.');
+    } finally {
+      setAddingToTripId(null);
+    }
+  };
+
   const handleCreateTrip = async () => {
     if (!tripName || !destination || !startDate || !endDate || !user) {
       alert('Please fill in all required fields');
@@ -269,6 +423,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       if (tripError) throw tripError;
 
+      if (initialDestination) {
+        await handleAddDestinationToTrip(trip.id);
+        return;
+      }
+
       setCurrentTripId(trip.id);
 
       // Create days array
@@ -292,6 +451,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       setDays(newDays);
       setStep('plan');
+      setActiveTab('itinerary');
     } catch (error: any) {
       console.error('Error creating trip:', error);
       alert(error?.message || 'Failed to create trip. Please try again.');
@@ -582,14 +742,27 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 pb-6 md:pb-8 dark:border-gray-800">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                  {step === 'create' ? 'Start a trip' : 'Trip planner'}
+                  {step === 'plan'
+                    ? 'Trip planner'
+                    : step === 'select'
+                    ? 'Add to trip'
+                    : 'Start a trip'}
                 </p>
                 <h2 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
-                  {step === 'create' ? 'Create a new itinerary' : tripName || 'Untitled trip'}
+                  {step === 'plan'
+                    ? tripName || 'Untitled trip'
+                    : step === 'select'
+                    ? `Add “${initialDestination?.name ?? ''}” to a trip`
+                    : 'Create a new itinerary'}
                 </h2>
                 {step === 'plan' && destination && (
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     {destination}
+                  </p>
+                )}
+                {step === 'select' && initialDestination?.city && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {initialDestination.city}
                   </p>
                 )}
               </div>
@@ -645,7 +818,82 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             </div>
 
             <div className="pt-6 md:pt-8">
-              {step === 'create' ? (
+              {step === 'select' && initialDestination ? (
+                <div className="space-y-6">
+                  <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Choose a trip to add <span className="font-medium text-gray-900 dark:text-white">“{initialDestination.name}”</span> or start a new itinerary below.
+                    </p>
+                  </div>
+
+                  {loadingTripSummaries ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                    </div>
+                  ) : tripSummaries.length > 0 ? (
+                    <div className="space-y-3">
+                      {tripSummaries.map((trip) => (
+                        <button
+                          key={trip.id}
+                          onClick={() => handleAddDestinationToTrip(trip.id)}
+                          disabled={addingToTripId === trip.id}
+                          className="w-full text-left rounded-2xl border border-gray-200 bg-white/90 p-5 shadow-sm transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                                {trip.title}
+                              </h3>
+                              {trip.destination && (
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                  {trip.destination}
+                                </p>
+                              )}
+                              {(trip.start_date || trip.end_date) && (
+                                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                  {[trip.start_date, trip.end_date].filter(Boolean).map((date) =>
+                                    date ? new Date(date).toLocaleDateString() : ''
+                                  ).join(' – ')}
+                                </p>
+                              )}
+                            </div>
+                            {addingToTripId === trip.id ? (
+                              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                            ) : (
+                              <Plus className="h-4 w-4 text-gray-400" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
+                      You haven’t created any trips yet. Start a new itinerary below.
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl border border-dashed border-gray-300 bg-white/50 p-6 text-center dark:border-gray-700 dark:bg-gray-900/40">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Prefer to create a new itinerary for this place?
+                    </p>
+                    <button
+                      onClick={() => {
+                        setBypassSelection(true);
+                        resetForm();
+                        setTripName(initialDestination.name);
+                        if (initialDestination.city) {
+                          setDestination(initialDestination.city);
+                        }
+                        setStep('create');
+                      }}
+                      className="mt-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Start a new trip
+                    </button>
+                  </div>
+                </div>
+              ) : step === 'create' ? (
                 <div className="mx-auto max-w-2xl space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="md:col-span-2">
