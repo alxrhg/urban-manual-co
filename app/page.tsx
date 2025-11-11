@@ -51,6 +51,8 @@ import { TripPlanner } from '@/components/TripPlanner';
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
+const MOBILE_INLINE_LIMIT = 5;
+
 // Category icons using Untitled UI icons
 function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {
   return getCategoryIconComponent(category);
@@ -655,36 +657,100 @@ export default function Home() {
   } | null>(null);
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
-  const extractFilterOptions = (rows: Array<{ city?: string | null; category?: string | null }>) => {
-    const citySet = new Set<string>();
-    const categorySet = new Set<string>();
+  const extractFilterOptions = (rows: Array<Record<string, unknown>>) => {
+    const cityMap = new Map<string, { weight: number; count: number }>();
+    const categoryMap = new Map<string, { order: number | null; count: number }>();
+
+    const pickNumber = (...values: unknown[]) => {
+      for (const value of values) {
+        const parsed = toNumberOrNull(value);
+        if (parsed !== null) {
+          return parsed;
+        }
+      }
+      return null;
+    };
 
     rows.forEach(row => {
-      const city = (row.city ?? '').toString().trim();
-      const category = (row.category ?? '').toString().trim();
+      if (!isRecord(row)) {
+        return;
+      }
+
+      const city = toTrimmedString(row.city);
+      const category = toTrimmedString(row.category);
 
       if (city) {
-        citySet.add(city);
+        const existing = cityMap.get(city);
+        const weight = pickNumber(
+          row['city_editorial_weight'],
+          row['cityEditorialWeight'],
+          row['editorial_weight'],
+          row['editorialWeight'],
+          row['city_weight'],
+          row['cityWeight'],
+          row['editorialRank'],
+        );
+        if (existing) {
+          existing.count += 1;
+          if (weight !== null && weight > existing.weight) {
+            existing.weight = weight;
+          }
+        } else {
+          cityMap.set(city, { weight: weight ?? 0, count: 1 });
+        }
       }
+
       if (category) {
-        categorySet.add(category);
+        const existing = categoryMap.get(category);
+        const order = pickNumber(
+          row['category_editorial_order'],
+          row['categoryEditorialOrder'],
+          row['editorial_order'],
+          row['editorialOrder'],
+          row['category_order'],
+          row['categoryOrder'],
+        );
+        if (existing) {
+          existing.count += 1;
+          if (order !== null && (existing.order === null || order < existing.order)) {
+            existing.order = order;
+          }
+        } else {
+          categoryMap.set(category, { order: order ?? null, count: 1 });
+        }
       }
     });
 
-    const sortedCategories = Array.from(categorySet).sort();
-    const promotedCategories = (() => {
-      if (sortedCategories.length === 0) return sortedCategories;
-      const isShopping = (value: string) => value.trim().toLowerCase() === 'shopping';
-      const isOther = (value: string) => value.trim().toLowerCase() === 'other';
-      const shopping = sortedCategories.filter(isShopping);
-      const others = sortedCategories.filter((category) => !isShopping(category) && !isOther(category));
-      const otherBucket = sortedCategories.filter(isOther);
-      return [...shopping, ...others, ...otherBucket];
-    })();
+    const cities = Array.from(cityMap.entries())
+      .sort((a, b) => {
+        const weightDiff = (b[1].weight ?? 0) - (a[1].weight ?? 0);
+        if (weightDiff !== 0) {
+          return weightDiff;
+        }
+        if (b[1].count !== a[1].count) {
+          return b[1].count - a[1].count;
+        }
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([name]) => name);
+
+    const categories = Array.from(categoryMap.entries())
+      .sort((a, b) => {
+        const orderA = a[1].order ?? Number.POSITIVE_INFINITY;
+        const orderB = b[1].order ?? Number.POSITIVE_INFINITY;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        if (b[1].count !== a[1].count) {
+          return b[1].count - a[1].count;
+        }
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([name]) => name);
 
     return {
-      cities: Array.from(citySet).sort(),
-      categories: promotedCategories,
+      cities,
+      categories,
     };
   };
 
@@ -1140,7 +1206,7 @@ export default function Home() {
       try {
         const queryPromise = supabaseClient
         .from('destinations')
-          .select('city, category')
+          .select('city, category, city_editorial_weight, category_editorial_order')
           .is('parent_destination_id', null) // Only top-level destinations for filters
           .limit(1000) // Limit to speed up initial query
           .order('city');
@@ -2044,6 +2110,16 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
   const displayedCities = showAllCities ? cities : cities.slice(0, 12);
+  const mobileCityItems = useMemo(
+    () => cities.slice(0, MOBILE_INLINE_LIMIT),
+    [cities],
+  );
+  const hasMoreCities = cities.length > MOBILE_INLINE_LIMIT;
+  const mobileCategoryItems = useMemo(
+    () => categories.slice(0, MOBILE_INLINE_LIMIT),
+    [categories],
+  );
+  const hasMoreCategories = categories.length > MOBILE_INLINE_LIMIT;
 
   return (
     <ErrorBoundary>
@@ -2335,30 +2411,140 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <>
-                  <div className="md:hidden px-5 pt-6 space-y-6">
-                    <div className="flex flex-row gap-4">
-                      <button
-                        onClick={() => setSelectionSheet('city')}
-                        className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-900 shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                      >
-                        <span className="block text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">City</span>
-                        <span className="mt-1 block text-base font-semibold text-gray-900 dark:text-white">{selectedCity ? capitalizeCity(selectedCity) : 'All Cities'}</span>
-                      </button>
-                      <button
-                        onClick={() => setSelectionSheet('category')}
-                        className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-900 shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                      >
-                        <span className="block text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Category</span>
-                        <span className="mt-1 block text-base font-semibold text-gray-900 dark:text-white">{advancedFilters.michelin ? 'Michelin' : selectedCategory ? capitalizeCategory(selectedCategory) : 'All Categories'}</span>
-                      </button>
-                    </div>
+                  <div className="md:hidden px-5 pt-3 pb-4 space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex-1">
+                          <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap text-[13px] text-gray-500 dark:text-gray-400">
+                            <button
+                              onClick={() => {
+                                setSelectedCity('');
+                                setAdvancedFilters(prev => {
+                                  const updated = { ...prev };
+                                  delete updated.city;
+                                  return updated;
+                                });
+                                setCurrentPage(1);
+                                trackFilterChange({ filterType: 'city', value: 'all' });
+                              }}
+                              className={`shrink-0 transition ${
+                                !selectedCity
+                                  ? 'font-semibold text-gray-900 dark:text-white'
+                                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                              }`}
+                            >
+                              All Cities
+                            </button>
+                            {mobileCityItems.map((city) => (
+                              <button
+                                key={city}
+                                onClick={() => {
+                                  const newCity = city === selectedCity ? '' : city;
+                                  setSelectedCity(newCity);
+                                  setAdvancedFilters(prev => {
+                                    const updated = { ...prev };
+                                    if (newCity) {
+                                      updated.city = newCity;
+                                    } else {
+                                      delete updated.city;
+                                    }
+                                    return updated;
+                                  });
+                                  setCurrentPage(1);
+                                  trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                                }}
+                                className={`shrink-0 transition ${
+                                  selectedCity === city
+                                    ? 'font-semibold text-gray-900 dark:text-white'
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                }`}
+                              >
+                                {capitalizeCity(city)}
+                              </button>
+                            ))}
+                          </div>
+                          {hasMoreCities && (
+                            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-gray-950 dark:via-gray-950/70" />
+                          )}
+                        </div>
+                        {hasMoreCities && (
+                          <button
+                            onClick={() => setSelectionSheet('city')}
+                            className="shrink-0 text-[13px] font-medium text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          >
+                            + More Cities
+                          </button>
+                        )}
+                      </div>
 
-                    <button
-                      onClick={() => setShowTripPlanner(true)}
-                      className="mt-6 w-full rounded-xl bg-gray-900 py-3 text-base font-medium text-white transition hover:bg-black dark:bg-white dark:text-black"
-                    >
-                      Begin your journey
-                    </button>
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex-1">
+                          <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap text-[13px] text-gray-500 dark:text-gray-400">
+                            <button
+                              onClick={() => {
+                                setSelectedCategory('');
+                                setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+                                setCurrentPage(1);
+                                trackFilterChange({ filterType: 'category', value: 'all' });
+                              }}
+                              className={`shrink-0 transition ${
+                                !selectedCategory && !advancedFilters.michelin
+                                  ? 'font-semibold text-gray-900 dark:text-white'
+                                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                              }`}
+                            >
+                              All Categories
+                            </button>
+                            <button
+                              onClick={() => {
+                                const newValue = !advancedFilters.michelin;
+                                setSelectedCategory('');
+                                setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                                setCurrentPage(1);
+                                trackFilterChange({ filterType: 'michelin', value: newValue });
+                              }}
+                              className={`shrink-0 transition ${
+                                advancedFilters.michelin
+                                  ? 'font-semibold text-gray-900 dark:text-white'
+                                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                              }`}
+                            >
+                              Michelin
+                            </button>
+                            {mobileCategoryItems.map((category) => (
+                              <button
+                                key={category}
+                                onClick={() => {
+                                  const newCategory = category === selectedCategory ? '' : category;
+                                  setSelectedCategory(newCategory);
+                                  setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                                  setCurrentPage(1);
+                                  trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                                }}
+                                className={`shrink-0 transition ${
+                                  selectedCategory === category && !advancedFilters.michelin
+                                    ? 'font-semibold text-gray-900 dark:text-white'
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                }`}
+                              >
+                                {capitalizeCategory(category)}
+                              </button>
+                            ))}
+                          </div>
+                          {hasMoreCategories && (
+                            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-gray-950 dark:via-gray-950/70" />
+                          )}
+                        </div>
+                        {hasMoreCategories && (
+                          <button
+                            onClick={() => setSelectionSheet('category')}
+                            className="shrink-0 text-[13px] font-medium text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          >
+                            + More Categories
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
                     <div className="flex flex-row items-center justify-between">
                       <SearchFiltersComponent
@@ -2845,16 +3031,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               />
               <div className="relative mt-auto rounded-t-3xl bg-white px-5 py-6 pb-safe-area shadow-2xl dark:bg-gray-950">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {selectionSheet === 'city' ? 'Choose a city' : 'Choose a category'}
-                    </h3>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {selectionSheet === 'city'
-                        ? 'Switch destinations by city without leaving the homepage.'
-                        : 'Refine the list by category or Michelin selections.'}
-                    </p>
-                  </div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {selectionSheet === 'city' ? 'Choose a city' : 'Choose a category'}
+                  </h3>
                   <button
                     onClick={() => setSelectionSheet(null)}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
@@ -2863,15 +3042,15 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="mt-6 max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+                <div className="mt-6 max-h-[60vh] space-y-3 overflow-y-auto pr-1">
                   {selectionSheet === 'city' ? (
                     <>
                       <button
                         onClick={() => handleCitySheetSelect(null)}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                        className={`w-full text-left text-base font-medium transition ${
                           selectedCity === ''
-                            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                            ? 'text-gray-900 dark:text-white'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                         }`}
                       >
                         All Cities
@@ -2880,10 +3059,10 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         <button
                           key={city}
                           onClick={() => handleCitySheetSelect(city)}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                          className={`w-full text-left text-base font-medium transition ${
                             selectedCity === city
-                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                              ? 'text-gray-900 dark:text-white'
+                              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                           }`}
                         >
                           {capitalizeCity(city)}
@@ -2894,20 +3073,20 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                     <>
                       <button
                         onClick={() => handleCategorySheetSelect(null)}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                        className={`w-full text-left text-base font-medium transition ${
                           !selectedCategory && !advancedFilters.michelin
-                            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                            ? 'text-gray-900 dark:text-white'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                         }`}
                       >
                         All Categories
                       </button>
                       <button
                         onClick={() => handleCategorySheetSelect(null, { michelin: true })}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                        className={`w-full text-left text-base font-medium transition ${
                           advancedFilters.michelin
-                            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                            ? 'text-gray-900 dark:text-white'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                         }`}
                       >
                         Michelin
@@ -2916,10 +3095,10 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         <button
                           key={category}
                           onClick={() => handleCategorySheetSelect(category)}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                          className={`w-full text-left text-base font-medium transition ${
                             selectedCategory === category && !advancedFilters.michelin
-                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                              ? 'text-gray-900 dark:text-white'
+                              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                           }`}
                         >
                           {capitalizeCategory(category)}
