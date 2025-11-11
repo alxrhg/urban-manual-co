@@ -23,7 +23,7 @@ import { PageContainer } from '@/components/PageContainer';
 import { DestinationCard } from '@/components/DestinationCard';
 import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
-import { AddToTripModal } from '@/components/AddToTripModal';
+import { AddLocationToTrip } from '@/components/AddLocationToTrip';
 
 interface Trip {
   id: string;
@@ -248,6 +248,73 @@ export default function TripDetailPage() {
   const handleAddLocation = (dayNumber: number) => {
     setSelectedDay(dayNumber);
     setShowAddLocationModal(true);
+  };
+
+  const handleLocationAdded = async (location: {
+    id: number;
+    name: string;
+    city: string;
+    category: string;
+    image: string;
+    time?: string;
+    notes?: string;
+    cost?: number;
+    duration?: number;
+    mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  }) => {
+    if (!trip || selectedDay === null) return;
+
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient || !user) return;
+
+      // Get the next order_index for this day
+      const { data: existingItems } = await supabaseClient
+        .from('itinerary_items')
+        .select('order_index')
+        .eq('trip_id', trip.id)
+        .eq('day', selectedDay)
+        .order('order_index', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const nextOrder = existingItems ? (existingItems.order_index || 0) + 1 : 0;
+
+      // Store additional data in notes as JSON
+      const notesData = {
+        raw: location.notes || '',
+        cost: location.cost,
+        duration: location.duration,
+        mealType: location.mealType,
+        image: location.image,
+        city: location.city,
+        category: location.category,
+      };
+
+      // Add destination to itinerary
+      const { error } = await supabaseClient
+        .from('itinerary_items')
+        .insert({
+          trip_id: trip.id,
+          destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
+          day: selectedDay,
+          order_index: nextOrder,
+          time: location.time || null,
+          title: location.name,
+          description: location.category,
+          notes: JSON.stringify(notesData),
+        });
+
+      if (error) throw error;
+
+      // Reload trip data
+      await fetchTripDetails();
+      setShowAddLocationModal(false);
+      setSelectedDay(null);
+    } catch (error) {
+      console.error('Error adding location:', error);
+      alert('Failed to add location. Please try again.');
+    }
   };
 
   const handleRemoveLocation = async (locationId: number) => {
@@ -480,17 +547,9 @@ export default function TripDetailPage() {
 
       {/* Add Location Modal */}
       {trip && selectedDay !== null && (
-        <AddToTripModal
-          destinationSlug=""
-          destinationName=""
-          isOpen={showAddLocationModal}
+        <AddLocationToTrip
+          onAdd={handleLocationAdded}
           onClose={() => {
-            setShowAddLocationModal(false);
-            setSelectedDay(null);
-          }}
-          onAdd={async (tripId) => {
-            // After adding, refresh the trip data
-            await fetchTripDetails();
             setShowAddLocationModal(false);
             setSelectedDay(null);
           }}

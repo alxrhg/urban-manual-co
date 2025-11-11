@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Calendar, MapPin, Trash2, X } from 'lucide-react';
 import { PageIntro } from '@/components/PageIntro';
@@ -50,7 +50,11 @@ export default function TripsPage() {
 
   const fetchTrips = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { data, error } = await supabaseClient
         .from('trips')
         .select('*')
         .order('created_at', { ascending: false });
@@ -71,19 +75,20 @@ export default function TripsPage() {
     }
 
     try {
-      const { data, error } = await (supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient || !user) return;
+
+      const { data, error } = await supabaseClient
         .from('trips')
-        .insert as any)([
-          {
-            title: newTrip.title,
-            description: newTrip.description || null,
-            destination: newTrip.destination || null,
-            start_date: newTrip.start_date || null,
-            end_date: newTrip.end_date || null,
-            status: 'planning',
-            user_id: user?.id,
-          },
-        ])
+        .insert({
+          title: newTrip.title,
+          description: newTrip.description || null,
+          destination: newTrip.destination || null,
+          start_date: newTrip.start_date || null,
+          end_date: newTrip.end_date || null,
+          status: 'planning',
+          user_id: user.id,
+        })
         .select()
         .single();
 
@@ -115,7 +120,13 @@ export default function TripsPage() {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
 
     try {
-      const { error } = await supabase.from('trips').delete().eq('id', id);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .delete()
+        .eq('id', id);
 
       if (error) throw error;
 
