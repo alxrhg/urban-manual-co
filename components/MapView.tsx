@@ -41,6 +41,24 @@ export default function MapView({
 
     if (!mapContainerRef.current) return;
 
+    // Ensure container has dimensions
+    const container = mapContainerRef.current;
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.warn('Map container has no dimensions, waiting for layout...');
+      // Wait a bit for layout to settle
+      const timeout = setTimeout(() => {
+        if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+          setError('Map container has no dimensions. Please ensure the parent element has a defined height.');
+          console.error('Map container dimensions:', {
+            width: container.offsetWidth,
+            height: container.offsetHeight,
+            computed: window.getComputedStyle(container).height
+          });
+        }
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+
     // Set Mapbox access token
     mapboxgl.accessToken = accessToken;
 
@@ -178,7 +196,12 @@ export default function MapView({
     <div
       ref={mapContainerRef}
       className="w-full h-full overflow-hidden"
-      style={{ width: '100%', height: '100%', borderRadius: 0 }}
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        minHeight: '400px',
+        borderRadius: 0 
+      }}
     />
   );
 }
