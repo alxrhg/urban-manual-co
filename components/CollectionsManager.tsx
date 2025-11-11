@@ -138,13 +138,17 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
 
     try {
       // Remove collection from all saved destinations
-      await (supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      await supabaseClient
         .from('saved_destinations')
-        .update as any)({ collection_id: null })
+        .update({ collection_id: null })
         .eq('collection_id', collectionId);
 
       // Delete the collection
-      const { error } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      const { error } = await supabaseClient
         .from('collections')
         .delete()
         .eq('id', collectionId)
