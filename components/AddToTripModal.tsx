@@ -91,30 +91,30 @@ export function AddToTripModal({
         throw new Error('Trip not found or you do not have permission to add items to this trip');
       }
 
-      // Get the next day and order_index for this trip
-      // Use a simpler query that avoids RLS recursion
-      const { data: existingItems, error: queryError } = await supabaseClient
-        .from('itinerary_items')
-        .select('day, order_index')
-        .eq('trip_id', tripId)
-        .order('day', { ascending: false })
-        .order('order_index', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Get the next day and order_index for this trip using RPC to avoid RLS recursion
+      let nextDay = 1;
+      let nextOrder = 0;
+      const { data: nextPositionData, error: nextPositionError } = await supabaseClient.rpc(
+        'get_next_itinerary_position',
+        { p_trip_id: tripId }
+      );
 
-      // If query error and it's not a "not found" error, throw it
-      if (queryError && queryError.code !== 'PGRST116') {
-        console.error('Error querying itinerary items:', queryError);
-        // If it's a recursion error, use default values
-        if (queryError.message && queryError.message.includes('infinite recursion')) {
-          console.warn('RLS recursion detected, using default day/order');
-        } else {
-          throw queryError;
+      if (nextPositionError) {
+        console.warn('get_next_itinerary_position RPC failed, falling back to defaults:', nextPositionError);
+        if (
+          nextPositionError.code !== 'PGRST116' &&
+          !(nextPositionError.message && nextPositionError.message.includes('infinite recursion'))
+        ) {
+          throw nextPositionError;
+        }
+      } else if (nextPositionData && typeof nextPositionData === 'object') {
+        if (typeof nextPositionData.next_day === 'number') {
+          nextDay = Math.max(1, nextPositionData.next_day);
+        }
+        if (typeof nextPositionData.next_order === 'number') {
+          nextOrder = Math.max(0, nextPositionData.next_order);
         }
       }
-
-      const nextDay = existingItems ? (existingItems.day || 1) : 1;
-      const nextOrder = existingItems ? (existingItems.order_index || 0) + 1 : 0;
 
       // Prepare notes data
       const notesData = {
