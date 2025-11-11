@@ -11,6 +11,7 @@ interface WorldMapVisualizationProps {
     latitude?: number | null;
     longitude?: number | null;
   }>;
+  visitedCountryCodes?: Set<string>;
 }
 
 // World Atlas TopoJSON URL (110m resolution)
@@ -34,12 +35,19 @@ function mercatorProjection(
 
 export function WorldMapVisualization({ 
   visitedCountries,
-  visitedDestinations = []
+  visitedDestinations = [],
+  visitedCountryCodes,
 }: WorldMapVisualizationProps) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
 
   // Convert country names to ISO-2 codes
   const visitedISO2Codes = useMemo(() => {
+    if (visitedCountryCodes && visitedCountryCodes.size > 0) {
+      return new Set(
+        Array.from(visitedCountryCodes).map((code) => code.toUpperCase())
+      );
+    }
+
     const isoSet = new Set<string>();
     const unmappedCountries: string[] = [];
     

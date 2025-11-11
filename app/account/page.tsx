@@ -326,11 +326,25 @@ const isNonEmptyString = (value: unknown): value is string =>
       if (canonical) countriesFromApi.add(canonical);
     });
 
-    const uniqueCountries = new Set<string>([
+    const rawCountryNames = new Set<string>([
       ...Array.from(countriesFromDestinations).filter(isNonEmptyString),
       ...countriesFromCities.filter(isNonEmptyString),
       ...Array.from(countriesFromApi).filter(isNonEmptyString),
     ]);
+
+    const canonicalCountryNames = new Set<string>();
+    const visitedCountryCodes = new Set<string>();
+
+    rawCountryNames.forEach((countryName) => {
+      if (!countryName) return;
+      const info = getCountryInfo(countryName);
+      if (info) {
+        canonicalCountryNames.add(info.name);
+        visitedCountryCodes.add(info.iso2.toUpperCase());
+      } else if (isNonEmptyString(countryName)) {
+        canonicalCountryNames.add(countryName);
+      }
+    });
     
     // Extract visited destinations with coordinates for map
     const visitedDestinationsWithCoords = visitedPlaces
@@ -344,13 +358,14 @@ const isNonEmptyString = (value: unknown): value is string =>
 
     // Debug logging to help diagnose map issues
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Account] Countries found:', Array.from(uniqueCountries));
+      console.log('[Account] Countries found:', Array.from(canonicalCountryNames));
       console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
       console.log('[Account] Countries from cities:', countriesFromCities);
       console.log('[Account] Countries from API:', Array.from(countriesFromApi));
       console.log('[Account] Unique cities:', Array.from(uniqueCities));
       console.log('[Account] Visited places count:', visitedPlaces.length);
       console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
+      console.log('[Account] Visited country ISO2 codes:', Array.from(visitedCountryCodes));
     }
 
     const curationCompletionPercentage = totalDestinations > 0
@@ -359,7 +374,8 @@ const isNonEmptyString = (value: unknown): value is string =>
 
     return {
       uniqueCities,
-      uniqueCountries,
+      uniqueCountries: canonicalCountryNames,
+      visitedCountryCodes,
       visitedCount: visitedPlaces.length,
       savedCount: savedPlaces.length,
       collectionsCount: collections.length,
@@ -509,6 +525,7 @@ const isNonEmptyString = (value: unknown): value is string =>
                 </div>
                 <WorldMapVisualization 
                   visitedCountries={stats.uniqueCountries}
+                  visitedCountryCodes={stats.visitedCountryCodes}
                   visitedDestinations={stats.visitedDestinationsWithCoords}
                 />
               </div>
