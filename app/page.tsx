@@ -461,10 +461,11 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showTripPlanner, setShowTripPlanner] = useState(false);
+  const [showTripSidebar, setShowTripSidebar] = useState(false);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  // Calculate items per page based on 1.5 rows × current grid columns
-  const itemsPerPage = useItemsPerPage(1.5); // Show 1.5 rows
+  // Calculate items per page based on 4 full rows × current grid columns
+  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<{
     city?: string;
