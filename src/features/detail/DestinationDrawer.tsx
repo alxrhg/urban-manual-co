@@ -380,14 +380,21 @@ Summary:`;
       setIsSaved(!!savedData);
         }
 
-        const { data: visitedData } = await supabaseClient
+        const { data: visitedData, error: visitedError } = await supabaseClient
         .from('visited_places')
-          .select('id')
+          .select('id, visited_at')
         .eq('user_id', user.id)
         .eq('destination_slug', destination.slug)
           .maybeSingle();
 
+      if (visitedError && visitedError.code !== 'PGRST116') {
+        console.error('Error loading visited status:', visitedError);
+      }
+      
       setIsVisited(!!visitedData);
+      if (visitedData) {
+        console.log('Visited status loaded:', visitedData);
+      }
       } else {
         setIsSaved(false);
         setIsVisited(false);
@@ -515,27 +522,53 @@ Summary:`;
           return;
         }
 
-        const { error } = await supabaseClient
+        // First try to insert, if it fails due to conflict, update instead
+        const { data: insertData, error: insertError } = await supabaseClient
           .from('visited_places')
-          .upsert({
+          .insert({
             user_id: user.id,
             destination_slug: destination.slug,
             visited_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id,destination_slug',
-          });
+          })
+          .select()
+          .single();
 
-      if (error) {
-          console.error('Error adding visit:', error);
-          // Check if error is related to activity_feed RLS policy
-          if (error.message && error.message.includes('activity_feed') && error.message.includes('row-level security')) {
-            // Visit was created but activity_feed insert failed - this is okay, continue
-            console.warn('Visit created but activity_feed insert failed due to RLS policy. Visit status updated successfully.');
-            setIsVisited(true);
-            if (onVisitToggle) onVisitToggle(destination.slug, true);
-            return;
+        if (insertError) {
+          // If it's a unique constraint violation, try to update instead
+          if (insertError.code === '23505' || insertError.message?.includes('duplicate') || insertError.message?.includes('unique')) {
+            console.log('Visit already exists, updating instead...');
+            const { error: updateError } = await supabaseClient
+              .from('visited_places')
+              .update({
+                visited_at: new Date().toISOString(),
+              })
+              .eq('user_id', user.id)
+              .eq('destination_slug', destination.slug);
+
+            if (updateError) {
+              console.error('Error updating visit:', updateError);
+              // Check if error is related to activity_feed RLS policy
+              if (updateError.message && updateError.message.includes('activity_feed') && updateError.message.includes('row-level security')) {
+                // Visit was updated but activity_feed insert failed - this is okay, continue
+                console.warn('Visit updated but activity_feed insert failed due to RLS policy. Visit status updated successfully.');
+                setIsVisited(true);
+                if (onVisitToggle) onVisitToggle(destination.slug, true);
+                return;
+              }
+              throw updateError;
+            }
+          } else {
+            console.error('Error adding visit:', insertError);
+            // Check if error is related to activity_feed RLS policy
+            if (insertError.message && insertError.message.includes('activity_feed') && insertError.message.includes('row-level security')) {
+              // Visit was created but activity_feed insert failed - this is okay, continue
+              console.warn('Visit created but activity_feed insert failed due to RLS policy. Visit status updated successfully.');
+              setIsVisited(true);
+              if (onVisitToggle) onVisitToggle(destination.slug, true);
+              return;
+            }
+            throw insertError;
           }
-          throw error;
         }
 
         setIsVisited(true);
