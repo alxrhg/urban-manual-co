@@ -2451,33 +2451,32 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                     availableCities={cities}
                     availableCategories={categories}
                     onLocationChange={handleLocationChange}
-                    triggerClassName="flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                    triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                    activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                     iconClassName="h-4 w-4"
                     label="Filters"
                   />
 
                   {/* Grid/Map Toggle */}
-                  <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
                         viewMode === 'grid'
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
                       }`}
                       aria-label="Grid view"
                     >
                       <LayoutGrid className="h-4 w-4" />
                       <span>Grid</span>
                     </button>
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-800" />
                     <button
                       onClick={() => setViewMode('map')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
                         viewMode === 'map'
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
                       }`}
                       aria-label="Map view"
                     >
