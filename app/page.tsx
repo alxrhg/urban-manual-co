@@ -449,6 +449,7 @@ export default function Home() {
   const [cities, setCities] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
+  const initialVisitedSlugsRef = useRef<Set<string> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -1164,6 +1165,7 @@ export default function Home() {
     currentVisitedSlugs: Set<string> = visitedSlugs
   ) => {
     let filtered = dataToFilter;
+    const visitedSortingSet = initialVisitedSlugsRef.current ?? currentVisitedSlugs;
 
     // Apply filters only when there's NO search term (AI chat handles all search)
     if (!currentSearchTerm) {
@@ -1271,9 +1273,9 @@ export default function Home() {
     }
 
     // When user is signed in: separate visited & unvisited, move visited to bottom
-    if (currentUser && currentVisitedSlugs.size > 0) {
-      const unvisited = filtered.filter(d => !currentVisitedSlugs.has(d.slug));
-      const visited = filtered.filter(d => currentVisitedSlugs.has(d.slug));
+    if (currentUser && visitedSortingSet.size > 0) {
+      const unvisited = filtered.filter(d => !visitedSortingSet.has(d.slug));
+      const visited = filtered.filter(d => visitedSortingSet.has(d.slug));
       filtered = [...unvisited, ...visited];
     }
 
@@ -1471,6 +1473,9 @@ export default function Home() {
       if (error) throw error;
 
       const slugs = new Set((data as any[])?.map((v: any) => v.destination_slug) || []);
+      if (initialVisitedSlugsRef.current === null) {
+        initialVisitedSlugsRef.current = new Set(slugs);
+      }
       setVisitedSlugs(slugs);
     } catch (error) {
       // Expected error if user is not logged in - suppress
@@ -2547,10 +2552,11 @@ export default function Home() {
             isOpen={isDrawerOpen}
             onClose={() => {
               // Sort visited items to the back when closing
+            const visitedSortingSet = initialVisitedSlugsRef.current ?? visitedSlugs;
               setFilteredDestinations(prev => {
                 const sorted = [...prev].sort((a, b) => {
-                  const aVisited = user && visitedSlugs.has(a.slug);
-                  const bVisited = user && visitedSlugs.has(b.slug);
+                const aVisited = user && visitedSortingSet.has(a.slug);
+                const bVisited = user && visitedSortingSet.has(b.slug);
                   if (aVisited && !bVisited) return 1;
                   if (!aVisited && bVisited) return -1;
                   return 0;
@@ -2573,10 +2579,11 @@ export default function Home() {
               });
               
               // Sort visited items to the back
+            const visitedSortingSet = initialVisitedSlugsRef.current ?? visitedSlugs;
               setFilteredDestinations(prev => {
                 const sorted = [...prev].sort((a, b) => {
-                  const aVisited = user && (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
-                  const bVisited = user && (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
+                const aVisited = user && (visitedSortingSet.has(a.slug));
+                const bVisited = user && (visitedSortingSet.has(b.slug));
                   if (aVisited && !bVisited) return 1;
                   if (!aVisited && bVisited) return -1;
                   return 0;
