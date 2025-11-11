@@ -56,11 +56,12 @@ export function AddToTripModal({
     try {
       setLoading(true);
       const supabaseClient = createClient();
-      if (!supabaseClient) return;
+      if (!supabaseClient || !user) return;
 
       const { data, error } = await supabaseClient
         .from('trips')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
