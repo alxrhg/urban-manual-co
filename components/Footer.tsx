@@ -7,22 +7,6 @@ export function Footer() {
       {/* Main Content Area */}
       <div className="w-full px-6 md:px-10 lg:px-12 py-16">
         <div className="max-w-6xl mx-auto">
-          {/* Contact */}
-          <div className="flex flex-col gap-4">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              contact@avmlo.com
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              @urbanmanual
-            </div>
-            <Link 
-              href="/contact" 
-              className="inline-flex items-center gap-2 text-orange-600 dark:text-orange-500 hover:opacity-80 transition-opacity text-sm font-medium mt-2"
-            >
-              Contact Us
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
         </div>
       </div>
 
