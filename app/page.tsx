@@ -2249,29 +2249,31 @@ export default function Home() {
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="flex justify-end items-start gap-3 mb-8 md:mb-10 relative flex-wrap">
-                  {/* Filter Button - First so it can expand */}
-                  <div className="relative z-50">
-                    <SearchFiltersComponent
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                      availableCities={cities}
-                      availableCategories={categories}
-                      onLocationChange={handleLocationChange}
-                    />
-                  </div>
+                  {/* Filter Button */}
+                  <SearchFiltersComponent
+                    filters={advancedFilters}
+                    onFiltersChange={(newFilters) => {
+                      setAdvancedFilters(newFilters);
+                      if (newFilters.city !== undefined) {
+                        setSelectedCity(newFilters.city || '');
+                      }
+                      if (newFilters.category !== undefined) {
+                        setSelectedCategory(newFilters.category || '');
+                      }
+                      Object.entries(newFilters).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null && value !== '') {
+                          trackFilterChange({ filterType: key, value });
+                        }
+                      });
+                    }}
+                    availableCities={cities}
+                    availableCategories={categories}
+                    onLocationChange={handleLocationChange}
+                    triggerClassName="flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                    iconClassName="h-4 w-4"
+                    label="Filters"
+                  />
 
                   {/* Grid/Map Toggle */}
                   <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex-shrink-0">

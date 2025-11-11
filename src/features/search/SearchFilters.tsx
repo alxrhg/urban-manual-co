@@ -23,6 +23,10 @@ interface SearchFiltersProps {
   availableCities: string[];
   availableCategories: string[];
   onLocationChange?: (lat: number | null, lng: number | null, radius: number) => void;
+  triggerClassName?: string;
+  activeTriggerClassName?: string;
+  iconClassName?: string;
+  label?: string;
 }
 
 export function SearchFiltersComponent({
@@ -31,6 +35,10 @@ export function SearchFiltersComponent({
   availableCities,
   availableCategories,
   onLocationChange,
+  triggerClassName,
+  activeTriggerClassName,
+  iconClassName,
+  label,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
@@ -105,14 +113,24 @@ export function SearchFiltersComponent({
     ).join(' ');
   };
 
+  const defaultTriggerClass =
+    'flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0';
+  const appliedTriggerClass = triggerClassName ?? defaultTriggerClass;
+  const appliedActiveClass = activeTriggerClassName ?? '';
+  const appliedIconClass = iconClassName ?? 'h-5 w-5';
+  const displayLabel = label ?? '';
+  const isActive = hasActiveFilters || isOpen;
+
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0"
-        aria-label="Open filters"
+        className={`${appliedTriggerClass} ${isActive ? appliedActiveClass : ''}`}
+        aria-label={displayLabel || 'Open filters'}
+        type="button"
       >
-        <SlidersHorizontal className="h-5 w-5" />
+        <SlidersHorizontal className={appliedIconClass} />
+        {displayLabel && <span>{displayLabel}</span>}
       </button>
 
       {isOpen && (
