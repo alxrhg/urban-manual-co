@@ -390,7 +390,7 @@ Summary:`;
       if (visitedError && visitedError.code !== 'PGRST116') {
         console.error('Error loading visited status:', visitedError);
       }
-      
+
       setIsVisited(!!visitedData);
       if (visitedData) {
         console.log('Visited status loaded:', visitedData);
@@ -531,7 +531,7 @@ Summary:`;
           .from('visited_places')
           .upsert({
             user_id: user.id,
-            destination_slug: destination.slug,
+          destination_slug: destination.slug,
             visited_at: visitedAt,
           }, {
             onConflict: 'user_id,destination_slug',
@@ -543,9 +543,33 @@ Summary:`;
           console.log('Visit saved via upsert:', upsertData);
           saved = true;
           savedData = upsertData;
-        } else {
-          console.error('Upsert error:', upsertError);
-          
+        } else if (upsertError) {
+          // Check if error is related to activity_feed RLS policy (from trigger)
+          if (upsertError.message && upsertError.message.includes('activity_feed') && upsertError.message.includes('row-level security')) {
+            // Visit was saved but activity_feed insert failed - verify the visit exists
+            console.warn('Visit saved via upsert but activity_feed insert failed due to RLS policy. Verifying visit...');
+            const { data: verifyData } = await supabaseClient
+              .from('visited_places')
+              .select('*')
+              .eq('user_id', user.id)
+              .eq('destination_slug', destination.slug)
+              .maybeSingle();
+            
+            if (verifyData) {
+              console.log('Visit verified after RLS error:', verifyData);
+              saved = true;
+              savedData = verifyData;
+            } else {
+              // If verification fails, continue to fallback logic
+              console.error('Upsert error (RLS) but visit not found, trying fallback:', upsertError);
+            }
+          } else {
+            console.error('Upsert error:', upsertError);
+          }
+        }
+        
+        // If upsert failed (and not handled by RLS check above), try insert as fallback
+        if (!saved) {
           // If upsert fails, try insert
           const { data: insertData, error: insertError } = await supabaseClient
             .from('visited_places')
