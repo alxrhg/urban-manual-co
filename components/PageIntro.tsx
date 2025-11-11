@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { LAYOUT_MAX_WIDTHS } from '@/lib/layout';
 
 const WIDTH_MAP: Record<'narrow' | 'standard' | 'wide', string> = {
-  narrow: 'max-w-4xl',
-  standard: 'max-w-5xl',
-  wide: 'max-w-6xl',
+  narrow: LAYOUT_MAX_WIDTHS.narrow,
+  standard: LAYOUT_MAX_WIDTHS.standard,
+  wide: LAYOUT_MAX_WIDTHS.wide,
 };
 
 interface PageIntroProps {

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { SITE_MAX_WIDTH_CLASS } from '@/lib/layout';
 
 export function Footer() {
   return (
