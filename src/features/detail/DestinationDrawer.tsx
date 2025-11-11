@@ -519,11 +519,11 @@ Summary:`;
           .from('visited_places')
           .upsert({
             user_id: user.id,
-          destination_slug: destination.slug,
+            destination_slug: destination.slug,
             visited_at: new Date().toISOString(),
           }, {
             onConflict: 'user_id,destination_slug',
-        });
+          });
 
       if (error) {
           console.error('Error adding visit:', error);

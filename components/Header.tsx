@@ -215,7 +215,7 @@ export function Header() {
           />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed z-50 w-72 rounded-2xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
             style={{
               top: `${dropdownPosition.top}px`,
               right: `${dropdownPosition.right}px`,
@@ -224,32 +224,32 @@ export function Header() {
             aria-label="Main menu"
           >
             {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white border-t border-l border-gray-200" aria-hidden="true" />
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
             <div className="py-2">
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Cities
               </button>
               <button
                 onClick={() => { navigate('/map'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Map
               </button>
               <button
                 onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Discover Collections
               </button>
               <button
                 onClick={() => { navigate('/collections'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Collections
@@ -259,42 +259,42 @@ export function Header() {
                 <>
                   <button
                     onClick={() => { navigate('/trips'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Trips
                   </button>
                   <button
                     onClick={() => { navigate('/saved'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Saved
                   </button>
                   <button
                     onClick={() => { navigate('/recent'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Recent
                   </button>
                   <button
                     onClick={() => { navigate('/lists'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Lists
                   </button>
                   <button
                     onClick={() => { navigate('/itinerary'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Itinerary
                   </button>
                   <button
                     onClick={() => { navigate('/chat'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Chat
@@ -302,7 +302,7 @@ export function Header() {
                   <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
                   <button
                     onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Account
@@ -310,7 +310,7 @@ export function Header() {
                   {isAdmin && (
                     <button
                       onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
-                      className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-50 dark:hover:bg-dark-blue-700 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                      className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                       role="menuitem"
                     >
                       Admin
@@ -318,7 +318,7 @@ export function Header() {
                   )}
                   <button
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
-                    className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Sign Out
@@ -327,7 +327,7 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }}
-                  className="block w-full text-left px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                   role="menuitem"
                 >
                   Sign In

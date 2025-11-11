@@ -971,7 +971,7 @@ export default function Home() {
         // This prevents unnecessary re-fetching when visitedSlugs changes after login
         // Note: filterDestinationsWithData is defined later, but it's a useCallback so it's stable
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        filterDestinations();
+      filterDestinations();
       }
     }
     // Don't reset displayed count here - let the search effect handle it
@@ -1025,7 +1025,7 @@ export default function Home() {
       let data, error;
       try {
         const queryPromise = supabaseClient
-          .from('destinations')
+        .from('destinations')
           .select('city, category')
           .is('parent_destination_id', null) // Only top-level destinations for filters
           .limit(1000) // Limit to speed up initial query
@@ -1147,7 +1147,7 @@ export default function Home() {
         // OPTIMIZATION: Batch state updates
         React.startTransition(() => {
           setCities([]);
-          setCategories([]);
+      setCategories([]);
         });
       }
     }
@@ -1579,7 +1579,7 @@ export default function Home() {
 
       // ONLY show the latest AI response (simple text)
       setChatResponse(data.content || '');
-
+      
       // ALWAYS set destinations array
       const destinations = data.destinations || [];
       setFilteredDestinations(destinations);
@@ -1681,7 +1681,7 @@ export default function Home() {
     
     if (newActiveFilters.has(key)) {
       newActiveFilters.delete(key);
-    } else {
+            } else {
       newActiveFilters.add(key);
     }
     
@@ -1890,61 +1890,61 @@ export default function Home() {
                         </div>
                       )}
 
-                      <GreetingHero
-                        searchQuery={searchTerm}
-                        onSearchChange={(value) => {
-                          setSearchTerm(value);
-                          // Clear conversation history only if search is cleared
-                          if (!value.trim()) {
-                            setConversationHistory([]);
-                            setSearchIntent(null);
-                            setSeasonalContext(null);
-                            setSearchTier(null);
-                            setChatResponse('');
-                            setFilteredDestinations([]);
+                  <GreetingHero
+                searchQuery={searchTerm}
+                onSearchChange={(value) => {
+                  setSearchTerm(value);
+                  // Clear conversation history only if search is cleared
+                  if (!value.trim()) {
+                    setConversationHistory([]);
+                    setSearchIntent(null);
+                    setSeasonalContext(null);
+                    setSearchTier(null);
+                    setChatResponse('');
+                    setFilteredDestinations([]);
                             setSubmittedQuery('');
-                          }
-                        }}
-                        onSubmit={(query) => {
-                          // CHAT MODE: Explicit submit on Enter key (like chat component)
-                          if (query.trim() && !searching) {
-                            performAISearch(query);
-                          }
-                        }}
-                        userName={(function () {
-                          const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                          if (!raw) return undefined;
-                          return raw
-                            .split(/[\s._-]+/)
-                            .filter(Boolean)
-                            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                            .join(' ');
-                        })()}
+                  }
+                }}
+                onSubmit={(query) => {
+                  // CHAT MODE: Explicit submit on Enter key (like chat component)
+                  if (query.trim() && !searching) {
+                    performAISearch(query);
+                  }
+                }}
+                userName={(function () {
+                  const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                  if (!raw) return undefined;
+                  return raw
+                    .split(/[\s._-]+/)
+                    .filter(Boolean)
+                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(' ');
+                })()}
                         userProfile={userProfile}
                         lastSession={lastSession}
                         enrichedContext={enrichedGreetingContext}
-                        isAIEnabled={isAIEnabled}
-                        isSearching={searching}
-                        filters={advancedFilters}
-                        onFiltersChange={(newFilters) => {
-                          setAdvancedFilters(newFilters);
-                          // Sync with legacy state for backward compatibility
-                          if (newFilters.city !== undefined) {
-                            setSelectedCity(newFilters.city || '');
-                          }
-                          if (newFilters.category !== undefined) {
-                            setSelectedCategory(newFilters.category || '');
-                          }
-                          // Track filter changes
-                          Object.entries(newFilters).forEach(([key, value]) => {
-                            if (value !== undefined && value !== null && value !== '') {
-                              trackFilterChange({ filterType: key, value });
-                            }
-                          });
-                        }}
-                        availableCities={cities}
-                        availableCategories={categories}
-                      />
+                isAIEnabled={isAIEnabled}
+                isSearching={searching}
+                filters={advancedFilters}
+                onFiltersChange={(newFilters) => {
+                  setAdvancedFilters(newFilters);
+                  // Sync with legacy state for backward compatibility
+                  if (newFilters.city !== undefined) {
+                    setSelectedCity(newFilters.city || '');
+                  }
+                  if (newFilters.category !== undefined) {
+                    setSelectedCategory(newFilters.category || '');
+                  }
+                  // Track filter changes
+                  Object.entries(newFilters).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                      trackFilterChange({ filterType: key, value });
+                    }
+                  });
+                }}
+                availableCities={cities}
+                availableCategories={categories}
+                  />
                     </>
                   )}
 
@@ -2041,7 +2041,7 @@ export default function Home() {
                         {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
                         {(searching || (submittedQuery && chatMessages.length === 0)) && (
                           <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                            <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                               {discoveryEngineLoading && (
                                 <div className="flex gap-1">
                                   <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
@@ -2050,9 +2050,9 @@ export default function Home() {
                                 </div>
                               )}
                               <span>{currentLoadingText}</span>
-                            </div>
-                          </div>
-                        )}
+                      </div>
+                    </div>
+                  )}
                       </div>
 
                       {/* Follow-up input field - Chat style */}
@@ -2196,26 +2196,26 @@ export default function Home() {
                         {categories.map((category) => {
                           const IconComponent = getCategoryIcon(category);
                           return (
-                            <button
-                              key={category}
-                              onClick={() => {
-                                const newCategory = category === selectedCategory ? "" : category;
-                                setSelectedCategory(newCategory);
+                          <button
+                            key={category}
+                            onClick={() => {
+                              const newCategory = category === selectedCategory ? "" : category;
+                              setSelectedCategory(newCategory);
                                 setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
                                 setCurrentPage(1);
-                                trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                              }}
+                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                            }}
                               className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
                                 selectedCategory === category && !advancedFilters.michelin
-                                  ? "font-medium text-black dark:text-white"
-                                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                              }`}
-                            >
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
                               {IconComponent && (
                                 <IconComponent className="h-3 w-3" size={12} />
                               )}
-                              {capitalizeCategory(category)}
-                            </button>
+                            {capitalizeCategory(category)}
+                          </button>
                           );
                         })}
                       </div>
@@ -2262,28 +2262,28 @@ export default function Home() {
                   </div>
 
                   {/* Filter Button */}
-                  <SearchFiltersComponent
-                    filters={advancedFilters}
-                    onFiltersChange={(newFilters) => {
-                      setAdvancedFilters(newFilters);
-                      if (newFilters.city !== undefined) {
-                        setSelectedCity(newFilters.city || '');
-                      }
-                      if (newFilters.category !== undefined) {
-                        setSelectedCategory(newFilters.category || '');
-                      }
-                      Object.entries(newFilters).forEach(([key, value]) => {
-                        if (value !== undefined && value !== null && value !== '') {
-                          trackFilterChange({ filterType: key, value });
-                        }
-                      });
-                    }}
-                    availableCities={cities}
-                    availableCategories={categories}
+                    <SearchFiltersComponent
+                filters={advancedFilters}
+                onFiltersChange={(newFilters) => {
+                  setAdvancedFilters(newFilters);
+                  if (newFilters.city !== undefined) {
+                    setSelectedCity(newFilters.city || '');
+                  }
+                  if (newFilters.category !== undefined) {
+                    setSelectedCategory(newFilters.category || '');
+                  }
+                  Object.entries(newFilters).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                      trackFilterChange({ filterType: key, value });
+                    }
+                  });
+                }}
+                availableCities={cities}
+                availableCategories={categories}
                     onLocationChange={handleLocationChange}
-                  />
-                </div>
-
+              />
+            </div>
+            
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
@@ -2335,11 +2335,11 @@ export default function Home() {
               />
               </div>
             )}
-
+            
             {/* Trending Section - Show when no active search */}
             {!submittedQuery && (
               <div className="mb-12 md:mb-16">
-                <TrendingSection />
+              <TrendingSection />
               </div>
             )}
 
@@ -2362,7 +2362,7 @@ export default function Home() {
             )}
 
             {/* Destination Grid - Original design */}
-            {(() => {
+                {(() => {
               // Determine which destinations to show
               const displayDestinations = advancedFilters.nearMe && nearbyDestinations.length > 0
                 ? nearbyDestinations
@@ -2398,11 +2398,11 @@ export default function Home() {
                     </div>
                   ) : (
                     (() => {
-                      const startIndex = (currentPage - 1) * itemsPerPage;
-                      const endIndex = startIndex + itemsPerPage;
+                  const startIndex = (currentPage - 1) * itemsPerPage;
+                  const endIndex = startIndex + itemsPerPage;
                       const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-                      return (
+                  return (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
                     {paginatedDestinations.map((destination, index) => {
                       const isVisited = !!(user && visitedSlugs.has(destination.slug));
@@ -2410,35 +2410,35 @@ export default function Home() {
                       
                       return (
                         <DestinationCard
-                          key={destination.slug}
+                    key={destination.slug}
                           destination={destination}
-                          onClick={() => {
-                            setSelectedDestination(destination);
-                            setIsDrawerOpen(true);
+                    onClick={() => {
+                      setSelectedDestination(destination);
+                      setIsDrawerOpen(true);
 
-                            // Track destination click
-                            trackDestinationClick({
-                              destinationSlug: destination.slug,
+                      // Track destination click
+                      trackDestinationClick({
+                        destinationSlug: destination.slug,
                               position: globalIndex,
-                              source: 'grid',
-                            });
-                        
-                            // Also track with new analytics system
-                            if (destination.id) {
-                              import('@/lib/analytics/track').then(({ trackEvent }) => {
-                                trackEvent({
-                                  event_type: 'click',
-                                  destination_id: destination.id,
-                                  destination_slug: destination.slug,
-                                  metadata: {
-                                    category: destination.category,
-                                    city: destination.city,
-                                    source: 'homepage_grid',
+                        source: 'grid',
+                      });
+                      
+                      // Also track with new analytics system
+                      if (destination.id) {
+                        import('@/lib/analytics/track').then(({ trackEvent }) => {
+                          trackEvent({
+                            event_type: 'click',
+                            destination_id: destination.id,
+                            destination_slug: destination.slug,
+                            metadata: {
+                              category: destination.category,
+                              city: destination.city,
+                              source: 'homepage_grid',
                                     position: globalIndex,
-                                  },
-                                });
-                              });
-                            }
+                            },
+                          });
+                        });
+                      }
                         
                             // Track click event to Discovery Engine for personalization
                             if (user?.id) {
@@ -2469,61 +2469,61 @@ export default function Home() {
                   {/* Pagination - Only show in grid view */}
                   {viewMode === 'grid' && (() => {
                     const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
-                    if (totalPages <= 1) return null;
-
-                    return (
+            if (totalPages <= 1) return null;
+            
+            return (
                       <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
-                        <button
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                          disabled={currentPage === 1}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
                           className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-
-                            return (
-                              <button
-                                key={pageNum}
-                                onClick={() => setCurrentPage(pageNum)}
+                >
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
                                 className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
-                                  currentPage === pageNum
+                          currentPage === pageNum
                                     ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
                                     : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm font-medium'
-                                }`}
-                              >
-                                {pageNum}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <button
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                          disabled={currentPage === totalPages}
-                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-
-                        <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                      </div>
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
                     );
-                  })()}
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                
+                        <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
+            );
+          })()}
 
                   {/* Ad below pagination */}
                   {displayDestinations.length > 0 && (
@@ -2535,15 +2535,50 @@ export default function Home() {
               );
             })()}
                 </div>
-              </div>
+          </div>
 
           {/* Destination Drawer */}
           <DestinationDrawer
             destination={selectedDestination}
             isOpen={isDrawerOpen}
             onClose={() => {
+              // Sort visited items to the back when closing
+              setFilteredDestinations(prev => {
+                const sorted = [...prev].sort((a, b) => {
+                  const aVisited = user && visitedSlugs.has(a.slug);
+                  const bVisited = user && visitedSlugs.has(b.slug);
+                  if (aVisited && !bVisited) return 1;
+                  if (!aVisited && bVisited) return -1;
+                  return 0;
+                });
+                return sorted;
+              });
               setIsDrawerOpen(false);
               setTimeout(() => setSelectedDestination(null), 300);
+            }}
+            onVisitToggle={(slug, visited) => {
+              // Update visited slugs
+              setVisitedSlugs(prev => {
+                const newSet = new Set(prev);
+                if (visited) {
+                  newSet.add(slug);
+                } else {
+                  newSet.delete(slug);
+                }
+                return newSet;
+              });
+              
+              // Sort visited items to the back
+              setFilteredDestinations(prev => {
+                const sorted = [...prev].sort((a, b) => {
+                  const aVisited = user && (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
+                  const bVisited = user && (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
+                  if (aVisited && !bVisited) return 1;
+                  if (!aVisited && bVisited) return -1;
+                  return 0;
+                });
+                return sorted;
+              });
             }}
           />
 
