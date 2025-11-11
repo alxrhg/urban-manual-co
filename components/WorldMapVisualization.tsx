@@ -11,7 +11,8 @@ interface WorldMapVisualizationProps {
     latitude?: number | null;
     longitude?: number | null;
   }>;
-  visitedCountryCodes?: Set<string>;
+  visitedCountryIso2Codes?: Set<string>;
+  visitedCountryIso3Codes?: Set<string>;
 }
 
 // World Atlas TopoJSON URL (110m resolution)
@@ -36,18 +37,13 @@ function mercatorProjection(
 export function WorldMapVisualization({ 
   visitedCountries,
   visitedDestinations = [],
-  visitedCountryCodes,
+  visitedCountryIso2Codes,
+  visitedCountryIso3Codes,
 }: WorldMapVisualizationProps) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
 
   // Convert country names to ISO-2 codes
   const visitedISO2Codes = useMemo(() => {
-    if (visitedCountryCodes && visitedCountryCodes.size > 0) {
-      return new Set(
-        Array.from(visitedCountryCodes).map((code) => code.toUpperCase())
-      );
-    }
-
     const isoSet = new Set<string>();
     const unmappedCountries: string[] = [];
     
@@ -67,8 +63,35 @@ export function WorldMapVisualization({
       console.warn('[WorldMap] Unmapped countries (will not appear on map):', unmappedCountries);
     }
     
+    if (visitedCountryIso2Codes && visitedCountryIso2Codes.size > 0) {
+      return new Set(
+        Array.from(visitedCountryIso2Codes).map((code) => code.toUpperCase())
+      );
+    }
+
     return isoSet;
-  }, [visitedCountries]);
+  }, [visitedCountries, visitedCountryIso2Codes]);
+
+  const visitedISO3Codes = useMemo(() => {
+    const isoSet = new Set<string>();
+
+    visitedCountries.forEach((country) => {
+      if (!country) return;
+
+      const countryInfo = getCountryInfo(country);
+      if (countryInfo?.iso3) {
+        isoSet.add(countryInfo.iso3.toUpperCase());
+      }
+    });
+
+    if (visitedCountryIso3Codes && visitedCountryIso3Codes.size > 0) {
+      return new Set(
+        Array.from(visitedCountryIso3Codes).map((code) => code.toUpperCase())
+      );
+    }
+
+    return isoSet;
+  }, [visitedCountries, visitedCountryIso3Codes]);
 
   // Extract unique city coordinates from visited destinations
   const cityMarkers = useMemo(() => {
@@ -112,8 +135,11 @@ export function WorldMapVisualization({
               return geographies.map((geo) => {
                 // world-110m.json uses ISO_A2 for 2-letter codes
                 // Some territories use ISO_A2_EH (Western Sahara, etc.)
-                const iso2Code = geo.properties.ISO_A2 || geo.properties.ISO_A2_EH;
-                const isVisited = iso2Code && visitedISO2Codes.has(iso2Code);
+                const iso2Code = (geo.properties.ISO_A2 || geo.properties.ISO_A2_EH || '').toUpperCase();
+                const iso3Code = (geo.properties.ISO_A3 || geo.properties.ISO_A3_EH || '').toUpperCase();
+                const isVisited =
+                  (iso2Code && visitedISO2Codes.has(iso2Code)) ||
+                  (iso3Code && visitedISO3Codes.has(iso3Code));
                 const countryName = geo.properties.NAME || geo.properties.NAME_LONG || geo.properties.NAME_EN || 'Unknown';
                 
                 // Debug: Log first few countries to verify matching
@@ -130,8 +156,8 @@ export function WorldMapVisualization({
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill={isVisited ? '#000000' : '#E8E6E3'}
-                    stroke={isVisited ? '#000000' : '#BDBAB5'}
+                    fill={isVisited ? '#2563EB' : '#E8E6E3'}
+                    stroke={isVisited ? '#1E40AF' : '#BDBAB5'}
                     strokeWidth={isVisited ? 1 : 0.5}
                     style={{
                       default: {

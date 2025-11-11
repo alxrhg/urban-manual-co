@@ -333,14 +333,16 @@ const isNonEmptyString = (value: unknown): value is string =>
     ]);
 
     const canonicalCountryNames = new Set<string>();
-    const visitedCountryCodes = new Set<string>();
+    const visitedCountryIso2Codes = new Set<string>();
+    const visitedCountryIso3Codes = new Set<string>();
 
     rawCountryNames.forEach((countryName) => {
       if (!countryName) return;
       const info = getCountryInfo(countryName);
       if (info) {
         canonicalCountryNames.add(info.name);
-        visitedCountryCodes.add(info.iso2.toUpperCase());
+        visitedCountryIso2Codes.add(info.iso2.toUpperCase());
+        visitedCountryIso3Codes.add(info.iso3.toUpperCase());
       } else if (isNonEmptyString(countryName)) {
         canonicalCountryNames.add(countryName);
       }
@@ -365,7 +367,8 @@ const isNonEmptyString = (value: unknown): value is string =>
       console.log('[Account] Unique cities:', Array.from(uniqueCities));
       console.log('[Account] Visited places count:', visitedPlaces.length);
       console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
-      console.log('[Account] Visited country ISO2 codes:', Array.from(visitedCountryCodes));
+      console.log('[Account] Visited country ISO2 codes:', Array.from(visitedCountryIso2Codes));
+      console.log('[Account] Visited country ISO3 codes:', Array.from(visitedCountryIso3Codes));
     }
 
     const curationCompletionPercentage = totalDestinations > 0
@@ -375,7 +378,8 @@ const isNonEmptyString = (value: unknown): value is string =>
     return {
       uniqueCities,
       uniqueCountries: canonicalCountryNames,
-      visitedCountryCodes,
+      visitedCountryIso2Codes,
+      visitedCountryIso3Codes,
       visitedCount: visitedPlaces.length,
       savedCount: savedPlaces.length,
       collectionsCount: collections.length,
@@ -525,7 +529,8 @@ const isNonEmptyString = (value: unknown): value is string =>
                 </div>
                 <WorldMapVisualization 
                   visitedCountries={stats.uniqueCountries}
-                  visitedCountryCodes={stats.visitedCountryCodes}
+                  visitedCountryIso2Codes={stats.visitedCountryIso2Codes}
+                  visitedCountryIso3Codes={stats.visitedCountryIso3Codes}
                   visitedDestinations={stats.visitedDestinationsWithCoords}
                 />
               </div>
