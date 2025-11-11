@@ -53,6 +53,10 @@ export default function ListsPage() {
   const [creating, setCreating] = useState(false);
 
   const supabaseClient = useMemo(() => createClient(), []);
+  const totalPlaces = useMemo(
+    () => lists.reduce((sum, list) => sum + (list.item_count || 0), 0),
+    [lists]
+  );
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -197,11 +201,6 @@ export default function ListsPage() {
   if (!user) {
     return null;
   }
-
-  const totalPlaces = useMemo(
-    () => lists.reduce((sum, list) => sum + (list.item_count || 0), 0),
-    [lists]
-  );
 
   return (
     <div className="pb-24">
