@@ -29,7 +29,10 @@ export default function MapView({
   const [error, setError] = useState<string | null>(null);
   const [useFallback, setUseFallback] = useState(false);
 
-  const googleMapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const googleMapsKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
+    '';
 
   const fallbackDestination = destinations.find(
     (dest) => dest.latitude !== null && dest.latitude !== undefined && dest.longitude !== null && dest.longitude !== undefined
@@ -46,7 +49,7 @@ export default function MapView({
           <div className="text-center p-6 space-y-2">
             <p className="text-sm font-medium">Unable to load map</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Mapbox is unavailable and `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is not configured.
+              Mapbox is unavailable and a Google API key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY or NEXT_PUBLIC_GOOGLE_API_KEY) is not configured.
             </p>
           </div>
         </div>

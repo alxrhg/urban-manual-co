@@ -1,11 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import { Spinner } from '@/components/ui/spinner';
 import { ExternalLink } from 'lucide-react';
-import { getMapboxConfig } from '@/lib/mapbox/config';
 
 interface GoogleMapProps {
   query?: string;
@@ -26,6 +23,81 @@ interface GoogleMapProps {
   staticMode?: boolean;
 }
 
+declare global {
+  interface Window {
+    __googleMapsScriptLoading?: boolean;
+  }
+}
+
+async function loadGoogleMapsApi(apiKey: string): Promise<typeof google.maps> {
+  if (typeof window === 'undefined') {
+    throw new Error('Google Maps API requires a browser environment');
+  }
+
+  if (window.google?.maps) {
+    return window.google.maps;
+  }
+
+  const existingScript = document.querySelector<HTMLScriptElement>('script[data-google-maps-script="true"]');
+  if (existingScript) {
+    return new Promise((resolve, reject) => {
+      existingScript.addEventListener('load', () => {
+        if (window.google?.maps) {
+          resolve(window.google.maps);
+        } else {
+          reject(new Error('Google Maps API failed to load'));
+        }
+      });
+      existingScript.addEventListener('error', () => {
+        reject(new Error('Google Maps script failed to load'));
+      });
+    });
+  }
+
+  if (window.__googleMapsScriptLoading) {
+    return new Promise((resolve, reject) => {
+      const checkInterval = window.setInterval(() => {
+        if (window.google?.maps) {
+          window.clearInterval(checkInterval);
+          resolve(window.google.maps);
+        }
+      }, 200);
+
+      window.setTimeout(() => {
+        window.clearInterval(checkInterval);
+        if (window.google?.maps) {
+          resolve(window.google.maps);
+        } else {
+          reject(new Error('Google Maps API load timed out'));
+        }
+      }, 15000);
+    });
+  }
+
+  window.__googleMapsScriptLoading = true;
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleMapsScript = 'true';
+    script.addEventListener('load', () => {
+      window.__googleMapsScriptLoading = false;
+      if (window.google?.maps) {
+        resolve(window.google.maps);
+      } else {
+        reject(new Error('Google Maps API failed to initialize'));
+      }
+    });
+    script.addEventListener('error', () => {
+      window.__googleMapsScriptLoading = false;
+      reject(new Error('Google Maps script failed to load'));
+    });
+    document.head.appendChild(script);
+  });
+}
+
 export default function GoogleMap({
   query,
   latitude,
@@ -36,17 +108,17 @@ export default function GoogleMap({
   showInfoWindow = false,
   infoWindowContent,
   autoOpenInfoWindow = false,
-  staticMode = false
+  staticMode = false,
 }: GoogleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const mapsApiRef = useRef<typeof google.maps | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mapboxUrl, setMapboxUrl] = useState<string>('');
+  const [mapUrl, setMapUrl] = useState<string>('');
 
-  // Get height style
   const getHeightStyle = () => {
     if (typeof height === 'number') {
       return `${height}px`;
@@ -54,185 +126,172 @@ export default function GoogleMap({
     return height;
   };
 
-  // Initialize Mapbox map
+  const getApiKey = () =>
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
+    '';
+
   useEffect(() => {
-    const { accessToken, styles } = getMapboxConfig();
-    if (!accessToken) {
-      setError('Mapbox access token is not configured. Please add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to your environment variables.');
-      console.error('Mapbox access token is not configured');
-      return;
-    }
+    let isCancelled = false;
 
-    if (!mapRef.current) return;
+    const initialize = async () => {
+      if (!mapRef.current) return;
 
-    mapboxgl.accessToken = accessToken;
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        setError('Google Maps API key is not configured. Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY or NEXT_PUBLIC_GOOGLE_API_KEY.');
+        return;
+      }
 
-    const initializeMap = async () => {
       try {
-        let center: [number, number];
+        const maps = await loadGoogleMapsApi(apiKey);
+        if (isCancelled || !mapRef.current) return;
 
-        // If we have explicit coordinates, use them
-        if (latitude !== undefined && longitude !== undefined) {
-          center = [longitude, latitude];
-        } else if (query) {
-          // Geocode using Mapbox Geocoding API
-          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${accessToken}&limit=1`;
-          const response = await fetch(geocodeUrl);
-          const data = await response.json();
+        mapsApiRef.current = maps;
 
-          if (data.features && data.features.length > 0) {
-            center = data.features[0].center;
-          } else {
-            throw new Error('No results found for query');
-          }
-        } else {
-          // Default to Tokyo
-          center = [139.6503, 35.6762];
-        }
-
-        // Generate Mapbox URL for click-to-open
-        const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+1C1C1C(${center[0]},${center[1]})/${center[0]},${center[1]},15/400x300@2x?access_token=${accessToken}`;
-        setMapboxUrl(`https://www.mapbox.com/maps?lon=${center[0]}&lat=${center[1]}&zoom=15`);
-
-        // Create map
-        if (!mapInstanceRef.current) {
-          const isStatic = staticMode || !interactive;
-          mapInstanceRef.current = new mapboxgl.Map({
-            container: mapRef.current!,
-            style: styles.light,
-            center: center,
-            zoom: 15,
-            interactive: !isStatic && interactive,
-            attributionControl: false,
-          });
-
-          // Add navigation controls if interactive
-          if (!isStatic && interactive) {
-            mapInstanceRef.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-          }
-        } else {
-          mapInstanceRef.current.setCenter(center);
-        }
-
-        // Add or update marker
-        if (markerRef.current) {
-          markerRef.current.setLngLat(center);
-        } else {
-          // Create marker element
-          const el = document.createElement('div');
-          el.className = 'marker';
-          el.style.width = '20px';
-          el.style.height = '20px';
-          el.style.borderRadius = '50%';
-          el.style.backgroundColor = '#1C1C1C';
-          el.style.border = '2px solid #FFFFFF';
-          el.style.cursor = 'pointer';
-
-          markerRef.current = new mapboxgl.Marker({
-            element: el,
-            anchor: 'center',
-          })
-            .setLngLat(center)
-            .addTo(mapInstanceRef.current);
-        }
-
-        // Create popup if needed
-        if (showInfoWindow && infoWindowContent) {
-          const content = `
-            <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              ${infoWindowContent.title ? `
-                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
-                  ${infoWindowContent.title}
-                </h3>
-              ` : ''}
-              ${infoWindowContent.category ? `
-                <p style="margin: 0 0 4px 0; font-size: 13px; color: #666;">
-                  ${infoWindowContent.category}
-                </p>
-              ` : ''}
-              ${infoWindowContent.address ? `
-                <p style="margin: 4px 0; font-size: 12px; color: #888; line-height: 1.4;">
-                  ${infoWindowContent.address}
-                </p>
-              ` : ''}
-              ${infoWindowContent.rating ? `
-                <div style="margin: 6px 0 0 0; font-size: 12px; color: #666;">
-                  ⭐ ${infoWindowContent.rating.toFixed(1)}
-                </div>
-              ` : ''}
-              ${infoWindowContent.website ? `
-                <a 
-                  href="${infoWindowContent.website}" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style="display: inline-block; margin-top: 8px; font-size: 12px; color: #0066cc; text-decoration: none;"
-                >
-                  Visit Website →
-                </a>
-              ` : ''}
-            </div>
-          `;
-
-          if (!popupRef.current) {
-            popupRef.current = new mapboxgl.Popup({
-              offset: 25,
-              closeButton: true,
-            }).setHTML(content);
-          } else {
-            popupRef.current.setHTML(content);
-          }
-
-          // Add click handler to marker
-          if (markerRef.current && markerRef.current.getElement()) {
-            const markerEl = markerRef.current.getElement();
-            markerEl.addEventListener('click', () => {
-              if (popupRef.current && markerRef.current) {
-                popupRef.current.setLngLat(center).addTo(mapInstanceRef.current!);
-              }
-            });
-          }
-
-          // Auto-open popup if requested
-          if (autoOpenInfoWindow && popupRef.current && markerRef.current) {
-            setTimeout(() => {
-              if (popupRef.current && markerRef.current && mapInstanceRef.current) {
-                popupRef.current.setLngLat(center).addTo(mapInstanceRef.current);
-              }
-            }, 100);
-          }
-        }
-
-        mapInstanceRef.current.on('load', () => {
-          setLoaded(true);
+        const defaultCenter = new maps.LatLng(latitude ?? 40.7128, longitude ?? -74.0060);
+        const map = new maps.Map(mapRef.current, {
+          center: defaultCenter,
+          zoom: 13,
+          disableDefaultUI: staticMode || !interactive,
+          clickableIcons: interactive,
+          gestureHandling: staticMode || !interactive ? 'none' : 'auto',
+          zoomControl: interactive && !staticMode,
+          mapTypeControl: false,
+          streetViewControl: interactive && !staticMode,
+          fullscreenControl: interactive && !staticMode,
         });
 
-        mapInstanceRef.current.on('error', (e) => {
-          console.error('Mapbox error:', e);
-          setError('Failed to initialize map');
-        });
+        mapInstanceRef.current = map;
+        setLoaded(true);
       } catch (err: any) {
-        console.error('Error initializing Mapbox map:', err);
-        setError(err.message || 'Failed to initialize map');
+        if (!isCancelled) {
+          console.error('Google Maps initialization error:', err);
+          setError(err?.message || 'Failed to load Google Maps.');
+        }
       }
     };
 
-    initializeMap();
+    initialize();
 
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+      isCancelled = true;
+    };
+  }, [latitude, longitude, interactive, staticMode]);
+
+  useEffect(() => {
+    const maps = mapsApiRef.current;
+    const map = mapInstanceRef.current;
+    if (!maps || !map) return;
+
+    const updateInteractionOptions = () => {
+      map.setOptions({
+        gestureHandling: staticMode || !interactive ? 'none' : 'auto',
+        zoomControl: interactive && !staticMode,
+        draggable: interactive && !staticMode,
+        scrollwheel: interactive && !staticMode,
+        disableDoubleClickZoom: staticMode || !interactive,
+        clickableIcons: interactive,
+      });
+    };
+
+    updateInteractionOptions();
+  }, [interactive, staticMode]);
+
+  useEffect(() => {
+    const maps = mapsApiRef.current;
+    const map = mapInstanceRef.current;
+    if (!maps || !map) return;
+
+    let cancelled = false;
+
+    const applyPosition = (position: google.maps.LatLngLiteral) => {
+      if (cancelled) return;
+      map.setCenter(position);
+
+      if (!markerRef.current) {
+        markerRef.current = new maps.Marker({
+          position,
+          map,
+          clickable: interactive,
+        });
+      } else {
+        markerRef.current.setPosition(position);
+      }
+
+      const url = `https://www.google.com/maps/search/?api=1&query=${position.lat},${position.lng}`;
+      setMapUrl(url);
+
+      if (showInfoWindow && infoWindowContent) {
+        const content = `
+          <div style="padding: 12px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            ${infoWindowContent.title ? `<h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">${infoWindowContent.title}</h3>` : ''}
+            ${infoWindowContent.category ? `<p style="margin: 0 0 4px 0; font-size: 13px; color: #666;">${infoWindowContent.category}</p>` : ''}
+            ${infoWindowContent.address ? `<p style="margin: 4px 0; font-size: 12px; color: #888; line-height: 1.4;">${infoWindowContent.address}</p>` : ''}
+            ${infoWindowContent.rating ? `<div style="margin: 6px 0 0 0; font-size: 12px; color: #666;">⭐ ${infoWindowContent.rating.toFixed(1)}</div>` : ''}
+            ${infoWindowContent.website ? `<a href="${infoWindowContent.website}" target="_blank" rel="noopener noreferrer" style="display: inline-block; margin-top: 8px; font-size: 12px; color: #0066cc; text-decoration: none;">Visit Website →</a>` : ''}
+          </div>
+        `;
+
+        if (!infoWindowRef.current) {
+          infoWindowRef.current = new maps.InfoWindow({ content });
+        } else {
+          infoWindowRef.current.setContent(content);
+        }
+
+        if (autoOpenInfoWindow) {
+          infoWindowRef.current.open({ map, anchor: markerRef.current || undefined });
+        }
+
+        if (markerRef.current) {
+          markerRef.current.addListener('click', () => {
+            infoWindowRef.current?.open({ map, anchor: markerRef.current || undefined });
+          });
+        }
+      } else if (infoWindowRef.current) {
+        infoWindowRef.current.close();
       }
     };
-  }, [query, latitude, longitude, interactive, showInfoWindow, infoWindowContent, autoOpenInfoWindow, staticMode]);
+
+    const resolvePosition = () => {
+      if (latitude !== undefined && longitude !== undefined) {
+        applyPosition({ lat: latitude, lng: longitude });
+        return;
+      }
+
+      if (query) {
+        const geocoder = new maps.Geocoder();
+        geocoder.geocode({ address: query }, (results, status) => {
+          if (cancelled) return;
+          if (status === 'OK' && results && results.length > 0) {
+            const location = results[0].geometry.location;
+            applyPosition(location.toJSON());
+          } else {
+            setError('Failed to locate address.');
+          }
+        });
+        return;
+      }
+
+      // Default fallback center (NYC)
+      applyPosition({ lat: 40.7128, lng: -74.0060 });
+    };
+
+    resolvePosition();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [latitude, longitude, query, showInfoWindow, infoWindowContent, autoOpenInfoWindow, interactive, staticMode]);
 
   if (error) {
     return (
       <div
-        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 ${className}`}
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-center ${className}`}
         style={{ height: getHeightStyle() }}
       >
-        <div className="text-center max-w-md">
-          <p className="text-sm text-red-600 dark:text-red-400 mb-2 font-medium">Map unavailable</p>
+        <div className="max-w-md space-y-2">
+          <p className="text-sm text-red-600 dark:text-red-400 font-medium">Map unavailable</p>
           <p className="text-xs text-gray-600 dark:text-gray-400">{error}</p>
         </div>
       </div>
@@ -257,66 +316,32 @@ export default function GoogleMap({
 
   return (
     <div
-      className={`w-full rounded-2xl overflow-hidden relative ${className}`}
+      className={`relative w-full rounded-2xl overflow-hidden ${className}`}
       style={{ height: getHeightStyle() }}
     >
       <div
         ref={mapRef}
         className="w-full h-full"
-        style={{ 
+        style={{
           height: getHeightStyle(),
           pointerEvents: isStatic ? 'none' : 'auto',
-          cursor: isStatic ? 'pointer' : 'default'
+          cursor: isStatic ? 'pointer' : 'default',
         }}
       />
-      
-      {/* Static mode: Info overlay in top left and click-to-open link */}
-      {isStatic && mapboxUrl && (
-        <>
-          {/* Info overlay in top left */}
-          {infoWindowContent && (
-            <div className="absolute top-3 left-3 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-3 max-w-[280px] z-10 pointer-events-none">
-              {infoWindowContent.title && (
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                  {infoWindowContent.title}
-                </h4>
-              )}
-              {infoWindowContent.category && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                  {infoWindowContent.category}
-                </p>
-              )}
-              {infoWindowContent.address && (
-                <p className="text-xs text-gray-500 dark:text-gray-500 mb-1 line-clamp-2">
-                  {infoWindowContent.address}
-                </p>
-              )}
-              {infoWindowContent.rating && (
-                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  ⭐ {infoWindowContent.rating.toFixed(1)}
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Click-to-open overlay */}
-          <a
-            href={mapboxUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute inset-0 z-20 flex items-center justify-center bg-black/0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-          >
-            <div className="opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-900 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 transition-opacity pointer-events-none">
-              <ExternalLink className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Open in Mapbox
-              </span>
-            </div>
-          </a>
-        </>
+
+      {isStatic && mapUrl && (
+        <a
+          href={mapUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-900 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 transition-opacity pointer-events-none">
+            <ExternalLink className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Open in Google Maps</span>
+          </div>
+        </a>
       )}
     </div>
   );
