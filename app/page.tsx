@@ -615,9 +615,20 @@ export default function Home() {
       }
     });
 
+    const sortedCategories = Array.from(categorySet).sort();
+    const promotedCategories = (() => {
+      if (sortedCategories.length === 0) return sortedCategories;
+      const isShopping = (value: string) => value.trim().toLowerCase() === 'shopping';
+      const isOther = (value: string) => value.trim().toLowerCase() === 'other';
+      const shopping = sortedCategories.filter(isShopping);
+      const others = sortedCategories.filter((category) => !isShopping(category) && !isOther(category));
+      const otherBucket = sortedCategories.filter(isOther);
+      return [...shopping, ...others, ...otherBucket];
+    })();
+
     return {
       cities: Array.from(citySet).sort(),
-      categories: Array.from(categorySet).sort(),
+      categories: promotedCategories,
     };
   };
 
