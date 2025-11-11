@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase-server';
 import { openai, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { intentAnalysisService } from '@/services/intelligence/intent-analysis';
@@ -748,16 +749,50 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET endpoint to load conversation history
- * Supports both authenticated users (via userId) and anonymous users (via sessionToken)
+ * Supports both authenticated users (derived from auth) and anonymous users (via sessionToken)
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const sessionToken = searchParams.get('sessionToken');
-    const userId = searchParams.get('userId');
+    const requestedUserId = searchParams.get('userId');
 
-    // Need at least one identifier
-    if (!sessionToken && !userId) {
+    const supabaseAuthClient = await createServerClient();
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+    let authenticatedUserId: string | undefined;
+    let authError: Error | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice('Bearer '.length).trim();
+      if (token) {
+        const { data: { user }, error } = await supabaseAuthClient.auth.getUser(token);
+        if (error) {
+          authError = error;
+        }
+        authenticatedUserId = user?.id;
+      }
+    } else {
+      const { data: { user }, error } = await supabaseAuthClient.auth.getUser();
+      if (error) {
+        authError = error;
+      }
+      authenticatedUserId = user?.id;
+    }
+
+    if (authError) {
+      console.error('Error fetching auth user for conversation history:', authError);
+    }
+
+    if (requestedUserId) {
+      if (!authenticatedUserId || authenticatedUserId !== requestedUserId) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+    }
+
+    if (!sessionToken && !authenticatedUserId) {
       return NextResponse.json({
         messages: [],
         sessionId: null,
@@ -765,8 +800,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get or create session
-    const session = await getOrCreateSession(userId || undefined, sessionToken || undefined);
+    // Get or create session using the authenticated user (if any)
+    const session = await getOrCreateSession(authenticatedUserId || undefined, sessionToken || undefined);
     if (!session) {
       return NextResponse.json({
         messages: [],
@@ -782,7 +817,7 @@ export async function GET(request: NextRequest) {
       messages,
       sessionId: session.sessionId,
       context: session.context,
-      sessionToken: sessionToken || (session && !userId ? `anon_${session.sessionId}` : null),
+      sessionToken: sessionToken || (session && !authenticatedUserId ? `anon_${session.sessionId}` : null),
     });
   } catch (error: any) {
     console.error('Error loading conversation history:', error);
