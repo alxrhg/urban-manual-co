@@ -216,7 +216,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       // Fetch enriched data from database
       try {
-        const { data, error } = await supabase
+        const supabaseClient = createClient();
+        if (!supabaseClient) return;
+        const { data, error } = await supabaseClient
           .from('destinations')
           .select(`
             formatted_address,
