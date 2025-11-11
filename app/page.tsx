@@ -2292,21 +2292,19 @@ export default function Home() {
                         </button>
                       ))}
 
-                      {!showAllCities && cities.length > 12 && (
+                      {cities.length > 12 && (
                         <button
-                          onClick={() => setShowAllCities(true)}
-                          className="flex items-center gap-1 font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out ml-auto"
+                          onClick={() => {
+                            setShowAllCities((prev) => !prev);
+                          }}
+                          className={`ml-5 flex items-center gap-1 font-medium transition-all duration-200 ease-out ${
+                            showAllCities
+                              ? 'text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              : 'text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                          style={{ order: 999 }}
                         >
-                          + Show More
-                        </button>
-                      )}
-
-                      {showAllCities && cities.length > 12 && (
-                        <button
-                          onClick={() => setShowAllCities(false)}
-                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
-                        >
-                          − Show Less
+                          {showAllCities ? '− Show Less' : '+ Show More'}
                         </button>
                       )}
                     </div>
