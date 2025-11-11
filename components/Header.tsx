@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
@@ -227,112 +228,144 @@ export function Header() {
             {/* Arrow/caret */}
             <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
             <div className="py-2">
-              <button
-                onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+              <Link
+                href="/cities"
+                onClick={() => setIsMenuOpen(false)}
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                 role="menuitem"
               >
                 Cities
-              </button>
-              <button
-                onClick={() => { navigate('/map'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+              </Link>
+              <Link
+                href="/map"
+                onClick={() => setIsMenuOpen(false)}
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                 role="menuitem"
               >
                 Map
-              </button>
-              <button
-                onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+              </Link>
+              <Link
+                href="/discover"
+                onClick={() => setIsMenuOpen(false)}
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                 role="menuitem"
               >
                 Discover Collections
-              </button>
-              <button
-                onClick={() => { navigate('/collections'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+              </Link>
+              <Link
+                href="/collections"
+                onClick={() => setIsMenuOpen(false)}
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                 role="menuitem"
               >
                 Collections
-              </button>
+              </Link>
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               {user ? (
                 <>
-                  <button
-                    onClick={() => { navigate('/trips'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  <Link
+                    href="/trips"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Trips
-                  </button>
-                  <button
-                    onClick={() => { navigate('/saved'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  </Link>
+                  <Link
+                    href="/trips?new=1"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    role="menuitem"
+                  >
+                    Start a Trip
+                  </Link>
+                  <Link
+                    href="/saved"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Saved
-                  </button>
-                  <button
-                    onClick={() => { navigate('/recent'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  </Link>
+                  <Link
+                    href="/recent"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Recent
-                  </button>
-                  <button
-                    onClick={() => { navigate('/lists'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  </Link>
+                  <Link
+                    href="/lists"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Lists
-                  </button>
-                  <button
-                    onClick={() => { navigate('/itinerary'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  </Link>
+                  <Link
+                    href="/itinerary"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Itinerary
-                  </button>
-                  <button
-                    onClick={() => { navigate('/chat'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  </Link>
+                  <Link
+                    href="/chat"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Chat
-                  </button>
+                  </Link>
                   <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
-                  <button
-                    onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                  <Link
+                    href="/account"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Account
-                  </button>
+                  </Link>
                   {isAdmin && (
-                    <button
-                      onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
-                      className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out"
                       role="menuitem"
                     >
                       Admin
-                    </button>
+                    </Link>
                   )}
                   <button
+                    type="button"
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"
                   >
                     Sign Out
                   </button>
                 </>
               ) : (
-                <button
-                  onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }}
-                  className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                  role="menuitem"
-                >
-                  Sign In
-                </button>
+                <>
+                  <Link
+                    href="/trips?new=1"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    role="menuitem"
+                  >
+                    Start a Trip
+                  </Link>
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    role="menuitem"
+                  >
+                    Sign In
+                  </Link>
+                </>
               )}
             </div>
           </div>

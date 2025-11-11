@@ -332,6 +332,7 @@ export default function TripsPage() {
     }
   }, [user, fetchTrips, fetchConversationPreview]);
 
+
   const metrics = useMemo(() => {
     const planning = trips.filter((trip) => trip.status === 'planning').length;
     const upcoming = trips.filter((trip) => trip.status === 'upcoming').length;
@@ -442,6 +443,16 @@ export default function TripsPage() {
     ],
     [handleOpenPlanner, handleOpenIntelligence, handleViewTrip, nextTrip]
   );
+
+  useEffect(() => {
+    if (!user) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('new') === '1') {
+      handleOpenPlanner();
+      router.replace('/trips');
+    }
+  }, [user, handleOpenPlanner, router]);
 
   if (authLoading || loadingTrips) {
     return (

@@ -574,12 +574,12 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       />
 
       <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-start justify-center px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex min-h-full items-start justify-center px-5 md:px-8 py-10">
           <div
-            className="relative w-full max-w-4xl rounded-3xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950"
+            className="relative w-full max-w-[900px] rounded-3xl border border-gray-200 bg-white px-5 py-10 shadow-xl dark:border-gray-800 dark:bg-gray-950 md:px-8"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-6 py-6 md:px-8 dark:border-gray-800">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 pb-6 md:pb-8 dark:border-gray-800">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                   {step === 'create' ? 'Start a trip' : 'Trip planner'}
@@ -644,7 +644,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               </div>
             </div>
 
-            <div className="px-6 py-6 md:px-8">
+            <div className="pt-6 md:pt-8">
               {step === 'create' ? (
                 <div className="mx-auto max-w-2xl space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
