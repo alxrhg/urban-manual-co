@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { Heart, MapPin, Star, List, User, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -48,7 +48,8 @@ export function ActivityFeed({ userId, followingOnly = false, limit = 20 }: Acti
 
   const fetchActivities = async () => {
     try {
-      let query = supabase
+      const supabaseClient = createClient();
+      let query = supabaseClient
         .from('activities')
         .select(`
           *,
@@ -74,9 +75,9 @@ export function ActivityFeed({ userId, followingOnly = false, limit = 20 }: Acti
       if (userId) {
         query = query.eq('user_id', userId);
       } else if (followingOnly) {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await supabaseClient.auth.getUser();
         if (user) {
-          const { data: following } = await supabase
+          const { data: following } = await supabaseClient
             .from('follows')
             .select('following_id')
             .eq('follower_id', user.id);
