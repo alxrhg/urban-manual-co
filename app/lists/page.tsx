@@ -1,11 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { Plus, Lock, Globe, Trash2, Loader2, Heart, MapPin, X } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/lib/supabase/client";
+import { PageIntro } from "@/components/PageIntro";
+import { PageContainer } from "@/components/PageContainer";
+import {
+  Plus,
+  Lock,
+  Globe,
+  Trash2,
+  Loader2,
+  Heart,
+  MapPin,
+  X,
+  Sparkles,
+} from "lucide-react";
 
 interface List {
   id: string;
@@ -41,6 +52,8 @@ export default function ListsPage() {
   const [newListPublic, setNewListPublic] = useState(true);
   const [creating, setCreating] = useState(false);
 
+  const supabaseClient = useMemo(() => createClient(), []);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login');
@@ -48,7 +61,7 @@ export default function ListsPage() {
   }, [user, authLoading, router]);
 
   const fetchLists = useCallback(async () => {
-    if (!user) {
+    if (!user || !supabaseClient) {
       setLoading(false);
       return;
     }
@@ -56,7 +69,7 @@ export default function ListsPage() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('lists')
         .select('*')
         .eq('user_id', user.id)
@@ -69,26 +82,26 @@ export default function ListsPage() {
         // Fetch counts and cities for each list
         const listsWithCounts = await Promise.all(
           (data as any[]).map(async (list: any) => {
-            const { count: itemCount } = await supabase
+            const { count: itemCount } = await supabaseClient
               .from('list_items')
               .select('*', { count: 'exact', head: true })
               .eq('list_id', list.id);
 
-            const { count: likeCount } = await supabase
+            const { count: likeCount } = await supabaseClient
               .from('list_likes')
               .select('*', { count: 'exact', head: true })
               .eq('list_id', list.id);
 
             // Fetch destination cities for this list
             let cities: string[] = [];
-            const { data: listItems } = await supabase
+            const { data: listItems } = await supabaseClient
               .from('list_items')
               .select('destination_slug')
               .eq('list_id', list.id);
 
             if (listItems && listItems.length > 0) {
               const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
-              const { data: destinations } = await supabase
+              const { data: destinations } = await supabaseClient
                 .from('destinations')
                 .select('city')
                 .in('slug', slugs);
@@ -115,13 +128,19 @@ export default function ListsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, supabaseClient]);
+
+  useEffect(() => {
+    if (user) {
+      fetchLists();
+    }
+  }, [user, fetchLists]);
 
   const createList = async () => {
-    if (!user || !newListName.trim()) return;
+    if (!user || !newListName.trim() || !supabaseClient) return;
 
     setCreating(true);
-    const { data, error } = await (supabase
+    const { data, error } = await (supabaseClient
       .from('lists')
       .insert as any)([
         {
@@ -152,7 +171,9 @@ export default function ListsPage() {
   const deleteList = async (listId: string, listName: string) => {
     if (!confirm(`Are you sure you want to delete "${listName}"?`)) return;
 
-    const { error } = await supabase
+    if (!supabaseClient) return;
+
+    const { error } = await supabaseClient
       .from('lists')
       .delete()
       .eq('id', listId);
@@ -177,139 +198,201 @@ export default function ListsPage() {
     return null;
   }
 
+  const totalPlaces = useMemo(
+    () => lists.reduce((sum, list) => sum + (list.item_count || 0), 0),
+    [lists]
+  );
+
   return (
-    <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-      <div className="container mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">My Lists</h1>
-            <span className="text-base text-gray-600 dark:text-gray-400">
-              Organize destinations into collections
-            </span>
-          </div>
+    <div className="pb-24">
+      <PageIntro
+        eyebrow="Collections Studio"
+        title="My Lists"
+        description="Curate your own collections of must-visit destinations and share them with your travel circle."
+        actions={
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+            className="flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
           >
-            <Plus className="h-5 w-5" />
-            <span>New List</span>
+            <Plus className="h-4 w-4" />
+            New List
           </button>
-        </div>
+        }
+      />
 
-        {/* Lists Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="rounded-2xl h-48" />
-            ))}
+      <PageContainer className="space-y-10">
+        <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                Snapshot
+              </p>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Your saved collections
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300 max-w-xl">
+                Group favorite restaurants, boutique hotels, and experiences by city, travel vibe, or itinerary. Your lists sync across web and Travel Intelligence.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
+                <Sparkles className="h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                    Total lists
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{lists.length}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
+                <MapPin className="h-5 w-5 text-emerald-500" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                    Places saved
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{totalPlaces}</p>
+                </div>
+              </div>
+            </div>
           </div>
-        ) : lists.length === 0 ? (
-          <div className="text-center py-20">
-            <Heart className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-            <span className="text-xl text-gray-400 mb-6">No lists yet</span>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
-            >
-              Create Your First List
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lists.map((list) => (
-              <div
-                key={list.id}
-                onClick={() => router.push(`/lists/${list.id}`)}
-                className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h2 className="font-bold text-lg mb-1">{list.name}</h2>
-                    {list.description && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {list.description}
+        </section>
+
+        <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+          {loading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <div
+                  key={index}
+                  className="h-48 animate-pulse rounded-3xl border border-gray-200 bg-gray-100/70 dark:border-gray-800 dark:bg-gray-900/60"
+                />
+              ))}
+            </div>
+          ) : lists.length === 0 ? (
+            <div className="relative overflow-hidden rounded-3xl border border-dashed border-gray-300 bg-white/80 px-10 py-16 text-center dark:border-gray-800 dark:bg-gray-950/70">
+              <div className="absolute inset-x-[-30%] top-[-20%] h-64 rounded-full bg-blue-100/40 blur-3xl dark:bg-blue-900/30" />
+              <div className="relative mx-auto max-w-md space-y-5">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200">
+                  <Heart className="h-6 w-6" />
+                </div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">No lists yet</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Start a collection for your next city break, group restaurants by mood, or build a capsule of places you love.
+                </p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create your first list
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {lists.map((list) => (
+                <div
+                  key={list.id}
+                  onClick={() => router.push(`/lists/${list.id}`)}
+                  className="group relative flex flex-col justify-between rounded-3xl border border-gray-200/70 bg-white/90 p-6 shadow-sm transition hover:-translate-y-1 hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950/80 dark:hover:border-gray-700"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{list.name}</h3>
+                      {list.description && (
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                          {list.description}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteList(list.id, list.name);
+                      }}
+                      className="rounded-xl border border-gray-200 p-1.5 opacity-0 transition group-hover:opacity-100 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-900/70"
+                      aria-label={`Delete ${list.name}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </button>
+                  </div>
+
+                  <div className="mt-5 space-y-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-3 text-gray-600 dark:text-gray-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {list.item_count} {list.item_count === 1 ? 'place' : 'places'}
                       </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                        {list.is_public ? <Globe className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                        {list.is_public ? 'Public' : 'Private'}
+                      </span>
+                      {(list.like_count || 0) > 0 && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100/80 px-3 py-1 text-xs font-medium text-rose-600 dark:bg-rose-900/30 dark:text-rose-200">
+                          <Heart className="h-3.5 w-3.5 fill-current" />
+                          {(list.like_count || 0)} {list.like_count === 1 ? 'like' : 'likes'}
+                        </span>
+                      )}
+                    </div>
+
+                    {list.cities && list.cities.length > 0 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {list.cities.slice(0, 3).map(city => capitalizeCity(city)).join(', ')}
+                        {list.cities.length > 3 && ` +${list.cities.length - 3} more`}
+                      </p>
                     )}
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteList(list.id, list.name);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded"
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </button>
                 </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{list.item_count} {list.item_count === 1 ? 'place' : 'places'}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {list.is_public ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                      <span>{list.is_public ? 'Public' : 'Private'}</span>
-                    </div>
-                  </div>
-
-                  {list.cities && list.cities.length > 0 && (
-                    <div className="text-xs text-gray-400 dark:text-gray-500">
-                      {list.cities.slice(0, 3).map(city => capitalizeCity(city)).join(', ')}
-                      {list.cities.length > 3 && ` +${list.cities.length - 3} more`}
-                    </div>
-                  )}
-                </div>
-
-                {(list.like_count || 0) > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                    <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-                    <span>{list.like_count} {list.like_count === 1 ? 'like' : 'likes'}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </PageContainer>
 
       {/* Create List Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Create New List</h2>
+          <div className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-950">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Create new list</h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Keep places grouped by travel plans, vibes, or friends.
+                </p>
+              </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded"
+                className="rounded-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-900/70"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="mt-6 space-y-5">
               <div>
-                <label className="block text-sm font-medium mb-2">List Name *</label>
+                <label className="block text-xs font-semibold uppercase tracking-[1.5px] text-gray-500 dark:text-gray-400">
+                  List name *
+                </label>
                 <input
                   type="text"
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
+                <label className="block text-xs font-semibold uppercase tracking-[1.5px] text-gray-500 dark:text-gray-400">
+                  Description
+                </label>
                 <textarea
                   value={newListDescription}
                   onChange={(e) => setNewListDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="mt-2 w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
                 />
               </div>
 
@@ -319,17 +402,17 @@ export default function ListsPage() {
                   id="public"
                   checked={newListPublic}
                   onChange={(e) => setNewListPublic(e.target.checked)}
-                  className="rounded"
+                  className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:ring-white"
                 />
-                <label htmlFor="public" className="text-sm">
+                <label htmlFor="public" className="text-sm text-gray-600 dark:text-gray-300">
                   Make this list public
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors"
+                  className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm font-medium transition hover:bg-gray-100 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900/70"
                   disabled={creating}
                 >
                   Cancel
@@ -337,15 +420,15 @@ export default function ListsPage() {
                 <button
                   onClick={createList}
                   disabled={!newListName.trim() || creating}
-                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="flex-1 rounded-2xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
                 >
-                  {creating ? 'Creating...' : 'Create List'}
+                  {creating ? 'Creating…' : 'Create list'}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

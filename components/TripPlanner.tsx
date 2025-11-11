@@ -554,6 +554,13 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     ];
   };
 
+  const plannerTabs: { id: typeof activeTab; label: string }[] = [
+    { id: 'itinerary', label: 'Itinerary' },
+    { id: 'budget', label: 'Budget' },
+    { id: 'weather', label: 'Weather' },
+    { id: 'packing', label: 'Packing' },
+  ];
+
   if (!isOpen) return null;
 
   return (
@@ -566,523 +573,253 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         onClick={onClose}
       />
 
-      {/* Mobile-Optimized Drawer (bottom sheet) */}
-      <div
-        className={`md:hidden fixed inset-x-0 bottom-0 top-[10vh] bg-white dark:bg-gray-950 z-50 rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
-        } overflow-hidden flex flex-col`}
-      >
-        {/* Close Button - Top Right */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm"
-          aria-label="Close"
-        >
-          <XIcon className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-        </button>
-
-        {/* Content Area - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 pt-6 pb-24">
-          {step === 'create' ? (
-            <div className="space-y-8">
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-full items-start justify-center px-4 sm:px-6 lg:px-8 py-10">
+          <div
+            className="relative w-full max-w-4xl rounded-3xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-6 py-6 md:px-8 dark:border-gray-800">
               <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Trip Name
-                </label>
-                <input
-                  type="text"
-                  value={tripName}
-                  onChange={(e) => setTripName(e.target.value)}
-                  placeholder="Summer in Paris"
-                  className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Destination
-                </label>
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  placeholder="Paris, France"
-                  className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Hotel / Base Location (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={hotelLocation}
-                  onChange={(e) => setHotelLocation(e.target.value)}
-                  placeholder="Hotel Le Marais"
-                  className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Total Budget (Optional)
-                </label>
-                <input
-                  type="number"
-                  value={totalBudget || ''}
-                  onChange={(e) => setTotalBudget(Number(e.target.value))}
-                  placeholder="2000"
-                  className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-
-              <button
-                onClick={handleCreateTrip}
-                disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-                className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Trip'
+                <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                  {step === 'create' ? 'Start a trip' : 'Trip planner'}
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+                  {step === 'create' ? 'Create a new itinerary' : tripName || 'Untitled trip'}
+                </h2>
+                {step === 'plan' && destination && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {destination}
+                  </p>
                 )}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Mobile tabs */}
-              {step === 'plan' && (
-                <div className="flex items-center gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-800">
-                  <button
-                    onClick={() => setActiveTab('itinerary')}
-                    className={`text-xs transition-colors ${
-                      activeTab === 'itinerary'
-                        ? 'text-neutral-900 dark:text-neutral-100'
-                        : 'text-neutral-400 dark:text-neutral-500'
-                    }`}
-                  >
-                    Itinerary
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('budget')}
-                    className={`text-xs transition-colors ${
-                      activeTab === 'budget'
-                        ? 'text-neutral-900 dark:text-neutral-100'
-                        : 'text-neutral-400 dark:text-neutral-500'
-                    }`}
-                  >
-                    Budget
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('weather')}
-                    className={`text-xs transition-colors ${
-                      activeTab === 'weather'
-                        ? 'text-neutral-900 dark:text-neutral-100'
-                        : 'text-neutral-400 dark:text-neutral-500'
-                    }`}
-                  >
-                    Weather
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('packing')}
-                    className={`text-xs transition-colors ${
-                      activeTab === 'packing'
-                        ? 'text-neutral-900 dark:text-neutral-100'
-                        : 'text-neutral-400 dark:text-neutral-500'
-                    }`}
-                  >
-                    Packing
-                  </button>
-                </div>
-              )}
-
-              {/* Mobile content - same as desktop but simplified */}
-              {activeTab === 'itinerary' && (
-                <div className="space-y-8">
-                  {days.map((day, index) => (
-                    <TripDay
-                      key={day.date}
-                      dayNumber={index + 1}
-                      date={day.date}
-                      locations={day.locations}
-                      hotelLocation={hotelLocation}
-                      onAddLocation={() => setShowAddLocation(index)}
-                      onRemoveLocation={(locationId) =>
-                        handleRemoveLocation(index, locationId)
-                      }
-                      onReorderLocations={(locations) =>
-                        handleReorderLocations(index, locations)
-                      }
-                      onDuplicateDay={() => handleDuplicateDay(index)}
-                      onOptimizeRoute={() => handleOptimizeRoute(index)}
-                    />
-                  ))}
-                </div>
-              )}
-              {activeTab === 'budget' && (
-                <TripBudgetTracker
-                  days={days}
-                  totalBudget={totalBudget}
-                  onUpdateBudget={setTotalBudget}
-                />
-              )}
-              {activeTab === 'weather' && (
-                <TripWeatherForecast
-                  destination={destination}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              )}
-              {activeTab === 'packing' && (
-                <TripPackingList
-                  destination={destination}
-                  days={days}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Desktop Drawer (right side) */}
-      <div
-        className={`hidden md:flex fixed right-4 top-4 bottom-4 w-[600px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 dark:ring-white/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
-        } overflow-hidden flex-col`}
-      >
-        {/* Header */}
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-8 py-6 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-6">
-            <h2 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
-              {step === 'create' ? 'New Trip' : tripName}
-            </h2>
-            {step === 'plan' && (
-              <div className="flex items-center gap-4 pl-6 border-l border-neutral-200 dark:border-neutral-800">
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {step === 'plan' && (
+                  <>
+                    {currentTripId && (
+                      <button
+                        onClick={handleSaveTrip}
+                        disabled={saving}
+                        className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3.5 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
+                        title="Save trip"
+                      >
+                        {saving ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <SaveIcon className="h-3.5 w-3.5" />
+                        )}
+                        {saving ? 'Saving…' : 'Save'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowShare(true)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                      title="Share trip"
+                    >
+                      <ShareIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={handleExportToCalendar}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                      title="Export to calendar"
+                    >
+                      <DownloadIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={handlePrint}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                      title="Print itinerary"
+                    >
+                      <PrinterIcon className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
                 <button
-                  onClick={() => setActiveTab('itinerary')}
-                  className={`text-[11px] tracking-wide transition-colors ${
-                    activeTab === 'itinerary'
-                      ? 'text-neutral-900 dark:text-neutral-100'
-                      : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                  }`}
+                  onClick={onClose}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                  aria-label="Close"
                 >
-                  Itinerary
-                </button>
-                <button
-                  onClick={() => setActiveTab('budget')}
-                  className={`text-[11px] tracking-wide transition-colors ${
-                    activeTab === 'budget'
-                      ? 'text-neutral-900 dark:text-neutral-100'
-                      : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                  }`}
-                >
-                  Budget
-                </button>
-                <button
-                  onClick={() => setActiveTab('weather')}
-                  className={`text-[11px] tracking-wide transition-colors ${
-                    activeTab === 'weather'
-                      ? 'text-neutral-900 dark:text-neutral-100'
-                      : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                  }`}
-                >
-                  Weather
-                </button>
-                <button
-                  onClick={() => setActiveTab('packing')}
-                  className={`text-[11px] tracking-wide transition-colors ${
-                    activeTab === 'packing'
-                      ? 'text-neutral-900 dark:text-neutral-100'
-                      : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                  }`}
-                >
-                  Packing
+                  <XIcon className="h-4 w-4" />
                 </button>
               </div>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {step === 'plan' && (
-              <>
-                {currentTripId && (
+            </div>
+
+            <div className="px-6 py-6 md:px-8">
+              {step === 'create' ? (
+                <div className="mx-auto max-w-2xl space-y-6">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Trip name *
+                      </label>
+                      <input
+                        type="text"
+                        value={tripName}
+                        onChange={(e) => setTripName(e.target.value)}
+                        placeholder="Summer in Paris"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Destination *
+                      </label>
+                      <input
+                        type="text"
+                        value={destination}
+                        onChange={(e) => setDestination(e.target.value)}
+                        placeholder="Paris, France"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Hotel / base location
+                      </label>
+                      <input
+                        type="text"
+                        value={hotelLocation}
+                        onChange={(e) => setHotelLocation(e.target.value)}
+                        placeholder="Hotel Le Marais"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Start date *
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        End date *
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Total budget
+                      </label>
+                      <input
+                        type="number"
+                        value={totalBudget || ''}
+                        onChange={(e) => setTotalBudget(Number(e.target.value))}
+                        placeholder="2000"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
+                  </div>
                   <button
-                    onClick={handleSaveTrip}
-                    disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 text-xs border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Save trip"
+                    onClick={handleCreateTrip}
+                    disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
                   >
                     {saving ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creating…
+                      </>
                     ) : (
-                      <SaveIcon className="w-3 h-3" />
+                      'Create trip'
                     )}
-                    {saving ? 'Saving...' : 'Save'}
                   </button>
-                )}
-                <button
-                  onClick={() => setShowShare(true)}
-                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  title="Share trip"
-                >
-                  <ShareIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-                </button>
-                <button
-                  onClick={handleExportToCalendar}
-                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  title="Export to calendar"
-                >
-                  <DownloadIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-                </button>
-                <button
-                  onClick={handlePrint}
-                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  title="Print itinerary"
-                >
-                  <PrinterIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-                </button>
-              </>
-            )}
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-            >
-              <XIcon className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          {step === 'create' ? (
-            <div className="p-8 max-w-2xl mx-auto">
-              <div className="space-y-8">
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Trip Name
-                  </label>
-                  <input
-                    type="text"
-                    value={tripName}
-                    onChange={(e) => setTripName(e.target.value)}
-                    placeholder="Summer in Paris"
-                    className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
                 </div>
-
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Destination
-                  </label>
-                  <input
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder="Paris, France"
-                    className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Hotel / Base Location (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={hotelLocation}
-                    onChange={(e) => setHotelLocation(e.target.value)}
-                    placeholder="Hotel Le Marais"
-                    className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Total Budget (Optional)
-                  </label>
-                  <input
-                    type="number"
-                    value={totalBudget || ''}
-                    onChange={(e) => setTotalBudget(Number(e.target.value))}
-                    placeholder="2000"
-                    className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-
-                <button
-                  onClick={handleCreateTrip}
-                  disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-                  className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Trip'
-                  )}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {activeTab === 'itinerary' && (
-                <div className="p-8">
-                  {/* Trip Overview */}
-                  <div className="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-center gap-3 text-[11px] text-neutral-500 dark:text-neutral-400 tracking-wide">
-                        <MapPinIcon className="w-3.5 h-3.5" />
-                        {destination}
-                        <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                        <CalendarIcon className="w-3.5 h-3.5" />
-                        {new Date(startDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}{' '}
-                        –{' '}
-                        {new Date(endDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                        {totalBudget > 0 && (
-                          <>
-                            <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                            <WalletIcon className="w-3.5 h-3.5" />$
-                            {getTotalSpent()} / ${totalBudget}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {/* AI Suggestions */}
-                    <div className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <h4 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
-                          Smart Suggestions
-                        </h4>
-                      </div>
-                      <ul className="space-y-2">
-                        {getAISuggestions().map((suggestion, index) => (
-                          <li
-                            key={index}
-                            className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed"
-                          >
-                            • {suggestion}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Days */}
-                  <div className="space-y-12">
-                    {days.map((day, index) => (
-                      <TripDay
-                        key={day.date}
-                        dayNumber={index + 1}
-                        date={day.date}
-                        locations={day.locations}
-                        hotelLocation={hotelLocation}
-                        onAddLocation={() => setShowAddLocation(index)}
-                        onRemoveLocation={(locationId) =>
-                          handleRemoveLocation(index, locationId)
-                        }
-                        onReorderLocations={(locations) =>
-                          handleReorderLocations(index, locations)
-                        }
-                        onDuplicateDay={() => handleDuplicateDay(index)}
-                        onOptimizeRoute={() => handleOptimizeRoute(index)}
-                      />
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {plannerTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                          activeTab === tab.id
+                            ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
                     ))}
                   </div>
+
+                  {activeTab === 'itinerary' && (
+                    <div className="space-y-6">
+                      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                            <MapPinIcon className="h-3.5 w-3.5" />
+                            {destination}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                            <CalendarIcon className="h-3.5 w-3.5" />
+                            {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
+                            {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          {totalBudget > 0 && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                              <WalletIcon className="h-3.5 w-3.5" />
+                              ${getTotalSpent()} / ${totalBudget}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/40">
+                          <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                            Smart suggestions
+                          </p>
+                          <ul className="mt-3 space-y-2">
+                            {getAISuggestions().map((suggestion, index) => (
+                              <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
+                                • {suggestion}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="space-y-10">
+                        {days.map((day, index) => (
+                          <TripDay
+                            key={day.date}
+                            dayNumber={index + 1}
+                            date={day.date}
+                            locations={day.locations}
+                            hotelLocation={hotelLocation}
+                            onAddLocation={() => setShowAddLocation(index)}
+                            onRemoveLocation={(locationId) => handleRemoveLocation(index, locationId)}
+                            onReorderLocations={(locations) => handleReorderLocations(index, locations)}
+                            onDuplicateDay={() => handleDuplicateDay(index)}
+                            onOptimizeRoute={() => handleOptimizeRoute(index)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'budget' && (
+                    <TripBudgetTracker days={days} totalBudget={totalBudget} onUpdateBudget={setTotalBudget} />
+                  )}
+
+                  {activeTab === 'weather' && (
+                    <TripWeatherForecast destination={destination} startDate={startDate} endDate={endDate} />
+                  )}
+
+                  {activeTab === 'packing' && (
+                    <TripPackingList destination={destination} days={days} startDate={startDate} endDate={endDate} />
+                  )}
                 </div>
               )}
-
-              {activeTab === 'budget' && (
-                <TripBudgetTracker
-                  days={days}
-                  totalBudget={totalBudget}
-                  onUpdateBudget={setTotalBudget}
-                />
-              )}
-
-              {activeTab === 'weather' && (
-                <TripWeatherForecast
-                  destination={destination}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              )}
-
-              {activeTab === 'packing' && (
-                <TripPackingList
-                  destination={destination}
-                  days={days}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
 

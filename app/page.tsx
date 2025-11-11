@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -145,6 +145,17 @@ const naturalLanguageTriggers = [
   'versus',
   'vs ',
 ];
+
+function deterministicRandomFromString(value: string): number {
+  if (!value) return 0;
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  const normalized = (Math.abs(hash) % 1000) / 1000;
+  return normalized;
+}
 
 function isLikelyNaturalLanguageQuery(query: string): boolean {
   const trimmed = query.trim();
@@ -1879,7 +1890,7 @@ export default function Home() {
   };
 
   // Pinterest-like recommendation algorithm
-  const getRecommendationScore = (dest: Destination, index: number): number => {
+const getRecommendationScore = (dest: Destination, index: number): number => {
     let score = 0;
 
     // Priority signals (like Pinterest's quality score)
@@ -1891,8 +1902,9 @@ export default function Home() {
     const categoryBonus = (index % 7) * 5; // Rotate through categories (increased from 2)
     score += categoryBonus;
 
-    // Random discovery factor (increased for more serendipity)
-    score += Math.random() * 30;
+  // Random discovery factor (increased for more serendipity) - deterministic per destination
+  const randomKey = dest.slug || dest.id?.toString() || `idx-${index}`;
+  score += deterministicRandomFromString(randomKey) * 30;
 
     return score;
   };
@@ -2297,10 +2309,11 @@ export default function Home() {
                           onClick={() => {
                             setShowAllCities((prev) => !prev);
                           }}
-                          className={`ml-5 flex items-center gap-1 font-medium transition-all duration-200 ease-out ${
+                          aria-label={showAllCities ? 'Show fewer cities' : 'Show more cities'}
+                          className={`flex items-center gap-1 rounded-full border px-3.5 py-2 font-medium transition-all duration-200 ease-out ${
                             showAllCities
-                              ? 'text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                              : 'text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              ? 'border-gray-300 text-black dark:border-gray-700 dark:text-white'
+                              : 'border-gray-200 text-black/60 hover:border-black hover:text-black dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-200'
                           }`}
                           style={{ order: 999 }}
                         >
@@ -2376,6 +2389,24 @@ export default function Home() {
                         })}
                       </div>
                     )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Ready to map out a trip?
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Launch the itinerary studio and co-plan with Travel Intelligence.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowTripPlanner(true)}
+                        className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Start a trip
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

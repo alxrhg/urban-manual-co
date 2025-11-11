@@ -40,6 +40,21 @@ interface Message {
   timestamp?: Date;
 }
 
+function getOrCreateChatSessionToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const storage = window.sessionStorage;
+    const existing = storage.getItem('travel_intel_chat_session');
+    if (existing) return existing;
+    const newToken = crypto.randomUUID();
+    storage.setItem('travel_intel_chat_session', newToken);
+    return newToken;
+  } catch (error) {
+    console.warn('Unable to access sessionStorage for chat session token:', error);
+    return null;
+  }
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -47,6 +62,7 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -67,17 +83,26 @@ export default function ChatPage() {
     }
   }, []);
 
+  // Ensure session token exists (for anonymous users as well)
+  useEffect(() => {
+    if (!sessionToken) {
+      setSessionToken(getOrCreateChatSessionToken());
+    }
+  }, [sessionToken]);
+
   // Load conversation history
   useEffect(() => {
-    if (user?.id) {
+    if (sessionToken || user?.id) {
       loadConversationHistory();
     }
-  }, [user?.id]);
+  }, [user?.id, sessionToken]);
 
   async function loadConversationHistory() {
     try {
-      const userId = user?.id || 'anonymous';
-      const response = await fetch(`/api/conversation/${userId}`);
+      if (!sessionToken && !user?.id) return;
+      const userId = user?.id || 'guest';
+      const query = sessionToken ? `?session_token=${sessionToken}` : '';
+      const response = await fetch(`/api/conversation/${userId}${query}`);
       if (response.ok) {
         const data = await response.json();
         setMessages(data.messages || []);
@@ -95,12 +120,21 @@ export default function ChatPage() {
     trackChatMessage(user?.id, { messageLength: userMessage.length });
 
     try {
-      const userId = user?.id || 'anonymous';
+      let activeSessionToken = sessionToken;
+      if (!activeSessionToken && !user?.id) {
+        activeSessionToken = getOrCreateChatSessionToken();
+        if (activeSessionToken) {
+          setSessionToken(activeSessionToken);
+        }
+      }
+
+      const userId = user?.id || 'guest';
       const response = await fetch(`/api/conversation-stream/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
+          session_token: user?.id ? sessionToken : activeSessionToken,
         }),
       });
 

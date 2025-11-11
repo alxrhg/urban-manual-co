@@ -5,7 +5,6 @@ import { Send, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConversationBubble } from './ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
-import { trackSuggestionAcceptance } from '@/lib/metrics/conversationMetrics';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -215,7 +214,19 @@ export function ConversationInterfaceStreaming({
   }
 
   async function handleSuggestionClick(suggestion: string) {
-    await trackSuggestionAcceptance(sessionId || '', suggestion, user?.id);
+    if (sessionId) {
+      fetch('/api/analytics/feature-usage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: 'suggestion_accepted',
+          userId: user?.id,
+          payload: { sessionId, suggestion },
+        }),
+      }).catch(() => {
+        // Ignore errors
+      });
+    }
     setInput(suggestion);
     inputRef.current?.focus();
     // Auto-submit after a brief delay

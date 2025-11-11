@@ -30,6 +30,12 @@ export interface ConversationMessage {
 /**
  * Get or create conversation session
  */
+function isValidUuid(value: string | undefined | null): boolean {
+  if (!value) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value);
+}
+
 export async function getOrCreateSession(
   userId?: string,
   sessionToken?: string
@@ -38,13 +44,16 @@ export async function getOrCreateSession(
   if (!supabase) return null;
 
   try {
+    const normalizedUserId = isValidUuid(userId) ? userId : undefined;
+    const normalizedSessionToken = sessionToken || (!normalizedUserId ? sessionToken : sessionToken);
+
     // Try to get existing session
     let query = supabase.from('conversation_sessions').select('id, context, context_summary');
     
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else if (sessionToken) {
-      query = query.eq('session_token', sessionToken);
+    if (normalizedUserId) {
+      query = query.eq('user_id', normalizedUserId);
+    } else if (normalizedSessionToken) {
+      query = query.eq('session_token', normalizedSessionToken);
     } else {
       return null;
     }
@@ -71,8 +80,8 @@ export async function getOrCreateSession(
     const { data: newSession, error } = await supabase
       .from('conversation_sessions')
       .insert({
-        user_id: userId || null,
-        session_token: sessionToken || null,
+        user_id: normalizedUserId || null,
+        session_token: normalizedSessionToken || null,
         context: {},
       })
       .select('id, context')
