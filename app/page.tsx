@@ -1817,7 +1817,8 @@ export default function Home() {
   }, [destinations, filterDestinationsWithData]);
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
-  const displayedCities = showAllCities ? cities : cities.slice(0, 20);
+  // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
+  const displayedCities = showAllCities ? cities : cities.slice(0, 24);
 
   return (
     <ErrorBoundary>
@@ -2110,8 +2111,8 @@ export default function Home() {
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
-                    {/* City List */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                    {/* City List - Limited to 2 rows */}
+                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs max-h-[4.5rem] overflow-hidden">
                       <button
                         onClick={() => {
                           setSelectedCity("");
@@ -2144,7 +2145,7 @@ export default function Home() {
                           {capitalizeCity(city)}
                         </button>
                       ))}
-                      {cities.length > 20 && (
+                      {cities.length > 24 && (
                         <button
                           onClick={() => setShowAllCities(!showAllCities)}
                           className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
@@ -2251,11 +2252,41 @@ export default function Home() {
                     }
                   });
                 }}
-                availableCities={cities}
-                availableCategories={categories}
-                    onLocationChange={handleLocationChange}
-              />
-            </div>
+                      availableCities={cities}
+                      availableCategories={categories}
+                      onLocationChange={handleLocationChange}
+                    />
+                  </div>
+
+                  {/* Grid/Map Toggle */}
+                  <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                        viewMode === 'grid'
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      aria-label="Grid view"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>Grid</span>
+                    </button>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-800" />
+                    <button
+                      onClick={() => setViewMode('map')}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                        viewMode === 'map'
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      aria-label="Map view"
+                    >
+                      <Map className="h-4 w-4" />
+                      <span>Map</span>
+                    </button>
+                  </div>
+                </div>
             
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
