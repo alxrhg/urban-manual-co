@@ -733,340 +733,331 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
         onClick={onClose}
       />
 
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-start justify-center px-5 md:px-8 py-10">
-          <div
-            className="relative w-full max-w-[900px] rounded-3xl border border-gray-200 bg-white px-5 py-10 shadow-xl dark:border-gray-800 dark:bg-gray-950 md:px-8"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 pb-6 md:pb-8 dark:border-gray-800">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                  {step === 'plan'
-                    ? 'Trip planner'
-                    : step === 'select'
-                    ? 'Add to trip'
-                    : 'Start a trip'}
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
-                  {step === 'plan'
-                    ? tripName || 'Untitled trip'
-                    : step === 'select'
-                    ? `Add “${initialDestination?.name ?? ''}” to a trip`
-                    : 'Create a new itinerary'}
-                </h2>
-                {step === 'plan' && destination && (
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {destination}
-                  </p>
-                )}
-                {step === 'select' && initialDestination?.city && (
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {initialDestination.city}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {step === 'plan' && (
-                  <>
-                    {currentTripId && (
-                      <button
-                        onClick={handleSaveTrip}
-                        disabled={saving}
-                        className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3.5 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
-                        title="Save trip"
-                      >
-                        {saving ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <SaveIcon className="h-3.5 w-3.5" />
-                        )}
-                        {saving ? 'Saving…' : 'Save'}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setShowShare(true)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                      title="Share trip"
-                    >
-                      <ShareIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={handleExportToCalendar}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                      title="Export to calendar"
-                    >
-                      <DownloadIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={handlePrint}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                      title="Print itinerary"
-                    >
-                      <PrinterIcon className="h-4 w-4" />
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={onClose}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                  aria-label="Close"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
-              </div>
+      <div
+        className={`fixed inset-y-0 right-0 z-50 flex w-full transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div
+          className="flex h-full w-full max-w-[900px] flex-col border-l border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-5 py-6 md:px-8 md:py-8 dark:border-gray-800">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                {step === 'plan'
+                  ? 'Trip planner'
+                  : step === 'select'
+                  ? 'Add to trip'
+                  : 'Start a trip'}
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+                {step === 'plan'
+                  ? tripName || 'Untitled trip'
+                  : step === 'select'
+                  ? `Add “${initialDestination?.name ?? ''}” to a trip`
+                  : 'Create a new itinerary'}
+              </h2>
+              {step === 'plan' && destination && (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{destination}</p>
+              )}
+              {step === 'select' && initialDestination?.city && (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{initialDestination.city}</p>
+              )}
             </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {step === 'plan' && (
+                <>
+                  {currentTripId && (
+                    <button
+                      onClick={handleSaveTrip}
+                      disabled={saving}
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3.5 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
+                      title="Save trip"
+                    >
+                      {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SaveIcon className="h-3.5 w-3.5" />}
+                      {saving ? 'Saving…' : 'Save'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowShare(true)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                    title="Share trip"
+                  >
+                    <ShareIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleExportToCalendar}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                    title="Export to calendar"
+                  >
+                    <DownloadIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                    title="Print itinerary"
+                  >
+                    <PrinterIcon className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={onClose}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                aria-label="Close"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
 
-            <div className="pt-6 md:pt-8">
-              {step === 'select' && initialDestination ? (
-                <div className="space-y-6">
-                  <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Choose a trip to add <span className="font-medium text-gray-900 dark:text-white">“{initialDestination.name}”</span> or start a new itinerary below.
-                    </p>
+          <div className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
+            {step === 'select' && initialDestination ? (
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Choose a trip to add <span className="font-medium text-gray-900 dark:text-white">“{initialDestination.name}”</span> or start a new itinerary below.
+                  </p>
+                </div>
+
+                {loadingTripSummaries ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                   </div>
-
-                  {loadingTripSummaries ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                    </div>
-                  ) : tripSummaries.length > 0 ? (
-                    <div className="space-y-3">
-                      {tripSummaries.map((trip) => (
-                        <button
-                          key={trip.id}
-                          onClick={() => handleAddDestinationToTrip(trip.id)}
-                          disabled={addingToTripId === trip.id}
-                          className="w-full text-left rounded-2xl border border-gray-200 bg-white/90 p-5 shadow-sm transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                                {trip.title}
-                              </h3>
-                              {trip.destination && (
-                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                  {trip.destination}
-                                </p>
-                              )}
-                              {(trip.start_date || trip.end_date) && (
-                                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                                  {[trip.start_date, trip.end_date].filter(Boolean).map((date) =>
-                                    date ? new Date(date).toLocaleDateString() : ''
-                                  ).join(' – ')}
-                                </p>
-                              )}
-                            </div>
-                            {addingToTripId === trip.id ? (
-                              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                            ) : (
-                              <Plus className="h-4 w-4 text-gray-400" />
+                ) : tripSummaries.length > 0 ? (
+                  <div className="space-y-3">
+                    {tripSummaries.map((trip) => (
+                      <button
+                        key={trip.id}
+                        onClick={() => handleAddDestinationToTrip(trip.id)}
+                        disabled={addingToTripId === trip.id}
+                        className="w-full text-left rounded-2xl border border-gray-200 bg-white/90 p-5 shadow-sm transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{trip.title}</h3>
+                            {trip.destination && (
+                              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{trip.destination}</p>
+                            )}
+                            {(trip.start_date || trip.end_date) && (
+                              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                {[trip.start_date, trip.end_date]
+                                  .filter(Boolean)
+                                  .map((date) => (date ? new Date(date).toLocaleDateString() : ''))
+                                  .join(' – ')}
+                              </p>
                             )}
                           </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
-                      You haven’t created any trips yet. Start a new itinerary below.
-                    </div>
-                  )}
-
-                  <div className="rounded-2xl border border-dashed border-gray-300 bg-white/50 p-6 text-center dark:border-gray-700 dark:bg-gray-900/40">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Prefer to create a new itinerary for this place?
-                    </p>
-                    <button
-                      onClick={() => {
-                        setBypassSelection(true);
-                        resetForm();
-                        setTripName(initialDestination.name);
-                        if (initialDestination.city) {
-                          setDestination(initialDestination.city);
-                        }
-                        setStep('create');
-                      }}
-                      className="mt-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Start a new trip
-                    </button>
-                  </div>
-                </div>
-              ) : step === 'create' ? (
-                <div className="mx-auto max-w-2xl space-y-6">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Trip name *
-                      </label>
-                      <input
-                        type="text"
-                        value={tripName}
-                        onChange={(e) => setTripName(e.target.value)}
-                        placeholder="Summer in Paris"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Destination *
-                      </label>
-                      <input
-                        type="text"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                        placeholder="Paris, France"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Hotel / base location
-                      </label>
-                      <input
-                        type="text"
-                        value={hotelLocation}
-                        onChange={(e) => setHotelLocation(e.target.value)}
-                        placeholder="Hotel Le Marais"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Start date *
-                      </label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        End date *
-                      </label>
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Total budget
-                      </label>
-                      <input
-                        type="number"
-                        value={totalBudget || ''}
-                        onChange={(e) => setTotalBudget(Number(e.target.value))}
-                        placeholder="2000"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleCreateTrip}
-                    disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Creating…
-                      </>
-                    ) : (
-                      'Create trip'
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {plannerTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
-                          activeTab === tab.id
-                            ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
-                            : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                        }`}
-                      >
-                        {tab.label}
+                          {addingToTripId === trip.id ? (
+                            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                          ) : (
+                            <Plus className="h-4 w-4 text-gray-400" />
+                          )}
+                        </div>
                       </button>
                     ))}
                   </div>
+                ) : (
+                  <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
+                    You haven’t created any trips yet. Start a new itinerary below.
+                  </div>
+                )}
 
-                  {activeTab === 'itinerary' && (
-                    <div className="space-y-6">
-                      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <div className="rounded-2xl border border-dashed border-gray-300 bg-white/50 p-6 text-center dark:border-gray-700 dark:bg-gray-900/40">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Prefer to create a new itinerary for this place?
+                  </p>
+                  <button
+                    onClick={() => {
+                      setBypassSelection(true);
+                      resetForm();
+                      setTripName(initialDestination.name);
+                      if (initialDestination.city) {
+                        setDestination(initialDestination.city);
+                      }
+                      setStep('create');
+                    }}
+                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Start a new trip
+                  </button>
+                </div>
+              </div>
+            ) : step === 'create' ? (
+              <div className="mx-auto max-w-2xl space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      Trip name *
+                    </label>
+                    <input
+                      type="text"
+                      value={tripName}
+                      onChange={(e) => setTripName(e.target.value)}
+                      placeholder="Summer in Paris"
+                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      Destination *
+                    </label>
+                    <input
+                      type="text"
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="Paris, France"
+                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      Hotel / base location
+                    </label>
+                    <input
+                      type="text"
+                      value={hotelLocation}
+                      onChange={(e) => setHotelLocation(e.target.value)}
+                      placeholder="Hotel Le Marais"
+                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      Start date *
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      End date *
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      Total budget
+                    </label>
+                    <input
+                      type="number"
+                      value={totalBudget || ''}
+                      onChange={(e) => setTotalBudget(Number(e.target.value))}
+                      placeholder="2000"
+                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleCreateTrip}
+                  disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating…
+                    </>
+                  ) : (
+                    'Create trip'
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  {plannerTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                        activeTab === tab.id
+                          ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {activeTab === 'itinerary' && (
+                  <div className="space-y-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                          <MapPinIcon className="h-3.5 w-3.5" />
+                          {destination}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
+                          {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        {totalBudget > 0 && (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                            <MapPinIcon className="h-3.5 w-3.5" />
-                            {destination}
+                            <WalletIcon className="h-3.5 w-3.5" />
+                            ${getTotalSpent()} / ${totalBudget}
                           </span>
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                            <CalendarIcon className="h-3.5 w-3.5" />
-                            {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
-                            {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                          {totalBudget > 0 && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                              <WalletIcon className="h-3.5 w-3.5" />
-                              ${getTotalSpent()} / ${totalBudget}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/40">
-                          <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                            Smart suggestions
-                          </p>
-                          <ul className="mt-3 space-y-2">
-                            {getAISuggestions().map((suggestion, index) => (
-                              <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
-                                • {suggestion}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        )}
                       </div>
-
-                      <div className="space-y-10">
-                        {days.map((day, index) => (
-                          <TripDay
-                            key={day.date}
-                            dayNumber={index + 1}
-                            date={day.date}
-                            locations={day.locations}
-                            hotelLocation={hotelLocation}
-                            onAddLocation={() => setShowAddLocation(index)}
-                            onRemoveLocation={(locationId) => handleRemoveLocation(index, locationId)}
-                            onReorderLocations={(locations) => handleReorderLocations(index, locations)}
-                            onDuplicateDay={() => handleDuplicateDay(index)}
-                            onOptimizeRoute={() => handleOptimizeRoute(index)}
-                          />
-                        ))}
+                      <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/40">
+                        <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                          Smart suggestions
+                        </p>
+                        <ul className="mt-3 space-y-2">
+                          {getAISuggestions().map((suggestion, index) => (
+                            <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
+                              • {suggestion}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
-                  )}
 
-                  {activeTab === 'budget' && (
-                    <TripBudgetTracker days={days} totalBudget={totalBudget} onUpdateBudget={setTotalBudget} />
-                  )}
+                    <div className="space-y-10">
+                      {days.map((day, index) => (
+                        <TripDay
+                          key={day.date}
+                          dayNumber={index + 1}
+                          date={day.date}
+                          locations={day.locations}
+                          hotelLocation={hotelLocation}
+                          onAddLocation={() => setShowAddLocation(index)}
+                          onRemoveLocation={(locationId) => handleRemoveLocation(index, locationId)}
+                          onReorderLocations={(locations) => handleReorderLocations(index, locations)}
+                          onDuplicateDay={() => handleDuplicateDay(index)}
+                          onOptimizeRoute={() => handleOptimizeRoute(index)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                  {activeTab === 'weather' && (
-                    <TripWeatherForecast destination={destination} startDate={startDate} endDate={endDate} />
-                  )}
+                {activeTab === 'budget' && (
+                  <TripBudgetTracker days={days} totalBudget={totalBudget} onUpdateBudget={setTotalBudget} />
+                )}
 
-                  {activeTab === 'packing' && (
-                    <TripPackingList destination={destination} days={days} startDate={startDate} endDate={endDate} />
-                  )}
-                </div>
-              )}
-            </div>
+                {activeTab === 'weather' && (
+                  <TripWeatherForecast destination={destination} startDate={startDate} endDate={endDate} />
+                )}
+
+                {activeTab === 'packing' && (
+                  <TripPackingList destination={destination} days={days} startDate={startDate} endDate={endDate} />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1079,10 +1070,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       )}
 
       {showShare && (
-        <TripShareModal
-          tripName={tripName}
-          onClose={() => setShowShare(false)}
-        />
+        <TripShareModal tripName={tripName} onClose={() => setShowShare(false)} />
       )}
     </>
   );
