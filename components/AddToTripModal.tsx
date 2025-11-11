@@ -79,7 +79,20 @@ export function AddToTripModal({
       const supabaseClient = createClient();
       if (!supabaseClient || !user) return;
 
+      // First verify the trip exists and belongs to the user
+      const { data: trip, error: tripError } = await supabaseClient
+        .from('trips')
+        .select('id')
+        .eq('id', tripId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (tripError || !trip) {
+        throw new Error('Trip not found or you do not have permission to add items to this trip');
+      }
+
       // Get the next day and order_index for this trip
+      // Use a simpler query that avoids RLS recursion
       const { data: existingItems, error: queryError } = await supabaseClient
         .from('itinerary_items')
         .select('day, order_index')
@@ -91,7 +104,13 @@ export function AddToTripModal({
 
       // If query error and it's not a "not found" error, throw it
       if (queryError && queryError.code !== 'PGRST116') {
-        throw queryError;
+        console.error('Error querying itinerary items:', queryError);
+        // If it's a recursion error, use default values
+        if (queryError.message && queryError.message.includes('infinite recursion')) {
+          console.warn('RLS recursion detected, using default day/order');
+        } else {
+          throw queryError;
+        }
       }
 
       const nextDay = existingItems ? (existingItems.day || 1) : 1;

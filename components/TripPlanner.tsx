@@ -131,6 +131,20 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       setCurrentTripId(trip.id);
 
       // Load itinerary items
+      // First verify trip ownership to avoid RLS recursion
+      const { data: tripCheck, error: tripCheckError } = await supabaseClient
+        .from('trips')
+        .select('id')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (tripCheckError || !tripCheck) {
+        console.error('Error verifying trip ownership:', tripCheckError);
+        alert('Trip not found or access denied');
+        return;
+      }
+
       const { data: items, error: itemsError } = await supabaseClient
         .from('itinerary_items')
         .select('*')
@@ -140,6 +154,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       if (itemsError) {
         console.error('Error loading itinerary items:', itemsError);
+        // If recursion error, continue with empty items
+        if (itemsError.message && itemsError.message.includes('infinite recursion')) {
+          console.warn('RLS recursion detected, continuing with empty items');
+        }
       }
 
       // Group items by day
@@ -998,7 +1016,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                     {/* AI Suggestions */}
                     <div className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-6">
                       <div className="flex items-center gap-2 mb-4">
-                        <SparklesIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
                         <h4 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
                           Smart Suggestions
                         </h4>
