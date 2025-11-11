@@ -79,17 +79,33 @@ export function AddToTripModal({
       if (!supabaseClient || !user) return;
 
       // Get the next day and order_index for this trip
-      const { data: existingItems } = await supabaseClient
+      const { data: existingItems, error: queryError } = await supabaseClient
         .from('itinerary_items')
         .select('day, order_index')
         .eq('trip_id', tripId)
         .order('day', { ascending: false })
         .order('order_index', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      // If query error and it's not a "not found" error, throw it
+      if (queryError && queryError.code !== 'PGRST116') {
+        throw queryError;
+      }
 
       const nextDay = existingItems ? (existingItems.day || 1) : 1;
       const nextOrder = existingItems ? (existingItems.order_index || 0) + 1 : 0;
+
+      // Prepare notes data
+      const notesData = {
+        raw: '',
+        cost: undefined,
+        duration: undefined,
+        mealType: undefined,
+        image: undefined,
+        city: undefined,
+        category: undefined,
+      };
 
       // Add destination to itinerary
       const { error } = await supabaseClient
@@ -100,15 +116,19 @@ export function AddToTripModal({
           day: nextDay,
           order_index: nextOrder,
           title: destinationName,
+          description: '', // Required field
+          notes: JSON.stringify(notesData), // Store as JSON
         });
 
       if (error) throw error;
 
       if (onAdd) onAdd(tripId);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding to trip:', error);
-      alert('Failed to add destination to trip. Please try again.');
+      const errorMessage = error?.message || 'Failed to add destination to trip. Please try again.';
+      console.error('Full error details:', error);
+      alert(errorMessage);
     } finally {
       setAdding(null);
     }

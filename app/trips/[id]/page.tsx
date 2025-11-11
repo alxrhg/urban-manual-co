@@ -491,7 +491,7 @@ export default function TripDetailPage() {
                         }
 
                         // Reload trip data
-                        fetchTripDetails();
+                        await fetchTripDetails();
                       } catch (error) {
                         console.error('Error reordering locations:', error);
                         alert('Failed to reorder locations. Please try again.');

@@ -281,7 +281,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
-      // Update trip
+      // Update trip (including budget)
       const { error: tripError } = await supabaseClient
         .from('trips')
         .update({
@@ -290,6 +290,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           destination: destination,
           start_date: startDate,
           end_date: endDate,
+          budget: totalBudget > 0 ? totalBudget : null,
         })
         .eq('id', currentTripId)
         .eq('user_id', user.id);
@@ -349,9 +350,18 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         if (insertError) throw insertError;
       }
 
-      alert('Trip saved successfully!');
-      // Optionally redirect to trip detail page
-      // router.push(`/trips/${currentTripId}`);
+      // Show success feedback without alert
+      // The save button will show "Saved" briefly
+      const saveButton = document.querySelector('[title="Save trip"]') as HTMLButtonElement;
+      if (saveButton) {
+        const originalText = saveButton.textContent;
+        saveButton.textContent = 'Saved!';
+        saveButton.disabled = true;
+        setTimeout(() => {
+          saveButton.textContent = originalText;
+          saveButton.disabled = false;
+        }, 2000);
+      }
     } catch (error: any) {
       console.error('Error saving trip:', error);
       alert(error?.message || 'Failed to save trip. Please try again.');
