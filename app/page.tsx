@@ -2584,23 +2584,20 @@ export default function Home() {
                 const newSet = new Set(prev);
                 if (visited) {
                   newSet.add(slug);
+                  if (!initialVisitedSlugsRef.current) {
+                    initialVisitedSlugsRef.current = new Set(newSet);
+                  } else {
+                    initialVisitedSlugsRef.current = new Set(initialVisitedSlugsRef.current);
+                    initialVisitedSlugsRef.current.add(slug);
+                  }
                 } else {
                   newSet.delete(slug);
+                  if (initialVisitedSlugsRef.current) {
+                    initialVisitedSlugsRef.current = new Set(initialVisitedSlugsRef.current);
+                    initialVisitedSlugsRef.current.delete(slug);
+                  }
                 }
                 return newSet;
-              });
-              
-              // Sort visited items to the back
-            const visitedSortingSet = initialVisitedSlugsRef.current ?? visitedSlugs;
-              setFilteredDestinations(prev => {
-                const sorted = [...prev].sort((a, b) => {
-                const aVisited = user && (visitedSortingSet.has(a.slug));
-                const bVisited = user && (visitedSortingSet.has(b.slug));
-                  if (aVisited && !bVisited) return 1;
-                  if (!aVisited && bVisited) return -1;
-                  return 0;
-                });
-                return sorted;
               });
             }}
           />
