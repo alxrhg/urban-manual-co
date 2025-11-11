@@ -28,6 +28,7 @@ export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [newTrip, setNewTrip] = useState({
     title: '',
     description: '',
@@ -215,7 +216,11 @@ export default function TripsPage() {
             {trips.map(trip => (
               <article
                 key={trip.id}
-                className="flex flex-col overflow-hidden rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 shadow-sm transition-transform duration-300 hover:-translate-y-1"
+                onClick={() => {
+                  setEditingTripId(trip.id);
+                  setShowCreateDialog(true);
+                }}
+                className="flex flex-col overflow-hidden rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 shadow-sm transition-transform duration-300 hover:-translate-y-1 cursor-pointer"
               >
                 <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600">
                   {trip.cover_image && (
@@ -260,9 +265,20 @@ export default function TripsPage() {
                         e.stopPropagation();
                         router.push(`/trips/${trip.id}`);
                       }}
-                      className="flex-1 text-sm font-medium py-2 px-3 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-dark-blue-700"
+                      className="flex-1 text-sm font-medium py-2 px-3 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                     >
                       View details
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        setEditingTripId(trip.id);
+                        setShowCreateDialog(true);
+                      }}
+                      className="p-2 rounded-full text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                      aria-label={`Edit ${trip.title}`}
+                    >
+                      <Edit2 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={e => {
@@ -285,8 +301,10 @@ export default function TripsPage() {
       {/* Trip Planner Modal */}
       <TripPlanner
         isOpen={showCreateDialog}
+        tripId={editingTripId || undefined}
         onClose={() => {
           setShowCreateDialog(false);
+          setEditingTripId(null);
           setNewTrip({ title: '', description: '', destination: '', start_date: '', end_date: '' });
           // Refresh trips list after closing
           if (user) {
