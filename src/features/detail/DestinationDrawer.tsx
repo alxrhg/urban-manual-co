@@ -1068,14 +1068,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </span>
               )}
 
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
+              {(destination.michelin_stars ?? 0) > 0 && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
                     className="h-3 w-3"
                   />
-                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
                   </span>
             )}
 
