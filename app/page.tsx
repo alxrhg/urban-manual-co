@@ -1531,12 +1531,6 @@ export default function Home() {
         setSearchTier('semantic');
         setSubmittedQuery(trimmed);
         setCurrentPage(1);
-        setChatResponse('');
-        setChatMessages([]);
-        setConversationHistory([]);
-        setSearchIntent(null);
-        setInferredTags(null);
-        setSeasonalContext(null);
         setCurrentLoadingText('Searching curated destinations...');
 
         const params = new URLSearchParams({ q: trimmed });
@@ -1563,10 +1557,16 @@ export default function Home() {
               ? `Found ${results.length} ${results.length === 1 ? 'place' : 'places'}.`
               : 'No matching places found.')
         );
+        setChatResponse(data.contextResponse || '');
+        setSearchIntent(data.intent || null);
+        setInferredTags(null);
+        setSeasonalContext(null);
+        setChatMessages([]);
+        setConversationHistory([]);
       } catch (error) {
         console.error('Semantic search error:', error);
-        setFilteredDestinations([]);
         setChatResponse('');
+        setSearchIntent(null);
         setCurrentLoadingText('We had trouble searching. Try a different phrase.');
       } finally {
         setSearching(false);

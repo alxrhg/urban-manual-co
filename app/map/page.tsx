@@ -7,7 +7,7 @@ import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
 import MapView from '@/components/MapView';
 import GoogleMap from '@/components/GoogleMap';
-import { Search, X, List, ChevronRight, Map, Globe, Compass } from 'lucide-react';
+import { Search, X, ChevronRight, Map, Globe, Compass } from 'lucide-react';
 import AppleMap from '@/components/AppleMap';
 import Image from 'next/image';
 
@@ -35,7 +35,6 @@ export default function MapPage() {
     michelin: false,
     searchQuery: '',
   });
-  const [showListPanel, setShowListPanel] = useState(true);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
   const providerOptions = useMemo(
@@ -229,31 +228,29 @@ export default function MapPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      {/* Filters Bar - Top (below header) - Uses default container */}
-      <div className="sticky top-[112px] left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 safe-area-top">
-        <div className="w-full px-6 md:px-10 lg:px-12 py-2 md:py-3">
-          <div className="flex flex-col gap-2 md:gap-3">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 dark:text-neutral-500" />
-              <input
-                type="search"
-                value={filters.searchQuery}
-                onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder="Search cities, places, vibes…"
-                className="w-full pl-10 pr-10 py-2.5 md:py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-base md:text-sm text-gray-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:border-gray-300 dark:focus:border-gray-600"
-              />
-              {filters.searchQuery && (
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 hover:text-gray-900 dark:hover:text-white"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+      <div className="w-full px-6 md:px-10 lg:px-12 py-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="flex flex-col gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+            <input
+              type="search"
+              value={filters.searchQuery}
+              onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
+              placeholder="Search cities, places, vibes…"
+              className="w-full pl-10 pr-10 py-2.5 md:py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-base md:text-sm text-gray-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:border-gray-300 dark:focus:border-gray-600"
+            />
+            {filters.searchQuery && (
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 hover:text-gray-900 dark:hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
                 Map Provider
               </span>
@@ -279,7 +276,6 @@ export default function MapPage() {
               </div>
             </div>
 
-            {/* Category Chips - Scrollable on mobile */}
             <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible md:pb-0 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {categories.map(category => (
                 <button
@@ -294,8 +290,6 @@ export default function MapPage() {
                   {category}
                 </button>
               ))}
-              
-              {/* Michelin Filter */}
               <button
                 onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
                 className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
@@ -316,141 +310,37 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* List Panel - Left (Desktop) */}
-      {showListPanel && (
-        <div className="hidden md:block fixed left-0 top-[calc(112px+73px)] bottom-0 w-[380px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-800 z-20 overflow-y-auto">
-          <div className="p-4 space-y-2">
-            <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+      <div className="w-full px-6 md:px-10 lg:px-12 py-8">
+        <div className="grid gap-6 md:grid-cols-[360px,minmax(0,1fr)] items-start">
+          <div className="space-y-3">
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
             </div>
-            {sortedDestinations.map((dest) => (
-              <button
-                key={dest.slug}
-                onClick={() => handleListItemClick(dest)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
-                  selectedDestination?.slug === dest.slug
-                    ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-                    : 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
-                }`}
-              >
-                {dest.image && (
-                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                    <Image
-                      src={dest.image}
-                      alt={dest.name}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{dest.name}</div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                    {dest.category && <span>{dest.category}</span>}
-                    {dest.city && (
-                      <span className="ml-1">• {dest.city}</span>
-                    )}
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Map - Scrollable with page */}
-      <div
-        className={`w-full ${showListPanel ? 'md:ml-[380px]' : ''} mt-[73px]`}
-        style={{ height: 'calc(100vh - 112px - 73px)', minHeight: '600px' }}
-      >
-        {mapProvider === 'mapbox' ? (
-          <MapView
-            destinations={filteredDestinations}
-            onMarkerClick={handleMarkerClick}
-            center={mapCenter}
-            zoom={mapZoom}
-          />
-        ) : mapProvider === 'google' ? (
-          <GoogleMap
-            latitude={focusLat}
-            longitude={focusLng}
-            height="100%"
-            interactive
-            autoOpenInfoWindow
-            showInfoWindow={!!infoWindowContent}
-            infoWindowContent={infoWindowContent}
-            className="h-full rounded-none"
-          />
-        ) : (
-          <AppleMap
-            latitude={focusLat}
-            longitude={focusLng}
-            height="100%"
-            zoom={mapZoom}
-            label={focusLabel}
-            className="h-full rounded-none"
-          />
-        )}
-      </div>
-
-      {/* List Panel - Mobile (Bottom Sheet - Compact) */}
-      {showListPanel && (
-        <>
-          {/* Backdrop - Lighter, allows map interaction */}
-          <div 
-            className="md:hidden fixed inset-0 bg-black/20 z-20 top-[calc(112px+73px)]"
-            onClick={() => setShowListPanel(false)}
-          />
-          {/* Panel - Takes up max 50% of screen, shows map above */}
-          <div className="md:hidden fixed inset-x-0 bottom-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 z-30 overflow-hidden rounded-t-2xl shadow-2xl safe-area-bottom"
-            style={{ 
-              height: 'min(50vh, 400px)',
-              maxHeight: '50vh'
-            }}>
-            {/* Handle bar with close button */}
-            <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 z-10 px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {filteredDestinations.length} {filteredDestinations.length === 1 ? 'place' : 'places'}
-                </span>
-              </div>
-              <button
-                onClick={() => setShowListPanel(false)}
-                className="p-1.5 -mr-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                aria-label="Close list"
-              >
-                <X className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-            {/* Scrollable list */}
-            <div className="overflow-y-auto h-[calc(100%-57px)]">
-            <div className="p-4 space-y-2 pb-6">
+            <div className="space-y-2">
               {sortedDestinations.map((dest) => (
                 <button
                   key={dest.slug}
-                  onClick={() => {
-                    handleListItemClick(dest);
-                    setShowListPanel(false);
-                  }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left min-h-[72px] touch-manipulation"
-                  >
-                    {dest.image && (
-                      <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-                        <Image
-                          src={dest.image}
-                          alt={dest.name}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{dest.name}</div>
-                      <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  onClick={() => handleListItemClick(dest)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+                    selectedDestination?.slug === dest.slug
+                      ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                      : 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
+                  }`}
+                >
+                  {dest.image && (
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                      <Image
+                        src={dest.image}
+                        alt={dest.name}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{dest.name}</div>
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                       {dest.category && <span>{dest.category}</span>}
                       {dest.city && (
                         <span className="ml-1">• {dest.city}</span>
@@ -460,27 +350,44 @@ export default function MapPage() {
                   <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
                 </button>
               ))}
-              </div>
             </div>
           </div>
-        </>
-      )}
 
-      {/* List Toggle Button - Mobile (Floating, always visible when list is closed) */}
-      {!showListPanel && (
-        <button
-          onClick={() => setShowListPanel(true)}
-          className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-gray-900 dark:bg-gray-100 border border-gray-900 dark:border-gray-100 rounded-xl text-sm font-medium text-white dark:text-gray-900 active:bg-gray-800 dark:active:bg-gray-200 transition-all duration-200 shadow-lg min-h-[44px] safe-area-bottom hover:scale-105"
-          style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
-        >
-          <div className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            <span>Show List ({filteredDestinations.length})</span>
+          <div className="w-full">
+            <div className="relative w-full h-[420px] md:h-[calc(100vh-280px)] min-h-[420px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+              {mapProvider === 'mapbox' ? (
+                <MapView
+                  destinations={filteredDestinations}
+                  onMarkerClick={handleMarkerClick}
+                  center={mapCenter}
+                  zoom={mapZoom}
+                />
+              ) : mapProvider === 'google' ? (
+                <GoogleMap
+                  latitude={focusLat}
+                  longitude={focusLng}
+                  height="100%"
+                  interactive
+                  autoOpenInfoWindow
+                  showInfoWindow={!!infoWindowContent}
+                  infoWindowContent={infoWindowContent}
+                  className="h-full rounded-none"
+                />
+              ) : (
+                <AppleMap
+                  latitude={focusLat}
+                  longitude={focusLng}
+                  height="100%"
+                  zoom={mapZoom}
+                  label={focusLabel}
+                  className="h-full rounded-none"
+                />
+              )}
+            </div>
           </div>
-        </button>
-      )}
+        </div>
+      </div>
 
-      {/* Details Panel - Right (Desktop) - Using Drawer for now */}
       <DestinationDrawer
         destination={selectedDestination}
         isOpen={isDrawerOpen}
