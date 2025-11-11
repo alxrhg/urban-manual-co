@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Calendar, MapPin, Trash2, X } from 'lucide-react';
+import { Plus, Calendar, MapPin, Trash2, X, Edit2 } from 'lucide-react';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
 import { TripPlanner } from '@/components/TripPlanner';
