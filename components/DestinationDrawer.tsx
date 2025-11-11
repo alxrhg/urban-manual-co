@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
 import { Destination } from '@/types/destination';
@@ -179,6 +179,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [newListDescription, setNewListDescription] = useState('');
   const [newListPublic, setNewListPublic] = useState(true);
   const [creatingList, setCreatingList] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -586,9 +587,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       // Add current destination to the new list
       if (destination) {
-        const supabaseClient = createClient();
-        if (!supabaseClient) return;
-        await supabaseClient.from('list_items').insert({
+        await supabase.from('list_items').insert({
           list_id: data.id,
           destination_slug: destination.slug,
         });
