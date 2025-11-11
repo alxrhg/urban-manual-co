@@ -2232,37 +2232,9 @@ export default function Home() {
               <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-24 md:-mt-32">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
-                <div className="flex justify-end items-center gap-3 mb-8 md:mb-10 relative">
-                  {/* Grid/Map Toggle */}
-                  <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
-                        viewMode === 'grid'
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                      aria-label="Grid view"
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>Grid</span>
-                    </button>
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-800" />
-                    <button
-                      onClick={() => setViewMode('map')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
-                        viewMode === 'map'
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                      aria-label="Map view"
-                    >
-                      <Map className="h-4 w-4" />
-                      <span>Map</span>
-                    </button>
-                  </div>
-
-                  {/* Filter Button */}
+                <div className="flex justify-end items-start gap-3 mb-8 md:mb-10 relative flex-wrap">
+                  {/* Filter Button - First so it can expand */}
+                  <div className="relative z-50">
                     <SearchFiltersComponent
                 filters={advancedFilters}
                 onFiltersChange={(newFilters) => {
