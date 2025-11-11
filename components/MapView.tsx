@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Destination } from '@/types/destination';
 import { Spinner } from '@/components/ui/spinner';
+import { getMapboxConfig } from '@/lib/mapbox/config';
 
 interface MapViewProps {
   destinations: Destination[];
@@ -27,12 +28,9 @@ export default function MapView({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get Mapbox access token
-  const getAccessToken = () => process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
-
   // Initialize Mapbox map
   useEffect(() => {
-    const accessToken = getAccessToken();
+    const { accessToken, styles } = getMapboxConfig();
     if (!accessToken) {
       setError('Mapbox access token is not configured. Please add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to your environment variables.');
       console.error('Mapbox access token is not configured');
@@ -65,7 +63,7 @@ export default function MapView({
     // Initialize map
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11',
+      style: isDark ? styles.dark : styles.light,
       center: [center.lng, center.lat],
       zoom: zoom,
       attributionControl: false,

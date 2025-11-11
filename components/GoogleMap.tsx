@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Spinner } from '@/components/ui/spinner';
 import { ExternalLink } from 'lucide-react';
+import { getMapboxConfig } from '@/lib/mapbox/config';
 
 interface GoogleMapProps {
   query?: string;
@@ -53,12 +54,9 @@ export default function GoogleMap({
     return height;
   };
 
-  // Get Mapbox access token
-  const getAccessToken = () => process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
-
   // Initialize Mapbox map
   useEffect(() => {
-    const accessToken = getAccessToken();
+    const { accessToken, styles } = getMapboxConfig();
     if (!accessToken) {
       setError('Mapbox access token is not configured. Please add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to your environment variables.');
       console.error('Mapbox access token is not configured');
@@ -101,7 +99,7 @@ export default function GoogleMap({
           const isStatic = staticMode || !interactive;
           mapInstanceRef.current = new mapboxgl.Map({
             container: mapRef.current!,
-            style: 'mapbox://styles/mapbox/light-v11',
+            style: styles.light,
             center: center,
             zoom: 15,
             interactive: !isStatic && interactive,
