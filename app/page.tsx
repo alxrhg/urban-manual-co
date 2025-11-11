@@ -1823,7 +1823,7 @@ export default function Home() {
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
-  const displayedCities = showAllCities ? cities : cities.slice(0, 24);
+  const displayedCities = showAllCities ? cities : cities.slice(0, 12);
 
   return (
     <ErrorBoundary>
@@ -2117,7 +2117,7 @@ export default function Home() {
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-8 space-y-4">
                     {/* City List - Limited to 2 rows */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs max-h-[4.5rem] overflow-hidden">
+                    <div className="relative flex flex-wrap gap-x-5 gap-y-3 text-xs">
                       <button
                         onClick={() => {
                           setSelectedCity("");
@@ -2150,12 +2150,22 @@ export default function Home() {
                           {capitalizeCity(city)}
                         </button>
                       ))}
-                      {cities.length > 24 && (
+
+                      {!showAllCities && cities.length > 12 && (
                         <button
-                          onClick={() => setShowAllCities(!showAllCities)}
+                          onClick={() => setShowAllCities(true)}
+                          className="flex items-center gap-1 font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out ml-auto"
+                        >
+                          + Show More
+                        </button>
+                      )}
+
+                      {showAllCities && cities.length > 12 && (
+                        <button
+                          onClick={() => setShowAllCities(false)}
                           className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
                         >
-                          {showAllCities ? '- Show Less' : '+ Show More'}
+                          − Show Less
                         </button>
                       )}
                     </div>
