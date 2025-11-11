@@ -192,36 +192,24 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     
     setLoadingReviewSummary(true);
     try {
-      // Extract review texts (limit to first 10 reviews to avoid token limits)
-      const reviewTexts = reviews
-        .slice(0, 10)
-        .map((r: any) => r.text)
-        .filter((text: string) => text && text.length > 0)
-        .join('\n\n');
-
-      if (!reviewTexts) {
-        setLoadingReviewSummary(false);
-        return;
-      }
-
-      const prompt = `Summarize the following customer reviews for ${destinationName} in 2-3 concise sentences. Focus on:
-- Common themes and highlights
-- What customers love most
-- Any notable concerns or patterns
-- Overall sentiment
-
-Reviews:
-${reviewTexts}
-
-Summary:`;
-
-      const summary = await generateText(prompt, { 
-        temperature: 0.7, 
-        maxTokens: 150 
+      const response = await fetch('/api/reviews/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reviews,
+          destinationName,
+        }),
       });
 
-      if (summary) {
-        setReviewSummary(summary);
+      if (!response.ok) {
+        throw new Error('Failed to generate review summary');
+      }
+
+      const data = await response.json();
+      if (data.summary) {
+        setReviewSummary(data.summary);
       }
     } catch (error) {
       console.error('Error generating review summary:', error);
