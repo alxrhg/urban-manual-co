@@ -127,10 +127,10 @@ export function DestinationCard({
           `}
         />
 
-        {/* Visited Check Badge - Top Right */}
+        {/* Visited Check Badge - Center */}
         {isVisited && (
-          <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center shadow-sm">
-            <Check className="w-3 h-3 text-gray-900 dark:text-white" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+            <Check className="w-5 h-5 text-gray-900 dark:text-white stroke-[3]" />
           </div>
         )}
 
