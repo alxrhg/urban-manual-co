@@ -39,6 +39,9 @@ export default function Account() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [visitedCountriesApi, setVisitedCountriesApi] = useState<Array<{ country_code: string; country_name: string }>>([]);
   
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
   // Get initial tab from URL query param
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>(() => {
     if (typeof window !== 'undefined') {
@@ -313,7 +316,7 @@ export default function Account() {
         
         return getCountryName(country) || null;
       })
-      .filter(Boolean);
+      .filter(isNonEmptyString);
     
     const countriesFromApi = new Set<string>();
     visitedCountriesApi.forEach(({ country_code, country_name }) => {
@@ -323,10 +326,10 @@ export default function Account() {
       if (canonical) countriesFromApi.add(canonical);
     });
 
-    const uniqueCountries = new Set([
-      ...Array.from(countriesFromDestinations),
-      ...countriesFromCities,
-      ...Array.from(countriesFromApi),
+    const uniqueCountries = new Set<string>([
+      ...Array.from(countriesFromDestinations).filter(isNonEmptyString),
+      ...countriesFromCities.filter(isNonEmptyString),
+      ...Array.from(countriesFromApi).filter(isNonEmptyString),
     ]);
     
     // Extract visited destinations with coordinates for map

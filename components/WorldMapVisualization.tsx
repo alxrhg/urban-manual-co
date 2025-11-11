@@ -57,7 +57,6 @@ export function WorldMapVisualization({
     // Log all unmapped countries at once for easier debugging
     if (unmappedCountries.length > 0) {
       console.warn('[WorldMap] Unmapped countries (will not appear on map):', unmappedCountries);
-      console.warn('[WorldMap] Available country mappings:', Object.keys(COUNTRY_TO_ISO2));
     }
     
     return isoSet;
