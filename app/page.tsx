@@ -115,6 +115,59 @@ function pickString(...sources: Array<unknown | (() => unknown)>): string {
   return '';
 }
 
+const naturalLanguageTriggers = [
+  'what ',
+  'where ',
+  'when ',
+  'how ',
+  'why ',
+  'best ',
+  'recommend',
+  'suggest',
+  'show me',
+  'find me',
+  'looking for',
+  'plan',
+  'help',
+  'ideas',
+  'can you',
+  'could you',
+  'should i',
+  'tell me',
+  'give me',
+  'any ',
+  'list ',
+  'create',
+  'itinerary',
+  'write',
+  'explain',
+  'compare',
+  'versus',
+  'vs ',
+];
+
+function isLikelyNaturalLanguageQuery(query: string): boolean {
+  const trimmed = query.trim();
+  if (!trimmed) return false;
+
+  const lower = trimmed.toLowerCase();
+  const wordCount = lower.split(/\s+/).filter(Boolean).length;
+
+  if (trimmed.endsWith('?') || trimmed.includes('?')) {
+    return true;
+  }
+
+  if (/[.!]\s/.test(trimmed) || lower.includes(' please ')) {
+    return true;
+  }
+
+  if (wordCount >= 8) {
+    return true;
+  }
+
+  return naturalLanguageTriggers.some((phrase) => lower.startsWith(phrase) || lower.includes(` ${phrase}`));
+}
+
 function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | null {
   if (!isRecord(recordInput)) {
     return null;
@@ -451,6 +504,7 @@ export default function Home() {
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const initialVisitedSlugsRef = useRef<Set<string> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const skipNextSearchRef = useRef(false);
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showAllCities, setShowAllCities] = useState(false);
@@ -934,26 +988,6 @@ export default function Home() {
 
   // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
   // Works like chat but with convenience of auto-trigger
-  useEffect(() => {
-    if (searchTerm.trim().length > 0) {
-      const timer = setTimeout(() => {
-        performAISearch(searchTerm);
-      }, 500); // 500ms debounce for auto-trigger
-      return () => clearTimeout(timer);
-    } else {
-      // Clear everything when search is empty
-      setFilteredDestinations([]);
-      setChatResponse('');
-      setConversationHistory([]);
-      setSearching(false);
-      setSubmittedQuery('');
-      setChatMessages([]);
-      // Show all destinations when no search (with filters if set)
-      filterDestinations();
-      setCurrentPage(1);
-    }
-  }, [searchTerm]); // ONLY depend on searchTerm
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -1487,6 +1521,60 @@ export default function Home() {
 
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
+  const performSemanticSearch = useCallback(
+    async (query: string) => {
+      const trimmed = query.trim();
+      if (!trimmed) return;
+
+      try {
+        setSearching(true);
+        setSearchTier('semantic');
+        setSubmittedQuery(trimmed);
+        setCurrentPage(1);
+        setChatResponse('');
+        setChatMessages([]);
+        setConversationHistory([]);
+        setSearchIntent(null);
+        setInferredTags(null);
+        setSeasonalContext(null);
+        setCurrentLoadingText('Searching curated destinations...');
+
+        const params = new URLSearchParams({ q: trimmed });
+        const effectiveCity = advancedFilters.city || selectedCity;
+        const effectiveCategory = advancedFilters.category || selectedCategory;
+        if (effectiveCity) params.set('city', effectiveCity);
+        if (effectiveCategory) params.set('category', effectiveCategory);
+        if (advancedFilters.openNow) params.set('open_now', 'true');
+
+        const response = await fetch(`/api/search/intelligent?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`Semantic search failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const results: Destination[] = data.results || [];
+
+        setFilteredDestinations(results);
+        setSearchIntent(data.intent || null);
+        setChatResponse(data.contextResponse || '');
+        setCurrentLoadingText(
+          data.contextResponse ||
+            (results.length > 0
+              ? `Found ${results.length} ${results.length === 1 ? 'place' : 'places'}.`
+              : 'No matching places found.')
+        );
+      } catch (error) {
+        console.error('Semantic search error:', error);
+        setFilteredDestinations([]);
+        setChatResponse('');
+        setCurrentLoadingText('We had trouble searching. Try a different phrase.');
+      } finally {
+        setSearching(false);
+      }
+    },
+    [advancedFilters, selectedCity, selectedCategory]
+  );
+
   const performAISearch = useCallback(async (query: string) => {
     setSubmittedQuery(query); // Store the submitted query
     // Match chat component: only check if empty or loading
@@ -1615,6 +1703,30 @@ export default function Home() {
     }
   }, [user, searching, conversationHistory]);
 
+  const runSearch = useCallback(
+    (query: string, options: { forceAi?: boolean; forceSemantic?: boolean } = {}) => {
+      const trimmed = query.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      if (options.forceAi) {
+        return performAISearch(trimmed);
+      }
+
+      if (options.forceSemantic) {
+        return performSemanticSearch(trimmed);
+      }
+
+      if (isLikelyNaturalLanguageQuery(trimmed)) {
+        return performAISearch(trimmed);
+      }
+
+      return performSemanticSearch(trimmed);
+    },
+    [performAISearch, performSemanticSearch]
+  );
+
   // Convert inferredTags to RefinementTag array
   const convertInferredTagsToRefinementTags = useCallback((
     tags: { neighborhoods?: string[]; styleTags?: string[]; priceLevel?: string; modifiers?: string[] },
@@ -1704,10 +1816,10 @@ export default function Home() {
       const enhancedQuery = filterParts.length > 0
         ? `${submittedQuery} ${filterParts.join(' ')}`
         : submittedQuery;
-      
-      performAISearch(enhancedQuery);
+
+      runSearch(enhancedQuery, { forceSemantic: true });
     }
-  }, [activeFilters, submittedQuery, performAISearch]);
+  }, [activeFilters, submittedQuery, runSearch]);
 
   // Handle chip remove - remove filter and rebuild search
   const handleChipRemove = useCallback((tag: RefinementTag) => {
@@ -1727,10 +1839,10 @@ export default function Home() {
       const enhancedQuery = filterParts.length > 0
         ? `${submittedQuery} ${filterParts.join(' ')}`
         : submittedQuery;
-      
-      performAISearch(enhancedQuery);
+
+      runSearch(enhancedQuery, { forceSemantic: true });
     }
-  }, [activeFilters, submittedQuery, performAISearch]);
+  }, [activeFilters, submittedQuery, runSearch]);
 
   // Handle location changes from Near Me filter
   const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {
@@ -1820,6 +1932,35 @@ export default function Home() {
     const filtered = filterDestinationsWithData(destinations);
     setFilteredDestinations(filtered);
   }, [destinations, filterDestinationsWithData]);
+
+  useEffect(() => {
+    const trimmed = searchTerm.trim();
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
+      return;
+    }
+
+    if (trimmed.length > 0) {
+      const timer = setTimeout(() => {
+        runSearch(trimmed);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+
+    setFilteredDestinations([]);
+    setChatResponse('');
+    setConversationHistory([]);
+    setSearching(false);
+    setSubmittedQuery('');
+    setChatMessages([]);
+    setSearchTier(null);
+    setSearchIntent(null);
+    setSeasonalContext(null);
+    setInferredTags(null);
+    setCurrentLoadingText(loadingTextVariants[0]);
+    filterDestinations();
+    setCurrentPage(1);
+  }, [searchTerm, runSearch, filterDestinations]);
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
@@ -1913,9 +2054,8 @@ export default function Home() {
                   }
                 }}
                 onSubmit={(query) => {
-                  // CHAT MODE: Explicit submit on Enter key (like chat component)
                   if (query.trim() && !searching) {
-                    performAISearch(query);
+                    runSearch(query);
                   }
                 }}
                 userName={(function () {
@@ -2073,9 +2213,10 @@ export default function Home() {
                               if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
                                 e.preventDefault();
                                 const query = followUpInput.trim();
+                                skipNextSearchRef.current = true;
                                 setSearchTerm(query);
                                 setFollowUpInput('');
-                                performAISearch(query);
+                                runSearch(query, { forceAi: true });
                               }
                             }}
                             className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
