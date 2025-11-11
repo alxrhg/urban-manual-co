@@ -1,9 +1,35 @@
 import type { NextConfig } from "next";
 
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.SUPABASE_ANON_KEY ??
+  process.env.SUPABASE_PUBLISHABLE_KEY;
+const supabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.SUPABASE_PUBLISHABLE_KEY ??
+  process.env.SUPABASE_ANON_KEY;
+
+const publicEnv: Record<string, string> = {};
+if (supabaseUrl) {
+  publicEnv.NEXT_PUBLIC_SUPABASE_URL = supabaseUrl;
+}
+if (supabaseAnonKey) {
+  publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY = supabaseAnonKey;
+}
+if (supabasePublishableKey) {
+  publicEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = supabasePublishableKey;
+}
+
 const nextConfig: NextConfig = {
   /* config options here */
   // Enable compression
   compress: true,
+
+  env: publicEnv,
 
   // Optimize CSS
   experimental: {

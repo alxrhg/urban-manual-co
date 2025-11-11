@@ -13,6 +13,14 @@ import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.SUPABASE_PUBLISHABLE_KEY ??
+  process.env.SUPABASE_ANON_KEY;
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -75,11 +83,27 @@ export default function RootLayout({
         {/* Revert iOS-specific app meta to default web behavior */}
 
         {/* Preconnect hints for faster resource loading */}
-        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
-          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        {supabaseUrl && (
+          <link rel="preconnect" href={supabaseUrl} />
         )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {supabaseUrl && supabaseAnonKey && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.__SUPABASE_CONFIG__ = Object.assign(
+                  {},
+                  window.__SUPABASE_CONFIG__,
+                  {
+                    url: ${JSON.stringify(supabaseUrl)},
+                    anonKey: ${JSON.stringify(supabaseAnonKey)}
+                  }
+                );
+              `,
+            }}
+          />
+        )}
         
         {/* DNS Prefetch for additional domains */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />

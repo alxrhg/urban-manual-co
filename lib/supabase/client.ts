@@ -7,6 +7,15 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 
+declare global {
+  interface Window {
+    __SUPABASE_CONFIG__?: {
+      url?: string;
+      anonKey?: string;
+    };
+  }
+}
+
 /**
  * Get Supabase URL from environment variables
  * Supports both NEXT_PUBLIC_ and non-prefixed variants
@@ -50,8 +59,16 @@ function isValidConfig(url: string, key: string): boolean {
  * This is the main client for client-side components
  */
 export function createClient() {
-  const url = getSupabaseUrl();
-  const key = getSupabaseKey();
+  let url = getSupabaseUrl();
+  let key = getSupabaseKey();
+
+  if (!isValidConfig(url, key) && typeof window !== 'undefined') {
+    const runtimeConfig = window.__SUPABASE_CONFIG__;
+    if (runtimeConfig?.url && runtimeConfig?.anonKey) {
+      url = runtimeConfig.url;
+      key = runtimeConfig.anonKey;
+    }
+  }
 
   if (!isValidConfig(url, key)) {
     // In development, log helpful error
