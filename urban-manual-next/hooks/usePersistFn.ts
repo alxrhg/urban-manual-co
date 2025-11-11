@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
 type Noop<Args extends unknown[] = unknown[], Result = unknown> = (
   ...args: Args
@@ -7,10 +7,15 @@ type Noop<Args extends unknown[] = unknown[], Result = unknown> = (
 /**
  * usePersistFn 可以替代 useCallback 以降低心智负担
  */
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 export function usePersistFn<T extends Noop>(fn: T): T {
   const fnRef = useRef(fn);
 
-  fnRef.current = fn;
+  useIsomorphicLayoutEffect(() => {
+    fnRef.current = fn;
+  }, [fn]);
 
   const persistFn = useCallback((...args: Parameters<T>) => {
     return fnRef.current(...args);
