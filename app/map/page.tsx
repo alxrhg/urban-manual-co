@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
 import MapView from '@/components/MapView';
-import { Search, X, List, ChevronRight } from 'lucide-react';
+import GoogleMap from '@/components/GoogleMap';
+import { Search, X, List, ChevronRight, Map, Globe, Compass } from 'lucide-react';
+import AppleMap from '@/components/AppleMap';
 import Image from 'next/image';
 
 // Lazy load components
@@ -36,6 +38,28 @@ export default function MapPage() {
   const [showListPanel, setShowListPanel] = useState(true);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
+  const providerOptions = useMemo(
+    () => [
+      { id: 'mapbox' as const, label: 'Mapbox', icon: Map },
+      { id: 'google' as const, label: 'Google', icon: Globe },
+      { id: 'apple' as const, label: 'Apple', icon: Compass },
+    ],
+    []
+  );
+  const [mapProvider, setMapProvider] = useState<'mapbox' | 'google' | 'apple'>('mapbox');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.sessionStorage.getItem('map-provider');
+    if (stored === 'google' || stored === 'apple' || stored === 'mapbox') {
+      setMapProvider(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem('map-provider', mapProvider);
+  }, [mapProvider]);
 
   // Fetch destinations and categories
   useEffect(() => {
@@ -161,6 +185,38 @@ export default function MapPage() {
     });
   }, [filteredDestinations, mapCenter]);
 
+  const focusedDestination = useMemo(() => {
+    if (
+      selectedDestination &&
+      selectedDestination.latitude &&
+      selectedDestination.longitude
+    ) {
+      return selectedDestination;
+    }
+    return (
+      sortedDestinations.find(
+        (dest) => dest.latitude && dest.longitude
+      ) ?? null
+    );
+  }, [selectedDestination, sortedDestinations]);
+
+  const focusLat = focusedDestination?.latitude ?? mapCenter.lat;
+  const focusLng = focusedDestination?.longitude ?? mapCenter.lng;
+  const focusLabel = focusedDestination?.name ?? 'Urban Manual';
+  const infoWindowContent = useMemo(() => {
+    if (!focusedDestination) return undefined;
+    const addressParts = [
+      focusedDestination.neighborhood,
+      focusedDestination.city,
+    ].filter(Boolean);
+    return {
+      title: focusedDestination.name,
+      address: addressParts.join(' · ') || undefined,
+      category: focusedDestination.category || undefined,
+      rating: focusedDestination.rating || undefined,
+    };
+  }, [focusedDestination]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-white text-gray-900">
@@ -195,6 +251,32 @@ export default function MapPage() {
                   <X className="h-4 w-4" />
                 </button>
               )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                Map Provider
+              </span>
+              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                {providerOptions.map(({ id, label, icon: Icon }) => {
+                  const isActive = mapProvider === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setMapProvider(id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white'
+                          : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                      }`}
+                      type="button"
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Category Chips - Scrollable on mobile */}
@@ -279,13 +361,38 @@ export default function MapPage() {
       )}
 
       {/* Map - Scrollable with page */}
-      <div className={`w-full ${showListPanel ? 'md:ml-[380px]' : ''} mt-[73px]`} style={{ height: 'calc(100vh - 112px - 73px)', minHeight: '600px' }}>
-        <MapView
-          destinations={filteredDestinations}
-          onMarkerClick={handleMarkerClick}
-          center={mapCenter}
-          zoom={mapZoom}
-        />
+      <div
+        className={`w-full ${showListPanel ? 'md:ml-[380px]' : ''} mt-[73px]`}
+        style={{ height: 'calc(100vh - 112px - 73px)', minHeight: '600px' }}
+      >
+        {mapProvider === 'mapbox' ? (
+          <MapView
+            destinations={filteredDestinations}
+            onMarkerClick={handleMarkerClick}
+            center={mapCenter}
+            zoom={mapZoom}
+          />
+        ) : mapProvider === 'google' ? (
+          <GoogleMap
+            latitude={focusLat}
+            longitude={focusLng}
+            height="100%"
+            interactive
+            autoOpenInfoWindow
+            showInfoWindow={!!infoWindowContent}
+            infoWindowContent={infoWindowContent}
+            className="h-full rounded-none"
+          />
+        ) : (
+          <AppleMap
+            latitude={focusLat}
+            longitude={focusLng}
+            height="100%"
+            zoom={mapZoom}
+            label={focusLabel}
+            className="h-full rounded-none"
+          />
+        )}
       </div>
 
       {/* List Panel - Mobile (Bottom Sheet - Compact) */}
