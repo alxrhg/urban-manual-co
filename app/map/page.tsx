@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
@@ -24,7 +23,6 @@ interface FilterState {
 }
 
 export default function MapPage() {
-  const router = useRouter();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
@@ -37,6 +35,7 @@ export default function MapPage() {
   });
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
+  const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
   const providerOptions = useMemo(
     () => [
       { id: 'mapbox' as const, label: 'Mapbox', icon: Map },
@@ -166,6 +165,12 @@ export default function MapPage() {
     // Focus marker on map (would need map ref for this)
   }, []);
 
+  useEffect(() => {
+    if (selectedDestination) {
+      setMobileView('map');
+    }
+  }, [selectedDestination]);
+
   // Calculate distance from map center (simplified)
   const getDistanceFromCenter = (dest: Destination): number => {
     if (!dest.latitude || !dest.longitude) return Infinity;
@@ -226,10 +231,104 @@ export default function MapPage() {
     );
   }
 
+  const mapProviderButtons = (
+    <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+      {providerOptions.map(({ id, label, icon: Icon }) => {
+        const isActive = mapProvider === id;
+        return (
+          <button
+            key={id}
+            onClick={() => setMapProvider(id)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              isActive
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+            }`}
+            type="button"
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const destinationList = (
+    <div className="space-y-2">
+      {sortedDestinations.map((dest) => (
+        <button
+          key={dest.slug}
+          onClick={() => handleListItemClick(dest)}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+            selectedDestination?.slug === dest.slug
+              ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+              : 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
+          }`}
+        >
+          {dest.image && (
+            <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
+              <Image
+                src={dest.image}
+                alt={dest.name}
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{dest.name}</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+              {dest.category && <span>{dest.category}</span>}
+              {dest.city && (
+                <span className="ml-1">• {dest.city}</span>
+              )}
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
+        </button>
+      ))}
+    </div>
+  );
+
+  const mapContent = (
+    <div className="relative w-full h-[360px] sm:h-[420px] md:h-[calc(100vh-280px)] min-h-[360px] md:min-h-[420px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+      {mapProvider === 'mapbox' ? (
+        <MapView
+          destinations={filteredDestinations}
+          onMarkerClick={handleMarkerClick}
+          center={mapCenter}
+          zoom={mapZoom}
+        />
+      ) : mapProvider === 'google' ? (
+        <GoogleMap
+          latitude={focusLat}
+          longitude={focusLng}
+          height="100%"
+          interactive
+          autoOpenInfoWindow
+          showInfoWindow={!!infoWindowContent}
+          infoWindowContent={infoWindowContent}
+          className="h-full rounded-none"
+        />
+      ) : (
+        <AppleMap
+          latitude={focusLat}
+          longitude={focusLng}
+          height="100%"
+          zoom={mapZoom}
+          label={focusLabel}
+          className="h-full rounded-none"
+        />
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="flex flex-col gap-4">
+      <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 py-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="flex flex-col gap-5">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 dark:text-neutral-500" />
             <input
@@ -249,141 +348,120 @@ export default function MapPage() {
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2 md:space-y-0 md:flex md:items-center md:gap-3">
+              <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
                 Map Provider
               </span>
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-                {providerOptions.map(({ id, label, icon: Icon }) => {
-                  const isActive = mapProvider === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setMapProvider(id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                        isActive
-                          ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white'
-                          : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-                      }`}
-                      type="button"
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              <div className="hidden md:flex items-center gap-2">{mapProviderButtons}</div>
             </div>
+            <div className="md:hidden grid grid-cols-3 gap-2">
+              {providerOptions.map(({ id, label }) => {
+                const isActive = mapProvider === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setMapProvider(id)}
+                    className={`px-3 py-2 text-sm font-medium rounded-xl border transition-colors ${
+                      isActive
+                        ? 'bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100'
+                        : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible md:pb-0 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {categories.map(category => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryToggle(category)}
-                  className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
-                    filters.categories.has(category.toLowerCase())
-                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
-                      : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-700'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+          <div
+            className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible md:pb-0 scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {categories.map(category => (
               <button
-                onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
-                className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
-                  filters.michelin
+                key={category}
+                onClick={() => handleCategoryToggle(category)}
+                className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
+                  filters.categories.has(category.toLowerCase())
                     ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
                     : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-700'
                 }`}
               >
-                <img
-                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                  alt="Michelin"
-                  className="h-3 w-3"
-                />
-                Michelin
+                {category}
               </button>
-            </div>
+            ))}
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
+              className={`px-3 py-2 md:py-1.5 rounded-xl text-sm md:text-xs border transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
+                filters.michelin
+                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
+                  : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-700'
+              }`}
+            >
+              <img
+                src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                alt="Michelin"
+                className="h-3 w-3"
+              />
+              Michelin
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="w-full px-6 md:px-10 lg:px-12 py-8">
+      <div className="md:hidden px-4 sm:px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+          </div>
+          <div className="flex items-center rounded-full border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 p-1 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setMobileView('map')}
+              className={`px-3 py-1.5 rounded-full transition-colors ${
+                mobileView === 'map'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              Map
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileView('list')}
+              className={`px-3 py-1.5 rounded-full transition-colors ${
+                mobileView === 'list'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              List
+            </button>
+          </div>
+        </div>
+
+        {mobileView === 'map' ? (
+          mapContent
+        ) : (
+          <div className="space-y-4">
+            {destinationList}
+          </div>
+        )}
+      </div>
+
+      <div className="hidden md:block w-full px-6 md:px-10 lg:px-12 py-8">
         <div className="grid gap-6 md:grid-cols-[360px,minmax(0,1fr)] items-start">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="text-xs text-neutral-500 dark:text-neutral-400">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
             </div>
-            <div className="space-y-2">
-              {sortedDestinations.map((dest) => (
-                <button
-                  key={dest.slug}
-                  onClick={() => handleListItemClick(dest)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
-                    selectedDestination?.slug === dest.slug
-                      ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-                      : 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
-                  }`}
-                >
-                  {dest.image && (
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                      <Image
-                        src={dest.image}
-                        alt={dest.name}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{dest.name}</div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                      {dest.category && <span>{dest.category}</span>}
-                      {dest.city && (
-                        <span className="ml-1">• {dest.city}</span>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-neutral-500 flex-shrink-0" />
-                </button>
-              ))}
-            </div>
+            {destinationList}
           </div>
-
           <div className="w-full">
-            <div className="relative w-full h-[420px] md:h-[calc(100vh-280px)] min-h-[420px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
-              {mapProvider === 'mapbox' ? (
-                <MapView
-                  destinations={filteredDestinations}
-                  onMarkerClick={handleMarkerClick}
-                  center={mapCenter}
-                  zoom={mapZoom}
-                />
-              ) : mapProvider === 'google' ? (
-                <GoogleMap
-                  latitude={focusLat}
-                  longitude={focusLng}
-                  height="100%"
-                  interactive
-                  autoOpenInfoWindow
-                  showInfoWindow={!!infoWindowContent}
-                  infoWindowContent={infoWindowContent}
-                  className="h-full rounded-none"
-                />
-              ) : (
-                <AppleMap
-                  latitude={focusLat}
-                  longitude={focusLng}
-                  height="100%"
-                  zoom={mapZoom}
-                  label={focusLabel}
-                  className="h-full rounded-none"
-                />
-              )}
-            </div>
+            {mapContent}
           </div>
         </div>
       </div>
