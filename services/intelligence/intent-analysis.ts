@@ -7,11 +7,127 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateJSON } from '@/lib/llm';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 
+type PrimaryIntentType =
+  | 'discover'
+  | 'plan'
+  | 'compare'
+  | 'recommend'
+  | 'learn'
+  | 'book';
+
+type TimeframeType = 'now' | 'soon' | 'future' | 'flexible';
+
+const INTENT_KEYWORDS: Record<PrimaryIntentType, Array<RegExp | string>> = {
+  discover: [
+    'discover',
+    'explore',
+    'find',
+    'what to do',
+    'things to do',
+    /where should i go/i,
+  ],
+  plan: [
+    'plan',
+    'planning',
+    'itinerary',
+    'schedule',
+    'organize',
+    'arrange',
+    'timeline',
+  ],
+  compare: [
+    'compare',
+    'versus',
+    'vs',
+    'difference between',
+    'better than',
+    'which is better',
+    'which one',
+    'compare to',
+  ],
+  recommend: [
+    'recommend',
+    'recommendation',
+    'suggest',
+    'suggestion',
+    'ideas for',
+    'any tips',
+    'what do you recommend',
+  ],
+  learn: [
+    'learn',
+    'understand',
+    'tell me about',
+    'information about',
+    'history of',
+    'when is',
+    'why is',
+    'how does',
+  ],
+  book: [
+    'book',
+    'reserve',
+    'reservation',
+    'tickets',
+    'booking',
+  ],
+};
+
+const COMPARATIVE_PATTERNS = [
+  /\bcompare\b/i,
+  /\bcomparison\b/i,
+  /\bbetter than\b/i,
+  /\bworse than\b/i,
+  /\bversus\b/i,
+  /\bvs\.?\b/i,
+  /\bdifference between\b/i,
+  /\bprefer (?:over|to)\b/i,
+  /\bmore (?:than|versus)\b/i,
+  /\bless (?:than|versus)\b/i,
+  /\bwhich (?:is|one is) better\b/i,
+];
+
+const NOW_KEYWORDS = ['right now', 'currently', 'today', 'tonight', 'immediately'];
+const SOON_KEYWORDS = [
+  'soon',
+  'this week',
+  'this weekend',
+  'tomorrow',
+  'later today',
+  'later tonight',
+  'later this week',
+  'next week',
+  'next weekend',
+  'upcoming',
+  'over the weekend',
+];
+const FUTURE_KEYWORDS = [
+  'next month',
+  'next year',
+  'later this year',
+  'in a few months',
+  'in the future',
+  'eventually',
+  'next season',
+];
+
+const MONTH_REGEX =
+  /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)\b/i;
+
+const SPECIFIC_DATE_REGEX =
+  /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s*\d{4})?/i;
+
+const ISO_DATE_REGEX = /\b\d{4}-\d{2}-\d{2}\b/;
+
+const DATE_RANGE_REGEX = /\b(?:between|from)\s+([^.,;]+?)\s+(?:and|to)\s+([^.,;]+)/i;
+
+const SEASON_REGEX = /\b(?:this|next)?\s*(spring|summer|fall|autumn|winter)\b/i;
+
 export interface EnhancedIntent {
-  primaryIntent: 'discover' | 'plan' | 'compare' | 'recommend' | 'learn' | 'book';
+  primaryIntent: PrimaryIntentType;
   secondaryIntents?: string[];
   temporalContext?: {
-    timeframe: 'now' | 'soon' | 'future' | 'flexible';
+    timeframe: TimeframeType;
     dateRange?: { start: string; end: string };
     specificDate?: string;
   };
@@ -43,9 +159,9 @@ export class IntentAnalysisService {
     
     try {
       this.supabase = createServiceRoleClient();
-    } catch (error) {
+    } catch (error: unknown) {
       this.supabase = null;
-      console.warn('IntentAnalysisService: Supabase client not available');
+      console.warn('IntentAnalysisService: Supabase client not available', error);
     }
   }
 
@@ -100,7 +216,7 @@ export class IntentAnalysisService {
       if (parsed) {
         return this.validateAndEnhanceIntent(parsed, query, conversationHistory);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error in intent analysis:', error);
     }
 
@@ -111,13 +227,13 @@ export class IntentAnalysisService {
    * Validate and enhance parsed intent
    */
   private validateAndEnhanceIntent(
-    parsed: any,
+    parsed: Partial<EnhancedIntent> & Record<string, unknown>,
     query: string,
     conversationHistory: Array<{ role: string; content: string }>
   ): EnhancedIntent {
     // Detect relative queries
     const lowerQuery = query.toLowerCase();
-    if ((lowerQuery.includes('more') || lowerQuery.includes('another') || lowerQuery.includes('similar')) 
+    if ((lowerQuery.includes('more') || lowerQuery.includes('another') || lowerQuery.includes('similar'))
         && conversationHistory.length > 0) {
       parsed.referenceResolution = {
         type: 'previous_result',
@@ -126,10 +242,15 @@ export class IntentAnalysisService {
       };
     }
 
+    // Classify primary intent heuristically if missing or generic
+    if (!parsed.primaryIntent || parsed.primaryIntent === 'discover') {
+      parsed.primaryIntent = this.detectPrimaryIntent(query, parsed.primaryIntent);
+    }
+
     // Detect comparisons
-    if (lowerQuery.includes('better than') || lowerQuery.includes('vs') || lowerQuery.includes('compare')) {
+    if (this.detectComparativeLanguage(query)) {
       parsed.comparisonMode = true;
-      if (!parsed.primaryIntent) {
+      if (!parsed.primaryIntent || parsed.primaryIntent === 'discover') {
         parsed.primaryIntent = 'compare';
       }
     }
@@ -142,6 +263,10 @@ export class IntentAnalysisService {
     } else {
       parsed.urgency = parsed.urgency || 'low';
     }
+
+    // Extract temporal context
+    const temporalFromQuery = this.extractTemporalContext(query);
+    parsed.temporalContext = this.mergeTemporalContext(parsed.temporalContext, temporalFromQuery);
 
     // Assess complexity
     const intentCount = [parsed.primaryIntent, ...(parsed.secondaryIntents || [])].length;
@@ -161,22 +286,10 @@ export class IntentAnalysisService {
    */
   private fallbackAnalysis(query: string): EnhancedIntent {
     const lowerQuery = query.toLowerCase();
-    
-    let primaryIntent: EnhancedIntent['primaryIntent'] = 'discover';
-    if (lowerQuery.includes('plan') || lowerQuery.includes('itinerary')) {
-      primaryIntent = 'plan';
-    } else if (lowerQuery.includes('compare') || lowerQuery.includes('vs') || lowerQuery.includes('better')) {
-      primaryIntent = 'compare';
-    } else if (lowerQuery.includes('recommend') || lowerQuery.includes('suggest')) {
-      primaryIntent = 'recommend';
-    } else if (lowerQuery.includes('when') || lowerQuery.includes('best time')) {
-      primaryIntent = 'learn';
-    } else if (lowerQuery.includes('book') || lowerQuery.includes('reserve')) {
-      primaryIntent = 'book';
-    }
 
-    const comparisonMode = lowerQuery.includes('better') || lowerQuery.includes('vs') || lowerQuery.includes('compare');
-    
+    const primaryIntent = this.detectPrimaryIntent(query);
+    const comparisonMode = this.detectComparativeLanguage(query);
+
     let urgency: 'low' | 'medium' | 'high' = 'low';
     if (lowerQuery.includes('urgent') || lowerQuery.includes('asap')) {
       urgency = 'high';
@@ -184,12 +297,157 @@ export class IntentAnalysisService {
       urgency = 'medium';
     }
 
+    const temporalContext = this.extractTemporalContext(query);
+
     return {
       primaryIntent,
       comparisonMode,
       urgency,
+      ...(temporalContext ? { temporalContext } : {}),
       queryComplexity: 'simple',
     };
+  }
+
+  private detectPrimaryIntent(query: string, existingIntent?: PrimaryIntentType): PrimaryIntentType {
+    const normalized = query.toLowerCase();
+
+    const scores: Record<PrimaryIntentType, number> = {
+      discover: 0,
+      plan: 0,
+      compare: 0,
+      recommend: 0,
+      learn: 0,
+      book: 0,
+    };
+
+    Object.entries(INTENT_KEYWORDS).forEach(([intent, keywords]) => {
+      keywords.forEach((keyword) => {
+        if (typeof keyword === 'string') {
+          if (normalized.includes(keyword.toLowerCase())) {
+            scores[intent as PrimaryIntentType] += 1;
+          }
+        } else if (keyword.test(query)) {
+          scores[intent as PrimaryIntentType] += 1.5;
+        }
+      });
+    });
+
+    // Question-focused heuristics leaning toward recommend/learn
+    if (/\bwhat are the best\b/i.test(query) || /\bany (?:good|great)\b/i.test(query)) {
+      scores.recommend += 1.5;
+    }
+    if (/\bhow (?:do|does|should)\b/i.test(query) || /\bwhy\b/i.test(query)) {
+      scores.learn += 1;
+    }
+    if (/\btrip\b/i.test(query) || /\btravel plan\b/i.test(query)) {
+      scores.plan += 1;
+    }
+
+    let bestIntent: PrimaryIntentType = existingIntent || 'discover';
+    let bestScore = scores[bestIntent];
+
+    (Object.keys(scores) as PrimaryIntentType[]).forEach((intent) => {
+      const score = scores[intent];
+      if (score > bestScore) {
+        bestScore = score;
+        bestIntent = intent;
+      }
+    });
+
+    return bestIntent;
+  }
+
+  private detectComparativeLanguage(query: string): boolean {
+    return COMPARATIVE_PATTERNS.some((pattern) => pattern.test(query));
+  }
+
+  private extractTemporalContext(query: string): EnhancedIntent['temporalContext'] | undefined {
+    const lower = query.toLowerCase();
+
+    let timeframe: TimeframeType = 'flexible';
+    if (NOW_KEYWORDS.some((keyword) => lower.includes(keyword))) {
+      timeframe = 'now';
+    } else if (SOON_KEYWORDS.some((keyword) => lower.includes(keyword))) {
+      timeframe = 'soon';
+    } else if (
+      FUTURE_KEYWORDS.some((keyword) => lower.includes(keyword)) ||
+      /next\s+(?:month|year|spring|summer|fall|autumn|winter)/i.test(query)
+    ) {
+      timeframe = 'future';
+    } else if (MONTH_REGEX.test(lower) || SEASON_REGEX.test(query)) {
+      timeframe = 'future';
+    }
+
+    const isoMatch = query.match(ISO_DATE_REGEX);
+    const specificMatch = query.match(SPECIFIC_DATE_REGEX);
+    const seasonMatch = query.match(SEASON_REGEX);
+    const rangeMatch = query.match(DATE_RANGE_REGEX);
+
+    const temporalContext: EnhancedIntent['temporalContext'] = {
+      timeframe,
+    };
+
+    if (rangeMatch) {
+      temporalContext.dateRange = {
+        start: rangeMatch[1].trim(),
+        end: rangeMatch[2].trim(),
+      };
+    }
+
+    if (isoMatch) {
+      temporalContext.specificDate = isoMatch[0];
+    } else if (specificMatch) {
+      temporalContext.specificDate = specificMatch[0];
+    } else if (seasonMatch) {
+      temporalContext.specificDate = seasonMatch[0];
+    }
+
+    if (
+      timeframe === 'flexible' &&
+      !temporalContext.dateRange &&
+      !temporalContext.specificDate
+    ) {
+      return undefined;
+    }
+
+    return temporalContext;
+  }
+
+  private mergeTemporalContext(
+    existing?: EnhancedIntent['temporalContext'],
+    extracted?: EnhancedIntent['temporalContext'],
+  ): EnhancedIntent['temporalContext'] | undefined {
+    if (!existing && !extracted) {
+      return undefined;
+    }
+
+    if (!existing) {
+      return extracted;
+    }
+
+    if (!extracted) {
+      return existing;
+    }
+
+    const merged: EnhancedIntent['temporalContext'] = { ...existing };
+
+    if (
+      (!merged.timeframe || merged.timeframe === 'flexible') &&
+      extracted.timeframe &&
+      extracted.timeframe !== 'flexible'
+    ) {
+      merged.timeframe = extracted.timeframe;
+    }
+
+    if (!merged.dateRange && extracted.dateRange) {
+      merged.dateRange = extracted.dateRange;
+    }
+
+    if (!merged.specificDate && extracted.specificDate) {
+      merged.specificDate = extracted.specificDate;
+    }
+
+    return merged;
   }
 }
 
