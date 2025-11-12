@@ -136,15 +136,39 @@ export default function MapPage() {
     return filtered;
   }, [destinations, filters]);
 
+  // Filter destinations with valid coordinates for map display
+  const destinationsWithCoords = useMemo(() => {
+    return filteredDestinations.filter(d => 
+      d.latitude != null && 
+      d.longitude != null && 
+      !isNaN(d.latitude) && 
+      !isNaN(d.longitude) &&
+      d.latitude !== 0 &&
+      d.longitude !== 0
+    );
+  }, [filteredDestinations]);
+
   // Calculate map center from filtered destinations
   useEffect(() => {
-    const destinationsWithCoords = filteredDestinations.filter(d => d.latitude && d.longitude);
     if (destinationsWithCoords.length > 0) {
       const avgLat = destinationsWithCoords.reduce((sum, d) => sum + (d.latitude || 0), 0) / destinationsWithCoords.length;
       const avgLng = destinationsWithCoords.reduce((sum, d) => sum + (d.longitude || 0), 0) / destinationsWithCoords.length;
       setMapCenter({ lat: avgLat, lng: avgLng });
+      // Auto-adjust zoom based on number of destinations
+      if (destinationsWithCoords.length === 1) {
+        setMapZoom(15);
+      } else if (destinationsWithCoords.length < 10) {
+        setMapZoom(12);
+      } else if (destinationsWithCoords.length < 50) {
+        setMapZoom(10);
+      } else {
+        setMapZoom(8);
+      }
+    } else if (destinations.length > 0) {
+      // Fallback: if no destinations have coordinates, keep default center
+      console.warn('[Map Page] No destinations with valid coordinates found');
     }
-  }, [filteredDestinations]);
+  }, [destinationsWithCoords, destinations.length]);
 
   const handleCategoryToggle = (category: string) => {
     setFilters(prev => {
@@ -426,33 +450,51 @@ export default function MapPage() {
           <div className="absolute inset-0 rounded-none overflow-hidden bg-gray-100 dark:bg-gray-900">
             {mapProvider === 'mapbox' ? (
               <MapView
-                destinations={filteredDestinations}
+                destinations={destinationsWithCoords}
                 onMarkerClick={handleMarkerClick}
                 center={mapCenter}
                 zoom={mapZoom}
               />
             ) : mapProvider === 'google' ? (
-              <GoogleMap
-                latitude={focusLat}
-                longitude={focusLng}
-                height="100%"
-                interactive
-                autoOpenInfoWindow
-                showInfoWindow={!!infoWindowContent}
-                infoWindowContent={infoWindowContent}
-                className="h-full rounded-none"
-              />
+              destinationsWithCoords.length > 0 ? (
+                <GoogleMap
+                  latitude={focusLat}
+                  longitude={focusLng}
+                  height="100%"
+                  interactive
+                  autoOpenInfoWindow
+                  showInfoWindow={!!infoWindowContent}
+                  infoWindowContent={infoWindowContent}
+                  className="h-full rounded-none"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                  No destinations with coordinates to display
+                </div>
+              )
             ) : (
-              <AppleMap
-                latitude={focusLat}
-                longitude={focusLng}
-                height="100%"
-                zoom={mapZoom}
-                label={focusLabel}
-                className="h-full rounded-none"
-              />
+              destinationsWithCoords.length > 0 ? (
+                <AppleMap
+                  latitude={focusLat}
+                  longitude={focusLng}
+                  height="100%"
+                  zoom={mapZoom}
+                  label={focusLabel}
+                  className="h-full rounded-none"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                  No destinations with coordinates to display
+                </div>
+              )
             )}
           </div>
+          {/* Show count of destinations with coordinates */}
+          {destinationsWithCoords.length > 0 && (
+            <div className="absolute bottom-4 left-4 z-10 px-3 py-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-800 text-xs text-gray-700 dark:text-gray-300">
+              {destinationsWithCoords.length} {destinationsWithCoords.length === 1 ? 'destination' : 'destinations'} on map
+            </div>
+          )}
         </div>
       </div>
 
