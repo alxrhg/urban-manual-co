@@ -156,7 +156,9 @@ interface PlannerContextValue {
   addComment: (dayId: string, blockId: string, message: string) => Promise<void>;
   setActiveDay: (dayId: string) => void;
   shareItinerary: () => Promise<string | null>;
-  exportItinerary: () => void;
+  exportItinerary: () => boolean;
+  exportItineraryToIcs: () => Promise<boolean>;
+  syncGoogleCalendar: () => Promise<{ success: boolean; url?: string; error?: string }>;
   addRecommendationToDay: (dayId: string, recommendation: PlannerRecommendation) => void;
   refreshRecommendations: () => Promise<void>;
 }
@@ -197,6 +199,17 @@ function safeParseJSON(value?: string | null): unknown {
     console.warn('Failed to parse itinerary metadata', error);
     return undefined;
   }
+}
+
+function sanitizeDownloadName(name: string) {
+  return (
+    name
+      .trim()
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .toLowerCase() || 'itinerary'
+  );
 }
 
 export function PlannerProvider({
@@ -740,19 +753,72 @@ export function PlannerProvider({
   }, [itinerary, user]);
 
   const exportItinerary = useCallback(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return false;
     try {
       window.print();
-      void trackEvent({
-        event_type: 'click',
-        metadata: {
-          source: 'planner',
-          action: 'export_pdf',
-          trip_id: itinerary?.tripId,
-        },
-      });
+      return true;
     } catch (exportError) {
       console.error('Failed to export itinerary', exportError);
+      return false;
+    }
+  }, []);
+
+  const exportItineraryToIcs = useCallback(async () => {
+    if (typeof window === 'undefined') return false;
+    if (!itinerary?.tripId) return false;
+    try {
+      const response = await fetch(`/api/trips/${itinerary.tripId}/calendar.ics`);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        console.error('Failed to export itinerary iCal', response.status, errorText);
+        return false;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      const baseName = sanitizeDownloadName(itinerary.title || `trip-${itinerary.tripId}`);
+      anchor.href = url;
+      anchor.download = `${baseName}.ics`;
+      anchor.rel = 'noopener noreferrer';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+      return true;
+    } catch (error) {
+      console.error('Failed to export itinerary iCal', error);
+      return false;
+    }
+  }, [itinerary]);
+
+  const syncGoogleCalendar = useCallback(async () => {
+    if (!itinerary?.tripId) {
+      return { success: false, error: 'Missing trip identifier' };
+    }
+
+    try {
+      const response = await fetch('/api/google/calendar/oauth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tripId: itinerary.tripId }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+
+      if (!response.ok) {
+        const message = typeof payload?.error === 'string' ? payload.error : 'Unable to start Google Calendar sync';
+        return { success: false, error: message };
+      }
+
+      if (typeof payload?.url !== 'string' || !payload.url) {
+        return { success: false, error: 'Missing redirect URL' };
+      }
+
+      return { success: true, url: payload.url };
+    } catch (error) {
+      console.error('Failed to start Google Calendar sync', error);
+      return { success: false, error: 'Unable to start Google Calendar sync' };
     }
   }, [itinerary?.tripId]);
 
@@ -883,6 +949,8 @@ export function PlannerProvider({
     setActiveDay,
     shareItinerary,
     exportItinerary,
+    exportItineraryToIcs,
+    syncGoogleCalendar,
     addRecommendationToDay,
     refreshRecommendations: fetchRecommendations,
   }), [
@@ -912,6 +980,8 @@ export function PlannerProvider({
     setActiveDay,
     shareItinerary,
     exportItinerary,
+    exportItineraryToIcs,
+    syncGoogleCalendar,
     addRecommendationToDay,
     fetchRecommendations,
   ]);

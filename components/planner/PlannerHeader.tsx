@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CalendarDays, MapPin, Share2, Download, Loader2 } from 'lucide-react';
+import { CalendarDays, MapPin, Share2, Download, Loader2, CalendarPlus, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePlanner } from '@/contexts/PlannerContext';
@@ -10,10 +10,25 @@ interface PlannerHeaderProps {
   title: string;
   destination?: string;
   onShare: () => Promise<string | null>;
-  onExport: () => void;
+  onExportPdf: () => Promise<void> | void;
+  onExportIcal: () => Promise<void> | void;
+  onSyncGoogle: () => Promise<void> | void;
+  exportPdfPending?: boolean;
+  exportIcalPending?: boolean;
+  syncGooglePending?: boolean;
 }
 
-export function PlannerHeader({ title, destination, onShare, onExport }: PlannerHeaderProps) {
+export function PlannerHeader({
+  title,
+  destination,
+  onShare,
+  onExportPdf,
+  onExportIcal,
+  onSyncGoogle,
+  exportPdfPending,
+  exportIcalPending,
+  syncGooglePending,
+}: PlannerHeaderProps) {
   const { itinerary, updateItinerary, saving, realtimeStatus } = usePlanner();
   const [localTitle, setLocalTitle] = useState(title);
   const [localDestination, setLocalDestination] = useState(destination || '');
@@ -47,6 +62,24 @@ export function PlannerHeader({ title, destination, onShare, onExport }: Planner
       void navigator.clipboard?.writeText(link).catch(() => undefined);
     }
     setTimeout(() => setShareStatus('idle'), 2500);
+  };
+
+  const handleExportPdf = () => {
+    if (onExportPdf) {
+      void onExportPdf();
+    }
+  };
+
+  const handleExportIcal = () => {
+    if (onExportIcal) {
+      void onExportIcal();
+    }
+  };
+
+  const handleSyncGoogle = () => {
+    if (onSyncGoogle) {
+      void onSyncGoogle();
+    }
   };
 
   return (
@@ -99,13 +132,37 @@ export function PlannerHeader({ title, destination, onShare, onExport }: Planner
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="ghost" onClick={handleShare} className="min-w-[6.5rem]">
             <Share2 className="size-4" />
             {shareStatus === 'success' ? 'Link copied' : 'Share'}
           </Button>
-          <Button variant="default" onClick={onExport}>
-            <Download className="size-4" /> Export PDF
+          <Button
+            variant="default"
+            onClick={handleExportPdf}
+            disabled={exportPdfPending}
+            className="gap-2"
+          >
+            {exportPdfPending ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+            {exportPdfPending ? 'Exporting…' : 'Export PDF'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportIcal}
+            disabled={exportIcalPending}
+            className="gap-2"
+          >
+            {exportIcalPending ? <Loader2 className="size-4 animate-spin" /> : <CalendarPlus className="size-4" />}
+            {exportIcalPending ? 'Exporting…' : 'Export iCal'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSyncGoogle}
+            disabled={syncGooglePending}
+            className="gap-2"
+          >
+            {syncGooglePending ? <Loader2 className="size-4 animate-spin" /> : <RefreshCcw className="size-4" />}
+            {syncGooglePending ? 'Syncing…' : 'Sync Google'}
           </Button>
         </div>
       </div>
