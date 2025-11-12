@@ -5,28 +5,30 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-sm whitespace-nowrap rounded-pill text-sm font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-[var(--text-base)] shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--text-primary)_45%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-primary)] aria-invalid:ring-[color:color-mix(in_srgb,var(--error)_35%,transparent)] aria-invalid:border-[color:var(--error)] active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md",
+        default:
+          "bg-[color:var(--text-primary)] text-[color:var(--bg-primary)] shadow-sm hover:shadow-md hover:opacity-90",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 shadow-sm hover:shadow-md focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-[color:var(--error)] text-[color:var(--bg-primary)] shadow-sm hover:shadow-md hover:opacity-90 focus-visible:ring-[color:color-mix(in_srgb,var(--error)_45%,transparent)]",
         outline:
-          "border bg-transparent shadow-sm hover:bg-accent hover:shadow-md dark:bg-transparent dark:border-input dark:hover:bg-input/50",
+          "border border-[color:var(--border)] bg-transparent text-text-primary shadow-sm hover:bg-[color:color-mix(in_srgb,var(--bg-secondary)_80%,transparent)] hover:shadow-md",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm hover:shadow-md",
+          "bg-surface-secondary text-text-primary shadow-sm hover:shadow-md hover:opacity-90",
         ghost:
-          "hover:bg-accent dark:hover:bg-accent/50 hover:scale-[1.02]",
-        link: "text-primary underline-offset-4 hover:underline",
+          "hover:bg-[color:color-mix(in_srgb,var(--bg-secondary)_65%,transparent)] hover:scale-[1.02]",
+        link: "text-text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-5 py-2 has-[>svg]:px-4",
-        sm: "h-9 rounded-2xl gap-1.5 px-3.5 has-[>svg]:px-3",
-        lg: "h-11 rounded-2xl px-7 has-[>svg]:px-5",
-        icon: "size-10",
-        "icon-sm": "size-9",
-        "icon-lg": "size-11",
+        default:
+          "h-[calc(var(--space-2xl)-var(--space-sm))] px-lg py-sm has-[>svg]:px-md",
+        sm: "h-[calc(var(--space-xl)+var(--space-xs))] gap-[var(--space-xs)] rounded-pill px-md has-[>svg]:px-sm",
+        lg: "h-[calc(var(--space-2xl)-var(--space-xs))] px-xl has-[>svg]:px-lg",
+        icon: "size-[calc(var(--space-2xl)-var(--space-sm))]",
+        "icon-sm": "size-[calc(var(--space-xl)+var(--space-xs))]",
+        "icon-lg": "size-[calc(var(--space-2xl)-var(--space-xs))]",
       },
     },
     defaultVariants: {

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import "../styles/tokens.css";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -135,7 +136,7 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      <body className="antialiased bg-surface-primary text-text-primary">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
