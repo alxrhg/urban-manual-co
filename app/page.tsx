@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -2241,58 +2241,70 @@ export default function Home() {
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">
-                  <div className="flex justify-end items-start gap-3 relative flex-wrap">
-                    {/* Filter Button - Expands inline below */}
-                    <div className="w-full md:w-auto">
-                      <SearchFiltersComponent
-                        filters={advancedFilters}
-                        onFiltersChange={(newFilters) => {
-                          setAdvancedFilters(newFilters);
-                          if (newFilters.city !== undefined) {
-                            setSelectedCity(newFilters.city || '');
-                          }
-                          if (newFilters.category !== undefined) {
-                            setSelectedCategory(newFilters.category || '');
-                          }
-                          Object.entries(newFilters).forEach(([key, value]) => {
-                            if (value !== undefined && value !== null && value !== '') {
-                              trackFilterChange({ filterType: key, value });
+                  <div className="flex justify-end items-center gap-3 relative flex-wrap">
+                    {/* Wrapper for Filter and Map Toggle to ensure alignment */}
+                    <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
+                      {/* Filter Button - Expands inline below */}
+                      <div className="w-full md:w-auto">
+                        <SearchFiltersComponent
+                          filters={advancedFilters}
+                          onFiltersChange={(newFilters) => {
+                            setAdvancedFilters(newFilters);
+                            if (newFilters.city !== undefined) {
+                              setSelectedCity(newFilters.city || '');
                             }
-                          });
-                        }}
-                        availableCities={cities}
-                        availableCategories={categories}
-                        onLocationChange={handleLocationChange}
-                      />
+                            if (newFilters.category !== undefined) {
+                              setSelectedCategory(newFilters.category || '');
+                            }
+                            Object.entries(newFilters).forEach(([key, value]) => {
+                              if (value !== undefined && value !== null && value !== '') {
+                                trackFilterChange({ filterType: key, value });
+                              }
+                            });
+                          }}
+                          availableCities={cities}
+                          availableCategories={categories}
+                          onLocationChange={handleLocationChange}
+                        />
+                      </div>
+
+                      {/* Grid/Map Toggle */}
+                      <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                        <button
+                          onClick={() => setViewMode('grid')}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                            viewMode === 'grid'
+                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                          }`}
+                          aria-label="Grid view"
+                        >
+                          <LayoutGrid className="h-4 w-4" />
+                          <span>Grid</span>
+                        </button>
+                        <button
+                          onClick={() => setViewMode('map')}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                            viewMode === 'map'
+                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                          }`}
+                          aria-label="Map view"
+                        >
+                          <Map className="h-4 w-4" />
+                          <span>Map</span>
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Grid/Map Toggle */}
-                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                    {/* Add Trip Button */}
                     <button
-                      onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                        viewMode === 'grid'
-                          ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                      aria-label="Grid view"
+                      onClick={() => setShowTripPlanner(true)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80 flex-shrink-0"
                     >
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>Grid</span>
+                      <Plus className="h-4 w-4" />
+                      <span>Add Trip</span>
                     </button>
-                    <button
-                      onClick={() => setViewMode('map')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                        viewMode === 'map'
-                          ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                      aria-label="Map view"
-                    >
-                      <Map className="h-4 w-4" />
-                      <span>Map</span>
-                    </button>
-                  </div>
                   </div>
                 </div>
             
