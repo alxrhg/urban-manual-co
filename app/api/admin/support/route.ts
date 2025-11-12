@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       updates.escalated = true;
     }
 
-    if (payload.action === 'update_priority' && payload.priority) {
+    if (payload.priority) {
       updates.priority = payload.priority;
     }
 
