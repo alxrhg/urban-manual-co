@@ -2202,7 +2202,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                                 <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
                               </div>
                             )}
-                            <span>{currentLoadingText}</span>
+                            <span>{typeof currentLoadingText === 'string' ? currentLoadingText : String(currentLoadingText || 'Loading...')}</span>
                           </div>
                         </div>
                       )}
@@ -2217,15 +2217,17 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                             <div key={index} className="space-y-2">
                               {message.type === 'user' ? (
                                 <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                  {message.content}
+                                  {typeof message.content === 'string' ? message.content : String(message.content || '')}
                                 </div>
                               ) : (
                                 <div className="space-y-4">
-                                  <MarkdownRenderer
-                                    content={message.content}
-                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                  />
-                                  {message.contextPrompt && (
+                                  {message.content && typeof message.content === 'string' && (
+                                    <MarkdownRenderer
+                                      content={message.content}
+                                      className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                    />
+                                  )}
+                                  {message.contextPrompt && typeof message.contextPrompt === 'string' && (
                                     <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
                                       {message.contextPrompt}
                                     </div>
@@ -2236,7 +2238,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                           ))}
                           
                           {/* Show chatResponse if no messages yet but response exists */}
-                          {chatMessages.length === 0 && chatResponse && !searching && (
+                          {chatMessages.length === 0 && chatResponse && !searching && typeof chatResponse === 'string' && (
                             <div className="space-y-4">
                               <MarkdownRenderer
                                 content={chatResponse}

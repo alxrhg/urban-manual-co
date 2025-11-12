@@ -10,6 +10,9 @@ interface MarkdownRendererProps {
  * Handles basic markdown formatting: bold, italic, lists, line breaks
  */
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
+  // Ensure content is always a string
+  const safeContent = typeof content === 'string' ? content : String(content || '');
+  
   const renderMarkdown = (text: string): ReactElement[] => {
     const lines = text.split('\n');
     const elements: ReactElement[] = [];
@@ -18,14 +21,16 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
 
     const processInlineMarkdown = (line: string): (string | ReactElement)[] => {
       const parts: (string | ReactElement)[] = [];
-      let remaining = line;
+      // Ensure line is a string
+      const safeLine = typeof line === 'string' ? line : String(line || '');
+      let remaining = safeLine;
       let key = 0;
 
       while (remaining.length > 0) {
         // Match bold text: **text**
         const boldMatch = remaining.match(/^\*\*(.+?)\*\*/);
         if (boldMatch) {
-          parts.push(<strong key={`bold-${key++}`}>{boldMatch[1]}</strong>);
+          parts.push(<strong key={`bold-${key++}`}>{String(boldMatch[1] || '')}</strong>);
           remaining = remaining.slice(boldMatch[0].length);
           continue;
         }
@@ -33,7 +38,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         // Match italic text: *text* (but not ** which is bold)
         const italicMatch = remaining.match(/^\*([^*]+?)\*/);
         if (italicMatch) {
-          parts.push(<em key={`italic-${key++}`}>{italicMatch[1]}</em>);
+          parts.push(<em key={`italic-${key++}`}>{String(italicMatch[1] || '')}</em>);
           remaining = remaining.slice(italicMatch[0].length);
           continue;
         }
@@ -41,14 +46,14 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         // Match any other character
         const nextSpecial = remaining.search(/\*\*/);
         if (nextSpecial === -1) {
-          parts.push(remaining);
+          parts.push(String(remaining));
           break;
         } else if (nextSpecial === 0) {
           // Just add the asterisk if no match was found
-          parts.push(remaining[0]);
+          parts.push(String(remaining[0] || ''));
           remaining = remaining.slice(1);
         } else {
-          parts.push(remaining.slice(0, nextSpecial));
+          parts.push(String(remaining.slice(0, nextSpecial)));
           remaining = remaining.slice(nextSpecial);
         }
       }
@@ -105,7 +110,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
 
   return (
     <div className={className}>
-      {renderMarkdown(content)}
+      {renderMarkdown(safeContent)}
     </div>
   );
 }
