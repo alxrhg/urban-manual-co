@@ -15,7 +15,7 @@ import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import ProfileAvatar from "@/components/ProfileAvatar";
-import { getCountryInfo, getCountryName } from "@/data/countryCodes";
+import { getCountryInfo } from "@/data/countryCodes";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -41,6 +41,30 @@ export default function Account() {
   
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
+
+function resolveCountryFromCity(city?: string | null): string | null {
+  if (!city) return null;
+
+  const normalized = city.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const variations = [
+    city,
+    normalized,
+    normalized.replace(/\s+/g, '-'),
+    city.replace(/\s+/g, '-').toLowerCase(),
+    normalized.replace(/-/g, ''),
+  ];
+
+  for (const key of variations) {
+    const country = cityCountryMap[key];
+    if (country) {
+      return country;
+    }
+  }
+
+  return null;
+}
 
   // Get initial tab from URL query param
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>(() => {
@@ -275,79 +299,58 @@ const isNonEmptyString = (value: unknown): value is string =>
 
   // Calculate stats
   const stats = useMemo(() => {
-    const uniqueCities = new Set([
-      ...savedPlaces.map(p => p.destination?.city).filter(Boolean),
-      ...visitedPlaces.filter(p => p.destination).map(p => p.destination!.city)
-    ]);
-
-    // Get countries from destination.country field first, fallback to cityCountryMap
-    const countriesFromDestinations = new Set<string>();
-    savedPlaces.forEach((place) => {
-      const countryName = getCountryName(place.destination?.country);
-      if (countryName) countriesFromDestinations.add(countryName);
-    });
-    visitedPlaces.forEach((place) => {
-      const countryName = getCountryName(place.destination?.country);
-      if (countryName) countriesFromDestinations.add(countryName);
-    });
-    
-    // Also get countries from city mapping for destinations without country field
-    // Normalize city names to match cityCountryMap format (lowercase, hyphenated)
-    const countriesFromCities = Array.from(uniqueCities)
-      .map(city => {
-        if (!city) return null;
-        // Try exact match first
-        let country = cityCountryMap[city];
-        if (country) return getCountryName(country);
-        
-        // Try lowercase match
-        const cityLower = city.toLowerCase();
-        country = cityCountryMap[cityLower];
-        if (country) return getCountryName(country);
-        
-        // Try hyphenated version (e.g., "New York" -> "new-york")
-        const cityHyphenated = cityLower.replace(/\s+/g, '-');
-        country = cityCountryMap[cityHyphenated];
-        if (country) return getCountryName(country);
-        
-        // Try without hyphens (e.g., "new-york" -> "newyork" - less common but possible)
-        const cityNoHyphens = cityLower.replace(/-/g, '');
-        country = cityCountryMap[cityNoHyphens];
-        
-        return getCountryName(country) || null;
-      })
-      .filter(isNonEmptyString);
-    
-    const countriesFromApi = new Set<string>();
-    visitedCountriesApi.forEach(({ country_code, country_name }) => {
-      const fromCode = getCountryInfo(country_code)?.name;
-      const fromName = getCountryName(country_name);
-      const canonical = fromCode || fromName || country_name;
-      if (canonical) countriesFromApi.add(canonical);
-    });
-
-    const rawCountryNames = new Set<string>([
-      ...Array.from(countriesFromDestinations).filter(isNonEmptyString),
-      ...countriesFromCities.filter(isNonEmptyString),
-      ...Array.from(countriesFromApi).filter(isNonEmptyString),
-    ]);
-
-    const canonicalCountryNames = new Set<string>();
+    const visitedCities = new Set<string>();
+    const visitedCountryNames = new Set<string>();
     const visitedCountryIso2Codes = new Set<string>();
     const visitedCountryIso3Codes = new Set<string>();
 
-    rawCountryNames.forEach((countryName) => {
-      if (!countryName) return;
-      const info = getCountryInfo(countryName);
+    const registerCountry = (input?: string | null) => {
+      if (!isNonEmptyString(input)) {
+        return false;
+      }
+
+      const info = getCountryInfo(input);
       if (info) {
-        canonicalCountryNames.add(info.name);
+        visitedCountryNames.add(info.name);
         visitedCountryIso2Codes.add(info.iso2.toUpperCase());
         visitedCountryIso3Codes.add(info.iso3.toUpperCase());
-      } else if (isNonEmptyString(countryName)) {
-        canonicalCountryNames.add(countryName);
+        return true;
       }
+
+      return false;
+    };
+
+    const registerCountryWithFallback = (...inputs: Array<string | null | undefined>) => {
+      for (const candidate of inputs) {
+        if (registerCountry(candidate)) {
+          return;
+        }
+      }
+
+      for (const candidate of inputs) {
+        if (isNonEmptyString(candidate)) {
+          visitedCountryNames.add(candidate.trim());
+          return;
+        }
+      }
+    };
+
+    visitedPlaces.forEach((place) => {
+      const destination = place.destination;
+      if (!destination) return;
+
+      if (isNonEmptyString(destination.city)) {
+        visitedCities.add(destination.city);
+      }
+
+      const mappedCountry = resolveCountryFromCity(destination.city);
+      registerCountryWithFallback(destination.country, mappedCountry);
     });
-    
+
+    visitedCountriesApi.forEach(({ country_code, country_name }) => {
+      registerCountryWithFallback(country_code, country_name);
+    });
+
     // Extract visited destinations with coordinates for map
     const visitedDestinationsWithCoords = visitedPlaces
       .filter(p => p.destination)
@@ -360,11 +363,8 @@ const isNonEmptyString = (value: unknown): value is string =>
 
     // Debug logging to help diagnose map issues
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Account] Countries found:', Array.from(canonicalCountryNames));
-      console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
-      console.log('[Account] Countries from cities:', countriesFromCities);
-      console.log('[Account] Countries from API:', Array.from(countriesFromApi));
-      console.log('[Account] Unique cities:', Array.from(uniqueCities));
+      console.log('[Account] Countries found:', Array.from(visitedCountryNames));
+      console.log('[Account] Unique cities:', Array.from(visitedCities));
       console.log('[Account] Visited places count:', visitedPlaces.length);
       console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
       console.log('[Account] Visited country ISO2 codes:', Array.from(visitedCountryIso2Codes));
@@ -376,8 +376,8 @@ const isNonEmptyString = (value: unknown): value is string =>
       : 0;
 
     return {
-      uniqueCities,
-      uniqueCountries: canonicalCountryNames,
+      uniqueCities: visitedCities,
+      uniqueCountries: visitedCountryNames,
       visitedCountryIso2Codes,
       visitedCountryIso3Codes,
       visitedCount: visitedPlaces.length,
