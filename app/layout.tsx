@@ -4,6 +4,8 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
+import { TripProvider } from "@/contexts/TripContext";
+import { TripInterfaceProvider } from "@/contexts/TripInterfaceContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -120,14 +122,18 @@ export default function RootLayout({
           <SplashScreen />
           <TRPCProvider>
             <AuthProvider>
-              <ItineraryProvider>
-                <Header />
-                <main className="min-h-screen page-transition">
-                  {children}
-                </main>
-                <Footer />
-                <CookieConsent />
-              </ItineraryProvider>
+              <TripProvider>
+                <TripInterfaceProvider>
+                  <ItineraryProvider>
+                    <Header />
+                    <main className="min-h-screen page-transition">
+                      {children}
+                    </main>
+                    <Footer />
+                    <CookieConsent />
+                  </ItineraryProvider>
+                </TripInterfaceProvider>
+              </TripProvider>
             </AuthProvider>
           </TRPCProvider>
           <ToastContainer />

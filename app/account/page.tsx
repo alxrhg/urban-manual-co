@@ -15,7 +15,7 @@ import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import ProfileAvatar from "@/components/ProfileAvatar";
-import { TripPlanner } from "@/components/TripPlanner";
+import { useTripInterface } from "@/contexts/TripInterfaceContext";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -38,6 +38,7 @@ export default function Account() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const { openTripPlanner } = useTripInterface();
   
   // Get initial tab from URL query param
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips'>(() => {
@@ -60,8 +61,6 @@ export default function Account() {
   const [creatingCollection, setCreatingCollection] = useState(false);
 
   // Trip management state
-  const [showTripDialog, setShowTripDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -591,10 +590,13 @@ export default function Account() {
           <div className="fade-in">
             <div className="flex justify-end mb-4">
               <button
-                onClick={() => {
-                  setEditingTripId(null);
-                  setShowTripDialog(true);
-                }}
+                onClick={() =>
+                  openTripPlanner({
+                    onClose: () => {
+                      loadUserData();
+                    },
+                  })
+                }
                 className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
               >
                 <Plus className="h-3 w-3" />
@@ -607,10 +609,13 @@ export default function Account() {
                 <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
                 <button
-                  onClick={() => {
-                    setEditingTripId(null);
-                    setShowTripDialog(true);
-                  }}
+                  onClick={() =>
+                    openTripPlanner({
+                      onClose: () => {
+                        loadUserData();
+                      },
+                    })
+                  }
                   className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
                 >
                   Create your first trip
@@ -669,8 +674,12 @@ export default function Account() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEditingTripId(trip.id);
-                          setShowTripDialog(true);
+                          openTripPlanner({
+                            tripId: trip.id,
+                            onClose: () => {
+                              loadUserData();
+                            },
+                          });
                         }}
                         className="p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                         aria-label={`Edit ${trip.title}`}
@@ -813,16 +822,6 @@ export default function Account() {
         </div>
       )}
 
-      {/* Trip Planner Modal */}
-      <TripPlanner
-        isOpen={showTripDialog}
-        tripId={editingTripId || undefined}
-        onClose={() => {
-          setShowTripDialog(false);
-          setEditingTripId(null);
-          loadUserData();
-        }}
-      />
     </main>
   );
 }
