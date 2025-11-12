@@ -68,13 +68,16 @@ BEGIN
       )', trip_col_name);
     
     -- INSERT policy: only trip owners can add collaborators
+    -- In WITH CHECK for INSERT, unqualified column names refer to the new row
     EXECUTE format('CREATE POLICY "Trip owners can add collaborators"
       ON itinerary_collaborators FOR INSERT
       WITH CHECK (
-        check_trip_ownership_bypass_rls(NEW.%I)
+        check_trip_ownership_bypass_rls(%I)
       )', trip_col_name);
     
     -- UPDATE policy: trip owners can update, collaborators can update their own status
+    -- USING checks existing row, WITH CHECK checks new row values
+    -- In WITH CHECK for UPDATE, unqualified column names refer to the new row values
     EXECUTE format('CREATE POLICY "Users can update collaborators"
       ON itinerary_collaborators FOR UPDATE
       USING (
@@ -83,7 +86,7 @@ BEGIN
       )
       WITH CHECK (
         user_id = auth.uid()
-        OR check_trip_ownership_bypass_rls(itinerary_collaborators.%I)
+        OR check_trip_ownership_bypass_rls(%I)
       )', trip_col_name, trip_col_name);
     
     -- DELETE policy: trip owners can remove collaborators

@@ -330,7 +330,7 @@ export default function Account() {
   // Show loading
   if (!authChecked || isLoadingData) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="w-full px-6 md:px-10 py-20">
         <PageLoader />
       </main>
     );
@@ -339,7 +339,7 @@ export default function Account() {
   // Show sign in screen
   if (!user) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="w-full px-6 md:px-10 py-20">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-light mb-8">Account</h1>
@@ -359,8 +359,8 @@ export default function Account() {
   }
 
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="container mx-auto px-4 md:px-8 lg:px-12">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
         {/* Header - Matches homepage spacing and style */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
