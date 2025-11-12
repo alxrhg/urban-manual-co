@@ -816,9 +816,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         <div className="relative flex-1 overflow-y-auto bg-white dark:bg-gray-950">
           <div className="px-6 pb-36 pt-6 space-y-8">
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={async () => {
+            <div className="-mx-6">
+              <div
+                className="flex gap-2 overflow-x-auto px-6 pb-2"
+                role="toolbar"
+                aria-label="Destination quick actions"
+              >
+                <button
+                  onClick={async () => {
                   if (!user) {
                     router.push('/auth/login');
                     return;
@@ -846,84 +851,85 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     }
                   }
                 }}
-                className={`group flex w-full items-center justify-center gap-2 rounded-full border px-4 py-4 text-sm font-medium transition-colors ${
-                  isSaved
-                    ? 'border-transparent bg-[#FF6B9F] text-black shadow-sm hover:bg-[#ff7bac]'
-                    : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
-                }`}
-                aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
-                aria-pressed={isSaved}
-              >
-                <Bookmark
-                  className={`h-4 w-4 transition ${
+                  className={`group inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
                     isSaved
-                      ? 'fill-current text-black'
-                      : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
+                      ? 'border-transparent bg-[#FF6B9F] text-black shadow-sm hover:bg-[#ff7bac]'
+                      : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
                   }`}
-                />
-                <span>{isSaved ? 'Saved' : 'Save'}</span>
-              </button>
-
-              <DropdownMenu open={showMobileVisitedMenu} onOpenChange={setShowMobileVisitedMenu}>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={`group flex w-full items-center justify-center gap-2 rounded-full border px-4 py-4 text-sm font-medium transition-colors ${
-                      isVisited
-                        ? 'border-transparent bg-[#6BFFB8] text-black shadow-sm'
-                        : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
+                  aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+                  aria-pressed={isSaved}
+                >
+                  <Bookmark
+                    className={`h-4 w-4 transition ${
+                      isSaved
+                        ? 'fill-current text-black'
+                        : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
                     }`}
-                    aria-pressed={isVisited}
-                  >
-                    <Check
-                      className={`h-4 w-4 transition ${
+                  />
+                  <span>{isSaved ? 'Saved' : 'Save'}</span>
+                </button>
+
+                <DropdownMenu open={showMobileVisitedMenu} onOpenChange={setShowMobileVisitedMenu}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`group inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
                         isVisited
-                          ? 'stroke-[3] text-black'
-                          : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
+                          ? 'border-transparent bg-[#6BFFB8] text-black shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
                       }`}
-                    />
-                    <span>{isVisited ? 'Visited' : 'Visited?'}</span>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-44">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setShowVisitedModal(true);
-                      setShowMobileVisitedMenu(false);
-                    }}
-                  >
-                    <Plus className="mr-2 h-3 w-3" />
-                    Add details
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      handleVisitToggle();
-                      setShowMobileVisitedMenu(false);
-                    }}
-                  >
-                    {isVisited ? 'Remove visit' : 'Mark visited'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      aria-pressed={isVisited}
+                    >
+                      <Check
+                        className={`h-4 w-4 transition ${
+                          isVisited
+                            ? 'stroke-[3] text-black'
+                            : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
+                        }`}
+                      />
+                      <span>{isVisited ? 'Visited' : 'Visited?'}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-44">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setShowVisitedModal(true);
+                        setShowMobileVisitedMenu(false);
+                      }}
+                    >
+                      <Plus className="mr-2 h-3 w-3" />
+                      Add details
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        handleVisitToggle();
+                        setShowMobileVisitedMenu(false);
+                      }}
+                    >
+                      {isVisited ? 'Remove visit' : 'Mark visited'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              <button
-                onClick={handleShare}
-                className="group flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-4 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
-              >
-                <Share2 className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
-                <span>{copied ? 'Copied!' : 'Share'}</span>
-              </button>
+                <button
+                  onClick={handleShare}
+                  className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
+                >
+                  <Share2 className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
+                  <span>{copied ? 'Copied!' : 'Share'}</span>
+                </button>
 
-              <button
-                onClick={() => {
-                  const url = `https://maps.apple.com/?q=${encodeURIComponent(`${destination.name} ${destination.city ?? ''}`)}`;
-                  window.open(url, '_blank', 'noopener,noreferrer');
-                }}
-                className="group flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-4 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
-              >
-                <Navigation className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
-                <span>Directions</span>
-              </button>
+                <button
+                  onClick={() => {
+                    const url = `https://maps.apple.com/?q=${encodeURIComponent(`${destination.name} ${destination.city ?? ''}`)}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                  className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
+                >
+                  <Navigation className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
+                  <span>Directions</span>
+                </button>
+              </div>
             </div>
 
             {destination.micro_description && (
