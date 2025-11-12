@@ -1,9 +1,12 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
+import { X, MapPin, Bookmark, Share2, Navigation, ChevronDown, Plus, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,20 +14,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
-import { TripPlanner } from '@/components/TripPlanner';
-import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { RealtimeReportForm } from '@/components/RealtimeReportForm';
-import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
-import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
+import { LocatedInBadge } from '@/components/NestedDestinations';
+import { getParentDestination } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { getCountryInfo } from '@/data/countryCodes';
@@ -210,20 +210,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
-  const [showTripPlanner, setShowTripPlanner] = useState(false);
-  const [tripPlannerDestination, setTripPlannerDestination] = useState<{
-    slug: string;
-    name: string;
-    city?: string | null;
-    category?: string | null;
-  } | null>(null);
   const [copied, setCopied] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
   const [parentDestination, setParentDestination] = useState<Destination | null>(null);
-  const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
-  const [loadingNested, setLoadingNested] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
 
@@ -431,46 +422,34 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     loadDestinationData();
   }, [user, destination]);
 
-  // Load parent and nested destinations
+  // Load parent destination information
   useEffect(() => {
-    async function loadNestedData() {
+    const loadParentDestination = async () => {
       if (!destination || !isOpen) {
         setParentDestination(null);
-        setNestedDestinations([]);
         return;
       }
 
-      setLoadingNested(true);
       const supabaseClient = createClient();
       if (!supabaseClient) {
-        setLoadingNested(false);
+        setParentDestination(null);
         return;
       }
 
       try {
-        // Load parent if this is a nested destination
         if (destination.parent_destination_id) {
           const parent = await getParentDestination(supabaseClient, destination.id!);
           setParentDestination(parent);
-      } else {
+        } else {
           setParentDestination(null);
         }
-
-        // Load nested destinations if this is a parent
-        if (destination.id) {
-          const nested = await getNestedDestinations(supabaseClient, destination.id, false);
-          setNestedDestinations(nested);
-      } else {
-          setNestedDestinations([]);
+      } catch (error) {
+        console.warn('[DestinationDrawer] Error loading parent destination:', error);
+        setParentDestination(null);
       }
-    } catch (error) {
-        console.warn('[DestinationDrawer] Error loading nested data:', error);
-    } finally {
-        setLoadingNested(false);
-    }
-    }
+    };
 
-    loadNestedData();
+    void loadParentDestination();
   }, [destination, isOpen]);
 
 
@@ -658,7 +637,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         } else {
           setRecommendations([]);
         }
-      } catch (error) {
+      } catch {
         // Silently fail - recommendations are optional
         setRecommendations([]);
       } finally {
@@ -867,13 +846,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   return;
                 }
                 if (!destination.slug) return;
-                setTripPlannerDestination({
-                  slug: destination.slug,
-                  name: destination.name,
-                  city: destination.city,
-                  category: destination.category,
+                const params = new URLSearchParams({
+                  destinationSlug: destination.slug,
+                  destinationName: destination.name,
                 });
-                setShowTripPlanner(true);
+                if (destination.city) {
+                  params.set('city', destination.city);
+                }
+                if (destination.category) {
+                  params.set('category', destination.category);
+                }
+                router.push(`/trips/new?${params.toString()}`);
+                onClose();
               }}
               className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -1517,13 +1501,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   return;
                 }
                 if (!destination.slug) return;
-                setTripPlannerDestination({
-                  slug: destination.slug,
-                  name: destination.name,
-                  city: destination.city,
-                  category: destination.category,
+                const params = new URLSearchParams({
+                  destinationSlug: destination.slug,
+                  destinationName: destination.name,
                 });
-                setShowTripPlanner(true);
+                if (destination.city) {
+                  params.set('city', destination.city);
+                }
+                if (destination.category) {
+                  params.set('category', destination.category);
+                }
+                router.push(`/trips/new?${params.toString()}`);
+                onClose();
               }}
               className="flex items-center justify-center gap-1.5 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -1616,23 +1605,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         />
       )}
 
-      <TripPlanner
-        isOpen={showTripPlanner}
-        onClose={() => {
-          setShowTripPlanner(false);
-          setTripPlannerDestination(null);
-        }}
-        initialDestination={
-          tripPlannerDestination
-            ? {
-                slug: tripPlannerDestination.slug,
-                name: tripPlannerDestination.name,
-                city: tripPlannerDestination.city,
-                category: tripPlannerDestination.category,
-              }
-            : undefined
-        }
-      />
     </>
   );
 }
