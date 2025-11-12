@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripBudgetTracker } from './TripBudgetTracker';
@@ -52,11 +51,15 @@ interface TripLocation {
   city: string;
   category: string;
   image: string;
+  slug?: string | null;
   time?: string;
   notes?: string;
   cost?: number;
   duration?: number;
   mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  travelTimeMinutes?: number;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  metadata?: TripLocationMetadata;
 }
 
 interface DayItinerary {
@@ -66,9 +69,91 @@ interface DayItinerary {
   notes?: string;
 }
 
+interface TripLocationMetadata {
+  destinationId?: number;
+  startTime?: string | null;
+  endTime?: string | null;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  travelTimeMinutes?: number | null;
+  [key: string]: unknown;
+}
+
+type AIGenerationMode = 'generate' | 'regenerate' | 'refine';
+
+interface AIGenerationMetadata {
+  reasoning: string;
+  confidence: number;
+  generatedAt: string;
+  mode: AIGenerationMode;
+  dayNumber?: number;
+  adjustments?: {
+    pacing?: 'relaxed' | 'balanced' | 'packed';
+    budgetPreference?: 'budget' | 'mid' | 'luxury';
+    themes?: string[];
+    customPrompt?: string;
+  } | null;
+  optimization?: {
+    totalTravelTime: number;
+    totalEstimatedCost: number;
+    routeEfficiency: number;
+    categoryBalance: number;
+  };
+}
+
+interface AIPlanDayItem {
+  destinationId?: number;
+  slug?: string | null;
+  name: string;
+  city?: string | null;
+  category?: string | null;
+  image?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  durationMinutes?: number | null;
+  travelTimeMinutes?: number | null;
+  estimatedCost?: number | null;
+  notes?: string | null;
+  order?: number | null;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night' | null;
+}
+
+interface AIPlanDay {
+  dayNumber: number;
+  date: string;
+  summary?: string | null;
+  totals?: {
+    estimatedCost?: number | null;
+    travelMinutes?: number | null;
+  };
+  items: AIPlanDayItem[];
+}
+
+interface AIPlanResponse {
+  trip: {
+    id: string;
+    destination: string;
+    startDate: string;
+    endDate: string;
+  };
+  metadata: AIGenerationMetadata;
+  totals?: {
+    estimatedCost?: number | null;
+    estimatedTravelMinutes?: number | null;
+  };
+  days: AIPlanDay[];
+}
+
+interface AIGenerationOptions {
+  mode?: AIGenerationMode;
+  dayNumber?: number;
+  pacing?: 'relaxed' | 'balanced' | 'packed';
+  budgetPreference?: 'budget' | 'mid' | 'luxury';
+  themes?: string[];
+  customPrompt?: string;
+}
+
 export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: TripPlannerProps) {
   const { user } = useAuth();
-  const router = useRouter();
   const [tripName, setTripName] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -84,7 +169,9 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
   >('itinerary');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [aiGenerating, setAIGenerating] = useState(false);
+  const [aiGenerationMeta, setAIGenerationMeta] = useState<AIGenerationMetadata | null>(null);
+  const [aiError, setAIError] = useState<string | null>(null);
   const [tripSummaries, setTripSummaries] = useState<TripSummary[]>([]);
   const [loadingTripSummaries, setLoadingTripSummaries] = useState(false);
   const [addingToTripId, setAddingToTripId] = useState<string | null>(null);
@@ -134,7 +221,16 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
     resetForm();
     setStep('create');
-  }, [isOpen, tripId, user, initialDestination, step, bypassSelection, fetchTripSummaries]);
+  }, [
+    isOpen,
+    tripId,
+    user,
+    initialDestination,
+    step,
+    bypassSelection,
+    fetchTripSummaries,
+    loadTrip,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -163,67 +259,70 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     setTotalBudget(0);
     setHotelLocation('');
     setActiveTab('itinerary');
+    setAIGenerationMeta(null);
+    setAIError(null);
+    setAIGenerating(false);
     if (!options?.preserveTrip) {
-    setCurrentTripId(null);
+      setCurrentTripId(null);
     }
   };
 
-  const loadTrip = async (id: string) => {
-    setLoading(true);
-    try {
-      const supabaseClient = createClient();
-      if (!supabaseClient || !user) return;
+  const loadTrip = useCallback(
+    async (id: string) => {
+      try {
+        const supabaseClient = createClient();
+        if (!supabaseClient || !user) return;
 
-      // Load trip
-      const { data: trip, error: tripError } = await supabaseClient
-        .from('trips')
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+        // Load trip
+        const { data: trip, error: tripError } = await supabaseClient
+          .from('trips')
+          .select('*')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
 
-      if (tripError || !trip) {
-        console.error('Error loading trip:', tripError);
-        alert('Failed to load trip');
-        return;
-      }
-
-      setTripName(trip.title);
-      setDestination(trip.destination || '');
-      setStartDate(trip.start_date || '');
-      setEndDate(trip.end_date || '');
-      setHotelLocation(trip.description || ''); // Using description for hotel location
-      setCurrentTripId(trip.id);
-
-      // Load itinerary items
-      // First verify trip ownership to avoid RLS recursion
-      const { data: tripCheck, error: tripCheckError } = await supabaseClient
-        .from('trips')
-        .select('id')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (tripCheckError || !tripCheck) {
-        console.error('Error verifying trip ownership:', tripCheckError);
-        alert('Trip not found or access denied');
-        return;
-      }
-
-      const { data: items, error: itemsError } = await supabaseClient
-        .from('itinerary_items')
-        .select('*')
-        .eq('trip_id', id)
-        .order('day', { ascending: true })
-        .order('order_index', { ascending: true });
-
-      if (itemsError) {
-        console.error('Error loading itinerary items:', itemsError);
-        // If recursion error, continue with empty items
-        if (itemsError.message && itemsError.message.includes('infinite recursion')) {
-          console.warn('RLS recursion detected, continuing with empty items');
+        if (tripError || !trip) {
+          console.error('Error loading trip:', tripError);
+          alert('Failed to load trip');
+          return;
         }
-      }
+
+        setTripName(trip.title);
+        setDestination(trip.destination || '');
+        setStartDate(trip.start_date || '');
+        setEndDate(trip.end_date || '');
+        setHotelLocation(trip.description || ''); // Using description for hotel location
+        setCurrentTripId(trip.id);
+
+        // Load itinerary items
+        // First verify trip ownership to avoid RLS recursion
+        const { data: tripCheck, error: tripCheckError } = await supabaseClient
+          .from('trips')
+          .select('id')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (tripCheckError || !tripCheck) {
+          console.error('Error verifying trip ownership:', tripCheckError);
+          alert('Trip not found or access denied');
+          return;
+        }
+
+        const { data: items, error: itemsError } = await supabaseClient
+          .from('itinerary_items')
+          .select('*')
+          .eq('trip_id', id)
+          .order('day', { ascending: true })
+          .order('order_index', { ascending: true });
+
+        if (itemsError) {
+          console.error('Error loading itinerary items:', itemsError);
+          // If recursion error, continue with empty items
+          if (itemsError.message && itemsError.message.includes('infinite recursion')) {
+            console.warn('RLS recursion detected, continuing with empty items');
+          }
+        }
 
       // Group items by day
       if (items && items.length > 0) {
@@ -235,7 +334,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           }
 
           // Parse notes for additional data (cost, duration, mealType)
-          let notesData: any = {};
+          let notesData: Record<string, unknown> = {};
           if (item.notes) {
             try {
               notesData = JSON.parse(item.notes);
@@ -244,17 +343,38 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
             }
           }
 
+          const parsedNotes = notesData as {
+            raw?: unknown;
+            cost?: unknown;
+            duration?: unknown;
+            mealType?: TripLocation['mealType'];
+            image?: unknown;
+            city?: unknown;
+            category?: unknown;
+            slug?: unknown;
+          };
+
+          const rawNotes = typeof parsedNotes.raw === 'string' ? parsedNotes.raw : undefined;
+          const costValue = typeof parsedNotes.cost === 'number' ? parsedNotes.cost : undefined;
+          const durationValue = typeof parsedNotes.duration === 'number' ? parsedNotes.duration : undefined;
+          const mealTypeValue = parsedNotes.mealType;
+          const imageValue = typeof parsedNotes.image === 'string' ? parsedNotes.image : undefined;
+          const cityValue = typeof parsedNotes.city === 'string' ? parsedNotes.city : trip.destination || '';
+          const categoryValue = typeof parsedNotes.category === 'string' ? parsedNotes.category : item.description || '';
+          const slugValue = typeof parsedNotes.slug === 'string' ? parsedNotes.slug : item.destination_slug || null;
+
           const location: TripLocation = {
             id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
             name: item.title,
-            city: destination || '',
-            category: item.description || '',
-            image: notesData.image || '/placeholder-image.jpg',
+            city: cityValue,
+            category: categoryValue,
+            image: imageValue || '/placeholder-image.jpg',
+            slug: slugValue,
             time: item.time || undefined,
-            notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
-            cost: notesData.cost || undefined,
-            duration: notesData.duration || undefined,
-            mealType: notesData.mealType || undefined,
+            notes: rawNotes,
+            cost: costValue,
+            duration: durationValue,
+            mealType: mealTypeValue,
           };
 
           daysMap.get(day)!.push(location);
@@ -297,14 +417,238 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
         setDays(newDays);
       }
 
-      setStep('plan');
-    } catch (error) {
-      console.error('Error loading trip:', error);
-      alert('Failed to load trip');
-    } finally {
-      setLoading(false);
-    }
-  };
+        setAIGenerationMeta(null);
+        setAIError(null);
+
+        setStep('plan');
+      } catch (error) {
+        console.error('Error loading trip:', error);
+        alert('Failed to load trip');
+      }
+    },
+    [user]
+  );
+
+  const mapAIPlanToDayItineraries = useCallback(
+    (aiPlan: AIPlanResponse): DayItinerary[] => {
+      return aiPlan.days.map((day) => {
+        const normalizedDate = new Date(day.date);
+        const isoDate = Number.isNaN(normalizedDate.getTime())
+          ? new Date().toISOString().split('T')[0]
+          : normalizedDate.toISOString().split('T')[0];
+
+        const locations = day.items.map((item, index) => {
+          const orderIndex = typeof item.order === 'number' ? item.order : index;
+          const timeRange =
+            item.startTime && item.endTime
+              ? `${item.startTime} – ${item.endTime}`
+              : item.startTime || item.endTime || undefined;
+
+          const locationId = day.dayNumber * 1000 + orderIndex + 1;
+
+          const metadata: TripLocationMetadata = {
+            destinationId: item.destinationId,
+            startTime: item.startTime || null,
+            endTime: item.endTime || null,
+            timeOfDay: item.timeOfDay || undefined,
+            travelTimeMinutes: item.travelTimeMinutes ?? null,
+          };
+
+          return {
+            id: locationId,
+            name: item.name,
+            city: item.city || destination || '',
+            category: item.category || 'Experience',
+            image: item.image || '/placeholder-image.jpg',
+            slug: item.slug ?? null,
+            time: timeRange,
+            notes: item.notes || undefined,
+            cost: item.estimatedCost ?? undefined,
+            duration: item.durationMinutes ?? undefined,
+            mealType: undefined,
+            travelTimeMinutes: item.travelTimeMinutes ?? undefined,
+            timeOfDay: item.timeOfDay ?? undefined,
+            metadata,
+          } satisfies TripLocation;
+        });
+
+        const budget = day.totals?.estimatedCost ??
+          locations.reduce((sum, location) => sum + (location.cost || 0), 0);
+
+        return {
+          date: isoDate,
+          locations,
+          budget,
+          notes: day.summary || undefined,
+        };
+      });
+    },
+    [destination]
+  );
+
+  const applyAIPlan = useCallback(
+    (aiPlan: AIPlanResponse) => {
+      const mappedDays = mapAIPlanToDayItineraries(aiPlan);
+      setDays(mappedDays);
+      const aggregatedBudget = aiPlan.totals?.estimatedCost ??
+        mappedDays.reduce((sum, day) => sum + (day.budget || 0), 0);
+      if (aggregatedBudget > 0) {
+        setTotalBudget(Math.round(aggregatedBudget));
+      }
+      setAIGenerationMeta({
+        ...aiPlan.metadata,
+        adjustments: aiPlan.metadata.adjustments || null,
+      });
+      setAIError(null);
+      setActiveTab('itinerary');
+    },
+    [mapAIPlanToDayItineraries]
+  );
+
+  const buildItineraryPayload = useCallback(() => {
+    const items: Array<{
+      day: number;
+      order: number;
+      name: string;
+      slug?: string | null;
+      time?: string | null;
+      category?: string | null;
+      notes?: string | null;
+      cost?: number | null;
+      duration?: number | null;
+      mealType?: TripLocation['mealType'];
+      image?: string | null;
+      city?: string | null;
+      metadata?: TripLocationMetadata | null;
+    }> = [];
+
+    days.forEach((day, dayIndex) => {
+      day.locations.forEach((location, locationIndex) => {
+        const metadata: TripLocationMetadata = {};
+        if (location.metadata) {
+          Object.assign(metadata, location.metadata);
+        }
+        if (location.travelTimeMinutes !== undefined) {
+          metadata.travelTimeMinutes = location.travelTimeMinutes;
+        }
+        if (location.timeOfDay) {
+          metadata.timeOfDay = location.timeOfDay;
+        }
+
+        items.push({
+          day: dayIndex + 1,
+          order: locationIndex,
+          name: location.name,
+          slug: location.slug ?? null,
+          time: location.time || null,
+          category: location.category || null,
+          notes: location.notes || null,
+          cost: location.cost ?? null,
+          duration: location.duration ?? null,
+          mealType: location.mealType ?? null,
+          image: location.image || null,
+          city: location.city || null,
+          metadata: Object.keys(metadata).length > 0 ? metadata : null,
+        });
+      });
+    });
+
+    return items;
+  }, [days]);
+
+  const persistItineraryItems = useCallback(
+    async (tripIdToPersist: string) => {
+      const payload = {
+        items: buildItineraryPayload(),
+        metadata: aiGenerationMeta
+          ? {
+              reasoning: aiGenerationMeta.reasoning,
+              confidence: aiGenerationMeta.confidence,
+              adjustments: aiGenerationMeta.adjustments || undefined,
+              generatedAt: aiGenerationMeta.generatedAt,
+            }
+          : undefined,
+      };
+
+      const response = await fetch(`/api/trips/${tripIdToPersist}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        throw new Error(errorPayload?.error || 'Failed to persist itinerary items');
+      }
+    },
+    [aiGenerationMeta, buildItineraryPayload]
+  );
+
+  const handleGenerateAIDraft = useCallback(
+    async (options?: AIGenerationOptions) => {
+      if (!currentTripId) {
+        alert('Please create and save your trip details before requesting an AI itinerary.');
+        return;
+      }
+
+      setAIError(null);
+      setAIGenerating(true);
+
+      try {
+        const response = await fetch(`/api/trips/${currentTripId}/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...options,
+            themes: options?.themes?.filter((theme) => theme && theme.trim().length > 0),
+            customPrompt: options?.customPrompt?.trim() || undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.error || 'Failed to generate itinerary draft');
+        }
+
+        const data = (await response.json()) as AIPlanResponse;
+        applyAIPlan(data);
+      } catch (error) {
+        console.error('Error generating AI itinerary:', error);
+        const message = error instanceof Error ? error.message : 'Failed to generate itinerary draft.';
+        setAIError(message);
+      } finally {
+        setAIGenerating(false);
+      }
+    },
+    [applyAIPlan, currentTripId]
+  );
+
+  const handleRegenerateDay = useCallback(
+    (dayNumber: number) => {
+      handleGenerateAIDraft({ mode: 'regenerate', dayNumber });
+    },
+    [handleGenerateAIDraft]
+  );
+
+  const handleRefineDay = useCallback(
+    (
+      dayNumber: number,
+      options: Omit<AIGenerationOptions, 'mode' | 'dayNumber'> & {
+        mode?: Extract<AIGenerationMode, 'refine' | 'regenerate'>;
+      }
+    ) => {
+      handleGenerateAIDraft({
+        ...options,
+        dayNumber,
+        mode: options.mode || 'refine',
+      });
+    },
+    [handleGenerateAIDraft]
+  );
 
   const handleAddDestinationToTrip = async (targetTripId: string) => {
     if (!user) return;
@@ -387,9 +731,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       setActiveTab('itinerary');
       setShowAddLocation(null);
       fetchTripSummaries();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding destination to trip:', error);
-      alert(error?.message || 'Failed to add destination to trip. Please try again.');
+      const message = error instanceof Error ? error.message : 'Failed to add destination to trip. Please try again.';
+      alert(message);
     } finally {
       setAddingToTripId(null);
     }
@@ -452,9 +797,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       setDays(newDays);
       setStep('plan');
       setActiveTab('itinerary');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating trip:', error);
-      alert(error?.message || 'Failed to create trip. Please try again.');
+      const message = error instanceof Error ? error.message : 'Failed to create trip. Please try again.';
+      alert(message);
     } finally {
       setSaving(false);
     }
@@ -487,58 +833,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
       if (tripError) throw tripError;
 
-      // Delete all existing itinerary items
-      const { error: deleteError } = await supabaseClient
-        .from('itinerary_items')
-        .delete()
-        .eq('trip_id', currentTripId);
-
-      if (deleteError) throw deleteError;
-
-      // Insert all itinerary items
-      const itemsToInsert: Array<{
-        trip_id: string;
-        destination_slug: string;
-        day: number;
-        order_index: number;
-        time: string | null;
-        title: string;
-        description: string;
-        notes: string;
-      }> = [];
-      days.forEach((day, dayIndex) => {
-        day.locations.forEach((location, locationIndex) => {
-          // Store additional data in notes as JSON
-          const notesData: any = {
-            raw: location.notes || '',
-            cost: location.cost,
-            duration: location.duration,
-            mealType: location.mealType,
-            image: location.image,
-            city: location.city,
-            category: location.category,
-          };
-
-          itemsToInsert.push({
-            trip_id: currentTripId,
-            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
-            day: dayIndex + 1,
-            order_index: locationIndex,
-            time: location.time || null,
-            title: location.name,
-            description: location.category,
-            notes: JSON.stringify(notesData),
-          });
-        });
-      });
-
-      if (itemsToInsert.length > 0) {
-        const { error: insertError } = await supabaseClient
-          .from('itinerary_items')
-          .insert(itemsToInsert);
-
-        if (insertError) throw insertError;
-      }
+      await persistItineraryItems(currentTripId);
 
       // Show success feedback without alert
       // The save button will show "Saved" briefly
@@ -552,9 +847,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           saveButton.disabled = false;
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving trip:', error);
-      alert(error?.message || 'Failed to save trip. Please try again.');
+      const message = error instanceof Error ? error.message : 'Failed to save trip. Please try again.';
+      alert(message);
     } finally {
       setSaving(false);
     }
@@ -667,7 +963,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     let icsContent =
       'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Urban Manual//Trip Planner//EN\n';
 
-    days.forEach((day, dayIndex) => {
+    days.forEach((day) => {
       day.locations.forEach((location) => {
         const date = day.date.replace(/-/g, '');
         const time = location.time?.replace(':', '') || '0900';
@@ -769,6 +1065,27 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
             <div className="flex flex-wrap items-center gap-2">
             {step === 'plan' && (
               <>
+                <button
+                  onClick={() =>
+                    handleGenerateAIDraft(
+                      aiGenerationMeta ? { mode: 'regenerate' } : { mode: 'generate' }
+                    )
+                  }
+                  disabled={aiGenerating}
+                  className="inline-flex items-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3.5 py-2 text-xs font-medium text-indigo-600 transition hover:bg-indigo-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-indigo-400/30 dark:text-indigo-200 dark:hover:bg-indigo-500/20"
+                  title="Ask AI to draft or refine this itinerary"
+                >
+                  {aiGenerating ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <SparklesIcon className="h-3.5 w-3.5" />
+                  )}
+                  {aiGenerating
+                    ? 'Drafting…'
+                    : aiGenerationMeta
+                    ? 'Regenerate'
+                    : 'Generate plan'}
+                </button>
                 {currentTripId && (
                   <button
                     onClick={handleSaveTrip}
@@ -1098,7 +1415,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                           <MapPinIcon className="h-3.5 w-3.5" />
-                        {destination}
+                          {destination}
                         </span>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                           <CalendarIcon className="h-3.5 w-3.5" />
@@ -1113,18 +1430,108 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         )}
                       </div>
                       <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/40">
-                        <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                          Smart suggestions
-                        </p>
-                        <ul className="mt-3 space-y-2">
-                        {getAISuggestions().map((suggestion, index) => (
-                            <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
-                            • {suggestion}
-                          </li>
-                        ))}
-                      </ul>
+                        {aiGenerationMeta ? (
+                            <div className="space-y-4">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-[2px] text-indigo-500 dark:text-indigo-300">
+                                    AI draft ready
+                                  </p>
+                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[2px] text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
+                                    <SparklesIcon className="h-3 w-3" />
+                                    Confidence {Math.round(aiGenerationMeta.confidence * 100)}%
+                                  </span>
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-200/60 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[2px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                    Mode {aiGenerationMeta.mode}
+                                  </span>
+                                  {aiGenerationMeta.dayNumber && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-200/60 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[2px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                      Day {aiGenerationMeta.dayNumber}
+                                    </span>
+                                  )}
+                                  </div>
+                                </div>
+                              <button
+                                onClick={handleSaveTrip}
+                                disabled={saving}
+                                className="inline-flex items-center gap-2 rounded-full border border-indigo-500 bg-indigo-500 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SaveIcon className="h-3.5 w-3.5" />}
+                                {saving ? 'Saving…' : 'Accept draft'}
+                              </button>
+                            </div>
+                              <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">
+                                {aiGenerationMeta.reasoning}
+                              </p>
+                              {aiGenerating && (
+                                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-indigo-600 dark:border-indigo-400/20 dark:text-indigo-200">
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  Drafting update…
+                                </div>
+                              )}
+                            {aiGenerationMeta.adjustments && (
+                              <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                                {aiGenerationMeta.adjustments.pacing && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2.5 py-1 dark:border-gray-700">
+                                    Pace: {aiGenerationMeta.adjustments.pacing}
+                                  </span>
+                                )}
+                                {aiGenerationMeta.adjustments.budgetPreference && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2.5 py-1 dark:border-gray-700">
+                                    Budget: {aiGenerationMeta.adjustments.budgetPreference}
+                                  </span>
+                                )}
+                                {aiGenerationMeta.adjustments.themes?.map((theme) => (
+                                  <span
+                                    key={theme}
+                                    className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2.5 py-1 dark:border-gray-700"
+                                  >
+                                    Theme: {theme}
+                                  </span>
+                                ))}
+                                {aiGenerationMeta.adjustments.customPrompt && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2.5 py-1 dark:border-gray-700">
+                                    Prompted
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {aiGenerationMeta.optimization && (
+                              <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">
+                                <span>Route efficiency {Math.round(aiGenerationMeta.optimization.routeEfficiency * 100)}%</span>
+                                <span>Total travel {Math.round(aiGenerationMeta.optimization.totalTravelTime)} min</span>
+                                <span>Est. cost ${Math.round(aiGenerationMeta.optimization.totalEstimatedCost)}</span>
+                              </div>
+                            )}
+                            <p className="text-[10px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
+                              Generated {new Date(aiGenerationMeta.generatedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                              Smart planning tips
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Use the “Generate plan” button above to draft an itinerary with AI, then fine-tune each day with pacing, budget, and theme prompts.
+                            </p>
+                            <ul className="space-y-2">
+                              {getAISuggestions().map((suggestion, index) => (
+                                <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
+                                  • {suggestion}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {aiError && (
+                          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+                            {aiError}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
                     <div className="space-y-10">
                     {days.map((day, index) => (
@@ -1139,6 +1546,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                           onReorderLocations={(locations) => handleReorderLocations(index, locations)}
                         onDuplicateDay={() => handleDuplicateDay(index)}
                         onOptimizeRoute={() => handleOptimizeRoute(index)}
+                        onAIRegenerate={() => handleRegenerateDay(index + 1)}
+                        onAIRefine={(options) => handleRefineDay(index + 1, options)}
+                        isAIGenerating={aiGenerating}
+                        aiConfidence={aiGenerationMeta?.confidence}
                       />
                     ))}
                   </div>

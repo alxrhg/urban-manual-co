@@ -13,6 +13,9 @@ import {
   RouteIcon,
   SunriseIcon,
   SunsetIcon,
+  SparklesIcon,
+  RefreshCcw,
+  Loader2,
 } from 'lucide-react';
 
 interface TripLocation {
@@ -38,6 +41,16 @@ interface TripDayProps {
   onReorderLocations: (locations: TripLocation[]) => void;
   onDuplicateDay: () => void;
   onOptimizeRoute: () => void;
+  onAIRegenerate?: () => void;
+  onAIRefine?: (options: {
+    pacing?: 'relaxed' | 'balanced' | 'packed';
+    budgetPreference?: 'budget' | 'mid' | 'luxury';
+    themes?: string[];
+    customPrompt?: string;
+    mode?: 'refine' | 'regenerate';
+  }) => void;
+  isAIGenerating?: boolean;
+  aiConfidence?: number | null;
 }
 
 export function TripDay({
@@ -50,9 +63,16 @@ export function TripDay({
   onReorderLocations,
   onDuplicateDay,
   onOptimizeRoute,
+  onAIRegenerate,
+  onAIRefine,
+  isAIGenerating,
+  aiConfidence,
 }: TripDayProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [showNotes, setShowNotes] = useState<number | null>(null);
+  const [selectedPacing, setSelectedPacing] = useState<'relaxed' | 'balanced' | 'packed'>('balanced');
+  const [selectedBudget, setSelectedBudget] = useState<'budget' | 'mid' | 'luxury'>('mid');
+  const [themeInput, setThemeInput] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -73,8 +93,8 @@ export function TripDay({
 
   const calculateTravelTime = (index: number) => {
     if (index === 0) return null;
-    // Mock calculation - in real app would use routing API
-    return Math.floor(Math.random() * 30) + 10;
+    // Mock calculation - deterministic placeholder in lieu of routing API
+    return 20 + index * 5;
   };
 
   const getMealIcon = (mealType?: string) => {
@@ -105,6 +125,27 @@ export function TripDay({
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
+  };
+
+  const handleRegenerate = () => {
+    if (!onAIRegenerate || isAIGenerating) return;
+    onAIRegenerate();
+  };
+
+  const handleRefine = () => {
+    if (!onAIRefine || isAIGenerating) return;
+    const themes = themeInput
+      .split(',')
+      .map((theme) => theme.trim())
+      .filter((theme) => theme.length > 0);
+
+    onAIRefine({
+      pacing: selectedPacing,
+      budgetPreference: selectedBudget,
+      themes: themes.length > 0 ? themes : undefined,
+      customPrompt: customPrompt.trim() ? customPrompt.trim() : undefined,
+      mode: 'refine',
+    });
   };
 
   return (
@@ -159,6 +200,103 @@ export function TripDay({
         )}
       </div>
 
+      {(onAIRegenerate || onAIRefine) && (
+        <div className="mb-6 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">
+                AI adjustments
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {aiConfidence
+                  ? `Current draft confidence ${Math.round((aiConfidence || 0) * 100)}%. Tune pacing, budget, or add a theme.`
+                  : 'Tune pacing, budget, or themes for this day before asking AI to refine.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRegenerate}
+                disabled={!onAIRegenerate || !!isAIGenerating}
+                className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.2em] text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-600"
+              >
+                {isAIGenerating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCcw className="h-3 w-3" />
+                )}
+                Regenerate
+              </button>
+              <button
+                onClick={handleRefine}
+                disabled={!onAIRefine || !!isAIGenerating}
+                className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.2em] text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+              >
+                {isAIGenerating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <SparklesIcon className="h-3 w-3" />
+                )}
+                Refine
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                Pacing
+              </span>
+              <select
+                className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                value={selectedPacing}
+                onChange={(event) => setSelectedPacing(event.target.value as 'relaxed' | 'balanced' | 'packed')}
+              >
+                <option value="relaxed">Relaxed</option>
+                <option value="balanced">Balanced</option>
+                <option value="packed">Packed</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                Budget focus
+              </span>
+              <select
+                className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                value={selectedBudget}
+                onChange={(event) => setSelectedBudget(event.target.value as 'budget' | 'mid' | 'luxury')}
+              >
+                <option value="budget">Budget</option>
+                <option value="mid">Mid-range</option>
+                <option value="luxury">Luxury</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                Themes
+              </span>
+              <input
+                type="text"
+                value={themeInput}
+                onChange={(event) => setThemeInput(event.target.value)}
+                placeholder="Food, art, nightlife"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              />
+            </label>
+          </div>
+          <label className="mt-3 flex flex-col gap-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+              Optional guidance
+            </span>
+            <textarea
+              value={customPrompt}
+              onChange={(event) => setCustomPrompt(event.target.value)}
+              placeholder="Ask the planner to slow down evenings or highlight live music."
+              rows={2}
+              className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            />
+          </label>
+        </div>
+      )}
+
       <div className="space-y-4">
         {locations.length === 0 ? (
           <button
@@ -196,6 +334,7 @@ export function TripDay({
                   >
                     <GripVerticalIcon className="w-4 h-4 text-neutral-300 dark:text-neutral-600 mt-2 flex-shrink-0" />
                     <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={location.image}
                         alt={location.name}
