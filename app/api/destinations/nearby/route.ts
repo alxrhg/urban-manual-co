@@ -6,7 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { findNearbyDestinations } from '@/lib/enrichment/distance-matrix';
-import { withErrorHandling, createValidationError, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
+import { withErrorHandling, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
+import { filterNearbyResultsByRadius, parseLatitude, parseLongitude, parseRadius } from './utils';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,15 +20,11 @@ const supabase = createClient(
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
-  const lat = parseFloat(searchParams.get('lat') || '0');
-  const lng = parseFloat(searchParams.get('lng') || '0');
-  const radiusKm = parseFloat(searchParams.get('radius') || '5');
+  const lat = parseLatitude(searchParams.get('lat'));
+  const lng = parseLongitude(searchParams.get('lng'));
+  const radiusKm = parseRadius(searchParams.get('radius'));
   const maxWalkingMinutes = parseInt(searchParams.get('maxWalkingMinutes') || '15');
   const city = searchParams.get('city');
-
-  if (!lat || !lng) {
-    throw createValidationError('Latitude and longitude are required');
-  }
 
   // Fetch destinations in the area
   let query = supabase
@@ -62,8 +59,10 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     'walking'
   );
 
+  const nearbyWithinRadius = filterNearbyResultsByRadius(nearby, radiusKm);
+
   // Combine with destination data
-  const results = nearby.map(near => {
+  const results = nearbyWithinRadius.map(near => {
     const dest = destinations.find(d => d.slug === near.slug);
     return {
       ...dest,
