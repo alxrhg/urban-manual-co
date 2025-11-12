@@ -6,7 +6,6 @@ import { ProfileEditor } from '@/components/ProfileEditor';
 import { WorldMapVisualization } from '@/components/WorldMapVisualization';
 import { AchievementsDisplay } from '@/components/AchievementsDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 
 export default function AccountProfilePage() {
   const {
@@ -94,53 +93,43 @@ export default function AccountProfilePage() {
   }
 
   return (
-    <div className="space-y-12">
-      <header className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Account overview</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              See how your journeys and preferences shape recommendations.
-            </p>
-          </div>
-          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs">
-            {totalDestinations} destinations tracked
-          </Badge>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-10 text-sm">
+      <header className="space-y-3">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Account overview</h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          A quick summary of your saved places and travel history.
+        </p>
+        <dl className="space-y-1">
           {statistics.map(stat => (
-            <div
-              key={stat.label}
-              className="rounded-2xl border border-gray-100 bg-white/60 p-4 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60"
-            >
-              <p className="text-gray-500 dark:text-gray-400">{stat.label}</p>
-              <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{stat.value}</p>
+            <div key={stat.label} className="flex justify-between">
+              <dt className="text-gray-500 dark:text-gray-400">{stat.label}</dt>
+              <dd className="font-medium text-gray-900 dark:text-gray-100">{stat.value}</dd>
             </div>
           ))}
-        </div>
+          <div className="flex justify-between">
+            <dt className="text-gray-500 dark:text-gray-400">Destinations tracked</dt>
+            <dd className="font-medium text-gray-900 dark:text-gray-100">{totalDestinations}</dd>
+          </div>
+        </dl>
       </header>
 
-      <section aria-labelledby="profile-details" className="space-y-6">
-        <div className="space-y-2">
-          <h2 id="profile-details" className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Profile details
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Update your public profile and travel preferences.
-          </p>
-        </div>
+      <section aria-labelledby="profile-details" className="space-y-3">
+        <h2 id="profile-details" className="text-base font-medium text-gray-900 dark:text-gray-100">
+          Profile details
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Update your public profile and travel preferences.
+        </p>
         <ProfileEditor userId={user.id} onSaveComplete={refreshProfile} />
       </section>
 
-      <section aria-labelledby="map-intelligence" className="space-y-6">
-        <div className="space-y-2">
-          <h2 id="map-intelligence" className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Global footprint
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Countries highlighted are based on your visited destinations and travel history.
-          </p>
-        </div>
+      <section aria-labelledby="map-intelligence" className="space-y-3">
+        <h2 id="map-intelligence" className="text-base font-medium text-gray-900 dark:text-gray-100">
+          Global footprint
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Countries highlighted are based on your visited destinations and travel history.
+        </p>
         <WorldMapVisualization
           visitedCountries={new Set(visitedCountries.map(item => item.country_name).filter(Boolean) as string[])}
           visitedDestinations={visitedPlaces.map(place => ({
@@ -151,15 +140,13 @@ export default function AccountProfilePage() {
         />
       </section>
 
-      <section aria-labelledby="achievement-progress" className="space-y-6">
-        <div className="space-y-2">
-          <h2 id="achievement-progress" className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Achievement progress
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Unlock badges as you explore cities, save places, and visit top recommendations.
-          </p>
-        </div>
+      <section aria-labelledby="achievement-progress" className="space-y-3">
+        <h2 id="achievement-progress" className="text-base font-medium text-gray-900 dark:text-gray-100">
+          Achievement progress
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Unlock badges as you explore cities, save places, and visit top recommendations.
+        </p>
         <AchievementsDisplay
           visitedPlaces={visitedPlaces}
           savedPlaces={savedPlaces}

@@ -1,11 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ShieldCheck, Monitor, MapPin, Clock3 } from 'lucide-react';
 import { useUserContext } from '@/contexts/UserContext';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function formatRelative(dateInput?: string | null): string {
   if (!dateInput) return 'Unknown';
@@ -68,20 +64,15 @@ export default function AccountSecurityPage() {
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-10 text-sm">
       <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Security & sessions</h1>
-        </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Monitor active devices, revoke access, and review your recent activity.
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Security &amp; sessions</h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Review the devices connected to your account and recent security events.
         </p>
-        <div className="flex flex-wrap gap-2">
-          <Button
+        <div className="flex flex-wrap gap-3">
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             disabled={signingOutOthers || !user}
             onClick={async () => {
               try {
@@ -91,77 +82,52 @@ export default function AccountSecurityPage() {
                 setSigningOutOthers(false);
               }
             }}
+            className="underline hover:text-blue-600 disabled:text-gray-400"
           >
-            Sign out all other devices
-          </Button>
-          <Button
+            {signingOutOthers ? 'Signing out other devices…' : 'Sign out all other devices'}
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
             disabled={loading}
             onClick={refreshSessions}
+            className="underline hover:text-blue-600 disabled:text-gray-400"
           >
-            Refresh
-          </Button>
+            Refresh list
+          </button>
         </div>
       </header>
 
-      <section aria-labelledby="session-list" className="space-y-4">
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <h2 id="session-list" className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              Active sessions
-            </h2>
-            <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs">
-              {activeSessions.length} active
-            </Badge>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Sessions update automatically when you sign in or sign out on a device.
-          </p>
-        </div>
+      <section aria-labelledby="session-list" className="space-y-3">
+        <h2 id="session-list" className="text-base font-medium text-gray-900 dark:text-gray-100">
+          Active sessions ({activeSessions.length})
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Sessions update automatically when you sign in or out on a device.
+        </p>
 
         {activeSessions.length === 0 ? (
-          <Alert>
-            <AlertTitle>No active sessions</AlertTitle>
-            <AlertDescription>
-              Sign in on a device to start tracking session activity. We will surface the device, location, and last seen time here.
-            </AlertDescription>
-          </Alert>
+          <p className="text-gray-600 dark:text-gray-400">No active sessions at the moment.</p>
         ) : (
-          <ul className="space-y-4">
+          <ul className="divide-y divide-gray-200 dark:divide-gray-800">
             {activeSessions.map(session => {
               const isEnded = Boolean(session.ended_at);
               return (
-                <li
-                  key={session.id}
-                  className="rounded-2xl border border-gray-100 bg-white/60 p-4 shadow-sm transition hover:border-blue-200 dark:border-gray-800 dark:bg-gray-950/60 hover:dark:border-blue-500/40"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                        <Monitor className="h-4 w-4" aria-hidden="true" />
-                        <span>{session.device_type || 'Web session'}</span>
-                        <Clock3 className="h-4 w-4" aria-hidden="true" />
-                        <span>Started {formatRelative(session.started_at)}</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                        <MapPin className="h-4 w-4" aria-hidden="true" />
-                        <span>
-                          {session.location_city || 'Unknown city'}, {session.location_country || 'Unknown country'}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                          Last activity {formatRelative(session.last_activity || session.started_at)}
-                        </span>
-                      </div>
-                      {session.referrer && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Referrer: {session.referrer}</p>
-                      )}
-                    </div>
-                    <Button
+                <li key={session.id} className="py-3">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {session.device_type || 'Web session'}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Started {formatRelative(session.started_at)} · Last activity {formatRelative(session.last_activity || session.started_at)}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {session.location_city || 'Unknown city'}, {session.location_country || 'Unknown country'}
+                  </p>
+                  {session.referrer && (
+                    <p className="text-gray-500 dark:text-gray-400">Referrer: {session.referrer}</p>
+                  )}
+                  <div className="mt-2">
+                    <button
                       type="button"
-                      size="sm"
-                      variant="outline"
                       disabled={isEnded || endingSessionId === session.session_id}
                       onClick={async () => {
                         try {
@@ -171,9 +137,14 @@ export default function AccountSecurityPage() {
                           setEndingSessionId(null);
                         }
                       }}
+                      className="underline hover:text-red-600 disabled:text-gray-400"
                     >
-                      {isEnded ? 'Ended' : endingSessionId === session.session_id ? 'Ending…' : 'Sign out device'}
-                    </Button>
+                      {isEnded
+                        ? 'Session ended'
+                        : endingSessionId === session.session_id
+                          ? 'Ending session…'
+                          : 'Sign out this device'}
+                    </button>
                   </div>
                 </li>
               );
@@ -182,42 +153,31 @@ export default function AccountSecurityPage() {
         )}
       </section>
 
-      <section aria-labelledby="activity-log" className="space-y-4">
-        <div className="space-y-1">
-          <h2 id="activity-log" className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Activity log
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            We capture key account events to help you verify any suspicious activity.
-          </p>
-        </div>
+      <section aria-labelledby="activity-log" className="space-y-3">
+        <h2 id="activity-log" className="text-base font-medium text-gray-900 dark:text-gray-100">
+          Activity log
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          We capture key account events to help you verify anything unusual.
+        </p>
         {recentActivity.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No recent activity recorded.</p>
+          <p className="text-gray-600 dark:text-gray-400">No recent activity recorded.</p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="divide-y divide-gray-200 dark:divide-gray-800">
             {recentActivity.map(entry => (
-              <li
-                key={entry.id}
-                className="rounded-2xl border border-gray-100 bg-white/60 p-4 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="space-y-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 capitalize">{entry.type.replace(/_/g, ' ')}</p>
-                    {entry.description && (
-                      <p className="text-gray-500 dark:text-gray-400">{entry.description}</p>
-                    )}
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {new Date(entry.created_at).toLocaleString()} · {formatRelative(entry.created_at)}
-                    </p>
-                  </div>
-                  {entry.destination_slug && (
-                    <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
-                      {entry.destination_slug}
-                    </Badge>
-                  )}
-                </div>
+              <li key={entry.id} className="py-3">
+                <p className="font-medium text-gray-900 dark:text-gray-100 capitalize">{entry.type.replace(/_/g, ' ')}</p>
+                {entry.description && (
+                  <p className="text-gray-600 dark:text-gray-400">{entry.description}</p>
+                )}
+                <p className="text-gray-500 dark:text-gray-400">
+                  {new Date(entry.created_at).toLocaleString()} · {formatRelative(entry.created_at)}
+                </p>
+                {entry.destination_slug && (
+                  <p className="text-gray-500 dark:text-gray-400">Destination: {entry.destination_slug}</p>
+                )}
                 {entry.metadata && (
-                  <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-gray-100 p-3 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                  <pre className="mt-2 whitespace-pre-wrap rounded-md bg-gray-100 p-3 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300">
                     {JSON.stringify(entry.metadata, null, 2)}
                   </pre>
                 )}
