@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { supabase } from '@/lib/supabase';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 import { Destination } from '@/types/destination';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -14,23 +14,58 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let destinationData: Destination[] = [];
   let cities: string[] = [];
+  let collections: Array<{ id: string; updated_at: string | null }> = [];
+  let lists: Array<{ id: string; updated_at: string | null }> = [];
+  let trips: Array<{ id: string; updated_at: string | null }> = [];
 
   try {
-    // Fetch all destinations and cities
-    const { data: destinations, error } = await supabase
-      .from('destinations')
-      .select('slug, city, category')
-      .order('slug');
+    const serviceClient = createServiceRoleClient();
 
-    if (error) {
-      console.warn('Sitemap: Could not fetch destinations from Supabase:', error.message);
-    } else {
-      destinationData = (destinations || []) as Destination[];
-      // Get unique cities
+    const [destinationResult, collectionResult, listResult, tripResult] = await Promise.all([
+      serviceClient.from('destinations').select('slug, city, category').order('slug'),
+      serviceClient
+        .from('collections')
+        .select('id, updated_at')
+        .eq('is_public', true)
+        .order('updated_at', { ascending: false }),
+      serviceClient
+        .from('lists')
+        .select('id, updated_at')
+        .eq('is_public', true)
+        .order('updated_at', { ascending: false }),
+      serviceClient
+        .from('trips')
+        .select('id, updated_at')
+        .eq('is_public', true)
+        .order('updated_at', { ascending: false }),
+    ]);
+
+    if (destinationResult.error) {
+      console.warn('Sitemap: Could not fetch destinations from Supabase:', destinationResult.error.message);
+    } else if (destinationResult.data) {
+      destinationData = destinationResult.data as Destination[];
       cities = Array.from(new Set(destinationData.map(d => d.city)));
     }
+
+    if (collectionResult.error) {
+      console.warn('Sitemap: Could not fetch collections for sitemap:', collectionResult.error.message);
+    } else if (collectionResult.data) {
+      collections = collectionResult.data as Array<{ id: string; updated_at: string | null }>;
+    }
+
+    if (listResult.error) {
+      console.warn('Sitemap: Could not fetch lists for sitemap:', listResult.error.message);
+    } else if (listResult.data) {
+      lists = listResult.data as Array<{ id: string; updated_at: string | null }>;
+    }
+
+    if (tripResult.error) {
+      console.warn('Sitemap: Could not fetch trips for sitemap:', tripResult.error.message);
+    } else if (tripResult.data) {
+      trips = tripResult.data as Array<{ id: string; updated_at: string | null }>;
+    }
   } catch (error) {
-    console.warn('Sitemap: Could not fetch destinations from Supabase:', error);
+    console.warn('Sitemap: Could not fetch data from Supabase:', error);
     // This is fine during build without env vars - generate basic sitemap
   }
 
@@ -109,11 +144,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
+  const collectionPages: MetadataRoute.Sitemap = collections.map(collection => ({
+    url: `${baseUrl}/collection/${collection.id}`,
+    lastModified: collection.updated_at || currentDate,
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
+
+  const listPages: MetadataRoute.Sitemap = lists.map(list => ({
+    url: `${baseUrl}/lists/${list.id}`,
+    lastModified: list.updated_at || currentDate,
+    changeFrequency: 'weekly',
+    priority: 0.55,
+  }));
+
+  const tripPages: MetadataRoute.Sitemap = trips.map(trip => ({
+    url: `${baseUrl}/trips/${trip.id}`,
+    lastModified: trip.updated_at || currentDate,
+    changeFrequency: 'monthly',
+    priority: 0.5,
+  }));
+
   return [
     ...mainPages,
     ...featurePages,
     ...cityPages,
     ...destinationPages,
+    ...collectionPages,
+    ...listPages,
+    ...tripPages,
     ...staticPages,
   ];
 }
