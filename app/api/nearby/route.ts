@@ -26,14 +26,16 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    const lat = parseFloat(searchParams.get('lat') || '0');
-    const lng = parseFloat(searchParams.get('lng') || '0');
+    const latParam = searchParams.get('lat');
+    const lngParam = searchParams.get('lng');
+    const lat = latParam !== null ? Number(latParam) : NaN;
+    const lng = lngParam !== null ? Number(lngParam) : NaN;
     const radius = parseFloat(searchParams.get('radius') || '5'); // km
     const limit = parseInt(searchParams.get('limit') || '50');
     const city = searchParams.get('city'); // Optional city filter
     const category = searchParams.get('category'); // Optional category filter
 
-    if (!lat || !lng) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return NextResponse.json(
         { error: 'Latitude and longitude are required' },
         { status: 400 }

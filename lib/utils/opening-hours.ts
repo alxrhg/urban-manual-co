@@ -36,45 +36,107 @@ const CITY_TIMEZONES: Record<string, string> = {
   'hanoi': 'Asia/Ho_Chi_Minh',
 };
 
+interface TimeInfo {
+  dayOfWeek: number; // 0 = Sunday ... 6 = Saturday
+  hours: number;
+  minutes: number;
+}
+
+const WEEKDAY_MAP: Record<string, number> = {
+  sun: 0,
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+};
+
+function toTimeInfo(date: Date, useUTC = false): TimeInfo {
+  return {
+    dayOfWeek: useUTC ? date.getUTCDay() : date.getDay(),
+    hours: useUTC ? date.getUTCHours() : date.getHours(),
+    minutes: useUTC ? date.getUTCMinutes() : date.getMinutes(),
+  };
+}
+
+function getTimeInfoForZone(timeZone: string): TimeInfo | null {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      weekday: 'short',
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(new Date());
+    const map = parts.reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== 'literal') {
+        acc[part.type] = part.value;
+      }
+      return acc;
+    }, {});
+
+    const weekdayKey = map.weekday ? map.weekday.slice(0, 3).toLowerCase() : '';
+    const dayOfWeek = WEEKDAY_MAP[weekdayKey as keyof typeof WEEKDAY_MAP];
+    const hours = map.hour ? parseInt(map.hour, 10) : NaN;
+    const minutes = map.minute ? parseInt(map.minute, 10) : NaN;
+
+    if (
+      typeof dayOfWeek === 'number' &&
+      Number.isFinite(hours) &&
+      Number.isFinite(minutes)
+    ) {
+      return { dayOfWeek, hours, minutes };
+    }
+
+    return null;
+  } catch (error) {
+    console.warn(`Error resolving timezone ${timeZone}`, error);
+    return null;
+  }
+}
+
 /**
- * Get current time in destination's timezone
+ * Get current time information in destination's timezone
  */
 function getCurrentTimeInTimezone(
   city: string,
   timezoneId?: string | null,
   utcOffset?: number | null
-): Date {
+): TimeInfo {
   // Best: Use timezone_id from Google Places API (handles DST automatically)
   if (timezoneId) {
-    try {
-      const utcNow = new Date();
-      const localString = utcNow.toLocaleString('en-US', { timeZone: timezoneId });
-      return new Date(localString);
-    } catch (error) {
-      console.warn(`Invalid timezone_id: ${timezoneId}, falling back`, error);
+    const info = getTimeInfoForZone(timezoneId);
+    if (info) {
+      return info;
     }
   }
 
   // Good: Use city timezone mapping
   const cityKey = city.toLowerCase().replace(/\s+/g, '-');
-  if (CITY_TIMEZONES[cityKey]) {
-    try {
-      const utcNow = new Date();
-      const localString = utcNow.toLocaleString('en-US', { timeZone: CITY_TIMEZONES[cityKey] });
-      return new Date(localString);
-    } catch (error) {
-      console.warn(`Error using city timezone for ${cityKey}`, error);
+  const mappedZone = CITY_TIMEZONES[cityKey];
+  if (mappedZone) {
+    const info = getTimeInfoForZone(mappedZone);
+    if (info) {
+      return info;
     }
   }
 
   // Okay: Use UTC offset (static, doesn't handle DST)
   if (utcOffset !== null && utcOffset !== undefined) {
     const utcNow = new Date();
-    return new Date(utcNow.getTime() + (utcOffset * 60 * 1000));
+    const offsetDate = new Date(utcNow.getTime() + utcOffset * 60 * 1000);
+    return toTimeInfo(offsetDate, true);
   }
 
-  // Fallback: UTC
-  return new Date();
+  // Fallback: UTC/local environment
+  return toTimeInfo(new Date());
 }
 
 /**
@@ -122,7 +184,7 @@ export function isOpenNow(
   try {
     // Get current time in destination's timezone
     const now = getCurrentTimeInTimezone(city, timezoneId, utcOffset);
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const dayOfWeek = now.dayOfWeek; // 0 = Sunday, 1 = Monday, etc.
 
     // Google Places API weekday_text starts with Monday (index 0)
     // Convert: Sun=0 -> 6, Mon=1 -> 0, Tue=2 -> 1, etc.
@@ -143,7 +205,7 @@ export function isOpenNow(
 
     // Parse time ranges (e.g., "10:00 AM – 9:00 PM" or "10:00 AM – 2:00 PM, 5:00 PM – 9:00 PM")
     const timeRanges = hoursText.split(',').map((range: string) => range.trim());
-    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const currentTime = now.hours * 60 + now.minutes;
 
     for (const range of timeRanges) {
       const times = range.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi);

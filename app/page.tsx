@@ -1946,7 +1946,12 @@ export default function Home() {
 
   // Handle location changes from Near Me filter
   const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {
-    if (!lat || !lng) {
+    if (
+      lat === null ||
+      lng === null ||
+      Number.isNaN(lat) ||
+      Number.isNaN(lng)
+    ) {
       setUserLocation(null);
       setNearbyDestinations([]);
       return;
