@@ -2336,9 +2336,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {!submittedQuery && (
                 <>
                   <div className="md:hidden px-6 pt-6 space-y-6">
-                    <div>
+                    <div className="w-full">
                       <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                      <div className="flex w-full flex-wrap gap-x-4 gap-y-3 text-xs">
                         <button
                           onClick={() => handleCitySelect(null)}
                           className={`transition-all duration-200 ease-out ${
@@ -2364,7 +2364,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         ))}
                       </div>
                       {overflowCityButtons.length > 0 && (
-                        <div className="mt-3 space-y-3">
+                        <div className="mt-3 w-full space-y-3">
                           <button
                             onClick={() => setShowAllCities(prev => !prev)}
                             className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
@@ -2373,9 +2373,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                               ? '− Hide additional cities'
                               : `+ More cities (${overflowCityButtons.length})`}
                           </button>
-                          {showAllCities && (
-                            <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                            {showAllCities && (
+                              <div className="w-full rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                                <div className="flex w-full flex-wrap gap-x-4 gap-y-3 text-xs">
                                 {overflowCityButtons.map((city) => (
                                   <button
                                     key={city}
@@ -2396,9 +2396,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                       )}
                     </div>
 
-                    <div>
+                    <div className="w-full">
                       <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                      <div className="flex w-full flex-wrap gap-x-4 gap-y-3 text-xs">
                         <button
                           onClick={() => handleCategorySelect(null)}
                           className={`transition-all duration-200 ease-out ${
@@ -2443,7 +2443,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         })}
                       </div>
                       {overflowCategoryButtons.length > 0 && (
-                        <div className="mt-3 space-y-3">
+                        <div className="mt-3 w-full space-y-3">
                           <button
                             onClick={() => setShowAllCategories(prev => !prev)}
                             className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
@@ -2453,8 +2453,8 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                               : `+ More categories (${overflowCategoryButtons.length})`}
                           </button>
                           {showAllCategories && (
-                            <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                            <div className="w-full rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                              <div className="flex w-full flex-wrap gap-x-4 gap-y-3 text-xs">
                                 {overflowCategoryButtons.map((category) => {
                                   const IconComponent = getCategoryIcon(category);
                                   return (
@@ -2481,12 +2481,12 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
 
                     <button
                       onClick={() => setShowTripPlanner(true)}
-                      className="w-full rounded-xl bg-gray-900 py-3 text-base font-medium text-white transition hover:bg-black dark:bg-white dark:text-black"
+                      className="block w-full rounded-xl bg-gray-900 py-3 text-base font-medium text-white transition hover:bg-black dark:bg-white dark:text-black"
                     >
                       + New Trip
                     </button>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                       <SearchFiltersComponent
                         filters={advancedFilters}
                         onFiltersChange={(newFilters) => {
@@ -2506,15 +2506,15 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         availableCities={cities}
                         availableCategories={categories}
                         onLocationChange={handleLocationChange}
-                        triggerClassName="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                        triggerClassName="flex w-full items-center justify-between gap-2 rounded-full border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
                         activeTriggerClassName="bg-gray-900 text-white dark:bg-white dark:text-black border-gray-900 dark:border-white"
                         iconClassName="h-4 w-4"
                         label="Refine"
                       />
-                      <div className="flex items-center gap-2">
+                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                         <button
                           onClick={() => setViewMode('grid')}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-3 text-sm font-medium transition ${
+                          className={`flex w-full flex-1 items-center justify-center gap-1.5 rounded-full border px-4 py-3 text-sm font-medium transition sm:w-auto sm:flex-none ${
                             viewMode === 'grid'
                               ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
                               : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
@@ -2526,7 +2526,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         </button>
                         <button
                           onClick={() => setViewMode('map')}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-3 text-sm font-medium transition ${
+                          className={`flex w-full flex-1 items-center justify-center gap-1.5 rounded-full border px-4 py-3 text-sm font-medium transition sm:w-auto sm:flex-none ${
                             viewMode === 'map'
                               ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
                               : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
