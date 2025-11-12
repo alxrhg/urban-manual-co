@@ -34,7 +34,7 @@ export function TripInterfaceProvider({ children }: { children: ReactNode }) {
   const [isTripPlannerOpen, setTripPlannerOpen] = useState(false);
   const [plannerTripId, setPlannerTripId] = useState<string | undefined>();
   const [plannerDestination, setPlannerDestination] = useState<TripPlannerDestination | undefined>();
-  const plannerCloseCallback = useRef<(() => void) | undefined>();
+  const plannerCloseCallback = useRef<(() => void) | undefined>(undefined);
 
   const [isTripSidebarOpen, setTripSidebarOpen] = useState(false);
 

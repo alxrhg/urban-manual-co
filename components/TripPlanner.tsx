@@ -145,49 +145,6 @@ export function TripPlanner({
     }
   }, [isOpen, initialDestination, destination]);
 
-  useEffect(() => {
-    if (!pendingLocation || step !== 'plan' || days.length === 0) return;
-
-    const alreadyAdded = days.some((day) =>
-      day.locations.some((loc) =>
-        pendingLocation.slug
-          ? loc.slug === pendingLocation.slug
-          : loc.name === pendingLocation.name,
-      ),
-    );
-
-    if (alreadyAdded) {
-      setAutoAddMessage(`${pendingLocation.name} is already in your trip`);
-      setPendingLocation(null);
-      return;
-    }
-
-    const addLocationToPlan = async () => {
-      try {
-        const target = days.reduce(
-          (acc, day, index) => {
-            if (day.locations.length < acc.count) {
-              return { index, count: day.locations.length };
-            }
-            return acc;
-          },
-          { index: 0, count: days[0].locations.length },
-        );
-
-        await handleAddLocation(target.index, pendingLocation);
-        setAutoAddMessage(
-          `Added ${pendingLocation.name} to Day ${target.index + 1}`,
-        );
-      } catch (error) {
-        console.error('Error adding destination to trip automatically:', error);
-      } finally {
-        setPendingLocation(null);
-      }
-    };
-
-    addLocationToPlan();
-  }, [pendingLocation, step, days, handleAddLocation]);
-
   const resetForm = () => {
     setTripName('');
     setDestination('');
@@ -549,6 +506,49 @@ export function TripPlanner({
       await handleSaveTrip();
     }
   };
+
+  useEffect(() => {
+    if (!pendingLocation || step !== 'plan' || days.length === 0) return;
+
+    const alreadyAdded = days.some((day) =>
+      day.locations.some((loc) =>
+        pendingLocation.slug
+          ? loc.slug === pendingLocation.slug
+          : loc.name === pendingLocation.name,
+      ),
+    );
+
+    if (alreadyAdded) {
+      setAutoAddMessage(`${pendingLocation.name} is already in your trip`);
+      setPendingLocation(null);
+      return;
+    }
+
+    const addLocationToPlan = async () => {
+      try {
+        const target = days.reduce(
+          (acc, day, index) => {
+            if (day.locations.length < acc.count) {
+              return { index, count: day.locations.length };
+            }
+            return acc;
+          },
+          { index: 0, count: days[0].locations.length },
+        );
+
+        await handleAddLocation(target.index, pendingLocation);
+        setAutoAddMessage(
+          `Added ${pendingLocation.name} to Day ${target.index + 1}`,
+        );
+      } catch (error) {
+        console.error('Error adding destination to trip automatically:', error);
+      } finally {
+        setPendingLocation(null);
+      }
+    };
+
+    addLocationToPlan();
+  }, [pendingLocation, step, days, handleAddLocation]);
 
   const handleRemoveLocation = async (dayIndex: number, locationId: number) => {
     setDays((prev) =>
