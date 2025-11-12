@@ -10,6 +10,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -180,6 +181,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [newListPublic, setNewListPublic] = useState(true);
   const [creatingList, setCreatingList] = useState(false);
   const supabase = useMemo(() => createClient(), []);
+  const swipeHandlers = useSwipeGesture({
+    onSwipeDown: onClose,
+    threshold: 64,
+    velocityThreshold: 0.3,
+    enabled: isOpen,
+  });
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -670,6 +677,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-y-auto`}
+        {...swipeHandlers}
       >
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">

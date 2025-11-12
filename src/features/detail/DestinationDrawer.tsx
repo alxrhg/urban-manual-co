@@ -28,6 +28,7 @@ import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nest
 import { createClient } from '@/lib/supabase/client';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { getCountryInfo } from '@/data/countryCodes';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { 
@@ -226,6 +227,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingNested, setLoadingNested] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
+  const swipeHandlers = useSwipeGesture({
+    onSwipeDown: onClose,
+    threshold: 64,
+    velocityThreshold: 0.3,
+    enabled: isOpen,
+  });
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -689,6 +696,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         className={`md:hidden fixed inset-x-0 bottom-0 top-[10vh] bg-white dark:bg-gray-950 z-50 rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         } overflow-hidden flex flex-col`}
+        {...swipeHandlers}
       >
         {/* Close Button - Top Right */}
               <button

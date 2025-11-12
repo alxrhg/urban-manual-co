@@ -48,6 +48,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -2098,6 +2099,16 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
   const overflowCategoryButtons = categories.slice(MAX_INLINE_CATEGORY_COUNT);
   const showBrowseLists = !submittedQuery && searchTerm.trim().length === 0;
 
+  const handleRefresh = useCallback(() => {
+    if (searching) return;
+    return fetchDestinations();
+  }, [fetchDestinations, searching]);
+
+  const pullToRefreshHandlers = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: !searching,
+  });
+
   return (
     <ErrorBoundary>
       <ScreenReaderAnnouncements message={screenReaderMessage} priority={screenReaderPriority} />
@@ -2140,7 +2151,12 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
           }),
         }}
       />
-      <main id="main-content" className="relative min-h-screen dark:text-white" role="main">
+      <main
+        id="main-content"
+        className="relative min-h-screen dark:text-white"
+        role="main"
+        {...pullToRefreshHandlers}
+      >
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
