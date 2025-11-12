@@ -36,6 +36,12 @@ interface SearchState {
   isLoading?: boolean;
 }
 
+type SuggestedPersonalizationChip = {
+  label: string;
+  refinement: string;
+  type: 'category' | 'city';
+};
+
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -52,6 +58,8 @@ function SearchPageContent() {
     conversationHistory: [],
     suggestions: [],
   });
+  const [suggestedFilters, setSuggestedFilters] = useState<SuggestedPersonalizationChip[]>([]);
+  const [suggestedSource, setSuggestedSource] = useState<'user' | 'default'>('default');
 
   const performInitialSearch = useCallback(async (searchQuery: string) => {
     setSearchState(prev => ({ ...prev, isLoading: true }));
@@ -81,6 +89,48 @@ function SearchPageContent() {
   useEffect(() => {
     if (query) performInitialSearch(query);
   }, [query, performInitialSearch]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPersonalization() {
+      try {
+        const res = await fetch('/api/search/personalization');
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (!isMounted) return;
+
+        const categoryChips: SuggestedPersonalizationChip[] = Array.isArray(data.suggestedCategories)
+          ? data.suggestedCategories.map((category: string) => ({
+              label: category,
+              refinement: category,
+              type: 'category' as const,
+            }))
+          : [];
+        const cityChips: SuggestedPersonalizationChip[] = Array.isArray(data.suggestedCities)
+          ? data.suggestedCities.map((city: string) => ({
+              label: `In ${city}`,
+              refinement: `in ${city}`,
+              type: 'city' as const,
+            }))
+          : [];
+
+        setSuggestedFilters([...categoryChips, ...cityChips]);
+        if (data.source === 'user' || data.source === 'default') {
+          setSuggestedSource(data.source);
+        }
+      } catch (error) {
+        console.error('Failed to load personalization seeds', error);
+      }
+    }
+
+    void loadPersonalization();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Recompute suggestions whenever filtered results or refinements change
   useEffect(() => {
@@ -212,6 +262,36 @@ function SearchPageContent() {
       <p className="text-xs tracking-widest text-neutral-400 mb-8">
         {new Date().getHours() < 12 ? 'GOOD MORNING' : new Date().getHours() < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING'}
       </p>
+
+      {suggestedFilters.length > 0 && (
+        <div className="mb-6">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-amber-700 dark:text-amber-300">
+              Suggested for you
+            </span>
+            {suggestedSource === 'default' && (
+              <span className="text-[0.6rem] uppercase tracking-[2px] text-neutral-400">
+                Popular starters
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {suggestedFilters.map((chip, index) => (
+              <button
+                key={`${chip.type}-${chip.refinement}-${index}`}
+                onClick={() => handleRefinement(chip.refinement)}
+                className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-amber-900/60 dark:bg-amber-500/10 dark:text-amber-100"
+              >
+                <span aria-hidden className="text-[0.75rem]">✨</span>
+                {chip.label}
+                <span className="hidden text-[0.6rem] uppercase tracking-[1.5px] text-amber-600 dark:text-amber-300 md:inline">
+                  {chip.type === 'city' ? 'City' : 'Category'}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <CompactResponseSection
         query={searchState.originalQuery}
