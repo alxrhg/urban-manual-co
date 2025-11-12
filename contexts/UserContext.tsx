@@ -35,6 +35,7 @@ export interface PrivacySettings {
 
 export interface SavedPlaceSummary {
   destination_slug: string;
+  saved_at: string | null;
   destination: {
     name: string;
     city: string;
@@ -280,8 +281,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const [savedResult, visitedResult, collectionsResult, countriesResponse] = await Promise.all([
         supabase
           .from('saved_places')
-          .select('destination_slug')
-          .eq('user_id', userId),
+          .select('destination_slug, saved_at')
+          .eq('user_id', userId)
+          .order('saved_at', { ascending: false }),
         supabase
           .from('visited_places')
           .select('destination_slug, visited_at, rating, notes')
@@ -328,6 +330,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (!dest) return null;
           return {
             destination_slug: item.destination_slug,
+            saved_at: item.saved_at ?? null,
             destination: {
               name: dest.name,
               city: dest.city,
