@@ -69,22 +69,22 @@ export function AccountLayout({ children }: AccountLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-12 sm:px-6 lg:flex-row lg:px-8">
-        <aside className="w-full max-w-sm shrink-0 space-y-8 lg:w-72">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:flex-row lg:gap-10 lg:px-8 lg:py-12">
+        <aside className="w-full max-w-sm shrink-0 space-y-6 lg:w-72">
+          <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6">
             {loading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="space-y-3">
+                <Skeleton className="h-11 w-11 rounded-full" />
                 <div className="space-y-2">
                   <Skeleton className="h-5 w-32" />
                   <Skeleton className="h-4 w-40" />
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
-                    <UserCircle2 className="h-6 w-6" aria-hidden="true" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
+                    <UserCircle2 className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="text-base font-medium text-gray-900 dark:text-gray-100">
@@ -113,8 +113,11 @@ export function AccountLayout({ children }: AccountLayoutProps) {
             )}
           </div>
 
-          <nav aria-label="Account sections" className="rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+          <nav
+            aria-label="Account sections"
+            className="rounded-3xl border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-0"
+          >
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-0 sm:divide-y sm:divide-gray-100 dark:sm:divide-gray-800">
               {sections.map(section => {
                 const isActive = activeSection === section.href;
                 const Icon = section.icon;
@@ -123,10 +126,10 @@ export function AccountLayout({ children }: AccountLayoutProps) {
                     <Link
                       href={section.href}
                       className={cn(
-                        'flex gap-3 px-6 py-5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900',
+                        'flex min-h-[4.5rem] flex-col gap-2 rounded-2xl px-4 py-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900 sm:min-h-0 sm:flex-row sm:items-center sm:gap-3 sm:rounded-none sm:px-6 sm:py-5',
                         isActive
-                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-200'
-                          : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-200 sm:bg-blue-50'
+                          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:hover:bg-gray-50'
                       )}
                     >
                       <Icon className="h-5 w-5" aria-hidden="true" />
@@ -143,7 +146,7 @@ export function AccountLayout({ children }: AccountLayoutProps) {
         </aside>
 
         <main className="flex-1">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-8">
+          <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6 lg:p-8">
             {children}
           </div>
         </main>
