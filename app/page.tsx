@@ -45,6 +45,7 @@ import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
+import HomeNavigationBar from '@/components/HomeNavigationBar';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
@@ -546,6 +547,19 @@ export default function Home() {
     }
     return filteredDestinations;
   }, [advancedFilters.nearMe, filteredDestinations, nearbyDestinations]);
+
+  const handleNavigationFiltersClick = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-search-filters'));
+    }
+  }, []);
+
+  const handleNavigationStartTrip = useCallback(() => {
+    setShowTripPlanner(true);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-trip-planner'));
+    }
+  }, []);
 
   const handleCitySelect = useCallback(
     (city: string | null) => {
@@ -2405,6 +2419,14 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
             
             {!submittedQuery && (
               <>
+                <div className="mb-6 flex justify-end">
+                  <HomeNavigationBar
+                    className="justify-end flex-wrap gap-3"
+                    onFiltersClick={handleNavigationFiltersClick}
+                    onStartTrip={handleNavigationStartTrip}
+                  />
+                </div>
+
                 <div className="md:hidden px-5 pt-6 space-y-6">
                   <div>
                     <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
