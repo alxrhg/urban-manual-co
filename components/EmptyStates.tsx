@@ -148,7 +148,7 @@ export function SignInEmptyState({ action = "to continue" }: { action?: string }
       title={`Sign in ${action}`}
       description="Create an account to save places and track your visits"
       actionLabel="Sign In"
-      actionHref="/auth/login"
+      actionHref="/auth/sign-in"
     />
   );
 }

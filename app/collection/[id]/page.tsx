@@ -247,7 +247,9 @@ export default function CollectionDetailPage() {
   const fallbackHref = user ? '/account' : '/';
   const fallbackLabel = user ? 'Back to Account' : 'Back to Discover';
   const unauthorizedActionLabel = user ? 'Back to Discover' : 'Sign In';
-  const unauthorizedActionHref = user ? '/' : '/auth/login';
+  const unauthorizedActionHref = user
+    ? '/'
+    : `/auth/sign-in?returnTo=${encodeURIComponent(`/collection/${collectionId}`)}`;
 
   if (loading) {
     return (

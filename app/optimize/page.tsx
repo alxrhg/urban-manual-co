@@ -39,7 +39,7 @@ export default function RouteOptimizerPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/auth/login');
+      router.push('/auth/sign-in');
     }
   }, [user, authLoading, router]);
 

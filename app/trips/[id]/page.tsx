@@ -69,11 +69,7 @@ export default function TripDetailPage() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.push('/auth/login');
-        return;
-      }
+    if (!authLoading && user) {
       fetchTripDetails();
     }
   }, [authLoading, user, tripId]);

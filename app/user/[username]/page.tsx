@@ -55,7 +55,7 @@ export default function UserProfilePage() {
 
   const handleFollow = async () => {
     if (!currentUser) {
-      router.push('/auth/login');
+      router.push('/auth/sign-in');
       return;
     }
 

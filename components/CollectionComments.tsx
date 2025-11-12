@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { MessageCircle, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface CollectionCommentsProps {
   collectionId: string;
@@ -27,6 +27,7 @@ interface Comment {
 export function CollectionComments({ collectionId, isOwner }: CollectionCommentsProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -53,7 +54,8 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
     e.preventDefault();
 
     if (!user) {
-      router.push('/auth/login');
+      const destination = `/auth/sign-in?returnTo=${encodeURIComponent(pathname || '/')}`;
+      router.push(destination);
       return;
     }
 
@@ -139,7 +141,7 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
         <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl text-center">
           <p className="text-sm text-gray-500 mb-3">Sign in to leave a comment</p>
           <button
-            onClick={() => router.push('/auth/login')}
+            onClick={() => router.push(`/auth/sign-in?returnTo=${encodeURIComponent(pathname || '/')}`)}
             className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-2xl hover:opacity-80 transition-opacity"
           >
             Sign In

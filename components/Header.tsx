@@ -350,7 +350,7 @@ export function Header() {
                     Start a Trip
                   </Link>
                   <Link
-                    href="/auth/login"
+                    href={`/auth/sign-in?returnTo=${encodeURIComponent(pathname || '/')}`}
                     onClick={() => setIsMenuOpen(false)}
                     className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
                     role="menuitem"

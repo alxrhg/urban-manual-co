@@ -519,7 +519,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     }
 
     if (!user) {
-      router.push('/auth/login');
+      router.push('/auth/sign-in');
       return;
     }
 
@@ -553,7 +553,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       if (!response.ok) {
         if (response.status === 401) {
-          router.push('/auth/login');
+          router.push('/auth/sign-in');
           return;
         }
 
@@ -792,7 +792,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <button
               onClick={async () => {
                 if (!user) {
-                  router.push('/auth/login');
+                  router.push('/auth/sign-in');
                   return;
                 }
                 if (!isSaved) {
@@ -863,7 +863,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <button
               onClick={() => {
                 if (!user) {
-                  router.push('/auth/login');
+                  router.push('/auth/sign-in');
                   return;
                 }
                 if (!destination.slug) return;
@@ -1017,7 +1017,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     onClick={(e) => {
                       if (!user) {
                         e.preventDefault();
-                        router.push('/auth/login');
+                        router.push('/auth/sign-in');
                         return;
                       }
                       if (!isSaved) {
@@ -1513,7 +1513,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <button
               onClick={() => {
                 if (!user) {
-                  router.push('/auth/login');
+                  router.push('/auth/sign-in');
                   return;
                 }
                 if (!destination.slug) return;

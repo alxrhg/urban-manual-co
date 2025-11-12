@@ -37,7 +37,7 @@ function CreateCollectionForm() {
         </p>
         <div className="flex justify-center">
           <Link
-            href="/auth/login"
+            href="/auth/sign-in"
             className="rounded-2xl bg-black px-6 py-2 text-sm font-medium text-white transition hover:opacity-80 dark:bg-white dark:text-black"
           >
             Go to sign in

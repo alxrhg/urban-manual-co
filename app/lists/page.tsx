@@ -60,7 +60,7 @@ export default function ListsPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/auth/login');
+      router.push('/auth/sign-in');
     }
   }, [user, authLoading, router]);
 

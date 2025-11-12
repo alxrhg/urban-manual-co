@@ -17,7 +17,7 @@ function AuthCallbackContent() {
       // Handle OAuth errors from query params
       if (error) {
         const errorMessage = errorDescription || error;
-        router.push(`/auth/login?error=${encodeURIComponent(errorMessage)}`);
+        router.push(`/auth/sign-in?error=${encodeURIComponent(errorMessage)}`);
         return;
       }
 
@@ -27,7 +27,7 @@ function AuthCallbackContent() {
       const hashError = hashParams.get('error');
       
       if (hashError) {
-        router.push(`/auth/login?error=${encodeURIComponent(hashError)}`);
+        router.push(`/auth/sign-in?error=${encodeURIComponent(hashError)}`);
         return;
       }
 
@@ -72,11 +72,11 @@ function AuthCallbackContent() {
             // If it's a code verifier error, the issue is that PKCE flow wasn't properly initiated
             // This usually means the redirect domain changed or storage was cleared
             if (exchangeError.message?.includes('code verifier') || exchangeError.message?.includes('non-empty')) {
-              router.push(`/auth/login?error=${encodeURIComponent('Authentication failed. Please try signing in again. If the problem persists, clear your browser cache and try again.')}`);
+              router.push(`/auth/sign-in?error=${encodeURIComponent('Authentication failed. Please try signing in again. If the problem persists, clear your browser cache and try again.')}`);
               return;
             }
             
-            router.push(`/auth/login?error=${encodeURIComponent(exchangeError.message || 'Failed to authenticate')}`);
+            router.push(`/auth/sign-in?error=${encodeURIComponent(exchangeError.message || 'Failed to authenticate')}`);
             return;
           }
 
@@ -86,7 +86,7 @@ function AuthCallbackContent() {
           }
         } catch (err: any) {
           console.error('OAuth callback error:', err);
-          router.push(`/auth/login?error=${encodeURIComponent(err.message || 'Authentication failed')}`);
+          router.push(`/auth/sign-in?error=${encodeURIComponent(err.message || 'Authentication failed')}`);
           return;
         }
       }
@@ -101,7 +101,7 @@ function AuthCallbackContent() {
       }
 
       // Still no session - show error
-      router.push(`/auth/login?error=${encodeURIComponent('Authentication failed. Please try signing in again.')}`);
+      router.push(`/auth/sign-in?error=${encodeURIComponent('Authentication failed. Please try signing in again.')}`);
     };
 
     handleCallback();

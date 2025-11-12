@@ -75,7 +75,7 @@ This will automatically use:
 1. **Test in Development:**
    ```bash
    npm run dev
-   # Visit http://localhost:3000/auth/login
+   # Visit http://localhost:3000/auth/sign-in
    # Click "Continue with Apple"
    ```
 

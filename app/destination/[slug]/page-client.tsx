@@ -189,7 +189,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   const handleVisitToggle = async () => {
     if (!user || !destination) {
       if (!user) {
-        router.push('/auth/login');
+        router.push('/auth/sign-in');
       }
       return;
     }

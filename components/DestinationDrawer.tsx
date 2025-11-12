@@ -989,7 +989,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {!user && (
             <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-center">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                <a href="/auth/login" className="font-medium hover:opacity-60">Sign in</a> to save destinations and track your visits
+                <a href="/auth/sign-in" className="font-medium hover:opacity-60">Sign in</a> to save destinations and track your visits
               </span>
             </div>
           )}

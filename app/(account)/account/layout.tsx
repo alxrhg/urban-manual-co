@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { AccountLayout } from '@/components/account/AccountLayout';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 import { UserProvider } from '@/contexts/UserContext';
 
 interface AccountSectionLayoutProps {
@@ -10,8 +11,10 @@ interface AccountSectionLayoutProps {
 
 export default function AccountSectionLayout({ children }: AccountSectionLayoutProps) {
   return (
-    <UserProvider>
-      <AccountLayout>{children}</AccountLayout>
-    </UserProvider>
+    <RequireAuth reason="account">
+      <UserProvider>
+        <AccountLayout>{children}</AccountLayout>
+      </UserProvider>
+    </RequireAuth>
   );
 }

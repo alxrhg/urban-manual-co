@@ -262,12 +262,6 @@ export default function TripsPage() {
   const [loadingIntelligence, setLoadingIntelligence] = useState(false);
   const [conversationPreview, setConversationPreview] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
-
   const fetchTrips = useCallback(async () => {
     try {
       setLoadingTrips(true);
