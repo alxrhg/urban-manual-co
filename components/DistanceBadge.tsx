@@ -1,6 +1,7 @@
 'use client';
 
 import { Navigation } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface Props {
   distanceKm: number;
@@ -36,26 +37,26 @@ export function DistanceBadge({ distanceKm, compact = false }: Props) {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-        <Navigation className="h-3 w-3" />
+      <Badge variant="neutralOutline" className="gap-1.5 px-2.5 py-1">
+        <Navigation className="h-3 w-3 text-gray-600 dark:text-gray-200" />
         <span>{formatDistance(distanceKm)}</span>
-      </div>
+      </Badge>
     );
   }
 
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-      <Navigation className="h-3 w-3 text-blue-600" />
-      <div className="flex flex-col">
-        <span className="text-xs font-medium text-blue-600">
+    <Badge variant="neutralInverse" className="gap-2 px-3 py-2 text-left">
+      <Navigation className="h-3.5 w-3.5 text-gray-200" />
+      <div className="flex flex-col leading-tight">
+        <span className="text-xs font-semibold text-gray-100">
           {formatDistance(distanceKm)}
         </span>
         {walkingTime && (
-          <span className="text-xs text-blue-500">
+          <span className="text-[11px] text-gray-300">
             {walkingTime}
           </span>
         )}
       </div>
-    </div>
+    </Badge>
   );
 }
