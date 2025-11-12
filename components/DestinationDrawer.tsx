@@ -304,7 +304,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         return;
       }
 
-      const { data: savedData } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { data: savedData } = await supabaseClient
         .from('saved_places')
         .select('*')
         .eq('user_id', user.id)
@@ -313,7 +316,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       setIsSaved(!!savedData);
 
-      const { data: visitedData } = await supabase
+      const { data: visitedData } = await supabaseClient
         .from('visited_places')
         .select('*')
         .eq('user_id', user.id)
@@ -342,14 +345,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     onSaveToggle?.(destination.slug, newState);
 
     try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      
       if (previousState) {
-        await supabase
+        await supabaseClient
           .from('saved_places')
           .delete()
           .eq('user_id', user.id)
           .eq('destination_slug', destination.slug);
       } else {
-        await supabase
+        await supabaseClient
           .from('saved_places')
           .insert({
             user_id: user.id,
@@ -396,16 +402,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     onVisitToggle?.(destination.slug, newState);
 
     try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      
       if (previousState) {
         // Remove visit
-        await supabase
+        await supabaseClient
           .from('visited_places')
           .delete()
           .eq('user_id', user.id)
           .eq('destination_slug', destination.slug);
       } else {
         // Add visit with optional rating and notes
-        await supabase
+        await supabaseClient
           .from('visited_places')
           .insert({
             user_id: user.id,
@@ -494,8 +503,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
     setLoadingLists(true);
     try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      
       // Fetch user's lists
-      const { data: lists, error: listsError } = await supabase
+      const { data: lists, error: listsError } = await supabaseClient
         .from('lists')
         .select('id, name, is_public')
         .eq('user_id', user.id)
@@ -505,13 +517,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       setUserLists(lists || []);
 
       // Fetch which lists contain this destination
-      const { data: listItems, error: itemsError } = await supabase
+      const { data: listItems, error: itemsError } = await supabaseClient
         .from('list_items')
         .select('list_id')
         .eq('destination_slug', destination.slug);
 
       if (itemsError) throw itemsError;
-      const listIds = new Set((listItems || []).map(item => item.list_id));
+      const listIds = new Set<string>((listItems || []).map((item: { list_id: string }) => item.list_id));
       setListsWithDestination(listIds);
     } catch (error) {
       console.error('Error fetching lists:', error);
@@ -524,6 +536,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const toggleDestinationInList = async (listId: string) => {
     if (!user || !destination) return;
 
+    const supabaseClient = createClient();
+    if (!supabaseClient) return;
+
     const isInList = listsWithDestination.has(listId);
     const newListsWithDestination = new Set(listsWithDestination);
 
@@ -532,7 +547,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       newListsWithDestination.delete(listId);
       setListsWithDestination(newListsWithDestination);
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('list_items')
         .delete()
         .eq('list_id', listId)
@@ -548,7 +563,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       newListsWithDestination.add(listId);
       setListsWithDestination(newListsWithDestination);
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('list_items')
         .insert({
           list_id: listId,
@@ -570,7 +585,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
     setCreatingList(true);
     try {
-      const { data, error } = await supabase
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      
+      const { data, error } = await supabaseClient
         .from('lists')
         .insert([{
           user_id: user.id,
