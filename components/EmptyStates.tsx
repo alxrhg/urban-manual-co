@@ -86,14 +86,25 @@ export function NoVisitedPlacesEmptyState() {
   );
 }
 
-export function NoCollectionsEmptyState({ onCreateCollection }: { onCreateCollection: () => void }) {
+export function NoCollectionsEmptyState({ onCreateCollection }: { onCreateCollection?: () => void } = {}) {
+  const router = useRouter();
+
+  const handleCreateCollection = () => {
+    if (onCreateCollection) {
+      onCreateCollection();
+      return;
+    }
+
+    router.push('/collection/create');
+  };
+
   return (
     <EmptyState
       icon="📚"
       title="No collections yet"
       description="Create lists to organize your places"
       actionLabel="Create Collection"
-      onAction={onCreateCollection}
+      onAction={handleCreateCollection}
     />
   );
 }
