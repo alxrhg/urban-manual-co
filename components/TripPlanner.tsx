@@ -15,7 +15,17 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { createClient } from '@/lib/supabase/client';
+import {
+  useAddItineraryItemMutation,
+  useBatchUpdateItineraryMutation,
+  useCreateTripMutation,
+  useTripQuery,
+  useTripsQuery,
+  useUpdateTripMutation,
+  type TripDetailResponse,
+  type TripRecord,
+  type TripSummary as TripSummaryRecord,
+} from '@/features/trips/api';
 import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
@@ -36,15 +46,7 @@ interface TripPlannerProps {
   };
 }
 
-interface TripSummary {
-  id: string;
-  title: string;
-  description: string | null;
-  destination: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  updated_at: string;
-}
+type TripSummary = TripSummaryRecord;
 
 interface TripLocation {
   id: number;
@@ -86,30 +88,31 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tripSummaries, setTripSummaries] = useState<TripSummary[]>([]);
-  const [loadingTripSummaries, setLoadingTripSummaries] = useState(false);
   const [addingToTripId, setAddingToTripId] = useState<string | null>(null);
   const [bypassSelection, setBypassSelection] = useState(false);
+  const [isHydratingTrip, setIsHydratingTrip] = useState(false);
 
-  const fetchTripSummaries = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoadingTripSummaries(true);
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-      const { data, error } = await supabaseClient
-        .from('trips')
-        .select('id,title,description,destination,start_date,end_date,updated_at')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
-      if (error) throw error;
-      setTripSummaries(data || []);
-    } catch (error) {
-      console.error('Error loading trips:', error);
-      setTripSummaries([]);
-    } finally {
-      setLoadingTripSummaries(false);
-    }
-  }, [user]);
+  const tripsQuery = useTripsQuery({ enabled: isOpen && step === 'select' });
+  const tripQuery = useTripQuery(currentTripId ?? undefined, {
+    enabled: !!currentTripId,
+  });
+  const createTripMutation = useCreateTripMutation();
+  const updateTripMutation = useUpdateTripMutation();
+  const batchUpdateItineraryMutation = useBatchUpdateItineraryMutation();
+  const addItineraryItemMutation = useAddItineraryItemMutation();
+  const loadingTripSummaries = tripsQuery.isLoading || tripsQuery.isFetching;
+  const { refetch: refetchTrips } = tripsQuery;
+  const { refetch: refetchTrip } = tripQuery;
+  const notify = useCallback(
+    (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+      if (window.showToast) {
+        window.showToast(message, type);
+      } else if (type === 'error' || type === 'warning') {
+        alert(message);
+      }
+    },
+    []
+  );
 
   // Initialize drawer state based on provided props
   useEffect(() => {
@@ -117,7 +120,6 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
     if (tripId && user) {
       resetForm();
-      setStep('plan');
       loadTrip(tripId);
       return;
     }
@@ -125,16 +127,16 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     if (initialDestination) {
       if (bypassSelection || step === 'plan') return;
       if (step !== 'select') {
-      resetForm();
+        resetForm();
         setStep('select');
-        fetchTripSummaries();
+        refetchTrips();
       }
       return;
     }
 
     resetForm();
     setStep('create');
-  }, [isOpen, tripId, user, initialDestination, step, bypassSelection, fetchTripSummaries]);
+  }, [bypassSelection, initialDestination, isOpen, loadTrip, refetchTrips, resetForm, step, tripId, user]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -154,7 +156,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     };
   }, [isOpen]);
 
-  const resetForm = (options?: { preserveTrip?: boolean }) => {
+  const resetForm = useCallback((options?: { preserveTrip?: boolean }) => {
     setTripName('');
     setDestination('');
     setStartDate('');
@@ -163,233 +165,166 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     setTotalBudget(0);
     setHotelLocation('');
     setActiveTab('itinerary');
+    setIsHydratingTrip(false);
+    setLoading(false);
     if (!options?.preserveTrip) {
-    setCurrentTripId(null);
+      setCurrentTripId(null);
     }
-  };
+  }, []);
 
-  const loadTrip = async (id: string) => {
-    setLoading(true);
-    try {
-      const supabaseClient = createClient();
-      if (!supabaseClient || !user) return;
-
-      // Load trip
-      const { data: trip, error: tripError } = await supabaseClient
-        .from('trips')
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (tripError || !trip) {
-        console.error('Error loading trip:', tripError);
-        alert('Failed to load trip');
-        return;
-      }
-
-      setTripName(trip.title);
-      setDestination(trip.destination || '');
-      setStartDate(trip.start_date || '');
-      setEndDate(trip.end_date || '');
-      setHotelLocation(trip.description || ''); // Using description for hotel location
+  const hydrateTripState = useCallback(
+    (trip: TripRecord, items: TripDetailResponse['items']) => {
+      setTripName(trip.title ?? '');
+      setDestination(trip.destination ?? '');
+      setStartDate(trip.start_date ?? '');
+      setEndDate(trip.end_date ?? '');
+      setHotelLocation(trip.description ?? '');
+      setTotalBudget(trip.budget ?? 0);
       setCurrentTripId(trip.id);
 
-      // Load itinerary items
-      // First verify trip ownership to avoid RLS recursion
-      const { data: tripCheck, error: tripCheckError } = await supabaseClient
-        .from('trips')
-        .select('id')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+      const start = trip.start_date ? new Date(trip.start_date) : new Date();
+      const end = trip.end_date ? new Date(trip.end_date) : start;
+      const dayCount = Math.max(
+        1,
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      );
 
-      if (tripCheckError || !tripCheck) {
-        console.error('Error verifying trip ownership:', tripCheckError);
-        alert('Trip not found or access denied');
-        return;
-      }
+      const daysMap = new Map<number, TripLocation[]>();
 
-      const { data: items, error: itemsError } = await supabaseClient
-        .from('itinerary_items')
-        .select('*')
-        .eq('trip_id', id)
-        .order('day', { ascending: true })
-        .order('order_index', { ascending: true });
-
-      if (itemsError) {
-        console.error('Error loading itinerary items:', itemsError);
-        // If recursion error, continue with empty items
-        if (itemsError.message && itemsError.message.includes('infinite recursion')) {
-          console.warn('RLS recursion detected, continuing with empty items');
+      items.forEach((item) => {
+        if (!daysMap.has(item.day)) {
+          daysMap.set(item.day, []);
         }
-      }
 
-      // Group items by day
-      if (items && items.length > 0) {
-        const daysMap = new Map<number, TripLocation[]>();
-        items.forEach((item) => {
-          const day = item.day;
-          if (!daysMap.has(day)) {
-            daysMap.set(day, []);
+        let notesData: any = {};
+        if (item.notes) {
+          try {
+            notesData = JSON.parse(item.notes);
+          } catch {
+            notesData = { raw: item.notes };
           }
+        }
 
-          // Parse notes for additional data (cost, duration, mealType)
-          let notesData: any = {};
-          if (item.notes) {
-            try {
-              notesData = JSON.parse(item.notes);
-            } catch {
-              notesData = { raw: item.notes };
-            }
-          }
+        const location: TripLocation = {
+          id:
+            (item.id && parseInt(item.id.replace(/-/g, '').substring(0, 10), 16)) ||
+            Date.now() + Math.random(),
+          name: item.title,
+          city: notesData.city || trip.destination || '',
+          category: notesData.category || item.description || '',
+          image: notesData.image || '/placeholder-image.jpg',
+          time: item.time || undefined,
+          notes:
+            typeof notesData === 'string'
+              ? notesData
+              : notesData.raw || undefined,
+          cost: typeof notesData.cost === 'number' ? notesData.cost : undefined,
+          duration:
+            typeof notesData.duration === 'number' ? notesData.duration : undefined,
+          mealType: notesData.mealType || undefined,
+        };
 
-          const location: TripLocation = {
-            id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
-            name: item.title,
-            city: destination || '',
-            category: item.description || '',
-            image: notesData.image || '/placeholder-image.jpg',
-            time: item.time || undefined,
-            notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
-            cost: notesData.cost || undefined,
-            duration: notesData.duration || undefined,
-            mealType: notesData.mealType || undefined,
-          };
+        daysMap.get(item.day)!.push(location);
+      });
 
-          daysMap.get(day)!.push(location);
+      const newDays: DayItinerary[] = [];
+      for (let i = 0; i < dayCount; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const dayNumber = i + 1;
+        newDays.push({
+          date: date.toISOString().split('T')[0],
+          locations: daysMap.get(dayNumber) || [],
+          budget: 0,
         });
-
-        // Create days array
-        const start = new Date(trip.start_date || Date.now());
-        const end = new Date(trip.end_date || Date.now());
-        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-        const newDays: DayItinerary[] = [];
-        for (let i = 0; i < dayCount; i++) {
-          const date = new Date(start);
-          date.setDate(start.getDate() + i);
-          const dayNum = i + 1;
-          newDays.push({
-            date: date.toISOString().split('T')[0],
-            locations: daysMap.get(dayNum) || [],
-            budget: 0,
-          });
-        }
-
-        setDays(newDays);
-      } else {
-        // No items, create empty days
-        const start = new Date(trip.start_date || Date.now());
-        const end = new Date(trip.end_date || Date.now());
-        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-        const newDays: DayItinerary[] = [];
-        for (let i = 0; i < dayCount; i++) {
-          const date = new Date(start);
-          date.setDate(start.getDate() + i);
-          newDays.push({
-            date: date.toISOString().split('T')[0],
-            locations: [],
-            budget: 0,
-          });
-        }
-        setDays(newDays);
       }
 
-      setStep('plan');
-    } catch (error) {
-      console.error('Error loading trip:', error);
-      alert('Failed to load trip');
-    } finally {
-      setLoading(false);
-    }
-  };
+      setDays(newDays);
+    },
+    []
+  );
 
-  const handleAddDestinationToTrip = async (targetTripId: string) => {
-    if (!user) return;
-    if (!initialDestination) {
-      await loadTrip(targetTripId);
-      setCurrentTripId(targetTripId);
+  const loadTrip = useCallback(
+    (id: string) => {
       setStep('plan');
       setActiveTab('itinerary');
       setShowAddLocation(null);
+      setIsHydratingTrip(true);
+      setLoading(true);
+
+      if (currentTripId === id) {
+        refetchTrip();
+      } else {
+        setCurrentTripId(id);
+      }
+    },
+    [currentTripId, refetchTrip]
+  );
+
+  useEffect(() => {
+    if (tripsQuery.data) {
+      setTripSummaries(tripsQuery.data);
+    }
+  }, [tripsQuery.data]);
+
+  useEffect(() => {
+    if (tripsQuery.error) {
+      console.error('Error loading trips:', tripsQuery.error);
+      setTripSummaries([]);
+      notify('Failed to load trips', 'error');
+    }
+  }, [notify, tripsQuery.error]);
+
+  useEffect(() => {
+    if (!isHydratingTrip || !tripQuery.data) return;
+
+    hydrateTripState(tripQuery.data.trip, tripQuery.data.items);
+    setLoading(false);
+    setIsHydratingTrip(false);
+  }, [hydrateTripState, isHydratingTrip, tripQuery.data]);
+
+  useEffect(() => {
+    if (!isHydratingTrip || !tripQuery.error) return;
+
+    console.error('Error loading trip:', tripQuery.error);
+    setLoading(false);
+    setIsHydratingTrip(false);
+    notify('Failed to load trip', 'error');
+  }, [isHydratingTrip, notify, tripQuery.error]);
+
+  const handleAddDestinationToTrip = async (targetTripId: string) => {
+    if (!user) return;
+
+    if (!initialDestination) {
+      loadTrip(targetTripId);
       return;
     }
 
     setAddingToTripId(targetTripId);
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
+      await addItineraryItemMutation.mutateAsync({
+        tripId: targetTripId,
+        title: initialDestination.name,
+        description: initialDestination.category || '',
+        destinationSlug: initialDestination.slug,
+        notes: {
+          raw: '',
+          cost: undefined,
+          duration: undefined,
+          mealType: undefined,
+          image: undefined,
+          city: initialDestination.city || undefined,
+          category: initialDestination.category || undefined,
+        },
+      });
 
-      const { data: trip, error: tripError } = await supabaseClient
-        .from('trips')
-        .select('id')
-        .eq('id', targetTripId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (tripError || !trip) {
-        throw new Error('Trip not found or you do not have permission to add items to this trip');
-      }
-
-      let nextDay = 1;
-      let nextOrder = 0;
-      const { data: nextPositionData, error: nextPositionError } = await supabaseClient.rpc(
-        'get_next_itinerary_position',
-        { p_trip_id: targetTripId }
-      );
-
-      if (nextPositionError) {
-        console.warn('get_next_itinerary_position RPC failed, falling back to defaults:', nextPositionError);
-        if (
-          nextPositionError.code !== 'PGRST116' &&
-          !(nextPositionError.message && nextPositionError.message.includes('infinite recursion'))
-        ) {
-          throw nextPositionError;
-        }
-      } else if (nextPositionData && typeof nextPositionData === 'object') {
-        if (typeof nextPositionData.next_day === 'number') {
-          nextDay = Math.max(1, nextPositionData.next_day);
-        }
-        if (typeof nextPositionData.next_order === 'number') {
-          nextOrder = Math.max(0, nextPositionData.next_order);
-        }
-      }
-
-      const notesData = {
-        raw: '',
-        cost: undefined,
-        duration: undefined,
-        mealType: undefined,
-        image: undefined,
-        city: initialDestination.city || undefined,
-        category: initialDestination.category || undefined,
-      };
-
-      const { error: insertError } = await supabaseClient
-        .from('itinerary_items')
-        .insert({
-          trip_id: targetTripId,
-          destination_slug: initialDestination.slug,
-          day: nextDay,
-          order_index: nextOrder,
-          title: initialDestination.name,
-          description: initialDestination.category || '',
-          notes: JSON.stringify(notesData),
-        });
-
-      if (insertError) throw insertError;
-
-      await loadTrip(targetTripId);
-      setCurrentTripId(targetTripId);
-      setStep('plan');
-      setActiveTab('itinerary');
-      setShowAddLocation(null);
-      fetchTripSummaries();
+      notify('Destination added to trip', 'success');
+      setBypassSelection(true);
+      loadTrip(targetTripId);
+      refetchTrips();
     } catch (error: any) {
       console.error('Error adding destination to trip:', error);
-      alert(error?.message || 'Failed to add destination to trip. Please try again.');
+      notify(error?.message || 'Failed to add destination to trip. Please try again.', 'error');
     } finally {
       setAddingToTripId(null);
     }
@@ -397,119 +332,74 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
   const handleCreateTrip = async () => {
     if (!tripName || !destination || !startDate || !endDate || !user) {
-      alert('Please fill in all required fields');
+      notify('Please fill in all required fields', 'warning');
       return;
     }
 
     setSaving(true);
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-
-      // Create trip in database
-      const { data: trip, error: tripError } = await supabaseClient
-        .from('trips')
-        .insert({
-          title: tripName,
-          description: hotelLocation || null,
-          destination: destination,
-          start_date: startDate,
-          end_date: endDate,
-          status: 'planning',
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (tripError) throw tripError;
+      const trip = await createTripMutation.mutateAsync({
+        title: tripName,
+        destination,
+        startDate,
+        endDate,
+        description: hotelLocation || null,
+        status: 'planning',
+        budget: totalBudget > 0 ? totalBudget : null,
+      });
 
       if (initialDestination) {
         await handleAddDestinationToTrip(trip.id);
         return;
       }
 
-      setCurrentTripId(trip.id);
-
-      // Create days array
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const dayCount =
-        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-      const newDays: DayItinerary[] = [];
-
-      for (let i = 0; i < dayCount; i++) {
-        const date = new Date(start);
-        date.setDate(start.getDate() + i);
-
-        newDays.push({
-          date: date.toISOString().split('T')[0],
-          locations: [],
-          budget: 0,
-        });
-      }
-
-      setDays(newDays);
+      notify('Trip created', 'success');
+      hydrateTripState(trip, []);
       setStep('plan');
       setActiveTab('itinerary');
+      setLoading(false);
+      setIsHydratingTrip(false);
     } catch (error: any) {
       console.error('Error creating trip:', error);
-      alert(error?.message || 'Failed to create trip. Please try again.');
+      notify(error?.message || 'Failed to create trip. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveTrip = async () => {
+  const handleSaveTrip = async (
+    options: { showSuccess?: boolean; trackSaving?: boolean } = {}
+  ) => {
     if (!currentTripId || !user) {
-      alert('No trip to save');
+      notify('No trip to save', 'warning');
       return;
     }
 
-    setSaving(true);
+    const { showSuccess = true, trackSaving = true } = options;
+    if (trackSaving) {
+      setSaving(true);
+    }
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
+      await updateTripMutation.mutateAsync({
+        tripId: currentTripId,
+        title: tripName,
+        destination,
+        startDate,
+        endDate,
+        description: hotelLocation || null,
+        status: 'planning',
+        budget: totalBudget > 0 ? totalBudget : null,
+      });
 
-      // Update trip (including budget)
-      const { error: tripError } = await supabaseClient
-        .from('trips')
-        .update({
-          title: tripName,
-          description: hotelLocation || null,
-          destination: destination,
-          start_date: startDate,
-          end_date: endDate,
-          budget: totalBudget > 0 ? totalBudget : null,
-        })
-        .eq('id', currentTripId)
-        .eq('user_id', user.id);
-
-      if (tripError) throw tripError;
-
-      // Delete all existing itinerary items
-      const { error: deleteError } = await supabaseClient
-        .from('itinerary_items')
-        .delete()
-        .eq('trip_id', currentTripId);
-
-      if (deleteError) throw deleteError;
-
-      // Insert all itinerary items
-      const itemsToInsert: Array<{
-        trip_id: string;
-        destination_slug: string;
-        day: number;
-        order_index: number;
-        time: string | null;
-        title: string;
-        description: string;
-        notes: string;
-      }> = [];
-      days.forEach((day, dayIndex) => {
-        day.locations.forEach((location, locationIndex) => {
-          // Store additional data in notes as JSON
-          const notesData: any = {
+      const itemsToPersist = days.flatMap((day, dayIndex) =>
+        day.locations.map((location, locationIndex) => ({
+          destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
+          day: dayIndex + 1,
+          order_index: locationIndex,
+          time: location.time || null,
+          title: location.name,
+          description: location.category || '',
+          notes: {
             raw: location.notes || '',
             cost: location.cost,
             duration: location.duration,
@@ -517,46 +407,25 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
             image: location.image,
             city: location.city,
             category: location.category,
-          };
+          },
+        }))
+      );
 
-          itemsToInsert.push({
-            trip_id: currentTripId,
-            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
-            day: dayIndex + 1,
-            order_index: locationIndex,
-            time: location.time || null,
-            title: location.name,
-            description: location.category,
-            notes: JSON.stringify(notesData),
-          });
-        });
+      await batchUpdateItineraryMutation.mutateAsync({
+        tripId: currentTripId,
+        items: itemsToPersist,
       });
 
-      if (itemsToInsert.length > 0) {
-        const { error: insertError } = await supabaseClient
-          .from('itinerary_items')
-          .insert(itemsToInsert);
-
-        if (insertError) throw insertError;
-      }
-
-      // Show success feedback without alert
-      // The save button will show "Saved" briefly
-      const saveButton = document.querySelector('[title="Save trip"]') as HTMLButtonElement;
-      if (saveButton) {
-        const originalText = saveButton.textContent;
-        saveButton.textContent = 'Saved!';
-        saveButton.disabled = true;
-        setTimeout(() => {
-          saveButton.textContent = originalText;
-          saveButton.disabled = false;
-        }, 2000);
+      if (showSuccess) {
+        notify('Trip saved', 'success');
       }
     } catch (error: any) {
       console.error('Error saving trip:', error);
-      alert(error?.message || 'Failed to save trip. Please try again.');
+      notify(error?.message || 'Failed to save trip. Please try again.', 'error');
     } finally {
-      setSaving(false);
+      if (trackSaving) {
+        setSaving(false);
+      }
     }
   };
 
@@ -575,7 +444,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
     // Auto-save if trip exists
     if (currentTripId) {
-      await handleSaveTrip();
+      await handleSaveTrip({ showSuccess: false, trackSaving: false });
     }
   };
 
@@ -593,7 +462,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
     // Auto-save if trip exists
     if (currentTripId) {
-      await handleSaveTrip();
+      await handleSaveTrip({ showSuccess: false, trackSaving: false });
     }
   };
 
@@ -614,7 +483,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
     // Auto-save if trip exists
     if (currentTripId) {
-      await handleSaveTrip();
+      await handleSaveTrip({ showSuccess: false, trackSaving: false });
     }
   };
 
