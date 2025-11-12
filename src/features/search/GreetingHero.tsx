@@ -169,15 +169,10 @@ export default function GreetingHero({
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
         {/* Greeting above search - Enhanced with context */}
-        <div className="text-left mb-8 space-y-3">
+        <div className="text-left mb-8">
           <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
             {greeting}
           </h1>
-          {searchQuery.trim().length === 0 && !isFocused && subtext && (
-            <p className="text-lg md:text-xl lg:text-2xl font-light text-gray-600 dark:text-gray-300">
-              {subtext}
-            </p>
-          )}
         </div>
 
         {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
