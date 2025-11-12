@@ -3,7 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
+import {
+  X,
+  MapPin,
+  Bookmark,
+  Share2,
+  Navigation,
+  ChevronDown,
+  Plus,
+  Loader2,
+  Clock,
+  ExternalLink,
+  Check,
+  List,
+  Map,
+  Crown,
+  Phone,
+  Globe
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -201,6 +218,19 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
+function formatPriceLevel(priceLevel?: number | null) {
+  if (priceLevel === null || priceLevel === undefined) {
+    return null;
+  }
+
+  if (priceLevel <= 0) {
+    return 'Free';
+  }
+
+  const clamped = Math.min(priceLevel, 4);
+  return '$'.repeat(clamped);
+}
+
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
@@ -210,6 +240,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
+  const [showMobileVisitedMenu, setShowMobileVisitedMenu] = useState(false);
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [tripPlannerDestination, setTripPlannerDestination] = useState<{
     slug: string;
@@ -684,168 +715,379 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Mobile-Optimized Popup (inspired by simple mobile design) */}
+      {/* Mobile bottom sheet */}
       <div
-        className={`md:hidden fixed inset-x-0 bottom-0 top-[10vh] bg-white dark:bg-gray-950 z-50 rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`md:hidden fixed inset-x-0 bottom-0 top-[6vh] z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } overflow-hidden flex flex-col`}
+        } flex flex-col rounded-t-[32px] bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-[0_-20px_60px_rgba(15,23,42,0.2)]`}
       >
-        {/* Close Button - Top Right */}
-              <button
+        <div className="absolute inset-x-0 top-0 flex justify-center pt-3 pb-1 pointer-events-none">
+          <span className="h-1.5 w-12 rounded-full bg-white/80 dark:bg-white/20" aria-hidden="true" />
+        </div>
+
+        <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm"
+          className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-white/80 text-gray-900 shadow-sm backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-gray-900/70 dark:text-gray-100"
           aria-label="Close"
         >
-          <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+          <X className="h-4 w-4" />
         </button>
 
-        {/* Large Header Image (40% of viewport) */}
-        {destination.image && (
-          <div className="relative w-full h-[40vh] flex-shrink-0">
-            <Image
-              src={destination.image}
-              alt={destination.name}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-              quality={90}
-            />
-          </div>
-        )}
-
-        {/* Content Area - Scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Hotel Summary Section (30%) */}
-          <div className="px-6 pt-6 pb-4 space-y-3">
-            {/* Name */}
-            <h1 className="text-2xl font-semibold text-black dark:text-white leading-tight">
-              {destination.name}
-            </h1>
-
-            {/* Location & Rating Row */}
-            <div className="flex items-center gap-4 flex-wrap">
-              {destination.city && (
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {capitalizeCity(destination.city)}
-                  </span>
+        <div className="relative w-full flex-shrink-0">
+          <div className="relative h-[44vh] w-full overflow-hidden rounded-t-[32px] bg-gray-200 dark:bg-gray-900">
+            {destination.image ? (
+              <Image
+                src={destination.image}
+                alt={destination.name}
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+                quality={90}
+              />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-gray-500">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/70">
+                  <MapPin className="h-5 w-5" />
                 </div>
-              )}
-              {rating && (
-                <div className="flex items-center gap-1.5">
-                  <svg className="h-4 w-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                <span className="text-sm">Image coming soon</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/0" aria-hidden="true" />
+
+            <div className="absolute bottom-6 left-6 right-6 space-y-4 text-white">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/90">
+                {destination.category && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 uppercase tracking-[0.2em]">
+                    {destination.category}
+                  </span>
+                )}
+                {destination.crown && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 text-[11px] font-medium text-white">
+                    <Crown className="h-3 w-3" />
+                    Manual Pick
+                  </span>
+                )}
+                {(destination.michelin_stars ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 text-[11px] font-medium text-white">
+                    <img
+                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                      alt="Michelin star"
+                      className="h-3 w-3"
+                    />
+                    {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+
+              <h1 className="text-3xl font-semibold leading-tight drop-shadow-lg">{destination.name}</h1>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/90 sm:text-sm">
+                {destination.city && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white/90">
+                    <MapPin className="h-3 w-3" />
+                    {destination.country
+                      ? `${capitalizeCity(destination.city)}, ${destination.country}`
+                      : capitalizeCity(destination.city)}
+                  </span>
+                )}
+                {rating && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white">
+                    <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
                     {rating.toFixed(1)}
                   </span>
-                </div>
-              )}
-              {destination.category && (
-                <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-400">
-                  {destination.category}
-                </span>
-              )}
-            </div>
-
-            {/* Description */}
-            {destination.micro_description && (
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {destination.micro_description}
-              </p>
-            )}
-          </div>
-
-          {/* Details Section (20%) */}
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-black dark:text-white mb-3">Details</h3>
-            <div className="space-y-2 text-sm">
-              {destination.category && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Type:</span>
-                  <span className="text-gray-900 dark:text-white">{destination.category}</span>
-                </div>
-              )}
-              {destination.city && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Location:</span>
-                  <span className="text-gray-900 dark:text-white">{capitalizeCity(destination.city)}</span>
-                </div>
-              )}
-              {destination.category && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Category:</span>
-                  <span className="text-gray-900 dark:text-white">{destination.category}</span>
-                </div>
-              )}
+                )}
+                {(enrichedData?.user_ratings_total || destination.user_ratings_total) && (
+                  <span className="text-xs text-white/70">
+                    {(enrichedData?.user_ratings_total || destination.user_ratings_total)?.toLocaleString()} reviews
+                  </span>
+                )}
+                {formatPriceLevel(enrichedData?.price_level ?? destination.price_level) && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white">
+                    {formatPriceLevel(enrichedData?.price_level ?? destination.price_level)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons (Bottom 10%) */}
-        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-          {/* Favorite and Share Buttons */}
-          <div className="flex items-center justify-end gap-3 mb-4">
-            {/* Favorite Button */}
-            <button
-              onClick={async () => {
-                if (!user) {
-                  router.push('/auth/login');
-                  return;
-                }
-                if (!isSaved) {
-                  setShowSaveModal(true);
-                } else {
-                  // Quick unsave
-                  try {
-                    const supabaseClient = createClient();
-                    if (!supabaseClient) {
-                      alert('Failed to connect to database. Please try again.');
-                      return;
-                    }
-                    const { error } = await supabaseClient
-                      .from('saved_places')
-                      .delete()
-                      .eq('user_id', user.id)
-                      .eq('destination_slug', destination.slug);
-                    if (!error) {
-                      setIsSaved(false);
-                      if (onSaveToggle) onSaveToggle(destination.slug, false);
-                    }
-                  } catch (error) {
-                    console.error('Error unsaving:', error);
+        <div className="relative flex-1 overflow-y-auto bg-white dark:bg-gray-950">
+          <div className="px-6 pb-36 pt-6 space-y-8">
+            <div className="-mx-6">
+              <div
+                className="flex gap-2 overflow-x-auto px-6 pb-2"
+                role="toolbar"
+                aria-label="Destination quick actions"
+              >
+                <button
+                  onClick={async () => {
+                  if (!user) {
+                    router.push('/auth/login');
+                    return;
                   }
-                }
-              }}
-              className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors ${
-                isSaved
-                  ? 'bg-black dark:bg-white border-black dark:border-white'
-                  : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700'
-              }`}
-              aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Heart className={`h-5 w-5 ${
-                isSaved
-                  ? 'fill-white dark:fill-black text-white dark:text-black'
-                  : 'text-gray-900 dark:text-gray-100'
-              }`} />
-            </button>
+                  if (!isSaved) {
+                    setShowSaveModal(true);
+                  } else {
+                    try {
+                      const supabaseClient = createClient();
+                      if (!supabaseClient) {
+                        alert('Failed to connect to database. Please try again.');
+                        return;
+                      }
+                      const { error } = await supabaseClient
+                        .from('saved_places')
+                        .delete()
+                        .eq('user_id', user.id)
+                        .eq('destination_slug', destination.slug);
+                      if (!error) {
+                        setIsSaved(false);
+                        if (onSaveToggle) onSaveToggle(destination.slug, false);
+                      }
+                    } catch (error) {
+                      console.error('Error unsaving:', error);
+                    }
+                  }
+                }}
+                  className={`group inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
+                    isSaved
+                      ? 'border-transparent bg-[#FF6B9F] text-black shadow-sm hover:bg-[#ff7bac]'
+                      : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
+                  }`}
+                  aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+                  aria-pressed={isSaved}
+                >
+                  <Bookmark
+                    className={`h-4 w-4 transition ${
+                      isSaved
+                        ? 'fill-current text-black'
+                        : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
+                    }`}
+                  />
+                  <span>{isSaved ? 'Saved' : 'Save'}</span>
+                </button>
 
-            {/* Share Button */}
-            <button
-              onClick={handleShare}
-              className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center justify-center transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-              aria-label="Share"
-            >
-              <Share2 className="h-5 w-5 text-gray-900 dark:text-gray-100" />
-            </button>
+                <DropdownMenu open={showMobileVisitedMenu} onOpenChange={setShowMobileVisitedMenu}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`group inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
+                        isVisited
+                          ? 'border-transparent bg-[#6BFFB8] text-black shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
+                      }`}
+                      aria-pressed={isVisited}
+                    >
+                      <Check
+                        className={`h-4 w-4 transition ${
+                          isVisited
+                            ? 'stroke-[3] text-black'
+                            : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
+                        }`}
+                      />
+                      <span>{isVisited ? 'Visited' : 'Visited?'}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-44">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setShowVisitedModal(true);
+                        setShowMobileVisitedMenu(false);
+                      }}
+                    >
+                      <Plus className="mr-2 h-3 w-3" />
+                      Add details
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        handleVisitToggle();
+                        setShowMobileVisitedMenu(false);
+                      }}
+                    >
+                      {isVisited ? 'Remove visit' : 'Mark visited'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <button
+                  onClick={handleShare}
+                  className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
+                >
+                  <Share2 className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
+                  <span>{copied ? 'Copied!' : 'Share'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const url = `https://maps.apple.com/?q=${encodeURIComponent(`${destination.name} ${destination.city ?? ''}`)}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                  className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
+                >
+                  <Navigation className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
+                  <span>Directions</span>
+                </button>
+              </div>
+            </div>
+
+            {destination.micro_description && (
+              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
+                {destination.micro_description}
+              </p>
+            )}
+
+            {destination.tags && destination.tags.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  Highlights
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {destination.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 dark:border-gray-800 dark:text-gray-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(() => {
+              const hours =
+                enrichedData?.current_opening_hours ||
+                enrichedData?.opening_hours ||
+                destination.opening_hours;
+              if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
+                return null;
+              }
+
+              const openStatus = getOpenStatus(
+                hours,
+                destination.city,
+                enrichedData?.timezone_id,
+                enrichedData?.utc_offset
+              );
+
+              return (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                    Today&rsquo;s schedule
+                  </h3>
+                  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`h-2.5 w-2.5 rounded-full ${
+                          openStatus.isOpen ? 'bg-emerald-500' : 'bg-gray-400'
+                        }`}
+                      />
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {openStatus.isOpen ? 'Open now' : 'Closed'}
+                      </span>
+                      {openStatus.todayHours && (
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          · {openStatus.todayHours}
+                        </span>
+                      )}
+                    </div>
+                    <details className="mt-3 text-sm">
+                      <summary className="cursor-pointer text-gray-600 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+                        View weekly hours
+                      </summary>
+                      <div className="mt-3 space-y-1 pl-4">
+                        {hours.weekday_text.map((day: string, index: number) => (
+                          <div key={index} className="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>{day.split(': ')[0]}</span>
+                            <span>{day.split(': ')[1]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  Address
+                </h3>
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                      {enrichedData?.formatted_address}
+                      {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
+                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">{enrichedData.vicinity}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(enrichedData?.international_phone_number || destination.phone_number || enrichedData?.website || destination.website) && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  Contact
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {(enrichedData?.international_phone_number || destination.phone_number) && (
+                    <a
+                      href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900"
+                    >
+                      <Phone className="h-4 w-4" />
+                      {enrichedData?.international_phone_number || destination.phone_number}
+                    </a>
+                  )}
+                  {(enrichedData?.website || destination.website) && (
+                    <a
+                      href={(enrichedData?.website || destination.website).startsWith('http')
+                        ? enrichedData?.website || destination.website
+                        : `https://${enrichedData?.website || destination.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900"
+                    >
+                      <Globe className="h-4 w-4" />
+                      Website
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {destination.description && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  About this place
+                </h3>
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {stripHtmlTags(destination.description)}
+                </p>
+              </div>
+            )}
+
+            {enrichedData?.editorial_summary && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  From Google
+                </h3>
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {stripHtmlTags(enrichedData.editorial_summary)}
+                </p>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* Action Buttons - Side by Side */}
+        <div className="absolute inset-x-0 bottom-0 border-t border-gray-200 bg-white/95 px-6 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-4 shadow-[0_-6px_30px_rgba(15,23,42,0.08)] dark:border-gray-800 dark:bg-gray-950/95">
           <div className="flex gap-3">
-            {/* View More Details Button */}
             {destination.slug && (
               <Link
                 href={`/destination/${destination.slug}`}
@@ -853,13 +1095,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   e.stopPropagation();
                   onClose();
                 }}
-                className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3.5 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
+                className="flex-1 rounded-xl bg-black py-3 text-center text-sm font-medium text-white transition hover:opacity-90 dark:bg-white dark:text-black"
               >
-                View More Details
+                View details
               </Link>
             )}
-            
-            {/* Add to Trip Button */}
             <button
               onClick={() => {
                 if (!user) {
@@ -875,10 +1115,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 });
                 setShowTripPlanner(true);
               }}
-              className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 transition hover:bg-gray-50 dark:border-gray-800 dark:text-gray-100 dark:hover:bg-gray-900"
             >
               <Plus className="h-4 w-4" />
-              <span>Add to Trip</span>
+              Plan trip
             </button>
           </div>
         </div>
