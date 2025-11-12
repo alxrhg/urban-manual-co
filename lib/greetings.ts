@@ -313,10 +313,14 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
     };
   }
 
-  // Fallback: Basic greeting with generic prompt
+  // Fallback: Basic greeting with generic prompt (integrate breakfast for 6-11 AM)
+  const fallbackSubtext = (hour >= 6 && hour < 11) 
+    ? 'Looking for breakfast spots?'
+    : 'What are you craving today?';
+  
   return {
     greeting: `${baseGreeting}${userNamePart}`,
-    subtext: 'What are you craving today?',
+    subtext: fallbackSubtext,
     type: 'basic',
   };
 }
