@@ -68,10 +68,10 @@ export function AccountLayout({ children }: AccountLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-muted/40">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-12 sm:px-6 lg:flex-row lg:px-8">
         <aside className="w-full max-w-sm shrink-0 space-y-8 lg:w-72">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
             {loading ? (
               <div className="space-y-4">
                 <Skeleton className="h-12 w-12 rounded-full" />
@@ -83,26 +83,26 @@ export function AccountLayout({ children }: AccountLayoutProps) {
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <UserCircle2 className="h-6 w-6" aria-hidden="true" />
                   </div>
                   <div>
-                    <p className="text-base font-medium text-gray-900 dark:text-gray-100">
+                    <p className="text-base font-medium text-foreground">
                       {profile?.display_name || profile?.username || user?.email || 'Traveler'}
                     </p>
                     {user?.email && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
                     )}
                   </div>
                 </div>
-                <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="space-y-2 text-sm text-muted-foreground">
                   <p>Manage how Urban Manual personalizes your experience.</p>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     disabled={!user}
-                    className="gap-2 text-red-600 hover:text-red-700 disabled:text-gray-400 disabled:hover:text-gray-400 dark:text-red-400"
+                    className="gap-2 text-destructive hover:text-destructive/90 disabled:text-muted-foreground"
                     onClick={signOutOtherDevices}
                   >
                     <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -113,8 +113,8 @@ export function AccountLayout({ children }: AccountLayoutProps) {
             )}
           </div>
 
-          <nav aria-label="Account sections" className="rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+          <nav aria-label="Account sections" className="rounded-3xl border border-border bg-card shadow-sm">
+            <ul className="divide-y divide-border/60">
               {sections.map(section => {
                 const isActive = activeSection === section.href;
                 const Icon = section.icon;
@@ -123,16 +123,16 @@ export function AccountLayout({ children }: AccountLayoutProps) {
                     <Link
                       href={section.href}
                       className={cn(
-                        'flex gap-3 px-6 py-5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900',
+                        'flex gap-3 px-6 py-5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                         isActive
-                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-200'
-                          : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-muted/50'
                       )}
                     >
                       <Icon className="h-5 w-5" aria-hidden="true" />
                       <div className="flex flex-1 flex-col">
-                        <span className="text-sm font-medium">{section.label}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{section.description}</span>
+                        <span className="text-sm font-medium text-foreground">{section.label}</span>
+                        <span className="text-xs text-muted-foreground">{section.description}</span>
                       </div>
                     </Link>
                   </li>
@@ -143,7 +143,7 @@ export function AccountLayout({ children }: AccountLayoutProps) {
         </aside>
 
         <main className="flex-1">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-8">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
             {children}
           </div>
         </main>

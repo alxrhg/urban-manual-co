@@ -13,8 +13,8 @@ export default function AccountHistoryPage() {
   if (!user) {
     return (
       <div className="space-y-6 text-center">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Sign in required</h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <h1 className="text-2xl font-semibold text-foreground">Sign in required</h1>
+        <p className="text-muted-foreground">
           Sign in to review your travel history, saved places, and curated collections.
         </p>
       </div>
@@ -25,10 +25,10 @@ export default function AccountHistoryPage() {
     <div className="space-y-12">
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Layers className="h-6 w-6 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">History & curation</h1>
+          <Layers className="h-6 w-6 text-primary" aria-hidden="true" />
+          <h1 className="text-2xl font-semibold text-foreground">History & curation</h1>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Explore everywhere you have saved, tracked, and visited in Urban Manual.
         </p>
       </header>
@@ -36,12 +36,12 @@ export default function AccountHistoryPage() {
       <section aria-labelledby="visited-places" className="space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-300" aria-hidden="true" />
+            <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
             <div>
-              <h2 id="visited-places" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              <h2 id="visited-places" className="text-lg font-medium text-foreground">
                 Visited destinations
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Track where you have been and add notes for future reference.
               </p>
             </div>
@@ -56,12 +56,12 @@ export default function AccountHistoryPage() {
       <section aria-labelledby="saved-places" className="space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-blue-600 dark:text-blue-300" aria-hidden="true" />
+            <Heart className="h-5 w-5 text-primary" aria-hidden="true" />
             <div>
-              <h2 id="saved-places" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              <h2 id="saved-places" className="text-lg font-medium text-foreground">
                 Saved places
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Organize your wishlist and build itineraries with your favourites.
               </p>
             </div>
@@ -72,12 +72,12 @@ export default function AccountHistoryPage() {
 
       <section aria-labelledby="collections" className="space-y-6">
         <div className="flex items-center gap-2">
-          <Layers className="h-5 w-5 text-blue-600 dark:text-blue-300" aria-hidden="true" />
+          <Layers className="h-5 w-5 text-primary" aria-hidden="true" />
           <div>
-            <h2 id="collections" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            <h2 id="collections" className="text-lg font-medium text-foreground">
               Collections
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Curate thematic lists to share with friends and collaborators.
             </p>
           </div>
@@ -89,20 +89,20 @@ export default function AccountHistoryPage() {
             {collections.map(collection => (
               <li
                 key={collection.id}
-                className="rounded-2xl border border-gray-100 bg-white/60 p-4 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60"
+                className="rounded-2xl border border-border bg-card/80 p-4 text-sm shadow-sm"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{collection.name}</p>
+                    <p className="font-medium text-foreground">{collection.name}</p>
                     {collection.description && (
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{collection.description}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{collection.description}</p>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-muted-foreground">
                     {collection.destination_count ?? 0} places
                   </span>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span>{collection.is_public ? 'Public' : 'Private'}</span>
                   <time dateTime={collection.created_at}>
                     Created {new Date(collection.created_at).toLocaleDateString()}

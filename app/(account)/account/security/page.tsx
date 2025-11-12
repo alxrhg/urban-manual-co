@@ -59,8 +59,8 @@ export default function AccountSecurityPage() {
   if (!user) {
     return (
       <div className="space-y-6 text-center">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Sign in required</h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <h1 className="text-2xl font-semibold text-foreground">Sign in required</h1>
+        <p className="text-muted-foreground">
           Authenticate to review your session history and security events.
         </p>
       </div>
@@ -71,10 +71,10 @@ export default function AccountSecurityPage() {
     <div className="space-y-12">
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Security & sessions</h1>
+          <ShieldCheck className="h-6 w-6 text-primary" aria-hidden="true" />
+          <h1 className="text-2xl font-semibold text-foreground">Security & sessions</h1>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Monitor active devices, revoke access, and review your recent activity.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -109,14 +109,14 @@ export default function AccountSecurityPage() {
       <section aria-labelledby="session-list" className="space-y-4">
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <h2 id="session-list" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            <h2 id="session-list" className="text-lg font-medium text-foreground">
               Active sessions
             </h2>
             <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs">
               {activeSessions.length} active
             </Badge>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Sessions update automatically when you sign in or sign out on a device.
           </p>
         </div>
@@ -135,27 +135,27 @@ export default function AccountSecurityPage() {
               return (
                 <li
                   key={session.id}
-                  className="rounded-2xl border border-gray-100 bg-white/60 p-4 shadow-sm transition hover:border-blue-200 dark:border-gray-800 dark:bg-gray-950/60 hover:dark:border-blue-500/40"
+                  className="rounded-2xl border border-border bg-card/80 p-4 shadow-sm transition hover:border-primary/30"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Monitor className="h-4 w-4" aria-hidden="true" />
                         <span>{session.device_type || 'Web session'}</span>
                         <Clock3 className="h-4 w-4" aria-hidden="true" />
                         <span>Started {formatRelative(session.started_at)}</span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <MapPin className="h-4 w-4" aria-hidden="true" />
                         <span>
                           {session.location_city || 'Unknown city'}, {session.location_country || 'Unknown country'}
                         </span>
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
                           Last activity {formatRelative(session.last_activity || session.started_at)}
                         </span>
                       </div>
                       {session.referrer && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Referrer: {session.referrer}</p>
+                        <p className="text-xs text-muted-foreground">Referrer: {session.referrer}</p>
                       )}
                     </div>
                     <Button
@@ -184,29 +184,29 @@ export default function AccountSecurityPage() {
 
       <section aria-labelledby="activity-log" className="space-y-4">
         <div className="space-y-1">
-          <h2 id="activity-log" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          <h2 id="activity-log" className="text-lg font-medium text-foreground">
             Activity log
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             We capture key account events to help you verify any suspicious activity.
           </p>
         </div>
         {recentActivity.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No recent activity recorded.</p>
+          <p className="text-sm text-muted-foreground">No recent activity recorded.</p>
         ) : (
           <ul className="space-y-3">
             {recentActivity.map(entry => (
               <li
                 key={entry.id}
-                className="rounded-2xl border border-gray-100 bg-white/60 p-4 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60"
+                className="rounded-2xl border border-border bg-card/80 p-4 text-sm shadow-sm"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="space-y-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 capitalize">{entry.type.replace(/_/g, ' ')}</p>
+                    <p className="font-medium text-foreground capitalize">{entry.type.replace(/_/g, ' ')}</p>
                     {entry.description && (
-                      <p className="text-gray-500 dark:text-gray-400">{entry.description}</p>
+                      <p className="text-muted-foreground">{entry.description}</p>
                     )}
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {new Date(entry.created_at).toLocaleString()} · {formatRelative(entry.created_at)}
                     </p>
                   </div>
@@ -217,7 +217,7 @@ export default function AccountSecurityPage() {
                   )}
                 </div>
                 {entry.metadata && (
-                  <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-gray-100 p-3 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                  <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-muted p-3 text-xs text-muted-foreground">
                     {JSON.stringify(entry.metadata, null, 2)}
                   </pre>
                 )}

@@ -23,6 +23,11 @@ import { TripBudgetTracker } from './TripBudgetTracker';
 import { TripWeatherForecast } from './TripWeatherForecast';
 import { TripPackingList } from './TripPackingList';
 import { TripShareModal } from './TripShareModal';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface TripPlannerProps {
   isOpen: boolean;
@@ -740,19 +745,19 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
         className={`fixed inset-y-0 right-0 z-50 flex w-full transform transition-transform duration-300 ease-in-out ${baseTranslateClass} ${desktopTranslateClass} md:inset-y-auto md:top-4 md:bottom-4 md:w-auto md:right-4`}
       >
         <div
-          className="flex h-full w-full flex-col bg-white shadow-2xl dark:bg-gray-950 md:w-[440px] md:max-w-[calc(100vw-2rem)] md:rounded-2xl md:ring-1 md:ring-black/5 md:border md:border-gray-200 dark:md:border-gray-800 md:overflow-hidden"
+          className="flex h-full w-full flex-col bg-background shadow-2xl md:w-[440px] md:max-w-[calc(100vw-2rem)] md:rounded-2xl md:border md:border-border md:overflow-hidden"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-5 py-6 md:px-8 md:py-8 dark:border-gray-800">
-              <div>
-              <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-5 py-6 md:px-8 md:py-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                 {step === 'plan'
                   ? 'Trip planner'
                   : step === 'select'
                   ? 'Add to trip'
                   : 'Start a trip'}
               </p>
-              <h2 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="mt-1 text-2xl font-semibold text-foreground">
                 {step === 'plan'
                   ? tripName || 'Untitled trip'
                   : step === 'select'
@@ -760,85 +765,100 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                   : 'Create a new itinerary'}
               </h2>
               {step === 'plan' && destination && (
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{destination}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{destination}</p>
               )}
               {step === 'select' && initialDestination?.city && (
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{initialDestination.city}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{initialDestination.city}</p>
               )}
-                </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
-            {step === 'plan' && (
-              <>
-                {currentTripId && (
-                  <button
-                    onClick={handleSaveTrip}
-                    disabled={saving}
-                      className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3.5 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
-                    title="Save trip"
-                  >
-                      {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SaveIcon className="h-3.5 w-3.5" />}
+              {step === 'plan' && (
+                <>
+                  {currentTripId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={handleSaveTrip}
+                      disabled={saving}
+                      title="Save trip"
+                    >
+                      {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <SaveIcon className="h-3.5 w-3.5" aria-hidden="true" />}
                       {saving ? 'Saving…' : 'Save'}
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowShare(true)}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                  title="Share trip"
-                >
-                    <ShareIcon className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={handleExportToCalendar}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                  title="Export to calendar"
-                >
-                    <DownloadIcon className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={handlePrint}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                  title="Print itinerary"
-                >
-                    <PrinterIcon className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            <button
-              onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    className="rounded-full"
+                    onClick={() => setShowShare(true)}
+                    title="Share trip"
+                  >
+                    <ShareIcon className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    className="rounded-full"
+                    onClick={handleExportToCalendar}
+                    title="Export to calendar"
+                  >
+                    <DownloadIcon className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    className="rounded-full"
+                    onClick={handlePrint}
+                    title="Print itinerary"
+                  >
+                    <PrinterIcon className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="rounded-full"
+                onClick={onClose}
                 aria-label="Close"
-            >
-                <XIcon className="h-4 w-4" />
-            </button>
+              >
+                <XIcon className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
           </div>
-        </div>
 
           <div className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
             {step === 'select' && initialDestination ? (
               <div className="space-y-8">
-                <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+                <div className="overflow-hidden rounded-3xl border border-border bg-card/95 p-6 shadow-sm">
                   <div className="flex flex-col gap-4">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-muted-foreground">
                       Add to trip
                     </span>
                     <div className="space-y-3">
-                      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-2xl font-semibold text-foreground">
                         Add “{initialDestination.name}” to your itinerary
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                      <p className="text-sm text-muted-foreground">
                         Choose an itinerary that fits this spot or start a new plan that mirrors the homepage’s clean structure.
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {initialDestination.city && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                          <MapPinIcon className="h-3.5 w-3.5" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-muted-foreground">
+                          <MapPinIcon className="h-3.5 w-3.5" aria-hidden="true" />
                           {initialDestination.city}
                         </span>
                       )}
                       {initialDestination.category && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                          <SparklesIcon className="h-3.5 w-3.5" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-muted-foreground">
+                          <SparklesIcon className="h-3.5 w-3.5" aria-hidden="true" />
                           {initialDestination.category}
                         </span>
                       )}
@@ -848,37 +868,39 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-muted-foreground">
                       Your itineraries
                     </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Tap to keep building</span>
+                    <span className="text-xs text-muted-foreground">Tap to keep building</span>
                   </div>
                   {loadingTripSummaries ? (
                     <div className="flex items-center justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : tripSummaries.length > 0 ? (
                     <div className="space-y-3">
                       {tripSummaries.map((trip) => (
-                        <button
+                        <Button
                           key={trip.id}
+                          type="button"
                           onClick={() => handleAddDestinationToTrip(trip.id)}
                           disabled={addingToTripId === trip.id}
-                          className="group flex w-full items-start justify-between gap-4 rounded-3xl border border-gray-200 bg-white/95 p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/5 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-800 dark:bg-gray-950/80 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+                          variant="outline"
+                          className="group flex h-auto w-full items-start justify-between gap-4 rounded-3xl border-border bg-card/95 p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-foreground/10 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
+                              <span className="text-[0.65rem] font-semibold uppercase tracking-[2px] text-muted-foreground">
                                 Itinerary
                               </span>
-                              <span className="text-[0.65rem] font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                              <span className="text-[0.65rem] font-medium uppercase tracking-[2px] text-muted-foreground">
                                 Updated {new Date(trip.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                               </span>
                             </div>
-                            <h3 className="text-base font-semibold text-gray-900 transition-colors group-hover:text-gray-600 dark:text-white dark:group-hover:text-gray-200">
+                            <h3 className="text-base font-semibold text-foreground transition-colors group-hover:text-muted-foreground">
                               {trip.title}
                             </h3>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                               {trip.destination && <span className="uppercase tracking-[2px]">{trip.destination}</span>}
                               {(trip.start_date || trip.end_date) && (
                                 <span>
@@ -891,38 +913,39 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                             </div>
                           </div>
                           {addingToTripId === trip.id ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                           ) : (
-                            <ArrowRight className="h-5 w-5 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300" />
+                            <ArrowRight className="h-5 w-5 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" aria-hidden="true" />
                           )}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-3xl border border-gray-200 bg-white/90 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
+                    <div className="rounded-3xl border border-border bg-card/90 p-6 text-sm text-muted-foreground shadow-sm">
                       You haven’t created any trips yet. Start a new itinerary below.
                     </div>
                   )}
                 </div>
 
-                <div className="relative overflow-hidden rounded-3xl border border-gray-900 bg-black px-6 py-7 text-white shadow-xl dark:border-gray-100 dark:bg-white dark:text-black">
+                <div className="relative overflow-hidden rounded-3xl border border-border bg-foreground px-6 py-7 text-background shadow-xl dark:border-border dark:bg-background dark:text-foreground">
                   <div className="pointer-events-none absolute inset-0 opacity-80 [background:radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_rgba(255,255,255,0)_60%)] dark:[background:radial-gradient(circle_at_top,_rgba(0,0,0,0.14),_rgba(0,0,0,0)_60%)]" aria-hidden="true" />
                   <div className="relative flex flex-col gap-5">
                     <span className="inline-flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[3px]">
-                      <SparklesIcon className="h-4 w-4" />
+                      <SparklesIcon className="h-4 w-4" aria-hidden="true" />
                       Start fresh
                     </span>
                     <div className="space-y-3">
                       <h3 className="text-2xl font-semibold leading-snug">
                         Start a new itinerary for this destination
                       </h3>
-                      <p className="text-sm text-gray-300 dark:text-gray-600">
+                      <p className="text-sm opacity-80">
                         We’ll prefill the essentials so you can curate days, budgets, and highlights with the same polish as the homepage grid.
                       </p>
                     </div>
                     <div>
-                      <button
+                      <Button
                         type="button"
+                        variant="secondary"
                         onClick={() => {
                           setBypassSelection(true);
                           resetForm();
@@ -932,41 +955,41 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                           }
                           setStep('create');
                         }}
-                        className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[2px] text-black transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40 dark:bg-black dark:text-white dark:focus:ring-black/40"
+                        className="rounded-full px-4 text-xs font-semibold uppercase tracking-[2px]"
                       >
                         Start a new trip
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </button>
+                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
             ) : step === 'create' ? (
               <div className="mx-auto max-w-3xl space-y-8">
-                <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/95 px-6 py-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+                <div className="overflow-hidden rounded-3xl border border-border bg-card/95 px-6 py-8 shadow-sm">
                   <div className="flex flex-col gap-4">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-muted-foreground">
                       New trip
                     </span>
                     <div className="space-y-3">
-                      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-2xl font-semibold text-foreground">
                         Build your itinerary in our signature style
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                      <p className="text-sm text-muted-foreground">
                         Define the essentials and we’ll keep everything structured just like the homepage layout you’re used to.
                       </p>
                     </div>
                     {(initialDestination?.name || initialDestination?.city) && (
                       <div className="flex flex-wrap items-center gap-2">
                         {initialDestination?.name && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                            <SparklesIcon className="h-3.5 w-3.5" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-muted-foreground">
+                            <SparklesIcon className="h-3.5 w-3.5" aria-hidden="true" />
                             {initialDestination.name}
                           </span>
                         )}
                         {initialDestination?.city && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                            <MapPinIcon className="h-3.5 w-3.5" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-muted-foreground">
+                            <MapPinIcon className="h-3.5 w-3.5" aria-hidden="true" />
                             {initialDestination.city}
                           </span>
                         )}
@@ -975,150 +998,152 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+                <div className="rounded-3xl border border-border bg-card/95 p-6 shadow-sm">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Trip name *
-                      </label>
-                      <input
-                        type="text"
+                      <Label htmlFor="trip-name" className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+                        Trip name <span aria-hidden="true">*</span>
+                      </Label>
+                      <Input
+                        id="trip-name"
                         value={tripName}
                         onChange={(e) => setTripName(e.target.value)}
                         placeholder="Summer in Paris"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2"
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Destination *
-                      </label>
-                      <input
-                        type="text"
+                      <Label htmlFor="trip-destination" className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+                        Destination <span aria-hidden="true">*</span>
+                      </Label>
+                      <Input
+                        id="trip-destination"
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
                         placeholder="Paris, France"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2"
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      <Label htmlFor="trip-hotel" className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                         Hotel / base location
-                      </label>
-                      <input
-                        type="text"
+                      </Label>
+                      <Input
+                        id="trip-hotel"
                         value={hotelLocation}
                         onChange={(e) => setHotelLocation(e.target.value)}
                         placeholder="Hotel Le Marais"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        Start date *
-                      </label>
-                      <input
+                      <Label htmlFor="trip-start" className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+                        Start date <span aria-hidden="true">*</span>
+                      </Label>
+                      <Input
+                        id="trip-start"
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                        className="mt-2"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                        End date *
-                      </label>
-                      <input
+                      <Label htmlFor="trip-end" className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+                        End date <span aria-hidden="true">*</span>
+                      </Label>
+                      <Input
+                        id="trip-end"
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                        className="mt-2"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                      <Label htmlFor="trip-budget" className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                         Total budget
-                      </label>
-                      <input
+                      </Label>
+                      <Input
+                        id="trip-budget"
                         type="number"
                         value={totalBudget || ''}
                         onChange={(e) => setTotalBudget(Number(e.target.value))}
                         placeholder="2000"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2"
                       />
                     </div>
                   </div>
                   <div className="mt-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 font-medium uppercase tracking-[2px] text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                        <SparklesIcon className="h-3.5 w-3.5" />
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 font-medium uppercase tracking-[2px] text-muted-foreground">
+                        <SparklesIcon className="h-3.5 w-3.5" aria-hidden="true" />
                         Smart planning
                       </span>
                       <span>Budget, packing, and weather tools unlock once you create the trip.</span>
                     </div>
-                    <button
+                    <Button
                       type="button"
                       onClick={handleCreateTrip}
                       disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                      className="rounded-full px-5"
                     >
                       {saving ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                           Creating…
                         </>
                       ) : (
                         'Create trip'
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
-                <div className="flex flex-wrap items-center gap-2">
+              <Tabs
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+                className="space-y-6"
+              >
+                <TabsList className="flex flex-wrap gap-2 bg-transparent p-0">
                   {plannerTabs.map((tab) => (
-                    <button
+                    <TabsTrigger
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
-                        activeTab === tab.id
-                          ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                      }`}
+                      value={tab.id}
+                      className="rounded-full border border-border/80 bg-transparent px-4 py-1.5 text-xs font-semibold data-[state=active]:border-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
                     >
                       {tab.label}
-                    </button>
+                    </TabsTrigger>
                   ))}
-                </div>
+                </TabsList>
 
-              {activeTab === 'itinerary' && (
-                  <div className="space-y-6">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                          <MapPinIcon className="h-3.5 w-3.5" />
+                <TabsContent value="itinerary" className="space-y-6">
+                  <div className="rounded-2xl border border-border bg-card/95 p-6 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                        <MapPinIcon className="h-3.5 w-3.5" aria-hidden="true" />
                         {destination}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                        <CalendarIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                        {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
+                        {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                      {totalBudget > 0 && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                          <WalletIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                          ${getTotalSpent()} / ${totalBudget}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                          <CalendarIcon className="h-3.5 w-3.5" />
-                          {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
-                          {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                        {totalBudget > 0 && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                            <WalletIcon className="h-3.5 w-3.5" />
-                            ${getTotalSpent()} / ${totalBudget}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/40">
-                        <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                          Smart suggestions
-                        </p>
-                        <ul className="mt-3 space-y-2">
+                      )}
+                    </div>
+                    <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted/60 p-5">
+                      <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+                        Smart suggestions
+                      </p>
+                      <ul className="mt-3 space-y-2">
                         {getAISuggestions().map((suggestion, index) => (
-                            <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
+                          <li key={index} className="text-sm text-muted-foreground">
                             • {suggestion}
                           </li>
                         ))}
@@ -1126,7 +1151,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                     </div>
                   </div>
 
-                    <div className="space-y-10">
+                  <div className="space-y-10">
                     {days.map((day, index) => (
                       <TripDay
                         key={day.date}
@@ -1142,21 +1167,20 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                       />
                     ))}
                   </div>
-                </div>
-              )}
+                </TabsContent>
 
-              {activeTab === 'budget' && (
+                <TabsContent value="budget">
                   <TripBudgetTracker days={days} totalBudget={totalBudget} onUpdateBudget={setTotalBudget} />
-              )}
+                </TabsContent>
 
-              {activeTab === 'weather' && (
+                <TabsContent value="weather">
                   <TripWeatherForecast destination={destination} startDate={startDate} endDate={endDate} />
-              )}
+                </TabsContent>
 
-              {activeTab === 'packing' && (
+                <TabsContent value="packing">
                   <TripPackingList destination={destination} days={days} startDate={startDate} endDate={endDate} />
-                )}
-              </div>
+                </TabsContent>
+              </Tabs>
             )}
           </div>
         </div>

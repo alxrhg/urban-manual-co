@@ -21,6 +21,7 @@ import { PageContainer } from '@/components/PageContainer';
 import { PageIntro } from '@/components/PageIntro';
 import { TripPlanner } from '@/components/TripPlanner';
 import { ConversationInterfaceStreaming } from '@/app/components/chat/ConversationInterfaceStreaming';
+import { Button } from '@/components/ui/button';
 
 interface Trip {
   id: string;
@@ -147,7 +148,7 @@ function TripCard({ trip, onView, onEdit, onDelete, onOpenIntelligence }: TripCa
   const dateRange = formatDateRange(trip.start_date, trip.end_date);
 
   return (
-    <article className="group relative overflow-hidden rounded-3xl border border-gray-200/70 dark:border-gray-800 bg-white/80 dark:bg-gray-950/70 shadow-sm transition-transform hover:-translate-y-1">
+    <article className="group relative overflow-hidden rounded-3xl border border-border bg-card/95 shadow-sm transition-transform hover:-translate-y-1">
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${statusStyle.accentClass}`} />
       <div className="relative flex flex-col gap-6 p-6">
         <div className="flex items-start justify-between gap-4">
@@ -157,65 +158,74 @@ function TripCard({ trip, onView, onEdit, onDelete, onOpenIntelligence }: TripCa
                 {statusStyle.label}
               </span>
               {countdown && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                  <Clock className="h-3.5 w-3.5" />
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                   {countdown}
                 </span>
               )}
             </div>
-            <h3 className="mt-3 text-xl font-semibold leading-tight text-gray-900 dark:text-white">
+            <h3 className="mt-3 text-xl font-semibold leading-tight text-foreground">
               {trip.title}
             </h3>
             {trip.destination && (
-              <p className="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                <MapPin className="h-4 w-4" />
+              <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
                 <span>{trip.destination}</span>
               </p>
             )}
             {(trip.start_date || trip.end_date) && (
-              <p className="mt-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <Calendar className="h-4 w-4" />
+              <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" aria-hidden="true" />
                 <span>{dateRange}</span>
               </p>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="rounded-full border-border/70 text-muted-foreground hover:text-foreground"
               onClick={() => onEdit(trip)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:border-gray-300 hover:text-gray-700 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
               aria-label={`Edit ${trip.title}`}
             >
-              <Edit2 className="h-4 w-4" />
-            </button>
-            <button
+              <Edit2 className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="rounded-full border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-300"
               onClick={() => onDelete(trip)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-100 text-red-500 transition-colors hover:border-red-200 hover:text-red-600 dark:border-red-900/40 dark:text-red-300 dark:hover:border-red-800/60"
               aria-label={`Delete ${trip.title}`}
             >
-              <Trash2 className="h-4 w-4" />
-            </button>
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+            </Button>
           </div>
         </div>
 
         {trip.description && (
-          <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">{trip.description}</p>
+          <p className="text-sm leading-6 text-muted-foreground">{trip.description}</p>
         )}
 
         <div className="mt-auto flex flex-wrap gap-3">
-          <button
+          <Button
+            type="button"
+            className="flex-1 rounded-full"
             onClick={() => onOpenIntelligence(trip)}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
           >
-            <Bot className="h-4 w-4" />
+            <Bot className="h-4 w-4" aria-hidden="true" />
             Travel Intelligence
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full"
             onClick={() => onView(trip.id)}
-            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
           >
             View itinerary
-            <ArrowRight className="h-4 w-4" />
-          </button>
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Button>
         </div>
       </div>
     </article>
@@ -224,26 +234,23 @@ function TripCard({ trip, onView, onEdit, onDelete, onOpenIntelligence }: TripCa
 
 function EmptyState({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-dashed border-gray-300 bg-white/90 px-8 py-16 text-center dark:border-gray-800 dark:bg-gray-950/70">
-      <div className="absolute inset-x-[-40%] top-1/2 h-64 -translate-y-1/2 bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 opacity-40 blur-3xl dark:from-blue-900/30 dark:via-purple-900/30 dark:to-blue-900/30" />
+    <div className="relative overflow-hidden rounded-3xl border border-dashed border-border bg-background/95 px-8 py-16 text-center">
+      <div className="absolute inset-x-[-40%] top-1/2 h-64 -translate-y-1/2 bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 opacity-40 blur-3xl dark:from-blue-900/30 dark:via-purple-900/30 dark:to-blue-900/30" aria-hidden="true" />
       <div className="relative mx-auto max-w-lg space-y-5">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200">
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-6 w-6" aria-hidden="true" />
         </div>
-        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-2xl font-semibold text-foreground">
           Design your first intelligent itinerary
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Craft a flexible travel blueprint, then invite our Travel Intelligence copilot to fill in restaurants,
           experiences, and hidden gems tailored to your taste.
         </p>
-        <button
-          onClick={onCreate}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-        >
-          <Plus className="h-4 w-4" />
+        <Button className="rounded-full px-6" onClick={onCreate}>
+          <Plus className="h-4 w-4" aria-hidden="true" />
           Create a new trip
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -457,7 +464,7 @@ export default function TripsPage() {
   if (authLoading || loadingTrips) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <span className="text-gray-500 dark:text-gray-400">Loading trips…</span>
+        <span className="text-muted-foreground">Loading trips…</span>
       </div>
     );
   }
@@ -467,115 +474,113 @@ export default function TripsPage() {
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-20">
       <PageIntro
         eyebrow="Itinerary Studio"
         title="Trips"
         description="Keep every itinerary under one roof, collaborate with friends, and activate Travel Intelligence to evolve each journey."
         actions={
           <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => handleOpenPlanner()}
-              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-            >
-              <Plus className="h-4 w-4" />
-              New Trip
-            </button>
-            <button
+            <Button className="rounded-full px-5" onClick={() => handleOpenPlanner()}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New trip
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full px-5"
               onClick={() => handleOpenIntelligence()}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-white dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-900/60"
             >
-              <Bot className="h-4 w-4" />
-              Travel Intelligence Hub
-            </button>
+              <Bot className="h-4 w-4" aria-hidden="true" />
+              Travel Intelligence hub
+            </Button>
           </div>
         }
       />
 
-      <PageContainer className="space-y-10">
-        <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+      <PageContainer className="space-y-12">
+        <section className="rounded-3xl border border-border bg-card/90 p-8 shadow-sm">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-2xl border border-gray-200/70 bg-white/80 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-              <p className="text-xs font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+            <div className="rounded-2xl border border-border bg-background/80 p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                 Active plans
               </p>
-              <p className="mt-3 text-2xl font-semibold text-gray-900 dark:text-white">{metrics.active}</p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-3 text-2xl font-semibold text-foreground">{metrics.active}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
                 {metrics.planning} planning • {metrics.upcoming} upcoming • {metrics.ongoing} in progress
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-200/70 bg-white/80 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-              <p className="text-xs font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+            <div className="rounded-2xl border border-border bg-background/80 p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                 Next departure
               </p>
-              <p className="mt-3 text-2xl font-semibold text-gray-900 dark:text-white">
+              <p className="mt-3 text-2xl font-semibold text-foreground">
                 {nextTrip ? nextTrip.title : 'No trip scheduled'}
               </p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {nextTrip ? formatDateRange(nextTrip.start_date, nextTrip.end_date) : 'Set your next destination'}
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-200/70 bg-white/80 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-              <p className="text-xs font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+            <div className="rounded-2xl border border-border bg-background/80 p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                 Completed journeys
               </p>
-              <p className="mt-3 text-2xl font-semibold text-gray-900 dark:text-white">{metrics.completed}</p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-3 text-2xl font-semibold text-foreground">{metrics.completed}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
                 {metrics.total} total itineraries curated with Urban Manual
               </p>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-6 rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80 lg:grid-cols-[1.5fr,1fr]">
+        <section className="grid gap-6 rounded-3xl border border-border bg-card/90 p-8 shadow-sm lg:grid-cols-[1.5fr,1fr]">
           <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase tracking-[2px] text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
               Travel Intelligence
             </div>
             <div className="space-y-3">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-2xl font-semibold text-foreground">
                 Co-pilot every trip with live intelligence
               </h2>
-              <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">
+              <p className="text-sm leading-6 text-muted-foreground">
                 Ask Urban Manual to flesh out daily rhythms, surface new openings, track availability swings, and keep every itinerary flexible.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => handleOpenIntelligence()}
-                className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-              >
-                <Sparkles className="h-4 w-4" />
+              <Button className="rounded-full px-5" onClick={() => handleOpenIntelligence()}>
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
                 {conversationPreview ? 'Resume conversation' : 'Start a session'}
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full px-5"
                 onClick={() => router.push('/chat')}
-                className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
               >
                 Open full chat
-              </button>
+              </Button>
             </div>
           </div>
-          <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+          <div className="rounded-3xl border border-border bg-background/90 p-6 shadow-sm">
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                   Latest insights
                 </p>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {conversationPreview
                     ? `“${truncate(conversationPreview, 160)}”`
                     : 'No recent chat yet. Kick off a session to get tailored suggestions and timeline support.'}
                 </p>
               </div>
-              <div className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-800">
-                <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+              <div className="space-y-3 border-t border-border pt-4">
+                <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                   Live opportunities
                 </p>
                 {loadingIntelligence ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Scanning for fresh intel…</p>
+                  <p className="text-sm text-muted-foreground">Scanning for fresh intel…</p>
                 ) : opportunities.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     No urgent alerts right now. Travel Intelligence will surface price drops, event openings, and weather wins here.
                   </p>
                 ) : (
@@ -583,20 +588,20 @@ export default function TripsPage() {
                     {opportunities.slice(0, 3).map((opportunity, index) => (
                       <div
                         key={`${opportunity.destinationId}-${index}`}
-                        className="rounded-2xl border border-gray-200/70 bg-white/90 p-4 dark:border-gray-800 dark:bg-gray-950/70"
+                        className="rounded-2xl border border-border bg-background/90 p-4"
                       >
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{opportunity.title}</p>
+                          <p className="text-sm font-medium text-foreground">{opportunity.title}</p>
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${URGENCY_BADGE[opportunity.urgency]}`}
                           >
                             {opportunity.urgency}
                           </span>
                         </div>
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{opportunity.description}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">{opportunity.description}</p>
                         {(opportunity.city || opportunity.destinationName) && (
-                          <p className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <MapPin className="h-3.5 w-3.5" />
+                          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>{opportunity.city || opportunity.destinationName}</span>
                           </p>
                         )}
@@ -609,14 +614,14 @@ export default function TripsPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+        <section className="rounded-3xl border border-border bg-card/90 p-8 shadow-sm">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-xl space-y-3">
-              <p className="text-xs font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                 Orchestrated flow
               </p>
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Plan with confidence, finish with flair</h2>
-              <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">
+              <h2 className="text-2xl font-semibold text-foreground">Plan with confidence, finish with flair</h2>
+              <p className="text-sm leading-6 text-muted-foreground">
                 Every trip follows a proven cadence. Progress through each step and Travel Intelligence keeps the details humming in the background.
               </p>
             </div>
@@ -626,25 +631,27 @@ export default function TripsPage() {
                 return (
                   <div
                     key={step.title}
-                    className="flex flex-col rounded-2xl border border-gray-200/70 bg-white/80 p-5 shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700"
+                    className="flex flex-col rounded-2xl border border-border bg-background/90 p-5 shadow-sm transition hover:border-foreground/10"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200">
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-5 w-5" aria-hidden="true" />
                       </div>
-                      <span className="text-xs font-medium text-gray-400 dark:text-gray-500">0{index + 1}</span>
+                      <span className="text-xs font-medium text-muted-foreground">0{index + 1}</span>
                     </div>
                     <div className="mt-4 space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{step.title}</h3>
-                      <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">{step.description}</p>
+                      <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
+                      <p className="text-xs leading-5 text-muted-foreground">{step.description}</p>
                     </div>
-                    <button
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="mt-auto justify-start gap-2 px-0 text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
                       onClick={step.action}
-                      className="mt-auto inline-flex items-center gap-2 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
                     >
                       {step.actionLabel}
-                      <ArrowRight className="h-3 w-3" />
-                    </button>
+                      <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                    </Button>
                   </div>
                 );
               })}
@@ -652,21 +659,23 @@ export default function TripsPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+        <section className="rounded-3xl border border-border bg-card/90 p-8 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Active trips</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <h2 className="text-xl font-semibold text-foreground">Active trips</h2>
+              <p className="text-sm text-muted-foreground">
                 Collaborate with Travel Intelligence to complete each itinerary.
               </p>
             </div>
-            <button
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full px-4"
               onClick={() => handleOpenPlanner()}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               Add trip
-            </button>
+            </Button>
           </div>
           <div className="mt-6">
             {activeTrips.length === 0 ? (
@@ -689,51 +698,55 @@ export default function TripsPage() {
         </section>
 
         {archivedTrips.length > 0 && (
-          <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Archived journeys</h2>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <section className="rounded-3xl border border-border bg-card/90 p-8 shadow-sm">
+            <h2 className="text-xl font-semibold text-foreground">Archived journeys</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               Completed itineraries remain accessible for inspiration, sharing, or fast duplication.
             </p>
             <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {archivedTrips.map((trip) => (
                 <div
                   key={trip.id}
-                  className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white/90 p-5 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950/80 dark:hover:border-gray-700"
+                  className="flex flex-col justify-between rounded-2xl border border-border bg-background/90 p-5 transition hover:border-foreground/10"
                 >
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
                       <span>Completed</span>
                       {trip.destination && (
                         <>
                           <span>•</span>
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
+                            <MapPin className="h-3 w-3" aria-hidden="true" />
                             {trip.destination}
                           </span>
                         </>
                       )}
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{trip.title}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <h3 className="text-lg font-semibold text-foreground">{trip.title}</h3>
+                    <p className="text-xs text-muted-foreground">
                       {formatDateRange(trip.start_date, trip.end_date)}
                     </p>
                     {trip.description && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{truncate(trip.description, 120)}</p>
+                      <p className="text-sm text-muted-foreground">{truncate(trip.description, 120)}</p>
                     )}
                   </div>
                   <div className="mt-4 flex items-center gap-3">
-                    <button
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 rounded-full"
                       onClick={() => handleViewTrip(trip.id)}
-                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
                     >
                       View recap
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-full"
                       onClick={() => handleOpenPlanner(trip)}
-                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
                     >
                       Duplicate
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}

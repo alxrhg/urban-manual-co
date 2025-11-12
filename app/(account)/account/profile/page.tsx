@@ -71,8 +71,8 @@ export default function AccountProfilePage() {
   if (!user) {
     return (
       <div className="space-y-6 text-center">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Sign in required</h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <h1 className="text-2xl font-semibold text-foreground">Sign in required</h1>
+        <p className="text-muted-foreground">
           Create an account or sign in to personalize your Urban Manual experience.
         </p>
       </div>
@@ -98,8 +98,8 @@ export default function AccountProfilePage() {
       <header className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Account overview</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h1 className="text-2xl font-semibold text-foreground">Account overview</h1>
+            <p className="text-sm text-muted-foreground">
               See how your journeys and preferences shape recommendations.
             </p>
           </div>
@@ -111,10 +111,10 @@ export default function AccountProfilePage() {
           {statistics.map(stat => (
             <div
               key={stat.label}
-              className="rounded-2xl border border-gray-100 bg-white/60 p-4 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-950/60"
+              className="rounded-2xl border border-border bg-card/80 p-4 text-sm shadow-sm"
             >
-              <p className="text-gray-500 dark:text-gray-400">{stat.label}</p>
-              <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{stat.value}</p>
+              <p className="text-muted-foreground">{stat.label}</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -122,10 +122,10 @@ export default function AccountProfilePage() {
 
       <section aria-labelledby="profile-details" className="space-y-6">
         <div className="space-y-2">
-          <h2 id="profile-details" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          <h2 id="profile-details" className="text-lg font-medium text-foreground">
             Profile details
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Update your public profile and travel preferences.
           </p>
         </div>
@@ -134,10 +134,10 @@ export default function AccountProfilePage() {
 
       <section aria-labelledby="map-intelligence" className="space-y-6">
         <div className="space-y-2">
-          <h2 id="map-intelligence" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          <h2 id="map-intelligence" className="text-lg font-medium text-foreground">
             Global footprint
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Countries highlighted are based on your visited destinations and travel history.
           </p>
         </div>
@@ -153,10 +153,10 @@ export default function AccountProfilePage() {
 
       <section aria-labelledby="achievement-progress" className="space-y-6">
         <div className="space-y-2">
-          <h2 id="achievement-progress" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          <h2 id="achievement-progress" className="text-lg font-medium text-foreground">
             Achievement progress
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Unlock badges as you explore cities, save places, and visit top recommendations.
           </p>
         </div>
