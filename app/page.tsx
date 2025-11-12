@@ -2740,7 +2740,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
             <div className="fixed inset-0 z-[70] flex flex-col bg-black/80">
               <div className="relative flex-1 bg-black">
                 <MapView
-                  destinations={displayDestinations}
+                  destinations={destinations}
+                  highlightedDestinations={displayDestinations}
+                  showLegend
                   onMarkerClick={(dest) => {
                     setSelectedDestination(dest);
                     setIsDrawerOpen(true);
@@ -2765,7 +2767,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Explore on the map</h3>
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Pan, zoom, and tap a pin to open its details without leaving map mode.
+                      Pan, zoom, and tap a pin to open its details. Use the controls to refocus the map or spotlight your filtered results.
                     </p>
                   </div>
                   <button
