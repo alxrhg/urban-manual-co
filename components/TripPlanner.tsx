@@ -335,25 +335,55 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
       let nextDay = 1;
       let nextOrder = 0;
-      const { data: nextPositionData, error: nextPositionError } = await supabaseClient.rpc(
-        'get_next_itinerary_position',
-        { p_trip_id: targetTripId }
-      );
+      
+      // Try to get next position, but handle missing function gracefully
+      try {
+        const { data: nextPositionData, error: nextPositionError } = await supabaseClient.rpc(
+          'get_next_itinerary_position',
+          { p_trip_id: targetTripId }
+        );
 
-      if (nextPositionError) {
-        console.warn('get_next_itinerary_position RPC failed, falling back to defaults:', nextPositionError);
-        if (
-          nextPositionError.code !== 'PGRST116' &&
-          !(nextPositionError.message && nextPositionError.message.includes('infinite recursion'))
-        ) {
-          throw nextPositionError;
+        if (nextPositionError) {
+          // Function doesn't exist or other error - use fallback logic
+          console.warn('get_next_itinerary_position RPC failed, using fallback:', nextPositionError.message);
+          
+          // Fallback: Get max day and order from existing items
+          const { data: existingItems } = await supabaseClient
+            .from('trip_items')
+            .select('day, order')
+            .eq('trip_id', targetTripId)
+            .order('day', { ascending: false })
+            .order('order', { ascending: false })
+            .limit(1)
+            .single();
+          
+          if (existingItems) {
+            nextDay = existingItems.day || 1;
+            nextOrder = (existingItems.order || 0) + 1;
+          }
+        } else if (nextPositionData && typeof nextPositionData === 'object') {
+          if (typeof nextPositionData.next_day === 'number') {
+            nextDay = Math.max(1, nextPositionData.next_day);
+          }
+          if (typeof nextPositionData.next_order === 'number') {
+            nextOrder = Math.max(0, nextPositionData.next_order);
+          }
         }
-      } else if (nextPositionData && typeof nextPositionData === 'object') {
-        if (typeof nextPositionData.next_day === 'number') {
-          nextDay = Math.max(1, nextPositionData.next_day);
-        }
-        if (typeof nextPositionData.next_order === 'number') {
-          nextOrder = Math.max(0, nextPositionData.next_order);
+      } catch (rpcError) {
+        // If RPC call itself fails (function doesn't exist), use fallback
+        console.warn('RPC call failed, using fallback logic:', rpcError);
+        const { data: existingItems } = await supabaseClient
+          .from('trip_items')
+          .select('day, order')
+          .eq('trip_id', targetTripId)
+          .order('day', { ascending: false })
+          .order('order', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (existingItems) {
+          nextDay = existingItems.day || 1;
+          nextOrder = (existingItems.order || 0) + 1;
         }
       }
 
@@ -820,153 +850,91 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           </div>
           
           {step === 'select' && initialDestination ? (
-              <div className="space-y-8">
-                <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
-                  <div className="flex flex-col gap-4">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
-                      Add to trip
-                    </span>
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                        Add “{initialDestination.name}” to your itinerary
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Choose an itinerary that fits this spot or start a new plan that mirrors the homepage’s clean structure.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {initialDestination.city && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                          <MapPinIcon className="h-3.5 w-3.5" />
-                          {initialDestination.city}
-                        </span>
-                      )}
-                      {initialDestination.category && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                          <SparklesIcon className="h-3.5 w-3.5" />
-                          {initialDestination.category}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    Add "{initialDestination.name}" to your itinerary
+                  </h3>
+                  {initialDestination.city && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{initialDestination.city}</p>
+                  )}
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                    <span className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
                       Your itineraries
                     </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Tap to keep building</span>
                   </div>
                   {loadingTripSummaries ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                     </div>
                   ) : tripSummaries.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {tripSummaries.map((trip) => (
                         <button
                           key={trip.id}
                           onClick={() => handleAddDestinationToTrip(trip.id)}
                           disabled={addingToTripId === trip.id}
-                          className="group flex w-full items-start justify-between gap-4 rounded-3xl border border-gray-200 bg-white/95 p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/5 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-800 dark:bg-gray-950/80 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+                          className="group flex w-full items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-800 dark:bg-gray-950 dark:hover:border-gray-700 dark:hover:bg-gray-900"
                         >
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
-                                Itinerary
-                              </span>
-                              <span className="text-[0.65rem] font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                                Updated {new Date(trip.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </span>
-                            </div>
-                            <h3 className="text-base font-semibold text-gray-900 transition-colors group-hover:text-gray-600 dark:text-white dark:group-hover:text-gray-200">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                               {trip.title}
                             </h3>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                              {trip.destination && <span className="uppercase tracking-[2px]">{trip.destination}</span>}
-                              {(trip.start_date || trip.end_date) && (
-                                <span>
-                                  {[trip.start_date, trip.end_date]
-                                    .filter(Boolean)
-                                    .map((date) => (date ? new Date(date).toLocaleDateString() : ''))
-                                    .join(' – ')}
-                                </span>
-                              )}
-                            </div>
+                            {trip.destination && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                                {trip.destination}
+                              </p>
+                            )}
                           </div>
                           {addingToTripId === trip.id ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                            <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
                           ) : (
-                            <ArrowRight className="h-5 w-5 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300" />
+                            <ArrowRight className="h-4 w-4 text-gray-400 transition group-hover:translate-x-0.5 flex-shrink-0" />
                           )}
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-3xl border border-gray-200 bg-white/90 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
-                      You haven’t created any trips yet. Start a new itinerary below.
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      You haven't created any trips yet.
                     </div>
                   )}
                 </div>
 
-                <div className="relative overflow-hidden rounded-3xl border border-gray-900 bg-black px-6 py-7 text-white shadow-xl dark:border-gray-100 dark:bg-white dark:text-black">
-                  <div className="pointer-events-none absolute inset-0 opacity-80 [background:radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_rgba(255,255,255,0)_60%)] dark:[background:radial-gradient(circle_at_top,_rgba(0,0,0,0.14),_rgba(0,0,0,0)_60%)]" aria-hidden="true" />
-                  <div className="relative flex flex-col gap-5">
-                    <span className="inline-flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[3px]">
-                      <SparklesIcon className="h-4 w-4" />
-                      Start fresh
-                    </span>
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-semibold leading-snug">
-                        Start a new itinerary for this destination
-                      </h3>
-                      <p className="text-sm text-gray-300 dark:text-gray-600">
-                        We’ll prefill the essentials so you can curate days, budgets, and highlights with the same polish as the homepage grid.
-                      </p>
-                    </div>
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBypassSelection(true);
-                          resetForm();
-                          setTripName(initialDestination.name);
-                          if (initialDestination.city) {
-                            setDestination(initialDestination.city);
-                          }
-                          setStep('create');
-                        }}
-                        className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[2px] text-black transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40 dark:bg-black dark:text-white dark:focus:ring-black/40"
-                      >
-                        Start a new trip
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBypassSelection(true);
+                      resetForm();
+                      setTripName(initialDestination.name);
+                      if (initialDestination.city) {
+                        setDestination(initialDestination.city);
+                      }
+                      setStep('create');
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-black px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-900 focus:outline-none dark:border-gray-700 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+                  >
+                    Start a new trip
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             ) : step === 'create' ? (
-              <div className="mx-auto max-w-3xl space-y-8">
-                <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/95 px-6 py-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
-                  <div className="flex flex-col gap-4">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
-                      New trip
-                    </span>
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                        Build your itinerary in our signature style
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Define the essentials and we’ll keep everything structured just like the homepage layout you’re used to.
-                      </p>
-                    </div>
-                    {(initialDestination?.name || initialDestination?.city) && (
-                      <div className="flex flex-wrap items-center gap-2">
-                        {initialDestination?.name && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                            <SparklesIcon className="h-3.5 w-3.5" />
-                            {initialDestination.name}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    Create a new itinerary
+                  </h3>
+                  {(initialDestination?.name || initialDestination?.city) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {initialDestination?.name && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                          <SparklesIcon className="h-3.5 w-3.5" />
+                          {initialDestination.name}
                           </span>
                         )}
                         {initialDestination?.city && (
@@ -977,11 +945,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         )}
                       </div>
                     )}
-                  </div>
                 </div>
 
-                <div className="rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
-                  <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2">
                       <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                         Trip name *
@@ -991,7 +958,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         value={tripName}
                         onChange={(e) => setTripName(e.target.value)}
                         placeholder="Summer in Paris"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -1003,7 +970,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
                         placeholder="Paris, France"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -1015,7 +982,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         value={hotelLocation}
                         onChange={(e) => setHotelLocation(e.target.value)}
                         placeholder="Hotel Le Marais"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
                       />
                     </div>
                     <div>
@@ -1026,7 +993,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-950 dark:text-white dark:focus:ring-gray-600"
                       />
                     </div>
                     <div>
@@ -1037,7 +1004,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-950 dark:text-white dark:focus:ring-gray-600"
                       />
                     </div>
                     <div>
@@ -1049,7 +1016,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         value={totalBudget || ''}
                         onChange={(e) => setTotalBudget(Number(e.target.value))}
                         placeholder="2000"
-                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
                       />
                     </div>
                   </div>

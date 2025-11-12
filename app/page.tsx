@@ -1129,15 +1129,19 @@ export default function Home() {
       return;
     }
 
-    const totalPages = Math.max(1, Math.ceil(displayDestinationsCount / itemsPerPage));
+    const totalDestinations = displayDestinations.length;
+    const totalPages = Math.max(1, Math.ceil(totalDestinations / itemsPerPage));
 
     setCurrentPage(prevPage => {
-      if (prevPage > totalPages) {
+      if (prevPage > totalPages && totalPages > 0) {
         return totalPages;
+      }
+      if (prevPage < 1) {
+        return 1;
       }
       return prevPage;
     });
-  }, [displayDestinationsCount, itemsPerPage]);
+  }, [displayDestinations.length, itemsPerPage]);
 
   // Scroll to top of grid when page changes
   useEffect(() => {
@@ -2730,10 +2734,12 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 return null;
               }
 
+              // Rebuild pagination - use displayDestinations.length directly
+              const totalDestinations = displayDestinations.length;
+              const totalPages = Math.max(1, Math.ceil(totalDestinations / itemsPerPage));
               const startIndex = (currentPage - 1) * itemsPerPage;
-              const endIndex = startIndex + itemsPerPage;
+              const endIndex = Math.min(startIndex + itemsPerPage, totalDestinations);
               const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
-              const totalPages = Math.max(1, Math.ceil(displayDestinationsCount / itemsPerPage));
 
               return (
                 <>

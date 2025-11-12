@@ -149,7 +149,9 @@ export function HomeNavigationBar({
                 <button
                   key={city}
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const slug = slugifyCity(city);
                     if (!slug) return;
                     setIsCitiesOpen(false);

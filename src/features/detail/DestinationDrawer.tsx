@@ -715,107 +715,108 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Mobile bottom sheet */}
+      {/* Mobile bottom sheet - Match desktop layout */}
       <div
         className={`md:hidden fixed inset-x-0 bottom-0 top-[6vh] z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex flex-col rounded-t-[32px] bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-[0_-20px_60px_rgba(15,23,42,0.2)]`}
+        } flex flex-col bg-white dark:bg-gray-950 shadow-2xl`}
       >
-        <div className="absolute inset-x-0 top-0 flex justify-center pt-3 pb-1 pointer-events-none">
-          <span className="h-1.5 w-12 rounded-full bg-white/80 dark:bg-white/20" aria-hidden="true" />
+        {/* Header with Close Button - Match desktop */}
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
+          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+          <div className="flex items-center gap-2">
+            {destination?.slug && destination.slug.trim() && (
+              <Link
+                href={`/destination/${destination.slug}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                title="Open destination page"
+                aria-label="Open destination page"
+              >
+                <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              </Link>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+          </button>
         </div>
 
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-white/80 text-gray-900 shadow-sm backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-gray-900/70 dark:text-gray-100"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        <div className="relative w-full flex-shrink-0">
-          <div className="relative h-[44vh] w-full overflow-hidden rounded-t-[32px] bg-gray-200 dark:bg-gray-900">
-            {destination.image ? (
-              <Image
-                src={destination.image}
-                alt={destination.name}
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority
-                quality={90}
-              />
-            ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-gray-500">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/70">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <span className="text-sm">Image coming soon</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/0" aria-hidden="true" />
-
-            <div className="absolute bottom-6 left-6 right-6 space-y-4 text-white">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-white/90">
-                {destination.category && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 uppercase tracking-[0.2em]">
-                    {destination.category}
-                  </span>
-                )}
-                {destination.crown && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 text-[11px] font-medium text-white">
-                    <Crown className="h-3 w-3" />
-                    Manual Pick
-                  </span>
-                )}
-                {(destination.michelin_stars ?? 0) > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 text-[11px] font-medium text-white">
-                    <img
-                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                      alt="Michelin star"
-                      className="h-3 w-3"
-                    />
-                    {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-
-              <h1 className="text-3xl font-semibold leading-tight drop-shadow-lg">{destination.name}</h1>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs text-white/90 sm:text-sm">
-                {destination.city && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white/90">
-                    <MapPin className="h-3 w-3" />
-                    {destination.country
-                      ? `${capitalizeCity(destination.city)}, ${destination.country}`
-                      : capitalizeCity(destination.city)}
-                  </span>
-                )}
-                {rating && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white">
-                    <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                    {rating.toFixed(1)}
-                  </span>
-                )}
-                {(enrichedData?.user_ratings_total || destination.user_ratings_total) && (
-                  <span className="text-xs text-white/70">
-                    {(enrichedData?.user_ratings_total || destination.user_ratings_total)?.toLocaleString()} reviews
-                  </span>
-                )}
-                {formatPriceLevel(enrichedData?.price_level ?? destination.price_level) && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white">
-                    {formatPriceLevel(enrichedData?.price_level ?? destination.price_level)}
-                  </span>
-                )}
+        {/* Content - Match desktop structure */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Image - Match desktop */}
+          {destination.image && (
+            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
+              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
+                <Image
+                  src={destination.image}
+                  alt={destination.name}
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                  priority={false}
+                  quality={85}
+                />
               </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        <div className="relative flex-1 overflow-y-auto bg-white dark:bg-gray-950">
-          <div className="px-6 pb-36 pt-6 space-y-8">
+          {/* Title - Match desktop */}
+          <div className="mt-6 space-y-3">
+            <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
+              {destination.name}
+            </h1>
+
+            {/* Pills: Category, Crown, Michelin, Google Rating - Match desktop */}
+            <div className="flex flex-wrap gap-2">
+              {destination.category && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
+                  {destination.category}
+                </span>
+              )}
+
+              {destination.crown && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
+                  Crown
+                </span>
+              )}
+
+              {(destination.michelin_stars ?? 0) > 0 && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                  />
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
+                </span>
+              )}
+
+              {(enrichedData?.rating || destination.rating) && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  {(enrichedData?.rating || destination.rating).toFixed(1)}
+                </span>
+              )}
+            </div>
+
+            {destination.micro_description && (
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {destination.micro_description}
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 space-y-8">
             <div className="-mx-6">
               <div
                 className="flex gap-2 overflow-x-auto px-6 pb-2"
