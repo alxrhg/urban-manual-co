@@ -33,6 +33,15 @@ const INITIAL_ANALYTICS: AdminAnalyticsSummary = {
 
 type AdminTab = 'destinations' | 'analytics' | 'searches' | 'discover';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getStringField(record: Record<string, unknown>, key: string): string {
+  const value = record[key];
+  return typeof value === 'string' ? value : '';
+}
+
 function normalizeDestinationInput(data: DestinationFormValues): DestinationInput {
   const base: DestinationInput = {
     slug: data.slug.trim(),
@@ -375,11 +384,27 @@ export function AdminDashboard() {
                   </thead>
                   <tbody>
                     {searchLogs.map((log) => {
-                      const query = log.metadata?.query || '';
-                      const intent = log.metadata?.intent || {};
-                      const filters = log.metadata?.filters || {};
-                      const count = log.metadata?.count ?? '';
-                      const source = log.metadata?.source || '';
+                      const metadata = isRecord(log.metadata) ? log.metadata : undefined;
+                      const query = metadata ? getStringField(metadata, 'query') : '';
+
+                      const intentRecord = metadata && isRecord(metadata.intent) ? metadata.intent : undefined;
+                      const filtersRecord = metadata && isRecord(metadata.filters) ? metadata.filters : undefined;
+
+                      const intentCity = intentRecord ? getStringField(intentRecord, 'city') : '';
+                      const intentCategory = intentRecord ? getStringField(intentRecord, 'category') : '';
+                      const filterCity = filtersRecord ? getStringField(filtersRecord, 'city') : '';
+                      const filterCategory = filtersRecord ? getStringField(filtersRecord, 'category') : '';
+
+                      const countValue = metadata?.count;
+                      const count =
+                        typeof countValue === 'number'
+                          ? countValue.toString()
+                          : typeof countValue === 'string'
+                            ? countValue
+                            : '';
+                      const source = metadata ? getStringField(metadata, 'source') : '';
+                      const displayCity = intentCity || filterCity;
+                      const displayCategory = intentCategory || filterCategory;
                       return (
                         <tr
                           key={log.id}
@@ -390,8 +415,8 @@ export function AdminDashboard() {
                           <td className="py-2 pr-4 max-w-[360px] truncate" title={query}>
                             {query}
                           </td>
-                          <td className="py-2 pr-4">{intent.city || filters.city || ''}</td>
-                          <td className="py-2 pr-4">{intent.category || filters.category || ''}</td>
+                          <td className="py-2 pr-4">{displayCity}</td>
+                          <td className="py-2 pr-4">{displayCategory}</td>
                           <td className="py-2 pr-4">{count}</td>
                           <td className="py-2 pr-4">{source}</td>
                         </tr>

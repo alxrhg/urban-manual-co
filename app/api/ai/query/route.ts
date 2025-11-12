@@ -10,13 +10,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'query is required' }, { status: 400 });
     }
 
-    const system = 'You are an intelligent travel router. Parse the user query into JSON with fields: city, category, modifiers (array), openNow (boolean), budget (min,max), dateRange (start,end).';
-    const parsed = await generateJSON(system, query);
-
     const supabase = resolveSupabaseClient();
     if (!supabase) {
-      return NextResponse.json({ error: 'Supabase credentials are not configured.' }, { status: 500 });
+      console.error('Supabase environment variables are not configured for the AI query route.');
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
     }
+
+    const system = 'You are an intelligent travel router. Parse the user query into JSON with fields: city, category, modifiers (array), openNow (boolean), budget (min,max), dateRange (start,end).';
+    const parsed = await generateJSON(system, query);
 
     const limit = 50;
     let q = supabase

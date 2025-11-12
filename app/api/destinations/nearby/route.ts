@@ -9,17 +9,17 @@ import { withErrorHandling, createValidationError, handleSupabaseError, CustomEr
 import { resolveSupabaseClient } from '@/app/api/_utils/supabase';
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
+  const supabase = resolveSupabaseClient();
+  if (!supabase) {
+    throw new CustomError(ErrorCode.INTERNAL_SERVER_ERROR, 'Supabase credentials are not configured.', 500);
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const lat = parseFloat(searchParams.get('lat') || '0');
   const lng = parseFloat(searchParams.get('lng') || '0');
   const radiusKm = parseFloat(searchParams.get('radius') || '5');
   const maxWalkingMinutes = parseInt(searchParams.get('maxWalkingMinutes') || '15');
   const city = searchParams.get('city');
-
-  const supabase = resolveSupabaseClient();
-  if (!supabase) {
-    throw new CustomError(ErrorCode.INTERNAL_SERVER_ERROR, 'Supabase credentials are not configured.', 500);
-  }
 
   if (!lat || !lng) {
     throw createValidationError('Latitude and longitude are required');
