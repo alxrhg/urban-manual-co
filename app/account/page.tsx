@@ -4,7 +4,7 @@ import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MapPin, Heart, Check } from "lucide-react";
+import { MapPin, Heart, Check, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
@@ -15,6 +15,7 @@ import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import ProfileAvatar from "@/components/ProfileAvatar";
+import { TripPlanner } from "@/components/TripPlanner";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -33,16 +34,17 @@ export default function Account() {
   const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
   const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
   const [collections, setCollections] = useState<any[]>([]);
+  const [trips, setTrips] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   
   // Get initial tab from URL query param
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings'>(() => {
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab && ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings'].includes(tab)) {
+      if (tab && ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips'].includes(tab)) {
         return tab as any;
       }
     }
@@ -56,6 +58,10 @@ export default function Account() {
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [newCollectionPublic, setNewCollectionPublic] = useState(true);
   const [creatingCollection, setCreatingCollection] = useState(false);
+
+  // Trip management state
+  const [showTripDialog, setShowTripDialog] = useState(false);
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -102,8 +108,8 @@ export default function Account() {
     try {
       setIsLoadingData(true);
 
-      // Load saved, visited, and collections
-      const [savedResult, visitedResult, collectionsResult] = await Promise.all([
+      // Load saved, visited, collections, and trips
+      const [savedResult, visitedResult, collectionsResult, tripsResult] = await Promise.all([
         supabase
           .from('saved_places')
           .select('destination_slug')
@@ -115,6 +121,11 @@ export default function Account() {
           .order('visited_at', { ascending: false }),
         supabase
           .from('collections')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('trips')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
@@ -180,6 +191,11 @@ export default function Account() {
       // Set collections
       if (collectionsResult.data) {
         setCollections(collectionsResult.data);
+      }
+
+      // Set trips
+      if (tripsResult.data) {
+        setTrips(tripsResult.data);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -378,7 +394,7 @@ export default function Account() {
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {['profile', 'visited', 'saved', 'collections', 'achievements', 'settings'].map((tab) => (
+            {['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'settings'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -570,6 +586,127 @@ export default function Account() {
           </div>
         )}
 
+        {/* Trips Tab */}
+        {activeTab === 'trips' && (
+          <div className="fade-in">
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => {
+                  setEditingTripId(null);
+                  setShowTripDialog(true);
+                }}
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
+              >
+                <Plus className="h-3 w-3" />
+                New Trip
+              </button>
+            </div>
+
+            {trips.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
+                <button
+                  onClick={() => {
+                    setEditingTripId(null);
+                    setShowTripDialog(true);
+                  }}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                >
+                  Create your first trip
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {trips.map((trip) => (
+                  <div
+                    key={trip.id}
+                    className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <button
+                      onClick={() => router.push(`/trips/${trip.id}`)}
+                      className="text-left p-4 flex-1"
+                    >
+                      <h3 className="font-medium text-sm mb-2 line-clamp-2">{trip.title}</h3>
+                      {trip.description && (
+                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{trip.description}</p>
+                      )}
+                      <div className="space-y-1 text-xs text-gray-400">
+                        {trip.destination && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3 w-3" />
+                            <span>{trip.destination}</span>
+                          </div>
+                        )}
+                        {(trip.start_date || trip.end_date) && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                              {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                            </span>
+                          </div>
+                        )}
+                        {trip.status && (
+                          <div>
+                            <span className="capitalize text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
+                              {trip.status}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                    <div className="flex items-center gap-2 p-4 pt-0 border-t border-gray-200 dark:border-gray-800">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/trips/${trip.id}`);
+                        }}
+                        className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingTripId(trip.id);
+                          setShowTripDialog(true);
+                        }}
+                        className="p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                        aria-label={`Edit ${trip.title}`}
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm(`Are you sure you want to delete "${trip.title}"?`)) {
+                            try {
+                              const { error } = await supabase
+                                .from('trips')
+                                .delete()
+                                .eq('id', trip.id);
+                              if (error) throw error;
+                              await loadUserData();
+                            } catch (error) {
+                              console.error('Error deleting trip:', error);
+                              alert('Failed to delete trip');
+                            }
+                          }
+                        }}
+                        className="p-2 rounded-xl text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                        aria-label={`Delete ${trip.title}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
           <div className="fade-in">
@@ -675,6 +812,17 @@ export default function Account() {
           </div>
         </div>
       )}
+
+      {/* Trip Planner Modal */}
+      <TripPlanner
+        isOpen={showTripDialog}
+        tripId={editingTripId || undefined}
+        onClose={() => {
+          setShowTripDialog(false);
+          setEditingTripId(null);
+          loadUserData();
+        }}
+      />
     </main>
   );
 }

@@ -212,18 +212,25 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
         </Alert>
       )}
 
-      <div className="space-y-6">
-        {/* Avatar Upload */}
-        <div className="flex justify-center py-6 border-b border-gray-200 dark:border-gray-800">
-          <AvatarUpload
-            currentAvatarUrl={profile.avatar_url}
-            displayName={profile.display_name || 'User'}
-            onUploadComplete={handleAvatarUpload}
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left Column - Avatar Upload */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-sm font-medium text-black dark:text-white mb-4">Profile Picture</h3>
+            <div className="flex justify-center py-6">
+              <AvatarUpload
+                currentAvatarUrl={profile.avatar_url}
+                displayName={profile.display_name || 'User'}
+                onUploadComplete={handleAvatarUpload}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Personal Information Section */}
-        <div className="space-y-5">
+        {/* Right Column - Form Fields */}
+        <div className="space-y-6">
+          {/* Personal Information Section */}
+          <div className="space-y-5">
           <div>
             <h3 className="text-sm font-medium text-black dark:text-white mb-4">Personal Information</h3>
             <div className="space-y-4">
@@ -355,35 +362,36 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1"
-            variant="default"
-          >
-            {saving ? (
-              <>
-                <Spinner className="size-4" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="size-4" />
-                Save Changes
-              </>
-            )}
-          </Button>
-          {onClose && (
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
             <Button
-              onClick={onClose}
+              onClick={handleSave}
               disabled={saving}
-              variant="outline"
+              className="flex-1"
+              variant="default"
             >
-              Cancel
+              {saving ? (
+                <>
+                  <Spinner className="size-4" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4" />
+                  Save Changes
+                </>
+              )}
             </Button>
-          )}
+            {onClose && (
+              <Button
+                onClick={onClose}
+                disabled={saving}
+                variant="outline"
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

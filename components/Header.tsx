@@ -105,7 +105,7 @@ export function Header() {
           {/* Logo - Left */}
           <button
             onClick={() => navigate("/")}
-            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg px-3 py-2 -m-2 shrink-0"
+            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 -ml-6 md:-ml-10 lg:-ml-12 shrink-0"
             aria-label="Go to homepage"
           >
             Urban Manual®
