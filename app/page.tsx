@@ -45,7 +45,6 @@ import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
-import HomeNavigationBar from '@/components/HomeNavigationBar';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
@@ -2060,6 +2059,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
   const overflowCityButtons = cities.slice(MAX_INLINE_CITY_COUNT);
   const inlineCategoryButtons = categories.slice(0, MAX_INLINE_CATEGORY_COUNT);
   const overflowCategoryButtons = categories.slice(MAX_INLINE_CATEGORY_COUNT);
+  const showBrowseLists = !submittedQuery && searchTerm.trim().length === 0;
 
   return (
     <ErrorBoundary>
@@ -2417,251 +2417,125 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   </div>
                 </div>
             
-            {!submittedQuery && (
-              <>
-                <div className="mb-6 flex justify-end">
-                  <HomeNavigationBar
-                    className="justify-end flex-wrap gap-3"
-                    onFiltersClick={handleNavigationFiltersClick}
-                    onStartTrip={handleNavigationStartTrip}
-                  />
-                </div>
-
-                <div className="md:hidden px-5 pt-6 space-y-6">
-                  <div>
-                    <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+            {showBrowseLists && (
+              <div className="pt-6 md:pt-10 space-y-10">
+                <div className="space-y-3">
+                  <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
+                  <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                    <button
+                      onClick={() => handleCitySelect(null)}
+                      className={`transition-all duration-200 ease-out ${
+                        !selectedCity
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      All Cities
+                    </button>
+                    {inlineCityButtons.map((city) => (
                       <button
-                        onClick={() => handleCitySelect(null)}
+                        key={city}
+                        onClick={() => handleCitySelect(city)}
                         className={`transition-all duration-200 ease-out ${
-                          !selectedCity
+                          selectedCity === city
                             ? 'font-medium text-black dark:text-white'
                             : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                         }`}
                       >
-                        All Cities
+                        {capitalizeCity(city)}
                       </button>
-                      {inlineCityButtons.map((city) => (
-                        <button
-                          key={city}
-                          onClick={() => handleCitySelect(city)}
-                          className={`transition-all duration-200 ease-out ${
-                            selectedCity === city
-                              ? 'font-medium text-black dark:text-white'
-                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          {capitalizeCity(city)}
-                        </button>
-                      ))}
-                    </div>
-                    {overflowCityButtons.length > 0 && (
-                      <div className="mt-3 space-y-3">
-                        <button
-                          onClick={() => setShowAllCities(prev => !prev)}
-                          className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                        >
-                          {showAllCities
-                            ? '− Hide additional cities'
-                            : `+ More cities (${overflowCityButtons.length})`}
-                        </button>
-                        {showAllCities && (
-                          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                            <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                              {overflowCityButtons.map((city) => (
-                                <button
-                                  key={city}
-                                  onClick={() => handleCitySelect(city)}
-                                  className={`transition-all duration-200 ease-out ${
-                                    selectedCity === city
-                                      ? 'font-medium text-black dark:text-white'
-                                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                  }`}
-                                >
-                                  {capitalizeCity(city)}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    ))}
                   </div>
-
-                  <div>
-                    <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                  {overflowCityButtons.length > 0 && (
+                    <div className="space-y-3 text-xs">
                       <button
-                        onClick={() => handleCategorySelect(null)}
-                        className={`transition-all duration-200 ease-out ${
-                          !selectedCategory && !advancedFilters.michelin
-                            ? 'font-medium text-black dark:text-white'
-                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                        }`}
+                        onClick={() => setShowAllCities(prev => !prev)}
+                        className="font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
                       >
-                        All Categories
+                        {showAllCities
+                          ? '− Hide additional cities'
+                          : `+ More cities (${overflowCityButtons.length})`}
                       </button>
-                      <button
-                        onClick={() => handleCategorySelect(null, { michelin: true })}
-                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                          advancedFilters.michelin
-                            ? 'font-medium text-black dark:text-white'
-                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                        }`}
-                      >
-                        <img
-                          src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                          alt="Michelin star"
-                          className="h-3 w-3"
-                        />
-                        Michelin
-                      </button>
-                      {inlineCategoryButtons.map((category) => {
-                        const IconComponent = getCategoryIcon(category);
-                        return (
-                          <button
-                            key={category}
-                            onClick={() => handleCategorySelect(category)}
-                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                              selectedCategory === category && !advancedFilters.michelin
-                                ? 'font-medium text-black dark:text-white'
-                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                            {capitalizeCategory(category)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {overflowCategoryButtons.length > 0 && (
-                      <div className="mt-3 space-y-3">
-                        <button
-                          onClick={() => setShowAllCategories(prev => !prev)}
-                          className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                        >
-                          {showAllCategories
-                            ? '− Hide additional categories'
-                            : `+ More categories (${overflowCategoryButtons.length})`}
-                        </button>
-                        {showAllCategories && (
-                          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                            <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                              {overflowCategoryButtons.map((category) => {
-                                const IconComponent = getCategoryIcon(category);
-                                return (
-                                  <button
-                                    key={category}
-                                    onClick={() => handleCategorySelect(category)}
-                                    className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                      selectedCategory === category && !advancedFilters.michelin
-                                        ? 'font-medium text-black dark:text-white'
-                                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                    }`}
-                                  >
-                                    {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                                    {capitalizeCategory(category)}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="hidden md:flex flex-1 items-end">
-                  <div className="w-full pt-8 space-y-6">
-                    <div>
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => handleCitySelect(null)}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
-                              ? 'font-medium text-black dark:text-white'
-                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          All Cities
-                        </button>
-                        {inlineCityButtons.map((city) => (
-                          <button
-                            key={city}
-                            onClick={() => handleCitySelect(city)}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCity === city
-                                ? 'font-medium text-black dark:text-white'
-                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            {capitalizeCity(city)}
-                          </button>
-                        ))}
-                      </div>
-                      {overflowCityButtons.length > 0 && (
-                        <div className="mt-3 space-y-3">
-                          <button
-                            onClick={() => setShowAllCities(prev => !prev)}
-                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                          >
-                            {showAllCities
-                              ? '− Hide additional cities'
-                              : `+ More cities (${overflowCityButtons.length})`}
-                          </button>
-                          {showAllCities && (
-                            <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-                              <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                                {overflowCityButtons.map((city) => (
-                                  <button
-                                    key={city}
-                                    onClick={() => handleCitySelect(city)}
-                                    className={`transition-all duration-200 ease-out ${
-                                      selectedCity === city
-                                        ? 'font-medium text-black dark:text-white'
-                                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                    }`}
-                                  >
-                                    {capitalizeCity(city)}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                      {showAllCities && (
+                        <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3">
+                          {overflowCityButtons.map((city) => (
+                            <button
+                              key={city}
+                              onClick={() => handleCitySelect(city)}
+                              className={`transition-all duration-200 ease-out ${
+                                selectedCity === city
+                                  ? 'font-medium text-black dark:text-white'
+                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              }`}
+                            >
+                              {capitalizeCity(city)}
+                            </button>
+                          ))}
                         </div>
                       )}
                     </div>
+                  )}
+                </div>
 
-                    {categories.length > 0 && (
-                      <div>
-                        <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                          <button
-                            onClick={() => handleCategorySelect(null)}
-                            className={`transition-all duration-200 ease-out ${
-                              !selectedCategory && !advancedFilters.michelin
-                                ? 'font-medium text-black dark:text-white'
-                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            All Categories
-                          </button>
-                          <button
-                            onClick={() => handleCategorySelect(null, { michelin: true })}
-                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                              advancedFilters.michelin
-                                ? 'font-medium text-black dark:text-white'
-                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            <img
-                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                            />
-                            Michelin
-                          </button>
-                          {inlineCategoryButtons.map((category) => {
+                <div className="space-y-3">
+                  <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
+                  <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                    <button
+                      onClick={() => handleCategorySelect(null)}
+                      className={`transition-all duration-200 ease-out ${
+                        !selectedCategory && !advancedFilters.michelin
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      All Categories
+                    </button>
+                    <button
+                      onClick={() => handleCategorySelect(null, { michelin: true })}
+                      className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                        advancedFilters.michelin
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      <img
+                        src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                        alt="Michelin star"
+                        className="h-3 w-3"
+                      />
+                      Michelin
+                    </button>
+                    {inlineCategoryButtons.map((category) => {
+                      const IconComponent = getCategoryIcon(category);
+                      return (
+                        <button
+                          key={category}
+                          onClick={() => handleCategorySelect(category)}
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                            selectedCategory === category && !advancedFilters.michelin
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover-text-gray-300'
+                          }`}
+                        >
+                          {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                          {capitalizeCategory(category)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {overflowCategoryButtons.length > 0 && (
+                    <div className="space-y-3 text-xs">
+                      <button
+                        onClick={() => setShowAllCategories(prev => !prev)}
+                        className="font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                      >
+                        {showAllCategories
+                          ? '− Hide additional categories'
+                          : `+ More categories (${overflowCategoryButtons.length})`}
+                      </button>
+                      {showAllCategories && (
+                        <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3">
+                          {overflowCategoryButtons.map((category) => {
                             const IconComponent = getCategoryIcon(category);
                             return (
                               <button
@@ -2679,46 +2553,11 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                             );
                           })}
                         </div>
-                        {overflowCategoryButtons.length > 0 && (
-                          <div className="mt-3 space-y-3">
-                            <button
-                              onClick={() => setShowAllCategories(prev => !prev)}
-                              className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                            >
-                              {showAllCategories
-                                ? '− Hide additional categories'
-                                : `+ More categories (${overflowCategoryButtons.length})`}
-                            </button>
-                            {showAllCategories && (
-                              <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-                                <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                                  {overflowCategoryButtons.map((category) => {
-                                    const IconComponent = getCategoryIcon(category);
-                                    return (
-                                      <button
-                                        key={category}
-                                        onClick={() => handleCategorySelect(category)}
-                                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                          selectedCategory === category && !advancedFilters.michelin
-                                            ? 'font-medium text-black dark:text-white'
-                                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                        }`}
-                                      >
-                                        {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                                        {capitalizeCategory(category)}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </>
+              </div>
             )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}

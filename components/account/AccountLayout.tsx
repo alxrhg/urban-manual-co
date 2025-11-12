@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ReactNode, useMemo } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useMemo } from 'react';
 import {
   UserCircle2,
   ShieldCheck,
@@ -48,12 +48,24 @@ const sections = [
 
 export function AccountLayout({ children }: AccountLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, profile, loading, signOutOtherDevices } = useUserContext();
 
   const activeSection = useMemo(
     () => sections.find(section => pathname.startsWith(section.href))?.href ?? '/account/profile',
     [pathname]
   );
+
+  useEffect(() => {
+    if (!loading && !user) {
+      const redirectTo = pathname || '/account/profile';
+      router.replace(`/auth/login?redirect=${encodeURIComponent(redirectTo)}`);
+    }
+  }, [loading, user, pathname, router]);
+
+  if (!loading && !user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
