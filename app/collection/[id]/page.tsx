@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit2, Globe, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { PageLoader } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
@@ -25,6 +25,10 @@ export default function CollectionDetailPage() {
   const [collection, setCollection] = useState<any>(null);
   const [destinations, setDestinations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [errorState, setErrorState] = useState<'none' | 'not_found' | 'unauthorized' | 'error'>('none');
+  const [errorMessage, setErrorMessage] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -32,73 +36,117 @@ export default function CollectionDetailPage() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/auth/login');
-        return;
+    let isMounted = true;
+
+    async function loadSession() {
+      try {
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        if (isMounted) {
+          setAuthChecked(true);
+        }
       }
-      setUser(session.user);
     }
-    checkAuth();
-  }, [router]);
+
+    loadSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      isMounted = false;
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
+    if (!collectionId || !authChecked) return;
+
+    let isMounted = true;
+
     async function loadCollection() {
-      if (!user || !collectionId) return;
+      setLoading(true);
+      setErrorState('none');
+      setErrorMessage('');
 
       try {
-        // Fetch collection
-        const { data: collectionData, error: collectionError } = await supabase
-          .from('collections')
-          .select('*')
-          .eq('id', collectionId)
-          .eq('user_id', user.id)
-          .single();
+        const response = await fetch(`/api/collections/${collectionId}/view`, {
+          credentials: 'include',
+          cache: 'no-store'
+        });
 
-        if (collectionError) throw collectionError;
-        if (!collectionData) {
-          router.push('/account');
+        if (!isMounted) return;
+
+        if (response.status === 401) {
+          const errorData = await response.json().catch(() => null);
+          setCollection(null);
+          setDestinations([]);
+          setIsOwner(false);
+          setErrorState('unauthorized');
+          setErrorMessage(errorData?.error ?? 'You do not have permission to view this collection.');
           return;
         }
 
-        const collection = collectionData as any;
-        setCollection(collection);
-        setEditName(collection.name);
-        setEditDescription(collection.description || '');
-        setEditPublic(collection.is_public);
-
-        // Fetch collection items (using lists/list_items tables as they exist)
-        const { data: listItems, error: itemsError } = await supabase
-          .from('list_items')
-          .select('destination_slug')
-          .eq('list_id', collectionId);
-
-        if (itemsError) throw itemsError;
-
-        if (listItems && listItems.length > 0) {
-          const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
-          const { data: destData } = await supabase
-            .from('destinations')
-            .select('slug, name, city, category, image')
-            .in('slug', slugs);
-
-          if (destData) {
-            setDestinations(destData);
-          }
+        if (response.status === 404) {
+          const errorData = await response.json().catch(() => null);
+          setCollection(null);
+          setDestinations([]);
+          setIsOwner(false);
+          setErrorState('not_found');
+          setErrorMessage(errorData?.error ?? 'This collection may have been deleted.');
+          return;
         }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.error || 'Failed to load collection');
+        }
+
+        const data = await response.json();
+        const loadedCollection = data.collection as any;
+
+        setCollection(loadedCollection);
+        setDestinations(data.destinations || []);
+        setIsOwner(Boolean(data.isOwner));
+        setEditName(loadedCollection?.name || '');
+        setEditDescription(loadedCollection?.description || '');
+        setEditPublic(Boolean(loadedCollection?.is_public));
+        setErrorState('none');
+        setErrorMessage('');
       } catch (error) {
+        if (!isMounted) return;
         console.error('Error loading collection:', error);
+        setCollection(null);
+        setDestinations([]);
+        setIsOwner(false);
+        setErrorState('error');
+        setErrorMessage('We could not load this collection. Please try again later.');
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
     loadCollection();
-  }, [user, collectionId, router]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [collectionId, user?.id, authChecked]);
 
   const handleUpdateCollection = async () => {
-    if (!editName.trim()) return;
+    if (!editName.trim() || !user || !isOwner || !collection) return;
 
     setUpdating(true);
     try {
@@ -115,12 +163,16 @@ export default function CollectionDetailPage() {
 
       if (error) throw error;
 
-      setCollection({
-        ...collection,
-        name: editName.trim(),
-        description: editDescription.trim(),
-        is_public: editPublic
-      });
+      setCollection((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              name: editName.trim(),
+              description: editDescription.trim(),
+              is_public: editPublic
+            }
+          : prev
+      );
       setShowEditModal(false);
     } catch (error) {
       console.error('Error updating collection:', error);
@@ -131,6 +183,7 @@ export default function CollectionDetailPage() {
   };
 
   const handleDeleteCollection = async () => {
+    if (!user || !isOwner) return;
     if (!confirm('Are you sure you want to delete this collection?')) return;
 
     try {
@@ -157,6 +210,7 @@ export default function CollectionDetailPage() {
   };
 
   const handleRemoveDestination = async (slug: string) => {
+    if (!user || !isOwner || !collection) return;
     try {
       const { error } = await supabase
         .from('list_items')
@@ -166,22 +220,81 @@ export default function CollectionDetailPage() {
 
       if (error) throw error;
 
-      setDestinations(destinations.filter(d => d.slug !== slug));
+      setDestinations((prev) => prev.filter(d => d.slug !== slug));
 
       // Update count
       await (supabase
         .from('collections')
         .update as any)({ destination_count: Math.max(0, (collection.destination_count || 0) - 1) })
-        .eq('id', collectionId);
+        .eq('id', collectionId)
+        .eq('user_id', user.id);
+
+      setCollection((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              destination_count: Math.max(0, (prev.destination_count || 0) - 1)
+            }
+          : prev
+      );
     } catch (error) {
       console.error('Error removing destination:', error);
     }
   };
 
+  const backHref = isOwner ? '/account' : '/';
+  const backLabel = isOwner ? 'Back to Account' : 'Back to Discover';
+  const fallbackHref = user ? '/account' : '/';
+  const fallbackLabel = user ? 'Back to Account' : 'Back to Discover';
+  const unauthorizedActionLabel = user ? 'Back to Discover' : 'Sign In';
+  const unauthorizedActionHref = user ? '/' : '/auth/login';
+
   if (loading) {
     return (
       <main className="px-6 md:px-10 py-20">
         <PageLoader />
+      </main>
+    );
+  }
+
+  if (errorState === 'unauthorized') {
+    return (
+      <main className="px-6 md:px-10 py-20">
+        <EmptyState
+          icon="🔒"
+          title="Private collection"
+          description={errorMessage || 'This collection is private.'}
+          actionLabel={unauthorizedActionLabel}
+          actionHref={unauthorizedActionHref}
+        />
+      </main>
+    );
+  }
+
+  if (errorState === 'not_found') {
+    return (
+      <main className="px-6 md:px-10 py-20">
+        <EmptyState
+          icon="❓"
+          title="Collection not found"
+          description={errorMessage || 'This collection may have been deleted.'}
+          actionLabel={fallbackLabel}
+          actionHref={fallbackHref}
+        />
+      </main>
+    );
+  }
+
+  if (errorState === 'error') {
+    return (
+      <main className="px-6 md:px-10 py-20">
+        <EmptyState
+          icon="⚠️"
+          title="Something went wrong"
+          description={errorMessage || 'Please try again later.'}
+          actionLabel={fallbackLabel}
+          actionHref={fallbackHref}
+        />
       </main>
     );
   }
@@ -193,8 +306,8 @@ export default function CollectionDetailPage() {
           icon="❓"
           title="Collection not found"
           description="This collection may have been deleted"
-          actionLabel="Back to Account"
-          actionHref="/account"
+          actionLabel={fallbackLabel}
+          actionHref={fallbackHref}
         />
       </main>
     );
@@ -206,11 +319,11 @@ export default function CollectionDetailPage() {
         {/* Header */}
         <div className="mb-12">
           <button
-            onClick={() => router.push('/account')}
+            onClick={() => router.push(backHref)}
             className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors mb-6"
           >
             <ArrowLeft className="h-3 w-3" />
-            <span>Back to Account</span>
+            <span>{backLabel}</span>
           </button>
 
           <div className="flex items-start justify-between">
@@ -222,6 +335,11 @@ export default function CollectionDetailPage() {
               {collection.description && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                   {collection.description}
+                </p>
+              )}
+              {!isOwner && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
+                  Viewing this collection as a guest. Only the owner can make changes.
                 </p>
               )}
               <div className="flex items-center gap-3 text-xs text-gray-400">
@@ -243,22 +361,24 @@ export default function CollectionDetailPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
-              >
-                <Edit2 className="h-3 w-3" />
-                Edit
-              </button>
-              <button
-                onClick={handleDeleteCollection}
-                className="px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
-              >
-                <Trash2 className="h-3 w-3" />
-                Delete
-              </button>
-            </div>
+            {isOwner && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
+                >
+                  <Edit2 className="h-3 w-3" />
+                  Edit
+                </button>
+                <button
+                  onClick={handleDeleteCollection}
+                  className="px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -266,10 +386,14 @@ export default function CollectionDetailPage() {
         {destinations.length === 0 ? (
           <EmptyState
             icon="🏞️"
-            title="No places in this collection yet"
-            description="Browse destinations and add them to this collection"
-            actionLabel="Browse Destinations"
-            actionHref="/"
+            title={isOwner ? 'No places in this collection yet' : 'No places have been shared yet'}
+            description={
+              isOwner
+                ? 'Browse destinations and add them to this collection'
+                : 'The owner hasn’t added any places to this collection yet.'
+            }
+            actionLabel={isOwner ? 'Browse Destinations' : undefined}
+            actionHref={isOwner ? '/' : undefined}
           />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
@@ -301,16 +425,18 @@ export default function CollectionDetailPage() {
                 </button>
 
                 {/* Remove button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveDestination(destination.slug);
-                  }}
-                  className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
-                  title="Remove from collection"
-                >
-                  <Trash2 className="h-3 w-3 text-red-600" />
-                </button>
+                {isOwner && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveDestination(destination.slug);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
+                    title="Remove from collection"
+                  >
+                    <Trash2 className="h-3 w-3 text-red-600" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -318,7 +444,7 @@ export default function CollectionDetailPage() {
       </div>
 
       {/* Edit Collection Modal */}
-      {showEditModal && (
+      {isOwner && showEditModal && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setShowEditModal(false)}
