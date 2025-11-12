@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { generateJSON } from '@/lib/llm';
-
-const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const key = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-) as string;
-const supabase = createClient(url, key);
+import { resolveSupabaseClient } from '@/app/api/_utils/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +12,11 @@ export async function POST(req: NextRequest) {
 
     const system = 'You are an intelligent travel router. Parse the user query into JSON with fields: city, category, modifiers (array), openNow (boolean), budget (min,max), dateRange (start,end).';
     const parsed = await generateJSON(system, query);
+
+    const supabase = resolveSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase credentials are not configured.' }, { status: 500 });
+    }
 
     const limit = 50;
     let q = supabase

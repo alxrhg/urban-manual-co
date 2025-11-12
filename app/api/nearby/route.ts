@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { resolveSupabaseClient } from '@/app/api/_utils/supabase';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // Haversine formula to calculate distance between two points
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -33,6 +25,14 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const city = searchParams.get('city'); // Optional city filter
     const category = searchParams.get('category'); // Optional category filter
+
+    const supabase = resolveSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase credentials are not configured.' },
+        { status: 500 },
+      );
+    }
 
     if (!lat || !lng) {
       return NextResponse.json(

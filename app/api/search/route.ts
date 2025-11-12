@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { embedText } from '@/lib/llm';
 import {
   searchRatelimit,
@@ -8,18 +7,7 @@ import {
   createRateLimitResponse,
   isUpstashConfigured,
 } from '@/lib/rate-limit';
-
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const SUPABASE_KEY = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-  'placeholder-key'
-) as string;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+import { resolveSupabaseClient } from '@/app/api/_utils/supabase';
 
 // Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
@@ -138,8 +126,8 @@ export async function POST(request: NextRequest) {
     if (!authenticatedUserId) {
       try {
         const { createServerClient } = await import('@/lib/supabase-server');
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const serverSupabase = await createServerClient();
+        const { data: { user } } = await serverSupabase.auth.getUser();
         authenticatedUserId = user?.id;
       } catch {
         // Silently fail - userId is optional
@@ -158,11 +146,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (!query || query.trim().length < 2) {
-      return NextResponse.json({ 
-        results: [], 
+      return NextResponse.json({
+        results: [],
         searchTier: 'basic',
-        error: 'Query too short' 
+        error: 'Query too short'
       });
+    }
+
+    const supabase = resolveSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({
+        results: [],
+        searchTier: 'error',
+        error: 'Supabase credentials are not configured.'
+      }, { status: 500 });
     }
 
     // Extract structured filters using AI (with conversation context)
@@ -421,8 +418,8 @@ export async function POST(request: NextRequest) {
       try {
         // Use internal API call with user context
         const { createServerClient } = await import('@/lib/supabase-server');
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const serverSupabase = await createServerClient();
+        const { data: { user } } = await serverSupabase.auth.getUser();
         
         if (user) {
           const { AIRecommendationEngine } = await import('@/lib/ai-recommendations/engine');
