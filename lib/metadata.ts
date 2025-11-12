@@ -2,6 +2,20 @@ import { Metadata } from 'next';
 import { createServerClient } from './supabase-server';
 import { Destination } from '@/types/destination';
 
+export const SITE_NAME = 'The Urban Manual';
+export const SITE_URL = 'https://www.urbanmanual.co';
+export const SITE_DESCRIPTION =
+  "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.";
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
+export const SITE_LOGO_URL = `${SITE_URL}/icon-512.png`;
+export const DEFAULT_LOCALE = 'en_US';
+export const DEFAULT_LANGUAGE = 'en-US';
+export const SOCIAL_PROFILES = [
+  'https://www.instagram.com/theurbanmanual',
+  'https://www.linkedin.com/company/the-manual-company',
+  'https://www.youtube.com/@theurbanmanual',
+] as const;
+
 /**
  * Generate SEO-optimized metadata for destination pages
  */
@@ -16,7 +30,7 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
 
     if (error || !destination) {
       return {
-        title: 'Destination Not Found | The Urban Manual',
+        title: `Destination Not Found | ${SITE_NAME}`,
         description: 'The destination you are looking for could not be found.',
       };
     }
@@ -24,7 +38,7 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
     const dest = destination as Destination;
 
     // Generate title
-    const title = `${dest.name} - ${dest.category} in ${dest.city} | The Urban Manual`;
+    const title = `${dest.name} - ${dest.category} in ${dest.city} | ${SITE_NAME}`;
 
     // Generate description
     let description = '';
@@ -43,14 +57,14 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
       if (dest.michelin_stars && dest.michelin_stars > 0) {
         description += `. ${dest.michelin_stars} Michelin star${dest.michelin_stars > 1 ? 's' : ''}`;
       }
-      description += '. Curated by The Urban Manual.';
+      description += `. Curated by ${SITE_NAME}.`;
     }
 
     // Generate canonical URL
-    const canonicalUrl = `https://www.urbanmanual.co/destination/${slug}`;
+    const canonicalUrl = `${SITE_URL}/destination/${slug}`;
 
     // Generate Open Graph image
-    const ogImage = dest.image || 'https://www.urbanmanual.co/og-default.jpg';
+    const ogImage = dest.image || DEFAULT_OG_IMAGE;
 
     return {
       title,
@@ -62,7 +76,7 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
         title,
         description,
         url: canonicalUrl,
-        siteName: 'The Urban Manual',
+        siteName: SITE_NAME,
         images: [
           {
             url: ogImage,
@@ -71,7 +85,7 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
             alt: dest.name,
           },
         ],
-        locale: 'en_US',
+        locale: DEFAULT_LOCALE,
         type: 'website',
       },
       twitter: {
@@ -84,8 +98,8 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
-      title: 'The Urban Manual',
-      description: 'Your guide to the world\'s best destinations',
+      title: SITE_NAME,
+      description: SITE_DESCRIPTION,
     };
   }
 }
@@ -95,9 +109,9 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
  */
 export async function generateCityMetadata(city: string): Promise<Metadata> {
   const formattedCity = decodeURIComponent(city);
-  const title = `Best Hotels & Restaurants in ${formattedCity} | The Urban Manual`;
-  const description = `Discover the finest hotels, Michelin-starred restaurants, cafes, and hidden gems in ${formattedCity}. Curated by The Urban Manual.`;
-  const canonicalUrl = `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`;
+  const title = `Best Hotels & Restaurants in ${formattedCity} | ${SITE_NAME}`;
+  const description = `Discover the finest hotels, Michelin-starred restaurants, cafes, and hidden gems in ${formattedCity}. Curated by ${SITE_NAME}.`;
+  const canonicalUrl = `${SITE_URL}/city/${encodeURIComponent(city)}`;
 
   return {
     title,
@@ -109,8 +123,8 @@ export async function generateCityMetadata(city: string): Promise<Metadata> {
       title,
       description,
       url: canonicalUrl,
-      siteName: 'The Urban Manual',
-      locale: 'en_US',
+      siteName: SITE_NAME,
+      locale: DEFAULT_LOCALE,
       type: 'website',
     },
     twitter: {
@@ -130,7 +144,7 @@ export function generateDestinationSchema(destination: Destination) {
     name: destination.name,
     description: destination.content?.replace(/<[^>]*>/g, ''),
     image: destination.image,
-    url: `https://www.urbanmanual.co/destination/${destination.slug}`,
+    url: `${SITE_URL}/destination/${destination.slug}`,
   };
 
   // Determine schema type based on category
@@ -216,19 +230,19 @@ export function generateDestinationBreadcrumb(destination: Destination) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://www.urbanmanual.co',
+        item: SITE_URL,
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: cityName,
-        item: `https://www.urbanmanual.co/city/${destination.city}`,
+        item: `${SITE_URL}/city/${destination.city}`,
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: destination.name,
-        item: `https://www.urbanmanual.co/destination/${destination.slug}`,
+        item: `${SITE_URL}/destination/${destination.slug}`,
       },
     ],
   };
@@ -252,13 +266,13 @@ export function generateCityBreadcrumb(city: string) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://www.urbanmanual.co',
+        item: SITE_URL,
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: cityName,
-        item: `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`,
+        item: `${SITE_URL}/city/${encodeURIComponent(city)}`,
       },
     ],
   };

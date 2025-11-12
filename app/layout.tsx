@@ -12,6 +12,13 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
+import {
+  DEFAULT_LOCALE,
+  DEFAULT_OG_IMAGE,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/metadata";
 
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
@@ -20,6 +27,9 @@ const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   process.env.SUPABASE_PUBLISHABLE_KEY ??
   process.env.SUPABASE_ANON_KEY;
+
+const DEFAULT_TITLE =
+  `${SITE_NAME} - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations`;
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -30,8 +40,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
-  description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.",
+  title: DEFAULT_TITLE,
+  description: SITE_DESCRIPTION,
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -45,26 +55,26 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "The Urban Manual - Curated Travel Guide",
-    description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide.",
-    url: "https://urbanmanual.co",
-    siteName: "The Urban Manual",
+    title: `${SITE_NAME} - Curated Travel Guide`,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
     images: [
       {
-        url: '/og-image.jpg',
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: 'The Urban Manual',
+        alt: SITE_NAME,
       },
     ],
-    locale: 'en_US',
+    locale: DEFAULT_LOCALE,
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "The Urban Manual - Curated Travel Guide",
-    description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide.",
-    images: ['/og-image.jpg'],
+    title: `${SITE_NAME} - Curated Travel Guide`,
+    description: SITE_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
