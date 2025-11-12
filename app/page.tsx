@@ -1110,6 +1110,11 @@ export default function Home() {
     }));
   }, [selectedCity, selectedCategory]);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCity, selectedCategory, advancedFilters]);
+
   // Fetch filter data (cities and categories) first for faster initial display
   // OPTIMIZED: Call Discovery Engine once at start, reuse result throughout
   const fetchFilterData = async () => {
@@ -2667,67 +2672,124 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               const startIndex = (currentPage - 1) * itemsPerPage;
               const endIndex = startIndex + itemsPerPage;
               const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
+              const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
 
               return (
-                <div className="mt-16 grid grid-cols-2 gap-5 items-start sm:grid-cols-3 md:grid-cols-4 md:gap-7 lg:grid-cols-5 lg:gap-8 xl:grid-cols-6 2xl:grid-cols-7">
-                  {paginatedDestinations.map((destination, index) => {
-                    const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                    const globalIndex = startIndex + index;
+                <>
+                  <div className="mt-16 grid grid-cols-2 gap-5 items-start sm:grid-cols-3 md:grid-cols-4 md:gap-7 lg:grid-cols-5 lg:gap-8 xl:grid-cols-6 2xl:grid-cols-7">
+                    {paginatedDestinations.map((destination, index) => {
+                      const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                      const globalIndex = startIndex + index;
 
-                    return (
-                      <DestinationCard
-                        key={destination.slug}
-                        destination={destination}
-                        onClick={() => {
-                          setSelectedDestination(destination);
-                          setIsDrawerOpen(true);
+                      return (
+                        <DestinationCard
+                          key={destination.slug}
+                          destination={destination}
+                          onClick={() => {
+                            setSelectedDestination(destination);
+                            setIsDrawerOpen(true);
 
-                          // Track destination click
-                          trackDestinationClick({
-                            destinationSlug: destination.slug,
-                            position: globalIndex,
-                            source: 'grid',
-                          });
+                            // Track destination click
+                            trackDestinationClick({
+                              destinationSlug: destination.slug,
+                              position: globalIndex,
+                              source: 'grid',
+                            });
 
-                          // Also track with new analytics system
-                          if (destination.id) {
-                            import('@/lib/analytics/track').then(({ trackEvent }) => {
-                              trackEvent({
-                                event_type: 'click',
-                                destination_id: destination.id,
-                                destination_slug: destination.slug,
-                                metadata: {
-                                  category: destination.category,
-                                  city: destination.city,
-                                  source: 'homepage_grid',
-                                  position: globalIndex,
-                                },
+                            // Also track with new analytics system
+                            if (destination.id) {
+                              import('@/lib/analytics/track').then(({ trackEvent }) => {
+                                trackEvent({
+                                  event_type: 'click',
+                                  destination_id: destination.id,
+                                  destination_slug: destination.slug,
+                                  metadata: {
+                                    category: destination.category,
+                                    city: destination.city,
+                                    source: 'homepage_grid',
+                                    position: globalIndex,
+                                  },
+                                });
                               });
-                            });
+                            }
+
+                            // Track click event to Discovery Engine for personalization
+                            if (user?.id) {
+                              fetch('/api/discovery/track-event', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  userId: user.id,
+                                  eventType: 'click',
+                                  documentId: destination.slug,
+                                }),
+                              }).catch((error) => {
+                                console.warn('Failed to track click event:', error);
+                              });
+                            }
+                          }}
+                          index={globalIndex}
+                          isVisited={isVisited}
+                          showBadges={true}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
                           }
 
-                          // Track click event to Discovery Engine for personalization
-                          if (user?.id) {
-                            fetch('/api/discovery/track-event', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                userId: user.id,
-                                eventType: 'click',
-                                documentId: destination.slug,
-                              }),
-                            }).catch((error) => {
-                              console.warn('Failed to track click event:', error);
-                            });
-                          }
-                        }}
-                        index={globalIndex}
-                        isVisited={isVisited}
-                        showBadges={true}
-                      />
-                    );
-                  })}
-                </div>
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
+                                currentPage === pageNum
+                                  ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
+                                  : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm font-medium'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+
+                      <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                    </div>
+                  )}
+                </>
               );
             })()}
                 </div>
