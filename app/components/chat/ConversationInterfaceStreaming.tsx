@@ -6,6 +6,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ConversationBubble } from './ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
 
+type FeatureUsageEventType = 'page_view' | 'chat_message' | 'suggestion_accepted';
+
+async function sendFeatureUsageEvent(
+  eventType: FeatureUsageEventType,
+  userId: string | undefined,
+  payload: Record<string, unknown>
+) {
+  try {
+    const response = await fetch('/api/analytics/feature-usage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventType,
+        userId,
+        payload,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.warn(
+        `Feature usage tracking failed (${response.status})`,
+        errorText || response.statusText
+      );
+    }
+  } catch (error) {
+    console.debug('Feature usage tracking request failed:', error);
+  }
+}
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -75,6 +105,7 @@ export function ConversationInterfaceStreaming({
     setIsStreaming(true);
     setStreamingContent('');
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    void sendFeatureUsageEvent('chat_message', user?.id, { messageLength: userMessage.length });
 
     try {
       const userId = user?.id || 'anonymous';
@@ -215,17 +246,7 @@ export function ConversationInterfaceStreaming({
 
   async function handleSuggestionClick(suggestion: string) {
     if (sessionId) {
-      fetch('/api/analytics/feature-usage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventType: 'suggestion_accepted',
-          userId: user?.id,
-          payload: { sessionId, suggestion },
-        }),
-      }).catch(() => {
-        // Ignore errors
-      });
+      void sendFeatureUsageEvent('suggestion_accepted', user?.id, { sessionId, suggestion });
     }
     setInput(suggestion);
     inputRef.current?.focus();
