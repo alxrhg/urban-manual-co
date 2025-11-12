@@ -8,6 +8,22 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useAuth } from '@/contexts/AuthContext';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
+import { useExperiment } from '@/hooks/useExperiment';
+import { trackEvent } from '@/lib/analytics/track';
+
+interface DiscoveryRecommendation {
+  id?: number | string;
+  slug?: string;
+  name: string;
+  city: string;
+  category: string;
+  images?: string[];
+  image?: string;
+  rating?: number;
+  priceLevel?: number;
+  price_level?: number;
+  michelin_stars?: number;
+}
 
 function capitalizeCity(city: string): string {
   return city
@@ -24,18 +40,28 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { recentlyViewed } = useRecentlyViewed();
-  const [enhancedRecommendations, setEnhancedRecommendations] = useState<Destination[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setEnhancedRecommendations] = useState<Destination[]>([]);
+  const {
+    enabled: experimentEnabled,
+    loading: experimentLoading,
+    assignment: experimentAssignment,
+  } = useExperiment('recently_viewed_personalization', { userId: user?.id });
 
   // Fetch Discovery Engine recommendations based on view history
   useEffect(() => {
     if (recentlyViewed.length > 0 && user?.id) {
-      setLoading(true);
-      
+      if (experimentLoading) {
+        return;
+      }
+
+      if (!experimentEnabled) {
+        return;
+      }
+
       // Get categories and cities from recently viewed
       const categories = [...new Set(recentlyViewed.map(item => item.category))];
       const cities = [...new Set(recentlyViewed.map(item => item.city))];
-      
+
       // Fetch Discovery Engine recommendations based on view history
       fetch('/api/discovery/recommendations/contextual', {
         method: 'POST',
@@ -53,26 +79,41 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
         .then(data => {
           if (data.recommendations && data.recommendations.length > 0) {
             // Transform Discovery Engine results to Destination format
-            const transformed = data.recommendations.map((rec: any) => ({
-              id: rec.id || parseInt(rec.slug) || 0,
-              slug: rec.slug || rec.id,
-              name: rec.name,
-              city: rec.city,
-              category: rec.category,
-              image: rec.images?.[0] || rec.image,
-              rating: rec.rating || 0,
-              price_level: rec.priceLevel || rec.price_level || 0,
-              michelin_stars: rec.michelin_stars || 0,
-            }));
+            const transformed = data.recommendations.map((rec: DiscoveryRecommendation) => {
+              const rawId = rec.id ?? rec.slug ?? 0;
+              const normalizedId =
+                typeof rawId === 'number'
+                  ? rawId
+                  : Number.parseInt(String(rawId), 10) || 0;
+
+              return {
+                id: normalizedId,
+                slug: rec.slug || String(rawId),
+                name: rec.name,
+                city: rec.city,
+                category: rec.category,
+                image: rec.images?.[0] || rec.image,
+                rating: rec.rating || 0,
+                price_level: rec.priceLevel || rec.price_level || 0,
+                michelin_stars: rec.michelin_stars || 0,
+              };
+            });
             setEnhancedRecommendations(transformed);
           }
-          setLoading(false);
         })
         .catch(() => {
-          setLoading(false);
+          // Ignore errors for enhanced recommendations
         });
     }
-  }, [recentlyViewed, user?.id]);
+  }, [recentlyViewed, user?.id, experimentEnabled, experimentLoading]);
+
+  if (experimentLoading) {
+    return null;
+  }
+
+  if (!experimentEnabled) {
+    return null;
+  }
 
   if (recentlyViewed.length === 0) {
     return null;
@@ -109,7 +150,21 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
                   console.warn('Discovery Engine tracking error:', error);
                 }
               }
-              
+
+              trackEvent({
+                event_type: 'click',
+                destination_slug: item.slug,
+                metadata: {
+                  category: item.category,
+                  city: item.city,
+                  source: 'recently_viewed',
+                  surface: 'recently_viewed',
+                  experimentKey: experimentAssignment.key,
+                  variation: experimentAssignment.variation,
+                  recommendationId: item.slug,
+                },
+              });
+
               if (onCardClick) {
                 onCardClick(item as Destination);
               } else {

@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { VisitHistory } from '@/types/personalization';
 import { Destination } from '@/types/destination';
 import { Clock, MapPin, Search, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useExperiment } from '@/hooks/useExperiment';
+import { trackEvent } from '@/lib/analytics/track';
 
 interface VisitHistoryProps {
   userId: string;
@@ -17,12 +19,13 @@ export function VisitHistoryComponent({ userId, limit = 20 }: VisitHistoryProps)
   const router = useRouter();
   const [history, setHistory] = useState<(VisitHistory & { destination: Destination })[]>([]);
   const [loading, setLoading] = useState(true);
+  const {
+    enabled: experimentEnabled,
+    loading: experimentLoading,
+    assignment: experimentAssignment,
+  } = useExperiment('visit_history_personalization', { userId });
 
-  useEffect(() => {
-    loadHistory();
-  }, [userId]);
-
-  async function loadHistory() {
+  const loadHistory = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('visit_history')
@@ -41,7 +44,21 @@ export function VisitHistoryComponent({ userId, limit = 20 }: VisitHistoryProps)
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId, limit]);
+
+  useEffect(() => {
+    if (experimentLoading) {
+      return;
+    }
+
+    if (!experimentEnabled) {
+      setHistory([]);
+      setLoading(false);
+      return;
+    }
+
+    loadHistory();
+  }, [userId, experimentEnabled, experimentLoading, loadHistory]);
 
   function formatDate(dateString: string): string {
     const date = new Date(dateString);
@@ -70,11 +87,22 @@ export function VisitHistoryComponent({ userId, limit = 20 }: VisitHistoryProps)
   }
 
   if (loading) {
+    if (experimentLoading) {
+      return null;
+    }
     return (
       <div className="p-8 text-center text-gray-500 dark:text-gray-400">
         Loading history...
       </div>
     );
+  }
+
+  if (!experimentEnabled) {
+    return null;
+  }
+
+  if (experimentLoading) {
+    return null;
   }
 
   if (history.length === 0) {
@@ -96,7 +124,24 @@ export function VisitHistoryComponent({ userId, limit = 20 }: VisitHistoryProps)
         return (
           <div
             key={item.id}
-            onClick={() => router.push(`/destination/${dest.slug}`)}
+            onClick={async () => {
+              await trackEvent({
+                event_type: 'click',
+                destination_id: dest.id,
+                destination_slug: dest.slug,
+                metadata: {
+                  source: item.source || 'visit_history',
+                  surface: 'visit_history',
+                  experimentKey: experimentAssignment.key,
+                  variation: experimentAssignment.variation,
+                  dwellTimeMs: item.duration_seconds
+                    ? item.duration_seconds * 1000
+                    : undefined,
+                },
+              });
+
+              router.push(`/destination/${dest.slug}`);
+            }}
             className="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer transition-colors group"
           >
             {dest.image ? (
