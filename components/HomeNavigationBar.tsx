@@ -78,15 +78,16 @@ export function HomeNavigationBar({
     }
 
     if (isCitiesOpen || isCategoriesOpen) {
-      // Use a slight delay to allow click handlers to execute first
+      // Use click event instead of mousedown to allow click handlers to execute first
+      // Add listener with a delay to ensure button clicks execute before dropdown closes
       const timeoutId = setTimeout(() => {
-        document.addEventListener("mousedown", handleClick);
+        document.addEventListener("click", handleClick);
       }, 0);
       document.addEventListener("keydown", handleKey);
 
       return () => {
         clearTimeout(timeoutId);
-        document.removeEventListener("mousedown", handleClick);
+        document.removeEventListener("click", handleClick);
         document.removeEventListener("keydown", handleKey);
       };
     }
@@ -162,12 +163,10 @@ export function HomeNavigationBar({
                       e.preventDefault();
                       e.stopPropagation();
                       if (!slug) return;
-                      // Close dropdown first
+                      // Close dropdown immediately
                       setIsCitiesOpen(false);
-                      // Then navigate after a brief delay to ensure dropdown closes
-                      setTimeout(() => {
-                        router.push(`/city/${slug}`);
-                      }, 100);
+                      // Navigate immediately - no delay needed
+                      router.push(`/city/${slug}`);
                     }}
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
                   >
@@ -234,12 +233,10 @@ export function HomeNavigationBar({
                       e.preventDefault();
                       e.stopPropagation();
                       if (!query) return;
-                      // Close dropdown first
+                      // Close dropdown immediately
                       setIsCategoriesOpen(false);
-                      // Then navigate after a brief delay to ensure dropdown closes
-                      setTimeout(() => {
-                        router.push(`/search?q=${encodeURIComponent(query)}`);
-                      }, 100);
+                      // Navigate immediately - no delay needed
+                      router.push(`/search?q=${encodeURIComponent(query)}`);
                     }}
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
                   >

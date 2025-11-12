@@ -7,7 +7,7 @@ interface Props {
   compact?: boolean;
 }
 
-export function BestTimeToVisit({ destinationId, compact = false }: Props) {
+export function BestTimeToVisit({ destinationId: _destinationId, compact = false }: Props) {
   // For now, use simple heuristic based on category and data
   // In production, this would call the real-time API
   const bestTimes = getBestTimesHeuristic();

@@ -1740,14 +1740,14 @@ export default function Home() {
 
         setFilteredDestinations(results);
         setSearchIntent(data.intent || null);
-        setChatResponse(data.contextResponse || '');
+        const contextResponseText = typeof data.contextResponse === 'string' ? data.contextResponse : String(data.contextResponse || '');
+        setChatResponse(contextResponseText);
         setCurrentLoadingText(
-          data.contextResponse ||
+          contextResponseText ||
             (results.length > 0
               ? `Found ${results.length} ${results.length === 1 ? 'place' : 'places'}.`
               : 'No matching places found.')
         );
-        setChatResponse(data.contextResponse || '');
         setSearchIntent(data.intent || null);
         setInferredTags(null);
         setSeasonalContext(null);
@@ -1854,15 +1854,17 @@ export default function Home() {
           seasonData,
           userContext
         );
-        setCurrentLoadingText(contextAwareText);
+        setCurrentLoadingText(typeof contextAwareText === 'string' ? contextAwareText : String(contextAwareText || 'Loading...'));
       } else {
         // Fallback to context-aware message even without intent
         const contextAwareText = getContextAwareLoadingMessage(query, null, seasonalContext, userContext);
-        setCurrentLoadingText(contextAwareText);
+        setCurrentLoadingText(typeof contextAwareText === 'string' ? contextAwareText : String(contextAwareText || 'Loading...'));
       }
 
       // ONLY show the latest AI response (simple text)
-      setChatResponse(data.content || '');
+      // Ensure content is always a string
+      const contentText = typeof data.content === 'string' ? data.content : String(data.content || '');
+      setChatResponse(contentText);
       
       // ALWAYS set destinations array
       const destinations = data.destinations || [];
@@ -1870,10 +1872,11 @@ export default function Home() {
 
       // Add messages to visual chat history
       const contextPrompt = getContextAwareLoadingMessage(query);
+      const contextPromptText = typeof contextPrompt === 'string' ? contextPrompt : String(contextPrompt || '');
       setChatMessages(prev => [
         ...prev,
         { type: 'user', content: query },
-        { type: 'assistant', content: data.content || '', contextPrompt: destinations.length > 0 ? contextPrompt : undefined }
+        { type: 'assistant', content: contentText, contextPrompt: destinations.length > 0 ? contextPromptText : undefined }
       ]);
     } catch (error) {
       console.error('AI chat error:', error);
@@ -2142,9 +2145,12 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
       return () => clearTimeout(timer);
     }
 
-    // Only clear if searchTerm is empty and we're not in the middle of a search
-    if (trimmed.length === 0 && !searching) {
-      setFilteredDestinations([]);
+    // Only clear search-related state if we're transitioning FROM a search TO no search
+    // Don't clear filteredDestinations on initial load - let fetchDestinations handle it
+    if (trimmed.length === 0 && !searching && submittedQuery) {
+      // User cleared the search - restore to browse mode
+      // Don't clear filteredDestinations here - let the filter logic handle it
+      // filteredDestinations will be updated by the useEffect that watches filteredDestinationsMemo
       setChatResponse('');
       setConversationHistory([]);
       setSearching(false);
@@ -2242,14 +2248,91 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
         <section className="min-h-[65vh] flex flex-col px-6 md:px-10 lg:px-12 py-16 md:py-24 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-              {/* Greeting - Always vertically centered */}
-              <div className="flex-1 flex items-center">
-                <div className="w-full">
-                  {/* Chat messages above input - Keep input in same position */}
-                  {submittedQuery && (
-                    <div className="mb-6">
+          <div className="w-full flex md:justify-start flex-1">
+            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col">
+              {/* Greeting - Always at the top */}
+              <div className="w-full">
+                {/* Show GreetingHero first - Always at top */}
+                {!submittedQuery && (
+                  <>
+                    {/* Session Resume - Show if there's a recent session */}
+                    {showSessionResume && lastSession && (
+                      <div className="mb-6">
+                        <SessionResume
+                          session={lastSession}
+                          onResume={handleResumeSession}
+                          onDismiss={() => setShowSessionResume(false)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Context Cards - Show user's saved preferences */}
+                    {userContext && user && !searchTerm && (
+                      <div className="mb-6">
+                        <ContextCards context={userContext} />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <GreetingHero
+                  searchQuery={searchTerm}
+                  onSearchChange={(value) => {
+                    setSearchTerm(value);
+                    // Clear conversation history only if search is cleared
+                    if (!value.trim()) {
+                      setConversationHistory([]);
+                      setSearchIntent(null);
+                      setSeasonalContext(null);
+                      setSearchTier(null);
+                      setChatResponse('');
+                      setFilteredDestinations([]);
+                      setSubmittedQuery('');
+                    }
+                  }}
+                  onSubmit={(query) => {
+                    if (query.trim() && !searching) {
+                      runSearch(query);
+                    }
+                  }}
+                  userName={(function () {
+                    const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                    if (!raw) return undefined;
+                    return raw
+                      .split(/[\s._-]+/)
+                      .filter(Boolean)
+                      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                      .join(' ');
+                  })()}
+                  userProfile={userProfile}
+                  lastSession={lastSession}
+                  enrichedContext={enrichedGreetingContext}
+                  isAIEnabled={isAIEnabled}
+                  isSearching={searching}
+                  filters={advancedFilters}
+                  onFiltersChange={(newFilters) => {
+                    setAdvancedFilters(newFilters);
+                    // Sync with legacy state for backward compatibility
+                    if (newFilters.city !== undefined) {
+                      setSelectedCity(newFilters.city || '');
+                    }
+                    if (newFilters.category !== undefined) {
+                      setSelectedCategory(newFilters.category || '');
+                    }
+                    // Track filter changes
+                    Object.entries(newFilters).forEach(([key, value]) => {
+                      if (value !== undefined && value !== null && value !== '') {
+                        trackFilterChange({ filterType: key, value });
+                      }
+                    });
+                  }}
+                  availableCities={cities}
+                  availableCategories={categories}
+                />
+
+                {/* Chat messages below greeting - Keep greeting at top */}
+                {submittedQuery && (
+                  <div className="mt-6">
                       {/* Loading State - Show when searching */}
                       {searching && (
                         <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left mb-4">
@@ -2286,9 +2369,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                                       className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
                                     />
                                   )}
-                                  {message.contextPrompt && typeof message.contextPrompt === 'string' && (
+                                  {message.contextPrompt && (
                                     <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                      {message.contextPrompt}
+                                      {typeof message.contextPrompt === 'string' ? message.contextPrompt : String(message.contextPrompt || '')}
                                     </div>
                                   )}
                                 </div>
@@ -2342,84 +2425,6 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                       })()}
                     </div>
                   )}
-
-                  {/* Show GreetingHero only when no active search */}
-                  {!submittedQuery && (
-                    <>
-                      {/* Session Resume - Show if there's a recent session */}
-                      {showSessionResume && lastSession && (
-                        <div className="mb-6">
-                          <SessionResume
-                            session={lastSession}
-                            onResume={handleResumeSession}
-                            onDismiss={() => setShowSessionResume(false)}
-                          />
-                        </div>
-                      )}
-
-                      {/* Context Cards - Show user's saved preferences */}
-                      {userContext && user && !searchTerm && (
-                        <div className="mb-6">
-                          <ContextCards context={userContext} />
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  <GreetingHero
-                searchQuery={searchTerm}
-                onSearchChange={(value) => {
-                  setSearchTerm(value);
-                  // Clear conversation history only if search is cleared
-                  if (!value.trim()) {
-                    setConversationHistory([]);
-                    setSearchIntent(null);
-                    setSeasonalContext(null);
-                    setSearchTier(null);
-                    setChatResponse('');
-                    setFilteredDestinations([]);
-                            setSubmittedQuery('');
-                  }
-                }}
-                onSubmit={(query) => {
-                  if (query.trim() && !searching) {
-                    runSearch(query);
-                  }
-                }}
-                userName={(function () {
-                  const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                  if (!raw) return undefined;
-                  return raw
-                    .split(/[\s._-]+/)
-                    .filter(Boolean)
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(' ');
-                })()}
-                        userProfile={userProfile}
-                        lastSession={lastSession}
-                        enrichedContext={enrichedGreetingContext}
-                isAIEnabled={isAIEnabled}
-                isSearching={searching}
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  // Sync with legacy state for backward compatibility
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  // Track filter changes
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                availableCities={cities}
-                availableCategories={categories}
-                  />
 
                   {/* Follow-up input field - Chat style - Only show when there's a submitted query */}
                   {submittedQuery && !searching && chatMessages.length > 0 && (
@@ -2607,16 +2612,15 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   </div>
                 )}
               </div>
-            </div>
+                        </div>
                       )}
-                </div>
               </div>
             </div>
           </div>
         </section>
 
-              {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
+        {/* Content Section - Grid directly below hero */}
+        <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter, Start Trip, and View Toggle */}
                 <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">

@@ -721,28 +721,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           isOpen ? 'translate-y-0' : 'translate-y-full'
         } flex flex-col bg-white dark:bg-gray-950 shadow-2xl`}
       >
-        {/* Header with Close Button - Match desktop */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-          <div className="flex items-center gap-2">
-            {destination?.slug && destination.slug.trim() && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
-              >
-                <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              </Link>
-            )}
-          </div>
+        {/* Minimal Header - Just Close Button */}
+        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-end">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
             aria-label="Close"
           >
             <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
@@ -1131,33 +1114,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
         } overflow-hidden flex-col`}
       >
-        {/* Header with Close Button */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-          <div className="flex items-center gap-2">
-            {destination?.slug && destination.slug.trim() && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
-              >
-                <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              </Link>
-            )}
-          </div>
-          {/* Close Button - Top Right */}
-            <button
-              onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        {/* Minimal Header - Just Close Button */}
+        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-end">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
             aria-label="Close"
-            >
+          >
             <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-            </button>
+          </button>
         </div>
 
         {/* Content */}
@@ -1179,82 +1144,79 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Identity Block */}
-          <div className="space-y-4 mt-6">
-            {/* Location Badge */}
-            <div>
-              <a
-                href={`/city/${destination.city}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(`/city/${destination.city}`);
-                }}
-              >
-                <MapPin className="h-3 w-3" />
-                {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
-              </a>
-            </div>
-
-          {/* Title */}
-            <div className="space-y-3">
-              <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
+          {/* Identity Block - Rebalanced */}
+          <div className="space-y-6 mt-8">
+            {/* Title - Enlarged */}
+            <div className="space-y-4">
+              <h1 className="text-3xl md:text-4xl font-medium leading-tight text-black dark:text-white">
                 {destination.name}
               </h1>
 
-              {/* Pills: Category, Crown, Michelin, Google Rating */}
-              <div className="flex flex-wrap gap-2">
-              {destination.category && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
+              {/* Location - Subtle */}
+              <div>
+                <a
+                  href={`/city/${destination.city}`}
+                  className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(`/city/${destination.city}`);
+                  }}
+                >
+                  <MapPin className="h-3 w-3" />
+                  {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
+                </a>
+              </div>
+
+              {/* Pills: Simplified, Reduced Chrome */}
+              <div className="flex flex-wrap gap-1.5">
+                {destination.category && (
+                  <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500 capitalize">
                     {destination.category}
-                    </span>
+                  </span>
                 )}
 
                 {destination.crown && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
+                  <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500">
                     Crown
-                </span>
-              )}
-
-              {(destination.michelin_stars ?? 0) > 0 && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-3 w-3"
-                  />
-                  {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
                   </span>
-            )}
+                )}
+
+                {(destination.michelin_stars ?? 0) > 0 && (
+                  <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500 flex items-center gap-1">
+                    <img
+                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                      alt="Michelin star"
+                      className="h-2.5 w-2.5"
+                    />
+                    {destination.michelin_stars}
+                  </span>
+                )}
 
                 {(enrichedData?.rating || destination.rating) && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                  {(enrichedData?.rating || destination.rating).toFixed(1)}
-                    </span>
-              )}
-                  </div>
-
-              {destination.micro_description && (
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {destination.micro_description}
-                </p>
+                  <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500 flex items-center gap-1">
+                    <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    {(enrichedData?.rating || destination.rating).toFixed(1)}
+                  </span>
                 )}
               </div>
 
-            {/* Action Row - Pill Buttons */}
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
+              {destination.micro_description && (
+                <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
+                  {destination.micro_description}
+                </p>
+              )}
+            </div>
+
+            {/* Primary Actions - Save and Visited */}
+            <div className="flex items-center gap-2 mt-6">
               {/* Save Button with Dropdown */}
               <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
                     onClick={(e) => {
                       if (!user) {
                         e.preventDefault();
@@ -1262,7 +1224,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                         return;
                       }
                       if (!isSaved) {
-                        // Quick save without opening dropdown
                         e.preventDefault();
                         setShowSaveModal(true);
                         setShowSaveDropdown(false);
@@ -1300,7 +1261,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={async () => {
-                      // Unsave from saved_places
                       if (destination?.slug && user) {
                         try {
                           const supabaseClient = createClient();
@@ -1329,80 +1289,113 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
               </DropdownMenu>
 
-              <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                onClick={handleShare}
-              >
-                <Share2 className="h-3 w-3" />
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-
               {/* Visited Button with Dropdown */}
               {user && (
-                <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
-                  <DropdownMenuTrigger asChild>
+                <>
+                  {!isVisited ? (
                     <button
-                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
-                        isVisited
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                      onClick={(e) => {
-                        if (!isVisited) {
-                          e.preventDefault();
-                          handleVisitToggle();
-                        }
-                        // If already visited, let the dropdown handle the click
-                      }}
+                      className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                      onClick={handleVisitToggle}
                     >
-                      <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
-                      {isVisited ? 'Visited' : 'Mark Visited'}
-                      {isVisited && <ChevronDown className="h-3 w-3 ml-0.5" />}
+                      <Check className="h-3 w-3" />
+                      Mark Visited
                     </button>
-                  </DropdownMenuTrigger>
-                  {isVisited && (
-                    <DropdownMenuContent align="start" className="w-48">
-                      <DropdownMenuItem onClick={() => {
-                        setShowVisitedModal(true);
-                        setShowVisitedDropdown(false);
-                      }}>
-                        <Plus className="h-3 w-3 mr-2" />
-                        Add Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
-                        handleVisitToggle();
-                        setShowVisitedDropdown(false);
-                      }}>
-                        <X className="h-3 w-3 mr-2" />
-                        Remove Visit
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
+                  ) : (
+                    <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                        >
+                          <Check className="h-3 w-3 stroke-[3]" />
+                          Visited
+                          <ChevronDown className="h-3 w-3 ml-0.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-48">
+                        <DropdownMenuItem onClick={() => {
+                          setShowVisitedModal(true);
+                          setShowVisitedDropdown(false);
+                        }}>
+                          <Plus className="h-3 w-3 mr-2" />
+                          Add Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          handleVisitToggle();
+                          setShowVisitedDropdown(false);
+                        }}>
+                          <X className="h-3 w-3 mr-2" />
+                          Remove Visit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
-                </DropdownMenu>
+                </>
               )}
 
-              {destination.slug && destination.slug.trim() ? (
-                <button
-                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                  onClick={() => {
-                    onClose();
-                    setTimeout(() => {
-                      router.push(`/destination/${destination.slug}`);
-                    }, 100);
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  View Full Page
-                </button>
-              ) : null}
-                  </div>
-                </div>
+              {/* Secondary Actions Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                  >
+                    <span>More</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem onClick={handleShare}>
+                    <Share2 className="h-3 w-3 mr-2" />
+                    {copied ? 'Copied!' : 'Share'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const url = `https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}>
+                    <Navigation className="h-3 w-3 mr-2" />
+                    Directions
+                  </DropdownMenuItem>
+                  {destination.slug && destination.slug.trim() && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => {
+                        onClose();
+                        setTimeout(() => {
+                          router.push(`/destination/${destination.slug}`);
+                        }, 100);
+                      }}>
+                        <ExternalLink className="h-3 w-3 mr-2" />
+                        View Full Page
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {user && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => {
+                        if (!destination.slug) return;
+                        setTripPlannerDestination({
+                          slug: destination.slug,
+                          name: destination.name,
+                          city: destination.city,
+                          category: destination.category,
+                        });
+                        setShowTripPlanner(true);
+                      }}>
+                        <Plus className="h-3 w-3 mr-2" />
+                        Add to Trip
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
-          {/* Meta & Info Section */}
-          <div className="space-y-6">
+          {/* Meta & Info Section - More Spacing */}
+          <div className="space-y-8">
             {/* Badges - Only parent destination badge remains here */}
             {parentDestination && (
               <div className="flex flex-wrap gap-2">
@@ -1534,25 +1527,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-            {/* Actions */}
-            <div className="flex flex-wrap gap-2">
-              <a
-                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-              >
-                <Navigation className="h-3 w-3" />
-                Directions
-              </a>
-              <button
-                onClick={handleShare}
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-              >
-                <Share2 className="h-3 w-3" />
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-            </div>
             </div>
 
           {/* Divider */}
