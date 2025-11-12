@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarDays, NotebookPen, Paperclip, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { usePlanner } from '@/contexts/PlannerContext';
 import type { PlannerDay, PlannerRecommendation } from '@/contexts/PlannerContext';
 import { PlannerBlockCard } from './PlannerBlockCard';
+import { PlannerSegmentCard } from './PlannerSegmentCard';
+import { calculateDayCosts, formatCurrency, formatDuration, mapBlockToTravelSegment } from './plannerTravel';
 
 interface PlannerDayColumnProps {
   day: PlannerDay;
@@ -26,6 +28,38 @@ export function PlannerDayColumn({ day, isActive }: PlannerDayColumnProps) {
   } = usePlanner();
   const [dragActive, setDragActive] = useState(false);
   const dayBlocks = day.blocks;
+
+  const travelSegments = useMemo(() => {
+    if (!itinerary) return [];
+    const currentIndex = itinerary.days.findIndex(entry => entry.id === day.id);
+    const nextDay = currentIndex >= 0 ? itinerary.days[currentIndex + 1] : undefined;
+    return day.blocks
+      .map(block => mapBlockToTravelSegment(day, block, nextDay))
+      .filter((segment): segment is NonNullable<ReturnType<typeof mapBlockToTravelSegment>> => Boolean(segment));
+  }, [day, itinerary]);
+
+  const totalTransitMinutes = useMemo(
+    () =>
+      travelSegments.reduce((total, segment) => total + (segment?.durationMinutes ?? 0), 0),
+    [travelSegments],
+  );
+
+  const aggregatedWarnings = useMemo(() => {
+    const warnings = new Set<string>();
+    travelSegments.forEach(segment => {
+      segment.warnings.forEach(message => warnings.add(message));
+    });
+    if (totalTransitMinutes > 300) {
+      warnings.add('Consider reducing travel time');
+    }
+    return Array.from(warnings);
+  }, [totalTransitMinutes, travelSegments]);
+
+  const dayCostSummary = useMemo(() => calculateDayCosts(day), [day]);
+  const remainingLabel =
+    typeof dayCostSummary.remaining === 'number'
+      ? `${dayCostSummary.remaining >= 0 ? '' : '-'}${formatCurrency(Math.abs(dayCostSummary.remaining))}`
+      : null;
 
   const handleAddCustomBlock = () => {
     const title = window.prompt('What would you like to add to this day?');
@@ -139,6 +173,54 @@ export function PlannerDayColumn({ day, isActive }: PlannerDayColumnProps) {
       </div>
 
       <div className="flex flex-1 flex-col gap-4 px-5 py-4">
+        {(travelSegments.length > 0 || dayCostSummary.budget != null) && (
+          <div className="space-y-3 rounded-2xl border border-neutral-200/60 bg-neutral-50/80 p-4 text-[11px] text-neutral-500 dark:border-neutral-800/60 dark:bg-neutral-900/50 dark:text-neutral-400">
+            {travelSegments.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                  <span>Transit overview</span>
+                  <span className="text-[10px] font-medium">
+                    {formatDuration(totalTransitMinutes)} total transit
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {travelSegments.map(segment => (
+                    <PlannerSegmentCard key={segment.id} segment={segment} variant="compact" />
+                  ))}
+                </div>
+                {aggregatedWarnings.length > 0 && (
+                  <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">
+                    {aggregatedWarnings.map(message => (
+                      <span
+                        key={message}
+                        className="rounded-full bg-amber-100/70 px-2 py-1 dark:bg-amber-900/30"
+                      >
+                        {message}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {dayCostSummary.budget != null && (
+              <div className="rounded-xl bg-white/80 px-3 py-2 text-[11px] text-neutral-600 shadow-sm dark:bg-neutral-800/60 dark:text-neutral-300">
+                <div className="flex items-center justify-between">
+                  <span className="uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">Budget</span>
+                  <span className={`${dayCostSummary.remaining !== undefined && dayCostSummary.remaining < 0 ? 'text-red-500 dark:text-red-400' : 'text-neutral-600 dark:text-neutral-200'}`}>
+                    {formatCurrency(dayCostSummary.spent)} / {formatCurrency(dayCostSummary.budget)}
+                  </span>
+                </div>
+                {remainingLabel && (
+                  <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">
+                    Remaining {remainingLabel}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {day.attachments.length > 0 && (
           <div className="space-y-2">
             <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
