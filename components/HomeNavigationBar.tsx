@@ -164,7 +164,10 @@ export function HomeNavigationBar({
             <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-right text-xs font-medium text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
               <Link
                 href="/cities"
-                onClick={() => setIsCitiesOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCitiesOpen(false);
+                }}
                 className="transition hover:text-gray-900 dark:hover:text-gray-200"
               >
                 View all cities

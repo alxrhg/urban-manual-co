@@ -743,20 +743,33 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           className="flex h-full w-full flex-col bg-white shadow-2xl dark:bg-gray-950 md:w-[440px] md:max-w-[calc(100vw-2rem)] md:rounded-2xl md:ring-1 md:ring-black/5 md:border md:border-gray-200 dark:md:border-gray-800 md:overflow-hidden"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-5 py-6 md:px-8 md:py-8 dark:border-gray-800">
-              <div>
-              <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                {step === 'plan'
-                  ? 'Trip planner'
-                  : step === 'select'
-                  ? 'Add to trip'
-                  : 'Start a trip'}
-              </p>
-              <h2 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+          {/* Header with Close Button - Matching DestinationDrawer */}
+          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
+            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
+              {step === 'plan'
+                ? 'Trip planner'
+                : step === 'select'
+                ? 'Add to trip'
+                : 'Start a trip'}
+            </h2>
+            {/* Close Button - Top Right */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Close"
+            >
+              <XIcon className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {step === 'plan'
                   ? tripName || 'Untitled trip'
                   : step === 'select'
-                  ? `Add “${initialDestination?.name ?? ''}” to a trip`
+                  ? `Add "${initialDestination?.name ?? ''}" to a trip`
                   : 'Create a new itinerary'}
               </h2>
               {step === 'plan' && destination && (
@@ -765,8 +778,9 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
               {step === 'select' && initialDestination?.city && (
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{initialDestination.city}</p>
               )}
-                </div>
-            <div className="flex flex-wrap items-center gap-2">
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 mb-6">
             {step === 'plan' && (
               <>
                 {currentTripId && (
@@ -803,18 +817,9 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                 </button>
               </>
             )}
-            <button
-              onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                aria-label="Close"
-            >
-                <XIcon className="h-4 w-4" />
-            </button>
           </div>
-        </div>
-
-          <div className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
-            {step === 'select' && initialDestination ? (
+          
+          {step === 'select' && initialDestination ? (
               <div className="space-y-8">
                 <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
                   <div className="flex flex-col gap-4">

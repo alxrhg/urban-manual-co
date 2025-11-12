@@ -1122,6 +1122,16 @@ export default function Home() {
     setCurrentPage(1);
   }, [selectedCity, selectedCategory, advancedFilters]);
 
+  // Scroll to top of grid when page changes
+  useEffect(() => {
+    if (currentPage > 1 && viewMode === 'grid') {
+      const gridElement = document.querySelector('[data-name="destination-grid"]');
+      if (gridElement) {
+        gridElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [currentPage, viewMode]);
+
   // Fetch filter data (cities and categories) first for faster initial display
   // OPTIMIZED: Call Discovery Engine once at start, reuse result throughout
   const fetchFilterData = async () => {
@@ -2710,7 +2720,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
 
               return (
                 <>
-                  <div className="mt-16 grid grid-cols-2 gap-5 items-start sm:grid-cols-3 md:grid-cols-4 md:gap-7 lg:grid-cols-5 lg:gap-8 xl:grid-cols-6 2xl:grid-cols-7">
+                  <div className="mt-16 grid grid-cols-2 gap-5 items-start sm:grid-cols-3 md:grid-cols-4 md:gap-7 lg:grid-cols-5 lg:gap-8 xl:grid-cols-6 2xl:grid-cols-7" data-name="destination-grid">
                     {paginatedDestinations.map((destination, index) => {
                       const isVisited = !!(user && visitedSlugs.has(destination.slug));
                       const globalIndex = startIndex + index;
