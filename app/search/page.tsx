@@ -12,6 +12,8 @@ import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { useAuth } from '@/contexts/AuthContext';
+import { setTrackingUser } from '@/lib/tracking';
 
 interface Destination {
   id: number;
@@ -40,6 +42,7 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
+  const { user } = useAuth();
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
@@ -52,6 +55,10 @@ function SearchPageContent() {
     conversationHistory: [],
     suggestions: [],
   });
+
+  useEffect(() => {
+    setTrackingUser(user?.id ?? null);
+  }, [user?.id]);
 
   const performInitialSearch = useCallback(async (searchQuery: string) => {
     setSearchState(prev => ({ ...prev, isLoading: true }));

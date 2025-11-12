@@ -26,6 +26,9 @@ import {
   trackSearch,
   trackFilterChange,
   getSessionId,
+  setTrackingUser,
+  trackDestinationSaved,
+  trackDestinationVisited,
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
@@ -499,7 +502,7 @@ function getContextAwareLoadingMessage(
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
-  
+
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
   
@@ -615,6 +618,34 @@ export default function Home() {
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
+
+  useEffect(() => {
+    setTrackingUser(user?.id ?? null);
+  }, [user?.id]);
+
+  const destinationLookup = useMemo(() => {
+    const map = new Map<string, Destination>();
+    const addList = (list?: Destination[] | null) => {
+      if (!list) return;
+      for (const item of list) {
+        if (item?.slug) {
+          map.set(item.slug, item);
+        }
+      }
+    };
+
+    addList(destinations);
+    addList(filteredDestinations);
+    addList(nearbyDestinations);
+    for (const entry of conversationHistory) {
+      addList(entry.destinations);
+    }
+    if (selectedDestination?.slug) {
+      map.set(selectedDestination.slug, selectedDestination);
+    }
+
+    return map;
+  }, [destinations, filteredDestinations, nearbyDestinations, conversationHistory, selectedDestination]);
   const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
 
@@ -2907,11 +2938,11 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
             isOpen={isDrawerOpen}
             onClose={() => {
               // Sort visited items to the back when closing
-            const visitedSortingSet = initialVisitedSlugsRef.current ?? visitedSlugs;
+              const visitedSortingSet = initialVisitedSlugsRef.current ?? visitedSlugs;
               setFilteredDestinations(prev => {
                 const sorted = [...prev].sort((a, b) => {
-                const aVisited = user && visitedSortingSet.has(a.slug);
-                const bVisited = user && visitedSortingSet.has(b.slug);
+                  const aVisited = user && visitedSortingSet.has(a.slug);
+                  const bVisited = user && visitedSortingSet.has(b.slug);
                   if (aVisited && !bVisited) return 1;
                   if (!aVisited && bVisited) return -1;
                   return 0;
@@ -2921,7 +2952,39 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               setIsDrawerOpen(false);
               setTimeout(() => setSelectedDestination(null), 300);
             }}
+            onSaveToggle={(slug, saved) => {
+              if (saved) {
+                const tracked = destinationLookup.get(slug);
+                trackDestinationSaved({
+                  destinationId: tracked?.id,
+                  destinationSlug: slug,
+                  saved,
+                  metadata: tracked
+                    ? {
+                        category: tracked.category,
+                        city: tracked.city,
+                      }
+                    : undefined,
+                  context: { source: 'home_drawer' },
+                });
+              }
+            }}
             onVisitToggle={(slug, visited) => {
+              if (visited) {
+                const tracked = destinationLookup.get(slug);
+                trackDestinationVisited({
+                  destinationId: tracked?.id,
+                  destinationSlug: slug,
+                  visited,
+                  metadata: tracked
+                    ? {
+                        category: tracked.category,
+                        city: tracked.city,
+                      }
+                    : undefined,
+                  context: { source: 'home_drawer' },
+                });
+              }
               // Update visited slugs
               setVisitedSlugs(prev => {
                 const newSet = new Set(prev);

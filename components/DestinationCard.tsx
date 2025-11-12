@@ -6,6 +6,7 @@ import { MapPin, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
+import { trackDestinationViewed } from '@/lib/tracking';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -31,6 +32,11 @@ export function DestinationCard({
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
   const cardRef = useRef<HTMLButtonElement>(null);
+  const hasTrackedViewRef = useRef(false);
+
+  useEffect(() => {
+    hasTrackedViewRef.current = false;
+  }, [destination.slug]);
 
   // Intersection Observer for progressive loading
   useEffect(() => {
@@ -41,6 +47,20 @@ export function DestinationCard({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsInView(true);
+            if (!hasTrackedViewRef.current) {
+              trackDestinationViewed({
+                destinationId: destination.id,
+                destinationSlug: destination.slug,
+                metadata: {
+                  category: destination.category,
+                  city: destination.city,
+                },
+                context: {
+                  source: 'destination_card',
+                },
+              });
+              hasTrackedViewRef.current = true;
+            }
             observer.disconnect();
           }
         });
@@ -56,7 +76,7 @@ export function DestinationCard({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [destination.category, destination.city, destination.id, destination.slug]);
 
   return (
     <button

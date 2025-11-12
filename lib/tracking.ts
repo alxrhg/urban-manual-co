@@ -1,6 +1,205 @@
 import { createClient } from '@supabase/supabase-js';
 import type { UserInteraction } from '@/types/personalization';
 
+type DestinationEventType = 'view' | 'save' | 'visited';
+
+export interface DestinationTrackingEvent {
+  type?: DestinationEventType;
+  destinationId?: number;
+  destinationSlug?: string;
+  occurredAt?: string;
+  metadata?: Record<string, unknown> | null;
+  context?: {
+    source?: string;
+    searchQuery?: string;
+  } | null;
+}
+
+interface BatchedTrackingEvent extends DestinationTrackingEvent {
+  destinationId?: number;
+  destinationSlug?: string;
+}
+
+const TRACKING_ENDPOINT = '/api/profile/events';
+const BATCH_SIZE = 15;
+const DEBOUNCE_MS = 750;
+const MAX_QUEUE_LENGTH = 120;
+
+const pendingEvents: BatchedTrackingEvent[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let isFlushing = false;
+let isUnloadHandlerAttached = false;
+let currentUserId: string | null = null;
+
+function clearFlushTimer() {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+}
+
+async function flushTrackingQueue(): Promise<void> {
+  if (isFlushing) {
+    return;
+  }
+
+  if (pendingEvents.length === 0) {
+    clearFlushTimer();
+    return;
+  }
+
+  // Only attempt to flush in browser contexts
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const eventsToSend = pendingEvents.splice(0, BATCH_SIZE);
+  clearFlushTimer();
+  isFlushing = true;
+
+  try {
+    await fetch(TRACKING_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ events: eventsToSend }),
+    });
+  } catch (error) {
+    console.warn('[Tracking] Failed to persist events', error);
+    // Requeue events at the front to retry later
+    pendingEvents.unshift(...eventsToSend);
+  } finally {
+    isFlushing = false;
+    if (pendingEvents.length > 0) {
+      scheduleFlush();
+    }
+  }
+}
+
+function scheduleFlush(): void {
+  if (pendingEvents.length === 0) {
+    clearFlushTimer();
+    return;
+  }
+
+  if (flushTimer) {
+    return;
+  }
+
+  flushTimer = setTimeout(() => {
+    flushTrackingQueue().catch((error) => {
+      console.error('[Tracking] Flush error', error);
+    });
+  }, DEBOUNCE_MS);
+}
+
+function ensureUnloadHandler() {
+  if (typeof window === 'undefined' || isUnloadHandlerAttached) {
+    return;
+  }
+
+  const flushAndWait = () => {
+    if (pendingEvents.length === 0) {
+      return;
+    }
+
+    try {
+      navigator.sendBeacon(
+        TRACKING_ENDPOINT,
+        JSON.stringify({ events: pendingEvents.splice(0, pendingEvents.length) }),
+      );
+    } catch (error) {
+      console.debug('[Tracking] Beacon failed, falling back to synchronous flush', error);
+      // Synchronously flush as a last resort
+      fetch(TRACKING_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        keepalive: true,
+        body: JSON.stringify({ events: pendingEvents.splice(0, pendingEvents.length) }),
+      }).catch(() => {
+        // Ignore errors at this stage
+      });
+    }
+  };
+
+  window.addEventListener('beforeunload', flushAndWait);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushAndWait();
+    }
+  });
+
+  isUnloadHandlerAttached = true;
+}
+
+function enqueueTrackingEvent(event: BatchedTrackingEvent): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!currentUserId) {
+    return;
+  }
+
+  ensureUnloadHandler();
+
+  if (pendingEvents.length >= MAX_QUEUE_LENGTH) {
+    pendingEvents.splice(0, pendingEvents.length - MAX_QUEUE_LENGTH + 1);
+  }
+
+  pendingEvents.push({ ...event, occurredAt: event.occurredAt ?? new Date().toISOString() });
+
+  if (pendingEvents.length >= BATCH_SIZE) {
+    flushTrackingQueue().catch((error) => {
+      console.error('[Tracking] Immediate flush failed', error);
+    });
+  } else {
+    scheduleFlush();
+  }
+}
+
+export function setTrackingUser(userId: string | null): void {
+  currentUserId = userId;
+
+  if (!userId && pendingEvents.length > 0) {
+    pendingEvents.length = 0;
+  }
+}
+
+export function trackDestinationViewed(event: DestinationTrackingEvent): void {
+  if (!currentUserId) {
+    return;
+  }
+
+  enqueueTrackingEvent({
+    ...event,
+    type: 'view',
+  });
+}
+
+export function trackDestinationSaved(event: DestinationTrackingEvent & { saved?: boolean }): void {
+  if (!currentUserId || (event.saved === false)) {
+    return;
+  }
+
+  enqueueTrackingEvent({
+    ...event,
+    type: 'save',
+  });
+}
+
+export function trackDestinationVisited(event: DestinationTrackingEvent & { visited?: boolean }): void {
+  if (!currentUserId || event.visited === false) {
+    return;
+  }
+
+  enqueueTrackingEvent({
+    ...event,
+    type: 'visited',
+  });
+}
+
 function getEnv(key: string): string {
   const value = process.env[key];
   if (!value || value.trim() === '' || value.includes('placeholder') || value.includes('invalid')) {
