@@ -1783,44 +1783,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               }
             }
           }}
-          onSave={async (collectionId) => {
-            // If collectionId is null, user unsaved - remove from saved_places
-            if (collectionId === null && destination.slug && user) {
-              try {
-                const supabaseClient = createClient();
-                if (supabaseClient) {
-                  const { error } = await supabaseClient
-                    .from('saved_places')
-                    .delete()
-                    .eq('user_id', user.id)
-                    .eq('destination_slug', destination.slug);
-                  if (!error) {
-                    setIsSaved(false);
-                    if (onSaveToggle) onSaveToggle(destination.slug, false);
-                  }
-                }
-              } catch (error) {
-                console.error('Error removing from saved_places:', error);
-              }
-            } else if (collectionId !== null && destination.slug && user) {
-              // Also save to saved_places for simple save functionality
-              try {
-                const supabaseClient = createClient();
-                if (supabaseClient) {
-                  const { error } = await supabaseClient
-                    .from('saved_places')
-                    .upsert({
-                      user_id: user.id,
-                      destination_slug: destination.slug,
-                    });
-                  if (!error) {
-                    setIsSaved(true);
-                    if (onSaveToggle) onSaveToggle(destination.slug, true);
-                  }
-                }
-              } catch (error) {
-                console.error('Error saving to saved_places:', error);
-              }
+          onSave={(_, { saved }) => {
+            if (!destination.slug) {
+              return;
+            }
+
+            setIsSaved(saved);
+            if (onSaveToggle) {
+              onSaveToggle(destination.slug, saved);
             }
           }}
         />

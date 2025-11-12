@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { MapPin, Check } from 'lucide-react';
+import { MapPin, Check, BookmarkCheck, BookmarkPlus } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
@@ -14,6 +14,8 @@ interface DestinationCardProps {
   isVisited?: boolean;
   showBadges?: boolean;
   className?: string;
+  isSaved?: boolean;
+  onSaveClick?: (destination: Destination) => void;
 }
 
 /**
@@ -26,6 +28,8 @@ export function DestinationCard({
   isVisited = false,
   showBadges = true,
   className = '',
+  isSaved = false,
+  onSaveClick,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -87,6 +91,42 @@ export function DestinationCard({
           mb-3
         `}
       >
+        {onSaveClick && typeof destination.id === 'number' && (
+          <div className="absolute right-3 top-3 z-10">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onSaveClick(destination);
+              }}
+              aria-pressed={isSaved}
+              aria-label={
+                isSaved
+                  ? `Manage saved list for ${destination.name}`
+                  : `Save ${destination.name} to a list`
+              }
+              className={`
+                inline-flex h-9 w-9 items-center justify-center rounded-full border
+                transition-colors duration-200
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2
+                dark:focus-visible:ring-white dark:focus-visible:ring-offset-gray-900
+                ${
+                  isSaved
+                    ? 'border-gray-900 bg-gray-900 text-white shadow-sm dark:border-white dark:bg-white dark:text-gray-900'
+                    : 'border-white/70 bg-white/90 text-gray-600 hover:bg-white dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:bg-gray-900'
+                }
+              `}
+            >
+              {isSaved ? (
+                <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <BookmarkPlus className="h-4 w-4" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Skeleton while loading */}
         {!isLoaded && isInView && destination.image && (
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700 z-0" />

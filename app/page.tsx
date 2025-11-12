@@ -44,6 +44,7 @@ import { ScreenReaderAnnouncements } from '@/components/ScreenReaderAnnouncement
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
+import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
@@ -509,6 +510,8 @@ export default function Home() {
   const [categories, setCategories] = useState<string[]>([]);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const initialVisitedSlugsRef = useRef<Set<string> | null>(null);
+  const [savedSlugs, setSavedSlugs] = useState<Set<string>>(new Set());
+  const initialSavedSlugsRef = useRef<Set<string> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const skipNextSearchRef = useRef(false);
   const [selectedCity, setSelectedCity] = useState('');
@@ -521,6 +524,8 @@ export default function Home() {
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [quickSaveDestination, setQuickSaveDestination] = useState<Destination | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
@@ -968,14 +973,20 @@ export default function Home() {
         // Use requestAnimationFrame to ensure this doesn't block rendering
         if (destinations.length > 0) {
           requestAnimationFrame(() => {
-          filterDestinations();
+            filterDestinations();
           });
         }
       });
+      fetchSavedPlaces();
       fetchLastSession();
       fetchUserProfile();
+    } else {
+      setVisitedSlugs(new Set());
+      initialVisitedSlugsRef.current = null;
+      setSavedSlugs(new Set());
+      initialSavedSlugsRef.current = null;
     }
-  }, [user]);
+  }, [user, destinations.length, filterDestinations]);
 
   // Phase 2 & 3: Fetch enriched greeting context when user profile is loaded
   useEffect(() => {
@@ -1705,6 +1716,40 @@ export default function Home() {
       // Expected error if user is not logged in - suppress
       if (user) {
         console.warn('Error fetching visited places:', error);
+      }
+    }
+  };
+
+  const fetchSavedPlaces = async (): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from('saved_places')
+        .select('destination_slug')
+        .eq('user_id', user.id);
+
+      if (error && (error.code === 'PGRST116' || error.code === 'PGRST301')) {
+        return;
+      }
+
+      if (error) throw error;
+
+      const slugs = new Set((data as any[])?.map((item: any) => item.destination_slug).filter(Boolean) || []);
+      if (initialSavedSlugsRef.current === null) {
+        initialSavedSlugsRef.current = new Set(slugs);
+      } else {
+        initialSavedSlugsRef.current = new Set(slugs);
+      }
+      setSavedSlugs(slugs);
+    } catch (error) {
+      if (user) {
+        console.warn('Error fetching saved places:', error);
       }
     }
   };
@@ -2658,15 +2703,17 @@ export default function Home() {
                       const isVisited = !!(user && visitedSlugs.has(destination.slug));
                       const globalIndex = startIndex + index;
                       
+                      const isSaved = !!(user && savedSlugs.has(destination.slug));
+
                       return (
                         <DestinationCard
-                    key={destination.slug}
+                          key={destination.slug}
                           destination={destination}
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setIsDrawerOpen(true);
+                          onClick={() => {
+                          setSelectedDestination(destination);
+                          setIsDrawerOpen(true);
 
-                      // Track destination click
+                          // Track destination click
                       trackDestinationClick({
                         destinationSlug: destination.slug,
                               position: globalIndex,
@@ -2708,6 +2755,21 @@ export default function Home() {
                           index={globalIndex}
                           isVisited={isVisited}
                           showBadges={true}
+                          isSaved={isSaved}
+                          onSaveClick={(targetDestination) => {
+                            if (!user) {
+                              router.push('/auth/login');
+                              return;
+                            }
+
+                            if (typeof targetDestination.id !== 'number') {
+                              alert('Saving requires destination details. Please open the place to try again.');
+                              return;
+                            }
+
+                            setQuickSaveDestination(targetDestination);
+                            setShowSaveModal(true);
+                          }}
                         />
                       );
                       })}
@@ -2837,6 +2899,29 @@ export default function Home() {
               setIsDrawerOpen(false);
               setTimeout(() => setSelectedDestination(null), 300);
             }}
+            onSaveToggle={(slug, saved) => {
+              setSavedSlugs(prev => {
+                const updated = new Set(prev);
+                if (saved) {
+                  updated.add(slug);
+                  if (initialSavedSlugsRef.current) {
+                    const seed = new Set(initialSavedSlugsRef.current);
+                    seed.add(slug);
+                    initialSavedSlugsRef.current = seed;
+                  } else {
+                    initialSavedSlugsRef.current = new Set([slug]);
+                  }
+                } else {
+                  updated.delete(slug);
+                  if (initialSavedSlugsRef.current) {
+                    const seed = new Set(initialSavedSlugsRef.current);
+                    seed.delete(slug);
+                    initialSavedSlugsRef.current = seed;
+                  }
+                }
+                return updated;
+              });
+            }}
             onVisitToggle={(slug, visited) => {
               // Update visited slugs
               setVisitedSlugs(prev => {
@@ -2866,6 +2951,51 @@ export default function Home() {
             isOpen={showTripPlanner}
             onClose={() => setShowTripPlanner(false)}
           />
+
+          {quickSaveDestination?.id && (
+            <SaveDestinationModal
+              destinationId={quickSaveDestination.id}
+              destinationSlug={quickSaveDestination.slug}
+              isOpen={showSaveModal}
+              onClose={() => {
+                setShowSaveModal(false);
+                setQuickSaveDestination(null);
+              }}
+              onSave={(_collectionId, { saved }) => {
+                const slug = quickSaveDestination?.slug;
+                if (!slug) {
+                  setShowSaveModal(false);
+                  setQuickSaveDestination(null);
+                  return;
+                }
+
+                setSavedSlugs(prev => {
+                  const updated = new Set(prev);
+                  if (saved) {
+                    updated.add(slug);
+                    if (initialSavedSlugsRef.current) {
+                      const seed = new Set(initialSavedSlugsRef.current);
+                      seed.add(slug);
+                      initialSavedSlugsRef.current = seed;
+                    } else {
+                      initialSavedSlugsRef.current = new Set([slug]);
+                    }
+                  } else {
+                    updated.delete(slug);
+                    if (initialSavedSlugsRef.current) {
+                      const seed = new Set(initialSavedSlugsRef.current);
+                      seed.delete(slug);
+                      initialSavedSlugsRef.current = seed;
+                    }
+                  }
+                  return updated;
+                });
+
+                setShowSaveModal(false);
+                setQuickSaveDestination(null);
+              }}
+            />
+          )}
       </main>
     </ErrorBoundary>
   );

@@ -12,7 +12,7 @@ interface SaveDestinationModalProps {
   destinationSlug: string;
   isOpen: boolean;
   onClose: () => void;
-  onSave?: (collectionId: string | null) => void;
+  onSave?: (collectionId: string | null, metadata: { saved: boolean }) => void;
 }
 
 export function SaveDestinationModal({
@@ -119,7 +119,7 @@ export function SaveDestinationModal({
         });
       }
       
-      if (onSave) onSave(collectionId);
+      if (onSave) onSave(collectionId, { saved: true });
       onClose();
     } catch (error) {
       console.error('Error saving destination:', error);
@@ -157,7 +157,7 @@ export function SaveDestinationModal({
       }
 
       setCurrentCollectionId(null);
-      if (onSave) onSave(null);
+      if (onSave) onSave(null, { saved: false });
       onClose();
     } catch (error) {
       console.error('Error unsaving destination:', error);
