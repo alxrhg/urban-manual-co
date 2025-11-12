@@ -12,7 +12,7 @@ import {
   PrinterIcon,
   SaveIcon,
   Loader2,
-  Plus,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -815,167 +815,266 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
           <div className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
             {step === 'select' && initialDestination ? (
-              <div className="space-y-6">
-                <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Choose a trip to add <span className="font-medium text-gray-900 dark:text-white">“{initialDestination.name}”</span> or start a new itinerary below.
-                  </p>
+              <div className="space-y-8">
+                <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+                  <div className="flex flex-col gap-4">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                      Add to trip
+                    </span>
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                        Add “{initialDestination.name}” to your itinerary
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Choose an itinerary that fits this spot or start a new plan that mirrors the homepage’s clean structure.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {initialDestination.city && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                          <MapPinIcon className="h-3.5 w-3.5" />
+                          {initialDestination.city}
+                        </span>
+                      )}
+                      {initialDestination.category && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                          <SparklesIcon className="h-3.5 w-3.5" />
+                          {initialDestination.category}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                {loadingTripSummaries ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                      Your itineraries
+                    </span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">Tap to keep building</span>
                   </div>
-                ) : tripSummaries.length > 0 ? (
-                  <div className="space-y-3">
-                    {tripSummaries.map((trip) => (
-                      <button
-                        key={trip.id}
-                        onClick={() => handleAddDestinationToTrip(trip.id)}
-                        disabled={addingToTripId === trip.id}
-                        className="w-full text-left rounded-2xl border border-gray-200 bg-white/90 p-5 shadow-sm transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                <div>
-                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{trip.title}</h3>
-                            {trip.destination && (
-                              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{trip.destination}</p>
-                            )}
-                            {(trip.start_date || trip.end_date) && (
-                              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                                {[trip.start_date, trip.end_date]
-                                  .filter(Boolean)
-                                  .map((date) => (date ? new Date(date).toLocaleDateString() : ''))
-                                  .join(' – ')}
-                              </p>
-                            )}
+                  {loadingTripSummaries ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                    </div>
+                  ) : tripSummaries.length > 0 ? (
+                    <div className="space-y-3">
+                      {tripSummaries.map((trip) => (
+                        <button
+                          key={trip.id}
+                          onClick={() => handleAddDestinationToTrip(trip.id)}
+                          disabled={addingToTripId === trip.id}
+                          className="group flex w-full items-start justify-between gap-4 rounded-3xl border border-gray-200 bg-white/95 p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/5 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-800 dark:bg-gray-950/80 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
+                                Itinerary
+                              </span>
+                              <span className="text-[0.65rem] font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                                Updated {new Date(trip.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <h3 className="text-base font-semibold text-gray-900 transition-colors group-hover:text-gray-600 dark:text-white dark:group-hover:text-gray-200">
+                              {trip.title}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                              {trip.destination && <span className="uppercase tracking-[2px]">{trip.destination}</span>}
+                              {(trip.start_date || trip.end_date) && (
+                                <span>
+                                  {[trip.start_date, trip.end_date]
+                                    .filter(Boolean)
+                                    .map((date) => (date ? new Date(date).toLocaleDateString() : ''))
+                                    .join(' – ')}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           {addingToTripId === trip.id ? (
                             <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
                           ) : (
-                            <Plus className="h-4 w-4 text-gray-400" />
+                            <ArrowRight className="h-5 w-5 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300" />
                           )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
-                    You haven’t created any trips yet. Start a new itinerary below.
-                  </div>
-                )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl border border-gray-200 bg-white/90 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
+                      You haven’t created any trips yet. Start a new itinerary below.
+                    </div>
+                  )}
+                </div>
 
-                <div className="rounded-2xl border border-dashed border-gray-300 bg-white/50 p-6 text-center dark:border-gray-700 dark:bg-gray-900/40">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Prefer to create a new itinerary for this place?
-                  </p>
-                  <button
-                    onClick={() => {
-                      setBypassSelection(true);
-                      resetForm();
-                      setTripName(initialDestination.name);
-                      if (initialDestination.city) {
-                        setDestination(initialDestination.city);
-                      }
-                      setStep('create');
-                    }}
-                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Start a new trip
-                  </button>
+                <div className="relative overflow-hidden rounded-3xl border border-gray-900 bg-black px-6 py-7 text-white shadow-xl dark:border-gray-100 dark:bg-white dark:text-black">
+                  <div className="pointer-events-none absolute inset-0 opacity-80 [background:radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_rgba(255,255,255,0)_60%)] dark:[background:radial-gradient(circle_at_top,_rgba(0,0,0,0.14),_rgba(0,0,0,0)_60%)]" aria-hidden="true" />
+                  <div className="relative flex flex-col gap-5">
+                    <span className="inline-flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[3px]">
+                      <SparklesIcon className="h-4 w-4" />
+                      Start fresh
+                    </span>
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-semibold leading-snug">
+                        Start a new itinerary for this destination
+                      </h3>
+                      <p className="text-sm text-gray-300 dark:text-gray-600">
+                        We’ll prefill the essentials so you can curate days, budgets, and highlights with the same polish as the homepage grid.
+                      </p>
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBypassSelection(true);
+                          resetForm();
+                          setTripName(initialDestination.name);
+                          if (initialDestination.city) {
+                            setDestination(initialDestination.city);
+                          }
+                          setStep('create');
+                        }}
+                        className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[2px] text-black transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40 dark:bg-black dark:text-white dark:focus:ring-black/40"
+                      >
+                        Start a new trip
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : step === 'create' ? (
-              <div className="mx-auto max-w-2xl space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                      Trip name *
-                  </label>
-                  <input
-                    type="text"
-                    value={tripName}
-                    onChange={(e) => setTripName(e.target.value)}
-                    placeholder="Summer in Paris"
-                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                  />
-                </div>
-                  <div className="md:col-span-2">
-                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                      Destination *
-                  </label>
-                  <input
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder="Paris, France"
-                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                  />
-                </div>
-                  <div className="md:col-span-2">
-                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                      Hotel / base location
-                  </label>
-                  <input
-                    type="text"
-                    value={hotelLocation}
-                    onChange={(e) => setHotelLocation(e.target.value)}
-                    placeholder="Hotel Le Marais"
-                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                  />
-                </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                      Start date *
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
-                    />
+              <div className="mx-auto max-w-3xl space-y-8">
+                <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/95 px-6 py-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+                  <div className="flex flex-col gap-4">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                      New trip
+                    </span>
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                        Build your itinerary in our signature style
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Define the essentials and we’ll keep everything structured just like the homepage layout you’re used to.
+                      </p>
+                    </div>
+                    {(initialDestination?.name || initialDestination?.city) && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {initialDestination?.name && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                            <SparklesIcon className="h-3.5 w-3.5" />
+                            {initialDestination.name}
+                          </span>
+                        )}
+                        {initialDestination?.city && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                            <MapPinIcon className="h-3.5 w-3.5" />
+                            {initialDestination.city}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                      End date *
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
-                    />
+                </div>
+
+                <div className="rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Trip name *
+                      </label>
+                      <input
+                        type="text"
+                        value={tripName}
+                        onChange={(e) => setTripName(e.target.value)}
+                        placeholder="Summer in Paris"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Destination *
+                      </label>
+                      <input
+                        type="text"
+                        value={destination}
+                        onChange={(e) => setDestination(e.target.value)}
+                        placeholder="Paris, France"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Hotel / base location
+                      </label>
+                      <input
+                        type="text"
+                        value={hotelLocation}
+                        onChange={(e) => setHotelLocation(e.target.value)}
+                        placeholder="Hotel Le Marais"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Start date *
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        End date *
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Total budget
+                      </label>
+                      <input
+                        type="number"
+                        value={totalBudget || ''}
+                        onChange={(e) => setTotalBudget(Number(e.target.value))}
+                        placeholder="2000"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
+                      />
+                    </div>
                   </div>
-                <div>
-                    <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                      Total budget
-                  </label>
-                  <input
-                    type="number"
-                    value={totalBudget || ''}
-                    onChange={(e) => setTotalBudget(Number(e.target.value))}
-                    placeholder="2000"
-                      className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                  />
+                  <div className="mt-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 font-medium uppercase tracking-[2px] text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                        <SparklesIcon className="h-3.5 w-3.5" />
+                        Smart planning
+                      </span>
+                      <span>Budget, packing, and weather tools unlock once you create the trip.</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCreateTrip}
+                      disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Creating…
+                        </>
+                      ) : (
+                        'Create trip'
+                      )}
+                    </button>
+                  </div>
                 </div>
-                </div>
-                <button
-                  onClick={handleCreateTrip}
-                  disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Creating…
-                    </>
-                  ) : (
-                    'Create trip'
-                  )}
-                </button>
-            </div>
-          ) : (
+              </div>
+            ) : (
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center gap-2">
                   {plannerTabs.map((tab) => (
