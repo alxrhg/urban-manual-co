@@ -27,6 +27,8 @@ import {
 } from '@/lib/rate-limit';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
+import { buildChatPromptPayload } from '@/services/intelligence/context';
+import { logChatAudit } from '@/api/chat/log';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
@@ -43,6 +45,7 @@ export async function POST(
   context: any
 ) {
   const encoder = new TextEncoder();
+  const startedAt = Date.now();
 
   try {
     // Get user context first for rate limiting
@@ -79,7 +82,11 @@ export async function POST(
       );
     }
 
-    const { message, session_token } = await request.json();
+    const { message, session_token, memory_overrides } = await request.json();
+
+    const includeMemoryIds: string[] = Array.isArray(memory_overrides?.includeIds)
+      ? memory_overrides.includeIds.filter((value: unknown): value is string => typeof value === 'string')
+      : [];
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return new Response(
@@ -168,8 +175,21 @@ export async function POST(
             context: { ...session.context, ...contextUpdates }
           })));
 
-          // Build messages for LLM
-          const systemPrompt = `${URBAN_MANUAL_EDITOR_SYSTEM_PROMPT}\n\n${formatFewShots(3)}\n\nCurrent context: ${JSON.stringify({ ...session.context, ...contextUpdates })}`;
+          const contextSnapshot = { ...session.context, ...contextUpdates };
+          const basePrompt = `${URBAN_MANUAL_EDITOR_SYSTEM_PROMPT}\n\n${formatFewShots(3)}\n\nCurrent context: ${JSON.stringify(contextSnapshot)}`;
+
+          const promptPayload = await buildChatPromptPayload({
+            userId,
+            sessionId: session.sessionId,
+            sessionToken: session_token,
+            includeMemoryIds,
+            currentQuery: message,
+            basePrompt,
+          });
+
+          const systemPrompt = promptPayload.systemPrompt || basePrompt;
+          const memoryBundle = promptPayload.memoryBundle;
+          const memoryContext = promptPayload.memoryContext;
 
           const llmMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
             { role: 'system', content: systemPrompt },
@@ -420,6 +440,21 @@ Respond naturally and conversationally, mentioning 2-3 specific places that matc
           await saveMessage(session.sessionId, {
             role: 'assistant',
             content: assistantResponse,
+          });
+
+          await logChatAudit({
+            sessionId: session.sessionId,
+            userId,
+            request: message,
+            response: assistantResponse,
+            model: usedModel,
+            latencyMs: Date.now() - startedAt,
+            memorySnapshot: {
+              includeIds: includeMemoryIds,
+              bundle: memoryBundle,
+              context: memoryContext,
+            },
+            intent,
           });
 
           // Log metrics

@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Send, SlidersHorizontal, Loader2, Pin, PinOff, Trash2 } from 'lucide-react';
 import { ConversationBubble } from '@/app/components/chat/ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
+import { trpc } from '@/lib/trpc/client';
+import { Sheet, SheetHeader, SheetBody } from '@/app/components/Sheet';
 // Analytics tracking via API
 async function trackPageView(page: string, userId?: string) {
   fetch('/api/analytics/feature-usage', {
@@ -63,9 +65,215 @@ export default function ChatPage() {
   const [streamingContent, setStreamingContent] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [isMemoryOpen, setIsMemoryOpen] = useState(false);
+  const [memorySelection, setMemorySelection] = useState<Record<string, boolean>>({});
+  const [memoryDrafts, setMemoryDrafts] = useState<Record<string, string>>({});
+  const [memoryError, setMemoryError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+
+  const memoryQuery = trpc.chat.getMemoryBundle.useQuery(
+    { sessionId: sessionId ?? undefined, sessionToken: sessionToken ?? undefined },
+    { enabled: Boolean(user?.id || sessionToken) }
+  );
+
+  const updateMemoryMutation = trpc.chat.updateMemory.useMutation({
+    onSuccess: () => {
+      memoryQuery.refetch();
+    },
+  });
+
+  const deleteMemoryMutation = trpc.chat.deleteMemory.useMutation({
+    onSuccess: () => {
+      memoryQuery.refetch();
+    },
+  });
+
+  const memoryBundle = memoryQuery.data?.bundle;
+
+  const memoryItems = useMemo(() => {
+    if (!memoryBundle) return [] as Array<{
+      id: string;
+      kind: string;
+      title: string;
+      summary: string;
+      lastUpdated?: string;
+      editable?: boolean;
+      isPinned?: boolean;
+    }>;
+
+    const aggregate: Array<{
+      id: string;
+      kind: string;
+      title: string;
+      summary: string;
+      lastUpdated?: string;
+      editable?: boolean;
+      isPinned?: boolean;
+    }> = [];
+
+    const pushItems = (items: any[] | undefined, kind: string) => {
+      (items || []).forEach((item) => {
+        aggregate.push({
+          id: item.id,
+          kind,
+          title: item.title || 'Memory item',
+          summary: item.summary,
+          lastUpdated: item.lastUpdated,
+          editable: item.editable,
+          isPinned: item.isPinned,
+        });
+      });
+    };
+
+    pushItems(memoryBundle.pinnedPreferences, 'pinnedPreference');
+    pushItems(memoryBundle.recentTrips, 'recentTrip');
+    pushItems(memoryBundle.priorSuggestions, 'priorSuggestion');
+    pushItems(memoryBundle.turnSummaries, 'turnSummary');
+
+    return aggregate;
+  }, [memoryBundle]);
+
+  useEffect(() => {
+    if (!memoryItems.length) return;
+
+    setMemorySelection((prev) => {
+      const updated = { ...prev };
+      let changed = false;
+      for (const item of memoryItems) {
+        if (updated[item.id] === undefined) {
+          updated[item.id] = true;
+          changed = true;
+        }
+      }
+      return changed ? updated : prev;
+    });
+
+    setMemoryDrafts((prev) => {
+      const updated = { ...prev };
+      let changed = false;
+      for (const item of memoryItems) {
+        if (updated[item.id] === undefined) {
+          updated[item.id] = item.summary;
+          changed = true;
+        }
+      }
+      return changed ? updated : prev;
+    });
+  }, [memoryItems]);
+
+  const selectedMemoryIds = useMemo(
+    () => Object.entries(memorySelection).filter(([, enabled]) => enabled).map(([id]) => id),
+    [memorySelection]
+  );
+
+  const memorySections = useMemo(() => {
+    if (!memoryBundle) return [] as Array<{
+      key: string;
+      title: string;
+      description: string;
+      items: any[];
+    }>;
+
+    return [
+      {
+        key: 'pinnedPreferences',
+        title: 'Pinned preferences',
+        description: 'High-signal tastes, constraints, and preferences shared with every request.',
+        items: memoryBundle.pinnedPreferences || [],
+      },
+      {
+        key: 'recentTrips',
+        title: 'Recent trips',
+        description: 'Latest itineraries help the assistant stay aware of current plans.',
+        items: memoryBundle.recentTrips || [],
+      },
+      {
+        key: 'priorSuggestions',
+        title: 'Prior suggestions',
+        description: 'Recent recommendations that resonated with you.',
+        items: memoryBundle.priorSuggestions || [],
+      },
+      {
+        key: 'turnSummaries',
+        title: 'Conversation highlights',
+        description: 'Summaries of earlier turns to maintain continuity.',
+        items: memoryBundle.turnSummaries || [],
+      },
+    ];
+  }, [memoryBundle]);
+
+  const memoryActionDisabled = updateMemoryMutation.isPending || deleteMemoryMutation.isPending;
+
+  const formatMemoryDate = (value?: string) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
+  const findMemoryItem = (id: string) => memoryItems.find((item) => item.id === id);
+
+  const handleMemoryToggle = (id: string, enabled: boolean) => {
+    setMemorySelection((prev) => ({ ...prev, [id]: enabled }));
+  };
+
+  const handleDraftChange = (id: string, value: string) => {
+    setMemoryDrafts((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleMemorySave = async (id: string) => {
+    const item = findMemoryItem(id);
+    if (!item || !item.editable || !user?.id) return;
+
+    const draft = memoryDrafts[id]?.trim();
+    if (!draft || draft === item.summary) return;
+
+    setMemoryError(null);
+    try {
+      await updateMemoryMutation.mutateAsync({ id, summary: draft });
+    } catch (error) {
+      console.error('Failed to update memory', error);
+      setMemoryError('Failed to update memory. Please try again.');
+    }
+  };
+
+  const handleMemoryPinToggle = async (id: string) => {
+    const item = findMemoryItem(id);
+    if (!item || !user?.id) return;
+
+    setMemoryError(null);
+    try {
+      await updateMemoryMutation.mutateAsync({ id, isPinned: !item.isPinned });
+    } catch (error) {
+      console.error('Failed to toggle pinned state', error);
+      setMemoryError('Unable to update pinned state right now.');
+    }
+  };
+
+  const handleMemoryDelete = async (id: string) => {
+    const item = findMemoryItem(id);
+    if (!item || item.kind === 'recentTrip' || !user?.id) return;
+
+    setMemoryError(null);
+    try {
+      await deleteMemoryMutation.mutateAsync({ id });
+      setMemorySelection((prev) => {
+        const updated = { ...prev };
+        delete updated[id];
+        return updated;
+      });
+      setMemoryDrafts((prev) => {
+        const updated = { ...prev };
+        delete updated[id];
+        return updated;
+      });
+    } catch (error) {
+      console.error('Failed to delete memory item', error);
+      setMemoryError('Failed to delete memory item.');
+    }
+  };
 
   useEffect(() => {
     trackPageView('chat', user?.id);
@@ -135,6 +343,9 @@ export default function ChatPage() {
         body: JSON.stringify({
           message: userMessage,
           session_token: user?.id ? sessionToken : activeSessionToken,
+          memory_overrides: {
+            includeIds: selectedMemoryIds,
+          },
         }),
       });
 
@@ -269,6 +480,16 @@ export default function ChatPage() {
                   Travel Intelligence ⚡ Streaming
                 </span>
               </div>
+              {(memorySections.length > 0 || memoryQuery.isFetching) && (
+                <button
+                  type="button"
+                  onClick={() => setIsMemoryOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Memory ({selectedMemoryIds.length})
+                </button>
+              )}
             </div>
 
             {/* Messages */}
@@ -331,9 +552,140 @@ export default function ChatPage() {
                 </button>
               </div>
             </form>
-          </div>
         </div>
       </div>
+      <Sheet open={isMemoryOpen} onOpenChange={setIsMemoryOpen} side="right" className="max-w-2xl">
+        <SheetHeader
+          title="Conversation memory"
+          description="Control which long-term memories accompany your next request."
+          actions={
+            <button
+              type="button"
+              onClick={() => setIsMemoryOpen(false)}
+              className="rounded-md border border-gray-200 dark:border-gray-700 px-3 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              Close
+            </button>
+          }
+        />
+        <SheetBody>
+          {memoryError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200">
+              {memoryError}
+            </div>
+          )}
+
+          {memoryQuery.isFetching ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
+            </div>
+          ) : memorySections.every((section) => section.items.length === 0) ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              No long-term memory has been captured for this conversation yet. Ask a few questions or pin preferences to see them here.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {memorySections.map((section) => (
+                <section key={section.key} className="space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{section.title}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{section.description}</p>
+                    </div>
+                  </div>
+                  {section.items.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-500">No {section.title.toLowerCase()} yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {section.items.map((item: any) => {
+                        const isSelected = memorySelection[item.id] ?? false;
+                        const draft = memoryDrafts[item.id] ?? item.summary;
+                        const lastUpdated = formatMemoryDate(item.lastUpdated);
+                        const canEdit = Boolean(item.editable && user?.id);
+                        const canPin = Boolean(item.editable && user?.id);
+                        const canDelete = Boolean(user?.id && item.kind !== 'recentTrip' && !item.id.startsWith('preferences-'));
+
+                        return (
+                          <div key={item.id} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 p-4 shadow-sm">
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(event) => handleMemoryToggle(item.id, event.target.checked)}
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-black focus:ring-gray-500 dark:border-gray-600 dark:text-white"
+                              />
+                              <div className="flex-1 space-y-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{item.title}</p>
+                                    {lastUpdated ? (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">Updated {lastUpdated}</p>
+                                    ) : null}
+                                  </div>
+                                  {user?.id && (canPin || canDelete) && (
+                                    <div className="flex items-center gap-2">
+                                      {canPin && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleMemoryPinToggle(item.id)}
+                                          className="rounded-full border border-gray-200 dark:border-gray-700 p-1 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
+                                          disabled={memoryActionDisabled}
+                                        >
+                                          {item.isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                                        </button>
+                                      )}
+                                      {canDelete && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleMemoryDelete(item.id)}
+                                          className="rounded-full border border-gray-200 dark:border-gray-700 p-1 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-300"
+                                          disabled={memoryActionDisabled}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                {canEdit ? (
+                                  <div className="space-y-2">
+                                    <textarea
+                                      value={draft}
+                                      onChange={(event) => handleDraftChange(item.id, event.target.value)}
+                                      rows={3}
+                                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+                                    />
+                                    <div className="flex justify-end">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMemorySave(item.id)}
+                                        disabled={memoryActionDisabled || draft.trim() === (item.summary || '').trim()}
+                                        className="inline-flex items-center gap-2 rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                                      >
+                                        {updateMemoryMutation.isPending ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : null}
+                                        Save
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{item.summary}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
+          )}
+        </SheetBody>
+      </Sheet>
+    </div>
   );
 }
 
