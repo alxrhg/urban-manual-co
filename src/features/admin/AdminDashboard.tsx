@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Plus, X } from 'lucide-react';
+import { Loader2, Plus, X, Search, MapPin, Users, Eye, Heart, TrendingUp, ArrowUpRight } from 'lucide-react';
 import DiscoverTab from '@/components/admin/DiscoverTab';
 import { useConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
-import { DataTable } from './components/DataTable';
-import { createColumns, type Destination } from './components/columns';
+import { DestinationsList } from './components/DestinationsList';
+import { SearchLogsFeed } from './components/SearchLogsFeed';
+import { type Destination } from './components/columns';
 import { DestinationForm, type DestinationFormValues } from './components/DestinationForm';
 import { useAdminAccess } from './hooks/useAdminAccess';
 import {
@@ -32,15 +33,6 @@ const INITIAL_ANALYTICS: AdminAnalyticsSummary = {
 };
 
 type AdminTab = 'destinations' | 'analytics' | 'searches' | 'discover';
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function getStringField(record: Record<string, unknown>, key: string): string {
-  const value = record[key];
-  return typeof value === 'string' ? value : '';
-}
 
 function normalizeDestinationInput(data: DestinationFormValues): DestinationInput {
   const base: DestinationInput = {
@@ -231,17 +223,6 @@ export function AdminDashboard() {
     [editingDestination, refreshDestinations, showError, showSuccess]
   );
 
-  const tableColumns = useMemo(
-    () =>
-      createColumns(
-        (destination: Destination) => {
-          setEditingDestination(destination);
-          setShowForm(true);
-        },
-        handleDeleteDestination
-      ),
-    [handleDeleteDestination]
-  );
 
   if (!authChecked) {
     return (
@@ -257,64 +238,137 @@ export function AdminDashboard() {
     return null;
   }
 
+  // Calculate key health indicators
+  const healthIndicators = useMemo(() => {
+    const totalDestinations = destinations.length;
+    const avgViews = totalDestinations > 0 ? Math.round(analyticsStats.totalViews / totalDestinations) : 0;
+    const engagementRate = analyticsStats.totalSearches > 0 
+      ? Math.round((analyticsStats.totalSaves / analyticsStats.totalSearches) * 100) 
+      : 0;
+    
+    return {
+      totalDestinations,
+      avgViews,
+      engagementRate,
+      activeUsers: analyticsStats.totalUsers,
+    };
+  }, [destinations.length, analyticsStats]);
+
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="container mx-auto">
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Admin</h1>
+    <main className="min-h-screen bg-white dark:bg-gray-950">
+      {/* Hero Section */}
+      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24 border-b border-gray-100 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white mb-4">
+                Admin Dashboard
+              </h1>
+              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                Curate destinations, monitor engagement, and shape the Urban Manual experience. Every place you add helps travelers discover the world's best spots.
+              </p>
+            </div>
             <button
               onClick={() => router.push('/account')}
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              className="text-xs font-normal text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               Back to Account
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
-            <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">
-              Admin
-            </span>
-          </div>
-        </div>
 
-        <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-3">
-            {(['destinations', 'analytics', 'searches', 'discover'] as AdminTab[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`transition-all pb-1 ${
-                  activeTab === tab
-                    ? 'font-medium text-black dark:text-white border-b-2 border-black dark:border-white'
-                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+          {/* Key Health Indicators */}
+          <div className="flex flex-wrap items-center gap-6 md:gap-8 mt-8 text-sm">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <span className="text-gray-500 dark:text-gray-400">Destinations:</span>
+              <span className="font-medium text-black dark:text-white">{healthIndicators.totalDestinations}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <span className="text-gray-500 dark:text-gray-400">Avg views:</span>
+              <span className="font-medium text-black dark:text-white">{healthIndicators.avgViews}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <span className="text-gray-500 dark:text-gray-400">Active users:</span>
+              <span className="font-medium text-black dark:text-white">{healthIndicators.activeUsers}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Heart className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <span className="text-gray-500 dark:text-gray-400">Engagement:</span>
+              <span className="font-medium text-black dark:text-white">{healthIndicators.engagementRate}%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-normal">
+                {user?.email}
+              </span>
+            </div>
           </div>
         </div>
+      </section>
+
+      <div className="px-6 md:px-10 lg:px-12 py-12 md:py-16">
+        <div className="max-w-7xl mx-auto">
+          {/* Pill Navigation */}
+          <div className="mb-12">
+            <div className="flex flex-wrap gap-2">
+              {(['destinations', 'analytics', 'searches', 'discover'] as AdminTab[]).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-full text-xs font-normal transition-colors ${
+                    activeTab === tab
+                      ? 'bg-black dark:bg-white text-white dark:text-black'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
 
         {activeTab === 'destinations' && (
-          <div className="fade-in space-y-12">
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Destinations</h2>
+          <div className="fade-in space-y-16 md:space-y-24">
+            {/* Add Place Spotlight Card */}
+            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 p-8 md:p-12">
+              <div className="max-w-2xl">
+                <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white mb-4">
+                  Add a new destination
+                </h2>
+                <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+                  Expand the Urban Manual collection by adding restaurants, hotels, shops, and experiences. Each destination helps travelers discover the world's best places.
+                </p>
                 <button
                   onClick={() => {
                     setEditingDestination(null);
                     setShowForm(true);
                   }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center gap-2"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-gray-900 dark:hover:bg-gray-200 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
                 >
                   <Plus className="h-4 w-4" />
                   Add Place
                 </button>
               </div>
-              <DataTable
-                columns={tableColumns}
-                data={destinations}
+            </div>
+
+            {/* Section Divider */}
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-8">
+              <div className="space-y-3 mb-8">
+                <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
+                  Destination Library
+                </h2>
+                <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                  Manage and curate all destinations in the Urban Manual collection. Search, edit, or remove entries to keep the database accurate and up-to-date.
+                </p>
+              </div>
+              <DestinationsList
+                destinations={destinations}
+                onEdit={(destination) => {
+                  setEditingDestination(destination);
+                  setShowForm(true);
+                }}
+                onDelete={handleDeleteDestination}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 isLoading={isLoadingList}
@@ -324,43 +378,117 @@ export function AdminDashboard() {
         )}
 
         {activeTab === 'analytics' && (
-          <div className="fade-in space-y-12">
+          <div className="fade-in space-y-16 md:space-y-24">
             {loadingAnalytics ? (
               <div className="text-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Views</div>
+                {/* Overview Section - Large Format Cards */}
+                <div className="space-y-8">
+                  <div className="space-y-3">
+                    <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
+                      Platform Overview
+                    </h2>
+                    <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                      Key metrics that reflect how travelers are engaging with Urban Manual's curated destinations.
+                    </p>
                   </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Searches</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Saves</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Users</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Total Views Card */}
+                    <div className="relative p-8 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 dark:bg-blue-900/20 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                      <div className="relative">
+                        <div className="flex items-center justify-between mb-4">
+                          <Eye className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                          <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="text-4xl md:text-5xl font-light mb-2 text-black dark:text-white">
+                          {analyticsStats.totalViews.toLocaleString()}
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Total Views</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                          Cumulative destination page views across all users. This metric reflects overall content discovery and engagement.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Total Searches Card */}
+                    <div className="relative p-8 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100 dark:bg-purple-900/20 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                      <div className="relative">
+                        <div className="flex items-center justify-between mb-4">
+                          <Search className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                          <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="text-4xl md:text-5xl font-light mb-2 text-black dark:text-white">
+                          {analyticsStats.totalSearches.toLocaleString()}
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Total Searches</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                          All search queries performed by users. Higher search volume indicates active exploration and discovery intent.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Total Saves Card */}
+                    <div className="relative p-8 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-pink-100 dark:bg-pink-900/20 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                      <div className="relative">
+                        <div className="flex items-center justify-between mb-4">
+                          <Heart className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                          <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="text-4xl md:text-5xl font-light mb-2 text-black dark:text-white">
+                          {analyticsStats.totalSaves.toLocaleString()}
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Total Saves</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                          Destinations saved to user collections. This represents high-value engagement and future trip planning activity.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Total Users Card */}
+                    <div className="relative p-8 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 dark:bg-green-900/20 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                      <div className="relative">
+                        <div className="flex items-center justify-between mb-4">
+                          <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+                          <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="text-4xl md:text-5xl font-light mb-2 text-black dark:text-white">
+                          {analyticsStats.totalUsers.toLocaleString()}
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Active Users</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                          Unique users who have interacted with the platform. Growing user base indicates expanding reach and engagement.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
+                {/* Top Searches Section */}
                 {analyticsStats.topSearches.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
-                    <div className="space-y-2">
+                  <div className="border-t border-gray-100 dark:border-gray-700 pt-12">
+                    <div className="space-y-3 mb-8">
+                      <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
+                        Top Search Queries
+                      </h2>
+                      <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                        The most popular searches reveal what travelers are looking for. Use these insights to guide curation priorities.
+                      </p>
+                    </div>
+                    <div className="space-y-3">
                       {analyticsStats.topSearches.map((item, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl"
+                          className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                         >
-                          <span className="text-sm font-medium">{item.query}</span>
-                          <span className="text-xs text-gray-500">{item.count} searches</span>
+                          <span className="text-sm font-normal text-black dark:text-white">{item.query}</span>
+                          <span className="text-xs font-normal text-gray-500 dark:text-gray-500">{item.count} searches</span>
                         </div>
                       ))}
                     </div>
@@ -372,77 +500,37 @@ export function AdminDashboard() {
         )}
 
         {activeTab === 'searches' && (
-          <div className="fade-in">
-            {loadingSearches ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : searchLogs.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">No search logs available</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-left border-b border-gray-200 dark:border-gray-800">
-                      <th className="py-2 pr-4 font-medium text-gray-500">Time</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">User</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Query</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">City</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Category</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Count</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchLogs.map((log) => {
-                      const metadata = isRecord(log.metadata) ? log.metadata : undefined;
-                      const query = metadata ? getStringField(metadata, 'query') : '';
+          <div className="fade-in space-y-16 md:space-y-24">
+            {/* Section Header */}
+            <div className="space-y-3">
+              <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
+                Search Activity Log
+              </h2>
+              <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                A narrative feed of search activity grouped by user sessions. Each session tells a story of discovery—expand to see the full journey through queries, filters, and interactions.
+              </p>
+            </div>
 
-                      const intentRecord = metadata && isRecord(metadata.intent) ? metadata.intent : undefined;
-                      const filtersRecord = metadata && isRecord(metadata.filters) ? metadata.filters : undefined;
-
-                      const intentCity = intentRecord ? getStringField(intentRecord, 'city') : '';
-                      const intentCategory = intentRecord ? getStringField(intentRecord, 'category') : '';
-                      const filterCity = filtersRecord ? getStringField(filtersRecord, 'city') : '';
-                      const filterCategory = filtersRecord ? getStringField(filtersRecord, 'category') : '';
-
-                      const countValue = metadata?.count;
-                      const count =
-                        typeof countValue === 'number'
-                          ? countValue.toString()
-                          : typeof countValue === 'string'
-                            ? countValue
-                            : '';
-                      const source = metadata ? getStringField(metadata, 'source') : '';
-                      const displayCity = intentCity || filterCity;
-                      const displayCategory = intentCategory || filterCategory;
-                      return (
-                        <tr
-                          key={log.id}
-                          className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                        >
-                          <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
-                          <td className="py-2 pr-4">{log.user_id ? log.user_id.substring(0, 8) : 'anon'}</td>
-                          <td className="py-2 pr-4 max-w-[360px] truncate" title={query}>
-                            {query}
-                          </td>
-                          <td className="py-2 pr-4">{displayCity}</td>
-                          <td className="py-2 pr-4">{displayCategory}</td>
-                          <td className="py-2 pr-4">{count}</td>
-                          <td className="py-2 pr-4">{source}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {/* Search Logs Feed */}
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-8">
+              <SearchLogsFeed logs={searchLogs} isLoading={loadingSearches} />
+            </div>
           </div>
         )}
 
         {activeTab === 'discover' && (
-          <div className="fade-in">
-            <DiscoverTab />
+          <div className="fade-in space-y-16 md:space-y-24">
+            <div className="space-y-3">
+              <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
+                Discover & Curation
+              </h2>
+              <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                Tools for discovering new places, managing featured content, and curating collections that help travelers explore.
+              </p>
+            </div>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-8">
+              <DiscoverTab />
+            </div>
           </div>
         )}
 
@@ -487,7 +575,8 @@ export function AdminDashboard() {
           </>
         )}
 
-        <ConfirmDialogComponent />
+          <ConfirmDialogComponent />
+        </div>
       </div>
     </main>
   );

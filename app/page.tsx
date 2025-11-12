@@ -2330,6 +2330,154 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   availableCategories={categories}
                 />
 
+                {/* City and Category Lists - Right under search input, no spacing */}
+                {showBrowseLists && (
+                  <div className="w-full space-y-10 overflow-visible mt-0">
+                    <div className="space-y-3">
+                      <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
+                      <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                        <button
+                          onClick={() => handleCitySelect(null)}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCity
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          All Cities
+                        </button>
+                        {inlineCityButtons.map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => handleCitySelect(city)}
+                            className={`transition-all duration-200 ease-out ${
+                              selectedCity === city
+                                ? 'font-medium text-black dark:text-white'
+                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            {capitalizeCity(city)}
+                          </button>
+                        ))}
+                      </div>
+                      {overflowCityButtons.length > 0 && (
+                        <div className="mt-3 space-y-3 relative">
+                          <button
+                            onClick={() => setShowAllCities(prev => !prev)}
+                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                          >
+                            {showAllCities
+                              ? '− Hide additional cities'
+                              : `+ More cities (${overflowCityButtons.length})`}
+                          </button>
+                          {showAllCities && (
+                            <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
+                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                                {overflowCityButtons.map((city) => (
+                                  <button
+                                    key={city}
+                                    onClick={() => handleCitySelect(city)}
+                                    className={`transition-all duration-200 ease-out ${
+                                      selectedCity === city
+                                        ? 'font-medium text-black dark:text-white'
+                                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                    }`}
+                                  >
+                                    {capitalizeCity(city)}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
+                      <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                        <button
+                          onClick={() => handleCategorySelect(null)}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCategory && !advancedFilters.michelin
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          All Categories
+                        </button>
+                        <button
+                          onClick={() => handleCategorySelect(null, { michelin: true })}
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                            advancedFilters.michelin
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            className="h-3 w-3"
+                          />
+                          Michelin
+                        </button>
+                        {inlineCategoryButtons.map((category) => {
+                          const IconComponent = getCategoryIcon(category);
+                          return (
+                            <button
+                              key={category}
+                              onClick={() => handleCategorySelect(category)}
+                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                selectedCategory === category && !advancedFilters.michelin
+                                  ? 'font-medium text-black dark:text-white'
+                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              }`}
+                            >
+                              {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                              {capitalizeCategory(category)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {overflowCategoryButtons.length > 0 && (
+                        <div className="mt-3 space-y-3 relative">
+                          <button
+                            onClick={() => setShowAllCategories(prev => !prev)}
+                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                          >
+                            {showAllCategories
+                              ? '− Hide additional categories'
+                              : `+ More categories (${overflowCategoryButtons.length})`}
+                          </button>
+                          {showAllCategories && (
+                            <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
+                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                                {overflowCategoryButtons.map((category) => {
+                                  const IconComponent = getCategoryIcon(category);
+                                  return (
+                                    <button
+                                      key={category}
+                                      onClick={() => handleCategorySelect(category)}
+                                      className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                        selectedCategory === category && !advancedFilters.michelin
+                                          ? 'font-medium text-black dark:text-white'
+                                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                      }`}
+                                    >
+                                      {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                      {capitalizeCategory(category)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Chat messages below greeting - Keep greeting at top */}
                 {submittedQuery && (
                   <div className="mt-6">
@@ -2471,12 +2619,21 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
           </div>
         </section>
 
-        {/* Filter and Pill Buttons Section - Same layer, consistent spacing */}
-        <section className="w-full px-6 md:px-10 lg:px-12 pb-8 md:pb-12">
-          <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col space-y-6">
-            {/* Filter Component */}
-            {showBrowseLists && (
-              <div className="w-full">
+
+        {/* Content Section - Grid directly below hero */}
+        <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32">
+          <div className="max-w-[1800px] mx-auto">
+            {/* Start Trip, Filter, and View Toggle */}
+            <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
+              <button
+                onClick={() => setShowTripPlanner(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                aria-label="Start a trip"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Start a Trip</span>
+              </button>
+              {showBrowseLists && (
                 <SearchFiltersComponent
                   filters={advancedFilters}
                   onFiltersChange={(newFilters) => {
@@ -2505,172 +2662,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   iconClassName="h-4 w-4"
                   label="Filters"
                 />
-              </div>
-            )}
-
-            {/* City and Category Lists - Full width, positioned under filter, constrained to top section */}
-            {showBrowseLists && (
-              <div className="w-full space-y-10 overflow-visible">
-              <div className="space-y-3">
-                <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
-                <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
-                  <button
-                    onClick={() => handleCitySelect(null)}
-                    className={`transition-all duration-200 ease-out ${
-                      !selectedCity
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    All Cities
-                  </button>
-                  {inlineCityButtons.map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => handleCitySelect(city)}
-                      className={`transition-all duration-200 ease-out ${
-                        selectedCity === city
-                          ? 'font-medium text-black dark:text-white'
-                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                      }`}
-                    >
-                      {capitalizeCity(city)}
-                    </button>
-                  ))}
-                </div>
-                {overflowCityButtons.length > 0 && (
-                  <div className="mt-3 space-y-3 relative">
-                    <button
-                      onClick={() => setShowAllCities(prev => !prev)}
-                      className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                    >
-                      {showAllCities
-                        ? '− Hide additional cities'
-                        : `+ More cities (${overflowCityButtons.length})`}
-                    </button>
-                    {showAllCities && (
-                      <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
-                        <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                          {overflowCityButtons.map((city) => (
-                            <button
-                              key={city}
-                              onClick={() => handleCitySelect(city)}
-                              className={`transition-all duration-200 ease-out ${
-                                selectedCity === city
-                                  ? 'font-medium text-black dark:text-white'
-                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                              }`}
-                            >
-                              {capitalizeCity(city)}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
-                <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
-                  <button
-                    onClick={() => handleCategorySelect(null)}
-                    className={`transition-all duration-200 ease-out ${
-                      !selectedCategory && !advancedFilters.michelin
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    All Categories
-                  </button>
-                  <button
-                    onClick={() => handleCategorySelect(null, { michelin: true })}
-                    className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                      advancedFilters.michelin
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    <img
-                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                      alt="Michelin star"
-                      className="h-3 w-3"
-                    />
-                    Michelin
-                  </button>
-                  {inlineCategoryButtons.map((category) => {
-                    const IconComponent = getCategoryIcon(category);
-                    return (
-                      <button
-                        key={category}
-                        onClick={() => handleCategorySelect(category)}
-                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                          selectedCategory === category && !advancedFilters.michelin
-                            ? 'font-medium text-black dark:text-white'
-                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                        }`}
-                      >
-                        {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                        {capitalizeCategory(category)}
-                      </button>
-                    );
-                  })}
-                </div>
-                {overflowCategoryButtons.length > 0 && (
-                  <div className="mt-3 space-y-3 relative">
-                    <button
-                      onClick={() => setShowAllCategories(prev => !prev)}
-                      className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                    >
-                      {showAllCategories
-                        ? '− Hide additional categories'
-                        : `+ More categories (${overflowCategoryButtons.length})`}
-                    </button>
-                    {showAllCategories && (
-                      <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
-                        <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                          {overflowCategoryButtons.map((category) => {
-                            const IconComponent = getCategoryIcon(category);
-                            return (
-                              <button
-                                key={category}
-                                onClick={() => handleCategorySelect(category)}
-                                className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                  selectedCategory === category && !advancedFilters.michelin
-                                    ? 'font-medium text-black dark:text-white'
-                                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                }`}
-                              >
-                                {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                                {capitalizeCategory(category)}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              </div>
               )}
-          </div>
-        </section>
-
-        {/* Content Section - Grid directly below hero */}
-        <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32">
-          <div className="max-w-[1800px] mx-auto">
-            {/* Start Trip and View Toggle */}
-            <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
-              <button
-                onClick={() => setShowTripPlanner(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-                aria-label="Start a trip"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Start a Trip</span>
-              </button>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode('grid')}
