@@ -2187,6 +2187,8 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 availableCities={cities}
                 availableCategories={categories}
                   />
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -2487,20 +2489,16 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                           />
                         </div>
                       )}
-                    </div>
-                  )}
 
-                  {/* No results message */}
-                  {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <span>No results found. Try refining your search.</span>
+                      {/* No results message */}
+                      {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
+                        <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                          <span>No results found. Try refining your search.</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-              
-            </div>
-          </div>
+                  </div>
+                )}
         </section>
 
               {/* Content Section - Grid directly below hero */}
