@@ -144,7 +144,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
         
         {/* Country flags/labels */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-3 p-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 w-full">
             {visitedCountries.slice(0, 12).map((country, idx) => {
               const code = countryCodes[country];
               const flag = code ? getCountryFlag(code) : '🌍';
@@ -176,7 +176,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
       </div>
 
       {/* Full country list */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {visitedCountries.map((country) => {
           const code = countryCodes[country];
           const flag = code ? getCountryFlag(code) : '🌍';

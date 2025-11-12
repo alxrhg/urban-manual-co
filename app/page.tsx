@@ -2676,7 +2676,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
 
               return (
                 <>
-                  <div className="mt-16 grid grid-cols-2 gap-5 items-start sm:grid-cols-3 md:grid-cols-4 md:gap-7 lg:grid-cols-5 lg:gap-8 xl:grid-cols-6 2xl:grid-cols-7">
+                  <div className="mt-16 grid grid-cols-1 gap-5 items-start sm:grid-cols-2 md:grid-cols-3 md:gap-7 lg:grid-cols-4 lg:gap-8 xl:grid-cols-5 2xl:grid-cols-6">
                     {paginatedDestinations.map((destination, index) => {
                       const isVisited = !!(user && visitedSlugs.has(destination.slug));
                       const globalIndex = startIndex + index;

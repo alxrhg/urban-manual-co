@@ -68,7 +68,7 @@ export default function DiscoverTab() {
       <div className="text-xs text-gray-500 dark:text-gray-400">
         Showing {items.length} recommended places based on similarity to your curated destinations
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {items.map((p) => (
           <div 
             key={p.place_id} 

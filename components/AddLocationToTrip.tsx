@@ -240,7 +240,7 @@ export function AddLocationToTrip({
                   <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
                     Meal Type
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {['breakfast', 'lunch', 'dinner', 'snack'].map((type) => (
                       <button
                         key={type}

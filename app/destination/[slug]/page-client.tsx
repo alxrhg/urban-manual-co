@@ -585,7 +585,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             <h2 className="text-sm font-medium mb-6">Similar Destinations</h2>
 
             {loadingRecommendations ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 items-start">
                 {[1, 2, 3, 4, 5, 6].slice(0, 6).map(i => (
                   <div key={i} className="space-y-2">
                     <Skeleton className="aspect-square rounded-2xl" />
@@ -599,7 +599,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 No similar destinations found
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 items-start">
                 {recommendations.slice(0, 6).map(rec => (
                   <button
                     key={rec.slug}

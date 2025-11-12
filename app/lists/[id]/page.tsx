@@ -363,7 +363,7 @@ export default function ListDetailPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-start">
             {destinations.map((destination) => (
               <div key={destination.slug} className={`${CARD_WRAPPER} group flex flex-col`}>
                 <Link href={`/destination/${destination.slug}`} className="flex flex-col flex-1">
@@ -534,7 +534,7 @@ export default function ListDetailPage() {
                   {searchQuery ? 'No destinations found' : 'Start typing to search destinations'}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {searchResults.map((destination) => (
                     <button
                       key={destination.slug}

@@ -331,7 +331,7 @@ export function AdminDashboard() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
                     <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
                     <div className="text-xs text-gray-500">Total Views</div>

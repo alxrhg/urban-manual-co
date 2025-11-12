@@ -45,7 +45,7 @@ function PersonalizedRecommendationsComponent({
             <h2 className="text-2xl font-bold">{title}</h2>
           </div>
         )}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6">
           {Array.from({ length: limit }).map((_, i) => (
             <div key={i} className={CARD_WRAPPER}>
               <div className={`${CARD_MEDIA} mb-2 bg-gray-200 dark:bg-gray-800 animate-pulse`} />
@@ -85,7 +85,7 @@ function PersonalizedRecommendationsComponent({
           <h2 className="text-2xl font-bold">{title}</h2>
         </div>
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 items-start">
         {destinations.map((destination) => {
           const rec = recommendations.find((r) => r.destinationId === destination.id);
           return (

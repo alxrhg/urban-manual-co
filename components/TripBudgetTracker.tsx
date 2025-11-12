@@ -65,7 +65,7 @@ export function TripBudgetTracker({
     <div className="p-8 max-w-4xl mx-auto">
       <div className="space-y-8">
         {/* Overview */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="p-6 border border-neutral-200 dark:border-neutral-800">
             <p className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
               Total Budget

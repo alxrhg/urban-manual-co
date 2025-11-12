@@ -165,7 +165,7 @@ export function RealtimeReportForm({
           <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Current Crowding Level
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {(['quiet', 'moderate', 'busy', 'very_busy'] as const).map((level) => (
               <button
                 key={level}
