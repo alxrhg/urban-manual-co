@@ -145,23 +145,26 @@ export function HomeNavigationBar({
             className="absolute right-0 mt-2 w-48 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900"
           >
             <div className="py-1">
-              {VISIBLE_CITIES.map((city) => (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const slug = slugifyCity(city);
-                    if (!slug) return;
-                    setIsCitiesOpen(false);
-                    router.push(`/city/${slug}`);
-                  }}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
-                >
-                  {capitalizeCity(city)}
-                </button>
-              ))}
+              {VISIBLE_CITIES.map((city) => {
+                const slug = slugifyCity(city);
+                if (!slug) {
+                  return null;
+                }
+
+                return (
+                  <Link
+                    key={city}
+                    href={`/city/${slug}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCitiesOpen(false);
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    {capitalizeCity(city)}
+                  </Link>
+                );
+              })}
             </div>
             <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-right text-xs font-medium text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
               <Link
@@ -209,21 +212,27 @@ export function HomeNavigationBar({
             className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900"
           >
             <div className="py-1">
-              {CATEGORY_ITEMS.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => {
-                    const query = category.trim();
-                    if (!query) return;
-                    setIsCategoriesOpen(false);
-                    router.push(`/search?q=${encodeURIComponent(query)}`);
-                  }}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
-                >
-                  {capitalizeCategory(category)}
-                </button>
-              ))}
+              {CATEGORY_ITEMS.map((category) => {
+                const query = category.trim();
+                if (!query) {
+                  return null;
+                }
+                const href = `/search?q=${encodeURIComponent(query)}`;
+
+                return (
+                  <Link
+                    key={category}
+                    href={href}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCategoriesOpen(false);
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    {capitalizeCategory(category)}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

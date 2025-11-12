@@ -527,7 +527,14 @@ export default function Home() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   // Calculate items per page based on 4 full rows × current grid columns
-  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
+  const rawItemsPerPage = useItemsPerPage(4); // Always 4 full rows
+  const itemsPerPage = useMemo(() => {
+    if (!Number.isFinite(rawItemsPerPage) || rawItemsPerPage <= 0) {
+      // Fallback to a sensible default so pagination still works if grid measurement fails
+      return 12;
+    }
+    return Math.max(1, Math.floor(rawItemsPerPage));
+  }, [rawItemsPerPage]);
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<{
     city?: string;
