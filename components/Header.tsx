@@ -3,7 +3,6 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -16,7 +15,6 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const isHome = pathname === '/';
@@ -83,12 +81,6 @@ export function Header() {
     }
     fetchBuildVersion();
   }, [isAdmin]);
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
 
   const navigate = (path: string) => {
     router.push(path);

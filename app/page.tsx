@@ -47,6 +47,7 @@ import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
+import { HomeNavigationBar } from '@/components/HomeNavigationBar';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -617,6 +618,28 @@ export default function Home() {
   // Track submitted query for chat display
   const [submittedQuery, setSubmittedQuery] = useState<string>('');
   const [followUpInput, setFollowUpInput] = useState<string>('');
+
+  const handleNavigationFiltersClick = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-search-filters'));
+    }
+  }, []);
+
+  const handleNavigationStartTrip = useCallback(() => {
+    setShowTripPlanner(true);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-trip-planner'));
+    }
+  }, [setShowTripPlanner]);
+
+  useEffect(() => {
+    const handleOpenTripPlanner = () => setShowTripPlanner(true);
+
+    window.addEventListener('open-trip-planner', handleOpenTripPlanner);
+    return () => {
+      window.removeEventListener('open-trip-planner', handleOpenTripPlanner);
+    };
+  }, []);
 
   // Track visual chat messages for display
   const [chatMessages, setChatMessages] = useState<Array<{
@@ -2714,34 +2737,13 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
-                <div className="hidden md:flex justify-end items-start gap-3 mb-8 md:mb-10 relative flex-wrap">
-                  {/* Filter Button */}
-                  <SearchFiltersComponent
-                    filters={advancedFilters}
-                    onFiltersChange={(newFilters) => {
-                      setAdvancedFilters(newFilters);
-                      if (newFilters.city !== undefined) {
-                        setSelectedCity(newFilters.city || '');
-                      }
-                      if (newFilters.category !== undefined) {
-                        setSelectedCategory(newFilters.category || '');
-                      }
-                      Object.entries(newFilters).forEach(([key, value]) => {
-                        if (value !== undefined && value !== null && value !== '') {
-                          trackFilterChange({ filterType: key, value });
-                        }
-                      });
-                    }}
-                    availableCities={cities}
-                    availableCategories={categories}
-                    onLocationChange={handleLocationChange}
-                    triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-                    activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
-                    iconClassName="h-4 w-4"
-                    label="Filters"
+                <div className="hidden md:flex justify-end items-center gap-4 mb-8 md:mb-10 flex-wrap">
+                  <HomeNavigationBar
+                    className="justify-end"
+                    onFiltersClick={handleNavigationFiltersClick}
+                    onStartTrip={handleNavigationStartTrip}
                   />
 
-                  {/* Grid/Map Toggle */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => setViewMode('grid')}

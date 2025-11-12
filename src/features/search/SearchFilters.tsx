@@ -94,6 +94,15 @@ export function SearchFiltersComponent({
     }
   }, [hasLocation, latitude, longitude, filters.nearMe, nearMeRadius]);
 
+  useEffect(() => {
+    const handleExternalOpen = () => setIsOpen(true);
+
+    window.addEventListener('open-search-filters', handleExternalOpen);
+    return () => {
+      window.removeEventListener('open-search-filters', handleExternalOpen);
+    };
+  }, []);
+
   const hasActiveFilters = Object.keys(filters).length > 0;
 
   const formatDistance = (km: number) => {
