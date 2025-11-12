@@ -152,6 +152,8 @@ export default function MapView({
     };
   }, [center.lat, center.lng, zoom, isDark, useFallback]);
 
+  const markerColor = isDark ? '#38bdf8' : '#2563eb';
+
   // Update markers when destinations change
   useEffect(() => {
     if (useFallback) return;
@@ -173,21 +175,9 @@ export default function MapView({
       bounds.extend([lng, lat]);
       hasValidMarkers = true;
 
-      // Create marker element
-      const el = document.createElement('div');
-      el.className = 'marker';
-      el.style.width = '12px';
-      el.style.height = '12px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#1C1C1C';
-      el.style.border = '1.5px solid #FFFFFF';
-      el.style.cursor = 'pointer';
-      el.style.transition = 'all 0.2s ease';
-
       // Create marker
       const marker = new mapboxgl.Marker({
-        element: el,
-        anchor: 'center',
+        color: markerColor,
       })
         .setLngLat([lng, lat])
         .setPopup(
@@ -196,8 +186,13 @@ export default function MapView({
         )
         .addTo(mapRef.current!);
 
+      const markerElement = marker.getElement();
+      markerElement.style.cursor = 'pointer';
+      markerElement.style.transition = 'transform 0.2s ease, filter 0.2s ease';
+      markerElement.style.filter = 'drop-shadow(0 4px 6px rgba(15, 23, 42, 0.15))';
+
       // Add click handler
-      el.addEventListener('click', () => {
+      markerElement.addEventListener('click', () => {
         if (onMarkerClick) {
           onMarkerClick(dest);
         }
@@ -205,18 +200,14 @@ export default function MapView({
 
       // Hover effect (desktop only)
       if (window.innerWidth >= 768) {
-        el.addEventListener('mouseenter', () => {
-          el.style.width = '16px';
-          el.style.height = '16px';
-          el.style.backgroundColor = '#FFFFFF';
-          el.style.borderColor = '#1C1C1C';
+        markerElement.addEventListener('mouseenter', () => {
+          markerElement.style.transform = 'translateY(-2px) scale(1.05)';
+          markerElement.style.filter = 'drop-shadow(0 8px 12px rgba(15, 23, 42, 0.2))';
         });
 
-        el.addEventListener('mouseleave', () => {
-          el.style.width = '12px';
-          el.style.height = '12px';
-          el.style.backgroundColor = '#1C1C1C';
-          el.style.borderColor = '#FFFFFF';
+        markerElement.addEventListener('mouseleave', () => {
+          markerElement.style.transform = 'translateY(0) scale(1)';
+          markerElement.style.filter = 'drop-shadow(0 4px 6px rgba(15, 23, 42, 0.15))';
         });
       }
 
@@ -234,7 +225,7 @@ export default function MapView({
       mapRef.current.setCenter([center.lng, center.lat]);
       mapRef.current.setZoom(zoom);
     }
-  }, [destinations, loaded, onMarkerClick, center.lat, center.lng, zoom]);
+  }, [destinations, loaded, onMarkerClick, center.lat, center.lng, zoom, markerColor]);
 
   if (useFallback) {
     return renderFallbackMap();
