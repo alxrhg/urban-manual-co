@@ -2620,7 +2620,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
         </section>
 
         {/* Content Section - Grid directly below hero */}
-        <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
+        <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter, Start Trip, and View Toggle */}
                 <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
