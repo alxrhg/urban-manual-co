@@ -4,28 +4,27 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { processPlacePhotos } from '@/lib/enrichment/photos';
 import { fetchWeather } from '@/lib/enrichment/weather';
 import { fetchNearbyEvents } from '@/lib/enrichment/events';
 import { calculateRouteFromCityCenter } from '@/lib/enrichment/routes';
 import { generateDestinationMap } from '@/lib/enrichment/static-maps';
 import { getCurrencyCodeForCity, getExchangeRate } from '@/lib/enrichment/currency';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { resolveSupabaseClient } from '@/app/api/_utils/supabase';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const supabase = resolveSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase credentials are not configured.' },
+        { status: 500 },
+      );
+    }
+
     const { slug } = await params;
 
     // Fetch destination

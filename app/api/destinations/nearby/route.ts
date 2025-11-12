@@ -4,18 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { findNearbyDestinations } from '@/lib/enrichment/distance-matrix';
 import { withErrorHandling, createValidationError, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { resolveSupabaseClient } from '@/app/api/_utils/supabase';
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
@@ -24,6 +15,11 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const radiusKm = parseFloat(searchParams.get('radius') || '5');
   const maxWalkingMinutes = parseInt(searchParams.get('maxWalkingMinutes') || '15');
   const city = searchParams.get('city');
+
+  const supabase = resolveSupabaseClient();
+  if (!supabase) {
+    throw new CustomError(ErrorCode.INTERNAL_SERVER_ERROR, 'Supabase credentials are not configured.', 500);
+  }
 
   if (!lat || !lng) {
     throw createValidationError('Latitude and longitude are required');

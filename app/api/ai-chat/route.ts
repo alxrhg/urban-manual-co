@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL, getModelForQuery } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
@@ -8,23 +7,12 @@ import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { resolveSupabaseClient, type SupabaseClientLike } from '@/app/api/_utils/supabase';
 
 // Initialize Gemini as fallback
 const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
-
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
-const SUPABASE_KEY = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-  'placeholder-key'
-) as string;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Simple in-memory cache for search results
 interface CacheEntry {
@@ -102,6 +90,13 @@ const CATEGORY_SYNONYMS: Record<string, string> = {
   'gallery': 'Culture'
 };
 
+type UserProfileRow = {
+  favorite_cities: string[] | null;
+  favorite_categories: string[] | null;
+  travel_style: string | null;
+  interests: string[] | null;
+};
+
 // Generate embedding using OpenAI with caching
 async function generateEmbedding(text: string): Promise<number[] | null> {
   if (!openai?.embeddings) {
@@ -144,7 +139,8 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
 async function understandQuery(
   query: string,
   conversationHistory: Array<{role: string, content: string}> = [],
-  userId?: string
+  userId?: string,
+  supabaseClient?: SupabaseClientLike | null
 ): Promise<{
   keywords: string[];
   city?: string;
@@ -187,21 +183,21 @@ async function understandQuery(
 
     // Fetch user preferences if available
     let userContext = '';
-    if (userId) {
+    if (userId && supabaseClient) {
       try {
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await supabaseClient
           .from('user_profiles')
           .select('favorite_cities, favorite_categories, travel_style, interests')
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle<UserProfileRow>();
         
         // Handle errors gracefully - user_profiles might not exist or RLS might block
         if (!profileError && profile) {
           const contextParts = [];
-          if (profile.favorite_cities?.length > 0) {
+          if (Array.isArray(profile.favorite_cities) && profile.favorite_cities.length > 0) {
             contextParts.push(`Favorite cities: ${profile.favorite_cities.join(', ')}`);
           }
-          if (profile.favorite_categories?.length > 0) {
+          if (Array.isArray(profile.favorite_categories) && profile.favorite_categories.length > 0) {
             contextParts.push(`Favorite categories: ${profile.favorite_categories.join(', ')}`);
           }
           if (profile.travel_style) {
@@ -734,9 +730,17 @@ async function processAIChatRequest(
 ) {
   try {
 
+    const supabase = resolveSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({
+        content: 'Supabase credentials are not configured.',
+        destinations: [],
+      }, { status: 500 });
+    }
+
     // Parallelize intent understanding and embedding generation for better performance
     const [intent, queryEmbedding] = await Promise.all([
-      understandQuery(query, conversationHistory, userId),
+      understandQuery(query, conversationHistory, userId, supabase),
       generateEmbedding(query)
     ]);
 
