@@ -92,6 +92,19 @@ export interface PlannerRecommendation {
   type: 'activity' | 'lodging' | 'logistics';
 }
 
+type PlannerItemNotes = {
+  type?: string;
+  attachments?: PlannerAttachment[];
+  date?: string | null;
+  label?: string;
+  notes?: string;
+  durationMinutes?: number | null;
+  metadata?: Record<string, unknown> | null;
+  location?: PlannerBlock['location'];
+  comments?: PlannerComment[];
+  recommended?: boolean;
+};
+
 export interface PlannerItinerary {
   id: string;
   tripId: number;
@@ -106,7 +119,7 @@ export interface PlannerItinerary {
   sharedLink?: string | null;
 }
 
-interface PlannerPresence {
+interface PlannerPresence extends Record<string, unknown> {
   userId: string;
   name?: string | null;
   avatarUrl?: string | null;
@@ -167,6 +180,13 @@ function createEmptyDay(index: number, date?: string | null): PlannerDay {
     attachments: [],
     blocks: [],
   };
+}
+
+function normalizeBlockType(type?: string | null): PlannerBlock['type'] {
+  if (type === 'activity' || type === 'lodging' || type === 'logistics' || type === 'note') {
+    return type;
+  }
+  return 'activity';
 }
 
 function safeParseJSON(value?: string | null): unknown {
@@ -384,7 +404,7 @@ export function PlannerProvider({
 
         const grouped = new Map<number, PlannerDay>();
         (itemsResponse.data || []).forEach(item => {
-          const metadata = safeParseJSON(item.notes);
+          const metadata = safeParseJSON(item.notes) as PlannerItemNotes | undefined;
           if (!grouped.has(item.day)) {
             grouped.set(item.day, {
               id: `day-${item.day}-${crypto.randomUUID()}`,
@@ -413,10 +433,12 @@ export function PlannerProvider({
             return;
           }
 
+          const blockType = normalizeBlockType(metadata?.type);
+
           day.blocks.push({
             id: `block-${item.id}`,
             remoteId: item.id,
-            type: metadata?.type || 'activity',
+            type: blockType,
             title: item.title,
             description: item.description,
             time: item.time,

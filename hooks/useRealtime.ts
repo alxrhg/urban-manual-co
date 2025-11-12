@@ -8,7 +8,7 @@ type PresenceState<TPresence> = Record<string, TPresence[]>;
 
 interface UseRealtimeOptions<
   TPresence extends Record<string, unknown> = Record<string, unknown>,
-  TBroadcast extends Record<string, unknown> = Record<string, unknown>,
+  TBroadcast extends Record<string, unknown> | undefined = Record<string, unknown>,
 > {
   channel?: string;
   enabled?: boolean;
@@ -24,7 +24,7 @@ interface UseRealtimeOptions<
 
 interface UseRealtimeReturn<
   TPresence extends Record<string, unknown> = Record<string, unknown>,
-  TBroadcast extends Record<string, unknown> = Record<string, unknown>,
+  TBroadcast extends Record<string, unknown> | undefined = Record<string, unknown>,
 > {
   broadcast: (event: string, payload: TBroadcast) => void;
   updatePresence: (payload?: Partial<TPresence>) => void;
@@ -43,7 +43,7 @@ function isClient() {
  */
 export function useRealtime<
   TPresence extends Record<string, unknown> = Record<string, unknown>,
-  TBroadcast extends Record<string, unknown> = Record<string, unknown>,
+  TBroadcast extends Record<string, unknown> | undefined = Record<string, unknown>,
 >({
   channel,
   enabled = true,
