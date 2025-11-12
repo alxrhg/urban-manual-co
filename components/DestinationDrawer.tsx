@@ -10,6 +10,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
+import { Badge } from '@/components/ui/badge';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -754,12 +755,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {destination.tags && destination.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {destination.tags.map((tag, index) => (
-                  <span
+                  <Badge
                     key={index}
-                    className="inline-flex items-center px-2.5 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full border border-purple-200 dark:border-purple-800"
+                    variant="neutralInverse"
+                    className="gap-1.5 px-3 py-1"
                   >
-                    ✨ {tag}
-                  </span>
+                    <span aria-hidden="true">✨</span>
+                    <span>{tag}</span>
+                  </Badge>
                 ))}
               </div>
             )}
@@ -821,12 +824,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <span className="text-xs text-gray-500 dark:text-gray-400 mb-2">Types</span>
                 <div className="flex flex-wrap gap-2">
                   {enrichedData.place_types.slice(0, 5).map((type: string, idx: number) => (
-                    <span
+                    <Badge
                       key={idx}
-                      className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                      variant="neutralSubtle"
+                      className="capitalize px-3 py-1"
                     >
                       {type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               </div>
@@ -1007,76 +1011,70 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Contact & Links Section */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
             <div className="mb-8">
-              <style jsx>{`
-                .pill-button {
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  padding: 8px 16px;
-                  background: rgba(0, 0, 0, 0.6);
-                  backdrop-filter: blur(10px);
-                  color: white;
-                  font-size: 14px;
-                  font-weight: 500;
-                  border-radius: 9999px;
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                  cursor: pointer;
-                  transition: all 0.2s ease;
-                  text-decoration: none;
-                }
-                .pill-button:hover {
-                  background: rgba(0, 0, 0, 0.7);
-                }
-                .pill-separator {
-                  color: rgba(255, 255, 255, 0.6);
-                }
-              `}</style>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {destination.google_maps_url && (
-                  <a
-                    href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button"
+                  <Badge
+                    asChild
+                    variant="neutralInverse"
+                    className="px-3 py-1.5 gap-2"
                   >
-                    <span>📍</span>
-                    <span className="pill-separator">•</span>
-                    <span>Apple Maps</span>
-                  </a>
+                    <a
+                      href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span aria-hidden="true">📍</span>
+                      <span className="font-medium">Apple Maps</span>
+                    </a>
+                  </Badge>
                 )}
                 {(enrichedData?.website || destination.website) && (
-                  <a
-                    href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button"
+                  <Badge
+                    asChild
+                    variant="neutralInverse"
+                    className="px-3 py-1.5 gap-2"
                   >
-                    <span>🌐</span>
-                    <span className="pill-separator">•</span>
-                    <span>Website</span>
-                  </a>
+                    <a
+                      href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span aria-hidden="true">🌐</span>
+                      <span className="font-medium">Website</span>
+                    </a>
+                  </Badge>
                 )}
                 {(enrichedData?.international_phone_number || destination.phone_number) && (
-                  <a
-                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="pill-button"
+                  <Badge
+                    asChild
+                    variant="neutralInverse"
+                    className="px-3 py-1.5 gap-2"
                   >
-                    <span>📞</span>
-                    <span className="pill-separator">•</span>
-                    <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
-                  </a>
+                    <a
+                      href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                    >
+                      <span aria-hidden="true">📞</span>
+                      <span className="font-medium">
+                        {enrichedData?.international_phone_number || destination.phone_number}
+                      </span>
+                    </a>
+                  </Badge>
                 )}
                 {destination.instagram_url && (
-                  <a
-                    href={destination.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button"
+                  <Badge
+                    asChild
+                    variant="neutralInverse"
+                    className="px-3 py-1.5 gap-2"
                   >
-                    <span>📷</span>
-                    <span className="pill-separator">•</span>
-                    <span>Instagram</span>
-                  </a>
+                    <a
+                      href={destination.instagram_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span aria-hidden="true">📷</span>
+                      <span className="font-medium">Instagram</span>
+                    </a>
+                  </Badge>
                 )}
               </div>
             </div>
