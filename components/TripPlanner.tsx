@@ -740,7 +740,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
         className={`fixed inset-y-0 right-0 z-50 flex w-full transform transition-transform duration-300 ease-in-out ${baseTranslateClass} ${desktopTranslateClass} md:inset-y-auto md:top-4 md:bottom-4 md:w-auto md:right-4`}
       >
         <div
-          className="flex h-full w-full flex-col bg-white shadow-2xl dark:bg-gray-950 md:w-[640px] md:max-w-[640px] md:rounded-3xl md:ring-1 md:ring-black/5 md:border md:border-gray-200 dark:md:border-gray-800 md:overflow-hidden"
+          className="flex h-full w-full flex-col bg-white shadow-2xl dark:bg-gray-950 md:w-[440px] md:max-w-[calc(100vw-2rem)] md:rounded-2xl md:ring-1 md:ring-black/5 md:border md:border-gray-200 dark:md:border-gray-800 md:overflow-hidden"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-5 py-6 md:px-8 md:py-8 dark:border-gray-800">

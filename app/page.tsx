@@ -2225,16 +2225,10 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 availableCities={cities}
                 availableCategories={categories}
                   />
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* City and Category Lists - Full width, positioned under greeting */}
-          {showBrowseLists && (
-            <div className="w-full mt-10 space-y-10">
+                      
+                      {/* City and Category Lists - Full width, positioned under greeting */}
+                      {showBrowseLists && (
+                        <div className="w-full mt-10 space-y-10">
               <div className="space-y-3">
                 <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
                 <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
@@ -2378,7 +2372,13 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 )}
               </div>
             </div>
-          )}
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
           
           {/* Chat-like display when search is active */}
           {submittedQuery && (
