@@ -29,6 +29,9 @@ CLEANUP_TEMPORARY_FILES.sh
 
 # Large JSON data files (if not needed in repo)
 *.json
+!data/
+!data/destinations/
+!data/destinations/*.json
 !package.json
 !package-lock.json
 !tsconfig.json

@@ -1,0 +1,100 @@
+{
+  "slug": "paris",
+  "timezone": "Europe/Paris",
+  "defaultStartHour": 9,
+  "defaultEndHour": 20,
+  "attractions": [
+    {
+      "id": "louvre-museum",
+      "name": "Louvre Museum",
+      "slug": "louvre-museum",
+      "category": "museum",
+      "description": "Explore masterpieces from antiquity to modern times inside the Louvre's glass pyramid.",
+      "durationMinutes": 150,
+      "priority": 10,
+      "location": {
+        "address": "Rue de Rivoli, 75001 Paris, France",
+        "latitude": 48.8606,
+        "longitude": 2.3376
+      },
+      "openingHours": {
+        "monday": [],
+        "tuesday": ["09:00-18:00"],
+        "wednesday": ["09:00-18:00"],
+        "thursday": ["09:00-21:30"],
+        "friday": ["09:00-18:00"],
+        "saturday": ["09:00-18:00"],
+        "sunday": ["09:00-18:00"]
+      }
+    },
+    {
+      "id": "notre-dame",
+      "name": "Notre-Dame Cathedral",
+      "slug": "notre-dame",
+      "category": "landmark",
+      "description": "Gothic architecture, flying buttresses, and panoramic city views from the towers.",
+      "durationMinutes": 60,
+      "priority": 8,
+      "location": {
+        "address": "6 Parvis Notre-Dame - Pl. Jean-Paul II, 75004 Paris, France",
+        "latitude": 48.8530,
+        "longitude": 2.3499
+      },
+      "openingHours": {
+        "monday": ["08:00-18:45"],
+        "tuesday": ["08:00-18:45"],
+        "wednesday": ["08:00-18:45"],
+        "thursday": ["08:00-18:45"],
+        "friday": ["08:00-18:45"],
+        "saturday": ["08:00-18:45"],
+        "sunday": ["08:00-18:45"]
+      }
+    },
+    {
+      "id": "orsay-museum",
+      "name": "Musée d'Orsay",
+      "slug": "orsay-museum",
+      "category": "museum",
+      "description": "Impressionist treasures housed in a converted Beaux-Arts railway station.",
+      "durationMinutes": 120,
+      "priority": 7,
+      "location": {
+        "address": "1 Rue de la Légion d'Honneur, 75007 Paris, France",
+        "latitude": 48.8600,
+        "longitude": 2.3266
+      },
+      "openingHours": {
+        "monday": [],
+        "tuesday": ["09:30-18:00"],
+        "wednesday": ["09:30-18:00"],
+        "thursday": ["09:30-21:45"],
+        "friday": ["09:30-18:00"],
+        "saturday": ["09:30-18:00"],
+        "sunday": ["09:30-18:00"]
+      }
+    },
+    {
+      "id": "montmartre",
+      "name": "Montmartre & Sacré-Cœur",
+      "slug": "montmartre",
+      "category": "neighborhood",
+      "description": "Artists' studios, cobblestone lanes, and sweeping views from Sacré-Cœur Basilica.",
+      "durationMinutes": 90,
+      "priority": 6,
+      "location": {
+        "address": "75018 Paris, France",
+        "latitude": 48.8867,
+        "longitude": 2.3431
+      },
+      "openingHours": {
+        "monday": ["00:00-23:59"],
+        "tuesday": ["00:00-23:59"],
+        "wednesday": ["00:00-23:59"],
+        "thursday": ["00:00-23:59"],
+        "friday": ["00:00-23:59"],
+        "saturday": ["00:00-23:59"],
+        "sunday": ["00:00-23:59"]
+      }
+    }
+  ]
+}

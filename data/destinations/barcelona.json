@@ -1,0 +1,77 @@
+{
+  "slug": "barcelona",
+  "timezone": "Europe/Madrid",
+  "defaultStartHour": 9,
+  "defaultEndHour": 22,
+  "attractions": [
+    {
+      "id": "sagrada-familia",
+      "name": "Sagrada Família",
+      "slug": "sagrada-familia",
+      "category": "landmark",
+      "description": "Antoni Gaudí's unfinished masterpiece with soaring towers and stained glass.",
+      "durationMinutes": 120,
+      "priority": 10,
+      "location": {
+        "address": "C/ de Mallorca, 401, 08013 Barcelona, Spain",
+        "latitude": 41.4036,
+        "longitude": 2.1744
+      },
+      "openingHours": {
+        "monday": ["09:00-20:00"],
+        "tuesday": ["09:00-20:00"],
+        "wednesday": ["09:00-20:00"],
+        "thursday": ["09:00-20:00"],
+        "friday": ["09:00-20:00"],
+        "saturday": ["09:00-20:00"],
+        "sunday": ["10:30-20:00"]
+      }
+    },
+    {
+      "id": "park-guell",
+      "name": "Park Güell",
+      "slug": "park-guell",
+      "category": "park",
+      "description": "Mosaic dragons, undulating benches, and panoramic views over Barcelona.",
+      "durationMinutes": 90,
+      "priority": 8,
+      "location": {
+        "address": "08024 Barcelona, Spain",
+        "latitude": 41.4145,
+        "longitude": 2.1527
+      },
+      "openingHours": {
+        "monday": ["09:30-19:30"],
+        "tuesday": ["09:30-19:30"],
+        "wednesday": ["09:30-19:30"],
+        "thursday": ["09:30-19:30"],
+        "friday": ["09:30-19:30"],
+        "saturday": ["09:30-19:30"],
+        "sunday": ["09:30-19:30"]
+      }
+    },
+    {
+      "id": "gothic-quarter",
+      "name": "Barri Gòtic",
+      "slug": "gothic-quarter",
+      "category": "neighborhood",
+      "description": "Medieval alleyways, plazas, and tapas bars in the heart of the old city.",
+      "durationMinutes": 120,
+      "priority": 7,
+      "location": {
+        "address": "08002 Barcelona, Spain",
+        "latitude": 41.3839,
+        "longitude": 2.1801
+      },
+      "openingHours": {
+        "monday": ["00:00-23:59"],
+        "tuesday": ["00:00-23:59"],
+        "wednesday": ["00:00-23:59"],
+        "thursday": ["00:00-23:59"],
+        "friday": ["00:00-23:59"],
+        "saturday": ["00:00-23:59"],
+        "sunday": ["00:00-23:59"]
+      }
+    }
+  ]
+}
