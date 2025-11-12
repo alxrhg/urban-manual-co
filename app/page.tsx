@@ -1118,40 +1118,39 @@ export default function Home() {
     }));
   }, [selectedCity, selectedCategory]);
 
+  // Rebuild pagination logic - clean and reliable
+  const totalDestinations = displayDestinations.length;
+  const totalPages = useMemo(() => {
+    if (itemsPerPage <= 0 || totalDestinations === 0) return 1;
+    return Math.max(1, Math.ceil(totalDestinations / itemsPerPage));
+  }, [totalDestinations, itemsPerPage]);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCity, selectedCategory, advancedFilters]);
+  }, [selectedCity, selectedCategory, advancedFilters, searchTerm]);
 
-  // Clamp currentPage when destinations change (fix pagination)
+  // Clamp currentPage to valid range when destinations change
   useEffect(() => {
-    if (itemsPerPage <= 0) {
-      return;
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    } else if (currentPage < 1) {
+      setCurrentPage(1);
     }
-
-    const totalDestinations = displayDestinations.length;
-    const totalPages = Math.max(1, Math.ceil(totalDestinations / itemsPerPage));
-
-    setCurrentPage(prevPage => {
-      if (prevPage > totalPages && totalPages > 0) {
-        return totalPages;
-      }
-      if (prevPage < 1) {
-        return 1;
-      }
-      return prevPage;
-    });
-  }, [displayDestinations.length, itemsPerPage]);
+  }, [totalPages, currentPage]);
 
   // Scroll to top of grid when page changes
   useEffect(() => {
-    if (currentPage > 1 && viewMode === 'grid') {
-      const gridElement = document.querySelector('[data-name="destination-grid"]');
-      if (gridElement) {
-        gridElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+    if (currentPage > 1 && viewMode === 'grid' && totalDestinations > 0) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        const gridElement = document.querySelector('[data-name="destination-grid"]');
+        if (gridElement) {
+          gridElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
     }
-  }, [currentPage, viewMode]);
+  }, [currentPage, viewMode, totalDestinations]);
 
   // Fetch filter data (cities and categories) first for faster initial display
   // OPTIMIZED: Call Discovery Engine once at start, reuse result throughout
@@ -2719,10 +2718,8 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 return null;
               }
 
-              // Rebuild pagination - use displayDestinations.length directly
-              const totalDestinations = displayDestinations.length;
-              const totalPages = Math.max(1, Math.ceil(totalDestinations / itemsPerPage));
-              const startIndex = (currentPage - 1) * itemsPerPage;
+              // Pagination calculation - use memoized totalPages
+              const startIndex = Math.max(0, (currentPage - 1) * itemsPerPage);
               const endIndex = Math.min(startIndex + itemsPerPage, totalDestinations);
               const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 

@@ -46,6 +46,7 @@ export function HomeNavigationBar({
   const isHome = pathname === "/";
   const isMap = pathname === "/map";
 
+  // Rebuild dropdown close logic - allow navigation to complete
   useEffect(() => {
     function handleClick(event: MouseEvent) {
       const target = event.target as Node;
@@ -53,6 +54,7 @@ export function HomeNavigationBar({
       if (isCitiesOpen) {
         const withinButton = cityButtonRef.current?.contains(target);
         const withinMenu = cityMenuRef.current?.contains(target);
+        // Only close if clicking outside both button and menu
         if (!withinButton && !withinMenu) {
           setIsCitiesOpen(false);
         }
@@ -61,6 +63,7 @@ export function HomeNavigationBar({
       if (isCategoriesOpen) {
         const withinButton = categoryButtonRef.current?.contains(target);
         const withinMenu = categoryMenuRef.current?.contains(target);
+        // Only close if clicking outside both button and menu
         if (!withinButton && !withinMenu) {
           setIsCategoriesOpen(false);
         }
@@ -75,14 +78,18 @@ export function HomeNavigationBar({
     }
 
     if (isCitiesOpen || isCategoriesOpen) {
-      document.addEventListener("mousedown", handleClick);
+      // Use a slight delay to allow click handlers to execute first
+      const timeoutId = setTimeout(() => {
+        document.addEventListener("mousedown", handleClick);
+      }, 0);
       document.addEventListener("keydown", handleKey);
-    }
 
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener("mousedown", handleClick);
+        document.removeEventListener("keydown", handleKey);
+      };
+    }
   }, [isCitiesOpen, isCategoriesOpen]);
 
   const handleFiltersClick = () => {
@@ -145,30 +152,38 @@ export function HomeNavigationBar({
             className="absolute right-0 mt-2 w-48 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900"
           >
             <div className="py-1">
-              {VISIBLE_CITIES.map((city) => (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const slug = slugifyCity(city);
-                    if (!slug) return;
-                    setIsCitiesOpen(false);
-                    router.push(`/city/${slug}`);
-                  }}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
-                >
-                  {capitalizeCity(city)}
-                </button>
-              ))}
+              {VISIBLE_CITIES.map((city) => {
+                const slug = slugifyCity(city);
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!slug) return;
+                      // Close dropdown first
+                      setIsCitiesOpen(false);
+                      // Then navigate after a brief delay to ensure dropdown closes
+                      setTimeout(() => {
+                        router.push(`/city/${slug}`);
+                      }, 100);
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    {capitalizeCity(city)}
+                  </button>
+                );
+              })}
             </div>
             <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-right text-xs font-medium text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
               <Link
                 href="/cities"
                 onClick={(e) => {
                   e.stopPropagation();
+                  // Close dropdown and navigate
                   setIsCitiesOpen(false);
+                  // Let Link handle navigation naturally
                 }}
                 className="transition hover:text-gray-900 dark:hover:text-gray-200"
               >
@@ -209,21 +224,29 @@ export function HomeNavigationBar({
             className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900"
           >
             <div className="py-1">
-              {CATEGORY_ITEMS.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => {
-                    const query = category.trim();
-                    if (!query) return;
-                    setIsCategoriesOpen(false);
-                    router.push(`/search?q=${encodeURIComponent(query)}`);
-                  }}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
-                >
-                  {capitalizeCategory(category)}
-                </button>
-              ))}
+              {CATEGORY_ITEMS.map((category) => {
+                const query = category.trim();
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!query) return;
+                      // Close dropdown first
+                      setIsCategoriesOpen(false);
+                      // Then navigate after a brief delay to ensure dropdown closes
+                      setTimeout(() => {
+                        router.push(`/search?q=${encodeURIComponent(query)}`);
+                      }, 100);
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    {capitalizeCategory(category)}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
