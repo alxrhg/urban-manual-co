@@ -203,13 +203,13 @@ export function Header() {
       {isMenuOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/30 z-40"
+            className="fixed inset-0 z-40 bg-gray-950/40 backdrop-blur-sm transition-opacity duration-200 animate-in fade-in-0"
             onClick={() => setIsMenuOpen(false)}
             aria-hidden="true"
           />
           {/* Dropdown popover with elevated shadow and subtle ring */}
           <div
-            className="fixed z-50 w-72 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+            className="fixed z-50 w-[min(90vw,20rem)] origin-top-right overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 shadow-2xl ring-1 ring-black/5 backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg dark:border-gray-800/60 dark:bg-gray-950/90 dark:ring-white/10 animate-in fade-in-0 slide-in-from-top-2 duration-200"
             style={{
               top: `${dropdownPosition.top}px`,
               right: `${dropdownPosition.right}px`,
@@ -218,39 +218,79 @@ export function Header() {
             aria-label="Main menu"
           >
             {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 border-t border-l border-gray-200/80 bg-white/95 dark:border-gray-800/60 dark:bg-gray-950/90" aria-hidden="true" />
             <div className="py-2">
               <Link
                 href="/cities"
                 onClick={() => setIsMenuOpen(false)}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                 role="menuitem"
               >
                 Cities
+                <svg
+                  className="h-4 w-4 opacity-70"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
               <Link
                 href="/map"
                 onClick={() => setIsMenuOpen(false)}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                 role="menuitem"
               >
                 Map
+                <svg
+                  className="h-4 w-4 opacity-70"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
               <Link
                 href="/discover"
                 onClick={() => setIsMenuOpen(false)}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                 role="menuitem"
               >
                 Discover Collections
+                <svg
+                  className="h-4 w-4 opacity-70"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
               <Link
                 href="/collections"
                 onClick={() => setIsMenuOpen(false)}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                 role="menuitem"
               >
                 Collections
+                <svg
+                  className="h-4 w-4 opacity-70"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
               <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               {user ? (
@@ -258,85 +298,185 @@ export function Header() {
                   <Link
                     href="/trips"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Trips
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <Link
                     href="/trips?new=1"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-semibold text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Start a Trip
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <Link
                     href="/saved"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Saved
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <Link
                     href="/recent"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Recent
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <Link
                     href="/lists"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Lists
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <Link
                     href="/itinerary"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Itinerary
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <Link
                     href="/chat"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Chat
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
                   <Link
                     href="/account"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Account
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   {isAdmin && (
                     <Link
                       href="/admin"
                       onClick={() => setIsMenuOpen(false)}
-                      className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out"
+                      className="flex w-full items-center justify-between px-5 py-3 text-sm font-semibold text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                       role="menuitem"
                     >
                       Admin
+                      <svg
+                        className="h-4 w-4 opacity-70"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
                     </Link>
                   )}
                   <button
                     type="button"
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Sign Out
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </>
               ) : (
@@ -344,18 +484,38 @@ export function Header() {
                   <Link
                     href="/trips?new=1"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-semibold text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Start a Trip
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                   <Link
                     href="/auth/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out"
+                    className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium text-gray-900 transition-colors duration-200 ease-out hover:bg-gray-100 focus:outline-none focus-visible:bg-gray-100 focus-visible:ring-1 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800/80"
                     role="menuitem"
                   >
                     Sign In
+                    <svg
+                      className="h-4 w-4 opacity-70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                 </>
               )}
