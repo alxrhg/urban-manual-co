@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Send, ChevronDown } from 'lucide-react';
 
 interface ChatInterfaceProps {
@@ -11,6 +11,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ onSendMessage, placeholder = "Ask about restaurants, hotels, or cities..." }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const inputId = useId();
 
   const handleSend = () => {
     if (!message.trim()) return;
@@ -40,7 +41,11 @@ export function ChatInterface({ onSendMessage, placeholder = "Ask about restaura
       {isOpen && (
         <div className="p-6 bg-white dark:bg-gray-900">
           <div className="flex gap-3">
+            <label htmlFor={inputId} className="sr-only">
+              Ask the travel assistant a question
+            </label>
             <input
+              id={inputId}
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
