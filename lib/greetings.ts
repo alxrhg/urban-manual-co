@@ -57,15 +57,6 @@ function getTimeGreeting(hour: number = new Date().getHours()): string {
   return 'GOOD EVENING';
 }
 
-/**
- * Get time-appropriate activity suggestion
- */
-function getTimeActivity(hour: number): string | null {
-  if (hour >= 11 && hour < 14) return 'Lunch plans sorted?';
-  if (hour >= 17 && hour < 21) return 'Dinner reservations needed?';
-  if (hour >= 21 || hour < 2) return 'Late-night eats or cocktail bars?';
-  return null;
-}
 
 /**
  * Get day-of-week context
@@ -293,17 +284,7 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
     };
   }
 
-  // Priority 11: Time-appropriate activity suggestions
-  const timeActivity = getTimeActivity(hour);
-  if (timeActivity) {
-    return {
-      greeting: `${baseGreeting}${userNamePart}`,
-      subtext: timeActivity,
-      type: 'time_activity',
-    };
-  }
-
-  // Priority 12: Day-of-week context
+  // Priority 11: Day-of-week context
   const dayContext = getDayContext(day);
   if (dayContext) {
     return {
@@ -313,14 +294,11 @@ export function generateContextualGreeting(context: GreetingContext): GreetingRe
     };
   }
 
-  // Fallback: Basic greeting with generic prompt (integrate breakfast for 6-11 AM)
-  const fallbackSubtext = (hour >= 6 && hour < 11) 
-    ? 'Looking for breakfast spots?'
-    : 'What are you craving today?';
-  
+  // Fallback: Basic greeting with generic prompt
+  // Note: Time-based suggestions (breakfast, lunch, dinner) are integrated into placeholder text, not subtext
   return {
     greeting: `${baseGreeting}${userNamePart}`,
-    subtext: fallbackSubtext,
+    subtext: 'What are you craving today?',
     type: 'basic',
   };
 }
@@ -393,18 +371,18 @@ export function generateContextualPlaceholder(context: GreetingContext): string 
     return `Hidden gems in ${favoriteCity}...`;
   }
 
-  // Time-based suggestions
+  // Time-based suggestions (integrated into placeholder, not subtext)
   if (hour >= 6 && hour < 11) {
-    return 'Breakfast croissants in...';
+    return 'Looking for breakfast spots?';
   }
   if (hour >= 11 && hour < 14) {
-    return 'Best lunch spots in...';
+    return 'Lunch plans sorted?';
   }
   if (hour >= 17 && hour < 21) {
-    return 'Romantic dinner in...';
+    return 'Dinner reservations needed?';
   }
   if (hour >= 21 || hour < 2) {
-    return 'Late-night cocktail bars...';
+    return 'Late-night eats or cocktail bars?';
   }
 
   // Generic fallback
