@@ -3,7 +3,24 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Bookmark, Check, Plus, ChevronDown, X } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  MapPin,
+  Bookmark,
+  Check,
+  Plus,
+  ChevronDown,
+  X,
+  Star,
+  Phone,
+  Globe,
+  Navigation,
+  ExternalLink,
+  Tag,
+  Clock,
+  ArrowUpRight,
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
@@ -20,7 +37,7 @@ import { trackEvent } from '@/lib/analytics/track';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { NestedDestinations } from '@/components/NestedDestinations';
 
 interface Recommendation {
   slug: string;
@@ -47,10 +64,56 @@ function formatLabel(value: string): string {
     .join(' ');
 }
 
+function formatPriceLevel(value?: number | null): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const levels = ['Free', '$', '$$', '$$$', '$$$$'];
+  const descriptions = ['Complimentary', 'Budget-friendly', 'Casual', 'Upscale', 'Luxury'];
+
+  const index = Math.max(0, Math.min(levels.length - 1, value));
+  return `${levels[index]} • ${descriptions[index]}`;
+}
+
+function parseTags(tags?: string[] | string | null): string[] {
+  if (!tags) return [];
+
+  if (Array.isArray(tags)) {
+    return tags.map(tag => tag.trim()).filter(Boolean);
+  }
+
+  if (typeof tags === 'string') {
+    return tags
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function getHostname(url: string): string {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace(/^www\./, '');
+  } catch (error) {
+    return url.replace(/^https?:\/\//, '');
+  }
+}
+
 interface DestinationPageClientProps {
   initialDestination: Destination;
   parentDestination?: Destination | null;
 }
+
+type ContactItem = {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  href?: string;
+  helper?: string;
+};
 
 export default function DestinationPageClient({ initialDestination, parentDestination }: DestinationPageClientProps) {
   const router = useRouter();
@@ -350,336 +413,647 @@ export default function DestinationPageClient({ initialDestination, parentDestin
     }
   };
 
+
   const cityName = capitalizeCity(destination.city);
 
+  const ratingCandidate =
+    typeof enrichedData?.rating === 'number' ? enrichedData.rating : destination.rating;
+  const ratingValue = typeof ratingCandidate === 'number' ? ratingCandidate : null;
+  const ratingCountCandidate = enrichedData?.user_ratings_total ?? destination.user_ratings_total;
+  const ratingCount = typeof ratingCountCandidate === 'number' ? ratingCountCandidate : null;
+  const saveCount = destination.save_count ?? destination.saves_count ?? null;
+  const visitsCount = destination.visits_count ?? null;
+  const priceLabel = formatPriceLevel(destination.price_level);
+  const tags = parseTags(destination.tags);
+  const heroSummary =
+    destination.micro_description ||
+    (destination.content
+      ? stripHtmlTags(destination.content)
+          .split('
+')
+          .map(part => part.trim())
+          .filter(Boolean)[0]
+      : null);
+  const mapUrl =
+    destination.google_maps_url ||
+    (destination.latitude && destination.longitude
+      ? `https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`
+      : null);
+  const phoneNumber = destination.phone_number || destination.international_phone_number || null;
+  const instagramUrl =
+    destination.instagram_url ||
+    (destination.instagram_handle
+      ? `https://instagram.com/${destination.instagram_handle.replace(/^@/, '')}`
+      : null);
+  const instagramLabel = destination.instagram_handle
+    ? `@${destination.instagram_handle.replace(/^@/, '')}`
+    : instagramUrl
+    ? getHostname(instagramUrl)
+    : null;
+
+  const contactItems: ContactItem[] = [];
+  const addressLine =
+    destination.formatted_address ||
+    destination.vicinity ||
+    (destination.city ? `${cityName}${destination.country ? `, ${destination.country}` : ''}` : null);
+
+  if (addressLine) {
+    contactItems.push({
+      icon: MapPin,
+      label: 'Address',
+      value: addressLine,
+      href: mapUrl || undefined,
+      helper: destination.neighborhood || undefined,
+    });
+  }
+
+  if (phoneNumber) {
+    contactItems.push({
+      icon: Phone,
+      label: 'Call',
+      value: phoneNumber,
+      href: `tel:${phoneNumber.replace(/[^0-9+]/g, '')}`,
+    });
+  }
+
+  if (destination.website) {
+    contactItems.push({
+      icon: Globe,
+      label: 'Website',
+      value: getHostname(destination.website),
+      href: destination.website,
+    });
+  }
+
+  if (instagramUrl && instagramLabel) {
+    contactItems.push({
+      icon: ExternalLink,
+      label: 'Instagram',
+      value: instagramLabel,
+      href: instagramUrl,
+    });
+  }
+
+  const statItems: { icon: LucideIcon; label: string; value: string; helper?: string }[] = [];
+
+  if (ratingValue !== null) {
+    statItems.push({
+      icon: Star,
+      label: 'Google rating',
+      value: ratingValue.toFixed(1),
+      helper: ratingCount ? `${ratingCount.toLocaleString()} reviews` : undefined,
+    });
+  }
+
+  if (typeof saveCount === 'number' && saveCount > 0) {
+    statItems.push({
+      icon: Bookmark,
+      label: 'Saved',
+      value: saveCount.toLocaleString(),
+      helper: 'travelers planning trips',
+    });
+  }
+
+  if (typeof visitsCount === 'number' && visitsCount > 0) {
+    statItems.push({
+      icon: Check,
+      label: 'Visited',
+      value: visitsCount.toLocaleString(),
+      helper: 'trips logged',
+    });
+  }
+
+  if (priceLabel) {
+    statItems.push({
+      icon: Tag,
+      label: 'Price level',
+      value: priceLabel,
+    });
+  }
+
+  const openingHours = Array.isArray(enrichedData?.opening_hours?.weekday_text)
+    ? enrichedData.opening_hours.weekday_text
+    : null;
+  const isOpenNow =
+    typeof enrichedData?.opening_hours?.open_now === 'boolean'
+      ? enrichedData.opening_hours.open_now
+      : null;
+
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="container mx-auto space-y-12">
-        {/* Header */}
-        <div>
+    <main className="bg-gradient-to-b from-white via-white to-gray-50 dark:from-black dark:via-black dark:to-gray-950">
+      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <div className="flex items-center justify-between">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
           >
-            <ArrowLeft className="h-3 w-3" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             Back
           </button>
+        </div>
 
-          <div className="space-y-3">
-            {/* Location */}
-            <div className="flex items-center gap-2">
-              <a
-                href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 text-xs"
-              >
-                <MapPin className="h-3 w-3" />
-                {destination.country ? `${cityName}, ${destination.country}` : cityName}
-              </a>
-            </div>
+        <section className="relative overflow-hidden rounded-3xl border border-white/70 bg-gray-900 text-white shadow-xl ring-1 ring-black/5 dark:border-white/10">
+          <div className="absolute inset-0">
+            {destination.image ? (
+              <Image
+                src={destination.image}
+                alt={`${destination.name} - ${destination.category} in ${destination.city}`}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
+          </div>
 
-            {/* Title and Action Buttons */}
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl sm:text-4xl font-light leading-tight flex-1">
-                {destination.name}
-              </h1>
-              {user && (
-                <div className="flex items-center gap-2">
+          <div className="relative z-10 flex flex-col gap-10 px-6 py-10 sm:px-10 sm:py-16">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-3 text-xs">
+                  <a
+                    href={`/city/${destination.city}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 font-medium text-white/80 backdrop-blur transition hover:border-white/40 hover:text-white"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    {destination.country ? `${cityName}, ${destination.country}` : cityName}
+                  </a>
+
+                  {parentDestination && (
+                    <button
+                      onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+                      className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/25 px-3 py-1.5 text-white/80 transition hover:border-white/40 hover:text-white"
+                    >
+                      <Navigation className="h-3.5 w-3.5" />
+                      Part of <span className="font-medium">{parentDestination.name}</span>
+                    </button>
+                  )}
+
+                  {destination.category && (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-white/70">
+                      {formatLabel(destination.category)}
+                    </span>
+                  )}
+
+                  {destination.michelin_stars && destination.michelin_stars > 0 && (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-white/80">
+                      <Image
+                        src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                        alt="Michelin star"
+                        width={12}
+                        height={12}
+                        className="h-3 w-3"
+                      />
+                      {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
+                    </span>
+                  )}
+
+                  {destination.crown && (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-white/80">
+                      Signature crown
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+                    {destination.name}
+                  </h1>
+                  {heroSummary && (
+                    <p className="max-w-3xl text-base text-white/80 sm:text-lg">
+                      {heroSummary}
+                    </p>
+                  )}
+
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 text-xs text-white/75">
+                      {tags.map(tag => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1"
+                        >
+                          <Tag className="h-3 w-3" />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {user ? (
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row lg:flex-col lg:items-end">
                   <button
                     onClick={() => {
                       if (!isSaved) {
                         setShowSaveModal(true);
                       }
                     }}
-                    className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
                       isSaved
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        ? 'border border-white/30 bg-white/90 text-gray-900 shadow-sm'
+                        : 'border border-white/30 bg-white/10 text-white hover:bg-white/20'
                     }`}
                   >
-                    <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                    <Bookmark className={`h-4 w-4 ${isSaved ? 'text-gray-900' : ''}`} />
                     {isSaved ? 'Saved' : 'Save'}
                   </button>
 
-                  {/* Visited Button with Dropdown */}
                   <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                        className={`inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-medium transition ${
                           isVisited
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            ? 'bg-emerald-500/90 text-white shadow-sm hover:bg-emerald-500'
+                            : 'bg-white/10 text-white hover:bg-white/20'
                         }`}
                         onClick={(e) => {
                           if (!isVisited) {
                             e.preventDefault();
                             handleVisitToggle();
                           }
-                          // If already visited, let the dropdown handle the click
                         }}
                       >
-                        <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
-                        {isVisited ? 'Visited' : 'Mark Visited'}
-                        {isVisited && <ChevronDown className="h-3 w-3 ml-0.5" />}
+                        <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                        {isVisited ? 'Visited' : 'Mark visited'}
+                        {isVisited && <ChevronDown className="h-3.5 w-3.5" />}
                       </button>
                     </DropdownMenuTrigger>
                     {isVisited && (
-                      <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem onClick={() => {
-                          setShowVisitedModal(true);
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Details
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setShowVisitedModal(true);
+                            setShowVisitedDropdown(false);
+                          }}
+                        >
+                          <Plus className="mr-2 h-3.5 w-3.5" />
+                          Add details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          handleVisitToggle();
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <X className="h-3 w-3 mr-2" />
-                          Remove Visit
+                        <DropdownMenuItem
+                          onClick={() => {
+                            handleVisitToggle();
+                            setShowVisitedDropdown(false);
+                          }}
+                        >
+                          <X className="mr-2 h-3.5 w-3.5" />
+                          Remove visit
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     )}
                   </DropdownMenu>
                 </div>
+              ) : (
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+                >
+                  <Bookmark className="h-4 w-4" />
+                  Sign in to save
+                </button>
               )}
             </div>
 
-            {/* Meta badges */}
-            <div className="flex flex-wrap gap-2 text-xs">
-              {/* Parent destination badge - show if this is nested */}
-              {parentDestination && (
-                <LocatedInBadge 
-                  parent={parentDestination}
-                  onClick={() => router.push(`/destination/${parentDestination.slug}`)}
-                />
-              )}
-              
-              {destination.category && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
-                  {formatLabel(destination.category)}
-                </span>
-              )}
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <Image
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    width={12}
-                    height={12}
-                    className="h-3 w-3"
-                  />
-                  {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
-                </span>
-              )}
-              {destination.crown && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
-                  Crown
-                </span>
-              )}
-              {(enrichedData?.rating || destination.rating) && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                  {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  {enrichedData?.user_ratings_total && (
-                    <span className="text-gray-400">({enrichedData.user_ratings_total.toLocaleString()})</span>
-                  )}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Image */}
-        {destination.image && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
-            <Image
-              src={destination.image}
-              alt={`${destination.name} - ${destination.category} in ${destination.city}`}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-              className="object-cover"
-              quality={85}
-              priority
-            />
-          </div>
-        )}
-
-        {/* About */}
-        {destination.content && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4">About</h2>
-            <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-              {stripHtmlTags(destination.content)}
-            </div>
-          </div>
-        )}
-
-        {/* Opening Hours */}
-        {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4">Opening Hours</h2>
-            <div className="space-y-2 text-sm">
-              {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
-                const [dayName, hoursText] = day.split(': ');
-                return (
-                  <div key={index} className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">{dayName}</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{hoursText}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Reviews */}
-        {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4">Top Reviews</h2>
-            <div className="space-y-4">
-              {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <span className="font-medium text-sm">{review.author_name}</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-yellow-500">⭐</span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
-                        {review.relative_time_description && (
-                          <span className="text-xs text-gray-500">· {review.relative_time_description}</span>
-                        )}
+            {statItems.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {statItems.map((stat, index) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div
+                      key={`${stat.label}-${index}`}
+                      className="rounded-2xl border border-white/10 bg-black/30 px-4 py-4 backdrop-blur"
+                    >
+                      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                        <Icon className="h-3.5 w-3.5" />
+                        {stat.label}
                       </div>
-                    </div>
-                  </div>
-                  {review.text && (
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 leading-relaxed">
-                      {review.text}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Nested Destinations - Show venues within this destination */}
-        {destination.nested_destinations && destination.nested_destinations.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <NestedDestinations
-              destinations={destination.nested_destinations}
-              parentName={destination.name}
-              onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)}
-            />
-          </div>
-        )}
-
-        {/* Similar Destinations */}
-        {(loadingRecommendations || recommendations.length > 0) && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-6">Similar Destinations</h2>
-
-            {loadingRecommendations ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
-                {[1, 2, 3, 4, 5, 6].slice(0, 6).map(i => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="aspect-square rounded-2xl" />
-                    <Skeleton className="h-3 rounded-full w-3/4" />
-                    <Skeleton className="h-2 rounded-full w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : recommendations.length === 0 ? (
-              <div className="text-center py-12 text-xs text-gray-400">
-                No similar destinations found
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
-                {recommendations.slice(0, 6).map(rec => (
-                  <button
-                    key={rec.slug}
-                    onClick={() => {
-                      trackEvent({
-                        event_type: 'click',
-                        destination_slug: rec.slug,
-                        metadata: {
-                          source: 'destination_detail_recommendations',
-                          category: rec.category,
-                          city: rec.city,
-                        },
-                      });
-                      router.push(`/destination/${rec.slug}`);
-                    }}
-                    className={`${CARD_WRAPPER} text-left group`}
-                  >
-                    <div className={`${CARD_MEDIA} mb-2`}>
-                      {rec.image ? (
-                        <Image
-                          src={rec.image}
-                          alt={`${rec.name} - ${rec.category} in ${rec.city}`}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          quality={75}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                          <MapPin className="h-10 w-10 opacity-20" />
-                        </div>
-                      )}
-
-                      {rec.michelin_stars && rec.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                            alt="Michelin star"
-                            width={12}
-                            height={12}
-                            className="h-3 w-3"
-                          />
-                          {rec.michelin_stars}
-                        </div>
+                      <div className="mt-2 text-2xl font-semibold text-white">{stat.value}</div>
+                      {stat.helper && (
+                        <p className="mt-1 text-xs text-white/70">{stat.helper}</p>
                       )}
                     </div>
-
-                    <div>
-                      <h3 className={CARD_TITLE}>
-                        {rec.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        {capitalizeCity(rec.city)}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
-        )}
+        </section>
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => router.push('/')}
-            className="flex-1 min-w-[160px] px-6 py-2 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            Back to catalogue
-          </button>
-          <button
-            onClick={() => router.push(`/city/${destination.city}`)}
-            className="flex-1 min-w-[160px] px-6 py-2 text-xs font-medium bg-black text-white dark:bg-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity"
-          >
-            Explore {cityName}
-          </button>
-        </div>
+        <section className="grid gap-10 lg:grid-cols-[minmax(0,2fr),minmax(280px,1fr)] lg:gap-14">
+          <div className="space-y-8 lg:space-y-10">
+            {destination.content && (
+              <section className="rounded-3xl border border-gray-200/80 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/80">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Overview
+                </div>
+                <div className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {stripHtmlTags(destination.content)}
+                </div>
+              </section>
+            )}
+
+            {openingHours && (
+              <section className="rounded-3xl border border-gray-200/80 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/80">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                    <Clock className="h-3.5 w-3.5" />
+                    Opening hours
+                  </div>
+                  {isOpenNow !== null && (
+                    <span
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
+                        isOpenNow
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                          : 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300'
+                      }`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          isOpenNow ? 'bg-emerald-500' : 'bg-rose-500'
+                        }`}
+                      />
+                      {isOpenNow ? 'Open now' : 'Closed now'}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                  {openingHours.map((day: string, index: number) => {
+                    const [dayName, hoursText] = day.split(': ');
+                    return (
+                      <div
+                        key={`${dayName}-${index}`}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-2 transition hover:bg-gray-100/80 dark:hover:bg-gray-900/80"
+                      >
+                        <span className="font-medium text-gray-600 dark:text-gray-400">{dayName}</span>
+                        <span className="text-gray-900 dark:text-gray-100">{hoursText}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+              <section className="rounded-3xl border border-gray-200/80 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/80">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                  <Star className="h-3.5 w-3.5" />
+                  Traveler voices
+                </div>
+                <div className="mt-5 space-y-4">
+                  {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-gray-200/70 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-gray-800 dark:bg-gray-900/80"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {review.author_name}
+                          </p>
+                          {review.relative_time_description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {review.relative_time_description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 text-sm font-semibold text-amber-500">
+                          <Star className="h-4 w-4 fill-current" />
+                          {review.rating}
+                        </div>
+                      </div>
+                      {review.text && (
+                        <p className="mt-3 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                          {review.text}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {destination.nested_destinations && destination.nested_destinations.length > 0 && (
+              <section className="rounded-3xl border border-gray-200/80 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/80">
+                <NestedDestinations
+                  destinations={destination.nested_destinations}
+                  parentName={destination.name}
+                  onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)}
+                />
+              </section>
+            )}
+
+            {(loadingRecommendations || recommendations.length > 0) && (
+              <section className="rounded-3xl border border-gray-200/80 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/80">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                  <Navigation className="h-3.5 w-3.5" />
+                  Similar spots
+                </div>
+
+                {loadingRecommendations ? (
+                  <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    {[1, 2, 3, 4, 5, 6].slice(0, 6).map(i => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="aspect-square rounded-2xl" />
+                        <Skeleton className="h-3 w-3/4 rounded-full" />
+                        <Skeleton className="h-2 w-1/2 rounded-full" />
+                      </div>
+                    ))}
+                  </div>
+                ) : recommendations.length === 0 ? (
+                  <div className="mt-8 rounded-2xl border border-dashed border-gray-200 px-6 py-12 text-center text-sm text-gray-400 dark:border-gray-800 dark:text-gray-500">
+                    No similar destinations found yet.
+                  </div>
+                ) : (
+                  <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    {recommendations.slice(0, 6).map(rec => (
+                      <button
+                        key={rec.slug}
+                        onClick={() => {
+                          trackEvent({
+                            event_type: 'click',
+                            destination_slug: rec.slug,
+                            metadata: {
+                              source: 'destination_detail_recommendations',
+                              category: rec.category,
+                              city: rec.city,
+                            },
+                          });
+                          router.push(`/destination/${rec.slug}`);
+                        }}
+                        className={`${CARD_WRAPPER} group flex flex-col text-left`}
+                      >
+                        <div className={`${CARD_MEDIA} mb-3`}>
+                          {rec.image ? (
+                            <Image
+                              src={rec.image}
+                              alt={`${rec.name} - ${rec.category} in ${rec.city}`}
+                              fill
+                              sizes="(max-width: 768px) 50vw, 33vw"
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              quality={75}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-gray-300 dark:text-gray-700">
+                              <MapPin className="h-10 w-10 opacity-20" />
+                            </div>
+                          )}
+
+                          {rec.michelin_stars && rec.michelin_stars > 0 && (
+                            <div className="absolute bottom-2 left-2 inline-flex items-center gap-1.5 rounded-2xl border border-white/80 bg-white/90 px-3 py-1 text-xs text-gray-700 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 dark:text-gray-200">
+                              <img
+                                src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                                alt="Michelin star"
+                                width={12}
+                                height={12}
+                                className="h-3 w-3"
+                              />
+                              {rec.michelin_stars}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <h3 className={CARD_TITLE}>{rec.name}</h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">
+                            {capitalizeCity(rec.city)}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+
+          <aside className="space-y-6 lg:space-y-8">
+            <div className="rounded-3xl border border-gray-200/80 bg-white/95 p-6 shadow-lg backdrop-blur dark:border-gray-800 dark:bg-gray-950/85">
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                  Plan your visit
+                </span>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{destination.name}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {destination.country ? `${cityName}, ${destination.country}` : cityName}
+                </p>
+              </div>
+
+              {contactItems.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  {contactItems.map((item, idx) => {
+                    const Icon = item.icon;
+                    const content = (
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
+                            {item.label}
+                          </p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {item.value}
+                          </p>
+                          {item.helper && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{item.helper}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+
+                    return item.href ? (
+                      <a
+                        key={`${item.label}-${idx}`}
+                        href={item.href}
+                        target={item.href.startsWith('http') ? '_blank' : undefined}
+                        rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="block rounded-2xl border border-transparent px-2 py-2 transition hover:border-gray-200 hover:bg-gray-50 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div
+                        key={`${item.label}-${idx}`}
+                        className="rounded-2xl border border-gray-100 px-2 py-2 dark:border-gray-800"
+                      >
+                        {content}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-6 space-y-3">
+                {mapUrl && (
+                  <a
+                    href={mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <Navigation className="h-4 w-4" />
+                    View on Google Maps
+                  </a>
+                )}
+
+                <button
+                  onClick={() => router.push(`/city/${destination.city}`)}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                >
+                  <ArrowUpRight className="h-4 w-4" />
+                  Explore {cityName}
+                </button>
+
+                <button
+                  onClick={() => router.push('/')}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to catalogue
+                </button>
+              </div>
+            </div>
+
+            {tags.length > 0 && (
+              <div className="rounded-3xl border border-gray-200/80 bg-white/95 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/85">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Highlights</h3>
+                <p className="mt-1 text-xs uppercase tracking-[0.3em] text-gray-400">Mood & vibe</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {tags.map(tag => (
+                    <span
+                      key={`highlight-${tag}`}
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                    >
+                      <Tag className="h-3 w-3" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {parentDestination && (
+              <div className="rounded-3xl border border-gray-200/80 bg-white/95 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/85">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Part of</h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  Discover other experiences within {parentDestination.name}.
+                </p>
+                <button
+                  onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"
+                >
+                  <Navigation className="h-4 w-4" />
+                  Visit {parentDestination.name}
+                </button>
+              </div>
+            )}
+          </aside>
+        </section>
       </div>
-
       {/* Save to Collection Modal */}
       {destination && destination.id && (
         <SaveDestinationModal
