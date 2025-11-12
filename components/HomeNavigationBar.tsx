@@ -88,24 +88,22 @@ export function HomeNavigationBar({
   const handleFiltersClick = () => {
     if (onFiltersClick) {
       onFiltersClick();
-    } else if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("open-search-filters"));
-    }
-
-    if (!isHome && !isMap) {
-      router.push("/#filters");
+      if (!isHome && !isMap) {
+        router.push("/#filters");
+      }
+    } else {
+      router.push("/discover");
     }
   };
 
   const handleStartTrip = () => {
     if (onStartTrip) {
       onStartTrip();
-    } else if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("open-trip-planner"));
-    }
-
-    if (!isHome) {
-      router.push("/trips?new=1");
+      if (!isHome) {
+        router.push("/trips?new=1");
+      }
+    } else {
+      router.push("/trips/new");
     }
   };
 

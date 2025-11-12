@@ -28,6 +28,7 @@ import {
   getSessionId,
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
+import { HomeHeroLayout } from '@/src/features/search/HomeHeroLayout';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
@@ -59,6 +60,68 @@ function getCategoryIcon(category: string): React.ComponentType<{ className?: st
 
 const FEATURED_CITY_SLUGS = ['taipei', 'tokyo', 'new-york', 'london'] as const;
 const FEATURED_CITY_SET = new Set<string>(FEATURED_CITY_SLUGS);
+
+type GuidedStage = 'search' | 'filter' | 'planner';
+
+const guidedStageCopy: Record<GuidedStage, { title: string; description: string; ctaLabel?: string }> = {
+  search: {
+    title: 'Step 1 · Start with a search',
+    description: 'Look up a city, neighborhood, or vibe to see curated picks tailored to what you type.',
+  },
+  filter: {
+    title: 'Step 2 · Refine with filters',
+    description: 'Dial in the results by city, category, or Michelin recognition from the Discover view.',
+    ctaLabel: 'Open Discover filters',
+  },
+  planner: {
+    title: 'Step 3 · Plan your trip',
+    description: 'Save favorites and build an itinerary inside the dedicated trip planner experience.',
+    ctaLabel: 'Launch trip planner',
+  },
+};
+
+interface GettingStartedOverlayProps {
+  stage: GuidedStage;
+  onSkip: () => void;
+  onFiltersCta: () => void;
+  onPlannerCta: () => void;
+}
+
+function GettingStartedOverlay({ stage, onSkip, onFiltersCta, onPlannerCta }: GettingStartedOverlayProps) {
+  const content = guidedStageCopy[stage];
+  const stageOrder: GuidedStage[] = ['search', 'filter', 'planner'];
+  const stageIndex = stageOrder.indexOf(stage) + 1;
+
+  return (
+    <div className="pointer-events-auto absolute right-0 top-0 w-full max-w-sm rounded-2xl bg-white/90 p-4 shadow-xl ring-1 ring-black/5 backdrop-blur dark:bg-gray-900/80 dark:ring-white/10">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+            Getting started · {stageIndex} of {stageOrder.length}
+          </p>
+          <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100">{content.title}</h3>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{content.description}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onSkip}
+          className="text-xs font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          Skip
+        </button>
+      </div>
+      {content.ctaLabel && (
+        <button
+          type="button"
+          onClick={stage === 'planner' ? onPlannerCta : onFiltersCta}
+          className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+        >
+          {content.ctaLabel}
+        </button>
+      )}
+    </div>
+  );
+}
 
 function slugify(value: string): string {
   return value
@@ -523,6 +586,53 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showTripPlanner, setShowTripPlanner] = useState(false);
+  const [guidedStage, setGuidedStage] = useState<GuidedStage | null>(null);
+  const [sessionCheckComplete, setSessionCheckComplete] = useState(false);
+  const [guidedDismissed, setGuidedDismissed] = useState(false);
+  const isGuidedActive = guidedStage !== null;
+  const markSearchStepComplete = useCallback(() => {
+    setGuidedStage(prev => (prev === 'search' ? 'filter' : prev));
+  }, []);
+  const markFilterStepComplete = useCallback(() => {
+    setGuidedStage(prev => (prev === 'filter' ? 'planner' : prev));
+  }, []);
+  const markPlannerStepComplete = useCallback(() => {
+    setGuidedStage(prev => (prev === 'planner' ? null : prev));
+    setGuidedDismissed(true);
+  }, []);
+  const skipGuidedExperience = useCallback(() => {
+    setGuidedStage(null);
+    setGuidedDismissed(true);
+  }, []);
+  const handleGuidedFiltersCta = useCallback(() => {
+    router.push('/discover');
+  }, [router]);
+  const handleGuidedPlannerCta = useCallback(() => {
+    router.push('/trips/new');
+    markPlannerStepComplete();
+  }, [router, markPlannerStepComplete]);
+  const handleAdvancedFiltersChange = useCallback(
+    (newFilters: typeof advancedFilters) => {
+      setAdvancedFilters(newFilters);
+      if (newFilters.city !== undefined) {
+        setSelectedCity(newFilters.city || '');
+      }
+      if (newFilters.category !== undefined) {
+        setSelectedCategory(newFilters.category || '');
+      }
+      let tracked = false;
+      Object.entries(newFilters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          trackFilterChange({ filterType: key, value });
+          tracked = true;
+        }
+      });
+      if (tracked) {
+        markFilterStepComplete();
+      }
+    },
+    [markFilterStepComplete, setAdvancedFilters, setSelectedCity, setSelectedCategory]
+  );
   const [showTripSidebar, setShowTripSidebar] = useState(false);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -552,19 +662,6 @@ export default function Home() {
   }, [advancedFilters.nearMe, filteredDestinations, nearbyDestinations]);
   const resultsCount = filteredDestinations.length;
 
-  const handleNavigationFiltersClick = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-search-filters'));
-    }
-  }, []);
-
-  const handleNavigationStartTrip = useCallback(() => {
-    setShowTripPlanner(true);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-trip-planner'));
-    }
-  }, []);
-
   const handleCitySelect = useCallback(
     (city: string | null) => {
       const normalizedCity = city?.trim() || '';
@@ -581,8 +678,9 @@ export default function Home() {
       });
       setCurrentPage(1);
       trackFilterChange({ filterType: 'city', value: nextCity || 'all' });
+      markFilterStepComplete();
     },
-    [selectedCity, setAdvancedFilters, setCurrentPage]
+    [selectedCity, setAdvancedFilters, setCurrentPage, markFilterStepComplete]
   );
 
   const handleCategorySelect = useCallback(
@@ -593,6 +691,7 @@ export default function Home() {
         setSelectedCategory('');
         setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
         trackFilterChange({ filterType: 'michelin', value: newValue });
+        markFilterStepComplete();
         return;
       }
 
@@ -600,6 +699,7 @@ export default function Home() {
         setSelectedCategory('');
         setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
         trackFilterChange({ filterType: 'category', value: 'all' });
+        markFilterStepComplete();
         return;
       }
 
@@ -607,8 +707,9 @@ export default function Home() {
       setSelectedCategory(newCategory);
       setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
       trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+      markFilterStepComplete();
     },
-    [advancedFilters.michelin, selectedCategory, setAdvancedFilters, setCurrentPage]
+    [advancedFilters.michelin, selectedCategory, setAdvancedFilters, setCurrentPage, markFilterStepComplete]
   );
   
   // AI-powered chat using the chat API endpoint - only website content
@@ -630,15 +731,6 @@ export default function Home() {
   const [followUpInput, setFollowUpInput] = useState<string>('');
   const [screenReaderMessage, setScreenReaderMessage] = useState('');
   const [screenReaderPriority, setScreenReaderPriority] = useState<'polite' | 'assertive'>('polite');
-
-  useEffect(() => {
-    const handleOpenTripPlanner = () => setShowTripPlanner(true);
-
-    window.addEventListener('open-trip-planner', handleOpenTripPlanner);
-    return () => {
-      window.removeEventListener('open-trip-planner', handleOpenTripPlanner);
-    };
-  }, []);
 
   // Track visual chat messages for display
   const [chatMessages, setChatMessages] = useState<Array<{
@@ -952,18 +1044,31 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
+      setSessionCheckComplete(false);
       // Priority: Fetch visited places FIRST (needed for filtering)
       // Then fetch profile and session in parallel
-      fetchVisitedPlaces().then(() => {
+      void fetchVisitedPlaces().then(() => {
         // After visited places are loaded, re-filter destinations if they're already loaded
         if (destinations.length > 0) {
           filterDestinations();
         }
       });
-      fetchLastSession();
-      fetchUserProfile();
+      void fetchLastSession();
+      void fetchUserProfile();
+    } else {
+      setSessionCheckComplete(true);
     }
-  }, [user]);
+  }, [user, destinations.length, filterDestinations, fetchLastSession, fetchUserProfile, fetchVisitedPlaces]);
+
+  useEffect(() => {
+    if (!sessionCheckComplete || guidedDismissed) {
+      return;
+    }
+
+    if (!showSessionResume && !lastSession) {
+      setGuidedStage(prev => (prev ?? 'search'));
+    }
+  }, [sessionCheckComplete, guidedDismissed, showSessionResume, lastSession]);
 
   // Phase 2 & 3: Fetch enriched greeting context when user profile is loaded
   useEffect(() => {
@@ -973,8 +1078,11 @@ export default function Home() {
   }, [user, userProfile]);
 
   // Fetch last conversation session
-  async function fetchLastSession() {
-    if (!user) return;
+  const fetchLastSession = useCallback(async () => {
+    if (!user) {
+      setSessionCheckComplete(true);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/conversation/${user.id}`);
@@ -1000,11 +1108,13 @@ export default function Home() {
       if (user) {
         console.warn('Error fetching last session:', error);
       }
+    } finally {
+      setSessionCheckComplete(true);
     }
-  }
+  }, [user]);
 
   // Fetch user profile for context
-  async function fetchUserProfile() {
+  const fetchUserProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -1044,7 +1154,7 @@ export default function Home() {
         console.warn('Error fetching user profile:', error);
       }
     }
-  }
+  }, [user]);
 
   // Phase 2 & 3: Fetch enriched greeting context (journey, achievements, weather, trending)
   async function fetchEnrichedGreetingContext() {
@@ -1585,7 +1695,7 @@ export default function Home() {
     }
   }, [user, visitedSlugs, filterDestinationsWithData]);
 
-  const fetchVisitedPlaces = async (): Promise<void> => {
+  const fetchVisitedPlaces = useCallback(async (): Promise<void> => {
     if (!user) return;
 
     try {
@@ -1617,7 +1727,7 @@ export default function Home() {
         console.warn('Error fetching visited places:', error);
       }
     }
-  };
+  }, [user]);
 
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
@@ -1625,6 +1735,9 @@ export default function Home() {
     async (query: string) => {
       const trimmed = query.trim();
       if (!trimmed) return;
+
+      trackSearch({ query: trimmed });
+      markSearchStepComplete();
 
       try {
         setSearching(true);
@@ -1672,15 +1785,19 @@ export default function Home() {
         setSearching(false);
       }
     },
-    [advancedFilters, selectedCity, selectedCategory]
+    [advancedFilters, selectedCity, selectedCategory, markSearchStepComplete]
   );
 
   const performAISearch = useCallback(async (query: string) => {
+    const trimmedQuery = query.trim();
     setSubmittedQuery(query); // Store the submitted query
     // Match chat component: only check if empty or loading
-    if (!query.trim() || searching) {
+    if (!trimmedQuery || searching) {
       return;
     }
+
+    trackSearch({ query: trimmedQuery });
+    markSearchStepComplete();
 
     // Set initial loading text (will be updated with context-aware message after intent is parsed)
     setCurrentLoadingText('Finding the perfect spots...');
@@ -1704,7 +1821,7 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: query.trim(),
+          query: trimmedQuery,
           userId: user?.id,
           conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
         }),
@@ -1801,7 +1918,7 @@ export default function Home() {
     } finally {
       setSearching(false);
     }
-  }, [user, searching, conversationHistory]);
+  }, [user, searching, conversationHistory, markSearchStepComplete]);
 
   const runSearch = useCallback(
     (query: string, options: { forceAi?: boolean; forceSemantic?: boolean } = {}) => {
@@ -1918,8 +2035,9 @@ export default function Home() {
         : submittedQuery;
 
       runSearch(enhancedQuery, { forceSemantic: true });
+      markFilterStepComplete();
     }
-  }, [activeFilters, submittedQuery, runSearch]);
+  }, [activeFilters, submittedQuery, runSearch, markFilterStepComplete]);
 
   // Handle chip remove - remove filter and rebuild search
   const handleChipRemove = useCallback((tag: RefinementTag) => {
@@ -1941,8 +2059,9 @@ export default function Home() {
         : submittedQuery;
 
       runSearch(enhancedQuery, { forceSemantic: true });
+      markFilterStepComplete();
     }
-  }, [activeFilters, submittedQuery, runSearch]);
+  }, [activeFilters, submittedQuery, runSearch, markFilterStepComplete]);
 
   // Handle location changes from Near Me filter
   const handleLocationChange = async (lat: number | null, lng: number | null, radius: number) => {
@@ -2144,38 +2263,188 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 lg:px-12 py-16 md:py-24 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-              {/* Greeting - Always vertically centered */}
-              <div className="flex-1 flex items-center">
-                <div className="w-full">
-                  {/* Show GreetingHero only when no active search */}
-                  {!submittedQuery && (
-                    <>
-                      {/* Session Resume - Show if there's a recent session */}
-                      {showSessionResume && lastSession && (
-                        <div className="mb-6">
-                          <SessionResume
-                            session={lastSession}
-                            onResume={handleResumeSession}
-                            onDismiss={() => setShowSessionResume(false)}
-                          />
+        <HomeHeroLayout
+          overlay={
+            guidedStage ? (
+              <GettingStartedOverlay
+                stage={guidedStage}
+                onSkip={skipGuidedExperience}
+                onFiltersCta={handleGuidedFiltersCta}
+                onPlannerCta={handleGuidedPlannerCta}
+              />
+            ) : undefined
+          }
+          bottomSlot={
+            !submittedQuery && showBrowseLists ? (
+              <div className="w-full mt-10 space-y-10">
+                <div className="space-y-3">
+                  <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
+                  <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                    <button
+                      onClick={() => handleCitySelect(null)}
+                      className={`transition-all duration-200 ease-out ${
+                        !selectedCity
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      All Cities
+                    </button>
+                    {inlineCityButtons.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => handleCitySelect(city)}
+                        className={`transition-all duration-200 ease-out ${
+                          selectedCity === city
+                            ? 'font-medium text-black dark:text-white'
+                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        {capitalizeCity(city)}
+                      </button>
+                    ))}
+                  </div>
+                  {overflowCityButtons.length > 0 && (
+                    <div className="mt-3 space-y-3">
+                      <button
+                        onClick={() => setShowAllCities(prev => !prev)}
+                        className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                      >
+                        {showAllCities
+                          ? '− Hide additional cities'
+                          : `+ More cities (${overflowCityButtons.length})`}
+                      </button>
+                      {showAllCities && (
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                          <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                            {overflowCityButtons.map((city) => (
+                              <button
+                                key={city}
+                                onClick={() => handleCitySelect(city)}
+                                className={`transition-all duration-200 ease-out ${
+                                  selectedCity === city
+                                    ? 'font-medium text-black dark:text-white'
+                                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                }`}
+                              >
+                                {capitalizeCity(city)}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
+                    </div>
+                  )}
+                </div>
 
-                      {/* Context Cards - Show user's saved preferences */}
-                      {userContext && user && !searchTerm && (
-                        <div className="mb-6">
-                          <ContextCards context={userContext} />
+                <div className="space-y-3">
+                  <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
+                  <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                    <button
+                      onClick={() => handleCategorySelect(null)}
+                      className={`transition-all duration-200 ease-out ${
+                        !selectedCategory && !advancedFilters.michelin
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      All Categories
+                    </button>
+                    <button
+                      onClick={() => handleCategorySelect(null, { michelin: true })}
+                      className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                        advancedFilters.michelin
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      <img
+                        src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                        alt="Michelin star"
+                        className="h-3 w-3"
+                      />
+                      Michelin
+                    </button>
+                    {inlineCategoryButtons.map((category) => {
+                      const IconComponent = getCategoryIcon(category);
+                      return (
+                        <button
+                          key={category}
+                          onClick={() => handleCategorySelect(category)}
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                            selectedCategory === category && !advancedFilters.michelin
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                          {capitalizeCategory(category)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {overflowCategoryButtons.length > 0 && (
+                    <div className="mt-3 space-y-3">
+                      <button
+                        onClick={() => setShowAllCategories(prev => !prev)}
+                        className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                      >
+                        {showAllCategories
+                          ? '− Hide additional categories'
+                          : `+ More categories (${overflowCategoryButtons.length})`}
+                      </button>
+                      {showAllCategories && (
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                          <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                            {overflowCategoryButtons.map((category) => {
+                              const IconComponent = getCategoryIcon(category);
+                              return (
+                                <button
+                                  key={category}
+                                  onClick={() => handleCategorySelect(category)}
+                                  className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                    selectedCategory === category && !advancedFilters.michelin
+                                      ? 'font-medium text-black dark:text-white'
+                                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                  }`}
+                                >
+                                  {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                  {capitalizeCategory(category)}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : undefined
+          }
+        >
+          {!submittedQuery && (
+            <>
+              {showSessionResume && lastSession && (
+                <div className="mb-6">
+                  <SessionResume
+                    session={lastSession}
+                    onResume={handleResumeSession}
+                    onDismiss={() => setShowSessionResume(false)}
+                  />
+                </div>
+              )}
 
-                  <GreetingHero
+              {userContext && user && !searchTerm && (
+                <div className="mb-6">
+                  <ContextCards context={userContext} />
+                </div>
+              )}
+
+              <GreetingHero
                 searchQuery={searchTerm}
                 onSearchChange={(value) => {
                   setSearchTerm(value);
-                  // Clear conversation history only if search is cleared
                   if (!value.trim()) {
                     setConversationHistory([]);
                     setSearchIntent(null);
@@ -2183,7 +2452,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                     setSearchTier(null);
                     setChatResponse('');
                     setFilteredDestinations([]);
-                            setSubmittedQuery('');
+                    setSubmittedQuery('');
                   }
                 }}
                 onSubmit={(query) => {
@@ -2200,367 +2469,65 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                     .join(' ');
                 })()}
-                        userProfile={userProfile}
-                        lastSession={lastSession}
-                        enrichedContext={enrichedGreetingContext}
+                userProfile={userProfile}
+                lastSession={lastSession}
+                enrichedContext={enrichedGreetingContext}
                 isAIEnabled={isAIEnabled}
                 isSearching={searching}
                 filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  // Sync with legacy state for backward compatibility
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  // Track filter changes
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
+                onFiltersChange={handleAdvancedFiltersChange}
                 availableCities={cities}
                 availableCategories={categories}
-                  />
-                      
-                      {/* City and Category Lists - Full width, positioned under greeting */}
-                      {showBrowseLists && (
-                        <div className="w-full mt-10 space-y-10">
-              <div className="space-y-3">
-                <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
-                <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
-                  <button
-                    onClick={() => handleCitySelect(null)}
-                    className={`transition-all duration-200 ease-out ${
-                      !selectedCity
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    All Cities
-                  </button>
-                  {inlineCityButtons.map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => handleCitySelect(city)}
-                      className={`transition-all duration-200 ease-out ${
-                        selectedCity === city
-                          ? 'font-medium text-black dark:text-white'
-                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                      }`}
-                    >
-                      {capitalizeCity(city)}
-                    </button>
-                  ))}
-                </div>
-                {overflowCityButtons.length > 0 && (
-                  <div className="mt-3 space-y-3">
-                    <button
-                      onClick={() => setShowAllCities(prev => !prev)}
-                      className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                    >
-                      {showAllCities
-                        ? '− Hide additional cities'
-                        : `+ More cities (${overflowCityButtons.length})`}
-                    </button>
-                    {showAllCities && (
-                      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                          {overflowCityButtons.map((city) => (
-                            <button
-                              key={city}
-                              onClick={() => handleCitySelect(city)}
-                              className={`transition-all duration-200 ease-out ${
-                                selectedCity === city
-                                  ? 'font-medium text-black dark:text-white'
-                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                              }`}
-                            >
-                              {capitalizeCity(city)}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              />
+            </>
+          )}
+        </HomeHeroLayout>
 
-              <div className="space-y-3">
-                <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
-                <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
-                  <button
-                    onClick={() => handleCategorySelect(null)}
-                    className={`transition-all duration-200 ease-out ${
-                      !selectedCategory && !advancedFilters.michelin
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    All Categories
-                  </button>
-                  <button
-                    onClick={() => handleCategorySelect(null, { michelin: true })}
-                    className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                      advancedFilters.michelin
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    <img
-                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                      alt="Michelin star"
-                      className="h-3 w-3"
-                    />
-                    Michelin
-                  </button>
-                  {inlineCategoryButtons.map((category) => {
-                    const IconComponent = getCategoryIcon(category);
-                    return (
-                      <button
-                        key={category}
-                        onClick={() => handleCategorySelect(category)}
-                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                          selectedCategory === category && !advancedFilters.michelin
-                            ? 'font-medium text-black dark:text-white'
-                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                        }`}
-                      >
-                        {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                        {capitalizeCategory(category)}
-                      </button>
-                    );
-                  })}
-                </div>
-                {overflowCategoryButtons.length > 0 && (
-                  <div className="mt-3 space-y-3">
-                    <button
-                      onClick={() => setShowAllCategories(prev => !prev)}
-                      className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                    >
-                      {showAllCategories
-                        ? '− Hide additional categories'
-                        : `+ More categories (${overflowCategoryButtons.length})`}
-                    </button>
-                    {showAllCategories && (
-                      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                          {overflowCategoryButtons.map((category) => {
-                            const IconComponent = getCategoryIcon(category);
-                            return (
-                              <button
-                                key={category}
-                                onClick={() => handleCategorySelect(category)}
-                                className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                  selectedCategory === category && !advancedFilters.michelin
-                                    ? 'font-medium text-black dark:text-white'
-                                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                }`}
-                              >
-                                {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                                {capitalizeCategory(category)}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
+        {guidedStage === 'filter' && (
+          <div className="px-6 md:px-10 lg:px-12 pb-12">
+            <div className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Fine-tune your results</h2>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                Choose specific cities, categories, or Michelin picks to focus the recommendations before we reveal the full grid.
+              </p>
+              <button
+                type="button"
+                onClick={handleGuidedFiltersCta}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              >
+                Explore Discover filters
+              </button>
             </div>
           </div>
-          
-          {/* Chat-like display when search is active */}
-          {submittedQuery && (
-            <div className="w-full">
-              <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl">
-                {/* Greeting */}
-                <div className="text-left mb-6">
-                        <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-                          {(() => {
-                            const now = new Date();
-                            const currentHour = now.getHours();
-                            let greeting = 'GOOD EVENING';
-                            if (currentHour < 12) greeting = 'GOOD MORNING';
-                            else if (currentHour < 18) greeting = 'GOOD AFTERNOON';
+        )}
 
-                            const userName = (function () {
-                              const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                              if (!raw) return undefined;
-                              return raw
-                                .split(/[\s._-]+/)
-                                .filter(Boolean)
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(' ');
-                            })();
+        {guidedStage === 'planner' && (
+          <div className="px-6 md:px-10 lg:px-12 pb-12">
+            <div className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Plan your trip</h2>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                Save places you love and build a shared itinerary in the dedicated planner experience.
+              </p>
+              <button
+                type="button"
+                onClick={handleGuidedPlannerCta}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              >
+                Open trip planner
+              </button>
+            </div>
+          </div>
+        )}
 
-                            return `${greeting}${userName ? `, ${userName}` : ''}`;
-                          })()}
-                        </h2>
-                      </div>
-
-                      {/* Refinement Chips - Active Filters */}
-                      {inferredTags && !searching && (() => {
-                        const activeTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
-                        if (activeTags.length === 0) return null;
-                        return (
-                          <div className="mb-4">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Filtered by:</div>
-                            <RefinementChips
-                              tags={activeTags}
-                              onChipClick={(tag) => handleChipClick(tag)}
-                              onChipRemove={(tag) => handleChipRemove(tag)}
-                              activeTags={activeFilters}
-                            />
-                          </div>
-                        );
-                      })()}
-
-                      {/* Refinement Chips - Suggestions */}
-                      {inferredTags && !searching && (() => {
-                        const suggestionTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, false);
-                        if (suggestionTags.length === 0) return null;
-                        return (
-                          <div className="mb-6">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggestions:</div>
-                            <RefinementChips
-                              tags={suggestionTags}
-                              onChipClick={(tag) => handleChipClick(tag)}
-                              activeTags={activeFilters}
-                            />
-                          </div>
-                        );
-                      })()}
-
-                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
-                      <div
-                        ref={chatContainerRef}
-                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
-                      >
-                        {chatMessages.length > 0 ? (
-                          chatMessages.map((message, index) => (
-                            <div key={index} className="space-y-2">
-                              {message.type === 'user' ? (
-                                <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                  {message.content}
-                                </div>
-                              ) : (
-                                <div className="space-y-4">
-                                  <MarkdownRenderer
-                                    content={message.content}
-                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                  />
-                                  {message.contextPrompt && (
-                                    <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                      {message.contextPrompt}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          ))
-                        ) : null}
-
-                        {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
-                        {(searching || (submittedQuery && chatMessages.length === 0)) && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <div className="flex items-center gap-2">
-                              {discoveryEngineLoading && (
-                                <div className="flex gap-1">
-                                  <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
-                                </div>
-                              )}
-                              <span>{currentLoadingText}</span>
-                      </div>
-                    </div>
-                  )}
-                      </div>
-
-                      {/* Follow-up input field - Chat style */}
-                      {!searching && chatMessages.length > 0 && (
-                        <div className="relative">
-                          <input
-                            placeholder="Refine your search or ask a follow-up..."
-                            aria-label="Refine your search or ask a follow-up"
-                            value={followUpInput}
-                            onChange={(e) => setFollowUpInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
-                                e.preventDefault();
-                                const query = followUpInput.trim();
-                                skipNextSearchRef.current = true;
-                                setSearchTerm(query);
-                                setFollowUpInput('');
-                                runSearch(query, { forceAi: true });
-                              }
-                            }}
-                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-                          />
-                        </div>
-                      )}
-
-                      {/* Intent Confirmation Chips - Always under text input */}
-                      {searchIntent && !searching && (
-                        <div className="mt-4">
-                          <IntentConfirmationChips
-                            intent={searchIntent}
-                            onChipRemove={(chipType, value) => {
-                              // Modify the search based on what was removed
-                              setSearchTerm('');
-                              setSubmittedQuery('');
-                              setSearchIntent(null);
-                              setInferredTags(null);
-                              setActiveFilters(new Set());
-                            }}
-                            editable={true}
-                          />
-                        </div>
-                      )}
-
-                      {/* No results message */}
-                      {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
-                        <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                          <span>No results found. Try refining your search.</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-        </section>
-
-              {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
-                <div className="max-w-[1800px] mx-auto">
+        {/* Content Section - Grid directly below hero */}
+        {!isGuidedActive && (
+          <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
+            <div className="max-w-[1800px] mx-auto">
                 {/* Filter, Start Trip, and View Toggle */}
                 <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
                   <SearchFiltersComponent
                     filters={advancedFilters}
-                    onFiltersChange={(newFilters) => {
-                      setAdvancedFilters(newFilters);
-                      if (newFilters.city !== undefined) {
-                        setSelectedCity(newFilters.city || '');
-                      }
-                      if (newFilters.category !== undefined) {
-                        setSelectedCategory(newFilters.category || '');
-                      }
-                      Object.entries(newFilters).forEach(([key, value]) => {
-                        if (value !== undefined && value !== null && value !== '') {
-                          trackFilterChange({ filterType: key, value });
-                        }
-                      });
-                    }}
+                    onFiltersChange={handleAdvancedFiltersChange}
                     availableCities={cities}
                     availableCategories={categories}
                     onLocationChange={handleLocationChange}
@@ -2570,7 +2537,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                     label="Filters"
                   />
                   <button
-                    onClick={() => setShowTripPlanner(true)}
+                    onClick={handleGuidedPlannerCta}
                     className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
                     aria-label="Start a trip"
                   >
@@ -2828,8 +2795,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
             })()}
                 </div>
           </div>
+        )}
 
-          {/* Map Mode Overlay */}
+        {/* Map Mode Overlay */}
           {viewMode === 'map' && (
             <div className="fixed inset-0 z-[70] flex flex-col bg-black/80">
               <div className="relative flex-1 bg-black">
