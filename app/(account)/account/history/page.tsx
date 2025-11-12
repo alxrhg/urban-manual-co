@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/contexts/UserContext';
 import { EnhancedVisitedTab } from '@/components/EnhancedVisitedTab';
 import { EnhancedSavedTab } from '@/components/EnhancedSavedTab';
@@ -9,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Heart, Layers } from 'lucide-react';
 
 export default function AccountHistoryPage() {
-  const router = useRouter();
   const { user, visitedPlaces, savedPlaces, collections, refreshAll } = useUserContext();
 
   if (!user) {
@@ -85,7 +83,7 @@ export default function AccountHistoryPage() {
           </div>
         </div>
         {collections.length === 0 ? (
-          <NoCollectionsEmptyState onCreateCollection={() => router.push('/collection/create')} />
+          <NoCollectionsEmptyState />
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
             {collections.map(collection => (
