@@ -57,6 +57,9 @@ function getCategoryIcon(category: string): React.ComponentType<{ className?: st
   return getCategoryIconComponent(category);
 }
 
+const FEATURED_CITY_SLUGS = ['taipei', 'tokyo', 'new-york', 'london'] as const;
+const FEATURED_CITY_SET = new Set<string>(FEATURED_CITY_SLUGS);
+
 function slugify(value: string): string {
   return value
     .toString()
@@ -2084,10 +2087,13 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
-  const MAX_INLINE_CITY_COUNT = 12;
   const MAX_INLINE_CATEGORY_COUNT = 12;
-  const inlineCityButtons = cities.slice(0, MAX_INLINE_CITY_COUNT);
-  const overflowCityButtons = cities.slice(MAX_INLINE_CITY_COUNT);
+  const inlineCityButtons = FEATURED_CITY_SLUGS.filter((city) =>
+    cities.some((availableCity) => availableCity.toLowerCase() === city)
+  );
+  const overflowCityButtons = cities.filter(
+    (city) => !FEATURED_CITY_SET.has(city.toLowerCase())
+  );
   const inlineCategoryButtons = categories.slice(0, MAX_INLINE_CATEGORY_COUNT);
   const overflowCategoryButtons = categories.slice(MAX_INLINE_CATEGORY_COUNT);
   const showBrowseLists = !submittedQuery && searchTerm.trim().length === 0;
