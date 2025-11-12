@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSupabaseClient } from '@/app/api/_utils/supabase';
 
+interface NearbyDestination {
+  slug: string;
+  name: string;
+  city: string | null;
+  category: string | null;
+  description?: string | null;
+  content?: string | null;
+  image?: string | null;
+  michelin_stars?: number | null;
+  crown?: boolean | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  distance_km?: number;
+  distance_miles?: number;
+}
+
 // Haversine formula to calculate distance between two points
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in km
@@ -26,14 +42,22 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    const lat = parseFloat(searchParams.get('lat') || '0');
-    const lng = parseFloat(searchParams.get('lng') || '0');
-    const radius = parseFloat(searchParams.get('radius') || '5'); // km
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const latParam = searchParams.get('lat');
+    const lngParam = searchParams.get('lng');
+    const lat = latParam !== null ? Number(latParam) : NaN;
+    const lng = lngParam !== null ? Number(lngParam) : NaN;
+    const radiusParam = searchParams.get('radius');
+    const limitParam = searchParams.get('limit');
+    const radiusValue = radiusParam !== null ? Number(radiusParam) : 5; // km
+    const limitValue = limitParam !== null ? Number.parseInt(limitParam, 10) : 50;
+    const radius = Number.isFinite(radiusValue) && radiusValue > 0 ? radiusValue : 5;
+    const limit = Number.isFinite(limitValue) && limitValue > 0 ? limitValue : 50;
     const city = searchParams.get('city'); // Optional city filter
     const category = searchParams.get('category'); // Optional category filter
 
-    if (!lat || !lng) {
+    const hasValidCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
+
+    if (!hasValidCoordinates) {
       return NextResponse.json(
         { error: 'Latitude and longitude are required' },
         { status: 400 }
@@ -41,12 +65,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Try using the database function first (if migration has been run)
-    let destinations: any[] = [];
+    let destinations: NearbyDestination[] = [];
     let usesFallback = false;
 
     try {
       const { data, error } = await supabase
-        .rpc('destinations_nearby', {
+        .rpc<NearbyDestination[]>('destinations_nearby', {
           user_lat: lat,
           user_lng: lng,
           radius_km: radius,
@@ -58,18 +82,18 @@ export async function GET(request: NextRequest) {
         console.log('Database function not found, using fallback method');
         usesFallback = true;
       } else {
-        destinations = data || [];
+        destinations = Array.isArray(data) ? data : [];
       }
     } catch (error) {
       // Function doesn't exist, use fallback
-      console.log('Database function error, using fallback method');
+      console.log('Database function error, using fallback method', error);
       usesFallback = true;
     }
 
     // Fallback: Fetch all destinations and calculate distance client-side
     if (usesFallback) {
       const { data, error } = await supabase
-        .from('destinations')
+        .from<NearbyDestination>('destinations')
         .select('slug, name, city, category, description, content, image, michelin_stars, crown, latitude, longitude');
 
       if (error) {
@@ -81,30 +105,40 @@ export async function GET(request: NextRequest) {
       }
 
       // Calculate distances for destinations that have coordinates
-      destinations = (data || [])
-        .filter((d: any) => d.latitude && d.longitude)
-        .map((d: any) => {
-          const distance = calculateDistance(lat, lng, d.latitude, d.longitude);
-          return {
-            ...d,
-            distance_km: distance,
-            distance_miles: distance * 0.621371
-          };
-        })
-        .filter((d: any) => d.distance_km <= radius)
-        .sort((a: any, b: any) => a.distance_km - b.distance_km)
+      const withDistances = (data || []).reduce<NearbyDestination[]>((acc, record) => {
+        const destinationLat = Number(record.latitude);
+        const destinationLng = Number(record.longitude);
+        if (!Number.isFinite(destinationLat) || !Number.isFinite(destinationLng)) {
+          return acc;
+        }
+
+        const distance = calculateDistance(lat, lng, destinationLat, destinationLng);
+        if (distance > radius) {
+          return acc;
+        }
+
+        acc.push({
+          ...record,
+          distance_km: distance,
+          distance_miles: distance * 0.621371,
+        });
+        return acc;
+      }, []);
+
+      destinations = withDistances
+        .sort((a, b) => (a.distance_km ?? 0) - (b.distance_km ?? 0))
         .slice(0, limit);
     }
 
     // Apply additional filters if provided
-    let filtered = destinations || [];
+    let filtered: NearbyDestination[] = destinations || [];
 
     if (city) {
-      filtered = filtered.filter((d: any) => d.city === city);
+      filtered = filtered.filter((d) => d.city === city);
     }
 
     if (category) {
-      filtered = filtered.filter((d: any) => d.category === category);
+      filtered = filtered.filter((d) => d.category === category);
     }
 
     return NextResponse.json({
@@ -114,10 +148,13 @@ export async function GET(request: NextRequest) {
       count: filtered.length,
       usesFallback,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in nearby API:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
