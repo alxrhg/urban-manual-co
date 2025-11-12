@@ -2132,60 +2132,62 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                           <ContextCards context={userContext} />
                         </div>
                       )}
+                    </>
+                  )}
 
                   <GreetingHero
-                searchQuery={searchTerm}
-                onSearchChange={(value) => {
-                  setSearchTerm(value);
-                  // Clear conversation history only if search is cleared
-                  if (!value.trim()) {
-                    setConversationHistory([]);
-                    setSearchIntent(null);
-                    setSeasonalContext(null);
-                    setSearchTier(null);
-                    setChatResponse('');
-                    setFilteredDestinations([]);
-                            setSubmittedQuery('');
-                  }
-                }}
-                onSubmit={(query) => {
-                  if (query.trim() && !searching) {
-                    runSearch(query);
-                  }
-                }}
-                userName={(function () {
-                  const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                  if (!raw) return undefined;
-                  return raw
-                    .split(/[\s._-]+/)
-                    .filter(Boolean)
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(' ');
-                })()}
-                        userProfile={userProfile}
-                        lastSession={lastSession}
-                        enrichedContext={enrichedGreetingContext}
-                isAIEnabled={isAIEnabled}
-                isSearching={searching}
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  // Sync with legacy state for backward compatibility
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  // Track filter changes
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                availableCities={cities}
-                availableCategories={categories}
+                    searchQuery={searchTerm}
+                    onSearchChange={(value) => {
+                      setSearchTerm(value);
+                      // Clear conversation history only if search is cleared
+                      if (!value.trim()) {
+                        setConversationHistory([]);
+                        setSearchIntent(null);
+                        setSeasonalContext(null);
+                        setSearchTier(null);
+                        setChatResponse('');
+                        setFilteredDestinations([]);
+                        setSubmittedQuery('');
+                      }
+                    }}
+                    onSubmit={(query) => {
+                      if (query.trim() && !searching) {
+                        runSearch(query);
+                      }
+                    }}
+                    userName={(function () {
+                      const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                      if (!raw) return undefined;
+                      return raw
+                        .split(/[\s._-]+/)
+                        .filter(Boolean)
+                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' ');
+                    })()}
+                    userProfile={userProfile}
+                    lastSession={lastSession}
+                    enrichedContext={enrichedGreetingContext}
+                    isAIEnabled={isAIEnabled}
+                    isSearching={searching}
+                    filters={advancedFilters}
+                    onFiltersChange={(newFilters) => {
+                      setAdvancedFilters(newFilters);
+                      // Sync with legacy state for backward compatibility
+                      if (newFilters.city !== undefined) {
+                        setSelectedCity(newFilters.city || '');
+                      }
+                      if (newFilters.category !== undefined) {
+                        setSelectedCategory(newFilters.category || '');
+                      }
+                      // Track filter changes
+                      Object.entries(newFilters).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null && value !== '') {
+                          trackFilterChange({ filterType: key, value });
+                        }
+                      });
+                    }}
+                    availableCities={cities}
+                    availableCategories={categories}
                   />
                 </div>
               </div>
