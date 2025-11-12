@@ -1,4 +1,16 @@
 import { createClient } from '@/lib/supabase/client';
+import { logPersonalizationMetric } from '@/lib/analytics/personalizationMetrics';
+
+type TrackEventMetadata = Record<string, unknown> & {
+  category?: string;
+  city?: string;
+  source?: string;
+  surface?: string;
+  experimentKey?: string;
+  variation?: string;
+  recommendationId?: string;
+  dwellTimeMs?: number;
+};
 
 /**
  * Track user interaction events for intelligence layer
@@ -8,7 +20,7 @@ export async function trackEvent(event: {
   destination_id?: number;
   destination_slug?: string;
   query?: string;
-  metadata?: any;
+  metadata?: TrackEventMetadata;
 }) {
   try {
     const supabase = createClient();
@@ -20,7 +32,7 @@ export async function trackEvent(event: {
     if (event.destination_id || event.destination_slug) {
       // Get destination_id from slug if needed
       let destinationId = event.destination_id;
-      
+
       if (!destinationId && event.destination_slug) {
         const { data: dest } = await supabase
           .from('destinations')
@@ -54,6 +66,31 @@ export async function trackEvent(event: {
         if (event.event_type === 'save' && event.destination_slug) {
           await supabase.rpc('increment_saves', {
             dest_slug: event.destination_slug
+          });
+        }
+
+        const hasMetrics =
+          event.event_type === 'click' ||
+          (event.metadata && typeof event.metadata.dwellTimeMs === 'number');
+
+        if (hasMetrics) {
+          await logPersonalizationMetric({
+            userId: session.user.id,
+            destinationId,
+            destinationSlug: event.destination_slug,
+            surface:
+              event.metadata?.surface ||
+              event.metadata?.source ||
+              'unknown',
+            experimentKey: event.metadata?.experimentKey,
+            variation: event.metadata?.variation,
+            recommendationId: event.metadata?.recommendationId,
+            clickThrough: event.event_type === 'click',
+            dwellTimeMs: event.metadata?.dwellTimeMs ?? null,
+            payload: {
+              ...(event.metadata ?? {}),
+              eventType: event.event_type,
+            },
           });
         }
       }

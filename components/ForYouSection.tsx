@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics/track';
 import { useRouter } from 'next/navigation';
+import { useExperiment } from '@/hooks/useExperiment';
 
 interface Destination {
   id: number;
@@ -25,25 +26,66 @@ export function ForYouSection() {
   const { user } = useAuth();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
+  const {
+    enabled: experimentEnabled,
+    loading: experimentLoading,
+    assignment: experimentAssignment,
+  } = useExperiment('personalized_home_sections', { userId: user?.id });
 
   useEffect(() => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
+    let cancelled = false;
 
-    fetch(`/api/personalization/${user.id}`)
-      .then(res => res.json())
-      .then(data => {
-        setDestinations(data.results || []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
-  }, [user?.id]);
+    const run = async () => {
+      if (!user?.id) {
+        await Promise.resolve();
+        if (!cancelled) {
+          setLoading(false);
+        }
+        return;
+      }
 
-  if (!user || loading) return null;
+      if (experimentLoading) {
+        return;
+      }
+
+      if (!experimentEnabled) {
+        await Promise.resolve();
+        if (!cancelled) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      await Promise.resolve();
+      if (cancelled) {
+        return;
+      }
+
+      setLoading(true);
+
+      fetch(`/api/personalization/${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (cancelled) return;
+          setDestinations(data.results || []);
+          setLoading(false);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        });
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, experimentEnabled, experimentLoading]);
+
+  if (!user || loading || experimentLoading) return null;
+  if (!experimentEnabled) return null;
   if (!destinations.length) return null;
 
   return (
@@ -68,6 +110,10 @@ export function ForYouSection() {
                   category: dest.category,
                   city: dest.city,
                   source: 'for_you_section',
+                  surface: 'for_you',
+                  experimentKey: experimentAssignment.key,
+                  variation: experimentAssignment.variation,
+                  recommendationId: dest.slug,
                 },
               });
               router.push(`/destination/${dest.slug}`);
