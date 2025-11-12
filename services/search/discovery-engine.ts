@@ -49,7 +49,9 @@ export class DiscoveryEngineService {
     try {
       // Check if we have explicit credentials
       const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-      const credentialsJson = process.env.GOOGLE_CLOUD_CREDENTIALS_JSON;
+      const credentialsJson =
+        process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
+        process.env.GOOGLE_CLOUD_CREDENTIALS_JSON;
 
       const clientOptions: any = {};
 
@@ -58,7 +60,10 @@ export class DiscoveryEngineService {
         try {
           clientOptions.credentials = JSON.parse(credentialsJson);
         } catch (parseError) {
-          console.warn('[Discovery Engine] Failed to parse GOOGLE_CLOUD_CREDENTIALS_JSON:', parseError);
+          console.warn(
+            '[Discovery Engine] Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON (or legacy GOOGLE_CLOUD_CREDENTIALS_JSON):',
+            parseError
+          );
         }
       } else if (credentialsPath) {
         // If we have a path to credentials, the client will load it automatically
@@ -209,7 +214,9 @@ export class DiscoveryEngineService {
           this.searchClient = null;
           this.recommendationClient = null;
           this.userEventClient = null;
-          throw new Error('Discovery Engine credentials not available. Please configure GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CLOUD_CREDENTIALS_JSON');
+          throw new Error(
+            'Discovery Engine credentials not available. Please configure GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS_JSON (legacy GOOGLE_CLOUD_CREDENTIALS_JSON is also supported).'
+          );
         }
         throw error;
       });
