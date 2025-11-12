@@ -3,7 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Phone, Globe } from 'lucide-react';
+import {
+  X,
+  MapPin,
+  Bookmark,
+  Share2,
+  Navigation,
+  ChevronDown,
+  Plus,
+  Loader2,
+  Clock,
+  ExternalLink,
+  Check,
+  List,
+  Map,
+  Crown,
+  Phone,
+  Globe
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -739,21 +756,43 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/0" aria-hidden="true" />
 
             <div className="absolute bottom-6 left-6 right-6 space-y-4 text-white">
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/70">
-                {destination.category && <span>{destination.category}</span>}
-                {destination.city && (
-                  <span className="flex items-center gap-1 text-[11px] normal-case tracking-normal">
-                    <MapPin className="h-3 w-3" />
-                    {capitalizeCity(destination.city)}
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/90">
+                {destination.category && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 uppercase tracking-[0.2em]">
+                    {destination.category}
+                  </span>
+                )}
+                {destination.crown && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 text-[11px] font-medium text-white">
+                    <Crown className="h-3 w-3" />
+                    Manual Pick
+                  </span>
+                )}
+                {(destination.michelin_stars ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-3 py-1 text-[11px] font-medium text-white">
+                    <img
+                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                      alt="Michelin star"
+                      className="h-3 w-3"
+                    />
+                    {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
                   </span>
                 )}
               </div>
 
               <h1 className="text-3xl font-semibold leading-tight drop-shadow-lg">{destination.name}</h1>
 
-              <div className="flex flex-wrap items-center gap-3 text-sm text-white/90">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/90 sm:text-sm">
+                {destination.city && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white/90">
+                    <MapPin className="h-3 w-3" />
+                    {destination.country
+                      ? `${capitalizeCity(destination.city)}, ${destination.country}`
+                      : capitalizeCity(destination.city)}
+                  </span>
+                )}
                 {rating && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white">
                     <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
@@ -766,7 +805,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </span>
                 )}
                 {formatPriceLevel(enrichedData?.price_level ?? destination.price_level) && (
-                  <span className="rounded-full border border-white/30 px-3 py-1 text-xs font-medium">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-black/20 px-3 py-1 font-medium text-white">
                     {formatPriceLevel(enrichedData?.price_level ?? destination.price_level)}
                   </span>
                 )}
@@ -777,7 +816,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         <div className="relative flex-1 overflow-y-auto bg-white dark:bg-gray-950">
           <div className="px-6 pb-36 pt-6 space-y-8">
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={async () => {
                   if (!user) {
@@ -807,19 +846,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     }
                   }
                 }}
-                className={`flex h-24 flex-col items-center justify-center gap-2 rounded-2xl border text-xs font-medium transition-colors ${
+                className={`group flex w-full items-center justify-center gap-2 rounded-full border px-4 py-4 text-sm font-medium transition-colors ${
                   isSaved
-                    ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
-                    : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900'
+                    ? 'border-transparent bg-[#FF6B9F] text-black shadow-sm hover:bg-[#ff7bac]'
+                    : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
                 }`}
                 aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
                 aria-pressed={isSaved}
               >
-                <Heart
-                  className={`h-5 w-5 transition ${
+                <Bookmark
+                  className={`h-4 w-4 transition ${
                     isSaved
-                      ? 'fill-white text-white dark:fill-black dark:text-black'
-                      : 'text-gray-600 dark:text-gray-300'
+                      ? 'fill-current text-black'
+                      : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
                   }`}
                 />
                 <span>{isSaved ? 'Saved' : 'Save'}</span>
@@ -828,14 +867,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <DropdownMenu open={showMobileVisitedMenu} onOpenChange={setShowMobileVisitedMenu}>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className={`flex h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border text-xs font-medium transition-colors ${
+                    className={`group flex w-full items-center justify-center gap-2 rounded-full border px-4 py-4 text-sm font-medium transition-colors ${
                       isVisited
-                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-300'
-                        : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900'
+                        ? 'border-transparent bg-[#6BFFB8] text-black shadow-sm'
+                        : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
                     }`}
                     aria-pressed={isVisited}
                   >
-                    <Check className={`h-5 w-5 ${isVisited ? 'stroke-[3]' : ''}`} />
+                    <Check
+                      className={`h-4 w-4 transition ${
+                        isVisited
+                          ? 'stroke-[3] text-black'
+                          : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
+                      }`}
+                    />
                     <span>{isVisited ? 'Visited' : 'Visited?'}</span>
                   </button>
                 </DropdownMenuTrigger>
@@ -863,9 +908,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
               <button
                 onClick={handleShare}
-                className="flex h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-xs font-medium text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900"
+                className="group flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-4 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
                 <span>{copied ? 'Copied!' : 'Share'}</span>
               </button>
 
@@ -874,9 +919,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   const url = `https://maps.apple.com/?q=${encodeURIComponent(`${destination.name} ${destination.city ?? ''}`)}`;
                   window.open(url, '_blank', 'noopener,noreferrer');
                 }}
-                className="flex h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-xs font-medium text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900"
+                className="group flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-4 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
               >
-                <Navigation className="h-5 w-5" />
+                <Navigation className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
                 <span>Directions</span>
               </button>
             </div>
