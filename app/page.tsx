@@ -765,6 +765,18 @@ export default function Home() {
 
     if (updateDestinations) {
       setDestinations(fallback);
+      // Show immediately, filter later (non-blocking)
+      setFilteredDestinations(fallback);
+      // Apply filtering after display
+      requestAnimationFrame(() => {
+        const filtered = filterDestinationsWithData(
+          fallback,
+          '', {}, '', '', user, visitedSlugs
+        );
+        if (filtered.length !== fallback.length || filtered.some((d, i) => d.slug !== fallback[i]?.slug)) {
+          setFilteredDestinations(filtered);
+        }
+      });
     }
 
     if (ensureFilters) {
@@ -817,11 +829,18 @@ export default function Home() {
 
     if (updateDestinations) {
       setDestinations(discoveryBaseline);
-      const filtered = filterDestinationsWithData(
-        discoveryBaseline,
-        '', {}, '', '', user, visitedSlugs
-      );
-      setFilteredDestinations(filtered);
+      // Show immediately, filter later (non-blocking)
+      setFilteredDestinations(discoveryBaseline);
+      // Apply filtering after display
+      requestAnimationFrame(() => {
+        const filtered = filterDestinationsWithData(
+          discoveryBaseline,
+          '', {}, '', '', user, visitedSlugs
+        );
+        if (filtered.length !== discoveryBaseline.length || filtered.some((d, i) => d.slug !== discoveryBaseline[i]?.slug)) {
+          setFilteredDestinations(filtered);
+        }
+      });
     }
 
     return true;
@@ -957,8 +976,11 @@ export default function Home() {
       // Then fetch profile and session in parallel
       fetchVisitedPlaces().then(() => {
         // After visited places are loaded, re-filter destinations if they're already loaded
+        // Use requestAnimationFrame to ensure this doesn't block rendering
         if (destinations.length > 0) {
-          filterDestinations();
+          requestAnimationFrame(() => {
+            filterDestinations();
+          });
         }
       });
       fetchLastSession();
@@ -1456,16 +1478,23 @@ export default function Home() {
         const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
         if (discoveryBaseline.length) {
           setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(
-            discoveryBaseline,
-            '', {}, '', '', user, visitedSlugs
-          );
-          setFilteredDestinations(filtered);
+          // Show immediately, filter later
+          setFilteredDestinations(discoveryBaseline);
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
           // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
             if (discoveryCities.length) setCities(discoveryCities);
             if (discoveryCategories.length) setCategories(discoveryCategories);
+          });
+          // Apply filtering after display
+          requestAnimationFrame(() => {
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              '', {}, '', '', user, visitedSlugs
+            );
+            if (filtered.length !== discoveryBaseline.length || filtered.some((d, i) => d.slug !== discoveryBaseline[i]?.slug)) {
+              setFilteredDestinations(filtered);
+            }
           });
         } else {
           await applyFallbackData({ updateDestinations: true });
@@ -1511,16 +1540,23 @@ export default function Home() {
         const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
         if (discoveryBaseline.length) {
           setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(
-            discoveryBaseline,
-            '', {}, '', '', user, visitedSlugs
-          );
-          setFilteredDestinations(filtered);
+          // Show immediately, filter later
+          setFilteredDestinations(discoveryBaseline);
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
           // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
             if (discoveryCities.length) setCities(discoveryCities);
             if (discoveryCategories.length) setCategories(discoveryCategories);
+          });
+          // Apply filtering after display
+          requestAnimationFrame(() => {
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              '', {}, '', '', user, visitedSlugs
+            );
+            if (filtered.length !== discoveryBaseline.length || filtered.some((d, i) => d.slug !== discoveryBaseline[i]?.slug)) {
+              setFilteredDestinations(filtered);
+            }
           });
         } else {
           await applyFallbackData({ updateDestinations: true });
@@ -1528,8 +1564,12 @@ export default function Home() {
         return;
       }
 
-      // Step 2: Show Supabase results immediately
+      // Step 2: Show Supabase results immediately - DON'T WAIT FOR FILTERING
       setDestinations(data as Destination[]);
+      
+      // CRITICAL: Show destinations immediately without filtering to prevent blocking
+      // Filtering will happen after visitedSlugs are loaded
+      setFilteredDestinations(data as Destination[]);
 
       // Extract unique cities and categories from full data
       // IMPORTANT: Set cities/categories immediately (synchronously) to prevent empty filter flash
@@ -1543,17 +1583,23 @@ export default function Home() {
         setCategories(uniqueCategories);
       }
       
-      // Filter destinations immediately with the new data (no filters on initial load)
-      const filtered = filterDestinationsWithData(
-        data as Destination[],
-        '', // no search term
-        {}, // no advanced filters
-        '', // no selected city
-        '', // no selected category
-        user, // current user
-        visitedSlugs // current visited slugs
-      );
-      setFilteredDestinations(filtered);
+      // Apply filtering AFTER initial display (non-blocking)
+      // This ensures grid shows immediately, then filters down
+      requestAnimationFrame(() => {
+        const filtered = filterDestinationsWithData(
+          data as Destination[],
+          '', // no search term
+          {}, // no advanced filters
+          '', // no selected city
+          '', // no selected category
+          user, // current user
+          visitedSlugs // current visited slugs
+        );
+        // Only update if different to avoid unnecessary re-renders
+        if (filtered.length !== data.length || filtered.some((d, i) => d.slug !== data[i]?.slug)) {
+          setFilteredDestinations(filtered);
+        }
+      });
 
       // Step 3: Run Discovery Engine AFTER Supabase completes (as enhancement/filter)
       // This runs in background and can enhance the results
@@ -1571,11 +1617,18 @@ export default function Home() {
             // Only update if Discovery Engine provides additional value
             if (uniqueMerged.length > data.length) {
               setDestinations(uniqueMerged);
-              const filtered = filterDestinationsWithData(
-                uniqueMerged,
-                '', {}, '', '', user, visitedSlugs
-              );
-              setFilteredDestinations(filtered);
+              // Show immediately, filter later (non-blocking)
+              setFilteredDestinations(uniqueMerged);
+              // Apply filtering after display
+              requestAnimationFrame(() => {
+                const filtered = filterDestinationsWithData(
+                  uniqueMerged,
+                  '', {}, '', '', user, visitedSlugs
+                );
+                if (filtered.length !== uniqueMerged.length || filtered.some((d, i) => d.slug !== uniqueMerged[i]?.slug)) {
+                  setFilteredDestinations(filtered);
+                }
+              });
               
               // OPTIMIZATION: Batch state updates - only update if Discovery Engine has more
               const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
