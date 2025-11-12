@@ -40,6 +40,7 @@ import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
 import { DestinationBadges } from '@/components/DestinationBadges';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
+import { ScreenReaderAnnouncements } from '@/components/ScreenReaderAnnouncements';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
@@ -546,6 +547,7 @@ export default function Home() {
     }
     return filteredDestinations;
   }, [advancedFilters.nearMe, filteredDestinations, nearbyDestinations]);
+  const resultsCount = filteredDestinations.length;
 
   const handleNavigationFiltersClick = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -623,6 +625,8 @@ export default function Home() {
   // Track submitted query for chat display
   const [submittedQuery, setSubmittedQuery] = useState<string>('');
   const [followUpInput, setFollowUpInput] = useState<string>('');
+  const [screenReaderMessage, setScreenReaderMessage] = useState('');
+  const [screenReaderPriority, setScreenReaderPriority] = useState<'polite' | 'assertive'>('polite');
 
   useEffect(() => {
     const handleOpenTripPlanner = () => setShowTripPlanner(true);
@@ -2056,6 +2060,28 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
     setCurrentPage(1);
   }, [searchTerm, runSearch, filterDestinations]);
 
+  useEffect(() => {
+    if (!submittedQuery) {
+      if (!searching) {
+        setScreenReaderMessage('');
+      }
+      return;
+    }
+
+    if (searching) {
+      setScreenReaderPriority('assertive');
+      setScreenReaderMessage(`Searching for ${submittedQuery}...`);
+      return;
+    }
+
+    const resultText =
+      resultsCount === 0
+        ? `No destinations found for ${submittedQuery}.`
+        : `${resultsCount} ${resultsCount === 1 ? 'destination' : 'destinations'} found for ${submittedQuery}.`;
+    setScreenReaderPriority('polite');
+    setScreenReaderMessage(resultText);
+  }, [resultsCount, searching, submittedQuery]);
+
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
   const MAX_INLINE_CITY_COUNT = 12;
@@ -2068,6 +2094,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
 
   return (
     <ErrorBoundary>
+      <ScreenReaderAnnouncements message={screenReaderMessage} priority={screenReaderPriority} />
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -2460,6 +2487,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         <div className="relative">
                           <input
                             placeholder="Refine your search or ask a follow-up..."
+                            aria-label="Refine your search or ask a follow-up"
                             value={followUpInput}
                             onChange={(e) => setFollowUpInput(e.target.value)}
                             onKeyDown={(e) => {
