@@ -2,7 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Plus, X, Search, MapPin, Users, Eye, Heart, TrendingUp, ArrowUpRight } from 'lucide-react';
+import {
+  Loader2,
+  Plus,
+  X,
+  Search,
+  MapPin,
+  Users,
+  Eye,
+  Heart,
+  TrendingUp,
+  ArrowUpRight,
+  Check,
+  Edit2,
+  Trash2,
+} from 'lucide-react';
+import Image from 'next/image';
 import DiscoverTab from '@/components/admin/DiscoverTab';
 import { useConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
@@ -70,6 +85,13 @@ function normalizeDestinationInput(data: DestinationFormValues): DestinationInpu
   return base;
 }
 
+function formatCityName(city: string): string {
+  return city
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export function AdminDashboard() {
   const toast = useToast();
   const showError = toast.error;
@@ -91,6 +113,10 @@ export function AdminDashboard() {
   const [destinations, setDestinations] = useState<DestinationRecord[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterCity, setFilterCity] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [sortBy, setSortBy] = useState<'recent' | 'name'>('recent');
   const [showForm, setShowForm] = useState(false);
   const [editingDestination, setEditingDestination] = useState<DestinationRecord | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -102,6 +128,78 @@ export function AdminDashboard() {
   const [searchLogs, setSearchLogs] = useState<SearchLogEntry[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(false);
   const [hasLoadedSearches, setHasLoadedSearches] = useState(false);
+
+  const { cities, categories } = useMemo(() => {
+    const citySet = new Set<string>();
+    const categorySet = new Set<string>();
+
+    destinations.forEach((destination) => {
+      if (destination.city) {
+        citySet.add(destination.city);
+      }
+      if (destination.category) {
+        categorySet.add(destination.category);
+      }
+    });
+
+    return {
+      cities: Array.from(citySet).sort(),
+      categories: Array.from(categorySet).sort(),
+    };
+  }, [destinations]);
+
+  const filteredDestinations = useMemo(() => {
+    let result = [...destinations];
+
+    if (filterCity) {
+      result = result.filter((destination) => destination.city === filterCity);
+    }
+
+    if (filterCategory) {
+      result = result.filter((destination) => destination.category === filterCategory);
+    }
+
+    result.sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+
+      return b.slug.localeCompare(a.slug);
+    });
+
+    return result;
+  }, [destinations, filterCity, filterCategory, sortBy]);
+
+  const searchFilteredDestinations = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return filteredDestinations;
+    }
+
+    return filteredDestinations.filter((destination) => {
+      return (
+        destination.name.toLowerCase().includes(query) ||
+        destination.city.toLowerCase().includes(query) ||
+        destination.slug.toLowerCase().includes(query) ||
+        destination.category.toLowerCase().includes(query)
+      );
+    });
+  }, [filteredDestinations, searchQuery]);
+
+  const visibleDestinationCount = searchFilteredDestinations.length;
+
+  const handleCreateDestination = useCallback(() => {
+    setEditingDestination(null);
+    setShowForm(true);
+  }, [setEditingDestination, setShowForm]);
+
+  const handleEditDestinationClick = useCallback(
+    (destination: DestinationRecord) => {
+      setEditingDestination(destination);
+      setShowForm(true);
+    },
+    [setEditingDestination, setShowForm]
+  );
 
   const refreshDestinations = useCallback(async () => {
     if (!isAdmin || !authChecked) return;
@@ -257,52 +355,50 @@ export function AdminDashboard() {
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950">
       {/* Hero Section */}
-      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24 border-b border-gray-100 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white mb-4">
-                Admin Dashboard
-              </h1>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-                Curate destinations, monitor engagement, and shape the Urban Manual experience. Every place you add helps travelers discover the world's best spots.
-              </p>
+      <section className="px-6 md:px-10 lg:px-12 py-14 md:py-20 border-b border-gray-100 dark:border-gray-800">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div className="space-y-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">Urban Manual</p>
+              <div className="space-y-4">
+                <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white">Admin</h1>
+                <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                  Curate destinations, monitor engagement, and shape the Urban Manual experience. Every place you add helps
+                  travelers discover the world's best spots.
+                </p>
+              </div>
             </div>
             <button
               onClick={() => router.push('/account')}
-              className="text-xs font-normal text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              className="self-start text-xs font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
               Back to Account
             </button>
           </div>
 
           {/* Key Health Indicators */}
-          <div className="flex flex-wrap items-center gap-6 md:gap-8 mt-8 text-sm">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <span className="text-gray-500 dark:text-gray-400">Destinations:</span>
-              <span className="font-medium text-black dark:text-white">{healthIndicators.totalDestinations}</span>
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-600 dark:text-gray-300">
+              <MapPin className="h-3.5 w-3.5" />
+              <span>{healthIndicators.totalDestinations} destinations</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <span className="text-gray-500 dark:text-gray-400">Avg views:</span>
-              <span className="font-medium text-black dark:text-white">{healthIndicators.avgViews}</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-600 dark:text-gray-300">
+              <Eye className="h-3.5 w-3.5" />
+              <span>{healthIndicators.avgViews} avg views</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <span className="text-gray-500 dark:text-gray-400">Active users:</span>
-              <span className="font-medium text-black dark:text-white">{healthIndicators.activeUsers}</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-600 dark:text-gray-300">
+              <Users className="h-3.5 w-3.5" />
+              <span>{healthIndicators.activeUsers} active users</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Heart className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <span className="text-gray-500 dark:text-gray-400">Engagement:</span>
-              <span className="font-medium text-black dark:text-white">{healthIndicators.engagementRate}%</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-600 dark:text-gray-300">
+              <Heart className="h-3.5 w-3.5" />
+              <span>{healthIndicators.engagementRate}% engagement</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-normal">
-                {user?.email}
-              </span>
-            </div>
+            {user?.email && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black">
+                <span>{user.email}</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -329,51 +425,263 @@ export function AdminDashboard() {
           </div>
 
         {activeTab === 'destinations' && (
-          <div className="fade-in space-y-16 md:space-y-24">
-            {/* Add Place Spotlight Card */}
-            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 p-8 md:p-12">
-              <div className="max-w-2xl">
-                <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white mb-4">
-                  Add a new destination
-                </h2>
-                <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
-                  Expand the Urban Manual collection by adding restaurants, hotels, shops, and experiences. Each destination helps travelers discover the world's best places.
-                </p>
+          <div className="fade-in space-y-12">
+            <div className="space-y-8">
+              <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-3">
+                  <h2 className="text-3xl md:text-4xl font-medium text-black dark:text-white">Destination Library</h2>
+                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+                    Keep the Urban Manual collection feeling curated and intentional. Add new gems, refine details, and ensure every
+                    listing is ready for travelers to discover.
+                  </p>
+                </div>
                 <button
-                  onClick={() => {
-                    setEditingDestination(null);
-                    setShowForm(true);
-                  }}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-gray-900 dark:hover:bg-gray-200 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                  onClick={handleCreateDestination}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-sm font-medium hover:bg-gray-900 dark:hover:bg-gray-200 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                   Add Place
                 </button>
               </div>
+
+              <div className="space-y-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-3 text-xs">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`transition-all ${
+                        viewMode === 'grid'
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      Grid
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`transition-all ${
+                        viewMode === 'list'
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      List
+                    </button>
+                  </div>
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {visibleDestinationCount} {visibleDestinationCount === 1 ? 'destination' : 'destinations'}
+                    </span>
+                    <div className="relative w-full sm:w-72">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search destinations"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        className="w-full pl-10 pr-10 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-full bg-white dark:bg-gray-950 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs">
+                  <button
+                    onClick={() => setSortBy('recent')}
+                    className={`transition-all ${
+                      sortBy === 'recent'
+                        ? 'font-medium text-black dark:text-white'
+                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    Recent
+                  </button>
+                  <button
+                    onClick={() => setSortBy('name')}
+                    className={`transition-all ${
+                      sortBy === 'name'
+                        ? 'font-medium text-black dark:text-white'
+                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    A-Z
+                  </button>
+                </div>
+
+                {cities.length > 1 && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                    <button
+                      onClick={() => setFilterCity('')}
+                      className={`transition-all ${
+                        !filterCity
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      All Cities
+                    </button>
+                    {cities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => setFilterCity(filterCity === city ? '' : city)}
+                        className={`transition-all ${
+                          filterCity === city
+                            ? 'font-medium text-black dark:text-white'
+                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        {formatCityName(city)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {categories.length > 1 && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                    <button
+                      onClick={() => setFilterCategory('')}
+                      className={`transition-all ${
+                        !filterCategory
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      All Categories
+                    </button>
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setFilterCategory(filterCategory === category ? '' : category)}
+                        className={`transition-all capitalize ${
+                          filterCategory === category
+                            ? 'font-medium text-black dark:text-white'
+                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Section Divider */}
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-8">
-              <div className="space-y-3 mb-8">
-                <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
-                  Destination Library
-                </h2>
-                <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-                  Manage and curate all destinations in the Urban Manual collection. Search, edit, or remove entries to keep the database accurate and up-to-date.
-                </p>
-              </div>
+            {viewMode === 'grid' ? (
+              isLoadingList ? (
+                <div className="py-16 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">Loading destinations...</p>
+                </div>
+              ) : searchFilteredDestinations.length === 0 ? (
+                <div className="py-16 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl">
+                  <div className="text-4xl mb-3">🗺️</div>
+                  <h3 className="text-lg font-medium text-black dark:text-white mb-2">No destinations found</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                    {searchQuery || filterCity || filterCategory
+                      ? 'Adjust your filters or search terms to find more destinations.'
+                      : 'Add a new place to start building the curated collection.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                  {searchFilteredDestinations.map((destination) => (
+                    <button
+                      type="button"
+                      key={destination.slug}
+                      onClick={() => handleEditDestinationClick(destination)}
+                      className="group text-left space-y-3"
+                    >
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+                        {destination.image ? (
+                          <Image
+                            src={destination.image}
+                            alt={destination.name}
+                            fill
+                            sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 20vw"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">
+                            No image
+                          </div>
+                        )}
+
+                        <div className="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 dark:bg-gray-950/70 backdrop-blur">
+                          <Check className="h-4 w-4 text-black dark:text-white" />
+                        </div>
+
+                        <div className="absolute top-3 right-3 flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleEditDestinationClick(destination);
+                            }}
+                            className="p-2 rounded-full bg-white/80 dark:bg-gray-950/70 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
+                            aria-label={`Edit ${destination.name}`}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDeleteDestination(destination.slug, destination.name);
+                            }}
+                            className="p-2 rounded-full bg-white/80 dark:bg-gray-950/70 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                            aria-label={`Delete ${destination.name}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-2">
+                          {destination.crown && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full bg-white/90 dark:bg-gray-950/80 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300">
+                              Crown
+                            </span>
+                          )}
+                          {destination.michelin_stars && destination.michelin_stars > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full bg-white/90 dark:bg-gray-950/80 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300">
+                              ⭐ {destination.michelin_stars}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-medium text-black dark:text-white leading-tight line-clamp-2">
+                          {destination.name}
+                        </h3>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                          <span>{formatCityName(destination.city)}</span>
+                          <span className="text-gray-300 dark:text-gray-700">•</span>
+                          <span className="capitalize">{destination.category}</span>
+                        </div>
+                        <code className="text-[10px] text-gray-400 dark:text-gray-500">{destination.slug}</code>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )
+            ) : (
               <DestinationsList
-                destinations={destinations}
-                onEdit={(destination) => {
-                  setEditingDestination(destination);
-                  setShowForm(true);
-                }}
+                destinations={filteredDestinations}
+                onEdit={handleEditDestinationClick}
                 onDelete={handleDeleteDestination}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 isLoading={isLoadingList}
+                showSearchInput={false}
               />
-            </div>
+            )}
           </div>
         )}
 
