@@ -2636,8 +2636,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
               <div className="mb-12 md:mb-16">
                 <SmartRecommendations
-                onCardClick={(destination) => {
-                  setSelectedDestination(destination);
+                  userProfile={userProfile}
+                  onCardClick={(destination) => {
+                    setSelectedDestination(destination);
                   setIsDrawerOpen(true);
 
                   // Track destination click

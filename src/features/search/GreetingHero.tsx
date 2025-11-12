@@ -1,10 +1,25 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Search, SlidersHorizontal, Sparkles, Loader2, X, Clock } from 'lucide-react';
-import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
+
+type QuickAction = {
+  id: string;
+  label: string;
+  query: string;
+  description?: string;
+};
+
+function humanizeLabel(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -45,7 +60,7 @@ interface GreetingHeroProps {
 export default function GreetingHero({
   searchQuery,
   onSearchChange,
-  onOpenFilters,
+  onOpenFilters: _onOpenFilters,
   onSubmit,
   userName,
   userProfile,
@@ -53,16 +68,71 @@ export default function GreetingHero({
   enrichedContext,
   isAIEnabled = false,
   isSearching = false,
-  filters,
-  onFiltersChange,
-  availableCities = [],
-  availableCategories = [],
+  filters: _filters,
+  onFiltersChange: _onFiltersChange,
+  availableCities: _availableCities = [],
+  availableCategories: _availableCategories = [],
 }: GreetingHeroProps) {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const favoriteCity = userProfile?.favorite_cities?.[0];
+  const favoriteCategory = userProfile?.favorite_categories?.[0];
+  const favoriteCityLabel = useMemo(() => humanizeLabel(favoriteCity), [favoriteCity]);
+  const favoriteCategoryLabel = useMemo(() => humanizeLabel(favoriteCategory), [favoriteCategory]);
+
+  const preferenceSubtext = useMemo(() => {
+    if (favoriteCityLabel && favoriteCategoryLabel) {
+      return `Still in the mood for ${favoriteCategoryLabel.toLowerCase()} in ${favoriteCityLabel}?`;
+    }
+    if (favoriteCityLabel) {
+      return `Explore what's trending in ${favoriteCityLabel} today.`;
+    }
+    if (favoriteCategoryLabel) {
+      return `Looking for new ${favoriteCategoryLabel.toLowerCase()} to try?`;
+    }
+    return undefined;
+  }, [favoriteCityLabel, favoriteCategoryLabel]);
+
+  const quickActions = useMemo<QuickAction[]>(() => {
+    const actions: QuickAction[] = [];
+
+    if (favoriteCityLabel && favoriteCategoryLabel) {
+      actions.push({
+        id: 'city-category',
+        label: `Best ${favoriteCategoryLabel} in ${favoriteCityLabel}`,
+        description: 'Curated for your favorites',
+        query: `Best ${favoriteCategoryLabel} in ${favoriteCityLabel}`,
+      });
+    }
+
+    if (favoriteCityLabel) {
+      actions.push({
+        id: 'city-trending',
+        label: `${favoriteCityLabel} highlights`,
+        description: "See what's hot right now",
+        query: `Trending spots in ${favoriteCityLabel}`,
+      });
+    }
+
+    if (favoriteCategoryLabel) {
+      actions.push({
+        id: 'category-discover',
+        label: `New ${favoriteCategoryLabel}`,
+        description: 'Fresh ideas to explore',
+        query: `New ${favoriteCategoryLabel} places`,
+      });
+    }
+
+    const unique = actions.filter((action, index, self) =>
+      self.findIndex((item) => item.id === action.id) === index
+    );
+
+    return unique.slice(0, 3);
+  }, [favoriteCityLabel, favoriteCategoryLabel]);
 
   // Get current time
   const now = new Date();
@@ -86,6 +156,11 @@ export default function GreetingHero({
   };
 
   const { greeting, subtext } = generateContextualGreeting(greetingContext);
+
+  const heroSubtext = preferenceSubtext ?? subtext;
+  const secondarySubtext = preferenceSubtext && subtext && preferenceSubtext !== subtext ? subtext : undefined;
+  const showSubtext = searchQuery.trim().length === 0 && !isFocused;
+  const showQuickActions = showSubtext && quickActions.length > 0 && !isSearching;
 
   // Rotating AI-powered travel intelligence cues
   const contextualPlaceholder = generateContextualPlaceholder(greetingContext);
@@ -141,7 +216,7 @@ export default function GreetingHero({
 
   const handleInputChange = (value: string) => {
     onSearchChange(value);
-    
+
     // Show typing indicator when user is typing
     setIsTyping(true);
     
@@ -155,6 +230,35 @@ export default function GreetingHero({
       setIsTyping(false);
     }, 1000);
   };
+
+  const handleQuickAction = useCallback((action: QuickAction) => {
+    onSearchChange(action.query);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    setIsTyping(false);
+    setIsFocused(false);
+    inputRef.current?.blur();
+
+    if (onSubmit) {
+      setTimeout(() => onSubmit(action.query), 0);
+    }
+
+    void import('@/lib/analytics/track').then(({ trackEvent }) => {
+      trackEvent({
+        event_type: 'quick_action',
+        metadata: {
+          source: 'greeting_hero',
+          actionId: action.id,
+          label: action.label,
+          query: action.query,
+        },
+      }).catch(() => {
+        // Ignore analytics failures
+      });
+    });
+  }, [onSearchChange, onSubmit]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -173,10 +277,17 @@ export default function GreetingHero({
           <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
             {greeting}
           </h1>
-          {searchQuery.trim().length === 0 && !isFocused && subtext && (
-            <p className="text-lg md:text-xl lg:text-2xl font-light text-gray-600 dark:text-gray-300">
-              {subtext}
-            </p>
+          {showSubtext && heroSubtext && (
+            <div className="space-y-1.5">
+              <p className="text-lg md:text-xl lg:text-2xl font-light text-gray-600 dark:text-gray-300">
+                {heroSubtext}
+              </p>
+              {secondarySubtext && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {secondarySubtext}
+                </p>
+              )}
+            </div>
           )}
         </div>
 
@@ -215,7 +326,7 @@ export default function GreetingHero({
             {/* Typing Indicator - Minimal, editorial style */}
             {isTyping && searchQuery.length > 0 && !isSearching && (
               <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-                <span 
+                <span
                   className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
                   style={{ 
                     animation: 'typing-dot 1.4s ease-in-out infinite',
@@ -240,6 +351,29 @@ export default function GreetingHero({
             )}
           </div>
         </div>
+        {showQuickActions && (
+          <div className="mt-5 flex flex-wrap gap-3">
+            {quickActions.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                onClick={() => handleQuickAction(action)}
+                className="group inline-flex min-w-[180px] flex-col gap-1 rounded-2xl border border-gray-200 px-4 py-3 text-left transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                aria-label={`Search for ${action.label}`}
+              >
+                <span className="flex items-center gap-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  {action.label}
+                </span>
+                {action.description && (
+                  <span className="text-[11px] text-gray-500 transition group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300">
+                    {action.description}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
