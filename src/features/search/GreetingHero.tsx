@@ -168,14 +168,14 @@ export default function GreetingHero({
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
         {/* Greeting above search - Enhanced with context */}
-        <div className="text-left mb-8">
+        <div className="text-left mb-[50px]">
           <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
             {greeting}
           </h1>
         </div>
 
         {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
-        <div className="relative">
+        <div className="relative mb-[50px]">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
               <Loader2 className="w-4 h-4 animate-spin" />

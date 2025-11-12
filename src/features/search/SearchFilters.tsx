@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, SlidersHorizontal, MapPin, Loader2 } from 'lucide-react';
+import { X, SlidersHorizontal, MapPin, Loader2, Search } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 export interface SearchFilters {
+  searchQuery?: string;
   city?: string;
   category?: string;
   michelin?: boolean;
@@ -35,6 +36,28 @@ export function SearchFiltersComponent({
   const [isOpen, setIsOpen] = useState(false);
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
+  const [searchQuery, setSearchQuery] = useState(filters.searchQuery || '');
+
+  // Sync searchQuery with filters
+  useEffect(() => {
+    setSearchQuery(filters.searchQuery || '');
+  }, [filters.searchQuery]);
+
+  // Handle search query changes with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== (filters.searchQuery || '')) {
+        if (searchQuery.trim()) {
+          updateFilter('searchQuery', searchQuery.trim());
+        } else {
+          clearFilter('searchQuery');
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   function updateFilter(key: keyof SearchFilters, value: any) {
     onFiltersChange({ ...filters, [key]: value });
@@ -106,37 +129,68 @@ export function SearchFiltersComponent({
   };
 
   return (
-    <div className="relative">
+    <div className="w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0"
-        aria-label="Open filters"
+        className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-all ${
+          isOpen ? 'rounded-b-none' : ''
+        }`}
+        aria-label="Toggle filters"
+        aria-expanded={isOpen}
       >
         <SlidersHorizontal className="h-5 w-5" />
+        <span className="text-sm font-medium">Filters</span>
+        {hasActiveFilters && (
+          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-white/20 dark:bg-black/20 rounded-full">
+            {Object.keys(filters).length}
+          </span>
+        )}
       </button>
 
       {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-[60] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-              <div className="text-sm font-medium">Filters</div>
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAll}
-                  className="text-xs text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
+        <div className="w-full bg-white dark:bg-black border-x border-b border-gray-200 dark:border-gray-800 rounded-b-2xl shadow-lg overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+            <div className="text-sm font-medium">Filters</div>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAll}
+                className="text-xs text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
 
-            {/* Scrollable Content */}
-            <div className="max-h-[70vh] overflow-y-auto px-6 py-4 space-y-6">
+          {/* Scrollable Content */}
+          <div className="px-6 py-4 space-y-6">
+
+              {/* Text Search - Only filters grid, doesn't trigger top search */}
+              <div>
+                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Search</div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-600" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Filter destinations..."
+                    className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        clearFilter('searchQuery');
+                      }}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-black dark:hover:text-white transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {/* Special Filters */}
               <div>
@@ -295,7 +349,7 @@ export function SearchFiltersComponent({
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

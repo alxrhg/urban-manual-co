@@ -468,6 +468,7 @@ export default function Home() {
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<{
+    searchQuery?: string;
     city?: string;
     category?: string;
     michelin?: boolean;
@@ -1255,6 +1256,18 @@ export default function Home() {
             (d as any).utc_offset || undefined
           );
         });
+      }
+
+      // Filter popup search query - only filters grid locally, doesn't trigger top search
+      if (currentAdvancedFilters.searchQuery && currentAdvancedFilters.searchQuery.trim()) {
+        const query = currentAdvancedFilters.searchQuery.toLowerCase();
+        filtered = filtered.filter(d => 
+          d.name?.toLowerCase().includes(query) ||
+          d.city?.toLowerCase().includes(query) ||
+          d.category?.toLowerCase().includes(query) ||
+          d.neighborhood?.toLowerCase().includes(query) ||
+          d.tags?.some(tag => tag.toLowerCase().includes(query))
+        );
       }
     }
     // When searchTerm exists, AI chat handles all filtering - don't apply text search here
@@ -2110,9 +2123,9 @@ export default function Home() {
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
-                  <div className="w-full pt-8 space-y-4">
+                  <div className="w-full pt-[50px]">
                     {/* City List - Limited to 2 rows */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs max-h-[4.5rem] overflow-hidden">
+                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs max-h-[4.5rem] overflow-hidden mb-[50px]">
                       <button
                         onClick={() => {
                           setSelectedCity("");
@@ -2233,33 +2246,34 @@ export default function Home() {
               <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-24 md:-mt-32">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
-                <div className="flex justify-end items-start gap-3 mb-8 md:mb-10 relative flex-wrap">
-                  {/* Filter Button - First so it can expand */}
-                  <div className="relative z-50">
-                    <SearchFiltersComponent
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
-                    }
-                  });
-                }}
-                      availableCities={cities}
-                      availableCategories={categories}
-                      onLocationChange={handleLocationChange}
-                    />
-                  </div>
+                <div className="mb-8 md:mb-10">
+                  <div className="flex justify-end items-start gap-3 relative flex-wrap">
+                    {/* Filter Button - Expands inline below */}
+                    <div className="w-full md:w-auto">
+                      <SearchFiltersComponent
+                        filters={advancedFilters}
+                        onFiltersChange={(newFilters) => {
+                          setAdvancedFilters(newFilters);
+                          if (newFilters.city !== undefined) {
+                            setSelectedCity(newFilters.city || '');
+                          }
+                          if (newFilters.category !== undefined) {
+                            setSelectedCategory(newFilters.category || '');
+                          }
+                          Object.entries(newFilters).forEach(([key, value]) => {
+                            if (value !== undefined && value !== null && value !== '') {
+                              trackFilterChange({ filterType: key, value });
+                            }
+                          });
+                        }}
+                        availableCities={cities}
+                        availableCategories={categories}
+                        onLocationChange={handleLocationChange}
+                      />
+                    </div>
 
-                  {/* Grid/Map Toggle */}
-                  <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                    {/* Grid/Map Toggle */}
+                    <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                     <button
                       onClick={() => setViewMode('grid')}
                       className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
@@ -2285,6 +2299,7 @@ export default function Home() {
                       <Map className="h-4 w-4" />
                       <span>Map</span>
                     </button>
+                  </div>
                   </div>
                 </div>
             
