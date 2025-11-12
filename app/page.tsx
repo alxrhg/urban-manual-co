@@ -30,7 +30,7 @@ import {
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
-import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
+import { SearchFiltersComponent, type SearchFilters } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
@@ -529,18 +529,7 @@ export default function Home() {
   // Calculate items per page based on 4 full rows × current grid columns
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   // Advanced filters state
-  const [advancedFilters, setAdvancedFilters] = useState<{
-    city?: string;
-    category?: string;
-    michelin?: boolean;
-    crown?: boolean;
-    minPrice?: number;
-    maxPrice?: number;
-    minRating?: number;
-    openNow?: boolean;
-    nearMe?: boolean;
-    nearMeRadius?: number;
-  }>({});
+  const [advancedFilters, setAdvancedFilters] = useState<SearchFilters>({});
   // Near Me state
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
@@ -1146,6 +1135,24 @@ export default function Home() {
     if (itemsPerPage <= 0 || totalDestinations === 0) return 1;
     return Math.max(1, Math.ceil(totalDestinations / itemsPerPage));
   }, [totalDestinations, itemsPerPage]);
+
+  // Sync searchTerm to filter's searchQuery (but don't create circular dependency)
+  useEffect(() => {
+    setAdvancedFilters(prev => {
+      const currentQuery = prev.searchQuery || '';
+      const newQuery = searchTerm.trim();
+      
+      if (currentQuery !== newQuery) {
+        if (newQuery) {
+          return { ...prev, searchQuery: newQuery };
+        } else {
+          const { searchQuery, ...rest } = prev;
+          return rest;
+        }
+      }
+      return prev;
+    });
+  }, [searchTerm]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -2622,6 +2629,10 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                       }
                       if (newFilters.category !== undefined) {
                         setSelectedCategory(newFilters.category || '');
+                      }
+                      // Connect filter search query to homepage search term
+                      if (newFilters.searchQuery !== undefined) {
+                        setSearchTerm(newFilters.searchQuery || '');
                       }
                       Object.entries(newFilters).forEach(([key, value]) => {
                         if (value !== undefined && value !== null && value !== '') {

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, SlidersHorizontal, MapPin, Loader2 } from 'lucide-react';
+import { X, SlidersHorizontal, MapPin, Loader2, Search } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 export interface SearchFilters {
+  searchQuery?: string;
   city?: string;
   category?: string;
   michelin?: boolean;
@@ -43,6 +44,7 @@ export function SearchFiltersComponent({
   const [isOpen, setIsOpen] = useState(false);
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
+  const [searchQuery, setSearchQuery] = useState(filters.searchQuery || '');
 
   function updateFilter(key: keyof SearchFilters, value: any) {
     onFiltersChange({ ...filters, [key]: value });
@@ -102,6 +104,26 @@ export function SearchFiltersComponent({
       window.removeEventListener('open-search-filters', handleExternalOpen);
     };
   }, []);
+
+  // Sync searchQuery with filters
+  useEffect(() => {
+    setSearchQuery(filters.searchQuery || '');
+  }, [filters.searchQuery]);
+
+  // Handle search query changes with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== (filters.searchQuery || '')) {
+        if (searchQuery.trim()) {
+          updateFilter('searchQuery', searchQuery.trim());
+        } else {
+          clearFilter('searchQuery');
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const hasActiveFilters = Object.keys(filters).length > 0;
 
@@ -164,6 +186,33 @@ export function SearchFiltersComponent({
 
             {/* Scrollable Content */}
             <div className="max-h-[70vh] overflow-y-auto px-6 py-4 space-y-6">
+              
+              {/* Text Search */}
+              <div>
+                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Search</div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-600" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search destinations..."
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        clearFilter('searchQuery');
+                      }}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-black dark:hover:text-white transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {/* Special Filters */}
               <div>
