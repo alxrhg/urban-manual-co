@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Heart, Grid3x3, List } from 'lucide-react';
@@ -8,6 +8,7 @@ import { NoSavedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
 
 interface SavedPlace {
   destination_slug: string;
+  saved_at?: string | null;
   destination: {
     name: string;
     city: string;
@@ -33,6 +34,27 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
   const [filterCity, setFilterCity] = useState<string>('');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recent' | 'name'>('recent');
+
+  const savedDateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }),
+    []
+  );
+
+  const getSavedAtTimestamp = useCallback((place: SavedPlace) => {
+    if (!place.saved_at) return 0;
+    const timestamp = new Date(place.saved_at).getTime();
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  }, []);
+
+  const formatSavedDate = useCallback(
+    (value?: string | null) => {
+      if (!value) return null;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return null;
+      return savedDateFormatter.format(date);
+    },
+    [savedDateFormatter]
+  );
 
   // Extract unique cities and categories
   const { cities, categories } = useMemo(() => {
@@ -65,11 +87,11 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
       if (sortBy === 'name') {
         return a.destination.name.localeCompare(b.destination.name);
       }
-      return 0; // Keep original order for 'recent'
+      return getSavedAtTimestamp(b) - getSavedAtTimestamp(a);
     });
 
     return filtered;
-  }, [savedPlaces, filterCity, filterCategory, sortBy]);
+  }, [savedPlaces, filterCity, filterCategory, sortBy, getSavedAtTimestamp]);
 
   if (savedPlaces.length === 0) {
     return <NoSavedPlacesEmptyState />;
@@ -226,34 +248,41 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
       {/* List View */}
       {viewMode === 'list' && filteredPlaces.length > 0 && (
         <div className="space-y-2">
-          {filteredPlaces.map((place) => (
-            <button
-              key={place.destination_slug}
-              onClick={() => router.push(`/destination/${place.destination_slug}`)}
-              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
-            >
-              {place.destination.image && (
-                <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  <Image
-                    src={place.destination.image}
-                    alt={place.destination.name}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
+          {filteredPlaces.map((place) => {
+            const savedDateLabel = formatSavedDate(place.saved_at);
+
+            return (
+              <button
+                key={place.destination_slug}
+                onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+              >
+                {place.destination.image && (
+                  <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <Image
+                      src={place.destination.image}
+                      alt={place.destination.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{place.destination.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {capitalizeCity(place.destination.city)} • {place.destination.category}
+                  </div>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{place.destination.name}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {capitalizeCity(place.destination.city)} • {place.destination.category}
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  {savedDateLabel && (
+                    <span className="text-[11px] text-gray-400">Saved {savedDateLabel}</span>
+                  )}
+                  <Heart className="w-4 h-4 fill-current text-gray-400" />
                 </div>
-              </div>
-              <div className="flex-shrink-0">
-                <Heart className="w-4 h-4 fill-current text-gray-400" />
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
