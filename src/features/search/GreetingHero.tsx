@@ -60,6 +60,7 @@ export default function GreetingHero({
 }: GreetingHeroProps) {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -172,7 +173,7 @@ export default function GreetingHero({
           <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
             {greeting}
           </h1>
-          {searchQuery.trim().length === 0 && subtext && (
+          {searchQuery.trim().length === 0 && !isFocused && subtext && (
             <p className="text-lg md:text-xl lg:text-2xl font-light text-gray-600 dark:text-gray-300">
               {subtext}
             </p>
@@ -194,6 +195,8 @@ export default function GreetingHero({
               onChange={(e) => {
                 handleInputChange(e.target.value);
               }}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               onKeyDown={(e) => {
                 handleKeyDown(e);
                 // CHAT MODE: Submit on Enter key (instant, bypasses debounce)
