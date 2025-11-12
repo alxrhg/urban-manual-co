@@ -349,7 +349,7 @@ export const chatRouter = router({
         .from('conversation_messages')
         .select('role, content, created_at')
         .eq('session_id', sessionId)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(input.limit);
 
       if (error) {
@@ -360,10 +360,12 @@ export const chatRouter = router({
         });
       }
 
+      const orderedMessages = (data || []).slice().reverse();
+
       return {
         sessionId,
         summary: (sessionRow?.context_summary as string | null) || null,
-        messages: (data || []).map((msg) => ({
+        messages: orderedMessages.map((msg) => ({
           role: msg.role as StoredMessage['role'],
           content: msg.content as string,
           createdAt: msg.created_at as string,
