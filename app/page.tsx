@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
-import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus
+import {
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, Star, LayoutGrid, Plus
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -519,6 +519,7 @@ export default function Home() {
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showAllCities, setShowAllCities] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
@@ -526,7 +527,6 @@ export default function Home() {
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
-  const [selectionSheet, setSelectionSheet] = useState<null | 'city' | 'category'>(null);
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
   // Pagination state
@@ -555,7 +555,7 @@ export default function Home() {
     }
     return filteredDestinations;
   }, [advancedFilters.nearMe, filteredDestinations, nearbyDestinations]);
-  const handleCitySheetSelect = useCallback(
+  const handleCitySelect = useCallback(
     (city: string | null) => {
       const normalizedCity = city?.trim() || '';
       const nextCity = normalizedCity === selectedCity ? '' : normalizedCity;
@@ -571,12 +571,11 @@ export default function Home() {
       });
       setCurrentPage(1);
       trackFilterChange({ filterType: 'city', value: nextCity || 'all' });
-      setSelectionSheet(null);
     },
-    [selectedCity]
+    [selectedCity, setAdvancedFilters, setCurrentPage, setSelectedCity]
   );
 
-  const handleCategorySheetSelect = useCallback(
+  const handleCategorySelect = useCallback(
     (category: string | null, options?: { michelin?: boolean }) => {
       setCurrentPage(1);
       if (options?.michelin) {
@@ -584,7 +583,6 @@ export default function Home() {
         setSelectedCategory('');
         setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
         trackFilterChange({ filterType: 'michelin', value: newValue });
-        setSelectionSheet(null);
         return;
       }
 
@@ -592,7 +590,6 @@ export default function Home() {
         setSelectedCategory('');
         setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
         trackFilterChange({ filterType: 'category', value: 'all' });
-        setSelectionSheet(null);
         return;
       }
 
@@ -600,11 +597,9 @@ export default function Home() {
       setSelectedCategory(newCategory);
       setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
       trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-      setSelectionSheet(null);
     },
-    [advancedFilters.michelin, selectedCategory]
+    [advancedFilters.michelin, selectedCategory, setAdvancedFilters, setSelectedCategory, setCurrentPage]
   );
-
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
@@ -2043,7 +2038,12 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
-  const displayedCities = showAllCities ? cities : cities.slice(0, 12);
+  const MAX_INLINE_CITY_COUNT = 12;
+  const MAX_INLINE_CATEGORY_COUNT = 12;
+  const inlineCityButtons = cities.slice(0, MAX_INLINE_CITY_COUNT);
+  const overflowCityButtons = cities.slice(MAX_INLINE_CITY_COUNT);
+  const inlineCategoryButtons = categories.slice(0, MAX_INLINE_CATEGORY_COUNT);
+  const overflowCategoryButtons = categories.slice(MAX_INLINE_CATEGORY_COUNT);
 
   return (
     <ErrorBoundary>
@@ -2336,31 +2336,157 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {!submittedQuery && (
                 <>
                   <div className="md:hidden px-5 pt-6 space-y-6">
-                    <div className="flex flex-row gap-4">
-                      <button
-                        onClick={() => setSelectionSheet('city')}
-                        className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-900 shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                      >
-                        <span className="block text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">City</span>
-                        <span className="mt-1 block text-base font-semibold text-gray-900 dark:text-white">{selectedCity ? capitalizeCity(selectedCity) : 'All Cities'}</span>
-                      </button>
-                      <button
-                        onClick={() => setSelectionSheet('category')}
-                        className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-900 shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                      >
-                        <span className="block text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Category</span>
-                        <span className="mt-1 block text-base font-semibold text-gray-900 dark:text-white">{advancedFilters.michelin ? 'Michelin' : selectedCategory ? capitalizeCategory(selectedCategory) : 'All Categories'}</span>
-                      </button>
+                    <div>
+                      <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                        <button
+                          onClick={() => handleCitySelect(null)}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCity
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          All Cities
+                        </button>
+                        {inlineCityButtons.map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => handleCitySelect(city)}
+                            className={`transition-all duration-200 ease-out ${
+                              selectedCity === city
+                                ? 'font-medium text-black dark:text-white'
+                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            {capitalizeCity(city)}
+                          </button>
+                        ))}
+                      </div>
+                      {overflowCityButtons.length > 0 && (
+                        <div className="mt-3 space-y-3">
+                          <button
+                            onClick={() => setShowAllCities(prev => !prev)}
+                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                          >
+                            {showAllCities
+                              ? '− Hide additional cities'
+                              : `+ More cities (${overflowCityButtons.length})`}
+                          </button>
+                          {showAllCities && (
+                            <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                                {overflowCityButtons.map((city) => (
+                                  <button
+                                    key={city}
+                                    onClick={() => handleCitySelect(city)}
+                                    className={`transition-all duration-200 ease-out ${
+                                      selectedCity === city
+                                        ? 'font-medium text-black dark:text-white'
+                                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                    }`}
+                                  >
+                                    {capitalizeCity(city)}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                        <button
+                          onClick={() => handleCategorySelect(null)}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCategory && !advancedFilters.michelin
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          All Categories
+                        </button>
+                        <button
+                          onClick={() => handleCategorySelect(null, { michelin: true })}
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                            advancedFilters.michelin
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          <img
+                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                            alt="Michelin star"
+                            className="h-3 w-3"
+                          />
+                          Michelin
+                        </button>
+                        {inlineCategoryButtons.map((category) => {
+                          const IconComponent = getCategoryIcon(category);
+                          return (
+                            <button
+                              key={category}
+                              onClick={() => handleCategorySelect(category)}
+                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                selectedCategory === category && !advancedFilters.michelin
+                                  ? 'font-medium text-black dark:text-white'
+                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              }`}
+                            >
+                              {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                              {capitalizeCategory(category)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {overflowCategoryButtons.length > 0 && (
+                        <div className="mt-3 space-y-3">
+                          <button
+                            onClick={() => setShowAllCategories(prev => !prev)}
+                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                          >
+                            {showAllCategories
+                              ? '− Hide additional categories'
+                              : `+ More categories (${overflowCategoryButtons.length})`}
+                          </button>
+                          {showAllCategories && (
+                            <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                                {overflowCategoryButtons.map((category) => {
+                                  const IconComponent = getCategoryIcon(category);
+                                  return (
+                                    <button
+                                      key={category}
+                                      onClick={() => handleCategorySelect(category)}
+                                      className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                        selectedCategory === category && !advancedFilters.michelin
+                                          ? 'font-medium text-black dark:text-white'
+                                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                      }`}
+                                    >
+                                      {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                      {capitalizeCategory(category)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <button
                       onClick={() => setShowTripPlanner(true)}
-                      className="mt-6 w-full rounded-xl bg-gray-900 py-3 text-base font-medium text-white transition hover:bg-black dark:bg-white dark:text-black"
+                      className="w-full rounded-xl bg-gray-900 py-3 text-base font-medium text-white transition hover:bg-black dark:bg-white dark:text-black"
                     >
-                      Begin your journey
+                      + New Trip
                     </button>
 
-                    <div className="flex flex-row items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <SearchFiltersComponent
                         filters={advancedFilters}
                         onFiltersChange={(newFilters) => {
@@ -2415,125 +2541,147 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   </div>
 
                   <div className="hidden md:flex flex-1 items-end">
-                    <div className="w-full pt-8 space-y-4">
-                      {/* City List - Limited to 2 rows */}
-                      <div className="relative flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => {
-                            setSelectedCity('');
-                            setCurrentPage(1);
-                            trackFilterChange({ filterType: 'city', value: 'all' });
-                          }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
-                              ? 'font-medium text-black dark:text-white'
-                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          All Cities
-                        </button>
-                        {displayedCities.map((city) => (
+                    <div className="w-full pt-8 space-y-6">
+                      <div>
+                        <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                           <button
-                            key={city}
-                            onClick={() => {
-                              const newCity = city === selectedCity ? '' : city;
-                              setSelectedCity(newCity);
-                              setCurrentPage(1);
-                              trackFilterChange({ filterType: 'city', value: newCity || 'all' });
-                            }}
+                            onClick={() => handleCitySelect(null)}
                             className={`transition-all duration-200 ease-out ${
-                              selectedCity === city
+                              !selectedCity
                                 ? 'font-medium text-black dark:text-white'
                                 : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                             }`}
                           >
-                            {capitalizeCity(city)}
+                            All Cities
                           </button>
-                        ))}
-
-                        {!showAllCities && cities.length > 12 && (
-                          <button
-                            onClick={() => setShowAllCities(true)}
-                            className="ml-auto flex items-center gap-1 font-medium text-black/30 transition-all duration-200 ease-out hover:text-black/60 dark:text-gray-500 dark:hover:text-gray-300"
-                          >
-                            + Show More
-                          </button>
-                        )}
-
-                        {showAllCities && cities.length > 12 && (
-                          <button
-                            onClick={() => setShowAllCities(false)}
-                            className="font-medium text-black/30 transition-all duration-200 ease-out hover:text-black/60 dark:text-gray-500 dark:hover:text-gray-300"
-                          >
-                            − Show Less
-                          </button>
+                          {inlineCityButtons.map((city) => (
+                            <button
+                              key={city}
+                              onClick={() => handleCitySelect(city)}
+                              className={`transition-all duration-200 ease-out ${
+                                selectedCity === city
+                                  ? 'font-medium text-black dark:text-white'
+                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              }`}
+                            >
+                              {capitalizeCity(city)}
+                            </button>
+                          ))}
+                        </div>
+                        {overflowCityButtons.length > 0 && (
+                          <div className="mt-3 space-y-3">
+                            <button
+                              onClick={() => setShowAllCities(prev => !prev)}
+                              className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                            >
+                              {showAllCities
+                                ? '− Hide additional cities'
+                                : `+ More cities (${overflowCityButtons.length})`}
+                            </button>
+                            {showAllCities && (
+                              <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                                <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                                  {overflowCityButtons.map((city) => (
+                                    <button
+                                      key={city}
+                                      onClick={() => handleCitySelect(city)}
+                                      className={`transition-all duration-200 ease-out ${
+                                        selectedCity === city
+                                          ? 'font-medium text-black dark:text-white'
+                                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                      }`}
+                                    >
+                                      {capitalizeCity(city)}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
 
-                      {/* Category List (including Michelin) */}
                       {categories.length > 0 && (
-                        <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                          <button
-                            onClick={() => {
-                              setSelectedCategory('');
-                              setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
-                              setCurrentPage(1);
-                              trackFilterChange({ filterType: 'category', value: 'all' });
-                            }}
-                            className={`transition-all duration-200 ease-out ${
-                              !selectedCategory && !advancedFilters.michelin
-                                ? 'font-medium text-black dark:text-white'
-                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            All Categories
-                          </button>
-                          <button
-                            onClick={() => {
-                              const newValue = !advancedFilters.michelin;
-                              setSelectedCategory('');
-                              setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
-                              setCurrentPage(1);
-                              trackFilterChange({ filterType: 'michelin', value: newValue });
-                            }}
-                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                              advancedFilters.michelin
-                                ? 'font-medium text-black dark:text-white'
-                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            <img
-                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                            />
-                            Michelin
-                          </button>
-                          {categories.map((category) => {
-                            const IconComponent = getCategoryIcon(category);
-                            return (
+                        <div>
+                          <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                            <button
+                              onClick={() => handleCategorySelect(null)}
+                              className={`transition-all duration-200 ease-out ${
+                                !selectedCategory && !advancedFilters.michelin
+                                  ? 'font-medium text-black dark:text-white'
+                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              }`}
+                            >
+                              All Categories
+                            </button>
+                            <button
+                              onClick={() => handleCategorySelect(null, { michelin: true })}
+                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                advancedFilters.michelin
+                                  ? 'font-medium text-black dark:text-white'
+                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              }`}
+                            >
+                              <img
+                                src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                                alt="Michelin star"
+                                className="h-3 w-3"
+                              />
+                              Michelin
+                            </button>
+                            {inlineCategoryButtons.map((category) => {
+                              const IconComponent = getCategoryIcon(category);
+                              return (
+                                <button
+                                  key={category}
+                                  onClick={() => handleCategorySelect(category)}
+                                  className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                    selectedCategory === category && !advancedFilters.michelin
+                                      ? 'font-medium text-black dark:text-white'
+                                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                  }`}
+                                >
+                                  {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                  {capitalizeCategory(category)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {overflowCategoryButtons.length > 0 && (
+                            <div className="mt-3 space-y-3">
                               <button
-                                key={category}
-                                onClick={() => {
-                                  const newCategory = category === selectedCategory ? '' : category;
-                                  setSelectedCategory(newCategory);
-                                  setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
-                                  setCurrentPage(1);
-                                  trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                                }}
-                                className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                  selectedCategory === category && !advancedFilters.michelin
-                                    ? 'font-medium text-black dark:text-white'
-                                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                }`}
+                                onClick={() => setShowAllCategories(prev => !prev)}
+                                className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
                               >
-                                {IconComponent && (
-                                  <IconComponent className="h-3 w-3" size={12} />
-                                )}
-                                {capitalizeCategory(category)}
+                                {showAllCategories
+                                  ? '− Hide additional categories'
+                                  : `+ More categories (${overflowCategoryButtons.length})`}
                               </button>
-                            );
-                          })}
+                              {showAllCategories && (
+                                <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                                  <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                                    {overflowCategoryButtons.map((category) => {
+                                      const IconComponent = getCategoryIcon(category);
+                                      return (
+                                        <button
+                                          key={category}
+                                          onClick={() => handleCategorySelect(category)}
+                                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                            selectedCategory === category && !advancedFilters.michelin
+                                              ? 'font-medium text-black dark:text-white'
+                                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                          }`}
+                                        >
+                                          {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                          {capitalizeCategory(category)}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -2815,7 +2963,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   </button>
                 </div>
               </div>
-              <div className="relative rounded-t-3xl bg-white px-5 py-6 pb-safe-area shadow-[0_-20px_40px_rgba(0,0,0,0.25)] dark:bg-gray-950">
+              <div className="relative w-full max-w-3xl mx-auto rounded-t-[32px] border border-gray-200/90 bg-white px-6 py-6 pb-safe-area shadow-[0_-28px_60px_rgba(15,23,42,0.35)] dark:border-gray-800/80 dark:bg-gray-950">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Explore on the map</h3>
@@ -2830,103 +2978,6 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                     <LayoutGrid className="h-4 w-4" />
                     View grid
                   </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Selection Sheet */}
-          {selectionSheet && (
-            <div className="fixed inset-0 z-[80] flex flex-col md:hidden">
-              <div
-                className="absolute inset-0 bg-black/40"
-                onClick={() => setSelectionSheet(null)}
-                aria-hidden="true"
-              />
-              <div className="relative mt-auto rounded-t-3xl bg-white px-5 py-6 pb-safe-area shadow-2xl dark:bg-gray-950">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {selectionSheet === 'city' ? 'Choose a city' : 'Choose a category'}
-                    </h3>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {selectionSheet === 'city'
-                        ? 'Switch destinations by city without leaving the homepage.'
-                        : 'Refine the list by category or Michelin selections.'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectionSheet(null)}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
-                    aria-label="Close selector"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="mt-6 max-h-[60vh] space-y-4 overflow-y-auto pr-1">
-                  {selectionSheet === 'city' ? (
-                    <>
-                      <button
-                        onClick={() => handleCitySheetSelect(null)}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
-                          selectedCity === ''
-                            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                        }`}
-                      >
-                        All Cities
-                      </button>
-                      {cities.map((city) => (
-                        <button
-                          key={city}
-                          onClick={() => handleCitySheetSelect(city)}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
-                            selectedCity === city
-                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                          }`}
-                        >
-                          {capitalizeCity(city)}
-                        </button>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleCategorySheetSelect(null)}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
-                          !selectedCategory && !advancedFilters.michelin
-                            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                        }`}
-                      >
-                        All Categories
-                      </button>
-                      <button
-                        onClick={() => handleCategorySheetSelect(null, { michelin: true })}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
-                          advancedFilters.michelin
-                            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                        }`}
-                      >
-                        Michelin
-                      </button>
-                      {categories.map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => handleCategorySheetSelect(category)}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
-                            selectedCategory === category && !advancedFilters.michelin
-                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                          }`}
-                        >
-                          {capitalizeCategory(category)}
-                        </button>
-                      ))}
-                    </>
-                  )}
                 </div>
               </div>
             </div>

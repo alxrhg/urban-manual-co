@@ -4,13 +4,7 @@ import { SITE_MAX_WIDTH_CLASS } from '@/lib/layout';
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-gray-200 dark:border-gray-800">
-      {/* Main Content Area */}
-      <div className="w-full px-6 md:px-10 lg:px-12 py-16">
-        <div className="max-w-6xl mx-auto">
-        </div>
-      </div>
-
+    <footer className="mt-12 border-t border-gray-200 dark:border-gray-800">
       {/* Bottom Section - Legal & Navigation */}
       <div className="border-t border-gray-200 dark:border-gray-800">
         <div className="w-full px-6 md:px-10 lg:px-12 py-6">
