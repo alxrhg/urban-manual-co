@@ -7,8 +7,7 @@ export default function SavedPage() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect to account page with saved tab
-    router.replace('/account?tab=saved');
+    router.replace('/account/history#saved-places');
   }, [router]);
 
   return null;
