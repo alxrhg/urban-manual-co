@@ -8,16 +8,20 @@ import { createClient } from '@supabase/supabase-js';
 import { findNearbyDestinations } from '@/lib/enrichment/distance-matrix';
 import { withErrorHandling, createValidationError, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey =
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new CustomError(ErrorCode.INTERNAL_SERVER_ERROR, 'Supabase not configured', 500);
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   const searchParams = request.nextUrl.searchParams;
   const lat = parseFloat(searchParams.get('lat') || '0');
   const lng = parseFloat(searchParams.get('lng') || '0');

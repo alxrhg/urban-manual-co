@@ -12,20 +12,25 @@ import { calculateRouteFromCityCenter } from '@/lib/enrichment/routes';
 import { generateDestinationMap } from '@/lib/enrichment/static-maps';
 import { getCurrencyCodeForCity, getExchangeRate } from '@/lib/enrichment/currency';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey =
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase environment variables are not configured for the enriched destination API.');
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const { slug } = await params;
 
     // Fetch destination

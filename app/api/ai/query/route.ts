@@ -2,15 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateJSON } from '@/lib/llm';
 
-const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const key = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey =
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-) as string;
-const supabase = createClient(url, key);
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,6 +16,13 @@ export async function POST(req: NextRequest) {
     if (!query || typeof query !== 'string') {
       return NextResponse.json({ error: 'query is required' }, { status: 400 });
     }
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase environment variables are not configured for the AI query route.');
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const system = 'You are an intelligent travel router. Parse the user query into JSON with fields: city, category, modifiers (array), openNow (boolean), budget (min,max), dateRange (start,end).';
     const parsed = await generateJSON(system, query);

@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const key = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+const supabaseKey =
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-) as string;
-const supabase = createClient(url, key);
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ city: string }> }
 ) {
   try {
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase environment variables are not configured for the itinerary API.');
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const { city } = await context.params;

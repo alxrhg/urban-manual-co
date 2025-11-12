@@ -158,17 +158,6 @@ export function DestinationForm({ destination, onSave, onCancel, isSaving, toast
     }
   }, [destination]);
 
-  useEffect(() => {
-    if (parentSearchQuery.trim()) {
-      const timeoutId = window.setTimeout(() => {
-        void searchParentDestinations(parentSearchQuery);
-      }, 300);
-      return () => window.clearTimeout(timeoutId);
-    }
-    setParentSearchResults([]);
-    return undefined;
-  }, [parentSearchQuery, searchParentDestinations]);
-
   const searchParentDestinations = useCallback(async (query: string) => {
     setIsSearchingParent(true);
     try {
@@ -188,6 +177,17 @@ export function DestinationForm({ destination, onSave, onCancel, isSaving, toast
       setIsSearchingParent(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (parentSearchQuery.trim()) {
+      const timeoutId = window.setTimeout(() => {
+        void searchParentDestinations(parentSearchQuery);
+      }, 300);
+      return () => window.clearTimeout(timeoutId);
+    }
+    setParentSearchResults([]);
+    return undefined;
+  }, [parentSearchQuery, searchParentDestinations]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
