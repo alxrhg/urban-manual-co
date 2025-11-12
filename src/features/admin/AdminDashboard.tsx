@@ -80,6 +80,17 @@ function normalizeDestinationInput(data: DestinationFormValues): DestinationInpu
 
 export function AdminDashboard() {
   const toast = useToast();
+  const showError = toast.error;
+  const showSuccess = toast.success;
+  const showWarning = toast.warning;
+  const toastApi = useMemo(
+    () => ({
+      error: showError,
+      success: showSuccess,
+      warning: showWarning,
+    }),
+    [showError, showSuccess, showWarning]
+  );
   const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
   const { user, isAdmin, authChecked } = useAdminAccess();
   const router = useRouter();
@@ -109,12 +120,12 @@ export function AdminDashboard() {
       setDestinations(data);
     } catch (error) {
       console.error('[Admin] Failed to load destinations', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to load destinations');
+      showError(error instanceof Error ? error.message : 'Failed to load destinations');
       setDestinations([]);
     } finally {
       setIsLoadingList(false);
     }
-  }, [authChecked, isAdmin, searchQuery, toast]);
+  }, [authChecked, isAdmin, searchQuery, showError]);
 
   useEffect(() => {
     if (!authChecked || !isAdmin) return;
@@ -140,11 +151,11 @@ export function AdminDashboard() {
       setHasLoadedAnalytics(true);
     } catch (error) {
       console.error('[Admin] Failed to load analytics', error);
-      toast.error('Failed to load analytics');
+      showError('Failed to load analytics');
     } finally {
       setLoadingAnalytics(false);
     }
-  }, [toast]);
+  }, [showError]);
 
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
@@ -154,12 +165,12 @@ export function AdminDashboard() {
       setHasLoadedSearches(true);
     } catch (error) {
       console.error('[Admin] Failed to load search logs', error);
-      toast.error('Failed to load search logs');
+      showError('Failed to load search logs');
       setSearchLogs([]);
     } finally {
       setLoadingSearches(false);
     }
-  }, [toast]);
+  }, [showError]);
 
   useEffect(() => {
     if (!authChecked || !isAdmin) return;
@@ -182,16 +193,16 @@ export function AdminDashboard() {
         onConfirm: async () => {
           try {
             await deleteDestinationApi(slug);
-            toast.success(`Successfully deleted "${name}"`);
+            showSuccess(`Successfully deleted "${name}"`);
             await refreshDestinations();
           } catch (error) {
             console.error('[Admin] Delete error:', error);
-            toast.error(error instanceof Error ? `Failed to delete: ${error.message}` : 'Failed to delete destination');
+            showError(error instanceof Error ? `Failed to delete: ${error.message}` : 'Failed to delete destination');
           }
         },
       });
     },
-    [confirm, refreshDestinations, toast]
+    [confirm, refreshDestinations, showError, showSuccess]
   );
 
   const handleSaveDestination = useCallback(
@@ -209,15 +220,15 @@ export function AdminDashboard() {
         setShowForm(false);
         setEditingDestination(null);
         await refreshDestinations();
-        toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
+        showSuccess(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
       } catch (error) {
         console.error('[Admin] Save error:', error);
-        toast.error(error instanceof Error ? error.message : 'Failed to save destination');
+        showError(error instanceof Error ? error.message : 'Failed to save destination');
       } finally {
         setIsSaving(false);
       }
     },
-    [editingDestination, refreshDestinations, toast]
+    [editingDestination, refreshDestinations, showError, showSuccess]
   );
 
   const tableColumns = useMemo(
@@ -463,7 +474,7 @@ export function AdminDashboard() {
               <div className="p-6">
                 <DestinationForm
                   destination={editingDestination}
-                  toast={toast}
+                  toast={toastApi}
                   onSave={handleSaveDestination}
                   onCancel={() => {
                     setShowForm(false);
