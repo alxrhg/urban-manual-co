@@ -550,7 +550,23 @@ export default function Home() {
     }
     return filteredDestinations;
   }, [advancedFilters.nearMe, filteredDestinations, nearbyDestinations]);
+  const displayDestinationsCount = displayDestinations.length;
   const resultsCount = filteredDestinations.length;
+
+  useEffect(() => {
+    if (itemsPerPage <= 0) {
+      return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(displayDestinationsCount / itemsPerPage));
+
+    setCurrentPage(prevPage => {
+      if (prevPage > totalPages) {
+        return totalPages;
+      }
+      return prevPage;
+    });
+  }, [displayDestinationsCount, itemsPerPage, setCurrentPage]);
 
   const handleNavigationFiltersClick = useCallback(() => {
     if (typeof window !== 'undefined') {
