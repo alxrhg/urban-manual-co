@@ -212,9 +212,16 @@ export function AddToTripModal({
       <div className="relative bg-white dark:bg-gray-950 rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Add to Trip
-          </h2>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Add to Trip
+            </h2>
+            {destinationName && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {destinationName}
+              </p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"

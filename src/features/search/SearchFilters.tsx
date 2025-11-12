@@ -132,8 +132,8 @@ export function SearchFiltersComponent({
     <div className="w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-all ${
-          isOpen ? 'rounded-b-none' : ''
+        className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl transition-all ${
+          isOpen ? 'rounded-b-none' : 'hover:opacity-90'
         }`}
         aria-label="Toggle filters"
         aria-expanded={isOpen}
@@ -349,8 +349,7 @@ export function SearchFiltersComponent({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
