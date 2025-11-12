@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -9,10 +9,8 @@ import {
   ArrowLeft,
   Calendar,
   MapPin,
-  Edit2,
   Trash2,
   Plus,
-  X,
   Loader2,
   Clock,
 } from 'lucide-react';
@@ -20,7 +18,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
-import { DestinationCard } from '@/components/DestinationCard';
 import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';
@@ -63,10 +60,11 @@ export default function TripDetailPage() {
   const [itineraryItems, setItineraryItems] = useState<ItineraryItem[]>([]);
   const [destinations, setDestinations] = useState<Map<string, Destination>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'day' | 'name'>('day');
+  const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all');
 
   useEffect(() => {
     if (!authLoading) {
@@ -213,6 +211,22 @@ export default function TripDetailPage() {
     return startDate.toISOString().split('T')[0];
   };
 
+  const dayNumbers = useMemo(() => {
+    const uniqueDays = new Set<number>();
+    itineraryItems.forEach((item) => {
+      if (typeof item.day === 'number') {
+        uniqueDays.add(item.day);
+      }
+    });
+    return Array.from(uniqueDays).sort((a, b) => a - b);
+  }, [itineraryItems]);
+
+  useEffect(() => {
+    if (activeDayFilter !== 'all' && !dayNumbers.includes(activeDayFilter)) {
+      setActiveDayFilter('all');
+    }
+  }, [activeDayFilter, dayNumbers]);
+
   // Transform itinerary items to TripLocation format
   const transformItemsToLocations = (items: ItineraryItem[]) => {
     return items.map((item) => {
@@ -243,6 +257,95 @@ export default function TripDetailPage() {
         mealType: notesData.mealType || undefined,
       };
     });
+  };
+
+  interface EnrichedItineraryItem {
+    id: string;
+    day: number;
+    order: number;
+    title: string;
+    city: string;
+    category: string;
+    image: string;
+    slug: string | null;
+    time?: string | null;
+    notes?: string;
+  }
+
+  const enrichedItems = useMemo<EnrichedItineraryItem[]>(() => {
+    return itineraryItems.map((item) => {
+      const destination = item.destination_slug
+        ? destinations.get(item.destination_slug)
+        : null;
+
+      let notesData: Record<string, any> = {};
+      if (item.notes) {
+        try {
+          notesData = JSON.parse(item.notes);
+        } catch {
+          notesData = { raw: item.notes };
+        }
+      }
+
+      const fallbackSlug =
+        destination?.slug || item.destination_slug || item.title.toLowerCase().replace(/\s+/g, '-');
+
+      return {
+        id: item.id,
+        day: item.day,
+        order: item.order_index,
+        title: destination?.name || item.title,
+        city: destination?.city || notesData.city || '',
+        category: destination?.category || item.description || '',
+        image: destination?.image || notesData.image || '/placeholder-image.jpg',
+        slug: fallbackSlug,
+        time: item.time,
+        notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+      } satisfies EnrichedItineraryItem;
+    });
+  }, [itineraryItems, destinations]);
+
+  const filteredItems = useMemo(() => {
+    let items = [...enrichedItems];
+
+    if (activeDayFilter !== 'all') {
+      items = items.filter((item) => item.day === activeDayFilter);
+    }
+
+    items.sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.title.localeCompare(b.title);
+      }
+      if (a.day !== b.day) {
+        return a.day - b.day;
+      }
+      return a.order - b.order;
+    });
+
+    return items;
+  }, [enrichedItems, activeDayFilter, sortBy]);
+
+  const formatTimeLabel = (time?: string | null) => {
+    if (!time) return null;
+    try {
+      const [hours, minutes] = time.split(':');
+      const date = new Date();
+      date.setHours(Number(hours), Number(minutes));
+      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch {
+      return time;
+    }
+  };
+
+  const openAddLocationModal = () => {
+    const defaultDay =
+      activeDayFilter !== 'all'
+        ? activeDayFilter
+        : dayNumbers.length > 0
+        ? dayNumbers[dayNumbers.length - 1]
+        : 1;
+    setSelectedDay(defaultDay);
+    setShowAddLocationModal(true);
   };
 
   const handleAddLocation = (dayNumber: number) => {
@@ -406,147 +509,353 @@ export default function TripDetailPage() {
           </div>
         </div>
 
-        {/* Itinerary by Day */}
-        {Object.keys(itemsByDay).length === 0 ? (
-          <div className="rounded-[32px] border border-dashed border-gray-300 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 px-10 py-16 text-center space-y-5">
-            <MapPin className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-700" />
-            <h3 className="text-xl font-medium">No items yet</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Add destinations to this trip to start building your itinerary.
-            </p>
+        {/* Modern itinerary overview */}
+        <section className="space-y-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3 text-xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`transition-all ${
+                  viewMode === 'grid'
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`transition-all ${
+                  viewMode === 'list'
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                List
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={openAddLocationModal}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Place
+            </button>
           </div>
-        ) : (
-          <div className="space-y-12">
-            {Object.entries(itemsByDay)
-              .sort(([a], [b]) => Number(a) - Number(b))
-              .map(([day, items]) => {
-                const dayNumber = Number(day);
-                const dayDate = getDateForDay(dayNumber);
-                const locations = transformItemsToLocations(items);
 
+          <div className="flex items-center gap-3 text-xs">
+            <button
+              type="button"
+              onClick={() => setSortBy('day')}
+              className={`transition-all ${
+                sortBy === 'day'
+                  ? 'font-medium text-black dark:text-white'
+                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+              }`}
+            >
+              Day order
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortBy('name')}
+              className={`transition-all ${
+                sortBy === 'name'
+                  ? 'font-medium text-black dark:text-white'
+                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+              }`}
+            >
+              A-Z
+            </button>
+          </div>
+
+          {dayNumbers.length > 1 && (
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveDayFilter('all')}
+                className={`transition-all ${
+                  activeDayFilter === 'all'
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                All days
+              </button>
+              {dayNumbers.map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => setActiveDayFilter(day)}
+                  className={`transition-all ${
+                    activeDayFilter === day
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Day {day}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {filteredItems.length === 0 ? (
+            <div className="rounded-[32px] border border-dashed border-gray-300 bg-white/70 px-10 py-16 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950/60 space-y-5">
+              <MapPin className="mx-auto h-16 w-16 text-gray-300 dark:text-gray-700" />
+              <div className="space-y-2">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100">Start building this trip</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Use Add Place to curate the perfect itinerary, then refine in the detailed planner below.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={openAddLocationModal}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-medium text-gray-600 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add first place
+              </button>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {filteredItems.map((item) => {
+                const timeLabel = formatTimeLabel(item.time);
                 return (
-                  <TripDay
-                    key={day}
-                    dayNumber={dayNumber}
-                    date={dayDate}
-                    locations={locations}
-                    onAddLocation={() => handleAddLocation(dayNumber)}
-                    onRemoveLocation={handleRemoveLocation}
-                    onReorderLocations={async (reorderedLocations) => {
-                      // Handle reordering - update order_index in database
-                      try {
-                        const supabaseClient = createClient();
-                        if (!supabaseClient || !user) return;
-
-                        // Delete existing items for this day
-                        await supabaseClient
-                          .from('itinerary_items')
-                          .delete()
-                          .eq('trip_id', tripId)
-                          .eq('day', dayNumber);
-
-                        // Insert reordered items - match by title/name
-                        const itemsToInsert = reorderedLocations.map((loc, idx) => {
-                          const originalItem = items.find(
-                            (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
-                          );
-                          
-                          // Parse notes if it contains JSON data
-                          let notesData: any = {};
-                          if (originalItem?.notes) {
-                            try {
-                              notesData = JSON.parse(originalItem.notes);
-                            } catch {
-                              notesData = { raw: originalItem.notes };
-                            }
-                          }
-
-                          // Update notes with location data
-                          const updatedNotes = JSON.stringify({
-                            raw: loc.notes || notesData.raw || '',
-                            cost: loc.cost || notesData.cost,
-                            duration: loc.duration || notesData.duration,
-                            mealType: loc.mealType || notesData.mealType,
-                            image: loc.image || notesData.image,
-                            city: loc.city || notesData.city,
-                            category: loc.category || notesData.category,
-                          });
-
-                          return {
-                            trip_id: tripId,
-                            destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
-                            day: dayNumber,
-                            order_index: idx,
-                            time: loc.time || originalItem?.time || null,
-                            title: loc.name,
-                            description: loc.category || originalItem?.description || '',
-                            notes: updatedNotes,
-                          };
-                        });
-
-                        if (itemsToInsert.length > 0) {
-                          await supabaseClient
-                            .from('itinerary_items')
-                            .insert(itemsToInsert);
+                  <div key={item.id} className="group relative rounded-2xl border border-gray-200 bg-white/80 p-2 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950/80 dark:hover:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.slug) {
+                          router.push(`/destination/${item.slug}`);
                         }
-
-                        // Reload trip data
-                        await fetchTripDetails();
-                      } catch (error) {
-                        console.error('Error reordering locations:', error);
-                        alert('Failed to reorder locations. Please try again.');
-                      }
-                    }}
-                    onDuplicateDay={async () => {
-                      // Duplicate day functionality
-                      alert('Duplicate day feature coming soon');
-                    }}
-                    onOptimizeRoute={async () => {
-                      // Optimize route functionality
-                      alert('Route optimization feature coming soon');
-                    }}
-                  />
+                      }}
+                      className="block w-full text-left"
+                    >
+                      <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+                        {item.image && (
+                          <Image
+                            src={item.image}
+                            alt={item.title}
+                            fill
+                            className="object-cover transition duration-300 group-hover:scale-105"
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                          />
+                        )}
+                        <div className="absolute left-2 top-2 rounded-full bg-white/90 px-3 py-1 text-[10px] font-medium text-gray-600 shadow-sm dark:bg-gray-900/80 dark:text-gray-300">
+                          Day {item.day}
+                        </div>
+                        {timeLabel && (
+                          <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-[10px] font-medium text-gray-600 shadow-sm dark:bg-gray-900/80 dark:text-gray-300">
+                            <Clock className="h-3 w-3" />
+                            {timeLabel}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                    <div className="mt-3 space-y-1">
+                      <h3 className="text-sm font-medium leading-tight text-gray-900 dark:text-gray-100 line-clamp-2">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {item.city ? capitalizeCity(item.city) : 'Unassigned city'}
+                      </p>
+                      {item.category && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{item.category}</p>
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!item.id) return;
+                          deleteItineraryItem(item.id);
+                        }}
+                        className="text-gray-400 transition hover:text-red-500"
+                        aria-label={`Remove ${item.title}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      {item.slug && (
+                        <Link
+                          href={`/destination/${item.slug}`}
+                          className="text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          View details
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
-          </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredItems.map((item) => {
+                const timeLabel = formatTimeLabel(item.time);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white/80 p-3 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950/80 dark:hover:border-gray-700"
+                  >
+                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+                      {item.image && (
+                        <Image
+                          src={item.image}
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</h3>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Day {item.day}
+                            {timeLabel && ` • ${timeLabel}`}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 capitalize">
+                            {item.city ? capitalizeCity(item.city) : 'Unassigned city'}
+                            {item.category && ` • ${item.category}`}
+                          </p>
+                          {item.notes && (
+                            <p className="mt-1 line-clamp-2 text-xs text-gray-400 dark:text-gray-500">{item.notes}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-2 text-xs">
+                          {item.slug && (
+                            <Link
+                              href={`/destination/${item.slug}`}
+                              className="text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              View
+                            </Link>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => deleteItineraryItem(item.id)}
+                            className="text-gray-400 transition hover:text-red-500"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {Object.keys(itemsByDay).length > 0 && (
+          <section className="space-y-8 border-t border-gray-100 pt-10 dark:border-gray-800">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Detailed planner</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Drag to reorder, duplicate days, and fine-tune pacing for every stop.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-12">
+              {Object.entries(itemsByDay)
+                .sort(([a], [b]) => Number(a) - Number(b))
+                .map(([day, items]) => {
+                  const dayNumber = Number(day);
+                  const dayDate = getDateForDay(dayNumber);
+                  const locations = transformItemsToLocations(items);
+
+                  return (
+                    <TripDay
+                      key={day}
+                      dayNumber={dayNumber}
+                      date={dayDate}
+                      locations={locations}
+                      onAddLocation={() => handleAddLocation(dayNumber)}
+                      onRemoveLocation={handleRemoveLocation}
+                      onReorderLocations={async (reorderedLocations) => {
+                        try {
+                          const supabaseClient = createClient();
+                          if (!supabaseClient || !user) return;
+
+                          await supabaseClient
+                            .from('itinerary_items')
+                            .delete()
+                            .eq('trip_id', tripId)
+                            .eq('day', dayNumber);
+
+                          const itemsToInsert = reorderedLocations.map((loc, idx) => {
+                            const originalItem = items.find(
+                              (item) =>
+                                item.title === loc.name ||
+                                item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
+                            );
+
+                            let notesData: any = {};
+                            if (originalItem?.notes) {
+                              try {
+                                notesData = JSON.parse(originalItem.notes);
+                              } catch {
+                                notesData = { raw: originalItem.notes };
+                              }
+                            }
+
+                            const updatedNotes = JSON.stringify({
+                              raw: loc.notes || notesData.raw || '',
+                              cost: loc.cost || notesData.cost,
+                              duration: loc.duration || notesData.duration,
+                              mealType: loc.mealType || notesData.mealType,
+                              image: loc.image || notesData.image,
+                              city: loc.city || notesData.city,
+                              category: loc.category || notesData.category,
+                            });
+
+                            return {
+                              trip_id: tripId,
+                              destination_slug:
+                                originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
+                              day: dayNumber,
+                              order_index: idx,
+                              time: loc.time || originalItem?.time || null,
+                              title: loc.name,
+                              description: loc.category || originalItem?.description || '',
+                              notes: updatedNotes,
+                            };
+                          });
+
+                          if (itemsToInsert.length > 0) {
+                            await supabaseClient.from('itinerary_items').insert(itemsToInsert);
+                          }
+
+                          await fetchTripDetails();
+                        } catch (error) {
+                          console.error('Error reordering locations:', error);
+                          alert('Failed to reorder locations. Please try again.');
+                        }
+                      }}
+                      onDuplicateDay={async () => {
+                        alert('Duplicate day feature coming soon');
+                      }}
+                      onOptimizeRoute={async () => {
+                        alert('Route optimization feature coming soon');
+                      }}
+                    />
+                  );
+                })}
+            </div>
+          </section>
         )}
       </PageContainer>
 
-      {/* Destination Drawer */}
-      {selectedDestination && (
-        <div
-          className={`fixed inset-0 z-50 md:hidden ${
-            isDrawerOpen ? 'block' : 'hidden'
-          }`}
-        >
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setIsDrawerOpen(false)}
-          />
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 rounded-t-2xl max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">{selectedDestination.name}</h2>
-                <button
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <Link
-                href={`/destination/${selectedDestination.slug}`}
-                className="block w-full text-center py-3 px-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium text-sm hover:opacity-90 transition-opacity"
-              >
-                View Full Details
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Add Location Modal */}
-      {trip && selectedDay !== null && (
+      {trip && showAddLocationModal && selectedDay !== null && (
         <AddLocationToTrip
           onAdd={handleLocationAdded}
           onClose={() => {
