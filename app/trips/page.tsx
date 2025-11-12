@@ -368,7 +368,7 @@ export default function TripsPage() {
         });
 
         const filtered = city
-          ? normalized.filter((item) => {
+          ? normalized.filter((item: Opportunity) => {
               const cityQuery = city.toLowerCase();
               const destinationCity = item.destination?.city?.toLowerCase();
               const alertCity = item.city?.toLowerCase();
