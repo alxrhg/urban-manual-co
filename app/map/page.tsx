@@ -37,6 +37,8 @@ export default function MapPage() {
   });
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileListOpen, setIsMobileListOpen] = useState(false);
   const providerOptions = useMemo(
     () => [
       { id: 'mapbox' as const, label: 'Mapbox', icon: Map },
@@ -59,6 +61,25 @@ export default function MapPage() {
     if (typeof window === 'undefined') return;
     window.sessionStorage.setItem('map-provider', mapProvider);
   }, [mapProvider]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsMobileListOpen(false);
+    }
+  }, [isMobile]);
 
   // Fetch destinations and categories
   useEffect(() => {
@@ -160,11 +181,17 @@ export default function MapPage() {
     setIsDrawerOpen(true);
   }, []);
 
-  const handleListItemClick = useCallback((dest: Destination) => {
-    setSelectedDestination(dest);
-    setIsDrawerOpen(true);
-    // Focus marker on map (would need map ref for this)
-  }, []);
+  const handleListItemClick = useCallback(
+    (dest: Destination) => {
+      setSelectedDestination(dest);
+      setIsDrawerOpen(true);
+      if (isMobile) {
+        setIsMobileListOpen(false);
+      }
+      // Focus marker on map (would need map ref for this)
+    },
+    [isMobile]
+  );
 
   // Calculate distance from map center (simplified)
   const getDistanceFromCenter = (dest: Destination): number => {
@@ -312,7 +339,7 @@ export default function MapPage() {
 
       <div className="w-full px-6 md:px-10 lg:px-12 py-8">
         <div className="grid gap-6 md:grid-cols-[360px,minmax(0,1fr)] items-start">
-          <div className="space-y-3">
+          <div className={`space-y-3 ${isMobile ? 'hidden md:block' : ''}`}>
             <div className="text-xs text-neutral-500 dark:text-neutral-400">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
             </div>
@@ -354,7 +381,11 @@ export default function MapPage() {
           </div>
 
           <div className="w-full">
-            <div className="relative w-full h-[420px] md:h-[calc(100vh-280px)] min-h-[420px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+            <div
+              className={`relative w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 ${
+                isMobile ? 'h-[65vh] min-h-[360px]' : 'h-[420px] md:h-[calc(100vh-280px)] min-h-[420px]'
+              }`}
+            >
               {mapProvider === 'mapbox' ? (
                 <MapView
                   destinations={filteredDestinations}
@@ -383,10 +414,90 @@ export default function MapPage() {
                   className="h-full rounded-none"
                 />
               )}
+
+              {isMobile && (
+                <div className="absolute inset-x-0 bottom-4 flex justify-center px-4 pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileListOpen(true)}
+                    className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white/95 px-5 py-3 text-sm font-medium text-gray-900 shadow-lg shadow-black/10 backdrop-blur dark:bg-gray-900/90 dark:text-white"
+                  >
+                    Browse list
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {isMobile && (
+        <div
+          className={`fixed inset-0 z-40 transition-transform duration-300 ease-in-out ${
+            isMobileListOpen ? 'translate-y-0 pointer-events-auto' : 'translate-y-full pointer-events-none'
+          }`}
+        >
+          <button
+            type="button"
+            aria-label="Close destinations list"
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isMobileListOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            onClick={() => setIsMobileListOpen(false)}
+          />
+          <div
+            className={`absolute inset-x-0 bottom-0 max-h-[70vh] rounded-t-3xl bg-white p-6 pb-8 shadow-xl transition-transform duration-300 ease-in-out dark:bg-gray-900 ${
+              isMobileListOpen ? 'translate-y-0' : 'translate-y-full'
+            }`}
+          >
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileListOpen(false)}
+                className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+              {sortedDestinations.map((dest) => (
+                <button
+                  key={dest.slug}
+                  onClick={() => handleListItemClick(dest)}
+                  className={`w-full flex items-center gap-3 rounded-xl p-3 text-left transition-colors ${
+                    selectedDestination?.slug === dest.slug
+                      ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                      : 'bg-gray-50/70 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
+                  }`}
+                >
+                  {dest.image && (
+                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                      <Image
+                        src={dest.image}
+                        alt={dest.name}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-gray-900 dark:text-white">{dest.name}</div>
+                    <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                      {dest.category && <span>{dest.category}</span>}
+                      {dest.city && <span className="ml-1">• {dest.city}</span>}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 flex-shrink-0 text-neutral-500" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <DestinationDrawer
         destination={selectedDestination}
