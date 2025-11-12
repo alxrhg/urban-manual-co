@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header() {
   const router = useRouter();
@@ -105,7 +106,8 @@ export function Header() {
           </button>
           
           {/* Profile picture / Menu dropdown on right */}
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
+            <ThemeToggle />
             {isAdmin && buildVersion && (
               <span
                 className="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-100 rounded"
