@@ -100,6 +100,7 @@ function parseQueryFallback(query: string): {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createServerClient();
   try {
     const body = await request.json();
     const { query, filters = {}, userId, session_token } = body;

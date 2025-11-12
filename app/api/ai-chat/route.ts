@@ -176,6 +176,7 @@ async function understandQuery(
     let userContext = '';
     if (userId) {
       try {
+        const supabase = await createServerClient();
         const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('favorite_cities, favorite_categories, travel_style, interests')
@@ -720,6 +721,7 @@ async function processAIChatRequest(
   userId: string | undefined,
   conversationHistory: Array<{role: string, content: string}>
 ) {
+  const supabase = await createServerClient();
   try {
 
     // Parallelize intent understanding and embedding generation for better performance

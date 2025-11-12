@@ -27,6 +27,8 @@
     "generate:micro-descriptions": "tsx scripts/generate_micro_descriptions.ts"
   },
   "dependencies": {
+    "@amcharts/amcharts5": "^5.14.4",
+    "@amcharts/amcharts5-geodata": "^5.1.5",
     "@google-cloud/discoveryengine": "^2.5.2",
     "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -44,6 +46,7 @@
     "@trpc/next": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.35.6",
     "@vercel/analytics": "^1.5.0",
@@ -55,6 +58,7 @@
     "framer-motion": "^11.0.0",
     "google-trends-api": "^4.9.2",
     "isomorphic-dompurify": "^2.31.0",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",
     "mapbox-gl": "^3.16.0",
     "next": "^16.0.1",
