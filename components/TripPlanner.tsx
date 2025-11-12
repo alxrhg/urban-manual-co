@@ -114,30 +114,6 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     []
   );
 
-  // Initialize drawer state based on provided props
-  useEffect(() => {
-    if (!isOpen) return;
-
-    if (tripId && user) {
-      resetForm();
-      loadTrip(tripId);
-      return;
-    }
-
-    if (initialDestination) {
-      if (bypassSelection || step === 'plan') return;
-      if (step !== 'select') {
-        resetForm();
-        setStep('select');
-        refetchTrips();
-      }
-      return;
-    }
-
-    resetForm();
-    setStep('create');
-  }, [bypassSelection, initialDestination, isOpen, loadTrip, refetchTrips, resetForm, step, tripId, user]);
-
   useEffect(() => {
     if (!isOpen) {
       setBypassSelection(false);
@@ -260,6 +236,30 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     },
     [currentTripId, refetchTrip]
   );
+
+  // Initialize drawer state based on provided props
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (tripId && user) {
+      resetForm();
+      loadTrip(tripId);
+      return;
+    }
+
+    if (initialDestination) {
+      if (bypassSelection || step === 'plan') return;
+      if (step !== 'select') {
+        resetForm();
+        setStep('select');
+        refetchTrips();
+      }
+      return;
+    }
+
+    resetForm();
+    setStep('create');
+  }, [bypassSelection, initialDestination, isOpen, loadTrip, refetchTrips, resetForm, step, tripId, user]);
 
   useEffect(() => {
     if (tripsQuery.data) {
@@ -428,6 +428,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       }
     }
   };
+
+  const handleSaveTripClick = useCallback(() => {
+    void handleSaveTrip();
+  }, [handleSaveTrip]);
 
   const handleAddLocation = async (dayIndex: number, location: TripLocation) => {
     setDays((prev) =>
@@ -640,7 +644,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
               <>
                 {currentTripId && (
                   <button
-                    onClick={handleSaveTrip}
+                    onClick={handleSaveTripClick}
                     disabled={saving}
                       className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3.5 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
                     title="Save trip"

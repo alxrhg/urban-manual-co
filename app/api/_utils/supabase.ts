@@ -35,7 +35,7 @@ export async function requireUser(request: NextRequest) {
   }
 
   if (!accessToken) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     accessToken = cookieStore.get('sb-access-token')?.value;
 
     if (!accessToken) {
