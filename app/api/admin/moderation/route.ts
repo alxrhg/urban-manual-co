@@ -84,19 +84,18 @@ export async function POST(request: Request) {
       );
     }
 
-    await serviceClient
+    const { error: insertError } = await serviceClient
       .from('moderation_actions')
       .insert({
         actor_id: user.id,
         action: moderationState,
         notes: payload.notes ?? null,
         destination_ids: payload.ids,
-      })
-      .catch(insertError => {
-        if (insertError && insertError.code !== '42P01' && insertError.code !== 'PGRST301') {
-          console.warn('[Admin Moderation] Failed to record audit trail', insertError);
-        }
       });
+
+    if (insertError && insertError.code !== '42P01' && insertError.code !== 'PGRST301') {
+      console.warn('[Admin Moderation] Failed to record audit trail', insertError);
+    }
 
     return NextResponse.json({ success: true, updated: payload.ids.length });
   } catch (error) {

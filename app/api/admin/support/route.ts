@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await serviceClient
+    const { error: insertError } = await serviceClient
       .from('support_ticket_activity')
       .insert({
         ticket_ids: payload.ids,
@@ -111,12 +111,11 @@ export async function POST(request: Request) {
           priority: payload.priority ?? null,
           assigneeId: payload.assigneeId ?? null,
         },
-      })
-      .catch(insertError => {
-        if (insertError && insertError.code !== '42P01' && insertError.code !== 'PGRST301') {
-          console.warn('[Admin Support] Failed to insert activity log', insertError);
-        }
       });
+
+    if (insertError && insertError.code !== '42P01' && insertError.code !== 'PGRST301') {
+      console.warn('[Admin Support] Failed to insert activity log', insertError);
+    }
 
     return NextResponse.json({ success: true, updated: payload.ids.length });
   } catch (error) {

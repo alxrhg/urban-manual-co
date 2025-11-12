@@ -16,6 +16,10 @@ interface GuardFailure {
 
 export type GuardResult = GuardSuccess | GuardFailure;
 
+function isGuardSuccess(result: GuardResult): result is GuardSuccess {
+  return 'context' in result;
+}
+
 export async function adminGuard(
   request: GuardableRequest,
   allowedRoles: AdminRole[] = ['admin']
@@ -53,10 +57,10 @@ export async function requireAdminRoles(
   allowedRoles: AdminRole[]
 ): Promise<AuthContext> {
   const result = await adminGuard(request, allowedRoles);
-  if ('context' in result) {
+  if (isGuardSuccess(result)) {
     return result.context;
   }
-  const status = result.response.status;
+  const { status } = result.response;
   const message = status === 401 ? 'Unauthorized' : 'Forbidden';
   throw new AuthError(message, status);
 }

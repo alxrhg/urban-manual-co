@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { PostgrestError, PostgrestFilterBuilder } from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/supabase-js';
 import { adminGuard } from '@/middlewares/adminGuard';
 import type { AdminRole } from '@/lib/auth';
 
@@ -11,9 +11,7 @@ interface SafeCountResult {
   unavailable?: boolean;
 }
 
-async function safeCount(
-  builder: PostgrestFilterBuilder<any, any, any>
-): Promise<SafeCountResult> {
+async function safeCount(builder: any): Promise<SafeCountResult> {
   try {
     const { count, error } = await builder;
     if (error) {
@@ -30,8 +28,8 @@ async function safeCount(
   }
 }
 
-async function safeSelect<T>(
-  builder: PostgrestFilterBuilder<T, any, any>
+async function safeSelect<T = any>(
+  builder: any
 ): Promise<{ data: T[]; error?: PostgrestError | Error; unavailable?: boolean }> {
   try {
     const { data, error } = await builder;
