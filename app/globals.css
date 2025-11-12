@@ -147,6 +147,25 @@
     display: none;
   }
 
+  @keyframes ai-flash {
+    0% {
+      background-color: rgba(250, 204, 21, 0.25);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .animate-ai-flash {
+    animation: ai-flash 1s ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-ai-flash {
+      animation: none;
+    }
+  }
+
   /* Search Input with Typing Cursor Indicator */
   .um-input-wrap {
     position: relative;

@@ -49,7 +49,10 @@ export function ConversationBubble({
           {isTyping ? (
             <TypingIndicator />
           ) : (
-            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+            <div
+              key={content}
+              className="animate-ai-flash text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line"
+            >
               {content}
             </div>
           )}

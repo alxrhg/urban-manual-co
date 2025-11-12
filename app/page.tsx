@@ -618,6 +618,15 @@ export default function Home() {
   const [submittedQuery, setSubmittedQuery] = useState<string>('');
   const [followUpInput, setFollowUpInput] = useState<string>('');
 
+  useEffect(() => {
+    const handleOpenTripPlanner = () => setShowTripPlanner(true);
+
+    window.addEventListener('open-trip-planner', handleOpenTripPlanner);
+    return () => {
+      window.removeEventListener('open-trip-planner', handleOpenTripPlanner);
+    };
+  }, []);
+
   // Track visual chat messages for display
   const [chatMessages, setChatMessages] = useState<Array<{
     type: 'user' | 'assistant';
