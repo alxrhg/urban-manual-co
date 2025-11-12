@@ -125,7 +125,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     if (initialDestination) {
       if (bypassSelection || step === 'plan') return;
       if (step !== 'select') {
-        resetForm();
+      resetForm();
         setStep('select');
         fetchTripSummaries();
       }
@@ -164,7 +164,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     setHotelLocation('');
     setActiveTab('itinerary');
     if (!options?.preserveTrip) {
-      setCurrentTripId(null);
+    setCurrentTripId(null);
     }
   };
 
@@ -721,6 +721,9 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     { id: 'packing', label: 'Packing' },
   ];
 
+  const baseTranslateClass = isOpen ? 'translate-x-0' : 'translate-x-full';
+  const desktopTranslateClass = isOpen ? 'md:translate-x-0' : 'md:translate-x-[calc(100%+1.5rem)]';
+
   if (!isOpen) return null;
 
   return (
@@ -734,16 +737,14 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       />
 
       <div
-        className={`fixed inset-y-0 right-0 z-50 flex w-full transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed inset-y-0 right-0 z-50 flex w-full transform transition-transform duration-300 ease-in-out ${baseTranslateClass} ${desktopTranslateClass} md:inset-y-auto md:top-4 md:bottom-4 md:w-auto md:right-4`}
       >
         <div
-          className="flex h-full w-full max-w-[900px] flex-col border-l border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950"
+          className="flex h-full w-full flex-col bg-white shadow-2xl dark:bg-gray-950 md:w-[640px] md:max-w-[640px] md:rounded-3xl md:ring-1 md:ring-black/5 md:border md:border-gray-200 dark:md:border-gray-800 md:overflow-hidden"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-5 py-6 md:px-8 md:py-8 dark:border-gray-800">
-            <div>
+              <div>
               <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                 {step === 'plan'
                   ? 'Trip planner'
@@ -764,53 +765,53 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
               {step === 'select' && initialDestination?.city && (
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{initialDestination.city}</p>
               )}
-            </div>
+                </div>
             <div className="flex flex-wrap items-center gap-2">
-              {step === 'plan' && (
-                <>
-                  {currentTripId && (
-                    <button
-                      onClick={handleSaveTrip}
-                      disabled={saving}
+            {step === 'plan' && (
+              <>
+                {currentTripId && (
+                  <button
+                    onClick={handleSaveTrip}
+                    disabled={saving}
                       className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3.5 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-900/60"
-                      title="Save trip"
-                    >
+                    title="Save trip"
+                  >
                       {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SaveIcon className="h-3.5 w-3.5" />}
                       {saving ? 'Saving…' : 'Save'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowShare(true)}
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowShare(true)}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                    title="Share trip"
-                  >
+                  title="Share trip"
+                >
                     <ShareIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={handleExportToCalendar}
+                </button>
+                <button
+                  onClick={handleExportToCalendar}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                    title="Export to calendar"
-                  >
+                  title="Export to calendar"
+                >
                     <DownloadIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={handlePrint}
+                </button>
+                <button
+                  onClick={handlePrint}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-                    title="Print itinerary"
-                  >
+                  title="Print itinerary"
+                >
                     <PrinterIcon className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-              <button
-                onClick={onClose}
+                </button>
+              </>
+            )}
+            <button
+              onClick={onClose}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-800 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
                 aria-label="Close"
-              >
+            >
                 <XIcon className="h-4 w-4" />
-              </button>
-            </div>
+            </button>
           </div>
+        </div>
 
           <div className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
             {step === 'select' && initialDestination ? (
@@ -835,7 +836,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         className="w-full text-left rounded-2xl border border-gray-200 bg-white/90 p-5 shadow-sm transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div>
+                <div>
                             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{trip.title}</h3>
                             {trip.destination && (
                               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{trip.destination}</p>
@@ -891,39 +892,39 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                   <div className="md:col-span-2">
                     <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                       Trip name *
-                    </label>
-                    <input
-                      type="text"
-                      value={tripName}
-                      onChange={(e) => setTripName(e.target.value)}
-                      placeholder="Summer in Paris"
+                  </label>
+                  <input
+                    type="text"
+                    value={tripName}
+                    onChange={(e) => setTripName(e.target.value)}
+                    placeholder="Summer in Paris"
                       className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                    />
-                  </div>
+                  />
+                </div>
                   <div className="md:col-span-2">
                     <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                       Destination *
-                    </label>
-                    <input
-                      type="text"
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      placeholder="Paris, France"
+                  </label>
+                  <input
+                    type="text"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    placeholder="Paris, France"
                       className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                    />
-                  </div>
+                  />
+                </div>
                   <div className="md:col-span-2">
                     <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                       Hotel / base location
-                    </label>
-                    <input
-                      type="text"
-                      value={hotelLocation}
-                      onChange={(e) => setHotelLocation(e.target.value)}
-                      placeholder="Hotel Le Marais"
+                  </label>
+                  <input
+                    type="text"
+                    value={hotelLocation}
+                    onChange={(e) => setHotelLocation(e.target.value)}
+                    placeholder="Hotel Le Marais"
                       className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                    />
-                  </div>
+                  />
+                </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                       Start date *
@@ -946,18 +947,18 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                       className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:ring-gray-600"
                     />
                   </div>
-                  <div>
+                <div>
                     <label className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
                       Total budget
-                    </label>
-                    <input
-                      type="number"
-                      value={totalBudget || ''}
-                      onChange={(e) => setTotalBudget(Number(e.target.value))}
-                      placeholder="2000"
+                  </label>
+                  <input
+                    type="number"
+                    value={totalBudget || ''}
+                    onChange={(e) => setTotalBudget(Number(e.target.value))}
+                    placeholder="2000"
                       className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-gray-600"
-                    />
-                  </div>
+                  />
+                </div>
                 </div>
                 <button
                   onClick={handleCreateTrip}
@@ -973,8 +974,8 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                     'Create trip'
                   )}
                 </button>
-              </div>
-            ) : (
+            </div>
+          ) : (
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center gap-2">
                   {plannerTabs.map((tab) => (
@@ -992,13 +993,13 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                   ))}
                 </div>
 
-                {activeTab === 'itinerary' && (
+              {activeTab === 'itinerary' && (
                   <div className="space-y-6">
                     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
                       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                           <MapPinIcon className="h-3.5 w-3.5" />
-                          {destination}
+                        {destination}
                         </span>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                           <CalendarIcon className="h-3.5 w-3.5" />
@@ -1017,43 +1018,43 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                           Smart suggestions
                         </p>
                         <ul className="mt-3 space-y-2">
-                          {getAISuggestions().map((suggestion, index) => (
+                        {getAISuggestions().map((suggestion, index) => (
                             <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
-                              • {suggestion}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="space-y-10">
-                      {days.map((day, index) => (
-                        <TripDay
-                          key={day.date}
-                          dayNumber={index + 1}
-                          date={day.date}
-                          locations={day.locations}
-                          hotelLocation={hotelLocation}
-                          onAddLocation={() => setShowAddLocation(index)}
-                          onRemoveLocation={(locationId) => handleRemoveLocation(index, locationId)}
-                          onReorderLocations={(locations) => handleReorderLocations(index, locations)}
-                          onDuplicateDay={() => handleDuplicateDay(index)}
-                          onOptimizeRoute={() => handleOptimizeRoute(index)}
-                        />
-                      ))}
+                            • {suggestion}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                )}
 
-                {activeTab === 'budget' && (
+                    <div className="space-y-10">
+                    {days.map((day, index) => (
+                      <TripDay
+                        key={day.date}
+                        dayNumber={index + 1}
+                        date={day.date}
+                        locations={day.locations}
+                        hotelLocation={hotelLocation}
+                        onAddLocation={() => setShowAddLocation(index)}
+                          onRemoveLocation={(locationId) => handleRemoveLocation(index, locationId)}
+                          onReorderLocations={(locations) => handleReorderLocations(index, locations)}
+                        onDuplicateDay={() => handleDuplicateDay(index)}
+                        onOptimizeRoute={() => handleOptimizeRoute(index)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'budget' && (
                   <TripBudgetTracker days={days} totalBudget={totalBudget} onUpdateBudget={setTotalBudget} />
-                )}
+              )}
 
-                {activeTab === 'weather' && (
+              {activeTab === 'weather' && (
                   <TripWeatherForecast destination={destination} startDate={startDate} endDate={endDate} />
-                )}
+              )}
 
-                {activeTab === 'packing' && (
+              {activeTab === 'packing' && (
                   <TripPackingList destination={destination} days={days} startDate={startDate} endDate={endDate} />
                 )}
               </div>
