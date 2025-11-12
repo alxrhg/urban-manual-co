@@ -45,10 +45,16 @@ import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
-import { HomeNavigationBar } from '@/components/HomeNavigationBar';
+import { getCategoryIconComponent } from '@/lib/icons/category-icons';
+import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+
+// Category icons using Untitled UI icons
+function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {
+  return getCategoryIconComponent(category);
+}
 
 function slugify(value: string): string {
   return value
@@ -503,6 +509,8 @@ export default function Home() {
   const skipNextSearchRef = useRef(false);
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showAllCities, setShowAllCities] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
@@ -538,6 +546,52 @@ export default function Home() {
     }
     return filteredDestinations;
   }, [advancedFilters.nearMe, filteredDestinations, nearbyDestinations]);
+
+  const handleCitySelect = useCallback(
+    (city: string | null) => {
+      const normalizedCity = city?.trim() || '';
+      const nextCity = normalizedCity === selectedCity ? '' : normalizedCity;
+      setSelectedCity(nextCity);
+      setAdvancedFilters(prev => {
+        const updated = { ...prev };
+        if (nextCity) {
+          updated.city = nextCity;
+        } else {
+          delete updated.city;
+        }
+        return updated;
+      });
+      setCurrentPage(1);
+      trackFilterChange({ filterType: 'city', value: nextCity || 'all' });
+    },
+    [selectedCity, setAdvancedFilters, setCurrentPage]
+  );
+
+  const handleCategorySelect = useCallback(
+    (category: string | null, options?: { michelin?: boolean }) => {
+      setCurrentPage(1);
+      if (options?.michelin) {
+        const newValue = !advancedFilters.michelin;
+        setSelectedCategory('');
+        setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+        trackFilterChange({ filterType: 'michelin', value: newValue });
+        return;
+      }
+
+      if (!category) {
+        setSelectedCategory('');
+        setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+        trackFilterChange({ filterType: 'category', value: 'all' });
+        return;
+      }
+
+      const newCategory = category === selectedCategory ? '' : category;
+      setSelectedCategory(newCategory);
+      setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+      trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+    },
+    [advancedFilters.michelin, selectedCategory, setAdvancedFilters, setCurrentPage]
+  );
   
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
@@ -556,19 +610,6 @@ export default function Home() {
   // Track submitted query for chat display
   const [submittedQuery, setSubmittedQuery] = useState<string>('');
   const [followUpInput, setFollowUpInput] = useState<string>('');
-
-  const handleNavigationFiltersClick = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-search-filters'));
-    }
-  }, []);
-
-  const handleNavigationStartTrip = useCallback(() => {
-    setShowTripPlanner(true);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-trip-planner'));
-    }
-  }, [setShowTripPlanner]);
 
   useEffect(() => {
     const handleOpenTripPlanner = () => setShowTripPlanner(true);
@@ -1999,7 +2040,12 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
 
   // Use cities from state (loaded from fetchFilterData or fetchDestinations)
   // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
-  
+  const MAX_INLINE_CITY_COUNT = 12;
+  const MAX_INLINE_CATEGORY_COUNT = 12;
+  const inlineCityButtons = cities.slice(0, MAX_INLINE_CITY_COUNT);
+  const overflowCityButtons = cities.slice(MAX_INLINE_CITY_COUNT);
+  const inlineCategoryButtons = categories.slice(0, MAX_INLINE_CATEGORY_COUNT);
+  const overflowCategoryButtons = categories.slice(MAX_INLINE_CATEGORY_COUNT);
 
   return (
     <ErrorBoundary>
@@ -2295,24 +2341,41 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
                 <div className="max-w-[1800px] mx-auto">
-                {/* Mobile quick actions */}
-                <div className="md:hidden mb-6 flex flex-wrap gap-2">
-                  <HomeNavigationBar
-                    className="w-full justify-between"
-                    onFiltersClick={handleNavigationFiltersClick}
-                    onStartTrip={handleNavigationStartTrip}
+                {/* Filter, Start Trip, and View Toggle */}
+                <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
+                  <SearchFiltersComponent
+                    filters={advancedFilters}
+                    onFiltersChange={(newFilters) => {
+                      setAdvancedFilters(newFilters);
+                      if (newFilters.city !== undefined) {
+                        setSelectedCity(newFilters.city || '');
+                      }
+                      if (newFilters.category !== undefined) {
+                        setSelectedCategory(newFilters.category || '');
+                      }
+                      Object.entries(newFilters).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null && value !== '') {
+                          trackFilterChange({ filterType: key, value });
+                        }
+                      });
+                    }}
+                    availableCities={cities}
+                    availableCategories={categories}
+                    onLocationChange={handleLocationChange}
+                    triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                    activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
+                    iconClassName="h-4 w-4"
+                    label="Filters"
                   />
-                </div>
-
-                {/* Filter and View Toggle - Top right of grid section */}
-                <div className="hidden md:flex justify-end items-center gap-4 mb-8 md:mb-10 flex-wrap">
-                  <HomeNavigationBar
-                    className="justify-end"
-                    onFiltersClick={handleNavigationFiltersClick}
-                    onStartTrip={handleNavigationStartTrip}
-                  />
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => setShowTripPlanner(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                    aria-label="Start a trip"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Start a Trip</span>
+                  </button>
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setViewMode('grid')}
                       className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
@@ -2341,23 +2404,299 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 </div>
             
             {!submittedQuery && (
-              <div className="flex flex-col items-start gap-6 pt-6 md:flex-row md:items-end md:justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Ready to map out a trip?
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Launch the itinerary studio and co-plan with Travel Intelligence.
-                  </p>
+              <>
+                <div className="md:hidden px-5 pt-6 space-y-6">
+                  <div>
+                    <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                      <button
+                        onClick={() => handleCitySelect(null)}
+                        className={`transition-all duration-200 ease-out ${
+                          !selectedCity
+                            ? 'font-medium text-black dark:text-white'
+                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        All Cities
+                      </button>
+                      {inlineCityButtons.map((city) => (
+                        <button
+                          key={city}
+                          onClick={() => handleCitySelect(city)}
+                          className={`transition-all duration-200 ease-out ${
+                            selectedCity === city
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          {capitalizeCity(city)}
+                        </button>
+                      ))}
+                    </div>
+                    {overflowCityButtons.length > 0 && (
+                      <div className="mt-3 space-y-3">
+                        <button
+                          onClick={() => setShowAllCities(prev => !prev)}
+                          className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                        >
+                          {showAllCities
+                            ? '− Hide additional cities'
+                            : `+ More cities (${overflowCityButtons.length})`}
+                        </button>
+                        {showAllCities && (
+                          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                              {overflowCityButtons.map((city) => (
+                                <button
+                                  key={city}
+                                  onClick={() => handleCitySelect(city)}
+                                  className={`transition-all duration-200 ease-out ${
+                                    selectedCity === city
+                                      ? 'font-medium text-black dark:text-white'
+                                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                  }`}
+                                >
+                                  {capitalizeCity(city)}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                      <button
+                        onClick={() => handleCategorySelect(null)}
+                        className={`transition-all duration-200 ease-out ${
+                          !selectedCategory && !advancedFilters.michelin
+                            ? 'font-medium text-black dark:text-white'
+                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        All Categories
+                      </button>
+                      <button
+                        onClick={() => handleCategorySelect(null, { michelin: true })}
+                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                          advancedFilters.michelin
+                            ? 'font-medium text-black dark:text-white'
+                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        <img
+                          src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                          alt="Michelin star"
+                          className="h-3 w-3"
+                        />
+                        Michelin
+                      </button>
+                      {inlineCategoryButtons.map((category) => {
+                        const IconComponent = getCategoryIcon(category);
+                        return (
+                          <button
+                            key={category}
+                            onClick={() => handleCategorySelect(category)}
+                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                              selectedCategory === category && !advancedFilters.michelin
+                                ? 'font-medium text-black dark:text-white'
+                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                            {capitalizeCategory(category)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {overflowCategoryButtons.length > 0 && (
+                      <div className="mt-3 space-y-3">
+                        <button
+                          onClick={() => setShowAllCategories(prev => !prev)}
+                          className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                        >
+                          {showAllCategories
+                            ? '− Hide additional categories'
+                            : `+ More categories (${overflowCategoryButtons.length})`}
+                        </button>
+                        {showAllCategories && (
+                          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
+                              {overflowCategoryButtons.map((category) => {
+                                const IconComponent = getCategoryIcon(category);
+                                return (
+                                  <button
+                                    key={category}
+                                    onClick={() => handleCategorySelect(category)}
+                                    className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                      selectedCategory === category && !advancedFilters.michelin
+                                        ? 'font-medium text-black dark:text-white'
+                                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                    }`}
+                                  >
+                                    {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                    {capitalizeCategory(category)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button
-                  onClick={() => setShowTripPlanner(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-                >
-                  <Plus className="h-4 w-4" />
-                  Start a Trip
-                </button>
-              </div>
+
+                <div className="hidden md:flex flex-1 items-end">
+                  <div className="w-full pt-8 space-y-6">
+                    <div>
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                        <button
+                          onClick={() => handleCitySelect(null)}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCity
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          All Cities
+                        </button>
+                        {inlineCityButtons.map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => handleCitySelect(city)}
+                            className={`transition-all duration-200 ease-out ${
+                              selectedCity === city
+                                ? 'font-medium text-black dark:text-white'
+                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            {capitalizeCity(city)}
+                          </button>
+                        ))}
+                      </div>
+                      {overflowCityButtons.length > 0 && (
+                        <div className="mt-3 space-y-3">
+                          <button
+                            onClick={() => setShowAllCities(prev => !prev)}
+                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                          >
+                            {showAllCities
+                              ? '− Hide additional cities'
+                              : `+ More cities (${overflowCityButtons.length})`}
+                          </button>
+                          {showAllCities && (
+                            <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                              <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                                {overflowCityButtons.map((city) => (
+                                  <button
+                                    key={city}
+                                    onClick={() => handleCitySelect(city)}
+                                    className={`transition-all duration-200 ease-out ${
+                                      selectedCity === city
+                                        ? 'font-medium text-black dark:text-white'
+                                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                    }`}
+                                  >
+                                    {capitalizeCity(city)}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {categories.length > 0 && (
+                      <div>
+                        <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                          <button
+                            onClick={() => handleCategorySelect(null)}
+                            className={`transition-all duration-200 ease-out ${
+                              !selectedCategory && !advancedFilters.michelin
+                                ? 'font-medium text-black dark:text-white'
+                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            All Categories
+                          </button>
+                          <button
+                            onClick={() => handleCategorySelect(null, { michelin: true })}
+                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                              advancedFilters.michelin
+                                ? 'font-medium text-black dark:text-white'
+                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            <img
+                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                              alt="Michelin star"
+                              className="h-3 w-3"
+                            />
+                            Michelin
+                          </button>
+                          {inlineCategoryButtons.map((category) => {
+                            const IconComponent = getCategoryIcon(category);
+                            return (
+                              <button
+                                key={category}
+                                onClick={() => handleCategorySelect(category)}
+                                className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                  selectedCategory === category && !advancedFilters.michelin
+                                    ? 'font-medium text-black dark:text-white'
+                                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                }`}
+                              >
+                                {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                {capitalizeCategory(category)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {overflowCategoryButtons.length > 0 && (
+                          <div className="mt-3 space-y-3">
+                            <button
+                              onClick={() => setShowAllCategories(prev => !prev)}
+                              className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                            >
+                              {showAllCategories
+                                ? '− Hide additional categories'
+                                : `+ More categories (${overflowCategoryButtons.length})`}
+                            </button>
+                            {showAllCategories && (
+                              <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                                <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                                  {overflowCategoryButtons.map((category) => {
+                                    const IconComponent = getCategoryIcon(category);
+                                    return (
+                                      <button
+                                        key={category}
+                                        onClick={() => handleCategorySelect(category)}
+                                        className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                          selectedCategory === category && !advancedFilters.michelin
+                                            ? 'font-medium text-black dark:text-white'
+                                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                                        }`}
+                                      >
+                                        {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                                        {capitalizeCategory(category)}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
