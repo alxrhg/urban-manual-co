@@ -489,12 +489,49 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
   const applyAIPlan = useCallback(
     (aiPlan: AIPlanResponse) => {
       const mappedDays = mapAIPlanToDayItineraries(aiPlan);
-      setDays(mappedDays);
-      const aggregatedBudget = aiPlan.totals?.estimatedCost ??
-        mappedDays.reduce((sum, day) => sum + (day.budget || 0), 0);
+      const { dayNumber, mode } = aiPlan.metadata;
+
+      let nextDaysResult: DayItinerary[] = mappedDays;
+
+      setDays((previousDays) => {
+        const isFullRegeneration =
+          !dayNumber || mode === 'generate' || previousDays.length === 0;
+
+        if (isFullRegeneration) {
+          nextDaysResult = mappedDays;
+          return mappedDays;
+        }
+
+        const dayIndex = Math.max(0, dayNumber - 1);
+        const aiPlanIndex = aiPlan.days.findIndex((day) => day.dayNumber === dayNumber);
+        const mappedIndex = aiPlanIndex !== -1 ? aiPlanIndex : dayIndex;
+        const updatedDay = mappedDays[mappedIndex];
+
+        if (!updatedDay || !previousDays[dayIndex]) {
+          nextDaysResult = mappedDays;
+          return mappedDays;
+        }
+
+        const nextDays = previousDays.map((day, index) =>
+          index === dayIndex ? updatedDay : day
+        );
+
+        nextDaysResult = nextDays;
+        return nextDays;
+      });
+
+      const aggregatedBudgetFromPlan =
+        !dayNumber || mode === 'generate'
+          ? aiPlan.totals?.estimatedCost ?? null
+          : null;
+
+      const aggregatedBudget = (aggregatedBudgetFromPlan ??
+        nextDaysResult.reduce((sum, day) => sum + (day.budget || 0), 0));
+
       if (aggregatedBudget > 0) {
         setTotalBudget(Math.round(aggregatedBudget));
       }
+
       setAIGenerationMeta({
         ...aiPlan.metadata,
         adjustments: aiPlan.metadata.adjustments || null,
