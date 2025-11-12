@@ -2189,37 +2189,9 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               <div className="flex-1 flex items-center">
                 <div className="w-full">
                   {/* Chat messages above input - Keep input in same position */}
-                  {submittedQuery && chatMessages.length > 0 && (
+                  {submittedQuery && (
                     <div className="mb-6">
-                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
-                      <div
-                        ref={chatContainerRef}
-                        className="max-h-[300px] overflow-y-auto space-y-4 mb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
-                      >
-                        {chatMessages.map((message, index) => (
-                          <div key={index} className="space-y-2">
-                            {message.type === 'user' ? (
-                              <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                {message.content}
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                <MarkdownRenderer
-                                  content={message.content}
-                                  className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                />
-                                {message.contextPrompt && (
-                                  <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                    {message.contextPrompt}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Loading State */}
+                      {/* Loading State - Show when searching */}
                       {searching && (
                         <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left mb-4">
                           <div className="flex items-center gap-2">
@@ -2232,6 +2204,46 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                             )}
                             <span>{currentLoadingText}</span>
                           </div>
+                        </div>
+                      )}
+
+                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
+                      {(chatMessages.length > 0 || chatResponse) && (
+                        <div
+                          ref={chatContainerRef}
+                          className="max-h-[300px] overflow-y-auto space-y-4 mb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+                        >
+                          {chatMessages.map((message, index) => (
+                            <div key={index} className="space-y-2">
+                              {message.type === 'user' ? (
+                                <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                  {message.content}
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  <MarkdownRenderer
+                                    content={message.content}
+                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                  />
+                                  {message.contextPrompt && (
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                      {message.contextPrompt}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          
+                          {/* Show chatResponse if no messages yet but response exists */}
+                          {chatMessages.length === 0 && chatResponse && !searching && (
+                            <div className="space-y-4">
+                              <MarkdownRenderer
+                                content={chatResponse}
+                                className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
 

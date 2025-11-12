@@ -36,6 +36,11 @@ export function DestinationCard({
   useEffect(() => {
     if (!cardRef.current) return;
 
+    // Reset states when destination changes
+    setIsLoaded(false);
+    setImageError(false);
+    setIsInView(false);
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -56,7 +61,7 @@ export function DestinationCard({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [destination.slug, destination.image]); // Re-observe when destination changes
 
   return (
     <button
@@ -80,17 +85,17 @@ export function DestinationCard({
           transition-shadow duration-300
           group-hover:shadow-lg
           mb-3
-          ${isLoaded ? 'opacity-100' : 'opacity-0'}
         `}
       >
         {/* Skeleton while loading */}
-        {!isLoaded && isInView && (
-          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
+        {!isLoaded && isInView && destination.image && (
+          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700 z-0" />
         )}
 
         {/* Actual Image */}
         {isInView && destination.image && !imageError ? (
           <Image
+            key={`${destination.slug}-${destination.image}`}
             src={destination.image}
             alt={`${destination.name} in ${capitalizeCity(destination.city)}${destination.category ? ` - ${destination.category}` : ''}`}
             fill
@@ -110,11 +115,11 @@ export function DestinationCard({
               setIsLoaded(true);
             }}
           />
-        ) : (
+        ) : !destination.image || imageError ? (
           <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
             <MapPin className="h-12 w-12 opacity-20 transition-transform duration-300 group-hover:scale-105" />
           </div>
-        )}
+        ) : null}
 
         {/* Hover Overlay */}
         <div
