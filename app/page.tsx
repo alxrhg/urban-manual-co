@@ -2267,26 +2267,25 @@ export default function Home() {
                     </div>
 
                     {/* Grid/Map Toggle */}
-                    <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
                         viewMode === 'grid'
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                       aria-label="Grid view"
                     >
                       <LayoutGrid className="h-4 w-4" />
                       <span>Grid</span>
                     </button>
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-800" />
                     <button
                       onClick={() => setViewMode('map')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
                         viewMode === 'map'
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                          : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                       aria-label="Map view"
                     >

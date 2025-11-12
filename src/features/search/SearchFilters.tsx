@@ -132,14 +132,14 @@ export function SearchFiltersComponent({
     <div className="w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl transition-opacity hover:opacity-90"
+        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
         aria-label="Toggle filters"
         aria-expanded={isOpen}
       >
         <SlidersHorizontal className="h-5 w-5" />
         <span className="text-sm font-medium">Filters</span>
         {hasActiveFilters && (
-          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-white/20 dark:bg-black/20 rounded-full">
+          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
             {Object.keys(filters).length}
           </span>
         )}
