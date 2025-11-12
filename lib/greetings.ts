@@ -61,7 +61,6 @@ function getTimeGreeting(hour: number = new Date().getHours()): string {
  * Get time-appropriate activity suggestion
  */
 function getTimeActivity(hour: number): string | null {
-  if (hour >= 6 && hour < 11) return 'Looking for breakfast spots?';
   if (hour >= 11 && hour < 14) return 'Lunch plans sorted?';
   if (hour >= 17 && hour < 21) return 'Dinner reservations needed?';
   if (hour >= 21 || hour < 2) return 'Late-night eats or cocktail bars?';

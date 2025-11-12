@@ -550,6 +550,7 @@ export default function Home() {
     }
     return filteredDestinations;
   }, [advancedFilters.nearMe, filteredDestinations, nearbyDestinations]);
+  const displayDestinationsCount = displayDestinations.length;
   const resultsCount = filteredDestinations.length;
 
   const handleNavigationFiltersClick = useCallback(() => {
@@ -1121,6 +1122,22 @@ export default function Home() {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCity, selectedCategory, advancedFilters]);
+
+  // Clamp currentPage when destinations change (fix pagination)
+  useEffect(() => {
+    if (itemsPerPage <= 0) {
+      return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(displayDestinationsCount / itemsPerPage));
+
+    setCurrentPage(prevPage => {
+      if (prevPage > totalPages) {
+        return totalPages;
+      }
+      return prevPage;
+    });
+  }, [displayDestinationsCount, itemsPerPage]);
 
   // Scroll to top of grid when page changes
   useEffect(() => {
@@ -2716,7 +2733,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               const startIndex = (currentPage - 1) * itemsPerPage;
               const endIndex = startIndex + itemsPerPage;
               const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
-              const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
+              const totalPages = Math.max(1, Math.ceil(displayDestinationsCount / itemsPerPage));
 
               return (
                 <>
