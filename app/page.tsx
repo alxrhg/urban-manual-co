@@ -979,14 +979,8 @@ export default function Home() {
     // Don't reset displayed count here - let the search effect handle it
   }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
 
-  // Sync advancedFilters with selectedCity/selectedCategory for backward compatibility
-  useEffect(() => {
-    setAdvancedFilters(prev => ({
-      ...prev,
-      city: selectedCity && selectedCity.trim() ? selectedCity : undefined,
-      category: selectedCategory && selectedCategory.trim() ? selectedCategory : undefined,
-    }));
-  }, [selectedCity, selectedCategory]);
+  // Note: Removed circular sync effect - SearchFiltersComponent now manages advancedFilters directly
+  // and updates selectedCity/selectedCategory when needed, avoiding duplicate filter initialization
 
   // Fetch filter data (cities and categories) first for faster initial display
   // OPTIMIZED: Call Discovery Engine once at start, reuse result throughout
