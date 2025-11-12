@@ -147,7 +147,9 @@ export default function RootLayout({
               <ItineraryProvider>
                 <Header />
                 <main className="min-h-screen page-transition">
-                  {children}
+                  <div className="um-shell">
+                    {children}
+                  </div>
                 </main>
                 <Footer />
                 <CookieConsent />

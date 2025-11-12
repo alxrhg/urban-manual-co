@@ -1,11 +1,18 @@
+import { PageShell } from '@/components/PageShell';
+import { PageIntro } from '@/components/PageIntro';
+import { PageContainer } from '@/components/PageContainer';
+
 export default function PrivacyPage() {
   return (
-    <div className="px-6 md:px-10 py-8 max-w-3xl mx-auto">
-      <h1 className="text-4xl md:text-5xl font-bold mb-8">
-        Privacy Policy
-      </h1>
+    <PageShell>
+      <PageIntro
+        eyebrow="Policies"
+        title="Privacy Policy"
+        description="How we collect, protect, and use your information across The Urban Manual experience."
+      />
 
-      <div className="prose dark:prose-invert max-w-none space-y-6">
+      <PageContainer width="standard" className="space-y-10">
+        <div className="prose dark:prose-invert max-w-none space-y-6">
         <section>
           <h2 className="text-2xl font-bold mb-4">Introduction</h2>
           <span className="text-gray-600 dark:text-gray-400">
@@ -85,7 +92,8 @@ export default function PrivacyPage() {
             Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </span>
         </section>
-      </div>
-    </div>
+        </div>
+      </PageContainer>
+    </PageShell>
   );
 }

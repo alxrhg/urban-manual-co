@@ -99,11 +99,52 @@
     border-color: hsl(var(--border));
   }
 
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    transition: background-color 0.2s ease, color 0.2s ease;
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.page-transition {
+  position: relative;
+  overflow-x: hidden;
+  background-color: hsl(var(--background));
+}
+
+.page-transition::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(249, 250, 251, 0.9) 0%, rgba(255, 255, 255, 0.65) 40%, rgba(255, 255, 255, 0) 80%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.dark .page-transition::before {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.85) 0%, rgba(17, 24, 39, 0.65) 40%, rgba(17, 24, 39, 0) 80%);
+}
+
+.um-shell {
+  position: relative;
+  min-height: inherit;
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+.um-shell > * {
+  position: relative;
+}
+
+.um-shell > *:not([data-bleed='true']) {
+  width: min(100%, var(--container-max));
+  margin-inline: auto;
+  padding-inline: clamp(var(--container-padding-mobile), 6vw, var(--container-padding-desktop));
+}
+
+@media (max-width: 640px) {
+  .um-shell {
+    padding-block: 2.5rem;
   }
+}
   
   html.dark {
     color-scheme: dark;

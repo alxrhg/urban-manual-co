@@ -48,6 +48,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+import { PageShell } from '@/components/PageShell';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -2130,7 +2131,8 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
   const showBrowseLists = !submittedQuery && searchTerm.trim().length === 0;
 
   return (
-    <ErrorBoundary>
+    <PageShell bleed>
+      <ErrorBoundary>
       <ScreenReaderAnnouncements message={screenReaderMessage} priority={screenReaderPriority} />
       {/* Structured Data for SEO */}
       <script
@@ -2957,6 +2959,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
             onClose={() => setShowTripPlanner(false)}
           />
       </main>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </PageShell>
   );
 }

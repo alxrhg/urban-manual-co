@@ -10,6 +10,7 @@ import GoogleMap from '@/components/GoogleMap';
 import { Search, X, ChevronRight, Map, Globe, Compass } from 'lucide-react';
 import AppleMap from '@/components/AppleMap';
 import Image from 'next/image';
+import { PageShell } from '@/components/PageShell';
 
 // Lazy load components
 const DestinationDrawer = dynamic(
@@ -218,17 +219,20 @@ export default function MapPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white text-gray-900">
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-sm text-neutral-500">Loading map…</div>
-        </div>
-      </main>
+      <PageShell bleed>
+        <main className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-white" data-bleed="true">
+          <div className="flex items-center justify-center h-screen">
+            <div className="text-sm uppercase tracking-[2px] text-neutral-500 dark:text-neutral-400">Loading map…</div>
+          </div>
+        </main>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <PageShell bleed>
+      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white" data-bleed="true">
+        <div className="w-full px-6 md:px-10 lg:px-12 py-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="flex flex-col gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 dark:text-neutral-500" />
@@ -388,14 +392,15 @@ export default function MapPage() {
         </div>
       </div>
 
-      <DestinationDrawer
-        destination={selectedDestination}
-        isOpen={isDrawerOpen}
-        onClose={() => {
-          setIsDrawerOpen(false);
-          setTimeout(() => setSelectedDestination(null), 300);
-        }}
-      />
-    </div>
+        <DestinationDrawer
+          destination={selectedDestination}
+          isOpen={isDrawerOpen}
+          onClose={() => {
+            setIsDrawerOpen(false);
+            setTimeout(() => setSelectedDestination(null), 300);
+          }}
+        />
+      </div>
+    </PageShell>
   );
 }
