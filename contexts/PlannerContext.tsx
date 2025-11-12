@@ -92,6 +92,18 @@ export interface PlannerRecommendation {
   type: 'activity' | 'lodging' | 'logistics';
 }
 
+export type PlannerWarningType = 'overlap' | 'transit' | 'budget';
+
+export interface PlannerWarning {
+  id: string;
+  type: PlannerWarningType;
+  severity: 'info' | 'warning' | 'error';
+  message: string;
+  dayId: string | null;
+  blockIds: string[];
+  details?: Record<string, unknown>;
+}
+
 type PlannerItemNotes = {
   type?: string;
   attachments?: PlannerAttachment[];
@@ -114,6 +126,8 @@ export interface PlannerItinerary {
   endDate?: string | null;
   ownerId?: string | null;
   updatedAt?: string | null;
+  budget?: number | null;
+  metadata?: Record<string, unknown> | null;
   days: PlannerDay[];
   collaborators: PlannerCollaborator[];
   sharedLink?: string | null;
@@ -139,8 +153,10 @@ interface PlannerContextValue {
   comments: PlannerComment[];
   recommendations: PlannerRecommendation[];
   recommendationsLoading: boolean;
+  validationWarnings: PlannerWarning[];
+  getWarningsForDay: (dayId: string) => PlannerWarning[];
   loadItinerary: (tripId: number | string) => Promise<void>;
-  updateItinerary: (updates: Partial<Pick<PlannerItinerary, 'title' | 'destination' | 'startDate' | 'endDate'>>) => void;
+  updateItinerary: (updates: Partial<Pick<PlannerItinerary, 'title' | 'destination' | 'startDate' | 'endDate' | 'budget'>>) => void;
   addDay: (date?: string | null) => void;
   updateDay: (dayId: string, updates: Partial<PlannerDay>) => void;
   removeDay: (dayId: string) => void;
@@ -159,6 +175,7 @@ interface PlannerContextValue {
   exportItinerary: () => void;
   addRecommendationToDay: (dayId: string, recommendation: PlannerRecommendation) => void;
   refreshRecommendations: () => Promise<void>;
+  autoArrangeDay: (dayId: string) => Promise<void>;
 }
 
 const PlannerContext = createContext<PlannerContextValue | undefined>(undefined);
@@ -197,6 +214,308 @@ function safeParseJSON(value?: string | null): unknown {
     console.warn('Failed to parse itinerary metadata', error);
     return undefined;
   }
+}
+
+function parseTimeToMinutes(value?: string | null): number | null {
+  if (!value) return null;
+  const match = /^\s*(\d{1,2}):(\d{2})\s*$/.exec(value);
+  if (!match) return null;
+  const hours = Number.parseInt(match[1], 10);
+  const minutes = Number.parseInt(match[2], 10);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  return hours * 60 + minutes;
+}
+
+function minutesToTimeString(minutes: number): string {
+  const normalized = ((minutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  const hours = Math.floor(normalized / 60);
+  const mins = normalized % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
+function extractFromMetadata(metadata: Record<string, unknown> | null | undefined, path: string[]): unknown {
+  if (!metadata) return undefined;
+  let current: unknown = metadata;
+  for (const key of path) {
+    if (!current || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+function getBlockStartMinutes(block: PlannerBlock): number | null {
+  const direct = parseTimeToMinutes(block.time ?? null);
+  if (direct != null) return direct;
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  const candidates = [
+    extractFromMetadata(metadata, ['timing', 'start']),
+    extractFromMetadata(metadata, ['startTime']),
+    extractFromMetadata(metadata, ['time', 'start']),
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string') {
+      const parsed = parseTimeToMinutes(candidate);
+      if (parsed != null) return parsed;
+    }
+  }
+  return null;
+}
+
+function getBlockDurationMinutes(block: PlannerBlock): number | null {
+  if (typeof block.durationMinutes === 'number' && Number.isFinite(block.durationMinutes)) {
+    return block.durationMinutes;
+  }
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  const candidates = [
+    extractFromMetadata(metadata, ['durationMinutes']),
+    extractFromMetadata(metadata, ['duration']),
+    extractFromMetadata(metadata, ['timing', 'durationMinutes']),
+    extractFromMetadata(metadata, ['timing', 'duration']),
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return candidate;
+    }
+    if (typeof candidate === 'string') {
+      const parsed = Number.parseFloat(candidate);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  const timingStart = extractFromMetadata(metadata, ['timing', 'start']);
+  const timingEnd = extractFromMetadata(metadata, ['timing', 'end']);
+  if (typeof timingStart === 'string' && typeof timingEnd === 'string') {
+    const start = parseTimeToMinutes(timingStart);
+    const end = parseTimeToMinutes(timingEnd);
+    if (start != null && end != null && end >= start) {
+      return end - start;
+    }
+  }
+  return null;
+}
+
+function getBlockEndMinutes(block: PlannerBlock): number | null {
+  const start = getBlockStartMinutes(block);
+  const duration = getBlockDurationMinutes(block);
+  if (start != null && duration != null) {
+    return start + duration;
+  }
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  const endCandidate = extractFromMetadata(metadata, ['timing', 'end']) ?? extractFromMetadata(metadata, ['endTime']);
+  if (typeof endCandidate === 'string') {
+    return parseTimeToMinutes(endCandidate);
+  }
+  return null;
+}
+
+function extractTransitMinutes(block: PlannerBlock): number | null {
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  const candidates = [
+    extractFromMetadata(metadata, ['timing', 'travelMinutesFromPrevious']),
+    extractFromMetadata(metadata, ['travelMinutesFromPrevious']),
+    extractFromMetadata(metadata, ['travelTimeMinutes']),
+    extractFromMetadata(metadata, ['transit', 'durationMinutes']),
+    extractFromMetadata(metadata, ['transit', 'minutes']),
+    extractFromMetadata(metadata, ['journey', 'durationMinutes']),
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return candidate;
+    }
+    if (typeof candidate === 'string') {
+      const parsed = Number.parseFloat(candidate);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function extractEstimatedCost(block: PlannerBlock): number | null {
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  const candidates = [
+    extractFromMetadata(metadata, ['estimatedCost']),
+    extractFromMetadata(metadata, ['cost']),
+    extractFromMetadata(metadata, ['pricing', 'estimatedCost']),
+    extractFromMetadata(metadata, ['pricing', 'estimate']),
+    extractFromMetadata(metadata, ['pricing', 'value']),
+    extractFromMetadata(metadata, ['budget', 'cost']),
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return candidate;
+    }
+    if (typeof candidate === 'string') {
+      const parsed = Number.parseFloat(candidate.replace(/[^0-9.]/g, ''));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function getBlockTimeOfDay(block: PlannerBlock): string | null {
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  const candidate = extractFromMetadata(metadata, ['timing', 'timeOfDay']) ?? extractFromMetadata(metadata, ['timeOfDay']);
+  return typeof candidate === 'string' ? candidate : null;
+}
+
+function blockHasUserOverride(block: PlannerBlock): boolean {
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  if (!metadata) return false;
+  const rootFlags = [
+    metadata.locked,
+    metadata.manual,
+    metadata.userOverride,
+    metadata.preserveTiming,
+    metadata.allowAutoArrange === false,
+    metadata.autoScheduled === false,
+  ];
+  if (rootFlags.some(flag => flag === true)) {
+    return true;
+  }
+  const timing = metadata.timing as Record<string, unknown> | undefined;
+  if (timing) {
+    const timingFlags = [timing.locked, timing.manual, timing.userOverride, timing.preserve];
+    if (timingFlags.some(flag => flag === true)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getBlockDestinationId(block: PlannerBlock): number | null {
+  const metadata = block.metadata as Record<string, unknown> | null | undefined;
+  const candidates = [
+    extractFromMetadata(metadata, ['destinationId']),
+    extractFromMetadata(metadata, ['destination', 'id']),
+    extractFromMetadata(metadata, ['place', 'id']),
+    extractFromMetadata(metadata, ['poi', 'id']),
+    extractFromMetadata(metadata, ['location', 'destinationId']),
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return candidate;
+    }
+    if (typeof candidate === 'string') {
+      const parsed = Number.parseInt(candidate, 10);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function getItineraryBudget(itinerary: PlannerItinerary | null): number | null {
+  if (!itinerary) return null;
+  if (typeof itinerary.budget === 'number' && Number.isFinite(itinerary.budget)) {
+    return itinerary.budget;
+  }
+  const metaBudget = extractFromMetadata(itinerary.metadata ?? undefined, ['budget']);
+  if (typeof metaBudget === 'number' && Number.isFinite(metaBudget)) {
+    return metaBudget;
+  }
+  const constraintsBudget = extractFromMetadata(itinerary.metadata ?? undefined, ['constraints', 'budget']);
+  if (typeof constraintsBudget === 'number' && Number.isFinite(constraintsBudget)) {
+    return constraintsBudget;
+  }
+  return null;
+}
+
+function computeValidationWarnings(itinerary: PlannerItinerary | null): PlannerWarning[] {
+  if (!itinerary) return [];
+  const warnings: PlannerWarning[] = [];
+
+  itinerary.days.forEach(day => {
+    const timedBlocks = day.blocks
+      .map(block => {
+        const start = getBlockStartMinutes(block);
+        const end = getBlockEndMinutes(block);
+        if (start == null || end == null) return null;
+        return { block, start, end };
+      })
+      .filter((entry): entry is { block: PlannerBlock; start: number; end: number } => entry != null)
+      .sort((a, b) => a.start - b.start);
+
+    for (let index = 1; index < timedBlocks.length; index += 1) {
+      const previous = timedBlocks[index - 1];
+      const current = timedBlocks[index];
+      if (current.start < previous.end) {
+        const overlapMinutes = previous.end - current.start;
+        warnings.push({
+          id: `overlap-${day.id}-${previous.block.id}-${current.block.id}`,
+          type: 'overlap',
+          severity: 'error',
+          message: `${current.block.title} overlaps with ${previous.block.title}.`,
+          dayId: day.id,
+          blockIds: [previous.block.id, current.block.id],
+          details: { overlapMinutes },
+        });
+      }
+    }
+
+    for (let index = 1; index < timedBlocks.length; index += 1) {
+      const previous = timedBlocks[index - 1];
+      const current = timedBlocks[index];
+      const requiredTransit = extractTransitMinutes(current.block);
+      if (requiredTransit == null) continue;
+      const gapMinutes = current.start - previous.end;
+      if (gapMinutes < requiredTransit) {
+        warnings.push({
+          id: `transit-${day.id}-${previous.block.id}-${current.block.id}`,
+          type: 'transit',
+          severity: 'warning',
+          message: `Only ${Math.max(gapMinutes, 0)} minutes between ${previous.block.title} and ${current.block.title}, but ${requiredTransit} minutes are recommended for travel.`,
+          dayId: day.id,
+          blockIds: [previous.block.id, current.block.id],
+          details: { actualGapMinutes: gapMinutes, requiredTransitMinutes: requiredTransit },
+        });
+      }
+    }
+  });
+
+  const budget = getItineraryBudget(itinerary);
+  if (budget != null && budget > 0) {
+    const totalCost = itinerary.days.reduce((daySum, day) => {
+      return (
+        daySum +
+        day.blocks.reduce((blockSum, block) => {
+          const cost = extractEstimatedCost(block);
+          return blockSum + (cost ?? 0);
+        }, 0)
+      );
+    }, 0);
+
+    if (totalCost > budget) {
+      warnings.push({
+        id: `budget-${itinerary.id}`,
+        type: 'budget',
+        severity: 'warning',
+        message: `Planned experiences total $${Math.round(totalCost)} which exceeds your budget of $${Math.round(budget)}.`,
+        dayId: null,
+        blockIds: [],
+        details: { totalCost, budget },
+      });
+    }
+  }
+
+  return warnings;
+}
+
+interface AutoArrangeRecommendationPayload {
+  blockId: string | null;
+  destinationId: number | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  durationMinutes?: number | null;
+  travelTimeMinutes?: number | null;
+  timeOfDay?: string | null;
+  notes?: string | null;
+}
+
+interface AutoArrangeResponsePayload {
+  dayId: string | null;
+  recommendations: AutoArrangeRecommendationPayload[];
+  totals?: {
+    travelMinutes?: number | null;
+    estimatedCost?: number | null;
+  };
 }
 
 export function PlannerProvider({
@@ -285,6 +604,7 @@ export function PlannerProvider({
             destination: data.destination,
             start_date: data.startDate,
             end_date: data.endDate,
+            budget: data.budget ?? null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', data.tripId);
@@ -386,7 +706,7 @@ export function PlannerProvider({
         const supabase = createClient();
         const tripResponse = await supabase
           .from('trips')
-          .select('id,title,destination,start_date,end_date,user_id,is_public,updated_at')
+          .select('id,title,destination,start_date,end_date,user_id,is_public,updated_at,budget')
           .eq('id', id)
           .single();
 
@@ -476,6 +796,8 @@ export function PlannerProvider({
             trip.is_public && typeof window !== 'undefined'
               ? `${window.location.origin}/trips/${trip.id}`
               : null,
+          budget: typeof trip.budget === 'number' ? trip.budget : null,
+          metadata: null,
         };
 
         setItinerary(nextItinerary);
@@ -530,7 +852,7 @@ export function PlannerProvider({
         draft.days.push(createEmptyDay(nextIndex, date));
       });
     },
-    [itinerary, mutateItinerary],
+    [itinerary, mutateItinerary, setError],
   );
 
   const updateDay = useCallback(
@@ -847,6 +1169,136 @@ export function PlannerProvider({
     [addBlock],
   );
 
+  const autoArrangeDay = useCallback(
+    async (dayId: string) => {
+      if (!itinerary) {
+        throw new Error('Itinerary not loaded');
+      }
+
+      const day = itinerary.days.find(d => d.id === dayId);
+      if (!day) {
+        throw new Error('Day not found');
+      }
+
+      const blocksPayload = day.blocks.map((block, index) => ({
+        id: block.id,
+        destinationId: getBlockDestinationId(block),
+        durationMinutes: getBlockDurationMinutes(block) ?? undefined,
+        metadata: block.metadata ?? undefined,
+        travelMinutesFromPrevious: index > 0 ? extractTransitMinutes(block) ?? undefined : undefined,
+        estimatedCost: extractEstimatedCost(block) ?? undefined,
+        notes: block.notes ?? undefined,
+        timeOfDay: getBlockTimeOfDay(block) ?? undefined,
+      }));
+
+      const startCandidates = day.blocks
+        .map(block => getBlockStartMinutes(block))
+        .filter((value): value is number => value != null);
+      const earliestStart = startCandidates.length ? Math.min(...startCandidates) : null;
+
+      try {
+        const response = await fetch('/api/intelligence/multi-day-plan/auto-schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tripId: itinerary.tripId,
+            city: itinerary.destination ?? null,
+            dayId,
+            dayDate: day.date ?? null,
+            startTime: earliestStart != null ? minutesToTimeString(earliestStart) : null,
+            constraints: {
+              startTime: earliestStart != null ? minutesToTimeString(earliestStart) : null,
+              defaultTravelMinutes: 15,
+            },
+            blocks: blocksPayload,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorMessage = await response.text().catch(() => 'Auto-arrange request failed');
+          throw new Error(errorMessage);
+        }
+
+        const payload = (await response.json()) as AutoArrangeResponsePayload;
+        const recommendations = Array.isArray(payload.recommendations) ? payload.recommendations : [];
+        const scheduleMap = new Map<string, AutoArrangeRecommendationPayload>();
+        recommendations.forEach(recommendation => {
+          if (recommendation.blockId) {
+            scheduleMap.set(recommendation.blockId, recommendation);
+          }
+        });
+
+        const timestamp = new Date().toISOString();
+
+        mutateItinerary(draft => {
+          const targetDay = draft.days.find(d => d.id === dayId);
+          if (!targetDay) return;
+          targetDay.blocks = targetDay.blocks.map(block => {
+            const suggestion = scheduleMap.get(block.id);
+            if (!suggestion) return block;
+            if (blockHasUserOverride(block)) return block;
+
+            const nextMetadata: Record<string, unknown> = { ...(block.metadata ?? {}) };
+            const nextTiming: Record<string, unknown> =
+              typeof nextMetadata.timing === 'object' && nextMetadata.timing
+                ? { ...(nextMetadata.timing as Record<string, unknown>) }
+                : {};
+
+            if (suggestion.startTime) {
+              nextTiming.start = suggestion.startTime;
+            }
+            if (suggestion.endTime) {
+              nextTiming.end = suggestion.endTime;
+            }
+            if (typeof suggestion.durationMinutes === 'number') {
+              nextTiming.durationMinutes = suggestion.durationMinutes;
+            }
+            if (typeof suggestion.travelTimeMinutes === 'number') {
+              nextTiming.travelMinutesFromPrevious = suggestion.travelTimeMinutes;
+              const existingTransit = nextMetadata.transit as Record<string, unknown> | undefined;
+              nextMetadata.transit = {
+                ...(existingTransit ?? {}),
+                durationMinutes: suggestion.travelTimeMinutes,
+              };
+            }
+            if (suggestion.timeOfDay) {
+              nextTiming.timeOfDay = suggestion.timeOfDay;
+            }
+            nextTiming.updatedAt = timestamp;
+            nextTiming.source = 'auto-schedule';
+            nextMetadata.timing = nextTiming;
+            nextMetadata.autoScheduled = true;
+
+            return {
+              ...block,
+              time: suggestion.startTime ?? block.time ?? null,
+              durationMinutes:
+                typeof suggestion.durationMinutes === 'number'
+                  ? suggestion.durationMinutes
+                  : block.durationMinutes ?? null,
+              metadata: nextMetadata,
+            };
+          });
+        });
+
+        void trackEvent({
+          event_type: 'click',
+          metadata: {
+            source: 'planner',
+            action: 'auto_arrange_day',
+            trip_id: itinerary.tripId,
+            day_id: dayId,
+          },
+        }).catch(() => undefined);
+      } catch (autoArrangeError) {
+        console.error('Failed to auto-arrange day', autoArrangeError);
+        setError('Unable to auto-arrange this day right now.');
+        throw autoArrangeError;
+      }
+    },
+    [itinerary, mutateItinerary],
+  );
+
   const comments = useMemo(() => {
     if (!itinerary) return [] as PlannerComment[];
     return itinerary.days.flatMap(day =>
@@ -855,6 +1307,13 @@ export function PlannerProvider({
       ),
     );
   }, [itinerary]);
+
+  const validationWarnings = useMemo(() => computeValidationWarnings(itinerary), [itinerary]);
+
+  const getWarningsForDay = useCallback(
+    (dayId: string) => validationWarnings.filter(warning => warning.dayId === dayId),
+    [validationWarnings],
+  );
 
   const value = useMemo<PlannerContextValue>(() => ({
     itinerary,
@@ -868,6 +1327,8 @@ export function PlannerProvider({
     comments,
     recommendations,
     recommendationsLoading,
+    validationWarnings,
+    getWarningsForDay,
     loadItinerary,
     updateItinerary: updateItineraryHandler,
     addDay,
@@ -885,6 +1346,7 @@ export function PlannerProvider({
     exportItinerary,
     addRecommendationToDay,
     refreshRecommendations: fetchRecommendations,
+    autoArrangeDay,
   }), [
     itinerary,
     loading,
@@ -897,6 +1359,8 @@ export function PlannerProvider({
     comments,
     recommendations,
     recommendationsLoading,
+    validationWarnings,
+    getWarningsForDay,
     loadItinerary,
     updateItineraryHandler,
     addDay,
@@ -914,6 +1378,7 @@ export function PlannerProvider({
     exportItinerary,
     addRecommendationToDay,
     fetchRecommendations,
+    autoArrangeDay,
   ]);
 
   return <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>;

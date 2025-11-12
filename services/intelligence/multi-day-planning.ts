@@ -215,7 +215,9 @@ export class MultiDayTripPlanningService {
       const dayItems = itemsByDay.get(dayNum) || [];
       
       // Calculate timing
-      const itemsWithTiming = this.calculateTiming(dayItems);
+      const itemsWithTiming = this.calculateTiming(dayItems, {
+        defaultTravelMinutes: 30,
+      });
       
       // Calculate travel time (simplified)
       const totalTravelTime = this.estimateTravelTime(dayItems);
@@ -236,30 +238,56 @@ export class MultiDayTripPlanningService {
   }
 
   private calculateTiming(
-    items: Itinerary['items']
+    items: Itinerary['items'],
+    options?: {
+      startMinutes?: number;
+      defaultDurationMinutes?: number;
+      defaultTravelMinutes?: number;
+      travelDurations?: Array<number | null | undefined>;
+    }
   ): MultiDayTripPlan['days'][0]['items'] {
-    let currentTime = 9 * 60; // Start at 9 AM (in minutes)
+    const startMinutes = options?.startMinutes ?? 9 * 60; // Default start at 9 AM
+    const defaultDuration = options?.defaultDurationMinutes ?? 120;
+    const defaultTravel = options?.defaultTravelMinutes ?? 0;
 
-    return items.map((item: any, idx) => {
-      const duration = (item.duration_minutes || item.duration || 120) as number;
+    let currentTime = startMinutes;
+
+    return items.map((item, idx) => {
+      const rawItem = item as any;
+      const inboundTravel = idx > 0
+        ? this.normalizeMinutes(
+            options?.travelDurations?.[idx - 1] ?? rawItem?.travel_time_minutes,
+            defaultTravel,
+          )
+        : 0;
+
+      if (inboundTravel > 0) {
+        currentTime += inboundTravel;
+      }
+
+      const duration = this.normalizeMinutes(
+        rawItem?.duration_minutes ?? rawItem?.duration,
+        defaultDuration,
+      );
+
       const startTime = this.minutesToTimeString(currentTime);
       const endTime = this.minutesToTimeString(currentTime + duration);
 
-      // Add travel time between items (30 min default)
-      const travelTime = idx > 0 ? 30 : 0;
-      currentTime += duration + travelTime;
+      currentTime += duration;
 
       return {
-        destinationId: typeof item.destination_id === 'string'
-          ? parseInt(item.destination_id)
-          : item.destination_id,
-        order: item.order,
-        timeOfDay: item.time_of_day || 'morning',
+        destinationId: typeof rawItem?.destination_id === 'string'
+          ? Number.parseInt(rawItem.destination_id as string, 10)
+          : rawItem?.destination_id,
+        destinationSlug: rawItem?.destination_slug,
+        destinationName: rawItem?.destination_name,
+        order: rawItem?.order ?? idx + 1,
+        timeOfDay: rawItem?.time_of_day || this.inferTimeOfDay(startTime),
         startTime,
         endTime,
         durationMinutes: duration,
-        travelTimeMinutes: travelTime,
-        notes: item.notes,
+        travelTimeMinutes: inboundTravel,
+        notes: rawItem?.notes,
       };
     });
   }
@@ -270,12 +298,79 @@ export class MultiDayTripPlanningService {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
 
+  private timeStringToMinutes(value?: string | null): number | null {
+    if (!value) return null;
+    const match = /^\s*(\d{1,2}):(\d{2})\s*$/.exec(value);
+    if (!match) return null;
+    const hours = Number.parseInt(match[1], 10);
+    const minutes = Number.parseInt(match[2], 10);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return null;
+    }
+    return hours * 60 + minutes;
+  }
+
+  private normalizeMinutes(value: unknown, fallback: number): number {
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+      return Math.round(value);
+    }
+    if (typeof value === 'string') {
+      const parsedFromClock = this.timeStringToMinutes(value);
+      if (parsedFromClock != null) return parsedFromClock;
+      const numeric = Number.parseFloat(value);
+      if (Number.isFinite(numeric) && numeric >= 0) {
+        return Math.round(numeric);
+      }
+    }
+    return Math.max(0, Math.round(fallback));
+  }
+
+  private inferTimeOfDay(time: string): 'morning' | 'afternoon' | 'evening' | 'night' {
+    const minutes = this.timeStringToMinutes(time);
+    if (minutes == null) return 'morning';
+    if (minutes < 12 * 60) return 'morning';
+    if (minutes < 17 * 60) return 'afternoon';
+    if (minutes < 21 * 60) return 'evening';
+    return 'night';
+  }
+
   private estimateTravelTime(items: Itinerary['items']): number {
+    const explicit = items
+      .map(item => {
+        const raw = (item as any)?.travel_time_minutes;
+        return typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+      })
+      .filter((value): value is number => value != null);
+
+    if (explicit.length > 0) {
+      return explicit.reduce((sum, value) => sum + value, 0);
+    }
+
     // Simplified: 30 minutes between each destination
     return Math.max(0, (items.length - 1) * 30);
   }
 
   private estimateDayCost(items: Itinerary['items']): number {
+    const provided = items
+      .map(item => {
+        const raw = (item as any)?.estimated_cost ?? (item as any)?.estimatedCost ?? (item as any)?.cost;
+        if (typeof raw === 'number' && Number.isFinite(raw)) {
+          return raw;
+        }
+        if (typeof raw === 'string') {
+          const parsed = Number.parseFloat(raw.replace(/[^0-9.]/g, ''));
+          if (Number.isFinite(parsed)) {
+            return parsed;
+          }
+        }
+        return null;
+      })
+      .filter((value): value is number => value != null);
+
+    if (provided.length > 0) {
+      return provided.reduce((sum, value) => sum + value, 0);
+    }
+
     // Simplified: estimate based on average price level
     // In production, would fetch actual prices
     return items.length * 50; // Placeholder: $50 per destination
@@ -299,6 +394,54 @@ export class MultiDayTripPlanningService {
       routeEfficiency: Math.min(1, Math.max(0, routeEfficiency)),
       categoryBalance,
     };
+  }
+
+  async recommendDaySchedule(params: {
+    items: Itinerary['items'];
+    startTime?: string;
+    defaultTravelMinutes?: number;
+  }): Promise<{
+    schedule: MultiDayTripPlan['days'][0]['items'];
+    totalTravelTime: number;
+    estimatedCost: number;
+  } | null> {
+    const { items, startTime, defaultTravelMinutes } = params;
+
+    if (!items || items.length === 0) {
+      return {
+        schedule: [],
+        totalTravelTime: 0,
+        estimatedCost: 0,
+      };
+    }
+
+    try {
+      const travelDurations = items
+        .slice(1)
+        .map(item => (item as any)?.travel_time_minutes ?? null);
+
+      const schedule = this.calculateTiming(items, {
+        startMinutes: startTime ? this.timeStringToMinutes(startTime) ?? undefined : undefined,
+        defaultTravelMinutes: defaultTravelMinutes ?? 15,
+        travelDurations,
+      });
+
+      const totalTravelTime = schedule.reduce(
+        (sum, block) => sum + (block.travelTimeMinutes ?? 0),
+        0,
+      );
+
+      const estimatedCost = this.estimateDayCost(items);
+
+      return {
+        schedule,
+        totalTravelTime,
+        estimatedCost,
+      };
+    } catch (error) {
+      console.error('Error recommending day schedule:', error);
+      return null;
+    }
   }
 }
 

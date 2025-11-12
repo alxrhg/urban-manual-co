@@ -14,6 +14,8 @@ export interface ItineraryItem {
   time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night';
   duration_minutes?: number;
   notes?: string;
+  travel_time_minutes?: number | null;
+  estimated_cost?: number | null;
 }
 
 export interface Itinerary {

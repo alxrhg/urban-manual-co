@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CalendarDays, MapPin, Share2, Download, Loader2 } from 'lucide-react';
+import { CalendarDays, MapPin, Share2, Download, Loader2, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePlanner } from '@/contexts/PlannerContext';
@@ -14,10 +14,11 @@ interface PlannerHeaderProps {
 }
 
 export function PlannerHeader({ title, destination, onShare, onExport }: PlannerHeaderProps) {
-  const { itinerary, updateItinerary, saving, realtimeStatus } = usePlanner();
+  const { itinerary, updateItinerary, saving, realtimeStatus, activeDayId, autoArrangeDay } = usePlanner();
   const [localTitle, setLocalTitle] = useState(title);
   const [localDestination, setLocalDestination] = useState(destination || '');
   const [shareStatus, setShareStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [autoArrangeStatus, setAutoArrangeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     setLocalTitle(title);
@@ -47,6 +48,20 @@ export function PlannerHeader({ title, destination, onShare, onExport }: Planner
       void navigator.clipboard?.writeText(link).catch(() => undefined);
     }
     setTimeout(() => setShareStatus('idle'), 2500);
+  };
+
+  const handleAutoArrange = async () => {
+    if (!activeDayId) return;
+    try {
+      setAutoArrangeStatus('loading');
+      await autoArrangeDay(activeDayId);
+      setAutoArrangeStatus('success');
+      setTimeout(() => setAutoArrangeStatus('idle'), 2500);
+    } catch (error) {
+      console.error('Auto-arrange failed', error);
+      setAutoArrangeStatus('error');
+      setTimeout(() => setAutoArrangeStatus('idle'), 3000);
+    }
   };
 
   return (
@@ -100,6 +115,23 @@ export function PlannerHeader({ title, destination, onShare, onExport }: Planner
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={handleAutoArrange}
+            disabled={!activeDayId || autoArrangeStatus === 'loading'}
+            className="min-w-[10rem]"
+          >
+            {autoArrangeStatus === 'loading' ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Wand2 className="size-4" />
+            )}
+            {autoArrangeStatus === 'success'
+              ? 'Arranged'
+              : autoArrangeStatus === 'error'
+                ? 'Try again'
+                : 'Auto-arrange day'}
+          </Button>
           <Button variant="ghost" onClick={handleShare} className="min-w-[6.5rem]">
             <Share2 className="size-4" />
             {shareStatus === 'success' ? 'Link copied' : 'Share'}
