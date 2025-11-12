@@ -2,7 +2,7 @@
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { useTheme } from "next-themes"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Laptop2, MoonStar, Sun, Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -26,9 +26,20 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   useEffect(() => setMounted(true), [])
 
   const activeTheme = mounted ? theme ?? "system" : "system"
-  const activeOption: ThemeOption =
-    THEME_OPTIONS.find(option => option.value === activeTheme) ?? THEME_OPTIONS[0]
-  const ActiveIcon = activeOption.icon
+
+  const ActiveIcon = useMemo(() => {
+    return (
+      THEME_OPTIONS.find(option => option.value === activeTheme)?.icon ?? Sun
+    )
+  }, [activeTheme])
+
+  const handleThemeChange = useCallback(
+    (value: string) => {
+      const themeValue = value as ThemeOption["value"]
+      setTheme(themeValue)
+    },
+    [setTheme],
+  )
 
   return (
     <DropdownMenu.Root>
@@ -58,27 +69,33 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
           <DropdownMenu.Label className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Theme
           </DropdownMenu.Label>
-          {THEME_OPTIONS.map(option => {
-            const Icon = option.icon
-            const isActive = option.value === activeTheme
+          <DropdownMenu.RadioGroup
+            value={activeTheme}
+            onValueChange={handleThemeChange}
+            aria-label="Theme selection"
+          >
+            {THEME_OPTIONS.map(option => {
+              const Icon = option.icon
 
-            return (
-              <DropdownMenu.Item
-                key={option.value}
-                onSelect={() => setTheme(option.value)}
-                className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800",
-                  isActive && "bg-gray-900 text-white dark:bg-gray-100/10 dark:text-white",
-                )}
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                <span className="flex-1">{option.label}</span>
-                <span className="flex h-5 w-5 items-center justify-center">
-                  {isActive && <Check className="h-4 w-4" aria-hidden="true" />}
-                </span>
-              </DropdownMenu.Item>
-            )
-          })}
+              return (
+                <DropdownMenu.RadioItem
+                  key={option.value}
+                  value={option.value}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100 data-[state=checked]:bg-gray-900 data-[state=checked]:text-white dark:text-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800 dark:data-[state=checked]:bg-gray-100/10",
+                  )}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <span className="flex-1">{option.label}</span>
+                  <DropdownMenu.ItemIndicator asChild>
+                    <span className="flex h-5 w-5 items-center justify-center">
+                      <Check className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                  </DropdownMenu.ItemIndicator>
+                </DropdownMenu.RadioItem>
+              )
+            })}
+          </DropdownMenu.RadioGroup>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
