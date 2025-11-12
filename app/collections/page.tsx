@@ -7,8 +7,7 @@ export default function CollectionsPage() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect to account page with collections tab
-    router.replace('/account?tab=collections');
+    router.replace('/account/history#collections');
   }, [router]);
 
   return null;

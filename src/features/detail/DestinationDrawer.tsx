@@ -1051,7 +1051,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => {
-                      router.push('/account?tab=collections');
+                      router.push('/account/history#collections');
                       setShowSaveDropdown(false);
                     }}>
                       <Plus className="h-3 w-3 mr-2" />

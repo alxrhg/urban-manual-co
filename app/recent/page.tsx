@@ -7,8 +7,7 @@ export default function RecentPage() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect to account page with recent tab
-    router.replace('/account?tab=visited');
+    router.replace('/account/history#visited-places');
   }, [router]);
 
   return null;

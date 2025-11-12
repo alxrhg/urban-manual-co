@@ -10,8 +10,8 @@ import { AddPlaceDropdown } from './AddPlaceDropdown';
 interface VisitedPlace {
   destination_slug: string;
   visited_at: string;
-  rating?: number;
-  notes?: string;
+  rating?: number | null;
+  notes?: string | null;
   destination: {
     name: string;
     city: string;
