@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, Fragment } from 'react';
+import Image from 'next/image';
 import {
   PlusIcon,
   XIcon,
@@ -13,10 +14,12 @@ import {
   RouteIcon,
   SunriseIcon,
   SunsetIcon,
+  Loader2,
 } from 'lucide-react';
 
-interface TripLocation {
+export interface TripLocation {
   id: number;
+  itemId?: string;
   name: string;
   city: string;
   category: string;
@@ -26,6 +29,7 @@ interface TripLocation {
   cost?: number;
   duration?: number;
   mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  orderIndex?: number;
 }
 
 interface TripDayProps {
@@ -35,9 +39,12 @@ interface TripDayProps {
   hotelLocation?: string;
   onAddLocation: () => void;
   onRemoveLocation: (locationId: number) => void;
-  onReorderLocations: (locations: TripLocation[]) => void;
+  onReorderLocations?: (locations: TripLocation[]) => void;
   onDuplicateDay: () => void;
   onOptimizeRoute: () => void;
+  onUpdateLocation?: (location: TripLocation, updates: Partial<TripLocation>) => void;
+  editable?: boolean;
+  savingLocationItemIds?: string[];
 }
 
 export function TripDay({
@@ -50,9 +57,12 @@ export function TripDay({
   onReorderLocations,
   onDuplicateDay,
   onOptimizeRoute,
+  onUpdateLocation,
+  editable = false,
+  savingLocationItemIds = [],
 }: TripDayProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [showNotes, setShowNotes] = useState<number | null>(null);
+  const [activeNotesEditor, setActiveNotesEditor] = useState<number | null>(null);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -73,8 +83,10 @@ export function TripDay({
 
   const calculateTravelTime = (index: number) => {
     if (index === 0) return null;
-    // Mock calculation - in real app would use routing API
-    return Math.floor(Math.random() * 30) + 10;
+    const previous = locations[index - 1];
+    const current = locations[index];
+    const seed = (previous?.id ?? 0) + (current?.id ?? index);
+    return Math.abs(seed % 30) + 10;
   };
 
   const getMealIcon = (mealType?: string) => {
@@ -99,12 +111,39 @@ export function TripDay({
     const draggedItem = newLocations[draggedIndex];
     newLocations.splice(draggedIndex, 1);
     newLocations.splice(index, 0, draggedItem);
-    onReorderLocations(newLocations);
+    onReorderLocations?.(newLocations);
     setDraggedIndex(index);
   };
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
+  };
+
+  const isEditable = editable || Boolean(onUpdateLocation);
+
+  const isLocationSaving = (location: TripLocation) => {
+    if (!location.itemId) return false;
+    return savingLocationItemIds.includes(location.itemId);
+  };
+
+  const handleTimeBlur = (location: TripLocation, value: string) => {
+    if (!onUpdateLocation) return;
+    const normalized = value.trim();
+    if ((location.time || '') === normalized) return;
+    onUpdateLocation(location, { time: normalized || undefined });
+  };
+
+  const handleNotesCommit = (location: TripLocation, value: string) => {
+    if (!onUpdateLocation) return;
+    if ((location.notes || '') === value) return;
+    onUpdateLocation(location, { notes: value });
+  };
+
+  const handleMealChange = (location: TripLocation, value: string) => {
+    if (!onUpdateLocation) return;
+    const normalized = (value || undefined) as TripLocation['mealType'] | undefined;
+    if ((location.mealType || undefined) === normalized) return;
+    onUpdateLocation(location, { mealType: normalized });
   };
 
   return (
@@ -174,6 +213,7 @@ export function TripDay({
           <>
             {locations.map((location, index) => {
               const travelTime = calculateTravelTime(index);
+              const saving = isLocationSaving(location);
               return (
                 <Fragment key={location.id}>
                   {travelTime && (
@@ -195,11 +235,13 @@ export function TripDay({
                     }`}
                   >
                     <GripVerticalIcon className="w-4 h-4 text-neutral-300 dark:text-neutral-600 mt-2 flex-shrink-0" />
-                    <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                      <img
+                    <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                      <Image
                         src={location.image}
                         alt={location.name}
-                        className="w-full h-full object-cover grayscale-[20%]"
+                        fill
+                        sizes="80px"
+                        className="object-cover grayscale-[20%]"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -225,6 +267,9 @@ export function TripDay({
                         >
                           <XIcon className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                         </button>
+                        {saving && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-400 dark:text-neutral-500" />
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-[10px] text-neutral-400 dark:text-neutral-500 tracking-wide">
                         {location.time && (
@@ -248,6 +293,59 @@ export function TripDay({
                           <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                             {location.notes}
                           </p>
+                        </div>
+                      )}
+                      {isEditable && (
+                        <div className="mt-4 space-y-3">
+                          <div className="flex flex-wrap gap-3 text-[10px] text-neutral-500 dark:text-neutral-400 tracking-wide">
+                            <label className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-2 text-[11px] dark:border-neutral-700 dark:bg-neutral-900 bg-neutral-50">
+                              <ClockIcon className="w-3 h-3" />
+                              <input
+                                key={`time-${location.id}-${location.time ?? ''}`}
+                                type="time"
+                                defaultValue={location.time || ''}
+                                className="bg-transparent focus:outline-none"
+                                onBlur={(event) => handleTimeBlur(location, event.target.value)}
+                              />
+                            </label>
+                            <label className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-2 text-[11px] dark:border-neutral-700 dark:bg-neutral-900 bg-neutral-50">
+                              <span className="uppercase tracking-[0.2em] text-[9px] text-neutral-400">Meal</span>
+                              <select
+                                value={location.mealType || ''}
+                                onChange={(event) => handleMealChange(location, event.target.value)}
+                                className="bg-transparent focus:outline-none text-[11px]"
+                              >
+                                <option value="">None</option>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="dinner">Dinner</option>
+                                <option value="snack">Snack</option>
+                              </select>
+                            </label>
+                          </div>
+                          <div>
+                            {activeNotesEditor === location.id ? (
+                              <textarea
+                                key={`notes-${location.id}-${location.notes ?? ''}`}
+                                defaultValue={location.notes || ''}
+                                className="w-full rounded-lg border border-neutral-200 bg-white p-3 text-xs text-neutral-600 shadow-sm focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                                rows={3}
+                                autoFocus
+                                onBlur={(event) => {
+                                  handleNotesCommit(location, event.target.value.trim());
+                                  setActiveNotesEditor(null);
+                                }}
+                              />
+                            ) : (
+                              <button
+                                onClick={() => setActiveNotesEditor(location.id)}
+                                className="text-[11px] uppercase tracking-[0.2em] text-neutral-400 transition hover:text-neutral-600 dark:hover:text-neutral-300"
+                                type="button"
+                              >
+                                {location.notes ? 'Edit notes' : 'Add notes'}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
                       {/* Opening hours warning */}

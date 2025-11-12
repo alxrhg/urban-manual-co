@@ -1,29 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
-import {
-  ArrowLeft,
-  Calendar,
-  MapPin,
-  Edit2,
-  Trash2,
-  Plus,
-  X,
-  Loader2,
-  Clock,
-} from 'lucide-react';
-import Image from 'next/image';
+import { ArrowLeft, Calendar, MapPin, Trash2, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
-import { DestinationCard } from '@/components/DestinationCard';
-import { capitalizeCity } from '@/lib/utils';
-import { TripDay } from '@/components/TripDay';
+import { TripDay, TripLocation } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';
+import { useToast } from '@/hooks/useToast';
+import {
+  batchUpdateItineraryItems,
+  mergeItineraryNotes,
+  parseItineraryNotes,
+  type ItineraryNotesData,
+} from '@/components/TripPlanner';
 
 interface Trip {
   id: string;
@@ -58,27 +52,27 @@ export default function TripDetailPage() {
   const router = useRouter();
   const params = useParams();
   const tripId = params.id as string;
+  const toast = useToast();
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [itineraryItems, setItineraryItems] = useState<ItineraryItem[]>([]);
   const [destinations, setDestinations] = useState<Map<string, Destination>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  const [selectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [showAddLocationModal, setShowAddLocationModal] = useState(false);
+  const [, setShowAddLocationModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [savingItemIds, setSavingItemIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.push('/auth/login');
-        return;
-      }
-      fetchTripDetails();
-    }
-  }, [authLoading, user, tripId]);
+  const addSavingItems = (ids: string[]) => {
+    setSavingItemIds((prev) => Array.from(new Set([...prev, ...ids])));
+  };
 
-  const fetchTripDetails = async () => {
+  const removeSavingItems = (ids: string[]) => {
+    setSavingItemIds((prev) => prev.filter((id) => !ids.includes(id)));
+  };
+
+  const fetchTripDetails = useCallback(async () => {
     if (!tripId) return;
     setLoading(true);
 
@@ -99,7 +93,7 @@ export default function TripDetailPage() {
         return;
       }
 
-      const trip = tripData as any;
+      const trip = tripData as Trip;
       
       // Check if user owns this trip or if it's public
       if (!trip.is_public && trip.user_id !== user?.id) {
@@ -120,12 +114,13 @@ export default function TripDetailPage() {
       if (itemsError) {
         console.error('Error fetching itinerary items:', itemsError);
       } else {
-        setItineraryItems(itemsData || []);
+        setItineraryItems(itemsForTrip);
 
         // Fetch destinations for items with destination_slug
-        const slugs = (itemsData || [])
-          .map((item: any) => item.destination_slug)
-          .filter((slug: string | null) => slug !== null) as string[];
+        const itemsForTrip = (itemsData || []) as ItineraryItem[];
+        const slugs = itemsForTrip
+          .map((item) => item.destination_slug)
+          .filter((slug): slug is string => slug !== null);
 
         if (slugs.length > 0) {
           const { data: destData, error: destError } = await supabaseClient
@@ -135,7 +130,7 @@ export default function TripDetailPage() {
 
           if (!destError && destData) {
             const destMap = new Map<string, Destination>();
-            destData.forEach((dest: any) => {
+            (destData as Destination[]).forEach((dest) => {
               destMap.set(dest.slug, dest);
             });
             setDestinations(destMap);
@@ -147,7 +142,17 @@ export default function TripDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tripId, user, router]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
+      fetchTripDetails();
+    }
+  }, [authLoading, user, router, fetchTripDetails]);
 
   const deleteItineraryItem = async (itemId: string) => {
     if (!confirm('Are you sure you want to remove this item from the trip?')) return;
@@ -164,9 +169,10 @@ export default function TripDetailPage() {
       if (error) throw error;
 
       setItineraryItems(prev => prev.filter(item => item.id !== itemId));
+      toast.success('Itinerary item removed.');
     } catch (error) {
       console.error('Error deleting itinerary item:', error);
-      alert('Failed to remove item. Please try again.');
+      toast.error('Failed to remove item. Please try again.');
     }
   };
 
@@ -185,9 +191,10 @@ export default function TripDetailPage() {
       if (error) throw error;
 
       router.push('/trips');
+      toast.success('Trip deleted.');
     } catch (error) {
       console.error('Error deleting trip:', error);
-      alert('Failed to delete trip. Please try again.');
+      toast.error('Failed to delete trip. Please try again.');
     }
   };
 
@@ -214,33 +221,27 @@ export default function TripDetailPage() {
   };
 
   // Transform itinerary items to TripLocation format
-  const transformItemsToLocations = (items: ItineraryItem[]) => {
+  const transformItemsToLocations = (items: ItineraryItem[]): TripLocation[] => {
     return items.map((item) => {
       const destination = item.destination_slug
         ? destinations.get(item.destination_slug)
         : null;
 
-      // Parse notes for additional data (cost, duration, mealType)
-      let notesData: any = {};
-      if (item.notes) {
-        try {
-          notesData = JSON.parse(item.notes);
-        } catch {
-          notesData = { raw: item.notes };
-        }
-      }
+      const notesData = parseItineraryNotes(item.notes);
 
       return {
         id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+        itemId: item.id,
         name: destination?.name || item.title,
         city: destination?.city || notesData.city || '',
         category: destination?.category || item.description || '',
         image: destination?.image || notesData.image || '/placeholder-image.jpg',
         time: item.time || undefined,
-        notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+        notes: notesData.raw || undefined,
         cost: notesData.cost || undefined,
         duration: notesData.duration || undefined,
         mealType: notesData.mealType || undefined,
+        orderIndex: item.order_index ?? 0,
       };
     });
   };
@@ -311,9 +312,10 @@ export default function TripDetailPage() {
       await fetchTripDetails();
       setShowAddLocationModal(false);
       setSelectedDay(null);
+      toast.success('Location added to itinerary.');
     } catch (error) {
       console.error('Error adding location:', error);
-      alert('Failed to add location. Please try again.');
+      toast.error('Failed to add location. Please try again.');
     }
   };
 
@@ -321,6 +323,158 @@ export default function TripDetailPage() {
     const itemId = itineraryItems.find(item => parseInt(item.id) === locationId)?.id;
     if (itemId) {
       await deleteItineraryItem(itemId);
+    }
+  };
+
+  const handleLocationFieldChange = async (
+    location: TripLocation,
+    updates: Partial<TripLocation>
+  ) => {
+    if (!location.itemId || !tripId || !trip || trip.user_id !== user?.id) return;
+
+    const currentItem = itineraryItems.find((item) => item.id === location.itemId);
+    if (!currentItem) return;
+
+    const previousItems = itineraryItems.map((item) => ({ ...item }));
+
+    const payload: {
+      id: string;
+      time?: string | null;
+      notes?: string | null;
+    } = {
+      id: location.itemId,
+    };
+
+    let didChange = false;
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'time')) {
+      const newTime = updates.time ? updates.time : null;
+      if ((currentItem.time || null) !== newTime) {
+        payload.time = newTime;
+        didChange = true;
+      }
+    }
+
+    const notesUpdates: Partial<ItineraryNotesData> = {};
+    if (Object.prototype.hasOwnProperty.call(updates, 'notes')) {
+      notesUpdates.raw = updates.notes || '';
+    }
+    if (Object.prototype.hasOwnProperty.call(updates, 'mealType')) {
+      notesUpdates.mealType = updates.mealType || undefined;
+    }
+
+    if (Object.keys(notesUpdates).length > 0) {
+      const mergedNotes = mergeItineraryNotes(currentItem.notes, notesUpdates);
+      if (mergedNotes !== currentItem.notes) {
+        payload.notes = mergedNotes;
+        didChange = true;
+      }
+    }
+
+    if (!didChange) return;
+
+    addSavingItems([location.itemId]);
+
+    setItineraryItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== location.itemId) return item;
+        return {
+          ...item,
+          ...(payload.time !== undefined ? { time: payload.time } : {}),
+          ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
+        };
+      })
+    );
+
+    try {
+      await batchUpdateItineraryItems(tripId, [payload]);
+      toast.success('Itinerary updated.');
+    } catch (error) {
+      console.error('Error updating itinerary item:', error);
+      setItineraryItems(previousItems);
+      toast.error('Failed to update itinerary item.');
+    } finally {
+      removeSavingItems([location.itemId]);
+    }
+  };
+
+  const handleReorderLocations = async (
+    dayNumber: number,
+    dayItems: ItineraryItem[],
+    reorderedLocations: TripLocation[]
+  ) => {
+    if (!tripId || !trip || trip.user_id !== user?.id) return;
+
+    const previousItems = itineraryItems.map((item) => ({ ...item }));
+    const usedIds = new Set<string>();
+
+    const updates = reorderedLocations.reduce<
+      Array<{ id: string; order_index: number; day: number }>
+    >((acc, location, index) => {
+      let targetId = location.itemId && !usedIds.has(location.itemId)
+        ? location.itemId
+        : undefined;
+
+      if (!targetId) {
+        const fallback = dayItems.find((item) => {
+          if (usedIds.has(item.id)) return false;
+          if (item.title === location.name) return true;
+          if (
+            item.destination_slug &&
+            location.name &&
+            item.destination_slug === location.name.toLowerCase().replace(/\s+/g, '-')
+          ) {
+            return true;
+          }
+          return false;
+        });
+        if (fallback) {
+          targetId = fallback.id;
+        }
+      }
+
+      if (!targetId) {
+        return acc;
+      }
+
+      usedIds.add(targetId);
+      acc.push({ id: targetId, order_index: index, day: dayNumber });
+      return acc;
+    }, []);
+
+    if (updates.length === 0) return;
+
+    addSavingItems(updates.map((update) => update.id));
+
+    const updatesMap = new Map(updates.map((update) => [update.id, update]));
+
+    setItineraryItems((prev) => {
+      const updated = prev.map((item) => {
+        const update = updatesMap.get(item.id);
+        if (!update) return item;
+        return {
+          ...item,
+          order_index: update.order_index,
+          day: update.day,
+        };
+      });
+      return updated.sort((a, b) => {
+        if (a.day === b.day) {
+          return (a.order_index || 0) - (b.order_index || 0);
+        }
+        return a.day - b.day;
+      });
+    });
+
+    try {
+      await batchUpdateItineraryItems(tripId, updates);
+      toast.success('Itinerary order updated.');
+    } catch (error) {
+      console.error('Error updating itinerary order:', error);
+      setItineraryItems(previousItems);
+      toast.error('Failed to reorder itinerary.');
+    } finally {
+      removeSavingItems(updates.map((update) => update.id));
     }
   };
 
@@ -424,6 +578,9 @@ export default function TripDetailPage() {
                 const dayDate = getDateForDay(dayNumber);
                 const locations = transformItemsToLocations(items);
 
+                const dayItems = items as ItineraryItem[];
+                const canEdit = trip.user_id === user?.id;
+
                 return (
                   <TripDay
                     key={day}
@@ -432,71 +589,17 @@ export default function TripDetailPage() {
                     locations={locations}
                     onAddLocation={() => handleAddLocation(dayNumber)}
                     onRemoveLocation={handleRemoveLocation}
-                    onReorderLocations={async (reorderedLocations) => {
-                      // Handle reordering - update order_index in database
-                      try {
-                        const supabaseClient = createClient();
-                        if (!supabaseClient || !user) return;
-
-                        // Delete existing items for this day
-                        await supabaseClient
-                          .from('itinerary_items')
-                          .delete()
-                          .eq('trip_id', tripId)
-                          .eq('day', dayNumber);
-
-                        // Insert reordered items - match by title/name
-                        const itemsToInsert = reorderedLocations.map((loc, idx) => {
-                          const originalItem = items.find(
-                            (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
-                          );
-                          
-                          // Parse notes if it contains JSON data
-                          let notesData: any = {};
-                          if (originalItem?.notes) {
-                            try {
-                              notesData = JSON.parse(originalItem.notes);
-                            } catch {
-                              notesData = { raw: originalItem.notes };
-                            }
-                          }
-
-                          // Update notes with location data
-                          const updatedNotes = JSON.stringify({
-                            raw: loc.notes || notesData.raw || '',
-                            cost: loc.cost || notesData.cost,
-                            duration: loc.duration || notesData.duration,
-                            mealType: loc.mealType || notesData.mealType,
-                            image: loc.image || notesData.image,
-                            city: loc.city || notesData.city,
-                            category: loc.category || notesData.category,
-                          });
-
-                          return {
-                            trip_id: tripId,
-                            destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
-                            day: dayNumber,
-                            order_index: idx,
-                            time: loc.time || originalItem?.time || null,
-                            title: loc.name,
-                            description: loc.category || originalItem?.description || '',
-                            notes: updatedNotes,
-                          };
-                        });
-
-                        if (itemsToInsert.length > 0) {
-                          await supabaseClient
-                            .from('itinerary_items')
-                            .insert(itemsToInsert);
-                        }
-
-                        // Reload trip data
-                        await fetchTripDetails();
-                      } catch (error) {
-                        console.error('Error reordering locations:', error);
-                        alert('Failed to reorder locations. Please try again.');
-                      }
-                    }}
+                    onReorderLocations={(reorderedLocations) =>
+                      handleReorderLocations(dayNumber, dayItems, reorderedLocations)
+                    }
+                    onUpdateLocation={
+                      canEdit
+                        ? (location, updates) =>
+                            handleLocationFieldChange(location, updates)
+                        : undefined
+                    }
+                    editable={canEdit}
+                    savingLocationItemIds={savingItemIds}
                     onDuplicateDay={async () => {
                       // Duplicate day functionality
                       alert('Duplicate day feature coming soon');

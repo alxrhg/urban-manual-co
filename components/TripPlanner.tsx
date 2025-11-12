@@ -7,7 +7,6 @@ import {
   MapPinIcon,
   ShareIcon,
   DownloadIcon,
-  SparklesIcon,
   WalletIcon,
   PrinterIcon,
   SaveIcon,
@@ -16,13 +15,89 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
-import { TripDay } from './TripDay';
+import { TripDay, TripLocation } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripBudgetTracker } from './TripBudgetTracker';
 import { TripWeatherForecast } from './TripWeatherForecast';
 import { TripPackingList } from './TripPackingList';
 import { TripShareModal } from './TripShareModal';
+import { useToast } from '@/hooks/useToast';
+
+export interface ItineraryNotesData {
+  raw?: string;
+  cost?: number;
+  duration?: number;
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  image?: string;
+  city?: string;
+  category?: string;
+}
+
+export function parseItineraryNotes(notes: string | null): ItineraryNotesData {
+  if (!notes) return {};
+  try {
+    const parsed = JSON.parse(notes);
+    if (typeof parsed === 'string') {
+      return { raw: parsed };
+    }
+    if (parsed && typeof parsed === 'object') {
+      return parsed as ItineraryNotesData;
+    }
+    return {};
+  } catch (error) {
+    console.warn('Failed to parse itinerary notes', error);
+    return { raw: notes };
+  }
+}
+
+export function mergeItineraryNotes(
+  existingNotes: string | null,
+  updates: Partial<ItineraryNotesData>
+): string | null {
+  const current = parseItineraryNotes(existingNotes);
+  const merged: Record<string, unknown> = { ...current, ...updates };
+
+  const sanitizedEntries = Object.entries(merged).filter(([, value]) => {
+    if (value === undefined || value === null) return false;
+    if (typeof value === 'string' && value.trim() === '') return false;
+    return true;
+  });
+
+  if (sanitizedEntries.length === 0) {
+    return null;
+  }
+
+  return JSON.stringify(Object.fromEntries(sanitizedEntries));
+}
+
+export async function batchUpdateItineraryItems(
+  tripId: string,
+  updates: Array<{
+    id: string;
+    day?: number;
+    order_index?: number;
+    time?: string | null;
+    notes?: string | null;
+    description?: string | null;
+  }>
+) {
+  if (updates.length === 0) return;
+  const supabaseClient = createClient();
+  if (!supabaseClient) throw new Error('Supabase client not available');
+
+  const payload = updates.map((update) => ({
+    trip_id: tripId,
+    ...update,
+  }));
+
+  const { error } = await supabaseClient
+    .from('itinerary_items')
+    .upsert(payload, { onConflict: 'id' });
+
+  if (error) {
+    throw error;
+  }
+}
 
 interface TripPlannerProps {
   isOpen: boolean;
@@ -46,19 +121,6 @@ interface TripSummary {
   updated_at: string;
 }
 
-interface TripLocation {
-  id: number;
-  name: string;
-  city: string;
-  category: string;
-  image: string;
-  time?: string;
-  notes?: string;
-  cost?: number;
-  duration?: number;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-}
-
 interface DayItinerary {
   date: string;
   locations: TripLocation[];
@@ -68,7 +130,7 @@ interface DayItinerary {
 
 export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: TripPlannerProps) {
   const { user } = useAuth();
-  const router = useRouter();
+  const toast = useToast();
   const [tripName, setTripName] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -84,7 +146,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
   >('itinerary');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [tripSummaries, setTripSummaries] = useState<TripSummary[]>([]);
   const [loadingTripSummaries, setLoadingTripSummaries] = useState(false);
   const [addingToTripId, setAddingToTripId] = useState<string | null>(null);
@@ -134,7 +196,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
     resetForm();
     setStep('create');
-  }, [isOpen, tripId, user, initialDestination, step, bypassSelection, fetchTripSummaries]);
+  }, [isOpen, tripId, user, initialDestination, step, bypassSelection, fetchTripSummaries, loadTrip]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -168,7 +230,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     }
   };
 
-  const loadTrip = async (id: string) => {
+  const loadTrip = useCallback(async (id: string) => {
     setLoading(true);
     try {
       const supabaseClient = createClient();
@@ -184,7 +246,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
       if (tripError || !trip) {
         console.error('Error loading trip:', tripError);
-        alert('Failed to load trip');
+        toast.error('Failed to load trip.');
         return;
       }
 
@@ -206,7 +268,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
       if (tripCheckError || !tripCheck) {
         console.error('Error verifying trip ownership:', tripCheckError);
-        alert('Trip not found or access denied');
+        toast.error('Trip not found or access denied.');
         return;
       }
 
@@ -234,27 +296,21 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
             daysMap.set(day, []);
           }
 
-          // Parse notes for additional data (cost, duration, mealType)
-          let notesData: any = {};
-          if (item.notes) {
-            try {
-              notesData = JSON.parse(item.notes);
-            } catch {
-              notesData = { raw: item.notes };
-            }
-          }
+          const notesData = parseItineraryNotes(item.notes);
 
           const location: TripLocation = {
             id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+            itemId: item.id,
             name: item.title,
-            city: destination || '',
+            city: notesData.city || trip.destination || '',
             category: item.description || '',
             image: notesData.image || '/placeholder-image.jpg',
             time: item.time || undefined,
-            notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+            notes: notesData.raw || undefined,
             cost: notesData.cost || undefined,
             duration: notesData.duration || undefined,
             mealType: notesData.mealType || undefined,
+            orderIndex: item.order_index ?? 0,
           };
 
           daysMap.get(day)!.push(location);
@@ -300,11 +356,11 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       setStep('plan');
     } catch (error) {
       console.error('Error loading trip:', error);
-      alert('Failed to load trip');
+      toast.error('Failed to load trip.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
 
   const handleAddDestinationToTrip = async (targetTripId: string) => {
     if (!user) return;
@@ -387,9 +443,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       setActiveTab('itinerary');
       setShowAddLocation(null);
       fetchTripSummaries();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding destination to trip:', error);
-      alert(error?.message || 'Failed to add destination to trip. Please try again.');
+      const message = error instanceof Error ? error.message : undefined;
+      toast.error(message || 'Failed to add destination to trip. Please try again.');
     } finally {
       setAddingToTripId(null);
     }
@@ -397,7 +454,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
   const handleCreateTrip = async () => {
     if (!tripName || !destination || !startDate || !endDate || !user) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields.');
       return;
     }
 
@@ -452,9 +509,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       setDays(newDays);
       setStep('plan');
       setActiveTab('itinerary');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating trip:', error);
-      alert(error?.message || 'Failed to create trip. Please try again.');
+      const message = error instanceof Error ? error.message : undefined;
+      toast.error(message || 'Failed to create trip. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -462,7 +520,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
   const handleSaveTrip = async () => {
     if (!currentTripId || !user) {
-      alert('No trip to save');
+      toast.error('No trip to save.');
       return;
     }
 
@@ -509,7 +567,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       days.forEach((day, dayIndex) => {
         day.locations.forEach((location, locationIndex) => {
           // Store additional data in notes as JSON
-          const notesData: any = {
+          const notesData: ItineraryNotesData = {
             raw: location.notes || '',
             cost: location.cost,
             duration: location.duration,
@@ -540,6 +598,8 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
         if (insertError) throw insertError;
       }
 
+      toast.success('Trip saved.');
+
       // Show success feedback without alert
       // The save button will show "Saved" briefly
       const saveButton = document.querySelector('[title="Save trip"]') as HTMLButtonElement;
@@ -552,9 +612,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           saveButton.disabled = false;
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving trip:', error);
-      alert(error?.message || 'Failed to save trip. Please try again.');
+      const message = error instanceof Error ? error.message : undefined;
+      toast.error(message || 'Failed to save trip. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -667,7 +728,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     let icsContent =
       'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Urban Manual//Trip Planner//EN\n';
 
-    days.forEach((day, dayIndex) => {
+    days.forEach((day) => {
       day.locations.forEach((location) => {
         const date = day.date.replace(/-/g, '');
         const time = location.time?.replace(':', '') || '0900';
