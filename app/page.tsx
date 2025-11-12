@@ -2335,7 +2335,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <>
-                  <div className="md:hidden px-5 pt-6 space-y-6">
+                  <div className="md:hidden px-6 pt-6 space-y-6">
                     <div>
                       <div className="mb-2 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
                       <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
