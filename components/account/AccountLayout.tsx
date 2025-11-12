@@ -69,8 +69,8 @@ export function AccountLayout({ children }: AccountLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:flex-row lg:gap-10 lg:px-8 lg:py-12">
-        <aside className="w-full max-w-sm shrink-0 space-y-6 lg:w-72">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10 lg:flex-row lg:gap-10 lg:px-8 lg:py-12">
+        <aside className="w-full max-w-sm shrink-0 space-y-4 lg:w-72 lg:space-y-6 lg:pt-2 lg:sticky lg:top-12">
           <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6">
             {loading ? (
               <div className="space-y-3">
@@ -117,25 +117,28 @@ export function AccountLayout({ children }: AccountLayoutProps) {
             aria-label="Account sections"
             className="rounded-3xl border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-0"
           >
-            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-0 sm:divide-y sm:divide-gray-100 dark:sm:divide-gray-800">
+            <ul className="flex gap-2 overflow-x-auto scroll-smooth px-1 py-1 snap-x snap-mandatory sm:grid sm:grid-cols-1 sm:gap-0 sm:divide-y sm:divide-gray-100 sm:px-0 sm:py-0 dark:sm:divide-gray-800">
               {sections.map(section => {
                 const isActive = activeSection === section.href;
                 const Icon = section.icon;
                 return (
-                  <li key={section.href}>
+                  <li key={section.href} className="flex-[0_0_auto] snap-start sm:flex-initial">
                     <Link
                       href={section.href}
+                      aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'flex min-h-[4.5rem] flex-col gap-2 rounded-2xl px-4 py-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900 sm:min-h-0 sm:flex-row sm:items-center sm:gap-3 sm:rounded-none sm:px-6 sm:py-5',
+                        'flex min-w-[9.5rem] flex-col gap-2 rounded-2xl px-3 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900 sm:min-w-full sm:flex-row sm:items-center sm:gap-3 sm:rounded-none sm:px-6 sm:py-5',
                         isActive
                           ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-200 sm:bg-blue-50'
                           : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:hover:bg-gray-50'
                       )}
                     >
                       <Icon className="h-5 w-5" aria-hidden="true" />
-                      <div className="flex flex-1 flex-col">
-                        <span className="text-sm font-medium">{section.label}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{section.description}</span>
+                      <div className="flex flex-1 flex-col justify-center gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+                        <span className="text-sm font-medium sm:text-base">{section.label}</span>
+                        <span className="hidden text-xs text-gray-500 dark:text-gray-400 sm:inline sm:text-sm">
+                          {section.description}
+                        </span>
                       </div>
                     </Link>
                   </li>
