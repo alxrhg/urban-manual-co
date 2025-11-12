@@ -17,6 +17,7 @@ A modern, curated travel guide featuring 897 destinations across the world.
 - 📱 **Responsive Design** - Beautiful on desktop and mobile
 - 🎨 **Urban Manual Inspired** - Clean, minimal, editorial design
 - 🌙 **Dark Mode** - Full dark mode support
+- 🤖 **Smart Trip Guide** - Describe your ideal outing and receive an AI-curated itinerary
 
 ### Tech Stack (Next.js)
 
@@ -127,6 +128,12 @@ Run these SQL commands in Supabase SQL Editor:
 - Recommendations from curated database only
 - Itinerary generation
 - Personalized greetings when logged in
+
+### Smart Trip Guide
+- Located at `/trips/smart-guide`
+- Free-text preference entry with optional city, budget, and tag controls
+- AI interprets requests into structured filters and returns a curated destination list
+- Summarized itinerary preview plus destination cards you can tap into for full details
 
 ### Account Page
 - Travel statistics (places visited, cities explored, countries)

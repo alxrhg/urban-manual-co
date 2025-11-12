@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test:intelligence": "tsx scripts/test-intelligence-endpoints.ts",
+    "test:smart-trip-guide": "tsx --test tests/services/ai/trip-preferences.test.ts tests/server/trip-guide-endpoint.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
