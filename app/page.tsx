@@ -2295,6 +2295,15 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
                 <div className="max-w-[1800px] mx-auto">
+                {/* Mobile quick actions */}
+                <div className="md:hidden mb-6 flex flex-wrap gap-2">
+                  <HomeNavigationBar
+                    className="w-full justify-between"
+                    onFiltersClick={handleNavigationFiltersClick}
+                    onStartTrip={handleNavigationStartTrip}
+                  />
+                </div>
+
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="hidden md:flex justify-end items-center gap-4 mb-8 md:mb-10 flex-wrap">
                   <HomeNavigationBar
