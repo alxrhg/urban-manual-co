@@ -77,7 +77,7 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <PageLoader />
       </main>
     );
@@ -85,7 +85,7 @@ export default function UserProfilePage() {
 
   if (!profile) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <div className="container mx-auto text-center">
           <h1 className="text-2xl font-light mb-4">User not found</h1>
           <button
@@ -102,7 +102,7 @@ export default function UserProfilePage() {
   const isOwnProfile = currentUser?.id === profile.user_id;
 
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
+    <main className="um-site-container py-20 min-h-screen">
       <div className="container mx-auto">
         {/* Profile Header */}
         <div className="mb-12">

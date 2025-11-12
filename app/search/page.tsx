@@ -258,7 +258,7 @@ function SearchPageContent() {
   }
 
   return (
-    <div className="w-full px-6 md:px-10 lg:px-12 py-10">
+    <div className="w-full um-site-container py-10">
       <p className="text-xs tracking-widest text-neutral-400 mb-8">
         {new Date().getHours() < 12 ? 'GOOD MORNING' : new Date().getHours() < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING'}
       </p>
@@ -435,7 +435,7 @@ function SearchPageContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="px-6 md:px-10 py-10">
+      <div className="um-site-container py-10">
         <div className="text-sm text-neutral-500 mb-4">with our in-house travel intelligence…</div>
         <Skeleton className="h-4 w-48 rounded mb-6" />
         <Skeleton className="h-5 w-80 rounded mb-8" />

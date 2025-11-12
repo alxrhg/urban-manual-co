@@ -490,7 +490,7 @@ export default function TripsPage() {
   return (
     <div className="pb-24">
       {/* Manifesto-Style Hero Section */}
-      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24">
+      <section className="um-site-container py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white">
             Plan with intention, travel with confidence

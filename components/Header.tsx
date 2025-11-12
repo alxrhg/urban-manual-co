@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { ChevronDown, User, LogOut, Shield } from "lucide-react";
+import { SITE_MAX_WIDTH_CLASS } from "@/lib/layout";
 
 export function Header() {
   const router = useRouter();
@@ -120,8 +121,11 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav: Brand + 1-2 Top-Level Links */}
-      <div className="w-full px-6 md:px-10 lg:px-12">
-        <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
+      <div className="um-site-container">
+        <nav
+          className={`mx-auto ${SITE_MAX_WIDTH_CLASS} flex items-center justify-between h-16`}
+          aria-label="Main navigation"
+        >
           {/* Logo - Left */}
           <button
             onClick={() => navigate("/")}

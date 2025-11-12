@@ -57,7 +57,7 @@ export default function DiscoverCollectionsPage() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24">
+      <section className="um-site-container py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white">
             Discover Collections
@@ -69,7 +69,7 @@ export default function DiscoverCollectionsPage() {
       </section>
 
       {/* Search and Sort Toolbar - Lighter, Inline */}
-      <div className="px-6 md:px-10 lg:px-12 mb-8">
+      <div className="um-site-container mb-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row gap-3 items-center">
             {/* Search */}
@@ -99,7 +99,7 @@ export default function DiscoverCollectionsPage() {
 
       {/* Editorial Band - Featured Collection */}
       {featuredCollection && !searchQuery.trim() && (
-        <div className="px-6 md:px-10 lg:px-12 mb-12">
+        <div className="um-site-container mb-12">
           <div className="max-w-7xl mx-auto">
             <div className="border-t border-gray-100 dark:border-gray-700 pt-8">
               <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
@@ -175,7 +175,7 @@ export default function DiscoverCollectionsPage() {
       )}
 
       {/* Collections Grid */}
-      <div className="px-6 md:px-10 lg:px-12 pb-24">
+      <div className="um-site-container pb-24">
         <div className="max-w-7xl mx-auto">
           {loading ? (
             <div className="text-center py-20 text-gray-500 dark:text-gray-400">

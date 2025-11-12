@@ -12,7 +12,7 @@ interface PageContainerProps {
 
 export function PageContainer({ children, width = 'wide', className }: PageContainerProps) {
   return (
-    <div className={cn('w-full px-6 md:px-10 lg:px-12', className)}>
+    <div className={cn('um-site-container', className)}>
       <div className={cn('mx-auto', LAYOUT_MAX_WIDTHS[width])}>
         {children}
       </div>

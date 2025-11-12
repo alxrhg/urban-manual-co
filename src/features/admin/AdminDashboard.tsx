@@ -226,7 +226,7 @@ export function AdminDashboard() {
 
   if (!authChecked) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <div className="container mx-auto flex items-center justify-center h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
@@ -257,7 +257,7 @@ export function AdminDashboard() {
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950">
       {/* Hero Section */}
-      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24 border-b border-gray-100 dark:border-gray-700">
+      <section className="um-site-container py-16 md:py-24 border-b border-gray-100 dark:border-gray-700">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -307,7 +307,7 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      <div className="px-6 md:px-10 lg:px-12 py-12 md:py-16">
+      <div className="um-site-container py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
           {/* Pill Navigation */}
           <div className="mb-12">

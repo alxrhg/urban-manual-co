@@ -391,7 +391,7 @@ function resolveCountryFromCity(city?: string | null): string | null {
   // Show loading
   if (!authChecked || isLoadingData) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <PageLoader />
       </main>
     );
@@ -400,7 +400,7 @@ function resolveCountryFromCity(city?: string | null): string | null {
   // Show sign in screen
   if (!user) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-light mb-8">Account</h1>
@@ -420,7 +420,7 @@ function resolveCountryFromCity(city?: string | null): string | null {
   }
 
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
+    <main className="um-site-container py-20 min-h-screen">
       <div className="container mx-auto px-4 md:px-8 lg:px-12">
         {/* Header - Matches homepage spacing and style */}
         <div className="mb-12">

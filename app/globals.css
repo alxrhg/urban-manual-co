@@ -119,6 +119,29 @@
     max-width: 1280px;
   }
 
+  /* Unified horizontal padding for structural containers */
+  .um-site-container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-padding-mobile);
+    padding-right: var(--container-padding-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .um-site-container {
+      padding-left: var(--container-padding-tablet);
+      padding-right: var(--container-padding-tablet);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .um-site-container {
+      padding-left: var(--container-padding-desktop);
+      padding-right: var(--container-padding-desktop);
+    }
+  }
+
   /* Safe area utilities for iPhone notches */
   .safe-area-top {
     padding-top: max(env(safe-area-inset-top), 0px);

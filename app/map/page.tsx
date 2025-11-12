@@ -272,7 +272,7 @@ export default function MapPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Hero Section */}
-      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24">
+      <section className="um-site-container py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white">
             Explore on Map
@@ -285,7 +285,7 @@ export default function MapPage() {
 
       {/* Minimal Header - Search Only */}
       <header className="sticky top-0 z-40 w-full border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
-        <div className="px-6 md:px-10 lg:px-12 py-4">
+        <div className="um-site-container py-4">
           <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
             {/* Search */}
             <div className="flex-1 max-w-2xl">
@@ -579,7 +579,7 @@ export default function MapPage() {
 
       {/* Curated Highlights Section */}
       {featuredDestinations.length > 0 && (
-        <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24 border-t border-gray-100 dark:border-gray-700">
+        <section className="um-site-container py-16 md:py-24 border-t border-gray-100 dark:border-gray-700">
           <div className="max-w-7xl mx-auto">
             <div className="mb-8">
               <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">

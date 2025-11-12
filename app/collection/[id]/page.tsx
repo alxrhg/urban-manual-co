@@ -251,7 +251,7 @@ export default function CollectionDetailPage() {
 
   if (loading) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <PageLoader />
       </main>
     );
@@ -259,7 +259,7 @@ export default function CollectionDetailPage() {
 
   if (errorState === 'unauthorized') {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <EmptyState
           icon="🔒"
           title="Private collection"
@@ -273,7 +273,7 @@ export default function CollectionDetailPage() {
 
   if (errorState === 'not_found') {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <EmptyState
           icon="❓"
           title="Collection not found"
@@ -287,7 +287,7 @@ export default function CollectionDetailPage() {
 
   if (errorState === 'error') {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <EmptyState
           icon="⚠️"
           title="Something went wrong"
@@ -301,7 +301,7 @@ export default function CollectionDetailPage() {
 
   if (!collection) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="um-site-container py-20">
         <EmptyState
           icon="❓"
           title="Collection not found"
@@ -314,7 +314,7 @@ export default function CollectionDetailPage() {
   }
 
   return (
-    <main className="px-6 md:px-10 py-20">
+    <main className="um-site-container py-20">
       <div className="container mx-auto">
         {/* Header */}
         <div className="mb-12">

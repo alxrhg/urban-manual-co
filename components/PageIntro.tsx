@@ -23,7 +23,7 @@ export function PageIntro({ eyebrow, title, description, align = 'left', actions
 
   return (
     <section className="w-full pt-12 pb-8">
-      <div className="w-full px-6 md:px-10 lg:px-12">
+      <div className="um-site-container">
         <div className={cn('mx-auto', WIDTH_MAP[widthPreset])}>
         <div className={cn('flex flex-col gap-3', alignment)}>
           {eyebrow && (

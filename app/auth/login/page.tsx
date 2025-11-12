@@ -67,7 +67,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 px-6 md:px-10 py-20">
+    <div className="min-h-screen bg-white dark:bg-gray-900 um-site-container py-20">
       <div className="w-full max-w-md mx-auto">
         {/* Back Button */}
         <button

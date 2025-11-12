@@ -120,7 +120,7 @@ export default function AccountProfilePage() {
   return (
     <div className="space-y-16 md:space-y-24">
       {/* Hero Section */}
-      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24">
+      <section className="um-site-container py-16 md:py-24">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-12">
             {/* Portrait/Avatar */}
@@ -170,7 +170,7 @@ export default function AccountProfilePage() {
       </section>
 
       {/* Stats - Lighter Inline Callouts */}
-      <section className="px-6 md:px-10 lg:px-12">
+      <section className="um-site-container">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap items-center gap-6 md:gap-8 text-sm">
             <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export default function AccountProfilePage() {
       </section>
 
       {/* Profile Editor */}
-      <section aria-labelledby="profile-details" className="px-6 md:px-10 lg:px-12">
+      <section aria-labelledby="profile-details" className="um-site-container">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="space-y-3">
             <h2 id="profile-details" className="text-2xl md:text-3xl font-medium text-black dark:text-white">
@@ -220,7 +220,7 @@ export default function AccountProfilePage() {
 
       {/* Recent Highlights / Testimonial Band */}
       {recentHighlights.length > 0 && (
-        <section className="px-6 md:px-10 lg:px-12 py-12 md:py-16 border-t border-gray-100 dark:border-gray-700">
+        <section className="um-site-container py-12 md:py-16 border-t border-gray-100 dark:border-gray-700">
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="space-y-3">
               <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
@@ -264,7 +264,7 @@ export default function AccountProfilePage() {
       )}
 
       {/* World Map - Long-form Story Section */}
-      <section aria-labelledby="map-intelligence" className="px-6 md:px-10 lg:px-12 py-12 md:py-16 border-t border-gray-100 dark:border-gray-700">
+      <section aria-labelledby="map-intelligence" className="um-site-container py-12 md:py-16 border-t border-gray-100 dark:border-gray-700">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="space-y-4">
             <h2 id="map-intelligence" className="text-2xl md:text-3xl font-medium text-black dark:text-white">
@@ -288,7 +288,7 @@ export default function AccountProfilePage() {
       </section>
 
       {/* Achievements - Long-form Story Section */}
-      <section aria-labelledby="achievement-progress" className="px-6 md:px-10 lg:px-12 py-12 md:py-16 border-t border-gray-100 dark:border-gray-700">
+      <section aria-labelledby="achievement-progress" className="um-site-container py-12 md:py-16 border-t border-gray-100 dark:border-gray-700">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="space-y-4">
             <h2 id="achievement-progress" className="text-2xl md:text-3xl font-medium text-black dark:text-white">

@@ -353,7 +353,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   const cityName = capitalizeCity(destination.city);
 
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
+    <main className="um-site-container py-20 min-h-screen">
       <div className="container mx-auto space-y-12">
         {/* Header */}
         <div>

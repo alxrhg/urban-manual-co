@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import { SITE_MAX_WIDTH_CLASS } from '@/lib/layout';
 
 export function Footer() {
@@ -7,8 +6,8 @@ export function Footer() {
     <footer className="mt-12 border-t border-gray-200 dark:border-gray-800">
       {/* Bottom Section - Legal & Navigation */}
       <div className="border-t border-gray-200 dark:border-gray-800">
-        <div className="w-full px-6 md:px-10 lg:px-12 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+        <div className="um-site-container py-6">
+          <div className={`mx-auto ${SITE_MAX_WIDTH_CLASS} flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400`}>
             {/* Copyright */}
             <div>
               © {new Date().getFullYear()} The Manual Company. All Rights Reserved.
