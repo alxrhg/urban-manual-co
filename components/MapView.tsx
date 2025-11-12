@@ -128,10 +128,12 @@ export default function MapView({
   }, [destinations]);
 
   const destinationLookup = useMemo(() => {
-    const entries = destinations
-      .filter((destination) => destination.slug)
+    const entries: Array<[string, Destination]> = destinations
+      .filter((destination): destination is Destination & { slug: string } =>
+        typeof destination.slug === 'string' && destination.slug.length > 0
+      )
       .map((destination) => [destination.slug, destination]);
-    return new Map<string, Destination>(entries);
+    return new Map(entries);
   }, [destinations]);
 
   const geoJsonData = geoJson ?? fallbackGeoJson;
