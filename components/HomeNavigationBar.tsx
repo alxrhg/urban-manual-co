@@ -1,10 +1,13 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { capitalizeCategory, capitalizeCity } from "@/lib/utils";
+
+import { ChevronDownIcon } from "@/components/icons/ChevronDown";
+import { Button } from "@/components/ui/button";
+import { cn, capitalizeCategory, capitalizeCity } from "@/lib/utils";
 
 const VISIBLE_CITIES = ["Taipei", "Tokyo", "New York", "London"] as const;
 const CATEGORY_ITEMS = [
@@ -43,6 +46,8 @@ export function HomeNavigationBar({
   const categoryButtonRef = useRef<HTMLButtonElement>(null);
   const cityMenuRef = useRef<HTMLDivElement>(null);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
+  const cityMenuId = useId();
+  const categoryMenuId = useId();
   const isHome = pathname === "/";
   const isMap = pathname === "/map";
 
@@ -111,40 +116,40 @@ export function HomeNavigationBar({
 
   return (
     <div
-      className={`flex items-center gap-3 flex-wrap ${className ?? ""}`}
+      className={cn("flex flex-wrap items-center gap-3", className)}
       role="navigation"
       aria-label="Homepage navigation"
     >
       <div className="relative">
-        <button
+        <Button
           ref={cityButtonRef}
           type="button"
           onClick={() => {
             setIsCitiesOpen((prev) => !prev);
             setIsCategoriesOpen(false);
           }}
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
           aria-haspopup="true"
           aria-expanded={isCitiesOpen}
+          aria-controls={cityMenuId}
+          variant="pill"
+          size="pill-md"
+          data-state={isCitiesOpen ? "open" : "closed"}
         >
           Cities
-          <svg
-            className={`h-4 w-4 transition-transform ${isCitiesOpen ? "rotate-180" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+          <ChevronDownIcon
+            className={cn(
+              "transition-transform duration-200",
+              isCitiesOpen && "rotate-180"
+            )}
+          />
+        </Button>
         {isCitiesOpen && (
           <div
             ref={cityMenuRef}
-            className="absolute right-0 mt-2 w-48 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900"
+            id={cityMenuId}
+            className="absolute right-0 mt-3 w-48 overflow-hidden rounded-xl border border-border/80 bg-popover shadow-lg ring-1 ring-black/5 dark:bg-muted"
           >
-            <div className="py-1">
+            <div className="py-1.5">
               {VISIBLE_CITIES.map((city) => (
                 <button
                   key={city}
@@ -155,17 +160,17 @@ export function HomeNavigationBar({
                     setIsCitiesOpen(false);
                     router.push(`/city/${slug}`);
                   }}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                  className="block w-full px-4 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:bg-secondary"
                 >
                   {capitalizeCity(city)}
                 </button>
               ))}
             </div>
-            <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-right text-xs font-medium text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+            <div className="border-t border-border/70 bg-secondary/40 px-4 py-2 text-right text-xs font-medium text-muted-foreground">
               <Link
                 href="/cities"
                 onClick={() => setIsCitiesOpen(false)}
-                className="transition hover:text-gray-900 dark:hover:text-gray-200"
+                className="transition-colors hover:text-foreground"
               >
                 View all cities
               </Link>
@@ -175,35 +180,35 @@ export function HomeNavigationBar({
       </div>
 
       <div className="relative">
-        <button
+        <Button
           ref={categoryButtonRef}
           type="button"
           onClick={() => {
             setIsCategoriesOpen((prev) => !prev);
             setIsCitiesOpen(false);
           }}
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
           aria-haspopup="true"
           aria-expanded={isCategoriesOpen}
+          aria-controls={categoryMenuId}
+          variant="pill"
+          size="pill-md"
+          data-state={isCategoriesOpen ? "open" : "closed"}
         >
           Categories
-          <svg
-            className={`h-4 w-4 transition-transform ${isCategoriesOpen ? "rotate-180" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+          <ChevronDownIcon
+            className={cn(
+              "transition-transform duration-200",
+              isCategoriesOpen && "rotate-180"
+            )}
+          />
+        </Button>
         {isCategoriesOpen && (
           <div
             ref={categoryMenuRef}
-            className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900"
+            id={categoryMenuId}
+            className="absolute right-0 mt-3 w-56 overflow-hidden rounded-xl border border-border/80 bg-popover shadow-lg ring-1 ring-black/5 dark:bg-muted"
           >
-            <div className="py-1">
+            <div className="py-1.5">
               {CATEGORY_ITEMS.map((category) => (
                 <button
                   key={category}
@@ -214,7 +219,7 @@ export function HomeNavigationBar({
                     setIsCategoriesOpen(false);
                     router.push(`/search?q=${encodeURIComponent(query)}`);
                   }}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                  className="block w-full px-4 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:bg-secondary"
                 >
                   {capitalizeCategory(category)}
                 </button>
@@ -224,22 +229,24 @@ export function HomeNavigationBar({
         )}
       </div>
 
-      <button
+      <Button
         type="button"
         onClick={handleFiltersClick}
-        className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+        variant="pill"
+        size="pill-md"
       >
         Filters
-      </button>
+      </Button>
 
-      <button
+      <Button
         type="button"
         onClick={handleStartTrip}
-        className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+        variant="pill"
+        size="pill-lg"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="size-4" />
         Start a Trip
-      </button>
+      </Button>
     </div>
   );
 }
