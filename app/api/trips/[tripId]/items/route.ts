@@ -29,7 +29,7 @@ interface PersistItineraryRequest {
 }
 
 async function ensureTripOwnership(
-  supabase: SupabaseClient<Record<string, unknown>, 'public', Record<string, unknown>>,
+  supabase: SupabaseClient,
   tripId: string,
   userId: string
 ) {
