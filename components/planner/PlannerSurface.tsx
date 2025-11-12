@@ -9,6 +9,7 @@ import { PlannerHeader } from './PlannerHeader';
 import { PlannerBoard } from './PlannerBoard';
 import { PlannerSidebar } from './PlannerSidebar';
 import { PlannerCollaborationBar } from './PlannerCollaborationBar';
+import { PlannerInsightsPanel } from './PlannerInsightsPanel';
 
 export function PlannerSurface() {
   const { itinerary, loading, error, shareItinerary, exportItinerary } = usePlanner();
@@ -56,6 +57,7 @@ export function PlannerSurface() {
           {itinerary ? <PlannerBoard /> : null}
         </div>
 
+        <PlannerInsightsPanel />
         <PlannerSidebar />
       </motion.div>
 
