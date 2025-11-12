@@ -13,6 +13,7 @@ import {
   RouteIcon,
   SunriseIcon,
   SunsetIcon,
+  WalletIcon,
 } from 'lucide-react';
 
 interface TripLocation {
@@ -33,6 +34,7 @@ interface TripDayProps {
   date: string;
   locations: TripLocation[];
   hotelLocation?: string;
+  plannedBudget?: number;
   onAddLocation: () => void;
   onRemoveLocation: (locationId: number) => void;
   onReorderLocations: (locations: TripLocation[]) => void;
@@ -45,6 +47,7 @@ export function TripDay({
   date,
   locations,
   hotelLocation,
+  plannedBudget,
   onAddLocation,
   onRemoveLocation,
   onReorderLocations,
@@ -70,6 +73,12 @@ export function TripDay({
   const getTotalDuration = () => {
     return locations.reduce((total, loc) => total + (loc.duration || 60), 0);
   };
+
+  const totalCost = getTotalCost();
+  const plannedBudgetValue =
+    typeof plannedBudget === 'number' ? plannedBudget : undefined;
+  const budgetVariance =
+    plannedBudgetValue !== undefined ? plannedBudgetValue - totalCost : undefined;
 
   const calculateTravelTime = (index: number) => {
     if (index === 0) return null;
@@ -119,9 +128,9 @@ export function TripDay({
           </p>
           {locations.length > 0 && (
             <div className="flex items-center gap-4 text-[10px] text-neutral-400 dark:text-neutral-500 tracking-wide">
-              {getTotalCost() > 0 && (
+              {totalCost > 0 && (
                 <span className="flex items-center gap-1">
-                  <DollarSignIcon className="w-3 h-3" />${getTotalCost()}
+                  <DollarSignIcon className="w-3 h-3" />${totalCost.toLocaleString()}
                 </span>
               )}
               <span className="flex items-center gap-1">
@@ -130,6 +139,25 @@ export function TripDay({
                 {getTotalDuration() % 60}m
               </span>
               <span>{locations.length} stops</span>
+              {plannedBudgetValue !== undefined && plannedBudgetValue > 0 && (
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+                    budgetVariance !== undefined && budgetVariance < 0
+                      ? 'bg-red-50 text-red-600 dark:bg-red-900/40 dark:text-red-200'
+                      : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200'
+                  }`}
+                >
+                  <WalletIcon className="w-3.5 h-3.5" />
+                  ${plannedBudgetValue.toLocaleString()}
+                  {budgetVariance !== undefined && (
+                    <span className="ml-1 text-[10px] uppercase tracking-[0.2em]">
+                      {budgetVariance < 0
+                        ? `Over ${Math.abs(budgetVariance).toLocaleString()}`
+                        : `Left ${Math.abs(budgetVariance).toLocaleString()}`}
+                    </span>
+                  )}
+                </span>
+              )}
             </div>
           )}
         </div>

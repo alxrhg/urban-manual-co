@@ -58,6 +58,7 @@ export const trips = mysqlTable("trips", {
   status: varchar("status", { length: 50 }).notNull().default("planning"), // 'planning', 'upcoming', 'ongoing', 'completed'
   isPublic: int("is_public").notNull().default(0), // 0 = private, 1 = public
   coverImage: varchar("cover_image", { length: 500 }),
+  totalBudget: int("total_budget"),
   createdAt: datetime("created_at").notNull(),
   updatedAt: datetime("updated_at").notNull(),
 });
@@ -80,4 +81,40 @@ export const itineraryItems = mysqlTable("itinerary_items", {
 
 export type ItineraryItem = typeof itineraryItems.$inferSelect;
 export type InsertItineraryItem = typeof itineraryItems.$inferInsert;
+
+export const itineraryDayBudgets = mysqlTable("itinerary_day_budgets", {
+  id: int("id").primaryKey().autoincrement(),
+  tripId: varchar("trip_id", { length: 255 }).notNull(),
+  dayIndex: int("day_index").notNull(),
+  budgetDate: datetime("budget_date"),
+  plannedBudget: int("planned_budget").notNull().default(0),
+  createdAt: datetime("created_at"),
+  updatedAt: datetime("updated_at"),
+});
+
+export type ItineraryDayBudget = typeof itineraryDayBudgets.$inferSelect;
+export type InsertItineraryDayBudget = typeof itineraryDayBudgets.$inferInsert;
+
+export const opportunityAlerts = mysqlTable("opportunity_alerts", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: varchar("user_id", { length: 255 }),
+  destinationId: varchar("destination_id", { length: 255 }),
+  alertType: varchar("alert_type", { length: 100 }).notNull(),
+  severity: varchar("severity", { length: 50 }).notNull().default("medium"),
+  title: varchar("title", { length: 255 }),
+  message: text("message"),
+  metadata: text("metadata"),
+  ctaLabel: varchar("cta_label", { length: 100 }),
+  ctaPayload: text("cta_payload"),
+  triggeredAt: datetime("triggered_at"),
+  expiresAt: datetime("expires_at"),
+  city: varchar("city", { length: 255 }),
+  category: varchar("category", { length: 255 }),
+  read: int("read").notNull().default(0),
+  createdAt: datetime("created_at"),
+  updatedAt: datetime("updated_at"),
+});
+
+export type OpportunityAlert = typeof opportunityAlerts.$inferSelect;
+export type InsertOpportunityAlert = typeof opportunityAlerts.$inferInsert;
 

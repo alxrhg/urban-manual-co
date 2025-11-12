@@ -13,6 +13,7 @@ import { Destination } from '@/types/destination';
 
 interface TripLocation {
   id: number;
+  slug?: string;
   name: string;
   city: string;
   category: string;
@@ -85,6 +86,7 @@ export function AddLocationToTrip({
     if (!selectedDestination) return;
     onAdd({
       id: selectedDestination.id || 0,
+      slug: selectedDestination.slug,
       name: selectedDestination.name,
       city: selectedDestination.city || '',
       category: selectedDestination.category || '',

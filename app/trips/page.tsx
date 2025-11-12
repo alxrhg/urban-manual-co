@@ -35,18 +35,33 @@ interface Trip {
   created_at: string;
 }
 
-interface Opportunity {
-  type: 'price_drop' | 'availability_opening' | 'event_alert' | 'weather_opportunity' | 'comparative_deal';
-  destinationId: number;
-  destinationSlug?: string;
-  destinationName?: string;
-  city?: string;
-  title: string;
-  description: string;
-  urgency: 'low' | 'medium' | 'high';
-  detectedAt: string | Date;
-  expiresAt?: string | Date;
+interface OpportunityDestination {
+  id?: string;
+  slug?: string;
+  name?: string;
+  city?: string | null;
+  image?: string | null;
+  category?: string | null;
 }
+
+interface Opportunity {
+  id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high';
+  title: string;
+  message: string;
+  triggeredAt: string;
+  destination?: OpportunityDestination | null;
+  city?: string | null;
+  category?: string | null;
+}
+
+type PlannerPrefill = {
+  slug: string;
+  name: string;
+  city?: string | null;
+  category?: string | null;
+};
 
 const TRIP_STATUS_STYLES: Record<
   string,
@@ -74,7 +89,7 @@ const TRIP_STATUS_STYLES: Record<
   },
 };
 
-const URGENCY_BADGE: Record<'low' | 'medium' | 'high', string> = {
+const SEVERITY_BADGE: Record<'low' | 'medium' | 'high', string> = {
   low: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200',
   medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200',
   high: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
@@ -261,6 +276,7 @@ export default function TripsPage() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loadingIntelligence, setLoadingIntelligence] = useState(false);
   const [conversationPreview, setConversationPreview] = useState<string | null>(null);
+  const [plannerPrefill, setPlannerPrefill] = useState<PlannerPrefill | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -306,23 +322,72 @@ export default function TripsPage() {
 
   const fetchOpportunities = useCallback(
     async (city?: string | null) => {
+      if (!user?.id) return;
+
       try {
         setLoadingIntelligence(true);
-        const params = new URLSearchParams();
-        if (city) {
-          params.set('city', city);
+        const response = await fetch(`/api/alerts/${user.id}`);
+        if (!response.ok) {
+          setOpportunities([]);
+          return;
         }
-        const response = await fetch(`/api/intelligence/opportunities${params.toString() ? `?${params.toString()}` : ''}`);
-        if (!response.ok) return;
+
         const data = await response.json();
-        setOpportunities(Array.isArray(data.opportunities) ? data.opportunities : []);
+        const alerts = Array.isArray(data.alerts) ? data.alerts : [];
+
+        const normalized = alerts.map((alert: any) => {
+          const destination = alert.destination || null;
+          const severityValue = String(alert.severity || 'medium').toLowerCase();
+          const severity: 'low' | 'medium' | 'high' =
+            severityValue === 'high'
+              ? 'high'
+              : severityValue === 'low'
+              ? 'low'
+              : 'medium';
+
+          const fallbackId =
+            alert.id ??
+            (destination?.slug
+              ? `alert-${destination.slug}-${alert.triggered_at || Date.now()}`
+              : `alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+
+          return {
+            id: String(fallbackId),
+            type: alert.type || alert.alert_type || 'opportunity',
+            severity,
+            title:
+              alert.title ||
+              destination?.name ||
+              (alert.message ? alert.message.split('.').slice(0, 1).join('') : 'Opportunity'),
+            message: alert.message || '',
+            triggeredAt: alert.triggered_at || new Date().toISOString(),
+            destination,
+            city: destination?.city || alert.city || null,
+            category: destination?.category || alert.category || null,
+          } as Opportunity;
+        });
+
+        const filtered = city
+          ? normalized.filter((item) => {
+              const cityQuery = city.toLowerCase();
+              const destinationCity = item.destination?.city?.toLowerCase();
+              const alertCity = item.city?.toLowerCase();
+              return (
+                (destinationCity && destinationCity.includes(cityQuery)) ||
+                (alertCity && alertCity.includes(cityQuery))
+              );
+            })
+          : normalized;
+
+        setOpportunities(filtered);
       } catch (error) {
         console.error('Error loading travel intelligence opportunities:', error);
+        setOpportunities([]);
       } finally {
         setLoadingIntelligence(false);
       }
     },
-    []
+    [user?.id]
   );
 
   useEffect(() => {
@@ -377,6 +442,7 @@ export default function TripsPage() {
 
   const handleOpenPlanner = useCallback(
     (trip?: Trip) => {
+      setPlannerPrefill(null);
       setEditingTripId(trip?.id ?? null);
       setShowPlanner(true);
     },
@@ -410,6 +476,28 @@ export default function TripsPage() {
     setIntelligenceSessionToken(trip ? `trip-${trip.id}` : null);
     setShowIntelligence(true);
   }, []);
+
+  const handleAddOpportunityToTrip = useCallback(
+    (opportunity: Opportunity) => {
+      const destination = opportunity.destination;
+      if (!destination?.slug || !destination?.name) {
+        setPlannerPrefill(null);
+        setEditingTripId(null);
+        setShowPlanner(true);
+        return;
+      }
+
+      setPlannerPrefill({
+        slug: destination.slug,
+        name: destination.name,
+        city: destination.city || opportunity.city || null,
+        category: opportunity.category || destination.category || null,
+      });
+      setEditingTripId(null);
+      setShowPlanner(true);
+    },
+    []
+  );
 
   const workflowSteps = useMemo(
     () => [
@@ -580,28 +668,60 @@ export default function TripsPage() {
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {opportunities.slice(0, 3).map((opportunity, index) => (
-                      <div
-                        key={`${opportunity.destinationId}-${index}`}
-                        className="rounded-2xl border border-gray-200/70 bg-white/90 p-4 dark:border-gray-800 dark:bg-gray-950/70"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{opportunity.title}</p>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${URGENCY_BADGE[opportunity.urgency]}`}
-                          >
-                            {opportunity.urgency}
-                          </span>
+                    {opportunities.slice(0, 3).map((opportunity) => {
+                      const destinationName =
+                        opportunity.destination?.name || opportunity.title;
+                      const destinationCity =
+                        opportunity.destination?.city || opportunity.city || null;
+                      const triggeredAt = new Date(
+                        opportunity.triggeredAt
+                      ).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      });
+
+                      return (
+                        <div
+                          key={opportunity.id}
+                          className="rounded-2xl border border-gray-200/70 bg-white/90 p-4 dark:border-gray-800 dark:bg-gray-950/70"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {opportunity.title}
+                            </p>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${SEVERITY_BADGE[opportunity.severity]}`}
+                            >
+                              {opportunity.severity}
+                            </span>
+                          </div>
+                          {opportunity.message && (
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                              {opportunity.message}
+                            </p>
+                          )}
+                          {(destinationName || destinationCity) && (
+                            <p className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                              <MapPin className="h-3.5 w-3.5" />
+                              <span>
+                                {destinationName}
+                                {destinationCity ? ` • ${destinationCity}` : ''}
+                              </span>
+                            </p>
+                          )}
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+                            <span>Triggered {triggeredAt}</span>
+                            <button
+                              onClick={() => handleAddOpportunityToTrip(opportunity)}
+                              className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
+                            >
+                              Add to trip
+                              <ArrowRight className="h-3 w-3" />
+                            </button>
+                          </div>
                         </div>
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{opportunity.description}</p>
-                        {(opportunity.city || opportunity.destinationName) && (
-                          <p className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <MapPin className="h-3.5 w-3.5" />
-                            <span>{opportunity.city || opportunity.destinationName}</span>
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -745,9 +865,11 @@ export default function TripsPage() {
       <TripPlanner
         isOpen={showPlanner}
         tripId={editingTripId || undefined}
+        initialDestination={plannerPrefill || undefined}
         onClose={() => {
           setShowPlanner(false);
           setEditingTripId(null);
+          setPlannerPrefill(null);
           if (user) {
             fetchTrips();
           }

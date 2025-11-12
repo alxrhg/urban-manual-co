@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   XIcon,
   CalendarIcon,
@@ -13,6 +13,8 @@ import {
   SaveIcon,
   Loader2,
   ArrowRight,
+  SearchIcon,
+  BookmarkIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -23,6 +25,10 @@ import { TripBudgetTracker } from './TripBudgetTracker';
 import { TripWeatherForecast } from './TripWeatherForecast';
 import { TripPackingList } from './TripPackingList';
 import { TripShareModal } from './TripShareModal';
+import {
+  useSavedPlaces,
+  SavedPlaceWithDestination,
+} from '@/features/lists/useSavedPlaces';
 
 interface TripPlannerProps {
   isOpen: boolean;
@@ -48,6 +54,7 @@ interface TripSummary {
 
 interface TripLocation {
   id: number;
+  slug?: string;
   name: string;
   city: string;
   category: string;
@@ -80,7 +87,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
   const [activeTab, setActiveTab] = useState<
-    'itinerary' | 'budget' | 'weather' | 'packing'
+    'itinerary' | 'saved' | 'budget' | 'weather' | 'packing'
   >('itinerary');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
@@ -89,6 +96,36 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
   const [loadingTripSummaries, setLoadingTripSummaries] = useState(false);
   const [addingToTripId, setAddingToTripId] = useState<string | null>(null);
   const [bypassSelection, setBypassSelection] = useState(false);
+  const [savedPlacesSearch, setSavedPlacesSearch] = useState('');
+  const [selectedSavedDayIndex, setSelectedSavedDayIndex] = useState(0);
+
+  const {
+    places: savedPlaces,
+    loading: loadingSavedPlaces,
+    error: savedPlacesError,
+  } = useSavedPlaces({ userId: user?.id || undefined });
+
+  const filteredSavedPlaces = useMemo(() => {
+    if (!savedPlacesSearch.trim()) {
+      return savedPlaces;
+    }
+
+    const query = savedPlacesSearch.toLowerCase();
+
+    return savedPlaces.filter((place) => {
+      const destination = place.destination;
+      const terms = [
+        destination?.name,
+        destination?.city,
+        destination?.category,
+        place.destinationSlug,
+      ]
+        .filter(Boolean)
+        .map((value) => value!.toLowerCase());
+
+      return terms.some((term) => term.includes(query));
+    });
+  }, [savedPlaces, savedPlacesSearch]);
 
   const fetchTripSummaries = useCallback(async () => {
     if (!user) return;
@@ -142,6 +179,12 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (selectedSavedDayIndex >= days.length) {
+      setSelectedSavedDayIndex(days.length > 0 ? Math.max(days.length - 1, 0) : 0);
+    }
+  }, [days.length, selectedSavedDayIndex]);
+
   // Prevent body scroll when drawer is open
   useEffect(() => {
     if (isOpen) {
@@ -163,8 +206,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     setTotalBudget(0);
     setHotelLocation('');
     setActiveTab('itinerary');
+    setSavedPlacesSearch('');
+    setSelectedSavedDayIndex(0);
     if (!options?.preserveTrip) {
-    setCurrentTripId(null);
+      setCurrentTripId(null);
     }
   };
 
@@ -194,6 +239,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
       setEndDate(trip.end_date || '');
       setHotelLocation(trip.description || ''); // Using description for hotel location
       setCurrentTripId(trip.id);
+      setTotalBudget(trip.total_budget || 0);
 
       // Load itinerary items
       // First verify trip ownership to avoid RLS recursion
@@ -225,6 +271,23 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
         }
       }
 
+      const { data: dayBudgets, error: dayBudgetsError } = await supabaseClient
+        .from('itinerary_day_budgets')
+        .select('day_index, planned_budget')
+        .eq('trip_id', id);
+
+      if (dayBudgetsError) {
+        console.error('Error loading day budgets:', dayBudgetsError);
+      }
+
+      const budgetsMap = new Map<number, number>();
+      (dayBudgets || []).forEach((entry: any) => {
+        const index = Number(entry.day_index);
+        if (Number.isFinite(index)) {
+          budgetsMap.set(index, Number(entry.planned_budget) || 0);
+        }
+      });
+
       // Group items by day
       if (items && items.length > 0) {
         const daysMap = new Map<number, TripLocation[]>();
@@ -246,6 +309,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
           const location: TripLocation = {
             id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+            slug: item.destination_slug || undefined,
             name: item.title,
             city: destination || '',
             category: item.description || '',
@@ -273,7 +337,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           newDays.push({
             date: date.toISOString().split('T')[0],
             locations: daysMap.get(dayNum) || [],
-            budget: 0,
+            budget: budgetsMap.get(dayNum) ?? 0,
           });
         }
 
@@ -288,10 +352,11 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
         for (let i = 0; i < dayCount; i++) {
           const date = new Date(start);
           date.setDate(start.getDate() + i);
+          const dayNum = i + 1;
           newDays.push({
             date: date.toISOString().split('T')[0],
             locations: [],
-            budget: 0,
+            budget: budgetsMap.get(dayNum) ?? 0,
           });
         }
         setDays(newDays);
@@ -417,6 +482,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           end_date: endDate,
           status: 'planning',
           user_id: user.id,
+          total_budget: totalBudget || null,
         })
         .select()
         .single();
@@ -480,7 +546,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           destination: destination,
           start_date: startDate,
           end_date: endDate,
-          budget: totalBudget > 0 ? totalBudget : null,
+          total_budget: totalBudget > 0 ? totalBudget : null,
         })
         .eq('id', currentTripId)
         .eq('user_id', user.id);
@@ -517,11 +583,13 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
             image: location.image,
             city: location.city,
             category: location.category,
+            slug: location.slug,
           };
 
           itemsToInsert.push({
             trip_id: currentTripId,
-            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
+            destination_slug:
+              location.slug || location.name.toLowerCase().replace(/\s+/g, '-'),
             day: dayIndex + 1,
             order_index: locationIndex,
             time: location.time || null,
@@ -538,6 +606,35 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
           .insert(itemsToInsert);
 
         if (insertError) throw insertError;
+      }
+
+      const budgetPayload = days.map((day, index) => ({
+        trip_id: currentTripId,
+        day_index: index + 1,
+        budget_date: day.date || null,
+        planned_budget: day.budget ?? 0,
+      }));
+
+      if (budgetPayload.length > 0) {
+        const { error: budgetError } = await supabaseClient
+          .from('itinerary_day_budgets')
+          .upsert(budgetPayload, { onConflict: 'trip_id,day_index' });
+
+        if (budgetError) throw budgetError;
+
+        const { error: cleanupError } = await supabaseClient
+          .from('itinerary_day_budgets')
+          .delete()
+          .eq('trip_id', currentTripId)
+          .gt('day_index', budgetPayload.length);
+
+        if (cleanupError) throw cleanupError;
+      } else {
+        const { error: cleanupError } = await supabaseClient
+          .from('itinerary_day_budgets')
+          .delete()
+          .eq('trip_id', currentTripId);
+        if (cleanupError) throw cleanupError;
       }
 
       // Show success feedback without alert
@@ -558,6 +655,91 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleUpdateDayBudget = (dayIndex: number, budget: number) => {
+    setDays((prev) =>
+      prev.map((day, index) =>
+        index === dayIndex
+          ? {
+              ...day,
+              budget,
+            }
+          : day
+      )
+    );
+  };
+
+  const handlePersistDayBudget = async (
+    dayIndex: number,
+    budget: number,
+    date: string
+  ) => {
+    if (!currentTripId || !user) return;
+
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('itinerary_day_budgets')
+        .upsert(
+          {
+            trip_id: currentTripId,
+            day_index: dayIndex + 1,
+            budget_date: date || null,
+            planned_budget: budget,
+          },
+          { onConflict: 'trip_id,day_index' }
+        );
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error syncing day budget:', err);
+    }
+  };
+
+  const handleUpdateTotalBudget = (budget: number) => {
+    setTotalBudget(budget);
+  };
+
+  const handlePersistTotalBudget = async (budget: number) => {
+    if (!currentTripId || !user) return;
+
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .update({ total_budget: budget > 0 ? budget : null })
+        .eq('id', currentTripId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error syncing total budget:', err);
+    }
+  };
+
+  const handleAddSavedPlace = async (place: SavedPlaceWithDestination) => {
+    if (days.length === 0) {
+      alert('Set your trip dates first to add saved places.');
+      return;
+    }
+
+    const destination = place.destination;
+    const location: TripLocation = {
+      id: Date.now() + Math.random(),
+      slug: destination?.slug || place.destinationSlug,
+      name: destination?.name || place.destinationSlug,
+      city: destination?.city || destination?.name || '',
+      category: destination?.category || 'Saved place',
+      image: destination?.image || '/placeholder-image.jpg',
+      notes: place.notes || undefined,
+    };
+
+    await handleAddLocation(selectedSavedDayIndex, location);
   };
 
   const handleAddLocation = async (dayIndex: number, location: TripLocation) => {
@@ -716,6 +898,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
 
   const plannerTabs: { id: typeof activeTab; label: string }[] = [
     { id: 'itinerary', label: 'Itinerary' },
+    { id: 'saved', label: 'Saved places' },
     { id: 'budget', label: 'Budget' },
     { id: 'weather', label: 'Weather' },
     { id: 'packing', label: 'Packing' },
@@ -1093,32 +1276,36 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                 </div>
 
               {activeTab === 'itinerary' && (
-                  <div className="space-y-6">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                          <MapPinIcon className="h-3.5 w-3.5" />
+                <div className="space-y-6">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/70">
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                        <MapPinIcon className="h-3.5 w-3.5" />
                         {destination}
-                        </span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
+                        {new Date(endDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </span>
+                      {totalBudget > 0 && (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                          <CalendarIcon className="h-3.5 w-3.5" />
-                          {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
-                          {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          <WalletIcon className="h-3.5 w-3.5" />
+                          ${getTotalSpent()} / ${totalBudget}
                         </span>
-                        {totalBudget > 0 && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                            <WalletIcon className="h-3.5 w-3.5" />
-                            ${getTotalSpent()} / ${totalBudget}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/40">
-                        <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                          Smart suggestions
-                        </p>
-                        <ul className="mt-3 space-y-2">
+                      )}
+                    </div>
+                    <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/40">
+                      <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                        Smart suggestions
+                      </p>
+                      <ul className="mt-3 space-y-2">
                         {getAISuggestions().map((suggestion, index) => (
-                            <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
+                          <li key={index} className="text-sm text-gray-600 dark:text-gray-400">
                             • {suggestion}
                           </li>
                         ))}
@@ -1126,7 +1313,7 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                     </div>
                   </div>
 
-                    <div className="space-y-10">
+                  <div className="space-y-10">
                     {days.map((day, index) => (
                       <TripDay
                         key={day.date}
@@ -1134,9 +1321,10 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                         date={day.date}
                         locations={day.locations}
                         hotelLocation={hotelLocation}
+                        plannedBudget={day.budget}
                         onAddLocation={() => setShowAddLocation(index)}
-                          onRemoveLocation={(locationId) => handleRemoveLocation(index, locationId)}
-                          onReorderLocations={(locations) => handleReorderLocations(index, locations)}
+                        onRemoveLocation={(locationId) => handleRemoveLocation(index, locationId)}
+                        onReorderLocations={(locations) => handleReorderLocations(index, locations)}
                         onDuplicateDay={() => handleDuplicateDay(index)}
                         onOptimizeRoute={() => handleOptimizeRoute(index)}
                       />
@@ -1145,17 +1333,173 @@ export function TripPlanner({ isOpen, onClose, tripId, initialDestination }: Tri
                 </div>
               )}
 
+              {activeTab === 'saved' && (
+                <div className="space-y-6">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-2">
+                      <div className="inline-flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[3px] text-gray-500 dark:text-gray-400">
+                        <BookmarkIcon className="h-3.5 w-3.5" />
+                        Saved places
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Drop favorites directly into your itinerary without leaving the planner.
+                      </p>
+                    </div>
+                    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+                      <div className="relative w-full sm:w-64">
+                        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          value={savedPlacesSearch}
+                          onChange={(e) => setSavedPlacesSearch(e.target.value)}
+                          placeholder="Search saved places"
+                          className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-gray-700 dark:focus:ring-gray-700"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                          Day
+                        </span>
+                        <select
+                          value={selectedSavedDayIndex}
+                          onChange={(e) => setSelectedSavedDayIndex(Number(e.target.value))}
+                          disabled={days.length === 0}
+                          className="rounded-full border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-200 dark:focus:border-gray-700 dark:focus:ring-gray-700"
+                        >
+                          {days.length === 0 ? (
+                            <option value={0}>No days yet</option>
+                          ) : (
+                            days.map((day, index) => (
+                              <option value={index} key={day.date}>
+                                Day {index + 1} •
+                                {' '}
+                                {new Date(day.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {loadingSavedPlaces ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                      </div>
+                    ) : savedPlacesError ? (
+                      <div className="rounded-2xl border border-red-200 bg-red-50/70 p-6 text-sm text-red-600 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300">
+                        Unable to load saved places right now. Please try again.
+                      </div>
+                    ) : filteredSavedPlaces.length === 0 ? (
+                      <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-950/70 dark:text-gray-400">
+                        {savedPlaces.length === 0
+                          ? 'You haven’t saved any places yet. Explore destinations and tap save to build your library.'
+                          : 'No saved places match your search.'}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {filteredSavedPlaces.map((place) => {
+                          const destination = place.destination;
+                          return (
+                            <div
+                              key={place.id}
+                              className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white/90 p-4 shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700 md:flex-row"
+                            >
+                              <div className="h-24 w-full overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-900 md:h-24 md:w-32">
+                                {destination?.image ? (
+                                  <img
+                                    src={destination.image}
+                                    alt={destination.name}
+                                    className="h-full w-full object-cover grayscale-[20%]"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-[0.6rem] font-semibold uppercase tracking-[3px] text-gray-400 dark:text-gray-600">
+                                    Saved spot
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-1 flex-col justify-between gap-3">
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {destination?.name || place.destinationSlug}
+                                      </p>
+                                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                        {destination?.category && (
+                                          <span className="uppercase tracking-[2px]">
+                                            {destination.category}
+                                          </span>
+                                        )}
+                                        {destination?.city && (
+                                          <>
+                                            <span>•</span>
+                                            <span>{destination.city}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => handleAddSavedPlace(place)}
+                                      disabled={days.length === 0}
+                                      className="inline-flex items-center gap-2 rounded-full border border-gray-900 px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[2px] text-gray-900 transition hover:bg-gray-900 hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 dark:border-gray-100 dark:text-gray-100 dark:hover:bg-gray-100 dark:hover:text-gray-900 dark:disabled:border-gray-800 dark:disabled:text-gray-600"
+                                    >
+                                      Add to day {selectedSavedDayIndex + 1}
+                                    </button>
+                                  </div>
+                                  {place.notes && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                      “{place.notes}”
+                                    </p>
+                                  )}
+                                </div>
+                                <p className="text-xs uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
+                                  Saved {new Date(place.savedAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'budget' && (
-                  <TripBudgetTracker days={days} totalBudget={totalBudget} onUpdateBudget={setTotalBudget} />
+                <TripBudgetTracker
+                  days={days}
+                  totalBudget={totalBudget}
+                  onUpdateBudget={handleUpdateTotalBudget}
+                  onPersistTotalBudget={handlePersistTotalBudget}
+                  onUpdateDayBudget={handleUpdateDayBudget}
+                  onPersistDayBudget={handlePersistDayBudget}
+                />
               )}
 
               {activeTab === 'weather' && (
-                  <TripWeatherForecast destination={destination} startDate={startDate} endDate={endDate} />
+                <TripWeatherForecast
+                  destination={destination}
+                  startDate={startDate}
+                  endDate={endDate}
+                />
               )}
 
               {activeTab === 'packing' && (
-                  <TripPackingList destination={destination} days={days} startDate={startDate} endDate={endDate} />
-                )}
+                <TripPackingList
+                  destination={destination}
+                  days={days}
+                  startDate={startDate}
+                  endDate={endDate}
+                />
+              )}
               </div>
             )}
           </div>
