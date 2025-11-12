@@ -527,6 +527,12 @@ export default function Home() {
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const controlButtonBase =
+    'inline-flex items-center gap-1.5 rounded-full border px-4 py-3 text-sm font-medium transition';
+  const controlButtonIdle =
+    'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60';
+  const controlButtonActive =
+    'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black';
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
   // Pagination state
@@ -2479,45 +2485,43 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => setShowTripPlanner(true)}
-                      className="w-full rounded-xl bg-gray-900 py-3 text-base font-medium text-white transition hover:bg-black dark:bg-white dark:text-black"
-                    >
-                      + New Trip
-                    </button>
-
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <SearchFiltersComponent
-                        filters={advancedFilters}
-                        onFiltersChange={(newFilters) => {
-                          setAdvancedFilters(newFilters);
-                          if (newFilters.city !== undefined) {
-                            setSelectedCity(newFilters.city || '');
-                          }
-                          if (newFilters.category !== undefined) {
-                            setSelectedCategory(newFilters.category || '');
-                          }
-                          Object.entries(newFilters).forEach(([key, value]) => {
-                            if (value !== undefined && value !== null && value !== '') {
-                              trackFilterChange({ filterType: key, value });
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="ml-auto flex flex-wrap items-center gap-2 md:flex-nowrap md:gap-3">
+                        <button
+                          onClick={() => setShowTripPlanner(true)}
+                          className={`${controlButtonBase} ${controlButtonIdle}`}
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span className="text-sm">New Trip</span>
+                        </button>
+                        <SearchFiltersComponent
+                          filters={advancedFilters}
+                          onFiltersChange={(newFilters) => {
+                            setAdvancedFilters(newFilters);
+                            if (newFilters.city !== undefined) {
+                              setSelectedCity(newFilters.city || '');
                             }
-                          });
-                        }}
-                        availableCities={cities}
-                        availableCategories={categories}
-                        onLocationChange={handleLocationChange}
-                        triggerClassName="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-                        activeTriggerClassName="bg-gray-900 text-white dark:bg-white dark:text-black border-gray-900 dark:border-white"
-                        iconClassName="h-4 w-4"
-                        label="Refine"
-                      />
-                      <div className="flex items-center gap-2">
+                            if (newFilters.category !== undefined) {
+                              setSelectedCategory(newFilters.category || '');
+                            }
+                            Object.entries(newFilters).forEach(([key, value]) => {
+                              if (value !== undefined && value !== null && value !== '') {
+                                trackFilterChange({ filterType: key, value });
+                              }
+                            });
+                          }}
+                          availableCities={cities}
+                          availableCategories={categories}
+                          onLocationChange={handleLocationChange}
+                          triggerClassName={`${controlButtonBase} ${controlButtonIdle}`}
+                          activeTriggerClassName={controlButtonActive}
+                          iconClassName="h-4 w-4"
+                          label="Refine"
+                        />
                         <button
                           onClick={() => setViewMode('grid')}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-3 text-sm font-medium transition ${
-                            viewMode === 'grid'
-                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                          className={`${controlButtonBase} ${
+                            viewMode === 'grid' ? controlButtonActive : controlButtonIdle
                           }`}
                           aria-label="Grid view"
                         >
@@ -2526,10 +2530,8 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         </button>
                         <button
                           onClick={() => setViewMode('map')}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-3 text-sm font-medium transition ${
-                            viewMode === 'map'
-                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-black'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                          className={`${controlButtonBase} ${
+                            viewMode === 'map' ? controlButtonActive : controlButtonIdle
                           }`}
                           aria-label="Map view"
                         >
