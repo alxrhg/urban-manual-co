@@ -2072,27 +2072,34 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
       return;
     }
 
-    if (trimmed.length > 0) {
+    // Prevent infinite loops: only auto-search if not already searching and not already submitted
+    if (trimmed.length > 0 && !searching && !submittedQuery) {
       const timer = setTimeout(() => {
-        runSearch(trimmed);
+        // Double-check we're still not searching/submitted before running
+        if (!searching && !submittedQuery) {
+          runSearch(trimmed);
+        }
       }, 500);
       return () => clearTimeout(timer);
     }
 
-    setFilteredDestinations([]);
-    setChatResponse('');
-    setConversationHistory([]);
-    setSearching(false);
-    setSubmittedQuery('');
-    setChatMessages([]);
-    setSearchTier(null);
-    setSearchIntent(null);
-    setSeasonalContext(null);
-    setInferredTags(null);
-    setCurrentLoadingText(loadingTextVariants[0]);
-    filterDestinations();
-    setCurrentPage(1);
-  }, [searchTerm, runSearch, filterDestinations]);
+    // Only clear if searchTerm is empty and we're not in the middle of a search
+    if (trimmed.length === 0 && !searching) {
+      setFilteredDestinations([]);
+      setChatResponse('');
+      setConversationHistory([]);
+      setSearching(false);
+      setSubmittedQuery('');
+      setChatMessages([]);
+      setSearchTier(null);
+      setSearchIntent(null);
+      setSeasonalContext(null);
+      setInferredTags(null);
+      setCurrentLoadingText(loadingTextVariants[0]);
+      filterDestinations();
+      setCurrentPage(1);
+    }
+  }, [searchTerm, runSearch, filterDestinations, searching, submittedQuery]);
 
   useEffect(() => {
     if (!submittedQuery) {
@@ -2181,6 +2188,88 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
                 <div className="w-full">
+                  {/* Chat messages above input - Keep input in same position */}
+                  {submittedQuery && chatMessages.length > 0 && (
+                    <div className="mb-6">
+                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
+                      <div
+                        ref={chatContainerRef}
+                        className="max-h-[300px] overflow-y-auto space-y-4 mb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+                      >
+                        {chatMessages.map((message, index) => (
+                          <div key={index} className="space-y-2">
+                            {message.type === 'user' ? (
+                              <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                {message.content}
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <MarkdownRenderer
+                                  content={message.content}
+                                  className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                />
+                                {message.contextPrompt && (
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                    {message.contextPrompt}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Loading State */}
+                      {searching && (
+                        <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left mb-4">
+                          <div className="flex items-center gap-2">
+                            {discoveryEngineLoading && (
+                              <div className="flex gap-1">
+                                <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
+                                <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
+                                <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
+                              </div>
+                            )}
+                            <span>{currentLoadingText}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Refinement Chips - Active Filters */}
+                      {inferredTags && !searching && (() => {
+                        const activeTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
+                        if (activeTags.length === 0) return null;
+                        return (
+                          <div className="mb-4">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Filtered by:</div>
+                            <RefinementChips
+                              tags={activeTags}
+                              onChipClick={(tag) => handleChipClick(tag)}
+                              onChipRemove={(tag) => handleChipRemove(tag)}
+                              activeTags={activeFilters}
+                            />
+                          </div>
+                        );
+                      })()}
+
+                      {/* Refinement Chips - Suggestions */}
+                      {inferredTags && !searching && (() => {
+                        const suggestionTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, false);
+                        if (suggestionTags.length === 0) return null;
+                        return (
+                          <div className="mb-4">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggestions:</div>
+                            <RefinementChips
+                              tags={suggestionTags}
+                              onChipClick={(tag) => handleChipClick(tag)}
+                              activeTags={activeFilters}
+                            />
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
                   {/* Show GreetingHero only when no active search */}
                   {!submittedQuery && (
                     <>
@@ -2201,6 +2290,8 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                           <ContextCards context={userContext} />
                         </div>
                       )}
+                    </>
+                  )}
 
                   <GreetingHero
                 searchQuery={searchTerm}
@@ -2256,6 +2347,47 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 availableCities={cities}
                 availableCategories={categories}
                   />
+
+                  {/* Follow-up input field - Chat style - Only show when there's a submitted query */}
+                  {submittedQuery && !searching && chatMessages.length > 0 && (
+                    <div className="relative mt-6">
+                      <input
+                        placeholder="Refine your search or ask a follow-up..."
+                        aria-label="Refine your search or ask a follow-up"
+                        value={followUpInput}
+                        onChange={(e) => setFollowUpInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
+                            e.preventDefault();
+                            const query = followUpInput.trim();
+                            skipNextSearchRef.current = true;
+                            setSearchTerm(query);
+                            setFollowUpInput('');
+                            runSearch(query, { forceAi: true });
+                          }
+                        }}
+                        className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                      />
+                    </div>
+                  )}
+
+                  {/* Intent Confirmation Chips - Always under text input */}
+                  {submittedQuery && searchIntent && !searching && (
+                    <div className="mt-4">
+                      <IntentConfirmationChips
+                        intent={searchIntent}
+                        onChipRemove={(chipType, value) => {
+                          // Modify the search based on what was removed
+                          setSearchTerm('');
+                          setSubmittedQuery('');
+                          setSearchIntent(null);
+                          setInferredTags(null);
+                          setActiveFilters(new Set());
+                        }}
+                        editable={true}
+                      />
+                    </div>
+                  )}
                       
                       {/* City and Category Lists - Full width, positioned under greeting */}
                       {showBrowseLists && (
@@ -2404,171 +2536,10 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               </div>
             </div>
                       )}
-                    </>
-                  )}
                 </div>
               </div>
             </div>
           </div>
-          
-          {/* Chat-like display when search is active */}
-          {submittedQuery && (
-            <div className="w-full">
-              <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl">
-                {/* Greeting */}
-                <div className="text-left mb-6">
-                        <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-                          {(() => {
-                            const now = new Date();
-                            const currentHour = now.getHours();
-                            let greeting = 'GOOD EVENING';
-                            if (currentHour < 12) greeting = 'GOOD MORNING';
-                            else if (currentHour < 18) greeting = 'GOOD AFTERNOON';
-
-                            const userName = (function () {
-                              const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                              if (!raw) return undefined;
-                              return raw
-                                .split(/[\s._-]+/)
-                                .filter(Boolean)
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(' ');
-                            })();
-
-                            return `${greeting}${userName ? `, ${userName}` : ''}`;
-                          })()}
-                        </h2>
-                      </div>
-
-                      {/* Refinement Chips - Active Filters */}
-                      {inferredTags && !searching && (() => {
-                        const activeTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
-                        if (activeTags.length === 0) return null;
-                        return (
-                          <div className="mb-4">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Filtered by:</div>
-                            <RefinementChips
-                              tags={activeTags}
-                              onChipClick={(tag) => handleChipClick(tag)}
-                              onChipRemove={(tag) => handleChipRemove(tag)}
-                              activeTags={activeFilters}
-                            />
-                          </div>
-                        );
-                      })()}
-
-                      {/* Refinement Chips - Suggestions */}
-                      {inferredTags && !searching && (() => {
-                        const suggestionTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, false);
-                        if (suggestionTags.length === 0) return null;
-                        return (
-                          <div className="mb-6">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggestions:</div>
-                            <RefinementChips
-                              tags={suggestionTags}
-                              onChipClick={(tag) => handleChipClick(tag)}
-                              activeTags={activeFilters}
-                            />
-                          </div>
-                        );
-                      })()}
-
-                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
-                      <div
-                        ref={chatContainerRef}
-                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
-                      >
-                        {chatMessages.length > 0 ? (
-                          chatMessages.map((message, index) => (
-                            <div key={index} className="space-y-2">
-                              {message.type === 'user' ? (
-                                <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                  {message.content}
-                                </div>
-                              ) : (
-                                <div className="space-y-4">
-                                  <MarkdownRenderer
-                                    content={message.content}
-                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                  />
-                                  {message.contextPrompt && (
-                                    <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                      {message.contextPrompt}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          ))
-                        ) : null}
-
-                        {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
-                        {(searching || (submittedQuery && chatMessages.length === 0)) && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <div className="flex items-center gap-2">
-                              {discoveryEngineLoading && (
-                                <div className="flex gap-1">
-                                  <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
-                                </div>
-                              )}
-                              <span>{currentLoadingText}</span>
-                      </div>
-                    </div>
-                  )}
-                      </div>
-
-                      {/* Follow-up input field - Chat style */}
-                      {!searching && chatMessages.length > 0 && (
-                        <div className="relative">
-                          <input
-                            placeholder="Refine your search or ask a follow-up..."
-                            aria-label="Refine your search or ask a follow-up"
-                            value={followUpInput}
-                            onChange={(e) => setFollowUpInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
-                                e.preventDefault();
-                                const query = followUpInput.trim();
-                                skipNextSearchRef.current = true;
-                                setSearchTerm(query);
-                                setFollowUpInput('');
-                                runSearch(query, { forceAi: true });
-                              }
-                            }}
-                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-                          />
-                        </div>
-                      )}
-
-                      {/* Intent Confirmation Chips - Always under text input */}
-                      {searchIntent && !searching && (
-                        <div className="mt-4">
-                          <IntentConfirmationChips
-                            intent={searchIntent}
-                            onChipRemove={(chipType, value) => {
-                              // Modify the search based on what was removed
-                              setSearchTerm('');
-                              setSubmittedQuery('');
-                              setSearchIntent(null);
-                              setInferredTags(null);
-                              setActiveFilters(new Set());
-                            }}
-                            editable={true}
-                          />
-                        </div>
-                      )}
-
-                      {/* No results message */}
-                      {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
-                        <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                          <span>No results found. Try refining your search.</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
         </section>
 
               {/* Content Section - Grid directly below hero */}
