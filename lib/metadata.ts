@@ -2,6 +2,46 @@ import { Metadata } from 'next';
 import { createServerClient } from './supabase-server';
 import { Destination } from '@/types/destination';
 
+const SITE_URL = 'https://www.urbanmanual.co';
+const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.jpg`;
+const THIN_PAGE_ROBOTS: NonNullable<Metadata['robots']> = {
+  index: false,
+  follow: true,
+};
+
+function ensureLeadingSlash(path: string): string {
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+export function buildCanonicalUrl(
+  path: string,
+  searchParams?: Record<string, string | undefined>,
+): string {
+  const url = new URL(ensureLeadingSlash(path), SITE_URL);
+
+  if (searchParams) {
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value) {
+        url.searchParams.set(key, value);
+      }
+    });
+  }
+
+  return url.toString();
+}
+
+function getPrimaryParam(value?: string | string[] | null): string | undefined {
+  if (!value) return undefined;
+  return Array.isArray(value) ? value[0]?.trim() : value.trim();
+}
+
+function formatCityName(city: string): string {
+  return decodeURIComponent(city)
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 /**
  * Generate SEO-optimized metadata for destination pages
  */
@@ -47,10 +87,10 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
     }
 
     // Generate canonical URL
-    const canonicalUrl = `https://www.urbanmanual.co/destination/${slug}`;
+    const canonicalUrl = buildCanonicalUrl(`/destination/${slug}`);
 
     // Generate Open Graph image
-    const ogImage = dest.image || 'https://www.urbanmanual.co/og-default.jpg';
+    const ogImage = dest.image || DEFAULT_OG_IMAGE;
 
     return {
       title,
@@ -94,10 +134,10 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
  * Generate SEO-optimized metadata for city pages
  */
 export async function generateCityMetadata(city: string): Promise<Metadata> {
-  const formattedCity = decodeURIComponent(city);
+  const formattedCity = formatCityName(city);
   const title = `Best Hotels & Restaurants in ${formattedCity} | The Urban Manual`;
   const description = `Discover the finest hotels, Michelin-starred restaurants, cafes, and hidden gems in ${formattedCity}. Curated by The Urban Manual.`;
-  const canonicalUrl = `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`;
+  const canonicalUrl = buildCanonicalUrl(`/city/${encodeURIComponent(city)}`);
 
   return {
     title,
@@ -105,6 +145,43 @@ export async function generateCityMetadata(city: string): Promise<Metadata> {
     alternates: {
       canonical: canonicalUrl,
     },
+    robots: THIN_PAGE_ROBOTS,
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'The Urban Manual',
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
+
+export function generateSearchMetadata(searchParams: Record<string, string | string[] | undefined>): Metadata {
+  const query = getPrimaryParam(searchParams?.q);
+  const canonicalUrl = buildCanonicalUrl('/search', query ? { q: query } : undefined);
+
+  const baseTitle = 'Search The Urban Manual';
+  let title = `${baseTitle} | The Urban Manual`;
+  let description = 'Discover curated hotels, restaurants, and unique urban experiences with The Urban Manual search.';
+
+  if (query) {
+    title = `Search results for "${query}" | The Urban Manual`;
+    description = `Explore curated recommendations for "${query}" across hotels, restaurants, and cultural experiences with The Urban Manual.`;
+  }
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    robots: THIN_PAGE_ROBOTS,
     openGraph: {
       title,
       description,
@@ -130,7 +207,7 @@ export function generateDestinationSchema(destination: Destination) {
     name: destination.name,
     description: destination.content?.replace(/<[^>]*>/g, ''),
     image: destination.image,
-    url: `https://www.urbanmanual.co/destination/${destination.slug}`,
+    url: buildCanonicalUrl(`/destination/${destination.slug}`),
   };
 
   // Determine schema type based on category
@@ -203,10 +280,7 @@ export function generateDestinationSchema(destination: Destination) {
  */
 export function generateDestinationBreadcrumb(destination: Destination) {
   // Format city name for display
-  const cityName = destination.city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const cityName = formatCityName(destination.city ?? '');
 
   return {
     '@context': 'https://schema.org',
@@ -216,19 +290,19 @@ export function generateDestinationBreadcrumb(destination: Destination) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://www.urbanmanual.co',
+        item: buildCanonicalUrl('/'),
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: cityName,
-        item: `https://www.urbanmanual.co/city/${destination.city}`,
+        item: buildCanonicalUrl(`/city/${encodeURIComponent(destination.city ?? '')}`),
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: destination.name,
-        item: `https://www.urbanmanual.co/destination/${destination.slug}`,
+        item: buildCanonicalUrl(`/destination/${destination.slug}`),
       },
     ],
   };
@@ -239,10 +313,7 @@ export function generateDestinationBreadcrumb(destination: Destination) {
  */
 export function generateCityBreadcrumb(city: string) {
   // Format city name for display
-  const cityName = decodeURIComponent(city)
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const cityName = formatCityName(city);
 
   return {
     '@context': 'https://schema.org',
@@ -252,16 +323,25 @@ export function generateCityBreadcrumb(city: string) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://www.urbanmanual.co',
+        item: buildCanonicalUrl('/'),
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: cityName,
-        item: `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`,
+        item: buildCanonicalUrl(`/city/${encodeURIComponent(city)}`),
       },
     ],
   };
+}
+
+export function createJsonLdScriptProps(data: unknown) {
+  return {
+    type: 'application/ld+json',
+    dangerouslySetInnerHTML: {
+      __html: JSON.stringify(data),
+    },
+  } as const;
 }
 
 /**
@@ -269,10 +349,7 @@ export function generateCityBreadcrumb(city: string) {
  */
 export function generateDestinationFAQ(destination: Destination) {
   const category = destination.category?.toLowerCase() || '';
-  const cityName = destination.city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const cityName = formatCityName(destination.city ?? '');
 
   const faqs: Array<{ question: string; answer: string }> = [];
 

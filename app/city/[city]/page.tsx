@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
 import { Metadata } from 'next';
-import { generateCityMetadata, generateCityBreadcrumb } from '@/lib/metadata';
+import { generateCityMetadata, generateCityBreadcrumb, createJsonLdScriptProps } from '@/lib/metadata';
 import CityPageClient from './page-client';
 
 // Generate metadata for SEO
@@ -24,18 +24,12 @@ export default async function CityPage({
 
   // Generate breadcrumb schema
   const breadcrumb = generateCityBreadcrumb(city);
+  const breadcrumbJsonLd = createJsonLdScriptProps(breadcrumb);
 
   return (
     <>
       {/* Breadcrumb Schema */}
-      {breadcrumb && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumb),
-          }}
-        />
-      )}
+      <script {...breadcrumbJsonLd} />
 
       <Suspense fallback={<SearchGridSkeleton />}>
         <CityPageClient />
