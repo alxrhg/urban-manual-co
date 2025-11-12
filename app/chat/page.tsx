@@ -4,33 +4,42 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { ConversationBubble } from '@/app/components/chat/ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
-// Analytics tracking via API
-async function trackPageView(page: string, userId?: string) {
-  fetch('/api/analytics/feature-usage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      eventType: 'page_view',
-      userId,
-      payload: { page },
-    }),
-  }).catch(() => {
-    // Ignore errors
-  });
+type FeatureUsageEventType = 'page_view' | 'chat_message' | 'suggestion_accepted';
+
+async function sendFeatureUsageEvent(
+  eventType: FeatureUsageEventType,
+  userId: string | undefined,
+  payload: Record<string, unknown>
+) {
+  try {
+    const response = await fetch('/api/analytics/feature-usage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventType,
+        userId,
+        payload,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.warn(
+        `Feature usage tracking failed (${response.status})`,
+        errorText || response.statusText
+      );
+    }
+  } catch (error) {
+    console.debug('Feature usage tracking request failed:', error);
+  }
 }
 
-async function trackChatMessage(userId: string | undefined, payload: { messageLength: number }) {
-  fetch('/api/analytics/feature-usage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      eventType: 'chat_message',
-      userId,
-      payload,
-    }),
-  }).catch(() => {
-    // Ignore errors
-  });
+function trackPageView(page: string, userId?: string) {
+  void sendFeatureUsageEvent('page_view', userId, { page });
+}
+
+function trackChatMessage(userId: string | undefined, payload: { messageLength: number }) {
+  void sendFeatureUsageEvent('chat_message', userId, payload);
 }
 
 interface Message {
@@ -224,17 +233,7 @@ export default function ChatPage() {
   async function handleSuggestionClick(suggestion: string) {
     // Track suggestion acceptance (fire and forget)
     if (sessionId) {
-      fetch('/api/analytics/feature-usage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventType: 'suggestion_accepted',
-          userId: user?.id,
-          payload: { sessionId, suggestion },
-        }),
-      }).catch(() => {
-        // Ignore errors
-      });
+      void sendFeatureUsageEvent('suggestion_accepted', user?.id, { sessionId, suggestion });
     }
     setInput(suggestion);
     inputRef.current?.focus();
