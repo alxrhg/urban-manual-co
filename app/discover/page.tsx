@@ -44,8 +44,8 @@ export default function DiscoverCollectionsPage() {
   };
 
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="container mx-auto">
+    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-2xl font-light mb-2">Discover Collections</h1>

@@ -180,7 +180,7 @@ export default function CollectionDetailPage() {
 
   if (loading) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20">
         <PageLoader />
       </main>
     );
@@ -188,7 +188,7 @@ export default function CollectionDetailPage() {
 
   if (!collection) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20">
         <EmptyState
           icon="❓"
           title="Collection not found"
@@ -201,8 +201,8 @@ export default function CollectionDetailPage() {
   }
 
   return (
-    <main className="px-6 md:px-10 py-20">
-      <div className="container mx-auto">
+    <main className="w-full px-6 md:px-10 lg:px-12 py-20">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-12">
           <button

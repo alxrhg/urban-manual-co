@@ -216,7 +216,7 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full px-6 md:px-10 lg:px-12 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Travel Chat

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { openai, OPENAI_EMBEDDING_MODEL, getModelForQuery } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -13,18 +12,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
-
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
-const SUPABASE_KEY = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-  'placeholder-key'
-) as string;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Simple in-memory cache for search results
 interface CacheEntry {
@@ -679,6 +666,7 @@ function generateResponse(count: number, city?: string, category?: string): stri
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerClient();
     const body = await request.json();
     const { query, userId, conversationHistory = [] } = body;
 

@@ -188,7 +188,7 @@ export default function CityPageClient() {
 
   if (loading) {
     return (
-      <main className="px-8 py-20">
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
         </div>
@@ -215,7 +215,7 @@ export default function CityPageClient() {
 
   return (
     <>
-      <main className="container mx-auto px-4 md:px-8 lg:px-12 py-20 min-h-screen space-y-12">
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen space-y-12">
           {/* Header */}
           <div>
             <button

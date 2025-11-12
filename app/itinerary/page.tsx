@@ -56,8 +56,8 @@ export default function ItineraryPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen px-6 md:px-10 py-20">
-        <div className="container mx-auto">
+      <div className="w-full min-h-screen px-6 md:px-10 lg:px-12 py-20">
+        <div className="w-full">
           <h1 className="text-2xl font-semibold mb-8">My Itinerary</h1>
           <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -78,8 +78,8 @@ export default function ItineraryPage() {
   }
 
   return (
-    <div className="min-h-screen px-6 md:px-10 py-20">
-      <div className="max-w-4xl mx-auto">
+    <div className="w-full min-h-screen px-6 md:px-10 lg:px-12 py-20">
+      <div className="w-full max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold">My Itinerary</h1>
           <button

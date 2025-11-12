@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 export default function SubmitPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-20">
+      <div className="w-full px-6 md:px-10 lg:px-12 py-20">
+        <div className="max-w-2xl mx-auto">
         <h1 className="text-4xl font-bold mb-4">Submit a Place</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
           Help us grow our collection by suggesting amazing places to visit.
@@ -68,6 +69,7 @@ export default function SubmitPage() {
           >
             ← Back to home
           </Link>
+        </div>
         </div>
       </div>
     </div>
