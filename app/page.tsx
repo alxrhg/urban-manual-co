@@ -48,6 +48,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+import { deterministicRandomFromString, pickDeterministicItem } from '@/lib/utils/random';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -140,17 +141,6 @@ const naturalLanguageTriggers = [
   'versus',
   'vs ',
 ];
-
-function deterministicRandomFromString(value: string): number {
-  if (!value) return 0;
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash << 5) - hash + value.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
-  const normalized = (Math.abs(hash) % 1000) / 1000;
-  return normalized;
-}
 
 function isLikelyNaturalLanguageQuery(query: string): boolean {
   const trimmed = query.trim();
@@ -364,7 +354,15 @@ function getContextAwareLoadingMessage(
 
     const messages = categoryCityMessages[category];
     if (messages) {
-      return messages[Math.floor(Math.random() * messages.length)];
+      return (
+        pickDeterministicItem(messages, [
+          queryLower,
+          category,
+          city,
+          intent?.primaryIntent ?? '',
+          'category-city',
+        ]) ?? messages[0]
+      );
     }
   }
 
@@ -447,7 +445,16 @@ function getContextAwareLoadingMessage(
 
     const messages = categoryMessages[category];
     if (messages) {
-      return messages[Math.floor(Math.random() * messages.length)];
+      return (
+        pickDeterministicItem(messages, [
+          queryLower,
+          category,
+          intent?.city ?? '',
+          seasonalContext?.season ?? '',
+          (intent?.modifiers ?? []).join('|'),
+          'category-only',
+        ]) ?? messages[0]
+      );
     }
   }
 
@@ -493,7 +500,16 @@ function getContextAwareLoadingMessage(
     'Selecting the finest spots...',
   ];
 
-  return fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
+  return (
+    pickDeterministicItem(fallbackMessages, [
+      queryLower,
+      intent?.category ?? '',
+      intent?.city ?? '',
+      seasonalContext?.season ?? '',
+      (intent?.modifiers ?? []).join('|'),
+      'fallback',
+    ]) ?? fallbackMessages[0]
+  );
 }
 
 export default function Home() {

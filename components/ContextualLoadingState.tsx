@@ -1,6 +1,7 @@
 'use client';
 
 import { Sparkles } from 'lucide-react';
+import { pickDeterministicItem } from '@/lib/utils/random';
 
 interface ContextualLoadingStateProps {
   intent?: {
@@ -85,8 +86,16 @@ export function ContextualLoadingState({ intent, query }: ContextualLoadingState
 
       const messages = categoryMessages[category.toLowerCase()];
       if (messages) {
-        // Pick a random message for variety
-        return messages[Math.floor(Math.random() * messages.length)];
+        const seedParts = [
+          query,
+          category,
+          city,
+          modifiers.join('|'),
+          timeframe ?? '',
+          primaryIntent ?? '',
+          'contextual-category',
+        ];
+        return pickDeterministicItem(messages, seedParts) ?? messages[0];
       }
     }
 
@@ -127,7 +136,16 @@ export function ContextualLoadingState({ intent, query }: ContextualLoadingState
       'Searching our carefully curated collection...',
     ];
 
-    return fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
+    const seedParts = [
+      query,
+      category,
+      city,
+      modifiers.join('|'),
+      timeframe ?? '',
+      primaryIntent ?? '',
+      'contextual-fallback',
+    ];
+    return pickDeterministicItem(fallbackMessages, seedParts) ?? fallbackMessages[0];
   };
 
   return (
