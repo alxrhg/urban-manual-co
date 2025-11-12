@@ -16,11 +16,19 @@ import {
   Clock,
   Compass,
   Layers,
+  MoreVertical,
+  ChevronDown,
 } from 'lucide-react';
 import { PageContainer } from '@/components/PageContainer';
-import { PageIntro } from '@/components/PageIntro';
 import { TripPlanner } from '@/components/TripPlanner';
 import { ConversationInterfaceStreaming } from '@/app/components/chat/ConversationInterfaceStreaming';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Trip {
   id: string;
@@ -147,76 +155,89 @@ function TripCard({ trip, onView, onEdit, onDelete, onOpenIntelligence }: TripCa
   const dateRange = formatDateRange(trip.start_date, trip.end_date);
 
   return (
-    <article className="group relative overflow-hidden rounded-3xl border border-gray-200/70 dark:border-gray-800 bg-white/80 dark:bg-gray-950/70 shadow-sm transition-transform hover:-translate-y-1">
-      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${statusStyle.accentClass}`} />
-      <div className="relative flex flex-col gap-6 p-6">
+    <article className="group relative overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-950 shadow-sm hover:shadow-md transition-shadow">
+      <div className="relative flex flex-col gap-4 p-6">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusStyle.pillClass}`}>
-                {statusStyle.label}
-              </span>
-              {countdown && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                  <Clock className="h-3.5 w-3.5" />
-                  {countdown}
-                </span>
-              )}
-            </div>
-            <h3 className="mt-3 text-xl font-semibold leading-tight text-gray-900 dark:text-white">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xl md:text-2xl font-medium leading-tight text-black dark:text-white mb-2">
               {trip.title}
             </h3>
-            {trip.destination && (
-              <p className="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                <MapPin className="h-4 w-4" />
-                <span>{trip.destination}</span>
-              </p>
-            )}
-            {(trip.start_date || trip.end_date) && (
-              <p className="mt-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <Calendar className="h-4 w-4" />
-                <span>{dateRange}</span>
-              </p>
-            )}
+            
+            {/* Subtle Metadata */}
+            <div className="flex flex-wrap items-center gap-3 text-xs font-normal text-gray-500 dark:text-gray-500">
+              <span className="px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                {statusStyle.label}
+              </span>
+              {trip.destination && (
+                <>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {trip.destination}
+                  </span>
+                </>
+              )}
+              {(trip.start_date || trip.end_date) && (
+                <>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {dateRange}
+                  </span>
+                </>
+              )}
+              {countdown && (
+                <>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {countdown}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onEdit(trip)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:border-gray-300 hover:text-gray-700 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-700"
-              aria-label={`Edit ${trip.title}`}
-            >
-              <Edit2 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onDelete(trip)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-100 text-red-500 transition-colors hover:border-red-200 hover:text-red-600 dark:border-red-900/40 dark:text-red-300 dark:hover:border-red-800/60"
-              aria-label={`Delete ${trip.title}`}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
+          
+          {/* Overflow Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                aria-label="More options"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => onView(trip.id)}>
+                <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                View itinerary
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onOpenIntelligence(trip)}>
+                <Bot className="h-3.5 w-3.5 mr-2" />
+                Travel Intelligence
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onEdit(trip)}>
+                <Edit2 className="h-3.5 w-3.5 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onDelete(trip)}
+                className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {trip.description && (
-          <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">{trip.description}</p>
+          <p className="text-sm font-normal leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2">
+            {trip.description}
+          </p>
         )}
-
-        <div className="mt-auto flex flex-wrap gap-3">
-          <button
-            onClick={() => onOpenIntelligence(trip)}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-          >
-            <Bot className="h-4 w-4" />
-            Travel Intelligence
-          </button>
-          <button
-            onClick={() => onView(trip.id)}
-            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-          >
-            View itinerary
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
       </div>
     </article>
   );
@@ -468,29 +489,26 @@ export default function TripsPage() {
 
   return (
     <div className="pb-24">
-      <PageIntro
-        eyebrow="Itinerary Studio"
-        title="Trips"
-        description="Keep every itinerary under one roof, collaborate with friends, and activate Travel Intelligence to evolve each journey."
-        actions={
-          <div className="flex flex-wrap gap-3">
+      {/* Manifesto-Style Hero Section */}
+      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white">
+            Plan with intention, travel with confidence
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
+            Keep every itinerary under one roof. Collaborate with friends, activate Travel Intelligence, and evolve each journey as you discover new possibilities.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-4">
             <button
               onClick={() => handleOpenPlanner()}
-              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
             >
               <Plus className="h-4 w-4" />
               New Trip
             </button>
-            <button
-              onClick={() => handleOpenIntelligence()}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-white dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-900/60"
-            >
-              <Bot className="h-4 w-4" />
-              Travel Intelligence Hub
-            </button>
           </div>
-        }
-      />
+        </div>
+      </section>
 
       <PageContainer className="space-y-10">
         <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
@@ -527,55 +545,57 @@ export default function TripsPage() {
           </div>
         </section>
 
-        <section className="grid gap-6 rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80 lg:grid-cols-[1.5fr,1fr]">
-          <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase tracking-[2px] text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-              Travel Intelligence
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        {/* Travel Intelligence Section - Dedicated */}
+        <section className="border-t border-gray-100 dark:border-gray-700 pt-12 mt-12">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="text-center space-y-4">
+              <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                Travel Intelligence
+              </div>
+              <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
                 Co-pilot every trip with live intelligence
               </h2>
-              <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">
+              <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
                 Ask Urban Manual to flesh out daily rhythms, surface new openings, track availability swings, and keep every itinerary flexible.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            
+            <div className="flex flex-wrap justify-center gap-3">
               <button
                 onClick={() => handleOpenIntelligence()}
-                className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
               >
                 <Sparkles className="h-4 w-4" />
                 {conversationPreview ? 'Resume conversation' : 'Start a session'}
               </button>
               <button
                 onClick={() => router.push('/chat')}
-                className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-100 dark:border-gray-700 px-5 py-2.5 text-sm font-normal text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
               >
                 Open full chat
               </button>
             </div>
-          </div>
-          <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+
+            {/* Latest Insights & Opportunities */}
+            <div className="grid md:grid-cols-2 gap-6 pt-8">
+              <div className="space-y-4">
+                <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500">
                   Latest insights
-                </p>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                </div>
+                <p className="text-sm font-normal text-gray-600 dark:text-gray-400 leading-relaxed">
                   {conversationPreview
-                    ? `“${truncate(conversationPreview, 160)}”`
+                    ? `"${truncate(conversationPreview, 160)}"`
                     : 'No recent chat yet. Kick off a session to get tailored suggestions and timeline support.'}
                 </p>
               </div>
-              <div className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-800">
-                <p className="text-xs font-semibold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+              <div className="space-y-4">
+                <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500">
                   Live opportunities
-                </p>
+                </div>
                 {loadingIntelligence ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Scanning for fresh intel…</p>
+                  <p className="text-sm font-normal text-gray-500 dark:text-gray-400">Scanning for fresh intel…</p>
                 ) : opportunities.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
                     No urgent alerts right now. Travel Intelligence will surface price drops, event openings, and weather wins here.
                   </p>
                 ) : (
@@ -583,20 +603,20 @@ export default function TripsPage() {
                     {opportunities.slice(0, 3).map((opportunity, index) => (
                       <div
                         key={`${opportunity.destinationId}-${index}`}
-                        className="rounded-2xl border border-gray-200/70 bg-white/90 p-4 dark:border-gray-800 dark:bg-gray-950/70"
+                        className="rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-950 p-4"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{opportunity.title}</p>
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <p className="text-sm font-normal text-gray-900 dark:text-white">{opportunity.title}</p>
                           <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${URGENCY_BADGE[opportunity.urgency]}`}
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-normal ${URGENCY_BADGE[opportunity.urgency]}`}
                           >
                             {opportunity.urgency}
                           </span>
                         </div>
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{opportunity.description}</p>
+                        <p className="text-xs font-normal text-gray-500 dark:text-gray-400">{opportunity.description}</p>
                         {(opportunity.city || opportunity.destinationName) && (
-                          <p className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <MapPin className="h-3.5 w-3.5" />
+                          <p className="mt-2 flex items-center gap-1.5 text-xs font-normal text-gray-500 dark:text-gray-400">
+                            <MapPin className="h-3 w-3" />
                             <span>{opportunity.city || opportunity.destinationName}</span>
                           </p>
                         )}
@@ -609,82 +629,42 @@ export default function TripsPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-xl space-y-3">
-              <p className="text-xs font-medium uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                Orchestrated flow
-              </p>
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Plan with confidence, finish with flair</h2>
-              <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">
-                Every trip follows a proven cadence. Progress through each step and Travel Intelligence keeps the details humming in the background.
-              </p>
-            </div>
-            <div className="grid flex-1 gap-4 sm:grid-cols-2">
-              {workflowSteps.map((step, index) => {
-                const Icon = step.icon;
-                return (
-                  <div
-                    key={step.title}
-                    className="flex flex-col rounded-2xl border border-gray-200/70 bg-white/80 p-5 shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-gray-700"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <span className="text-xs font-medium text-gray-400 dark:text-gray-500">0{index + 1}</span>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{step.title}</h3>
-                      <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">{step.description}</p>
-                    </div>
-                    <button
-                      onClick={step.action}
-                      className="mt-auto inline-flex items-center gap-2 text-xs font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
-                    >
-                      {step.actionLabel}
-                      <ArrowRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
 
-        <section className="rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-sm dark:border-gray-800 dark:bg-gray-950/80">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Active trips</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Collaborate with Travel Intelligence to complete each itinerary.
-              </p>
-            </div>
-            <button
-              onClick={() => handleOpenPlanner()}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-            >
-              <Plus className="h-4 w-4" />
-              Add trip
-            </button>
-          </div>
-          <div className="mt-6">
-            {activeTrips.length === 0 ? (
-              <EmptyState onCreate={() => handleOpenPlanner()} />
-            ) : (
-              <div className="grid gap-6 lg:grid-cols-2">
-                {activeTrips.map((trip) => (
-                  <TripCard
-                    key={trip.id}
-                    trip={trip}
-                    onView={handleViewTrip}
-                    onEdit={handleOpenPlanner}
-                    onDelete={handleDeleteTrip}
-                    onOpenIntelligence={handleOpenIntelligence}
-                  />
-                ))}
+        <section className="border-t border-gray-100 dark:border-gray-700 pt-12 mt-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white mb-2">Your trips</h2>
+                <p className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                  Each journey tells a story. Build your itinerary, refine with intelligence, and share with collaborators.
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => handleOpenPlanner()}
+                className="inline-flex items-center gap-2 rounded-full border border-gray-100 dark:border-gray-700 px-4 py-2 text-sm font-normal text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add trip
+              </button>
+            </div>
+            <div>
+              {activeTrips.length === 0 ? (
+                <EmptyState onCreate={() => handleOpenPlanner()} />
+              ) : (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {activeTrips.map((trip) => (
+                    <TripCard
+                      key={trip.id}
+                      trip={trip}
+                      onView={handleViewTrip}
+                      onEdit={handleOpenPlanner}
+                      onDelete={handleDeleteTrip}
+                      onOpenIntelligence={handleOpenIntelligence}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 

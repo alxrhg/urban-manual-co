@@ -2466,10 +2466,51 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                       />
                     </div>
                   )}
-                      
-                      {/* City and Category Lists - Full width, positioned under greeting */}
-                      {showBrowseLists && (
-                        <div className="w-full mt-10 space-y-10">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Filter and Pill Buttons Section - Same layer, consistent spacing */}
+        <section className="w-full px-6 md:px-10 lg:px-12 pb-8 md:pb-12">
+          <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col space-y-6">
+            {/* Filter Component */}
+            {showBrowseLists && (
+              <div className="w-full">
+                <SearchFiltersComponent
+                  filters={advancedFilters}
+                  onFiltersChange={(newFilters) => {
+                    setAdvancedFilters(newFilters);
+                    if (newFilters.city !== undefined) {
+                      setSelectedCity(newFilters.city || '');
+                    }
+                    if (newFilters.category !== undefined) {
+                      setSelectedCategory(newFilters.category || '');
+                    }
+                    // Connect filter search query to homepage search term
+                    if (newFilters.searchQuery !== undefined) {
+                      setSearchTerm(newFilters.searchQuery || '');
+                    }
+                    Object.entries(newFilters).forEach(([key, value]) => {
+                      if (value !== undefined && value !== null && value !== '') {
+                        trackFilterChange({ filterType: key, value });
+                      }
+                    });
+                  }}
+                  availableCities={cities}
+                  availableCategories={categories}
+                  onLocationChange={handleLocationChange}
+                  triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                  activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
+                  iconClassName="h-4 w-4"
+                  label="Filters"
+                />
+              </div>
+            )}
+
+            {/* City and Category Lists - Full width, positioned under filter, constrained to top section */}
+            {showBrowseLists && (
+              <div className="w-full space-y-10 overflow-visible">
               <div className="space-y-3">
                 <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
                 <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
@@ -2498,7 +2539,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   ))}
                 </div>
                 {overflowCityButtons.length > 0 && (
-                  <div className="mt-3 space-y-3">
+                  <div className="mt-3 space-y-3 relative">
                     <button
                       onClick={() => setShowAllCities(prev => !prev)}
                       className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
@@ -2508,7 +2549,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         : `+ More cities (${overflowCityButtons.length})`}
                     </button>
                     {showAllCities && (
-                      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
                         <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
                           {overflowCityButtons.map((city) => (
                             <button
@@ -2577,7 +2618,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   })}
                 </div>
                 {overflowCategoryButtons.length > 0 && (
-                  <div className="mt-3 space-y-3">
+                  <div className="mt-3 space-y-3 relative">
                     <button
                       onClick={() => setShowAllCategories(prev => !prev)}
                       className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
@@ -2587,7 +2628,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                         : `+ More categories (${overflowCategoryButtons.length})`}
                     </button>
                     {showAllCategories && (
-                      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                      <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
                         <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
                           {overflowCategoryButtons.map((category) => {
                             const IconComponent = getCategoryIcon(category);
@@ -2612,81 +2653,51 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   </div>
                 )}
               </div>
-                        </div>
-                      )}
               </div>
-            </div>
+              )}
           </div>
         </section>
 
         {/* Content Section - Grid directly below hero */}
         <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32">
-                <div className="max-w-[1800px] mx-auto">
-                {/* Filter, Start Trip, and View Toggle */}
-                <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
-                  <SearchFiltersComponent
-                    filters={advancedFilters}
-                    onFiltersChange={(newFilters) => {
-                      setAdvancedFilters(newFilters);
-                      if (newFilters.city !== undefined) {
-                        setSelectedCity(newFilters.city || '');
-                      }
-                      if (newFilters.category !== undefined) {
-                        setSelectedCategory(newFilters.category || '');
-                      }
-                      // Connect filter search query to homepage search term
-                      if (newFilters.searchQuery !== undefined) {
-                        setSearchTerm(newFilters.searchQuery || '');
-                      }
-                      Object.entries(newFilters).forEach(([key, value]) => {
-                        if (value !== undefined && value !== null && value !== '') {
-                          trackFilterChange({ filterType: key, value });
-                        }
-                      });
-                    }}
-                    availableCities={cities}
-                    availableCategories={categories}
-                    onLocationChange={handleLocationChange}
-                    triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-                    activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
-                    iconClassName="h-4 w-4"
-                    label="Filters"
-                  />
-                  <button
-                    onClick={() => setShowTripPlanner(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
-                    aria-label="Start a trip"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Start a Trip</span>
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
-                        viewMode === 'grid'
-                          ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                      }`}
-                      aria-label="Grid view"
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>Grid</span>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('map')}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
-                        viewMode === 'map'
-                          ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                      }`}
-                      aria-label="Map view"
-                    >
-                      <Map className="h-4 w-4" />
-                      <span>Map</span>
-                    </button>
-                  </div>
-                </div>
+          <div className="max-w-[1800px] mx-auto">
+            {/* Start Trip and View Toggle */}
+            <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
+              <button
+                onClick={() => setShowTripPlanner(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
+                aria-label="Start a trip"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Start a Trip</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
+                    viewMode === 'grid'
+                      ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                  }`}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span>Grid</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
+                    viewMode === 'map'
+                      ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
+                  }`}
+                  aria-label="Map view"
+                >
+                  <Map className="h-4 w-4" />
+                  <span>Map</span>
+                </button>
+              </div>
+            </div>
             
             {/* Browse lists rendered within the hero above */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (

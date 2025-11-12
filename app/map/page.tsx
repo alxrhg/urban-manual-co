@@ -7,7 +7,7 @@ import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
 import MapView from '@/components/MapView';
 import GoogleMap from '@/components/GoogleMap';
-import { Search, X, ChevronRight, Map, Globe, Compass, SlidersHorizontal, Filter } from 'lucide-react';
+import { Search, X, ChevronRight, Map, Globe, Compass, SlidersHorizontal, Filter, Menu, X as XIcon, ArrowRight } from 'lucide-react';
 import AppleMap from '@/components/AppleMap';
 import Image from 'next/image';
 
@@ -37,8 +37,8 @@ export default function MapPage() {
   });
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
-  const [showFilters, setShowFilters] = useState(false);
-  const [showList, setShowList] = useState(true);
+  const [showSidePanel, setShowSidePanel] = useState(false);
+  const [showList, setShowList] = useState(false);
   
   const providerOptions = useMemo(
     () => [
@@ -210,6 +210,21 @@ export default function MapPage() {
     });
   }, [filteredDestinations, mapCenter]);
 
+  // Get featured destinations for highlights (top rated, michelin, or recent)
+  const featuredDestinations = useMemo(() => {
+    return filteredDestinations
+      .filter(d => d.latitude && d.longitude)
+      .sort((a, b) => {
+        // Prioritize michelin stars, then rating, then recent
+        if ((a.michelin_stars || 0) > (b.michelin_stars || 0)) return -1;
+        if ((a.michelin_stars || 0) < (b.michelin_stars || 0)) return 1;
+        if ((a.rating || 0) > (b.rating || 0)) return -1;
+        if ((a.rating || 0) < (b.rating || 0)) return 1;
+        return 0;
+      })
+      .slice(0, 6);
+  }, [filteredDestinations]);
+
   const focusedDestination = useMemo(() => {
     if (
       selectedDestination &&
@@ -256,10 +271,22 @@ export default function MapPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      {/* Header - Clean, minimal design */}
-      <header className="sticky top-0 z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
+      {/* Hero Section */}
+      <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h1 className="text-4xl md:text-5xl font-medium leading-tight text-black dark:text-white">
+            Explore on Map
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
+            Discover destinations across the globe. Filter by category, search by name, and explore curated places on an interactive map.
+          </p>
+        </div>
+      </section>
+
+      {/* Minimal Header - Search Only */}
+      <header className="sticky top-0 z-40 w-full border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
         <div className="px-6 md:px-10 lg:px-12 py-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
             {/* Search */}
             <div className="flex-1 max-w-2xl">
               <div className="relative">
@@ -269,7 +296,7 @@ export default function MapPage() {
                   value={filters.searchQuery}
                   onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
                   placeholder="Search destinations, cities, categories…"
-                  className="w-full pl-10 pr-10 py-2.5 bg-transparent border-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
+                  className="w-full pl-10 pr-10 py-2.5 bg-transparent border-none text-sm font-normal text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
                 />
                 {filters.searchQuery && (
                   <button
@@ -282,172 +309,155 @@ export default function MapPage() {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              {/* Filter Toggle */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
-                  activeFilterCount > 0
-                    ? 'border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-black'
-                    : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700'
-                }`}
-              >
-                <Filter className="h-3.5 w-3.5" />
-                Filters
-                {activeFilterCount > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-white/20 dark:bg-black/20">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-
-              {/* List Toggle (Mobile) */}
-              <button
-                onClick={() => setShowList(!showList)}
-                className="md:hidden inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-800 px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
-              >
-                <ChevronRight className={`h-3.5 w-3.5 transition-transform ${showList ? 'rotate-90' : ''}`} />
-                List
-              </button>
-
-              {/* Map Provider Selector */}
-              <div className="hidden md:flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-1">
-                {providerOptions.map(({ id, label, icon: Icon }) => {
-                  const isActive = mapProvider === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setMapProvider(id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                        isActive
-                          ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                      }`}
-                      type="button"
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span className="hidden lg:inline">{label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Side Panel Toggle */}
+            <button
+              onClick={() => setShowSidePanel(!showSidePanel)}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2 text-xs font-normal text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            >
+              <Menu className="h-4 w-4" />
+              <span className="hidden sm:inline">Controls</span>
+            </button>
           </div>
-
-          {/* Filter Panel */}
-          {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-              <div className="flex flex-wrap items-center gap-2">
-                {categories.map(category => (
-                  <button
-                    key={category}
-                    onClick={() => handleCategoryToggle(category)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                      filters.categories.has(category.toLowerCase())
-                        ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
-                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-1.5 ${
-                    filters.michelin
-                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
-                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700'
-                  }`}
-                >
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin"
-                    className="h-3 w-3"
-                  />
-                  Michelin
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="relative flex h-[calc(100vh-80px)]">
-        {/* List Sidebar - Slide in/out on mobile */}
-        <aside
-          className={`${
-            showList ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 absolute md:relative z-30 w-80 md:w-96 h-full bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 transition-transform duration-300 ease-out overflow-y-auto`}
-        >
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
-                Destinations
-              </h2>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {filteredDestinations.length}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {sortedDestinations.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No destinations found
-                  </p>
-                </div>
-              ) : (
-                sortedDestinations.map((dest) => (
+      <div className="relative">
+        {/* Collapsible Side Panel - Floating Sheet */}
+        {showSidePanel && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/20 z-40 md:bg-transparent"
+              onClick={() => setShowSidePanel(false)}
+              aria-hidden="true"
+            />
+            <div className="fixed md:absolute right-0 top-0 md:top-16 h-full md:h-auto z-50 w-80 md:w-72 bg-white dark:bg-gray-950 border-l md:border-l-0 md:border-r border-gray-100 dark:border-gray-700 shadow-xl md:shadow-none">
+              <div className="p-6 space-y-6 h-full overflow-y-auto">
+                {/* Close Button */}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    Controls
+                  </h2>
                   <button
-                    key={dest.slug}
-                    onClick={() => handleListItemClick(dest)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left group ${
-                      selectedDestination?.slug === dest.slug
-                        ? 'bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800'
-                        : 'bg-transparent hover:bg-gray-50 dark:hover:bg-gray-900/50 border border-transparent hover:border-gray-200 dark:hover:border-gray-800'
-                    }`}
+                    onClick={() => setShowSidePanel(false)}
+                    className="p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    aria-label="Close panel"
                   >
-                    {dest.image ? (
-                      <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800">
-                        <Image
-                          src={dest.image}
-                          alt={dest.name}
-                          fill
-                          className="object-cover"
-                          sizes="56px"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-                        <Map className="h-5 w-5 text-gray-400 dark:text-gray-600" />
+                    <XIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  </button>
+                </div>
+
+                {/* Map Provider Selector */}
+                <div>
+                  <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                    Map Provider
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {providerOptions.map(({ id, label, icon: Icon }) => {
+                      const isActive = mapProvider === id;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => setMapProvider(id)}
+                          className={`flex items-center gap-2 px-3 py-2 text-sm font-normal rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 ${
+                            isActive
+                              ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white'
+                              : 'border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                          type="button"
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Filters */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                      Filters
+                    </div>
+                    {activeFilterCount > 0 && (
+                      <span className="px-2 py-0.5 text-[10px] font-normal rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {/* Categories */}
+                    <div className="space-y-1.5">
+                      {categories.map(category => (
+                        <button
+                          key={category}
+                          onClick={() => handleCategoryToggle(category)}
+                          className={`w-full text-left px-3 py-1.5 rounded-lg text-sm font-normal border transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 ${
+                            filters.categories.has(category.toLowerCase())
+                              ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white'
+                              : 'border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Michelin Filter */}
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
+                      className={`w-full text-left px-3 py-1.5 rounded-lg text-sm font-normal border transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 ${
+                        filters.michelin
+                          ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <img
+                        src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                        alt="Michelin"
+                        className="h-3 w-3"
+                      />
+                      <span>Michelin</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* List Toggle */}
+                <div>
+                  <button
+                    onClick={() => setShowList(!showList)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-700 text-sm font-normal text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                  >
+                    <span>Show List</span>
+                    <ChevronRight className={`h-4 w-4 transition-transform ${showList ? 'rotate-90' : ''}`} />
+                  </button>
+                </div>
+
+                {/* Legend */}
+                <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
+                  <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                    Legend
+                  </div>
+                  <div className="space-y-2 text-xs font-normal text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500" />
+                      <span>Destination</span>
+                    </div>
+                    {destinationsWithCoords.length > 0 && (
+                      <div className="text-xs text-gray-500 dark:text-gray-500 pt-2">
+                        {destinationsWithCoords.length} {destinationsWithCoords.length === 1 ? 'destination' : 'destinations'} visible
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {dest.name}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
-                        {dest.category && <span>{dest.category}</span>}
-                        {dest.city && (
-                          <>
-                            <span>•</span>
-                            <span>{dest.city}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors flex-shrink-0" />
-                  </button>
-                ))
-              )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </aside>
+          </>
+        )}
 
-        {/* Map */}
-        <div className="flex-1 relative">
-          <div className="absolute inset-0 rounded-none overflow-hidden bg-gray-100 dark:bg-gray-900">
+        {/* Map Container */}
+        <div className="relative h-[60vh] md:h-[70vh]">
+          <div className="absolute inset-0 bg-gray-100 dark:bg-gray-900">
             {mapProvider === 'mapbox' ? (
               <MapView
                 destinations={destinationsWithCoords}
@@ -465,7 +475,7 @@ export default function MapPage() {
                   autoOpenInfoWindow
                   showInfoWindow={!!infoWindowContent}
                   infoWindowContent={infoWindowContent}
-                  className="h-full rounded-none"
+                  className="h-full"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
@@ -480,7 +490,7 @@ export default function MapPage() {
                   height="100%"
                   zoom={mapZoom}
                   label={focusLabel}
-                  className="h-full rounded-none"
+                  className="h-full"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
@@ -489,14 +499,162 @@ export default function MapPage() {
               )
             )}
           </div>
-          {/* Show count of destinations with coordinates */}
-          {destinationsWithCoords.length > 0 && (
-            <div className="absolute bottom-4 left-4 z-10 px-3 py-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-800 text-xs text-gray-700 dark:text-gray-300">
-              {destinationsWithCoords.length} {destinationsWithCoords.length === 1 ? 'destination' : 'destinations'} on map
-            </div>
-          )}
         </div>
+
+        {/* List Sidebar - Slide in/out */}
+        {showList && (
+          <aside className="fixed md:absolute right-0 top-0 md:top-16 h-full md:h-auto z-30 w-80 md:w-96 bg-white dark:bg-gray-950 border-l md:border-l-0 md:border-r border-gray-100 dark:border-gray-700 shadow-xl md:shadow-none">
+            <div className="p-6 h-full overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  Destinations
+                </h2>
+                <button
+                  onClick={() => setShowList(false)}
+                  className="p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors md:hidden"
+                  aria-label="Close list"
+                >
+                  <XIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                </button>
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-500">
+                  {filteredDestinations.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {sortedDestinations.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                      No destinations found
+                    </p>
+                  </div>
+                ) : (
+                  sortedDestinations.map((dest) => (
+                    <button
+                      key={dest.slug}
+                      onClick={() => handleListItemClick(dest)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left group focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 ${
+                        selectedDestination?.slug === dest.slug
+                          ? 'bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700'
+                          : 'bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/50 border border-transparent hover:border-gray-100 dark:hover:border-gray-700'
+                      }`}
+                    >
+                      {dest.image ? (
+                        <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          <Image
+                            src={dest.image}
+                            alt={dest.name}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 flex-shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <Map className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-normal text-gray-900 dark:text-white truncate">
+                          {dest.name}
+                        </div>
+                        <div className="text-xs font-normal text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
+                          {dest.category && <span>{dest.category}</span>}
+                          {dest.city && (
+                            <>
+                              <span>·</span>
+                              <span>{dest.city}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors flex-shrink-0" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </aside>
+        )}
       </div>
+
+      {/* Curated Highlights Section */}
+      {featuredDestinations.length > 0 && (
+        <section className="px-6 md:px-10 lg:px-12 py-16 md:py-24 border-t border-gray-100 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8">
+              <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                Must-see this week
+              </div>
+              <h2 className="text-2xl md:text-3xl font-medium text-black dark:text-white">
+                Featured Destinations
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredDestinations.map((dest) => (
+                <button
+                  key={dest.slug}
+                  onClick={() => {
+                    setSelectedDestination(dest);
+                    setIsDrawerOpen(true);
+                  }}
+                  className="text-left group"
+                >
+                  {/* Square Image */}
+                  <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm group-hover:shadow-md transition-shadow mb-3">
+                    {dest.image ? (
+                      <Image
+                        src={dest.image}
+                        alt={dest.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Map className="h-8 w-8 text-gray-400 dark:text-gray-600" />
+                      </div>
+                    )}
+                    {/* Badges Overlay */}
+                    {(dest.michelin_stars && dest.michelin_stars > 0) && (
+                      <div className="absolute top-2 right-2 px-2 py-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-100 dark:border-gray-700 flex items-center gap-1">
+                        <img
+                          src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                          alt="Michelin star"
+                          className="h-3 w-3"
+                        />
+                        <span className="text-xs font-normal text-gray-700 dark:text-gray-300">
+                          {dest.michelin_stars}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Metadata */}
+                  <div className="space-y-1">
+                    <h3 className="font-medium text-base leading-tight text-black dark:text-white line-clamp-1 group-hover:opacity-80 transition-opacity">
+                      {dest.name}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs font-normal text-gray-500 dark:text-gray-500">
+                      {dest.category && <span>{dest.category}</span>}
+                      {dest.city && (
+                        <>
+                          <span>·</span>
+                          <span>{dest.city}</span>
+                        </>
+                      )}
+                    </div>
+                    {dest.micro_description && (
+                      <p className="text-sm font-normal text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mt-1">
+                        {dest.micro_description}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <DestinationDrawer
         destination={selectedDestination}
