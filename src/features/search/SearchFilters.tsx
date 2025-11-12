@@ -132,9 +132,7 @@ export function SearchFiltersComponent({
     <div className="w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl transition-all ${
-          isOpen ? 'rounded-b-none' : 'hover:opacity-90'
-        }`}
+        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl transition-opacity hover:opacity-90"
         aria-label="Toggle filters"
         aria-expanded={isOpen}
       >
@@ -148,10 +146,10 @@ export function SearchFiltersComponent({
       </button>
 
       {isOpen && (
-        <div className="w-full bg-white dark:bg-black border-x border-b border-gray-200 dark:border-gray-800 rounded-b-2xl shadow-lg overflow-hidden">
+        <div className="w-full mt-4">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-            <div className="text-sm font-medium">Filters</div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
             {hasActiveFilters && (
               <button
                 onClick={clearAll}
@@ -163,7 +161,7 @@ export function SearchFiltersComponent({
           </div>
 
           {/* Scrollable Content */}
-          <div className="px-6 py-4 space-y-6">
+          <div className="space-y-6">
 
               {/* Text Search - Only filters grid, doesn't trigger top search */}
               <div>

@@ -2123,7 +2123,7 @@ export default function Home() {
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
-                  <div className="w-full pt-[50px]">
+                  <div className="w-full pt-6">
                     {/* City List - Limited to 2 rows */}
                     <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs max-h-[4.5rem] overflow-hidden mb-[50px]">
                       <button
@@ -2243,7 +2243,7 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-24 md:-mt-32">
+              <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 mt-8">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">

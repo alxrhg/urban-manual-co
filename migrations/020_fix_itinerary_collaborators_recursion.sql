@@ -5,6 +5,7 @@
 
 -- Create a SECURITY DEFINER function that bypasses RLS to check trip ownership
 -- This prevents infinite recursion by not triggering RLS policies on trips
+-- SECURITY DEFINER functions automatically bypass RLS in PostgreSQL
 CREATE OR REPLACE FUNCTION check_trip_ownership_bypass_rls(trip_uuid uuid)
 RETURNS boolean
 LANGUAGE plpgsql
@@ -13,7 +14,8 @@ SET search_path = public
 STABLE
 AS $$
 BEGIN
-  -- Direct query without RLS (because of SECURITY DEFINER)
+  -- Direct query without RLS (SECURITY DEFINER bypasses RLS automatically)
+  -- This prevents recursion because it doesn't trigger RLS policies on trips
   RETURN EXISTS (
     SELECT 1 FROM trips
     WHERE trips.id = trip_uuid
@@ -62,14 +64,14 @@ BEGIN
       ON itinerary_collaborators FOR SELECT
       USING (
         user_id = auth.uid()
-        OR check_trip_ownership_bypass_rls(%I)
+        OR check_trip_ownership_bypass_rls(itinerary_collaborators.%I)
       )', trip_col_name);
     
     -- INSERT policy: only trip owners can add collaborators
     EXECUTE format('CREATE POLICY "Trip owners can add collaborators"
       ON itinerary_collaborators FOR INSERT
       WITH CHECK (
-        check_trip_ownership_bypass_rls(%I)
+        check_trip_ownership_bypass_rls(NEW.%I)
       )', trip_col_name);
     
     -- UPDATE policy: trip owners can update, collaborators can update their own status
@@ -77,18 +79,18 @@ BEGIN
       ON itinerary_collaborators FOR UPDATE
       USING (
         user_id = auth.uid()
-        OR check_trip_ownership_bypass_rls(%I)
+        OR check_trip_ownership_bypass_rls(itinerary_collaborators.%I)
       )
       WITH CHECK (
         user_id = auth.uid()
-        OR check_trip_ownership_bypass_rls(%I)
+        OR check_trip_ownership_bypass_rls(itinerary_collaborators.%I)
       )', trip_col_name, trip_col_name);
     
     -- DELETE policy: trip owners can remove collaborators
     EXECUTE format('CREATE POLICY "Trip owners can remove collaborators"
       ON itinerary_collaborators FOR DELETE
       USING (
-        check_trip_ownership_bypass_rls(%I)
+        check_trip_ownership_bypass_rls(itinerary_collaborators.%I)
       )', trip_col_name);
   END IF;
 END $$;
