@@ -208,13 +208,13 @@ export default function AccountProfilePage() {
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="space-y-3">
             <h2 id="profile-details" className="text-2xl md:text-3xl font-medium text-black dark:text-white">
-              Profile details
-            </h2>
+            Profile details
+          </h2>
             <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-              Update your public profile and travel preferences.
-            </p>
-          </div>
-          <ProfileEditor userId={user.id} onSaveComplete={refreshProfile} />
+            Update your public profile and travel preferences.
+          </p>
+        </div>
+        <ProfileEditor userId={user.id} onSaveComplete={refreshProfile} />
         </div>
       </section>
 
@@ -268,21 +268,21 @@ export default function AccountProfilePage() {
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="space-y-4">
             <h2 id="map-intelligence" className="text-2xl md:text-3xl font-medium text-black dark:text-white">
-              Global footprint
-            </h2>
+            Global footprint
+          </h2>
             <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
               Countries highlighted are based on your visited destinations and travel history. Each pin represents a place you've explored, creating a visual narrative of your journeys.
-            </p>
-          </div>
+          </p>
+        </div>
           <div className="mt-8">
-            <WorldMapVisualization
-              visitedCountries={new Set(visitedCountries.map(item => item.country_name).filter(Boolean) as string[])}
-              visitedDestinations={visitedPlaces.map(place => ({
+        <WorldMapVisualization
+          visitedCountries={new Set(visitedCountries.map(item => item.country_name).filter(Boolean) as string[])}
+          visitedDestinations={visitedPlaces.map(place => ({
                 city: place.destination?.city || '',
                 latitude: place.destination?.latitude || null,
                 longitude: place.destination?.longitude || null,
               })).filter(dest => dest.latitude && dest.longitude)}
-            />
+        />
           </div>
         </div>
       </section>
@@ -292,19 +292,19 @@ export default function AccountProfilePage() {
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="space-y-4">
             <h2 id="achievement-progress" className="text-2xl md:text-3xl font-medium text-black dark:text-white">
-              Achievement progress
-            </h2>
+            Achievement progress
+          </h2>
             <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
               Unlock badges as you explore cities, save places, and visit top recommendations. Each achievement tells a part of your travel story.
-            </p>
-          </div>
+          </p>
+        </div>
           <div className="mt-8">
-            <AchievementsDisplay
-              visitedPlaces={visitedPlaces}
-              savedPlaces={savedPlaces}
-              uniqueCities={uniqueCities}
-              uniqueCountries={uniqueCountries}
-            />
+        <AchievementsDisplay
+          visitedPlaces={visitedPlaces}
+          savedPlaces={savedPlaces}
+          uniqueCities={uniqueCities}
+          uniqueCountries={uniqueCountries}
+        />
           </div>
         </div>
       </section>

@@ -549,20 +549,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       return;
     }
 
-    if (!user) {
-      router.push('/auth/login');
+      if (!user) {
+        router.push('/auth/login');
       return;
     }
 
-    if (!destination.slug) {
-      alert('Invalid destination. Please try again.');
-      return;
-    }
+        if (!destination.slug) {
+          alert('Invalid destination. Please try again.');
+          return;
+        }
 
     const countryInfo = resolveCountryInfo(destination);
     const payload = {
       action: isVisited ? 'remove' : 'add',
-      destination_slug: destination.slug,
+          destination_slug: destination.slug,
       visited_at: new Date().toISOString(),
       country_name: countryInfo?.name,
       country_iso2: countryInfo?.iso2,
@@ -723,33 +723,33 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       >
         {/* Minimal Header - Just Close Button */}
         <div className="flex-shrink-0 px-6 py-4 flex items-center justify-end">
-          <button
-            onClick={onClose}
+              <button
+          onClick={onClose}
             className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-          </button>
+          aria-label="Close"
+        >
+          <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+        </button>
         </div>
 
         {/* Content - Match desktop structure */}
         <div className="flex-1 overflow-y-auto p-6">
           {/* Image - Match desktop */}
-          {destination.image && (
+        {destination.image && (
             <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
               <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
-                <Image
-                  src={destination.image}
-                  alt={destination.name}
-                  fill
-                  className="object-cover"
-                  sizes="100vw"
+            <Image
+              src={destination.image}
+              alt={destination.name}
+              fill
+              className="object-cover"
+              sizes="100vw"
                   priority={false}
                   quality={85}
-                />
+            />
               </div>
-            </div>
-          )}
+          </div>
+        )}
 
           {/* Title - Match desktop */}
           <div className="mt-6 space-y-3">
@@ -762,13 +762,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {destination.category && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
                   {destination.category}
-                </span>
+                  </span>
               )}
 
               {destination.crown && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
                   Crown
-                </span>
+                  </span>
               )}
 
               {(destination.michelin_stars ?? 0) > 0 && (
@@ -809,52 +809,52 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 role="toolbar"
                 aria-label="Destination quick actions"
               >
-                <button
-                  onClick={async () => {
-                  if (!user) {
-                    router.push('/auth/login');
-                    return;
-                  }
-                  if (!isSaved) {
-                    setShowSaveModal(true);
-                  } else {
-                    try {
-                      const supabaseClient = createClient();
-                      if (!supabaseClient) {
-                        alert('Failed to connect to database. Please try again.');
-                        return;
-                      }
-                      const { error } = await supabaseClient
-                        .from('saved_places')
-                        .delete()
-                        .eq('user_id', user.id)
-                        .eq('destination_slug', destination.slug);
-                      if (!error) {
-                        setIsSaved(false);
-                        if (onSaveToggle) onSaveToggle(destination.slug, false);
-                      }
-                    } catch (error) {
-                      console.error('Error unsaving:', error);
+            <button
+              onClick={async () => {
+                if (!user) {
+                  router.push('/auth/login');
+                  return;
+                }
+                if (!isSaved) {
+                  setShowSaveModal(true);
+                } else {
+                  try {
+                    const supabaseClient = createClient();
+                    if (!supabaseClient) {
+                      alert('Failed to connect to database. Please try again.');
+                      return;
                     }
+                    const { error } = await supabaseClient
+                      .from('saved_places')
+                      .delete()
+                      .eq('user_id', user.id)
+                      .eq('destination_slug', destination.slug);
+                    if (!error) {
+                      setIsSaved(false);
+                      if (onSaveToggle) onSaveToggle(destination.slug, false);
+                    }
+                  } catch (error) {
+                    console.error('Error unsaving:', error);
                   }
-                }}
+                }
+              }}
                   className={`group inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
-                    isSaved
+                isSaved
                       ? 'border-transparent bg-[#FF6B9F] text-black shadow-sm hover:bg-[#ff7bac]'
                       : 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500'
-                  }`}
-                  aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+              }`}
+              aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
                   aria-pressed={isSaved}
-                >
+            >
                   <Bookmark
                     className={`h-4 w-4 transition ${
-                      isSaved
+                isSaved
                         ? 'fill-current text-black'
                         : 'text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'
                     }`}
                   />
                   <span>{isSaved ? 'Saved' : 'Save'}</span>
-                </button>
+            </button>
 
                 <DropdownMenu open={showMobileVisitedMenu} onOpenChange={setShowMobileVisitedMenu}>
                   <DropdownMenuTrigger asChild>
@@ -898,8 +898,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <button
-                  onClick={handleShare}
+            <button
+              onClick={handleShare}
                   className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
                 >
                   <Share2 className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
@@ -912,12 +912,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     window.open(url, '_blank', 'noopener,noreferrer');
                   }}
                   className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-500"
-                >
+            >
                   <Navigation className="h-4 w-4 text-gray-600 transition group-hover:text-black dark:text-gray-300 dark:group-hover:text-white" />
                   <span>Directions</span>
-                </button>
+            </button>
               </div>
-            </div>
+          </div>
 
             {destination.micro_description && (
               <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
@@ -1101,12 +1101,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   category: destination.category,
                 });
                 setShowTripPlanner(true);
-              }}
+                }}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 transition hover:bg-gray-50 dark:border-gray-800 dark:text-gray-100 dark:hover:bg-gray-900"
-            >
+              >
               <Plus className="h-4 w-4" />
               Plan trip
-            </button>
+              </button>
           </div>
         </div>
       </div>
@@ -1119,13 +1119,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       >
         {/* Minimal Header - Just Close Button */}
         <div className="flex-shrink-0 px-6 py-4 flex items-center justify-end">
-          <button
-            onClick={onClose}
+            <button
+              onClick={onClose}
             className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
             aria-label="Close"
-          >
+            >
             <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-          </button>
+            </button>
         </div>
 
         {/* Content */}
@@ -1156,45 +1156,45 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </h1>
 
               {/* Location - Subtle */}
-              <div>
-                <a
-                  href={`/city/${destination.city}`}
+            <div>
+              <a
+                href={`/city/${destination.city}`}
                   className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    router.push(`/city/${destination.city}`);
-                  }}
-                >
-                  <MapPin className="h-3 w-3" />
-                  {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
-                </a>
-              </div>
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/city/${destination.city}`);
+                }}
+              >
+                <MapPin className="h-3 w-3" />
+                {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
+              </a>
+            </div>
 
               {/* Pills: Simplified, Reduced Chrome */}
               <div className="flex flex-wrap gap-1.5">
-                {destination.category && (
+              {destination.category && (
                   <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500 capitalize">
                     {destination.category}
-                  </span>
+                    </span>
                 )}
 
                 {destination.crown && (
                   <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500">
                     Crown
-                  </span>
-                )}
+                </span>
+              )}
 
-                {(destination.michelin_stars ?? 0) > 0 && (
+              {(destination.michelin_stars ?? 0) > 0 && (
                   <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500 flex items-center gap-1">
-                    <img
-                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                      alt="Michelin star"
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
                       className="h-2.5 w-2.5"
-                    />
+                  />
                     {destination.michelin_stars}
                   </span>
-                )}
+            )}
 
                 {(enrichedData?.rating || destination.rating) && (
                   <span className="px-2.5 py-0.5 border border-gray-100 dark:border-gray-700 rounded-full text-xs font-normal text-gray-500 dark:text-gray-500 flex items-center gap-1">
@@ -1203,18 +1203,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  </span>
-                )}
-              </div>
+                  </svg>
+                  {(enrichedData?.rating || destination.rating).toFixed(1)}
+                    </span>
+              )}
+                  </div>
 
               {destination.micro_description && (
                 <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
                   {destination.micro_description}
                 </p>
-              )}
-            </div>
+                )}
+              </div>
 
             {/* Primary Actions - Save and Visited */}
             <div className="flex items-center gap-2 mt-6">
@@ -1299,41 +1299,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {user && (
                 <>
                   {!isVisited ? (
-                    <button
+              <button
                       className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
                       onClick={handleVisitToggle}
-                    >
+              >
                       <Check className="h-3 w-3" />
                       Mark Visited
-                    </button>
+              </button>
                   ) : (
-                    <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
-                      <DropdownMenuTrigger asChild>
-                        <button
+                <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                  <DropdownMenuTrigger asChild>
+                    <button
                           className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-                        >
+                    >
                           <Check className="h-3 w-3 stroke-[3]" />
                           Visited
                           <ChevronDown className="h-3 w-3 ml-0.5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem onClick={() => {
-                          setShowVisitedModal(true);
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          handleVisitToggle();
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <X className="h-3 w-3 mr-2" />
-                          Remove Visit
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    </button>
+                  </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onClick={() => {
+                        setShowVisitedModal(true);
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <Plus className="h-3 w-3 mr-2" />
+                        Add Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        handleVisitToggle();
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <X className="h-3 w-3 mr-2" />
+                        Remove Visit
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
                   )}
                 </>
               )}
@@ -1341,7 +1341,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {/* Secondary Actions Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
+                <button
                     className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
                   >
                     <span>More</span>
@@ -1364,13 +1364,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => {
-                        onClose();
-                        setTimeout(() => {
-                          router.push(`/destination/${destination.slug}`);
-                        }, 100);
+                    onClose();
+                    setTimeout(() => {
+                      router.push(`/destination/${destination.slug}`);
+                    }, 100);
                       }}>
                         <ExternalLink className="h-3 w-3 mr-2" />
-                        View Full Page
+                  View Full Page
                       </DropdownMenuItem>
                     </>
                   )}
@@ -1394,8 +1394,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          </div>
+                  </div>
+                </div>
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
@@ -1731,8 +1731,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       )}
             
             {/* Add to Trip Button */}
-            <button
-              onClick={() => {
+                <button
+                  onClick={() => {
                 if (!user) {
                   router.push('/auth/login');
                   return;
@@ -1745,12 +1745,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   category: destination.category,
                 });
                 setShowTripPlanner(true);
-              }}
+                  }}
               className="flex items-center justify-center gap-1.5 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
+                >
               <Plus className="h-4 w-4" />
               <span>Add to Trip</span>
-            </button>
+                </button>
           </div>
         </div>
             </div>
@@ -1853,7 +1853,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               }
             : undefined
         }
-      />
+        />
     </>
   );
 }

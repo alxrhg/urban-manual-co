@@ -497,7 +497,7 @@ export default function TripsPage() {
           </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
             Keep every itinerary under one roof. Collaborate with friends, activate Travel Intelligence, and evolve each journey as you discover new possibilities.
-          </p>
+            </p>
           <div className="flex flex-wrap justify-center gap-3 pt-4">
             <button
               onClick={() => handleOpenPlanner()}
@@ -587,7 +587,7 @@ export default function TripsPage() {
                     ? `"${truncate(conversationPreview, 160)}"`
                     : 'No recent chat yet. Kick off a session to get tailored suggestions and timeline support.'}
                 </p>
-              </div>
+                  </div>
               <div className="space-y-4">
                 <div className="text-xs font-normal uppercase tracking-wider text-gray-400 dark:text-gray-500">
                   Live opportunities
@@ -619,7 +619,7 @@ export default function TripsPage() {
                             <MapPin className="h-3 w-3" />
                             <span>{opportunity.city || opportunity.destinationName}</span>
                           </p>
-                        )}
+                  )}
                       </div>
                     ))}
                   </div>
@@ -662,8 +662,8 @@ export default function TripsPage() {
                       onOpenIntelligence={handleOpenIntelligence}
                     />
                   ))}
-                </div>
-              )}
+                      </div>
+                    )}
             </div>
           </div>
         </section>
@@ -689,10 +689,10 @@ export default function TripsPage() {
                           <span className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             {trip.destination}
-                          </span>
+                        </span>
                         </>
                       )}
-                    </div>
+                      </div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{trip.title}</h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {formatDateRange(trip.start_date, trip.end_date)}
@@ -716,8 +716,8 @@ export default function TripsPage() {
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+            ))}
+          </div>
           </section>
         )}
       </PageContainer>

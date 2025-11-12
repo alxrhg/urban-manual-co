@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
-import {
+import { 
   MapPin, Map, LayoutGrid, Plus
 } from 'lucide-react';
 // Lazy load drawer (only when opened)
@@ -600,7 +600,7 @@ export default function Home() {
     },
     [advancedFilters.michelin, selectedCategory, setAdvancedFilters, setCurrentPage]
   );
-  
+
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
@@ -822,12 +822,12 @@ export default function Home() {
       setFilteredDestinations(discoveryBaseline);
       // Apply filtering after display
       requestAnimationFrame(() => {
-        const filtered = filterDestinationsWithData(
-          discoveryBaseline,
-          '', {}, '', '', user, visitedSlugs
-        );
+      const filtered = filterDestinationsWithData(
+        discoveryBaseline,
+        '', {}, '', '', user, visitedSlugs
+      );
         if (filtered.length !== discoveryBaseline.length || filtered.some((d, i) => d.slug !== discoveryBaseline[i]?.slug)) {
-          setFilteredDestinations(filtered);
+      setFilteredDestinations(filtered);
         }
       });
     }
@@ -968,7 +968,7 @@ export default function Home() {
         // Use requestAnimationFrame to ensure this doesn't block rendering
         if (destinations.length > 0) {
           requestAnimationFrame(() => {
-            filterDestinations();
+          filterDestinations();
           });
         }
       });
@@ -1593,18 +1593,18 @@ export default function Home() {
       // Apply filtering AFTER initial display (non-blocking)
       // This ensures grid shows immediately, then filters down
       requestAnimationFrame(() => {
-        const filtered = filterDestinationsWithData(
-          data as Destination[],
-          '', // no search term
-          {}, // no advanced filters
-          '', // no selected city
-          '', // no selected category
-          user, // current user
-          visitedSlugs // current visited slugs
-        );
+      const filtered = filterDestinationsWithData(
+        data as Destination[],
+        '', // no search term
+        {}, // no advanced filters
+        '', // no selected city
+        '', // no selected category
+        user, // current user
+        visitedSlugs // current visited slugs
+      );
         // Only update if different to avoid unnecessary re-renders
         if (filtered.length !== data.length || filtered.some((d, i) => d.slug !== data[i]?.slug)) {
-          setFilteredDestinations(filtered);
+      setFilteredDestinations(filtered);
         }
       });
 
@@ -1628,12 +1628,12 @@ export default function Home() {
               setFilteredDestinations(uniqueMerged);
               // Apply filtering after display
               requestAnimationFrame(() => {
-                const filtered = filterDestinationsWithData(
-                  uniqueMerged,
-                  '', {}, '', '', user, visitedSlugs
-                );
+              const filtered = filterDestinationsWithData(
+                uniqueMerged,
+                '', {}, '', '', user, visitedSlugs
+              );
                 if (filtered.length !== uniqueMerged.length || filtered.some((d, i) => d.slug !== uniqueMerged[i]?.slug)) {
-                  setFilteredDestinations(filtered);
+              setFilteredDestinations(filtered);
                 }
               });
               
@@ -2009,7 +2009,7 @@ export default function Home() {
       const enhancedQuery = filterParts.length > 0
         ? `${submittedQuery} ${filterParts.join(' ')}`
         : submittedQuery;
-
+      
       runSearch(enhancedQuery, { forceSemantic: true });
     }
   }, [activeFilters, submittedQuery, runSearch]);
@@ -2032,7 +2032,7 @@ export default function Home() {
       const enhancedQuery = filterParts.length > 0
         ? `${submittedQuery} ${filterParts.join(' ')}`
         : submittedQuery;
-
+      
       runSearch(enhancedQuery, { forceSemantic: true });
     }
   }, [activeFilters, submittedQuery, runSearch]);
@@ -2072,7 +2072,7 @@ export default function Home() {
   };
 
   // Pinterest-like recommendation algorithm
-const getRecommendationScore = (dest: Destination, index: number): number => {
+  const getRecommendationScore = (dest: Destination, index: number): number => {
     let score = 0;
 
     // Priority signals (like Pinterest's quality score)
@@ -2251,29 +2251,29 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
           <div className="w-full flex md:justify-start flex-1">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col">
               {/* Greeting - Always at the top */}
-              <div className="w-full">
+                <div className="w-full">
                 {/* Show GreetingHero first - Always at top */}
-                {!submittedQuery && (
-                  <>
-                    {/* Session Resume - Show if there's a recent session */}
-                    {showSessionResume && lastSession && (
-                      <div className="mb-6">
-                        <SessionResume
-                          session={lastSession}
-                          onResume={handleResumeSession}
-                          onDismiss={() => setShowSessionResume(false)}
-                        />
-                      </div>
-                    )}
+                  {!submittedQuery && (
+                    <>
+                      {/* Session Resume - Show if there's a recent session */}
+                      {showSessionResume && lastSession && (
+                        <div className="mb-6">
+                          <SessionResume
+                            session={lastSession}
+                            onResume={handleResumeSession}
+                            onDismiss={() => setShowSessionResume(false)}
+                          />
+                        </div>
+                      )}
 
-                    {/* Context Cards - Show user's saved preferences */}
-                    {userContext && user && !searchTerm && (
-                      <div className="mb-6">
-                        <ContextCards context={userContext} />
-                      </div>
+                      {/* Context Cards - Show user's saved preferences */}
+                      {userContext && user && !searchTerm && (
+                        <div className="mb-6">
+                          <ContextCards context={userContext} />
+                        </div>
                     )}
                   </>
-                )}
+                      )}
 
                 <GreetingHero
                   searchQuery={searchTerm}
@@ -2328,158 +2328,15 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                   }}
                   availableCities={cities}
                   availableCategories={categories}
+                  selectedCity={selectedCity}
+                  selectedCategory={selectedCategory}
+                  onCitySelect={handleCitySelect}
+                  onCategorySelect={handleCategorySelect}
+                  showBrowseLists={showBrowseLists}
                 />
 
-                {/* City and Category Lists - Right under search input, no spacing */}
-                {showBrowseLists && (
-                  <div className="w-full space-y-10 overflow-visible mt-0">
-                    <div className="space-y-3">
-                      <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
-                      <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => handleCitySelect(null)}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
-                              ? 'font-medium text-black dark:text-white'
-                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          All Cities
-                        </button>
-                        {inlineCityButtons.map((city) => (
-                          <button
-                            key={city}
-                            onClick={() => handleCitySelect(city)}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCity === city
-                                ? 'font-medium text-black dark:text-white'
-                                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            {capitalizeCity(city)}
-                          </button>
-                        ))}
-                      </div>
-                      {overflowCityButtons.length > 0 && (
-                        <div className="mt-3 space-y-3 relative">
-                          <button
-                            onClick={() => setShowAllCities(prev => !prev)}
-                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                          >
-                            {showAllCities
-                              ? '− Hide additional cities'
-                              : `+ More cities (${overflowCityButtons.length})`}
-                          </button>
-                          {showAllCities && (
-                            <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
-                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                                {overflowCityButtons.map((city) => (
-                                  <button
-                                    key={city}
-                                    onClick={() => handleCitySelect(city)}
-                                    className={`transition-all duration-200 ease-out ${
-                                      selectedCity === city
-                                        ? 'font-medium text-black dark:text-white'
-                                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                    }`}
-                                  >
-                                    {capitalizeCity(city)}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
-                      <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => handleCategorySelect(null)}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCategory && !advancedFilters.michelin
-                              ? 'font-medium text-black dark:text-white'
-                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          All Categories
-                        </button>
-                        <button
-                          onClick={() => handleCategorySelect(null, { michelin: true })}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                            advancedFilters.michelin
-                              ? 'font-medium text-black dark:text-white'
-                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                            alt="Michelin star"
-                            className="h-3 w-3"
-                          />
-                          Michelin
-                        </button>
-                        {inlineCategoryButtons.map((category) => {
-                          const IconComponent = getCategoryIcon(category);
-                          return (
-                            <button
-                              key={category}
-                              onClick={() => handleCategorySelect(category)}
-                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                selectedCategory === category && !advancedFilters.michelin
-                                  ? 'font-medium text-black dark:text-white'
-                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                              }`}
-                            >
-                              {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                              {capitalizeCategory(category)}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {overflowCategoryButtons.length > 0 && (
-                        <div className="mt-3 space-y-3 relative">
-                          <button
-                            onClick={() => setShowAllCategories(prev => !prev)}
-                            className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
-                          >
-                            {showAllCategories
-                              ? '− Hide additional categories'
-                              : `+ More categories (${overflowCategoryButtons.length})`}
-                          </button>
-                          {showAllCategories && (
-                            <div className="absolute top-full left-0 right-0 z-10 mt-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900 max-h-[60vh] overflow-y-auto">
-                              <div className="flex flex-wrap gap-x-4 gap-y-3 text-xs">
-                                {overflowCategoryButtons.map((category) => {
-                                  const IconComponent = getCategoryIcon(category);
-                                  return (
-                                    <button
-                                      key={category}
-                                      onClick={() => handleCategorySelect(category)}
-                                      className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                        selectedCategory === category && !advancedFilters.michelin
-                                          ? 'font-medium text-black dark:text-white'
-                                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                                      }`}
-                                    >
-                                      {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
-                                      {capitalizeCategory(category)}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Chat messages below greeting - Keep greeting at top */}
-                {submittedQuery && (
+                  {submittedQuery && (
                   <div className="mt-6">
                       {/* Loading State - Show when searching */}
                       {searching && (
@@ -2534,7 +2391,7 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                                 content={chatResponse}
                                 className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
                               />
-                            </div>
+                      </div>
                           )}
                         </div>
                       )}
@@ -2571,52 +2428,52 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                           </div>
                         );
                       })()}
-                    </div>
-                  )}
+                                    </div>
+                                  )}
 
                   {/* Follow-up input field - Chat style - Only show when there's a submitted query */}
                   {submittedQuery && !searching && chatMessages.length > 0 && (
                     <div className="relative mt-6">
-                      <input
-                        placeholder="Refine your search or ask a follow-up..."
+                          <input
+                            placeholder="Refine your search or ask a follow-up..."
                         aria-label="Refine your search or ask a follow-up"
-                        value={followUpInput}
-                        onChange={(e) => setFollowUpInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
-                            e.preventDefault();
-                            const query = followUpInput.trim();
+                            value={followUpInput}
+                            onChange={(e) => setFollowUpInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
+                                e.preventDefault();
+                                const query = followUpInput.trim();
                             skipNextSearchRef.current = true;
-                            setSearchTerm(query);
-                            setFollowUpInput('');
+                                setSearchTerm(query);
+                                setFollowUpInput('');
                             runSearch(query, { forceAi: true });
-                          }
-                        }}
-                        className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-                      />
-                    </div>
-                  )}
+                              }
+                            }}
+                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                          />
+                        </div>
+                      )}
 
-                  {/* Intent Confirmation Chips - Always under text input */}
+                      {/* Intent Confirmation Chips - Always under text input */}
                   {submittedQuery && searchIntent && !searching && (
-                    <div className="mt-4">
-                      <IntentConfirmationChips
-                        intent={searchIntent}
-                        onChipRemove={(chipType, value) => {
-                          // Modify the search based on what was removed
-                          setSearchTerm('');
-                          setSubmittedQuery('');
-                          setSearchIntent(null);
-                          setInferredTags(null);
-                          setActiveFilters(new Set());
-                        }}
-                        editable={true}
-                      />
+                        <div className="mt-4">
+                          <IntentConfirmationChips
+                            intent={searchIntent}
+                            onChipRemove={(chipType, value) => {
+                              // Modify the search based on what was removed
+                              setSearchTerm('');
+                              setSubmittedQuery('');
+                              setSearchIntent(null);
+                              setInferredTags(null);
+                              setActiveFilters(new Set());
+                            }}
+                            editable={true}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-              </div>
-            </div>
-          </div>
+                    </div>
+                </div>
         </section>
 
 
@@ -2625,38 +2482,38 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
           <div className="max-w-[1800px] mx-auto">
             {/* Start Trip, Filter, and View Toggle */}
             <div className="flex justify-end items-center gap-2 mb-6 md:mb-10 flex-wrap">
-              <button
+                        <button
                 onClick={() => setShowTripPlanner(true)}
                 className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
                 aria-label="Start a trip"
               >
                 <Plus className="h-4 w-4" />
                 <span>Start a Trip</span>
-              </button>
+                        </button>
               {showBrowseLists && (
-                <SearchFiltersComponent
-                  filters={advancedFilters}
-                  onFiltersChange={(newFilters) => {
-                    setAdvancedFilters(newFilters);
-                    if (newFilters.city !== undefined) {
-                      setSelectedCity(newFilters.city || '');
-                    }
-                    if (newFilters.category !== undefined) {
-                      setSelectedCategory(newFilters.category || '');
-                    }
+                    <SearchFiltersComponent
+                filters={advancedFilters}
+                onFiltersChange={(newFilters) => {
+                  setAdvancedFilters(newFilters);
+                  if (newFilters.city !== undefined) {
+                    setSelectedCity(newFilters.city || '');
+                  }
+                  if (newFilters.category !== undefined) {
+                    setSelectedCategory(newFilters.category || '');
+                  }
                     // Connect filter search query to homepage search term
                     if (newFilters.searchQuery !== undefined) {
                       setSearchTerm(newFilters.searchQuery || '');
                     }
-                    Object.entries(newFilters).forEach(([key, value]) => {
-                      if (value !== undefined && value !== null && value !== '') {
-                        trackFilterChange({ filterType: key, value });
-                      }
-                    });
-                  }}
-                  availableCities={cities}
-                  availableCategories={categories}
-                  onLocationChange={handleLocationChange}
+                  Object.entries(newFilters).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                      trackFilterChange({ filterType: key, value });
+                    }
+                  });
+                }}
+                      availableCities={cities}
+                      availableCategories={categories}
+                      onLocationChange={handleLocationChange}
                   triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-900/60"
                   activeTriggerClassName="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                   iconClassName="h-4 w-4"
@@ -2664,32 +2521,32 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                 />
               )}
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewMode('grid')}
+                    <button
+                      onClick={() => setViewMode('grid')}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
-                    viewMode === 'grid'
+                        viewMode === 'grid'
                       ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                  }`}
-                  aria-label="Grid view"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  <span>Grid</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('map')}
+                      }`}
+                      aria-label="Grid view"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>Grid</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('map')}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
-                    viewMode === 'map'
+                        viewMode === 'map'
                       ? 'border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white dark:border-gray-800 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-900/60'
-                  }`}
-                  aria-label="Map view"
-                >
-                  <Map className="h-4 w-4" />
-                  <span>Map</span>
-                </button>
-              </div>
-            </div>
+                      }`}
+                      aria-label="Map view"
+                    >
+                      <Map className="h-4 w-4" />
+                      <span>Map</span>
+                    </button>
+                  </div>
+                </div>
             
             {/* Browse lists rendered within the hero above */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
@@ -2792,47 +2649,47 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               // Pagination calculation - use memoized totalPages
               const startIndex = Math.max(0, (currentPage - 1) * itemsPerPage);
               const endIndex = Math.min(startIndex + itemsPerPage, totalDestinations);
-              const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
+                      const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-              return (
+                  return (
                 <>
                   <div className="mt-16 grid grid-cols-2 gap-5 items-start sm:grid-cols-3 md:grid-cols-4 md:gap-7 lg:grid-cols-5 lg:gap-8 xl:grid-cols-6 2xl:grid-cols-7" data-name="destination-grid">
                     {paginatedDestinations.map((destination, index) => {
                       const isVisited = !!(user && visitedSlugs.has(destination.slug));
                       const globalIndex = startIndex + index;
-
+                      
                       return (
                         <DestinationCard
-                          key={destination.slug}
+                    key={destination.slug}
                           destination={destination}
-                          onClick={() => {
-                            setSelectedDestination(destination);
-                            setIsDrawerOpen(true);
+                    onClick={() => {
+                      setSelectedDestination(destination);
+                      setIsDrawerOpen(true);
 
-                            // Track destination click
-                            trackDestinationClick({
-                              destinationSlug: destination.slug,
+                      // Track destination click
+                      trackDestinationClick({
+                        destinationSlug: destination.slug,
                               position: globalIndex,
-                              source: 'grid',
-                            });
-
-                            // Also track with new analytics system
-                            if (destination.id) {
-                              import('@/lib/analytics/track').then(({ trackEvent }) => {
-                                trackEvent({
-                                  event_type: 'click',
-                                  destination_id: destination.id,
-                                  destination_slug: destination.slug,
-                                  metadata: {
-                                    category: destination.category,
-                                    city: destination.city,
-                                    source: 'homepage_grid',
+                        source: 'grid',
+                      });
+                      
+                      // Also track with new analytics system
+                      if (destination.id) {
+                        import('@/lib/analytics/track').then(({ trackEvent }) => {
+                          trackEvent({
+                            event_type: 'click',
+                            destination_id: destination.id,
+                            destination_slug: destination.slug,
+                            metadata: {
+                              category: destination.category,
+                              city: destination.city,
+                              source: 'homepage_grid',
                                     position: globalIndex,
-                                  },
-                                });
-                              });
-                            }
-
+                            },
+                          });
+                        });
+                      }
+                        
                             // Track click event to Discovery Engine for personalization
                             if (user?.id) {
                               fetch('/api/discovery/track-event', {
@@ -2853,60 +2710,60 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
                           showBadges={true}
                         />
                       );
-                    })}
-                  </div>
+                      })}
+                        </div>
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
+                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
                       <button
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                                className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
+                          currentPage === pageNum
+                                    ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
+                                    : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm font-medium'
+                        }`}
                       >
-                        Previous
+                        {pageNum}
                       </button>
-
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum;
-                          if (totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i;
-                          } else {
-                            pageNum = currentPage - 2 + i;
-                          }
-
-                          return (
-                            <button
-                              key={pageNum}
-                              onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 sm:px-3.5 py-2.5 text-xs rounded-2xl transition-all duration-200 ease-out ${
-                                currentPage === pageNum
-                                  ? 'bg-black dark:bg-white text-white dark:text-black font-medium shadow-sm'
-                                  : 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm font-medium'
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-
-                      <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
-                        Page {currentPage} of {totalPages}
-                      </span>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                          className="px-4 sm:px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                
+                        <span className="hidden sm:inline-block ml-4 text-xs text-gray-500 dark:text-gray-400">
+                  Page {currentPage} of {totalPages}
+                </span>
                     </div>
                   )}
                 </>

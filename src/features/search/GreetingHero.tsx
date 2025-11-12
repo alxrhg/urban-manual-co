@@ -5,6 +5,16 @@ import { Search, SlidersHorizontal, Sparkles, Loader2, X, Clock } from 'lucide-r
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
+import { getCategoryIconComponent } from '@/lib/icons/category-icons';
+import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+
+const FEATURED_CITY_SLUGS = ['taipei', 'tokyo', 'new-york', 'london'] as const;
+const FEATURED_CITY_SET = new Set<string>(FEATURED_CITY_SLUGS);
+const MAX_INLINE_CATEGORY_COUNT = 12;
+
+function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {
+  return getCategoryIconComponent(category);
+}
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -40,6 +50,11 @@ interface GreetingHeroProps {
   onFiltersChange?: (filters: any) => void;
   availableCities?: string[];
   availableCategories?: string[];
+  selectedCity?: string;
+  selectedCategory?: string;
+  onCitySelect?: (city: string | null) => void;
+  onCategorySelect?: (category: string | null, options?: { michelin?: boolean }) => void;
+  showBrowseLists?: boolean;
 }
 
 export default function GreetingHero({
@@ -57,12 +72,29 @@ export default function GreetingHero({
   onFiltersChange,
   availableCities = [],
   availableCategories = [],
+  selectedCity = '',
+  selectedCategory = '',
+  onCitySelect,
+  onCategorySelect,
+  showBrowseLists = true,
 }: GreetingHeroProps) {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [showAllCities, setShowAllCities] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Compute city and category button lists
+  const inlineCityButtons = FEATURED_CITY_SLUGS.filter((city) =>
+    availableCities.some((availableCity) => availableCity.toLowerCase() === city)
+  );
+  const overflowCityButtons = availableCities.filter(
+    (city) => !FEATURED_CITY_SET.has(city.toLowerCase())
+  );
+  const inlineCategoryButtons = availableCategories.slice(0, MAX_INLINE_CATEGORY_COUNT);
+  const overflowCategoryButtons = availableCategories.slice(MAX_INLINE_CATEGORY_COUNT);
 
   // Get current time
   const now = new Date();
@@ -235,6 +267,144 @@ export default function GreetingHero({
             )}
           </div>
         </div>
+
+        {/* City and Category Lists - Right under search input, no spacing */}
+        {showBrowseLists && (
+          <div className="w-full space-y-10 overflow-visible mt-0">
+            <div className="space-y-3">
+              <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Cities</div>
+              <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                <button
+                  onClick={() => onCitySelect?.(null)}
+                  className={`transition-all duration-200 ease-out ${
+                    !selectedCity
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  All Cities
+                </button>
+                {inlineCityButtons.map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => onCitySelect?.(city)}
+                    className={`transition-all duration-200 ease-out ${
+                      selectedCity === city
+                        ? 'font-medium text-black dark:text-white'
+                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {capitalizeCity(city)}
+                  </button>
+                ))}
+                {/* Inline expanded overflow cities */}
+                {showAllCities && overflowCityButtons.map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => onCitySelect?.(city)}
+                    className={`transition-all duration-200 ease-out ${
+                      selectedCity === city
+                        ? 'font-medium text-black dark:text-white'
+                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {capitalizeCity(city)}
+                  </button>
+                ))}
+              </div>
+              {overflowCityButtons.length > 0 && (
+                <div className="mt-3">
+                  <button
+                    onClick={() => setShowAllCities(prev => !prev)}
+                    className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                  >
+                    {showAllCities
+                      ? '− Hide additional cities'
+                      : `+ More cities (${overflowCityButtons.length})`}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">Categories</div>
+              <div className="flex flex-wrap gap-x-4 md:gap-x-5 gap-y-3 text-xs">
+                <button
+                  onClick={() => onCategorySelect?.(null)}
+                  className={`transition-all duration-200 ease-out ${
+                    !selectedCategory && !filters?.michelin
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  All Categories
+                </button>
+                <button
+                  onClick={() => onCategorySelect?.(null, { michelin: true })}
+                  className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                    filters?.michelin
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                  />
+                  Michelin
+                </button>
+                {inlineCategoryButtons.map((category) => {
+                  const IconComponent = getCategoryIcon(category);
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => onCategorySelect?.(category)}
+                      className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                        selectedCategory === category && !filters?.michelin
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                      {capitalizeCategory(category)}
+                    </button>
+                  );
+                })}
+                {/* Inline expanded overflow categories */}
+                {showAllCategories && overflowCategoryButtons.map((category) => {
+                  const IconComponent = getCategoryIcon(category);
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => onCategorySelect?.(category)}
+                      className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                        selectedCategory === category && !filters?.michelin
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      {IconComponent && <IconComponent className="h-3 w-3" size={12} />}
+                      {capitalizeCategory(category)}
+                    </button>
+                  );
+                })}
+              </div>
+              {overflowCategoryButtons.length > 0 && (
+                <div className="mt-3">
+                  <button
+                    onClick={() => setShowAllCategories(prev => !prev)}
+                    className="text-xs font-medium text-black/40 transition-colors duration-200 ease-out hover:text-black/70 dark:text-gray-500 dark:hover:text-gray-300"
+                  >
+                    {showAllCategories
+                      ? '− Hide additional categories'
+                      : `+ More categories (${overflowCategoryButtons.length})`}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
