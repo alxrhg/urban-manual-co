@@ -3,8 +3,22 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
+import { AdvancedFilters, type SeasonFilterValue, type BudgetFilterValue } from '@/types/filters';
 import {
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, Star, LayoutGrid, Plus
+  Search,
+  MapPin,
+  Clock,
+  Map,
+  Grid3x3,
+  SlidersHorizontal,
+  Star,
+  LayoutGrid,
+  Plus,
+  Compass,
+  CalendarDays,
+  Sparkles,
+  Sun,
+  Snowflake,
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -47,6 +61,11 @@ import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
+import { AdvancedFilterPanel } from '@/components/filters/AdvancedFilterPanel';
+import { GuidePopover } from '@/components/ui/GuidePopover';
+import { CuratedJourneyModule } from '@/components/discovery/CuratedJourneyModule';
+import { mapEntryPoints } from '@/components/discovery/entryPoints';
+import type { CuratedJourneyItem } from '@/components/discovery/types';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -145,6 +164,19 @@ const naturalLanguageTriggers = [
   'versus',
   'vs ',
 ];
+
+const SEASON_KEYWORD_MAP: Record<SeasonFilterValue, string[]> = {
+  spring: ['spring', 'blossom', 'bloom', 'cherry blossom', 'garden'],
+  summer: ['summer', 'patio', 'beach', 'coastal', 'sunny', 'outdoor'],
+  fall: ['fall', 'autumn', 'harvest', 'foliage', 'cozy'],
+  winter: ['winter', 'holiday', 'snow', 'fireplace', 'mulled'],
+};
+
+const BUDGET_KEYWORD_MAP: Record<BudgetFilterValue, string[]> = {
+  budget: ['budget', 'casual', 'affordable', 'wallet-friendly', 'street food', 'value'],
+  midrange: ['midrange', 'mid-range', 'bistro', 'neighborhood favorite', 'comfort'],
+  premium: ['premium', 'luxury', 'fine dining', 'upscale', 'splurge', 'exclusive'],
+};
 
 function deterministicRandomFromString(value: string): number {
   if (!value) return 0;
@@ -529,23 +561,116 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
+  const [hasDismissedJourneyGuide, setHasDismissedJourneyGuide] = useState(false);
+  const homepageEntryPoints = useMemo(() => mapEntryPoints('homepage'), []);
+  const curatedJourneyModules = useMemo(() => {
+    const entryPointItems: CuratedJourneyItem[] = homepageEntryPoints.map(entry => ({
+      id: entry.id,
+      title: entry.label,
+      description: entry.description,
+      icon:
+        entry.type === 'plan' ? (
+          <CalendarDays className="h-5 w-5" aria-hidden="true" />
+        ) : (
+          <Compass className="h-5 w-5" aria-hidden="true" />
+        ),
+      meta: entry.type === 'plan' ? 'Plan journey' : 'Explore now',
+      href: entry.href,
+      filters: entry.filters,
+      analyticsId: entry.analyticsId,
+      actionId: entry.actionId,
+    }));
+
+    const weekendItems: CuratedJourneyItem[] = [
+      {
+        id: 'weekend-spring',
+        title: 'Art-forward spring weekends',
+        description: 'Gallery strolls, rooftop aperitivos, and peak bloom views.',
+        icon: <CalendarDays className="h-5 w-5" aria-hidden="true" />,
+        filters: { season: 'spring', budget: 'midrange' },
+        analyticsId: 'journey_weekend_spring',
+        meta: 'Apply filters',
+      },
+      {
+        id: 'weekend-summer',
+        title: 'Coastal summer escapes',
+        description: 'Sun-soaked patios, seaside tastings, and golden hour bars.',
+        icon: <Sun className="h-5 w-5" aria-hidden="true" />,
+        filters: { season: 'summer', budget: 'premium' },
+        analyticsId: 'journey_weekend_summer',
+        meta: 'Apply filters',
+      },
+      {
+        id: 'weekend-winter',
+        title: 'Cozy winter hideaways',
+        description: 'Fireplace lounges, tasting menus, and snug speakeasies.',
+        icon: <Snowflake className="h-5 w-5" aria-hidden="true" />,
+        filters: { season: 'winter', budget: 'budget' },
+        analyticsId: 'journey_weekend_winter',
+        meta: 'Apply filters',
+      },
+    ];
+
+    const localGemItems: CuratedJourneyItem[] = [
+      {
+        id: 'local-gems-neighborhood',
+        title: 'Neighborhood gems',
+        description: 'Beloved cafés, bakeries, and casual brunch staples.',
+        icon: <Sparkles className="h-5 w-5" aria-hidden="true" />,
+        filters: { category: 'cafe', budget: 'budget' },
+        analyticsId: 'journey_local_cafe',
+        meta: 'Apply filters',
+      },
+      {
+        id: 'local-gems-night',
+        title: 'Late-night favorites',
+        description: 'Cocktail dens, vinyl lounges, and moody after-hours spots.',
+        icon: <MapPin className="h-5 w-5" aria-hidden="true" />,
+        filters: { category: 'bar', budget: 'midrange' },
+        analyticsId: 'journey_local_night',
+        meta: 'Apply filters',
+      },
+      {
+        id: 'local-gems-design',
+        title: 'Design-led stays',
+        description: 'Statement hotels with standout architecture and service.',
+        icon: <Map className="h-5 w-5" aria-hidden="true" />,
+        filters: { category: 'hotel', budget: 'premium' },
+        analyticsId: 'journey_local_hotel',
+        meta: 'Apply filters',
+      },
+    ];
+
+    return [
+      {
+        id: 'weekend-escapes',
+        title: 'Weekend escapes',
+        description: 'Pick a vibe and we will tune the filters instantly.',
+        layout: 'carousel' as const,
+        items: weekendItems,
+      },
+      {
+        id: 'local-gems-module',
+        title: 'Local gems & moods',
+        description: 'Curations for when you want to explore like a local.',
+        layout: 'grid' as const,
+        items: localGemItems,
+      },
+      {
+        id: 'entry-points-overview',
+        title: 'Jump back into Urban Manual',
+        description: 'See every way to explore or plan from the homepage.',
+        layout: 'grid' as const,
+        items: entryPointItems,
+      },
+    ];
+  }, [homepageEntryPoints]);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   // Calculate items per page based on 4 full rows × current grid columns
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   // Advanced filters state
-  const [advancedFilters, setAdvancedFilters] = useState<{
-    city?: string;
-    category?: string;
-    michelin?: boolean;
-    crown?: boolean;
-    minPrice?: number;
-    maxPrice?: number;
-    minRating?: number;
-    openNow?: boolean;
-    nearMe?: boolean;
-    nearMeRadius?: number;
-  }>({});
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({});
   // Near Me state
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
@@ -599,6 +724,61 @@ export default function Home() {
       trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
     },
     [advancedFilters.michelin, selectedCategory, setAdvancedFilters, setSelectedCategory, setCurrentPage]
+  );
+  const handleContextualFiltersChange = useCallback(
+    (updates: Partial<AdvancedFilters>) => {
+      setAdvancedFilters(prev => {
+        const next: AdvancedFilters = { ...prev };
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value === undefined || value === null || value === '') {
+            delete (next as Record<string, unknown>)[key];
+          } else {
+            (next as Record<string, unknown>)[key] = value;
+          }
+        });
+        return next;
+      });
+
+      if (updates.city !== undefined) {
+        setSelectedCity(updates.city || '');
+      }
+      if (updates.category !== undefined) {
+        setSelectedCategory(updates.category || '');
+      }
+
+      setCurrentPage(1);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          trackFilterChange({ filterType: key, value });
+        }
+      });
+    },
+    [setAdvancedFilters, setSelectedCity, setSelectedCategory, setCurrentPage]
+  );
+
+  const handleJourneySelect = useCallback(
+    (item: CuratedJourneyItem) => {
+      setHasDismissedJourneyGuide(true);
+      trackFilterChange({ filterType: 'journey_module', value: item.analyticsId ?? item.id });
+
+      if (item.filters) {
+        handleContextualFiltersChange(item.filters);
+      }
+
+      if (item.actionId === 'open-map-view') {
+        setViewMode('map');
+      }
+
+      if (item.actionId === 'open-trip-planner' || item.actionId === 'open-weekend-template') {
+        setShowTripPlanner(true);
+      }
+
+      if (item.href) {
+        router.push(item.href);
+      }
+    },
+    [handleContextualFiltersChange, router, setHasDismissedJourneyGuide, setShowTripPlanner, setViewMode]
   );
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
@@ -1345,9 +1525,49 @@ export default function Home() {
 
       // Rating filter
       if (currentAdvancedFilters.minRating !== undefined) {
-        filtered = filtered.filter(d => 
+        filtered = filtered.filter(d =>
           d.rating != null && d.rating >= currentAdvancedFilters.minRating!
         );
+      }
+
+      if (currentAdvancedFilters.season) {
+        const keywords = SEASON_KEYWORD_MAP[currentAdvancedFilters.season];
+        if (keywords && keywords.length > 0) {
+          filtered = filtered.filter(d => {
+            const textHaystack = [
+              ...(d.tags ?? []).map(tag => tag.toLowerCase()),
+              d.description?.toLowerCase() ?? '',
+              d.content?.toLowerCase() ?? '',
+            ];
+            return keywords.some(keyword =>
+              textHaystack.some(text => text.includes(keyword))
+            );
+          });
+        }
+      }
+
+      if (currentAdvancedFilters.budget) {
+        filtered = filtered.filter(d => {
+          if (d.price_level != null) {
+            if (currentAdvancedFilters.budget === 'budget') {
+              return d.price_level <= 2;
+            }
+            if (currentAdvancedFilters.budget === 'midrange') {
+              return d.price_level >= 2 && d.price_level <= 3;
+            }
+            return d.price_level >= 3;
+          }
+
+          const tags = (d.tags ?? []).map(tag => tag.toLowerCase());
+          if (tags.length === 0) {
+            return true;
+          }
+          const keywords = BUDGET_KEYWORD_MAP[currentAdvancedFilters.budget];
+          if (!keywords || keywords.length === 0) {
+            return true;
+          }
+          return keywords.some(keyword => tags.some(tag => tag.includes(keyword)));
+        });
       }
 
       // Open Now filter - uses timezone_id, utc_offset, or city mapping
@@ -2713,6 +2933,42 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-5 md:px-10 lg:px-12 pb-24 md:pb-32 -mt-16 md:-mt-32">
                 <div className="max-w-[1800px] mx-auto">
+                <div className="space-y-10 mb-12" aria-label="Curated discovery modules">
+                  <AdvancedFilterPanel
+                    filters={advancedFilters}
+                    onFiltersChange={handleContextualFiltersChange}
+                    onReset={() =>
+                      handleContextualFiltersChange({
+                        season: undefined,
+                        budget: undefined,
+                        minPrice: undefined,
+                        maxPrice: undefined,
+                      })
+                    }
+                  />
+                  <GuidePopover
+                    title="Curated journeys"
+                    description="New themed modules automatically adjust filters and surface the right entry points."
+                    defaultOpen={!hasDismissedJourneyGuide}
+                    onDismiss={() => setHasDismissedJourneyGuide(true)}
+                    placement="top-start"
+                  >
+                    <div className="space-y-10">
+                      {curatedJourneyModules.map(module => (
+                        <CuratedJourneyModule
+                          key={module.id}
+                          id={module.id}
+                          title={module.title}
+                          description={module.description}
+                          items={module.items}
+                          layout={module.layout}
+                          onItemSelect={handleJourneySelect}
+                        />
+                      ))}
+                    </div>
+                  </GuidePopover>
+                </div>
+
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="hidden md:flex justify-end items-start gap-3 mb-8 md:mb-10 relative flex-wrap">
                   {/* Filter Button */}
@@ -2824,8 +3080,8 @@ const getRecommendationScore = (dest: Destination, index: number): number => {
             
             {/* Trending Section - Show when no active search */}
             {!submittedQuery && (
-              <div className="mb-12 md:mb-16">
-              <TrendingSection />
+              <div id="trending-destinations" className="mb-12 md:mb-16">
+                <TrendingSection />
               </div>
             )}
 
