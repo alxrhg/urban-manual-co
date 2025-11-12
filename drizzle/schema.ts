@@ -1,4 +1,7 @@
 import { mysqlTable, varchar, int, timestamp, text, datetime } from "drizzle-orm/mysql-core";
+import { userPreferences } from "./schema/user_preferences";
+export { userPreferences };
+export type { UserPreferences, InsertUserPreferences } from "./schema/user_preferences";
 
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 255 }).primaryKey(),
@@ -27,15 +30,6 @@ export const visitedPlaces = mysqlTable("visited_places", {
   visitedAt: timestamp("visited_at").notNull(),
   rating: int("rating"), // Optional rating 1-5
   notes: text("notes"),
-});
-
-export const userPreferences = mysqlTable("user_preferences", {
-  id: int("id").primaryKey().autoincrement(),
-  userId: varchar("user_id", { length: 255 }).notNull().unique(),
-  favoriteCategories: text("favorite_categories"), // JSON array
-  favoriteCities: text("favorite_cities"), // JSON array
-  interests: text("interests"), // JSON array
-  updatedAt: timestamp("updated_at").notNull(),
 });
 
 export const userActivity = mysqlTable("user_activity", {

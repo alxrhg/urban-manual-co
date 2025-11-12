@@ -1,96 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { withErrorHandling } from '@/lib/errors';
-import { handleSupabaseError } from '@/lib/errors';
+import { getSmartRecommendations, type RecommendationContext } from '@/services/intelligence/recommendations';
+import type { DevicePreferenceSignals } from '@/services/intelligence/personalization';
 
 export const GET = withErrorHandling(async (req: NextRequest) => {
   const searchParams = req.nextUrl.searchParams;
-  const context = searchParams.get('context') || 'personalized';
+  const context = (searchParams.get('context') || 'personalized') as RecommendationContext;
   const userId = searchParams.get('userId');
+  const city = searchParams.get('city');
+  const vibeParam = searchParams.get('vibe');
+  const partyParam = searchParams.get('party');
+  const budgetMin = searchParams.get('budgetMin');
+  const budgetMax = searchParams.get('budgetMax');
 
   const supabase = await createServerClient();
 
-  let categoryFilter: string[] = [];
-  let timeBasedFilter: any = {};
-
-  // Context-based filtering
-  switch (context) {
-    case 'weekend':
-      // Weekend: Suggest cafes, brunch spots, activities, hotels
-      categoryFilter = ['cafe', 'restaurant', 'hotel', 'bar', 'activity'];
-      break;
-    case 'evening':
-      // Evening: Bars, restaurants, nightlife
-      categoryFilter = ['bar', 'restaurant', 'nightlife'];
-      break;
-    case 'morning':
-      // Morning: Cafes, breakfast spots
-      categoryFilter = ['cafe', 'bakery', 'breakfast'];
-      break;
-    default:
-      // Personalized: Use user's history
-      break;
+  const deviceSignals: DevicePreferenceSignals = {};
+  if (city) deviceSignals.activeCity = city;
+  if (vibeParam) {
+    deviceSignals.preferredVibes = vibeParam.split(',').map(value => value.trim()).filter(Boolean);
+  }
+  if (partyParam) {
+    deviceSignals.travelParty = partyParam.split(',').map(value => value.trim()).filter(Boolean);
   }
 
-  let query = supabase
-    .from('destinations')
-    .select('*')
-    .limit(20);
-
-  // Apply category filter if context-based
-  if (categoryFilter.length > 0) {
-    query = query.in('category', categoryFilter);
+  const parsedMin = budgetMin !== null ? Number(budgetMin) : undefined;
+  const parsedMax = budgetMax !== null ? Number(budgetMax) : undefined;
+  const hasMin = parsedMin !== undefined && !Number.isNaN(parsedMin);
+  const hasMax = parsedMax !== undefined && !Number.isNaN(parsedMax);
+  if (hasMin || hasMax) {
+    deviceSignals.preferredBudget = {
+      min: hasMin ? parsedMin : undefined,
+      max: hasMax ? parsedMax : undefined,
+    };
   }
 
-  // If user is provided and context is personalized, get similar to their visited places
-  if (userId && context === 'personalized') {
-    // Get user's visited/saved places
-    const { data: visited, error: visitedError } = await supabase
-      .from('visited_places')
-      .select('destination_slug')
-      .eq('user_id', userId)
-      .limit(5);
+  const finalSignals = Object.keys(deviceSignals).length ? deviceSignals : undefined;
 
-    if (visitedError) {
-      throw handleSupabaseError(visitedError);
-    }
-
-    if (visited && visited.length > 0) {
-      // Get destinations similar to what user has visited
-      const { data: destinations, error: destError } = await supabase
-        .from('destinations')
-        .select('*')
-        .not('slug', 'in', `(${visited.map(v => `'${v.destination_slug}'`).join(',')})`)
-        .order('trending_score', { ascending: false })
-        .limit(20);
-
-      if (destError) {
-        throw handleSupabaseError(destError);
-      }
-
-      // Don't cache personalized recommendations
-      return NextResponse.json({
-        recommendations: destinations || [],
-        context
-      });
-    }
-  }
-
-  // Default: Get trending or top-rated places
-  query = query.order('rating', { ascending: false, nullsFirst: false });
-
-  const { data: recommendations, error } = await query;
-
-  if (error) {
-    throw handleSupabaseError(error);
-  }
-
-  const response = NextResponse.json({
-    recommendations: recommendations || [],
-    context
+  const recommendations = await getSmartRecommendations({
+    userId,
+    context,
+    limit: 20,
+    supabaseClient: supabase,
+    deviceSignals: finalSignals,
   });
 
-  // Add cache headers for context-based recommendations (not personalized)
+  const response = NextResponse.json({
+    recommendations,
+    context,
+  });
+
   if (context !== 'personalized') {
     response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
   }
