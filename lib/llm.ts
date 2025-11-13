@@ -79,18 +79,29 @@ export async function generateJSON(system: string, user: string): Promise<any | 
   return null;
 }
 
-export async function embedText(input: string): Promise<number[] | null> {
+export async function embedText(
+  input: string,
+  options: { model?: string; dimensions?: number } = {}
+): Promise<number[] | null> {
   // Prefer OpenAI embeddings
   const openai = getOpenAI();
   if (openai) {
     try {
-      // text-embedding-3-large default is 3072 dimensions, but we need 1536
-      // Explicitly specify dimensions to match our database schema
-      const emb = await openai.embeddings.create({ 
-        model: OPENAI_EMBEDDING_MODEL, 
+      const model = options.model || OPENAI_EMBEDDING_MODEL;
+      const payload: Record<string, any> = {
+        model,
         input,
-        dimensions: 1536  // Explicitly set to 1536 to match database schema
-      });
+      };
+
+      const envDimensions = process.env.OPENAI_EMBEDDING_DIMENSIONS
+        ? Number(process.env.OPENAI_EMBEDDING_DIMENSIONS)
+        : undefined;
+      const dimensions = options.dimensions ?? envDimensions;
+      if (dimensions && Number.isFinite(dimensions)) {
+        payload.dimensions = dimensions;
+      }
+
+      const emb = await openai.embeddings.create(payload);
       return emb.data?.[0]?.embedding || null;
     } catch (error: any) {
       console.error('[embedText] OpenAI error:', error.message || error);

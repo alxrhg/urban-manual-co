@@ -85,13 +85,16 @@ export const aiRouter = router({
       const searchQuery = intent.interpretations?.[0]?.semanticQuery || input.message;
 
       // Generate embedding for search
-      const embedding = await generateDestinationEmbedding({
+      const embeddingResult = await generateDestinationEmbedding({
         name: searchQuery,
         city: intent.interpretations?.[0]?.filters?.city || '',
         category: intent.interpretations?.[0]?.filters?.category || '',
         content: searchQuery,
         tags: intent.interpretations?.[0]?.filters?.tags || [],
-      });
+      }, { versionTag: 'ai-router' });
+
+      const queryEmbeddingString = embeddingResult.serialized;
+      const queryEmbeddingArray = Array.from(embeddingResult.vector);
 
       // Apply filters from intent interpretation
       const filters = intent.interpretations?.[0]?.filters || {};
@@ -102,7 +105,7 @@ export const aiRouter = router({
       try {
         const { data, error: searchError } = await supabase
           .rpc('search_destinations_hybrid', {
-            query_embedding: `[${embedding.join(',')}]`,
+            query_embedding: queryEmbeddingString,
             user_id_param: userId,
             city_filter: filters.city || null,
             category_filter: filters.category || null,
@@ -122,7 +125,7 @@ export const aiRouter = router({
           // Fallback: Use existing match_destinations if hybrid search not available
           try {
             const fallbackResult = await supabase.rpc('match_destinations', {
-              query_embedding: embedding,
+              query_embedding: queryEmbeddingArray,
               match_threshold: 0.6,
               match_count: 10,
               filter_city: filters.city || null,

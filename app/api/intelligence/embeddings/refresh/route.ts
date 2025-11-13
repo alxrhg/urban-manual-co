@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { embedText } from '@/lib/llm';
+import { generateDestinationEmbedding } from '@/lib/embeddings/generate';
 
-function buildEmbeddingText(d: any): string {
-  const parts: string[] = [];
-  if (d.name) parts.push(d.name);
-  if (d.city) parts.push(`City: ${d.city}`);
-  if (d.category) parts.push(`Category: ${d.category}`);
-  const tags: string[] = [];
-  (d.style_tags || []).forEach((t: string) => tags.push(t));
-  (d.ambience_tags || []).forEach((t: string) => tags.push(t));
-  (d.experience_tags || []).forEach((t: string) => tags.push(t));
-  (d.tags || []).forEach((t: string) => tags.push(t));
-  if (tags.length) parts.push(`Tags: ${tags.join(', ')}`);
-  if (d.description) parts.push(d.description);
-  if (d.content) parts.push(d.content);
-  return parts.join('\n');
+const PRICE_PER_1K = Number(process.env.OPENAI_EMBEDDING_PRICE_PER_1K || '0.13');
+
+function estimateTokens(text: string): number {
+  if (!text) return 0;
+  return Math.ceil(text.length / 4);
 }
 
 export async function POST(request: NextRequest) {
@@ -29,6 +20,7 @@ export async function POST(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '200', 10), 500);
     const cursor = parseInt(searchParams.get('cursor') || '0', 10);
     const onlyMissing = searchParams.get('onlyMissing') !== 'false';
+    const throttleMs = Number(searchParams.get('throttleMs') || process.env.EMBEDDING_THROTTLE_MS || '100');
 
     // Fetch a page of destinations
     let query = supabase
@@ -50,31 +42,60 @@ export async function POST(request: NextRequest) {
     const processed: string[] = [];
     const skipped: string[] = [];
     const failed: Array<{ slug: string; reason: string }> = [];
+    const errorBuckets = new Map<string, number>();
+    let estimatedTokens = 0;
 
     for (const d of rows) {
       if (onlyMissing && d.vector_embedding) {
         skipped.push(d.slug);
         continue;
       }
-      const text = buildEmbeddingText(d);
-      const vec = await embedText(text);
-      if (!vec) {
-        failed.push({ slug: d.slug, reason: 'embedding_failed' });
-        continue;
+
+      try {
+        const embedding = await generateDestinationEmbedding({
+          name: d.name || '',
+          city: d.city || '',
+          category: d.category || '',
+          description: d.description,
+          content: d.content,
+          tags: d.tags || [],
+          style_tags: d.style_tags || [],
+          ambience_tags: d.ambience_tags || [],
+          experience_tags: d.experience_tags || [],
+        }, { versionTag: 'cron-refresh' });
+
+        estimatedTokens += estimateTokens(embedding.text);
+
+        const { error: upErr } = await supabase
+          .from('destinations')
+          .update({
+            vector_embedding: Array.from(embedding.vector) as unknown as any,
+            embedding_model: embedding.metadata.model,
+            embedding_generated_at: embedding.metadata.generatedAt,
+            embedding_metadata: embedding.metadata,
+          })
+          .eq('id', d.id);
+
+        if (upErr) {
+          failed.push({ slug: d.slug, reason: upErr.message });
+          errorBuckets.set(upErr.message, (errorBuckets.get(upErr.message) || 0) + 1);
+        } else {
+          processed.push(d.slug);
+        }
+      } catch (err: any) {
+        const reason = err?.message || 'embedding_failed';
+        failed.push({ slug: d.slug, reason });
+        errorBuckets.set(reason, (errorBuckets.get(reason) || 0) + 1);
       }
-      const { error: upErr } = await supabase
-        .from('destinations')
-        .update({ vector_embedding: vec as unknown as any })
-        .eq('id', d.id);
-      if (upErr) {
-        failed.push({ slug: d.slug, reason: upErr.message });
-      } else {
-        processed.push(d.slug);
+
+      if (throttleMs > 0) {
+        await new Promise(resolve => setTimeout(resolve, throttleMs));
       }
     }
 
     const nextCursor = cursor + rows.length;
     const hasMore = typeof count === 'number' ? nextCursor < count : rows.length === limit;
+    const estimatedCostUsd = Number(((estimatedTokens / 1000) * PRICE_PER_1K).toFixed(4));
 
     return NextResponse.json({
       processedCount: processed.length,
@@ -85,6 +106,12 @@ export async function POST(request: NextRequest) {
       failed,
       nextCursor: hasMore ? nextCursor : null,
       total: count ?? null,
+      errorBuckets: Object.fromEntries(errorBuckets),
+      metrics: {
+        estimatedTokens,
+        estimatedCostUsd,
+        model: process.env.OPENAI_EMBEDDING_MODEL_UPGRADED || process.env.OPENAI_EMBEDDING_MODEL,
+      },
     });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Failed to refresh embeddings' }, { status: 500 });

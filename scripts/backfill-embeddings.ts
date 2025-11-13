@@ -1,6 +1,7 @@
 // Load environment variables FIRST before importing anything else
 import * as dotenv from 'dotenv';
 import { resolve } from 'path';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 import { createClient } from '@supabase/supabase-js';
@@ -38,43 +39,141 @@ console.log('');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function backfillEmbeddings(batchSize = 50) {
-  let offset = 0;
-  let processed = 0;
-  let errors = 0;
+type BackfillOptions = {
+  batchSize: number;
+  throttleMs: number;
+  startId?: number;
+  resume: boolean;
+  includeExisting: boolean;
+};
 
-  // First, check how many destinations need embeddings
-  const { count: totalWithoutEmbeddings } = await supabase
-    .from('destinations')
-    .select('*', { count: 'exact', head: true })
-    .is('embedding', null);
-  
-  console.log(`Starting embedding backfill...`);
-  console.log(`Total destinations without embeddings: ${totalWithoutEmbeddings}`);
-  console.log(`Using batch size: ${batchSize}`);
-  console.log('');
+const DEFAULT_BATCH_SIZE = Number(process.env.EMBEDDING_BATCH_SIZE || 40);
+const DEFAULT_THROTTLE = Number(process.env.EMBEDDING_THROTTLE_MS || 150);
+const PRICE_PER_1K = Number(process.env.OPENAI_EMBEDDING_PRICE_PER_1K || '0.13');
+const PROGRESS_FILE = resolve(process.cwd(), 'scripts/.backfill-embeddings-progress.json');
+
+function parseArgs(argv: string[]): BackfillOptions {
+  const opts: BackfillOptions = {
+    batchSize: DEFAULT_BATCH_SIZE,
+    throttleMs: DEFAULT_THROTTLE,
+    resume: false,
+    includeExisting: false,
+  };
+
+  argv.forEach(arg => {
+    if (arg.startsWith('--batch-size=')) {
+      opts.batchSize = Number(arg.split('=')[1]) || DEFAULT_BATCH_SIZE;
+    } else if (arg.startsWith('--throttle-ms=')) {
+      opts.throttleMs = Number(arg.split('=')[1]) || DEFAULT_THROTTLE;
+    } else if (arg.startsWith('--start-id=')) {
+      opts.startId = Number(arg.split('=')[1]);
+    } else if (arg === '--resume') {
+      opts.resume = true;
+    } else if (arg === '--include-existing' || arg === '--rebuild') {
+      opts.includeExisting = true;
+    }
+  });
+
+  return opts;
+}
+
+const cliOptions = parseArgs(process.argv.slice(2));
+
+type ProgressPayload = { lastProcessedId: number; updatedAt: string };
+
+function loadProgress(): ProgressPayload | null {
+  if (!existsSync(PROGRESS_FILE)) return null;
+  try {
+    const raw = readFileSync(PROGRESS_FILE, 'utf-8');
+    return JSON.parse(raw);
+  } catch (error) {
+    console.warn('Unable to read progress file, starting fresh. Error:', error);
+    return null;
+  }
+}
+
+function persistProgress(id: number) {
+  const payload: ProgressPayload = {
+    lastProcessedId: id,
+    updatedAt: new Date().toISOString(),
+  };
+  writeFileSync(PROGRESS_FILE, JSON.stringify(payload, null, 2));
+}
+
+function estimateTokens(text: string): number {
+  if (!text) return 0;
+  return Math.ceil(text.length / 4); // Rough heuristic
+}
+
+const progressState = loadProgress();
+let startId = cliOptions.startId ?? 0;
+if (cliOptions.resume && progressState?.lastProcessedId) {
+  startId = progressState.lastProcessedId;
+}
+
+async function wait(ms: number) {
+  if (ms <= 0) return;
+  await new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function backfillEmbeddings() {
+  let lastProcessedId = startId;
+  let totalTarget = 0;
+  const metrics = {
+    processed: 0,
+    errors: 0,
+    skipped: 0,
+    batches: 0,
+    totalTokens: 0,
+    totalCostUsd: 0,
+    errorBuckets: new Map<string, number>(),
+  };
+
+  let countQuery = supabase.from('destinations').select('*', { count: 'exact', head: true });
+  if (!cliOptions.includeExisting) {
+    countQuery = countQuery.is('embedding', null);
+  }
+  const { count } = await countQuery;
+  totalTarget = count || 0;
+
+  console.log('Starting embedding backfill...');
+  console.log(`Target rows: ${totalTarget || 'unknown'}`);
+  console.log(`Batch size: ${cliOptions.batchSize}`);
+  console.log(`Throttle: ${cliOptions.throttleMs}ms between requests`);
+  console.log(`Start ID: ${startId}`);
+  console.log(`Include existing embeddings: ${cliOptions.includeExisting}`);
+  console.log(`Writing progress to ${PROGRESS_FILE}`);
 
   while (true) {
-    const { data: destinations, error: fetchError } = await supabase
+    let query = supabase
       .from('destinations')
-      .select('*')
-      .is('embedding', null)
-      .order('id', { ascending: true }) // Order for consistent pagination
-      .range(offset, offset + batchSize - 1); // range() already sets the limit
+      .select('id, slug, name, city, category, content, description, tags, style_tags, ambience_tags, experience_tags', { count: 'exact' })
+      .gt('id', lastProcessedId)
+      .order('id', { ascending: true })
+      .limit(cliOptions.batchSize);
 
-    if (fetchError) {
-      console.error('Error fetching destinations:', fetchError);
+    if (!cliOptions.includeExisting) {
+      query = query.is('embedding', null);
+    }
+
+    const { data: destinations, error } = await query;
+    if (error) {
+      console.error('Error fetching destinations:', error.message);
       break;
     }
 
     if (!destinations || destinations.length === 0) {
-      console.log('\nNo more destinations to process');
+      console.log('No more destinations to process.');
       break;
     }
 
-    console.log(`\nProcessing batch ${Math.floor(offset / batchSize) + 1} (${destinations.length} destinations, offset: ${offset})...`);
+    metrics.batches += 1;
+    console.log(`\nBatch #${metrics.batches} (records ${destinations[0].id}-${destinations[destinations.length - 1].id})`);
 
     for (const dest of destinations) {
+      lastProcessedId = dest.id;
+      persistProgress(lastProcessedId);
+
       try {
         const embedding = await generateDestinationEmbedding({
           name: dest.name || '',
@@ -82,62 +181,68 @@ async function backfillEmbeddings(batchSize = 50) {
           category: dest.category || '',
           content: dest.content,
           description: dest.description,
-          tags: dest.tags || []
-        });
+          tags: dest.tags || [],
+          style_tags: dest.style_tags || [],
+          ambience_tags: dest.ambience_tags || [],
+          experience_tags: dest.experience_tags || [],
+        }, { versionTag: 'backfill-script' });
 
-        if (!embedding) {
-          console.error(`\n✗ Failed ${dest.slug}: No embedding returned`);
-          errors++;
-          continue;
-        }
+        const estimatedTokens = estimateTokens(embedding.text);
+        metrics.totalTokens += estimatedTokens;
+        metrics.totalCostUsd += (estimatedTokens / 1000) * PRICE_PER_1K;
 
-        // Update destination with embedding
-        // Supabase/PostgreSQL vector type expects array format
         const { error: updateError } = await supabase
           .from('destinations')
           .update({
-            embedding: `[${embedding.join(',')}]` as any, // Cast to any for vector type
-            embedding_model: 'text-embedding-3-large',
-            embedding_generated_at: new Date().toISOString(),
+            embedding: embedding.serialized as any,
+            embedding_model: embedding.metadata.model,
+            embedding_generated_at: embedding.metadata.generatedAt,
+            embedding_metadata: embedding.metadata,
           })
           .eq('id', dest.id);
 
         if (updateError) {
-          console.error(`✗ Failed to update ${dest.slug}:`, updateError.message);
-          errors++;
+          metrics.errors += 1;
+          const reason = updateError.message || 'update_error';
+          metrics.errorBuckets.set(reason, (metrics.errorBuckets.get(reason) || 0) + 1);
+          console.error(`✗ Failed to update ${dest.slug}: ${reason}`);
         } else {
-          processed++;
-          if (processed % 10 === 0) {
-            process.stdout.write(`\r✓ Processed: ${processed} | Errors: ${errors} | Remaining: ${totalWithoutEmbeddings! - processed}`);
+          metrics.processed += 1;
+          if (metrics.processed % 10 === 0) {
+            process.stdout.write(
+              `\rProcessed: ${metrics.processed} | Errors: ${metrics.errors} | Cost ~$${metrics.totalCostUsd.toFixed(2)}`
+            );
           }
         }
-
-        // Rate limiting: wait 25ms between requests
-        await new Promise(r => setTimeout(r, 25));
       } catch (err: any) {
-        console.error(`\n✗ Failed ${dest.slug}:`, err.message || err);
-        errors++;
+        metrics.errors += 1;
+        const reason = err?.message || 'embedding_failed';
+        metrics.errorBuckets.set(reason, (metrics.errorBuckets.get(reason) || 0) + 1);
+        console.error(`✗ Failed ${dest.slug}: ${reason}`);
       }
-    }
 
-    offset += batchSize;
-    
-    // Safety check: if we've processed more than the total, break
-    if (processed >= (totalWithoutEmbeddings || 0)) {
-      break;
+      await wait(cliOptions.throttleMs);
     }
   }
 
-  console.log(`\n\n✅ Complete! Processed ${processed} destinations with ${errors} errors.`);
-  
-  // Final check
+  console.log('\n\n✅ Backfill complete');
+  console.log(`Processed: ${metrics.processed}`);
+  console.log(`Errors: ${metrics.errors}`);
+  console.log(`Estimated tokens: ${metrics.totalTokens}`);
+  console.log(`Estimated cost (USD): $${metrics.totalCostUsd.toFixed(4)}`);
+  console.log('Error buckets:', Object.fromEntries(metrics.errorBuckets));
+  console.log(`Resume future runs with --start-id=${lastProcessedId}`);
+
   const { count: remaining } = await supabase
     .from('destinations')
     .select('*', { count: 'exact', head: true })
     .is('embedding', null);
-  
-  console.log(`Remaining destinations without embeddings: ${remaining}`);
+
+  console.log(`Remaining destinations without embeddings: ${remaining ?? 'unknown'}`);
 }
 
-backfillEmbeddings().catch(console.error);
+backfillEmbeddings().catch(error => {
+  console.error('Backfill failed:', error);
+  process.exit(1);
+});
 
