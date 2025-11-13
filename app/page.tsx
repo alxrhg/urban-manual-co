@@ -2297,13 +2297,13 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Add Trip Button */}
+                    {/* Create Trip Button */}
                     <button
                       onClick={() => setShowTripPlanner(true)}
                       className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80 flex-shrink-0"
                     >
                       <Plus className="h-4 w-4" />
-                      <span>Add Trip</span>
+                      <span>Create Trip</span>
                     </button>
                   </div>
                 </div>
