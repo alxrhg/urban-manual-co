@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test:intelligence": "tsx scripts/test-intelligence-endpoints.ts",
+    "test": "tsx --test server/tests/**/*.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

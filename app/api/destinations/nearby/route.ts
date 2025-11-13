@@ -6,7 +6,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { findNearbyDestinations } from '@/lib/enrichment/distance-matrix';
-import { withErrorHandling, createValidationError, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
+import { withErrorHandling, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
+import { coordinatesSchema, filtersSchema, parseSearchParams } from '@/lib/utils/validation';
+import { z } from 'zod';
+
+const nearbyQuerySchema = coordinatesSchema.extend({
+  radius: z
+    .coerce.number({ invalid_type_error: 'Radius must be a number' })
+    .positive('Radius must be greater than 0')
+    .max(100, 'Radius cannot exceed 100km')
+    .default(5),
+  maxWalkingMinutes: z
+    .coerce.number({ invalid_type_error: 'maxWalkingMinutes must be a number' })
+    .int('maxWalkingMinutes must be an integer')
+    .min(1, 'maxWalkingMinutes must be at least 1')
+    .max(240, 'maxWalkingMinutes cannot exceed 240')
+    .default(15),
+  city: filtersSchema.shape.city,
+});
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -24,16 +41,12 @@ function getSupabaseClient() {
 }
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
-  const searchParams = request.nextUrl.searchParams;
-  const lat = parseFloat(searchParams.get('lat') || '0');
-  const lng = parseFloat(searchParams.get('lng') || '0');
-  const radiusKm = parseFloat(searchParams.get('radius') || '5');
-  const maxWalkingMinutes = parseInt(searchParams.get('maxWalkingMinutes') || '15');
-  const city = searchParams.get('city');
-
-  if (!lat || !lng) {
-    throw createValidationError('Latitude and longitude are required');
-  }
+  const { lat, lng, radius, maxWalkingMinutes, city } = parseSearchParams(
+    request,
+    nearbyQuerySchema,
+    { errorMessage: 'Invalid nearby destination query' }
+  );
+  const radiusKm = radius;
 
   const supabase = getSupabaseClient();
 
