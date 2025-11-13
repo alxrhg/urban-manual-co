@@ -19,6 +19,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
   const { user } = useAuth();
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [googlePlaceQuery, setGooglePlaceQuery] = useState('');
   const [formData, setFormData] = useState({
     slug: '',
     name: '',
@@ -112,7 +113,9 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
     }
   };
 
-  const handleGooglePlaceSelect = async (place: any) => {
+  const handleGooglePlaceSelect = async (placeDetails: any) => {
+    if (!placeDetails?.place_id) return;
+    
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -128,7 +131,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ placeId: place.place_id }),
+        body: JSON.stringify({ placeId: placeDetails.place_id }),
       });
 
       if (!response.ok) {
@@ -147,6 +150,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
           image: data.place.image || prev.image,
           michelin_stars: data.place.michelin_stars || prev.michelin_stars,
         }));
+        setGooglePlaceQuery('');
         toast.success('Place details loaded from Google');
       }
     } catch (error: any) {
@@ -164,7 +168,9 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
             Search Google Places (optional)
           </label>
           <GooglePlacesAutocomplete
-            onSelect={handleGooglePlaceSelect}
+            value={googlePlaceQuery}
+            onChange={setGooglePlaceQuery}
+            onPlaceSelect={handleGooglePlaceSelect}
             placeholder="Search for a place on Google..."
           />
         </div>
