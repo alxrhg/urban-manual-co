@@ -1076,8 +1076,10 @@ export default function Home() {
       const controller = typeof window !== 'undefined' ? new AbortController() : null;
       const timeoutId = controller ? window.setTimeout(() => controller.abort(), 30000) : null;
       try {
-        const response = await fetch('/api/homepage/destinations', {
+        // Add cache-busting query parameter to ensure fresh data after POI creation
+        const response = await fetch(`/api/homepage/destinations?t=${Date.now()}`, {
           signal: controller?.signal,
+          cache: 'no-store',
         });
         if (!response.ok) {
           fetchError = new Error(await response.text());
@@ -2379,9 +2381,11 @@ export default function Home() {
             <POIDrawer
               isOpen={showPOIDrawer}
               onClose={() => setShowPOIDrawer(false)}
-              onSave={() => {
+              onSave={async () => {
                 // Refresh destinations after creating POI
-                fetchDestinations();
+                // Add a small delay to ensure the database has updated
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await fetchDestinations();
               }}
             />
           )}

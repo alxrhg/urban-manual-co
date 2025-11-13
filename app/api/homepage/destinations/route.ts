@@ -26,4 +26,5 @@ export const GET = createHomepageDestinationsHandler({
   loadDestinations: () => getHomepageDestinations(),
 });
 
-export const revalidate = 60;
+// Reduced revalidate time to allow faster updates after POI creation
+export const revalidate = 10;
