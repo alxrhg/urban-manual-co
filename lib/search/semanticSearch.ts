@@ -1,6 +1,5 @@
 import { embedText } from '@/lib/llm';
 import { trackContentMetric } from '@/lib/metrics';
-import { mapAsimovResultsToDestinations, searchAsimov } from '@/lib/search/asimov';
 import { createClient } from '@supabase/supabase-js';
 
 export type SemanticSearchFilters = {
@@ -23,16 +22,12 @@ const SEMANTIC_SEARCH_RPC = process.env.NEXT_PUBLIC_SEMANTIC_SEARCH_RPC || 'sear
 type SemanticSearchDependencies = {
   embed: typeof embedText;
   supabaseClient: typeof supabase;
-  asimovSearch: typeof searchAsimov;
-  asimovMapper: typeof mapAsimovResultsToDestinations;
   metricTracker: typeof trackContentMetric;
 };
 
 const defaultDeps: SemanticSearchDependencies = {
   embed: embedText,
   supabaseClient: supabase,
-  asimovSearch: searchAsimov,
-  asimovMapper: mapAsimovResultsToDestinations,
   metricTracker: trackContentMetric,
 };
 
@@ -124,33 +119,7 @@ async function fallbackSearch(
   filters: SemanticSearchFilters,
   deps: SemanticSearchDependencies
 ) {
-  try {
-    const asimovResults = await deps.asimovSearch({
-      query,
-      limit: 20,
-      params: {
-        city: filters.city,
-        category: filters.category,
-      },
-    });
-
-    if (asimovResults?.length) {
-      const knownDestinations = await fetchDestinationsForMapping(filters, deps.supabaseClient);
-      const mapped = deps.asimovMapper(asimovResults, knownDestinations);
-
-      if (mapped.length > 0) {
-        await logVectorMetric(
-          'vector_fallback',
-          { query, strategy: 'asimov', count: mapped.length },
-          deps.metricTracker
-        );
-        return normalizeResults(mapped);
-      }
-    }
-  } catch (error) {
-    console.error('[SemanticSearch] Asimov fallback error:', error);
-  }
-
+  // Direct fallback to keyword search (Asimov integration removed)
   const keywordResults = await keywordFallbackSearch(query, filters, deps.supabaseClient);
   await logVectorMetric(
     'vector_fallback',
@@ -160,31 +129,6 @@ async function fallbackSearch(
   return normalizeResults(keywordResults);
 }
 
-async function fetchDestinationsForMapping(
-  filters: SemanticSearchFilters,
-  client: typeof supabase
-) {
-  try {
-    let query = client
-      .from('destinations')
-      .select('id, slug, name, city, category, description, content, image, rating, price_level, michelin_stars, is_open_now')
-      .limit(200);
-
-    if (filters.city) {
-      query = query.ilike('city', `%${filters.city}%`);
-    }
-
-    if (filters.category) {
-      query = query.ilike('category', `%${filters.category}%`);
-    }
-
-    const { data } = await query;
-    return data || [];
-  } catch (error) {
-    console.error('[SemanticSearch] Error fetching mapping destinations:', error);
-    return [];
-  }
-}
 
 async function keywordFallbackSearch(
   query: string,
@@ -225,7 +169,7 @@ function normalizeResults(data: any[]) {
   return (data || []).map((row: any) => ({
     ...row,
     image: row.image ?? row.image_url ?? row.main_image ?? null,
-    similarity: row.similarity ?? row.similarity_score ?? row._asimov_score ?? null,
+    similarity: row.similarity ?? row.similarity_score ?? null,
     final_score: row.final_score ?? row.rank_score ?? row.similarity ?? null,
     content: row.content ?? row.description ?? null,
   }));
