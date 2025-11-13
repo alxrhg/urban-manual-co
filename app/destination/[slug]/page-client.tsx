@@ -470,6 +470,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     width={12}
                     height={12}
                     className="h-3 w-3"
+                    onError={(e) => {
+                      // Fallback to local file if external URL fails
+                      const target = e.currentTarget;
+                      if (target.src !== '/michelin-star.svg') {
+                        target.src = '/michelin-star.svg';
+                      }
+                    }}
                   />
                   {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
                 </span>
@@ -667,6 +674,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             width={12}
                             height={12}
                             className="h-3 w-3"
+                            onError={(e) => {
+                              // Fallback to local file if external URL fails
+                              const target = e.currentTarget;
+                              if (target.src !== '/michelin-star.svg') {
+                                target.src = '/michelin-star.svg';
+                              }
+                            }}
                           />
                           {rec.michelin_stars}
                         </div>

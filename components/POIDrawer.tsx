@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Drawer } from '@/components/ui/Drawer';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Trash2 } from 'lucide-react';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
@@ -32,6 +32,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerPro
   const { user } = useAuth();
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [googlePlaceQuery, setGooglePlaceQuery] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -65,6 +67,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerPro
       });
       setImageFile(null);
       setImagePreview(null);
+      setShowDeleteConfirm(false);
     } else if (destination) {
       // Pre-fill form with destination data for editing
       setFormData({
@@ -253,6 +256,47 @@ export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerPro
       toast.error(error.message || 'Failed to create POI');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!destination || !destination.slug) {
+      toast.error('No destination to delete');
+      return;
+    }
+
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('destinations')
+        .delete()
+        .eq('slug', destination.slug);
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Destination deleted successfully');
+      onSave?.();
+      onClose();
+    } catch (error: any) {
+      console.error('Error deleting destination:', error);
+      toast.error(error.message || 'Failed to delete destination');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -575,29 +619,82 @@ export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerPro
         </div>
 
         {/* Submit Button */}
-        <div className="flex gap-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
-            disabled={isSaving}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSaving || !formData.name || !formData.city || !formData.category}
-            className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {destination ? 'Updating...' : 'Creating...'}
-              </>
-            ) : (
-              destination ? 'Update Destination' : 'Create POI'
-            )}
-          </button>
+        <div className="space-y-3 pt-4">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+              disabled={isSaving || isDeleting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving || isDeleting || !formData.name || !formData.city || !formData.category}
+              className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {destination ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                destination ? 'Update Destination' : 'Create POI'
+              )}
+            </button>
+          </div>
+
+          {/* Delete Button (only show when editing) */}
+          {destination && (
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
+              {showDeleteConfirm ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                    Are you sure you want to delete "{destination.name}"? This action cannot be undone.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="flex-1 px-4 py-3 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" />
+                          Delete Destination
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isSaving || isDeleting}
+                  className="w-full px-4 py-3 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Destination
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </form>
     </div>

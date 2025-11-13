@@ -160,6 +160,7 @@ export const MICHELIN = {
   MIN: 0,
   MAX: 3,
   ICON_URL: 'https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg',
+  ICON_URL_FALLBACK: '/michelin-star.svg',
 } as const;
 
 // Local storage keys

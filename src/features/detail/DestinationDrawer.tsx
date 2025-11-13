@@ -1219,6 +1219,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
                     className="h-3 w-3"
+                    loading="lazy"
+                    onError={(e) => {
+                      // Fallback to local file if external URL fails
+                      const target = e.currentTarget;
+                      if (target.src !== '/michelin-star.svg') {
+                        target.src = '/michelin-star.svg';
+                      }
+                    }}
                   />
                   {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
                   </span>
@@ -1765,6 +1773,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"
                               className="h-3 w-3"
+                              loading="lazy"
+                              onError={(e) => {
+                                // Fallback to local file if external URL fails
+                                const target = e.currentTarget;
+                                if (target.src !== '/michelin-star.svg') {
+                                  target.src = '/michelin-star.svg';
+                                }
+                              }}
                             />
                             <span>{rec.michelin_stars}</span>
                           </div>
