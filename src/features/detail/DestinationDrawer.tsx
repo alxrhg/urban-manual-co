@@ -1268,18 +1268,44 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Meta & Info Section */}
           <div className="space-y-6">
-            {/* Badges - Only parent destination badge remains here */}
+            {/* Parent destination context */}
             {parentDestination && (
-              <div className="flex flex-wrap gap-2">
-                <LocatedInBadge 
-                  parent={parentDestination}
-                  onClick={() => {
-                    if (parentDestination.slug && parentDestination.slug.trim()) {
-                      router.push(`/destination/${parentDestination.slug}`);
-                      onClose();
-                    }
-                  }}
-                />
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <LocatedInBadge
+                    parent={parentDestination}
+                    onClick={() => {
+                      if (parentDestination.slug && parentDestination.slug.trim()) {
+                        router.push(`/destination/${parentDestination.slug}`);
+                        onClose();
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/80 dark:bg-dark-blue-900/40 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Located inside</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{parentDestination.name}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {parentDestination.category && parentDestination.city
+                        ? `${parentDestination.category} · ${capitalizeCity(parentDestination.city)}`
+                        : parentDestination.category || capitalizeCity(parentDestination.city || '')}
+                    </p>
+                  </div>
+
+                  <button
+                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    onClick={() => {
+                      if (parentDestination.slug && parentDestination.slug.trim()) {
+                        router.push(`/destination/${parentDestination.slug}`);
+                        onClose();
+                      }
+                    }}
+                  >
+                    View {parentDestination.name}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1419,6 +1445,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </button>
             </div>
             </div>
+
+            {/* Nested Destinations */}
+            {(loadingNested || (nestedDestinations && nestedDestinations.length > 0)) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                {loadingNested ? (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading venues located here…
+                  </div>
+                ) : (
+                  nestedDestinations && nestedDestinations.length > 0 && (
+                    <NestedDestinations
+                      destinations={nestedDestinations}
+                      parentName={destination.name}
+                      onDestinationClick={(nested) => {
+                        if (nested.slug) {
+                          onClose();
+                          setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
+                        }
+                      }}
+                    />
+                  )
+                )}
+              </div>
+            )}
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-6" />

@@ -449,7 +449,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             <div className="flex flex-wrap gap-2 text-xs">
               {/* Parent destination badge - show if this is nested */}
               {parentDestination && (
-                <LocatedInBadge 
+                <LocatedInBadge
                   parent={parentDestination}
                   onClick={() => router.push(`/destination/${parentDestination.slug}`)}
                 />
@@ -492,6 +492,29 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </span>
               )}
             </div>
+
+            {parentDestination && (
+              <div className="mt-4 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/80 dark:bg-dark-blue-900/40 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                    Located inside
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{parentDestination.name}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {parentDestination.category && parentDestination.city
+                      ? `${parentDestination.category} · ${capitalizeCity(parentDestination.city)}`
+                      : parentDestination.category || capitalizeCity(parentDestination.city || '')}
+                  </p>
+                </div>
+
+                <button
+                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                  onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+                >
+                  View {parentDestination.name}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
