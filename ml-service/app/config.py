@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     # Performance
     max_requests_per_minute: int = 60
 
+    # Topic modeling / NLP configuration
+    topic_min_documents_city: int = 20
+    topic_min_documents_destination: int = 5
+    topic_text_lookback_days: int = 365
+    topic_preprocess_batch_size: int = 500
+
     class Config:
         env_file = ".env"
         case_sensitive = False

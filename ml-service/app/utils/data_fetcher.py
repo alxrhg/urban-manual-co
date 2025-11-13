@@ -161,6 +161,152 @@ class DataFetcher:
             raise
 
     @staticmethod
+    def fetch_city_topic_texts(city: str, lookback_days: int = 365) -> pd.DataFrame:
+        """Fetch descriptions, tags, and user notes for a city."""
+        logger.info(f"Fetching topic texts for city {city} (last {lookback_days} days)")
+
+        query = """
+        WITH city_destinations AS (
+            SELECT
+                id,
+                slug,
+                city,
+                content,
+                tags,
+                COALESCE(updated_at, created_at, NOW()) AS last_updated
+            FROM destinations
+            WHERE LOWER(city) = LOWER(%s)
+        )
+        SELECT text, source, ts
+        FROM (
+            SELECT
+                content AS text,
+                'destination_content' AS source,
+                last_updated AS ts
+            FROM city_destinations
+            UNION ALL
+            SELECT
+                array_to_string(tags, ', ') AS text,
+                'destination_tags' AS source,
+                last_updated AS ts
+            FROM city_destinations
+            UNION ALL
+            SELECT
+                sp.notes AS text,
+                'saved_note' AS source,
+                sp.saved_at AS ts
+            FROM saved_places sp
+            JOIN destinations d ON d.slug = sp.destination_slug
+            WHERE LOWER(d.city) = LOWER(%s)
+              AND sp.saved_at >= NOW() - INTERVAL '1 day' * %s
+            UNION ALL
+            SELECT
+                array_to_string(sp.tags, ', ') AS text,
+                'saved_tags' AS source,
+                sp.saved_at AS ts
+            FROM saved_places sp
+            JOIN destinations d ON d.slug = sp.destination_slug
+            WHERE LOWER(d.city) = LOWER(%s)
+              AND sp.saved_at >= NOW() - INTERVAL '1 day' * %s
+            UNION ALL
+            SELECT
+                vp.notes AS text,
+                'visited_note' AS source,
+                vp.visited_at AS ts
+            FROM visited_places vp
+            JOIN destinations d ON d.slug = vp.destination_slug
+            WHERE LOWER(d.city) = LOWER(%s)
+              AND vp.visited_at >= NOW() - INTERVAL '1 day' * %s
+        ) AS combined
+        WHERE text IS NOT NULL AND LENGTH(TRIM(text)) > 0
+        ORDER BY ts DESC
+        """
+
+        params = [city, city, lookback_days, city, lookback_days, city, lookback_days]
+
+        try:
+            with get_db_connection() as conn:
+                df = pd.read_sql_query(query, conn, params=params)
+
+            logger.info(f"Fetched {len(df)} text snippets for city {city}")
+            return df
+        except Exception as e:
+            logger.error(f"Error fetching city topic texts: {e}")
+            raise
+
+    @staticmethod
+    def fetch_destination_topic_texts(destination_id: int, lookback_days: int = 365) -> pd.DataFrame:
+        """Fetch descriptions, tags, and user notes for a destination."""
+        logger.info(
+            f"Fetching topic texts for destination {destination_id} (last {lookback_days} days)"
+        )
+
+        query = """
+        WITH target_destination AS (
+            SELECT
+                id,
+                slug,
+                content,
+                tags,
+                COALESCE(updated_at, created_at, NOW()) AS last_updated
+            FROM destinations
+            WHERE id = %s
+        )
+        SELECT text, source, ts
+        FROM (
+            SELECT
+                content AS text,
+                'destination_content' AS source,
+                last_updated AS ts
+            FROM target_destination
+            UNION ALL
+            SELECT
+                array_to_string(tags, ', ') AS text,
+                'destination_tags' AS source,
+                last_updated AS ts
+            FROM target_destination
+            UNION ALL
+            SELECT
+                sp.notes AS text,
+                'saved_note' AS source,
+                sp.saved_at AS ts
+            FROM saved_places sp
+            JOIN target_destination td ON td.slug = sp.destination_slug
+            WHERE sp.saved_at >= NOW() - INTERVAL '1 day' * %s
+            UNION ALL
+            SELECT
+                array_to_string(sp.tags, ', ') AS text,
+                'saved_tags' AS source,
+                sp.saved_at AS ts
+            FROM saved_places sp
+            JOIN target_destination td ON td.slug = sp.destination_slug
+            WHERE sp.saved_at >= NOW() - INTERVAL '1 day' * %s
+            UNION ALL
+            SELECT
+                vp.notes AS text,
+                'visited_note' AS source,
+                vp.visited_at AS ts
+            FROM visited_places vp
+            JOIN target_destination td ON td.slug = vp.destination_slug
+            WHERE vp.visited_at >= NOW() - INTERVAL '1 day' * %s
+        ) AS combined
+        WHERE text IS NOT NULL AND LENGTH(TRIM(text)) > 0
+        ORDER BY ts DESC
+        """
+
+        params = [destination_id, lookback_days, lookback_days, lookback_days]
+
+        try:
+            with get_db_connection() as conn:
+                df = pd.read_sql_query(query, conn, params=params)
+
+            logger.info(f"Fetched {len(df)} text snippets for destination {destination_id}")
+            return df
+        except Exception as e:
+            logger.error(f"Error fetching destination topic texts: {e}")
+            raise
+
+    @staticmethod
     def fetch_analytics_data(days: int = 180) -> pd.DataFrame:
         """
         Fetch analytics data for demand forecasting.
