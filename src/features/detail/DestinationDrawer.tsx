@@ -264,9 +264,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setEnrichedData(null);
         setIsSaved(false);
         setIsVisited(false);
+        setIsAddedToTrip(false); // Reset immediately
         setReviewSummary(null);
         return;
       }
+
+      // Reset isAddedToTrip immediately when destination changes to prevent showing "Added" for all places
+      setIsAddedToTrip(false);
 
       // Fetch enriched data from database
       try {
