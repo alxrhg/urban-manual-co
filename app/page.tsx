@@ -2034,10 +2034,11 @@ export default function Home() {
                     {/* Create Trip Button */}
                     <button
                       onClick={() => setShowTripPlanner(true)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80 flex-shrink-0"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-colors hover:bg-gray-900 dark:hover:bg-gray-100 flex-shrink-0"
+                      aria-label="Create Trip"
                     >
-                      <Plus className="h-4 w-4" />
-                      <span>Create Trip</span>
+                      <Plus className="h-5 w-5" />
+                      <span className="text-sm font-medium">Create Trip</span>
                     </button>
                   </div>
                 </div>
