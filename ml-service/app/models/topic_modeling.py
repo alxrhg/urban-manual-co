@@ -2,10 +2,13 @@
 
 from typing import List, Dict, Optional
 from datetime import datetime
-import pandas as pd
+import re
+
 from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
-import numpy as np
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+
+EMOJI_PATTERN = re.compile("[\U00010000-\U0010ffff]", flags=re.UNICODE)
 
 from app.config import get_settings
 from app.utils.logger import get_logger
@@ -27,6 +30,7 @@ class TopicModelingModel:
         self.model = None
         self.embedding_model = None
         self.trained_at = None
+        self.stopwords = set(ENGLISH_STOP_WORDS)
 
     def _load_embedding_model(self):
         """Load sentence transformer for embeddings."""
@@ -37,6 +41,32 @@ class TopicModelingModel:
         except Exception as e:
             logger.error(f"Error loading embedding model: {e}")
             self.embedding_model = None
+
+    def _preprocess_text(self, text: str) -> str:
+        """Lowercase text, remove stopwords and emojis."""
+        if not text:
+            return ""
+
+        clean = EMOJI_PATTERN.sub(" ", text)
+        clean = clean.lower()
+        clean = re.sub(r"http\S+", " ", clean)
+        clean = re.sub(r"[^a-z0-9\s]", " ", clean)
+        tokens = [tok for tok in clean.split() if tok and tok not in self.stopwords]
+        return " ".join(tokens)
+
+    def _preprocess_texts(self, texts: List[str]) -> List[str]:
+        """Preprocess texts in batches to reduce memory pressure."""
+        if not texts:
+            return []
+
+        batch_size = settings.topic_preprocess_batch_size
+        cleaned: List[str] = []
+        for start in range(0, len(texts), batch_size):
+            batch = texts[start:start + batch_size]
+            cleaned.extend(
+                filter(None, (self._preprocess_text(text) for text in batch))
+            )
+        return cleaned
 
     def train(
         self,
@@ -55,6 +85,8 @@ class TopicModelingModel:
         Returns:
             Training results with topics and statistics
         """
+        texts = self._preprocess_texts(texts)
+
         if not texts or len(texts) < min_topic_size:
             logger.warning(f"Not enough texts for topic modeling: {len(texts)}")
             return {
@@ -139,8 +171,9 @@ class TopicModelingModel:
         try:
             # Fetch texts for destinations in this city
             texts = self._fetch_city_texts(city)
-            
-            if not texts or len(texts) < min_topic_size:
+            required_docs = max(min_topic_size, settings.topic_min_documents_city)
+
+            if not texts or len(texts) < required_docs:
                 return {
                     'city': city,
                     'topics': [],
@@ -149,7 +182,7 @@ class TopicModelingModel:
                 }
 
             # Train model on city-specific texts
-            result = self.train(texts, min_topic_size=min_topic_size)
+            result = self.train(texts, min_topic_size=required_docs)
             
             return {
                 'city': city,
@@ -181,8 +214,9 @@ class TopicModelingModel:
         """
         try:
             texts = self._fetch_destination_texts(destination_id)
-            
-            if not texts or len(texts) < min_topic_size:
+            required_docs = max(min_topic_size, settings.topic_min_documents_destination)
+
+            if not texts or len(texts) < required_docs:
                 return {
                     'destination_id': destination_id,
                     'topics': [],
@@ -190,7 +224,7 @@ class TopicModelingModel:
                     'status': 'insufficient_data',
                 }
 
-            result = self.train(texts, min_topic_size=min_topic_size)
+            result = self.train(texts, min_topic_size=required_docs)
             
             return {
                 'destination_id': destination_id,
@@ -208,10 +242,11 @@ class TopicModelingModel:
     def _fetch_city_texts(self, city: str) -> List[str]:
         """Fetch text data for destinations in a city."""
         try:
-            # Placeholder: Query destinations in city
-            # Combine descriptions, notes, tags
-            # This would use DataFetcher
-            return []
+            df = DataFetcher.fetch_city_topic_texts(
+                city,
+                settings.topic_text_lookback_days
+            )
+            return df['text'].tolist() if not df.empty else []
         except Exception as e:
             logger.error(f"Error fetching city texts: {e}")
             return []
@@ -219,8 +254,11 @@ class TopicModelingModel:
     def _fetch_destination_texts(self, destination_id: int) -> List[str]:
         """Fetch text data for a destination."""
         try:
-            # Placeholder: Query user notes, reviews for destination
-            return []
+            df = DataFetcher.fetch_destination_topic_texts(
+                destination_id,
+                settings.topic_text_lookback_days
+            )
+            return df['text'].tolist() if not df.empty else []
         except Exception as e:
             logger.error(f"Error fetching destination texts: {e}")
             return []
