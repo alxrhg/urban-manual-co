@@ -4,6 +4,20 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
+
+// Helper function to extract domain from URL
+function extractDomain(url: string): string {
+  try {
+    // Remove protocol if present
+    let cleanUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+    // Remove path and query params
+    cleanUrl = cleanUrl.split('/')[0].split('?')[0];
+    return cleanUrl;
+  } catch {
+    // If parsing fails, return original or a cleaned version
+    return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+  }
+}
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1434,16 +1448,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact</h3>
               <div className="flex flex-wrap gap-2">
-                {(enrichedData?.website || destination.website) && (
-                  <a
-                    href={(enrichedData?.website || destination.website).startsWith('http') ? (enrichedData?.website || destination.website) : `https://${enrichedData?.website || destination.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Website
-                  </a>
-                )}
+                {(enrichedData?.website || destination.website) && (() => {
+                  const websiteUrl = (enrichedData?.website || destination.website) || '';
+                  const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                  const domain = extractDomain(websiteUrl);
+                  return (
+                    <a
+                      href={fullUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <span>{domain}</span>
+                      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                    </a>
+                  );
+                })()}
                 {(enrichedData?.international_phone_number || destination.phone_number) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}

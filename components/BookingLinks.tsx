@@ -2,6 +2,20 @@
 
 import { ExternalLink, Phone, Calendar } from 'lucide-react';
 
+// Helper function to extract domain from URL
+function extractDomain(url: string): string {
+  try {
+    // Remove protocol if present
+    let cleanUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+    // Remove path and query params
+    cleanUrl = cleanUrl.split('/')[0].split('?')[0];
+    return cleanUrl;
+  } catch {
+    // If parsing fails, return original or a cleaned version
+    return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+  }
+}
+
 interface Props {
   googleMapsUrl?: string | null;
   website?: string | null;
@@ -103,20 +117,22 @@ export function BookingLinks({
         )}
 
         {/* Website */}
-        {website && (
-          <a
-            href={website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm">Visit Website</span>
-            </div>
-            <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-          </a>
-        )}
+        {website && (() => {
+          const domain = extractDomain(website);
+          return (
+            <a
+              href={website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-900 dark:text-gray-100">{domain}</span>
+              </div>
+              <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
+            </a>
+          );
+        })()}
 
         {/* Google Maps */}
         {googleMapsUrl && (
