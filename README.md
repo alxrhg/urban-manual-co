@@ -4,6 +4,8 @@ A modern, curated travel guide featuring 897 destinations across the world.
 
 > **⚠️ IMPORTANT**: The production Next.js 16 app now lives at the **repository root**. All commands in this README assume you are already in `/workspace/urban-manual` (or wherever you cloned the repo).
 
+Need to work on the tagging/enrichment system? Read the [Semantic Tags Guide](docs/semantic_tags.md) for rule syntax, testing steps, and taxonomy tips.
+
 ## Active Development (Next.js 16)
 
 **Location**: Repository root (`/`)
