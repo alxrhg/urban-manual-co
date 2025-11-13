@@ -3,7 +3,36 @@
  */
 
 import { NextResponse } from 'next/server';
-import { ErrorCode, CustomError, AppError } from './types';
+import { ErrorCode, CustomError } from './types';
+
+interface StandardResponse<TData> {
+  success: boolean;
+  data: TData | null;
+  meta: Record<string, any> | null;
+  errors: Array<{
+    message: string;
+    code: ErrorCode;
+    details?: any;
+  }>;
+}
+
+type SuccessMeta = Record<string, any> | null;
+
+export function createSuccessResponse<TData>(
+  data: TData,
+  meta: SuccessMeta = null,
+  status: number = 200
+): NextResponse<StandardResponse<TData>> {
+  return NextResponse.json(
+    {
+      success: true,
+      data,
+      meta,
+      errors: [],
+    },
+    { status }
+  );
+}
 
 /**
  * Create a standardized error response
@@ -11,14 +40,21 @@ import { ErrorCode, CustomError, AppError } from './types';
 export function createErrorResponse(
   error: Error | CustomError | unknown,
   defaultMessage: string = 'An error occurred'
-): NextResponse {
+): NextResponse<StandardResponse<null>> {
   // Handle CustomError
   if (error instanceof CustomError) {
     return NextResponse.json(
       {
-        error: error.message,
-        code: error.code,
-        details: error.details,
+        success: false,
+        data: null,
+        meta: null,
+        errors: [
+          {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+          },
+        ],
       },
       { status: error.statusCode }
     );
@@ -28,8 +64,15 @@ export function createErrorResponse(
   if (error instanceof Error) {
     return NextResponse.json(
       {
-        error: error.message || defaultMessage,
-        code: ErrorCode.INTERNAL_SERVER_ERROR,
+        success: false,
+        data: null,
+        meta: null,
+        errors: [
+          {
+            message: error.message || defaultMessage,
+            code: ErrorCode.INTERNAL_SERVER_ERROR,
+          },
+        ],
       },
       { status: 500 }
     );
@@ -38,8 +81,15 @@ export function createErrorResponse(
   // Handle unknown errors
   return NextResponse.json(
     {
-      error: defaultMessage,
-      code: ErrorCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      data: null,
+      meta: null,
+      errors: [
+        {
+          message: defaultMessage,
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+        },
+      ],
     },
     { status: 500 }
   );
