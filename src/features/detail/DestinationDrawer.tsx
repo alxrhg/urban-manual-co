@@ -1058,6 +1058,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             >
               <Share2 className="h-5 w-5 text-gray-900 dark:text-gray-100" />
             </button>
+
+            {/* Edit Button (Admin Only) */}
+            {isAdmin && destination && (
+              <button
+                onClick={() => setIsEditDrawerOpen(true)}
+                className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center justify-center transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                title="Edit destination"
+                aria-label="Edit destination"
+              >
+                <Edit className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+              </button>
+            )}
           </div>
 
           {/* Action Buttons - Side by Side */}
@@ -1554,17 +1566,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <Navigation className="h-3 w-3" />
                 Directions
               </a>
-              {isAdmin && destination && (
-                <button
-                  onClick={() => setIsEditDrawerOpen(true)}
-                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-2xl text-xs font-medium flex items-center gap-1.5"
-                  title="Edit destination"
-                  aria-label="Edit destination"
-                >
-                  <Edit className="h-3 w-3" />
-                  Edit
-                </button>
-              )}
               <button
                 onClick={handleShare}
                 className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
