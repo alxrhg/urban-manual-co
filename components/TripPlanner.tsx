@@ -23,7 +23,6 @@ import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripWeatherForecast } from './TripWeatherForecast';
-import { TripPackingList } from './TripPackingList';
 import { TripShareModal } from './TripShareModal';
 import { Drawer } from './ui/Drawer';
 import type { Trip as TripSchema, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
@@ -68,7 +67,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
   const [activeTab, setActiveTab] = useState<
-    'itinerary' | 'weather' | 'packing'
+    'itinerary' | 'weather'
   >('itinerary');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
@@ -627,16 +626,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           >
             Weather
           </button>
-          <button
-            onClick={() => setActiveTab('packing')}
-            className={`text-xs font-medium transition-colors ${
-              activeTab === 'packing'
-                ? 'text-black dark:text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Packing
-          </button>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -818,16 +807,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             >
               Weather
             </button>
-            <button
-              onClick={() => setActiveTab('packing')}
-              className={`text-xs font-medium transition-colors ${
-                activeTab === 'packing'
-                  ? 'text-black dark:text-white'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              Packing
-            </button>
           </div>
 
           {activeTab === 'itinerary' && (
@@ -980,14 +959,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             />
           )}
 
-          {activeTab === 'packing' && (
-            <TripPackingList
-              destination={destination}
-              days={days}
-              startDate={startDate}
-              endDate={endDate}
-            />
-          )}
         </>
       )}
     </div>
