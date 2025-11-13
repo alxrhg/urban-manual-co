@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { TripPlanner } from '@/components/TripPlanner';
+import { TripViewDrawer } from '@/components/TripViewDrawer';
 import type { Trip } from '@/types/trip';
 
 export default function TripsPage() {
@@ -15,6 +16,7 @@ export default function TripsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
+  const [viewingTripId, setViewingTripId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -193,7 +195,7 @@ export default function TripsPage() {
                       <button
                         onClick={e => {
                           e.stopPropagation();
-                          router.push(`/trips/${trip.id}`);
+                          setViewingTripId(trip.id);
                         }}
                         className="text-sm font-medium text-black dark:text-white hover:opacity-60 transition-opacity"
                       >
@@ -244,6 +246,26 @@ export default function TripsPage() {
           }
         }}
       />
+
+      {/* Trip View Drawer */}
+      {viewingTripId && (
+        <TripViewDrawer
+          isOpen={!!viewingTripId}
+          onClose={() => {
+            setViewingTripId(null);
+            fetchTrips();
+          }}
+          tripId={viewingTripId}
+          onEdit={() => {
+            setEditingTripId(viewingTripId);
+            setViewingTripId(null);
+            setShowCreateDialog(true);
+          }}
+          onDelete={() => {
+            fetchTrips();
+          }}
+        />
+      )}
     </main>
   );
 }
