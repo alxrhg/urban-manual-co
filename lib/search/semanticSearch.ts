@@ -1,73 +1,248 @@
 import { embedText } from '@/lib/llm';
+import { trackContentMetric } from '@/lib/metrics';
+import { mapAsimovResultsToDestinations, searchAsimov } from '@/lib/search/asimov';
 import { createClient } from '@supabase/supabase-js';
+
+export type SemanticSearchFilters = {
+  city?: string;
+  category?: string;
+  open_now?: boolean;
+};
 
 const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
 // Support both new (publishable/secret) and legacy (anon/service_role) key naming
 const key = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 ) as string;
 const supabase = createClient(url, key);
+const SEMANTIC_SEARCH_RPC = process.env.NEXT_PUBLIC_SEMANTIC_SEARCH_RPC || 'search_destinations_intelligent';
 
-function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0, na = 0, nb = 0;
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
+type SemanticSearchDependencies = {
+  embed: typeof embedText;
+  supabaseClient: typeof supabase;
+  asimovSearch: typeof searchAsimov;
+  asimovMapper: typeof mapAsimovResultsToDestinations;
+  metricTracker: typeof trackContentMetric;
+};
+
+const defaultDeps: SemanticSearchDependencies = {
+  embed: embedText,
+  supabaseClient: supabase,
+  asimovSearch: searchAsimov,
+  asimovMapper: mapAsimovResultsToDestinations,
+  metricTracker: trackContentMetric,
+};
+
+export function createSemanticBlendSearch(
+  deps: Partial<SemanticSearchDependencies> = {}
+) {
+  const resolved: SemanticSearchDependencies = { ...defaultDeps, ...deps };
+
+  return async function semanticBlendSearch(
+    query: string,
+    filters: SemanticSearchFilters = {}
+  ) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return [];
+
+    const embedding = await resolved.embed(trimmedQuery);
+    const vector = embedding ? Array.from(embedding) : null;
+
+    if (!vector) {
+      await logVectorMetric(
+        'vector_failure',
+        { query: trimmedQuery, reason: 'embedding_unavailable' },
+        resolved.metricTracker
+      );
+      return fallbackSearch(trimmedQuery, filters, resolved);
+    }
+
+    try {
+      const rpcResults = await runSemanticRpc(vector, filters, resolved);
+      if (rpcResults.length > 0) {
+        return rpcResults;
+      }
+
+      await logVectorMetric(
+        'vector_failure',
+        { query: trimmedQuery, reason: 'empty_rpc_results' },
+        resolved.metricTracker
+      );
+    } catch (error: any) {
+      console.error('[SemanticSearch] Hybrid RPC error:', error);
+      await logVectorMetric(
+        'vector_failure',
+        { query: trimmedQuery, reason: error?.message || 'rpc_error' },
+        resolved.metricTracker
+      );
+      return fallbackSearch(trimmedQuery, filters, resolved);
+    }
+
+    return fallbackSearch(trimmedQuery, filters, resolved);
+  };
+}
+
+export const semanticBlendSearch = createSemanticBlendSearch();
+
+async function runSemanticRpc(
+  embedding: number[],
+  filters: SemanticSearchFilters,
+  deps: SemanticSearchDependencies
+) {
+  const params: Record<string, any> = {
+    query_embedding: `[${embedding.join(',')}]`,
+    user_id_param: null,
+    limit_count: 20,
+    city_filter: filters.city || null,
+    category_filter: filters.category || null,
+  };
+
+  if (SEMANTIC_SEARCH_RPC === 'search_destinations_intelligent') {
+    params.open_now_filter = filters.open_now ?? false;
   }
-  if (na === 0 || nb === 0) return 0;
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+
+  const { data, error } = await deps.supabaseClient.rpc(SEMANTIC_SEARCH_RPC, params);
+
+  if (error) {
+    throw error;
+  }
+
+  let normalized = normalizeResults(data || []);
+
+  if (SEMANTIC_SEARCH_RPC !== 'search_destinations_intelligent' && filters.open_now) {
+    normalized = normalized.filter((result) => result.is_open_now);
+  }
+
+  return normalized;
 }
 
-function normalize(values: number[]): (x: number) => number {
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
-  const range = Math.max(max - min, 1);
-  return (x: number) => (x - min) / range;
+async function fallbackSearch(
+  query: string,
+  filters: SemanticSearchFilters,
+  deps: SemanticSearchDependencies
+) {
+  try {
+    const asimovResults = await deps.asimovSearch({
+      query,
+      limit: 20,
+      params: {
+        city: filters.city,
+        category: filters.category,
+      },
+    });
+
+    if (asimovResults?.length) {
+      const knownDestinations = await fetchDestinationsForMapping(filters, deps.supabaseClient);
+      const mapped = deps.asimovMapper(asimovResults, knownDestinations);
+
+      if (mapped.length > 0) {
+        await logVectorMetric(
+          'vector_fallback',
+          { query, strategy: 'asimov', count: mapped.length },
+          deps.metricTracker
+        );
+        return normalizeResults(mapped);
+      }
+    }
+  } catch (error) {
+    console.error('[SemanticSearch] Asimov fallback error:', error);
+  }
+
+  const keywordResults = await keywordFallbackSearch(query, filters, deps.supabaseClient);
+  await logVectorMetric(
+    'vector_fallback',
+    { query, strategy: 'keyword', count: keywordResults.length },
+    deps.metricTracker
+  );
+  return normalizeResults(keywordResults);
 }
 
-export async function semanticBlendSearch(query: string, filters: { city?: string; category?: string; open_now?: boolean } = {}) {
-  const qEmbedding = await embedText(query);
-  if (!qEmbedding) return [];
+async function fetchDestinationsForMapping(
+  filters: SemanticSearchFilters,
+  client: typeof supabase
+) {
+  try {
+    let query = client
+      .from('destinations')
+      .select('id, slug, name, city, category, description, content, image, rating, price_level, michelin_stars, is_open_now')
+      .limit(200);
 
-  let q = supabase
-    .from('destinations')
-    .select('slug, name, city, category, image, rating, reviews_count, rank_score, is_open_now, vector_embedding')
-    .order('rank_score', { ascending: false })
-    .limit(200);
-  if (filters.city) q = q.ilike('city', `%${filters.city}%`);
-  if (filters.category) q = q.ilike('category', `%${filters.category}%`);
-  if (filters.open_now) q = q.eq('is_open_now', true);
+    if (filters.city) {
+      query = query.ilike('city', `%${filters.city}%`);
+    }
 
-  const { data, error } = await q;
-  if (error || !data) return [];
+    if (filters.category) {
+      query = query.ilike('category', `%${filters.category}%`);
+    }
 
-  const rankValues = data.map((d: any) => d.rank_score || 0);
-  const norm = normalize(rankValues);
-
-  const scored = data
-    .filter((d: any) => Array.isArray(d.vector_embedding))
-    .map((d: any) => {
-      const sim = cosineSimilarity(qEmbedding as number[], d.vector_embedding as number[]);
-      const blended = 0.7 * sim + 0.3 * norm(d.rank_score || 0);
-      return { ...d, _sim: sim, _score: blended };
-    })
-    .sort((a: any, b: any) => b._score - a._score)
-    .slice(0, 20);
-
-  // Apply editorial integrity prioritization in the final pass
-  const curated = scored.sort((a: any, b: any) => {
-    const aGood = (a.rating || 0) > 4.0 && (a.reviews_count || 0) > 10 ? 1 : 0;
-    const bGood = (b.rating || 0) > 4.0 && (b.reviews_count || 0) > 10 ? 1 : 0;
-    if (aGood !== bGood) return bGood - aGood;
-    return b._score - a._score;
-  });
-
-  return curated.map(({ _sim, _score, vector_embedding, ...rest }: any) => rest);
+    const { data } = await query;
+    return data || [];
+  } catch (error) {
+    console.error('[SemanticSearch] Error fetching mapping destinations:', error);
+    return [];
+  }
 }
 
+async function keywordFallbackSearch(
+  query: string,
+  filters: SemanticSearchFilters,
+  client: typeof supabase
+) {
+  try {
+    let keywordQuery = client
+      .from('destinations')
+      .select('id, slug, name, city, category, description, content, image, rating, price_level, michelin_stars, is_open_now')
+      .limit(20);
 
+    if (filters.city) {
+      keywordQuery = keywordQuery.ilike('city', `%${filters.city}%`);
+    }
+
+    if (filters.category) {
+      keywordQuery = keywordQuery.ilike('category', `%${filters.category}%`);
+    }
+
+    if (filters.open_now) {
+      keywordQuery = keywordQuery.eq('is_open_now', true);
+    }
+
+    keywordQuery = keywordQuery.or(
+      `name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`
+    );
+
+    const { data } = await keywordQuery;
+    return data || [];
+  } catch (error) {
+    console.error('[SemanticSearch] Keyword fallback error:', error);
+    return [];
+  }
+}
+
+function normalizeResults(data: any[]) {
+  return (data || []).map((row: any) => ({
+    ...row,
+    image: row.image ?? row.image_url ?? row.main_image ?? null,
+    similarity: row.similarity ?? row.similarity_score ?? row._asimov_score ?? null,
+    final_score: row.final_score ?? row.rank_score ?? row.similarity ?? null,
+    content: row.content ?? row.description ?? null,
+  }));
+}
+
+async function logVectorMetric(
+  event: 'vector_failure' | 'vector_fallback',
+  payload: Record<string, any>,
+  tracker: typeof trackContentMetric
+) {
+  try {
+    await tracker(event, {
+      source: 'semanticBlendSearch',
+      ...payload,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.warn('[SemanticSearch] Unable to log vector metric:', error);
+  }
+}

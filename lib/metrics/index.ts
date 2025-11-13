@@ -10,7 +10,14 @@ const key = (
 ) as string;
 const supabase = createClient(url, key);
 
-export async function trackContentMetric(event: 'click'|'dwell'|'scroll', payload: any) {
+export type ContentMetricEvent =
+  | 'click'
+  | 'dwell'
+  | 'scroll'
+  | 'vector_failure'
+  | 'vector_fallback';
+
+export async function trackContentMetric(event: ContentMetricEvent, payload: any) {
   try {
     await supabase.from('content_metrics').insert({ event, payload, created_at: new Date().toISOString() });
   } catch {}
