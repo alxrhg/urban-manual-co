@@ -97,6 +97,22 @@ Once embeddings are generated:
 2. **Monitor Performance** - Vector search should be fast with the index
 3. **Consider Optimization** - Once embeddings are stable, you can adjust the IVFFlat index `lists` parameter if needed
 
+## 🧭 Re-running the Upgrade Safely
+
+When replaying migrations or bringing up a fresh environment, use this order so that the schema cannot regress back to 768-dimension vectors introduced by `2025_01_05_add_vector_search_function.sql`:
+
+1. **Apply earlier Supabase migrations (1-424) as normal.**
+2. **Run `025_fix_embedding_dimension.sql`.** This drops/recreates `destinations.embedding` as `vector(1536)` and ensures `search_destinations_intelligent` expects the same size.
+3. **Immediately run `430_realign_vector_dimensions.sql`.** This removes any 768-dimension leftovers, recreates the tuned HNSW indexes plus `search_text` trigger helpers, and updates all `match_destinations` RPC signatures to require `vector(1536)` parameters.
+
+After `430` finishes:
+
+- **Regenerate embeddings** using `npm run backfill-embeddings` so the new `destinations.embedding`, `destinations.vector_embedding`, and `destinations.cf_factors` columns are populated with 1536-dimension vectors.
+- **Verify indexes and triggers** with `\d+ destinations` inside `psql` – you should see the `idx_destinations_*_hnsw` indexes and `trigger_update_destination_search_text`.
+- **Smoke test the RPCs** by calling `match_destinations` and `search_destinations_intelligent` with freshly generated 1536-dimension query embeddings.
+
+> ℹ️ If a migration run fails midway, simply re-run `430_realign_vector_dimensions.sql`. The guards inside it safely drop/replace obsolete objects without harming the current schema, but embeddings will need to be regenerated afterward because the columns are recreated when dimensions mismatch.
+
 ## 📝 Notes
 
 - The backfill script processes destinations where `embedding IS NULL`
