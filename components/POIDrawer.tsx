@@ -13,9 +13,22 @@ interface POIDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: () => void; // Callback after successful save
+  destination?: Destination | null; // Optional destination for editing mode
 }
 
-export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
+interface Destination {
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  description?: string | null;
+  content?: string | null;
+  image?: string | null;
+  michelin_stars?: number | null;
+  crown?: boolean;
+}
+
+export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerProps) {
   const { user } = useAuth();
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -36,7 +49,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
     crown: false,
   });
 
-  // Reset form when drawer opens/closes
+  // Reset form when drawer opens/closes, or load destination data for editing
   useEffect(() => {
     if (!isOpen) {
       setFormData({
@@ -52,8 +65,24 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
       });
       setImageFile(null);
       setImagePreview(null);
+    } else if (destination) {
+      // Pre-fill form with destination data for editing
+      setFormData({
+        slug: destination.slug || '',
+        name: destination.name || '',
+        city: destination.city || '',
+        category: destination.category || '',
+        description: destination.description || '',
+        content: destination.content || '',
+        image: destination.image || '',
+        michelin_stars: destination.michelin_stars || null,
+        crown: destination.crown || false,
+      });
+      if (destination.image) {
+        setImagePreview(destination.image);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, destination]);
 
   // Auto-generate slug from name
   useEffect(() => {
@@ -189,9 +218,23 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
         crown: formData.crown || false,
       };
 
-      const { error } = await supabase
-        .from('destinations')
-        .insert([destinationData]);
+      const isEditing = !!destination;
+      
+      let error;
+      if (isEditing) {
+        // Update existing destination
+        const { error: updateError } = await supabase
+          .from('destinations')
+          .update(destinationData)
+          .eq('slug', destination.slug);
+        error = updateError;
+      } else {
+        // Create new destination
+        const { error: insertError } = await supabase
+          .from('destinations')
+          .insert([destinationData]);
+        error = insertError;
+      }
 
       if (error) {
         if (error.code === '23505') { // Unique constraint violation
@@ -202,7 +245,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
         return;
       }
 
-      toast.success('POI created successfully');
+      toast.success(isEditing ? 'Destination updated successfully' : 'POI created successfully');
       onSave?.();
       onClose();
     } catch (error: any) {
@@ -549,10 +592,10 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Creating...
+                {destination ? 'Updating...' : 'Creating...'}
               </>
             ) : (
-              'Create POI'
+              destination ? 'Update Destination' : 'Create POI'
             )}
           </button>
         </div>
@@ -564,7 +607,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Add New POI"
+      title={destination ? "Edit Destination" : "Add New POI"}
       desktopWidth="600px"
     >
       {content}

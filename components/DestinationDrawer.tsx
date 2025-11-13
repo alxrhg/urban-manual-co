@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
+import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -24,6 +24,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
+import { POIDrawer } from './POIDrawer';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -182,6 +183,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [heartAnimating, setHeartAnimating] = useState(false);
   const [checkAnimating, setCheckAnimating] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   // List management state
   const [showListsModal, setShowListsModal] = useState(false);
@@ -338,6 +341,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         .single();
 
       setIsVisited(!!visitedData);
+
+      // Check if user is admin
+      if (user) {
+        const role = (user.app_metadata as Record<string, any> | null)?.role;
+        setIsAdmin(role === 'admin');
+      } else {
+        setIsAdmin(false);
+      }
     }
 
     loadDestinationData();
@@ -710,6 +721,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-bold">Destination</h2>
           <div className="flex items-center gap-2">
+            {isAdmin && destination && (
+              <button
+                onClick={() => setIsEditDrawerOpen(true)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                title="Edit destination"
+                aria-label="Edit destination"
+              >
+                <Edit className="h-5 w-5" />
+              </button>
+            )}
             {destination?.slug && (
               <button
                 onClick={() => {
@@ -1422,6 +1443,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
         </div>
       )}
+
+      {/* Edit Drawer */}
+      <POIDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        destination={destination}
+        onSave={() => {
+          setIsEditDrawerOpen(false);
+          // Reload destination data after save
+          if (destination) {
+            window.location.reload();
+          }
+        }}
+      />
 
       {/* Visit Modal */}
       <VisitModal
