@@ -5,12 +5,10 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 /**
- * Payload Admin Page with Supabase Authentication
- * 
- * This page protects Payload's admin UI with your existing Supabase authentication.
- * Only users with admin role in Supabase can access Payload CMS.
+ * Wrapper component that checks Supabase auth before rendering Payload admin
+ * This ensures only Supabase-authenticated admins can access Payload
  */
-export default function PayloadAdminPage() {
+export default function PayloadAdminWrapper() {
   const router = useRouter()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -33,7 +31,7 @@ export default function PayloadAdminPage() {
           return
         }
 
-        // User is authenticated and is admin - allow access to Payload
+        // User is authenticated and is admin
         setIsAuthorized(true)
       } catch (error) {
         console.error('[Payload Admin] Auth check failed:', error)
@@ -48,8 +46,8 @@ export default function PayloadAdminPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
-        <div className="text-sm text-gray-500 dark:text-gray-400">Checking authentication...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-sm text-gray-500">Checking authentication...</div>
       </div>
     )
   }
@@ -58,8 +56,7 @@ export default function PayloadAdminPage() {
     return null // Router will handle redirect
   }
 
-  // Payload's admin UI will be rendered by Next.js integration
-  // The actual admin UI is served by Payload's internal routing
+  // Render Payload admin - it will be handled by Payload's Next.js integration
   return null
 }
 
