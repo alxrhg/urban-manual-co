@@ -2386,6 +2386,8 @@ export default function Home() {
                 // Add a small delay to ensure the database has updated
                 await new Promise(resolve => setTimeout(resolve, 500));
                 await fetchDestinations();
+                // Reset to first page to show the newly created POI at the top
+                setCurrentPage(1);
               }}
             />
           )}
