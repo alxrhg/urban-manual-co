@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { MapPin, Check } from 'lucide-react';
+import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
@@ -14,6 +14,8 @@ interface DestinationCardProps {
   isVisited?: boolean;
   showBadges?: boolean;
   className?: string;
+  isAdmin?: boolean;
+  onEdit?: (destination: Destination) => void;
 }
 
 /**
@@ -26,6 +28,8 @@ export function DestinationCard({
   isVisited = false,
   showBadges = true,
   className = '',
+  isAdmin = false,
+  onEdit,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -132,6 +136,21 @@ export function DestinationCard({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
             <Check className="w-5 h-5 text-gray-900 dark:text-white stroke-[3]" />
           </div>
+        )}
+
+        {/* Admin Edit Button - Top Right */}
+        {isAdmin && onEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(destination);
+            }}
+            className="absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-900 transition-all opacity-0 group-hover:opacity-100 shadow-lg"
+            title="Edit destination"
+            aria-label="Edit destination"
+          >
+            <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+          </button>
         )}
 
         {/* Badges - Animated on hover */}

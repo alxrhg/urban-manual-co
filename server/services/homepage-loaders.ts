@@ -107,10 +107,11 @@ export async function getHomepageDestinations(limit = 500) {
   try {
     const { data, error } = await adminClient
       .from('destinations')
-      .select('slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
+      .select('slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset, created_at')
       .is('parent_destination_id', null)
       .limit(limit)
-      .order('name');
+      .order('created_at', { ascending: false, nullsLast: true })
+      .order('id', { ascending: false }); // Fallback: newer IDs (higher numbers) first
 
     if (error) {
       throw error;

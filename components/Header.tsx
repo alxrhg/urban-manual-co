@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, User } from "lucide-react";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { AccountDrawer } from "@/components/AccountDrawer";
@@ -110,10 +111,17 @@ export function Header() {
           {/* Logo - Left */}
           <button
             onClick={() => navigate("/")}
-            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+            className="flex items-center hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
             aria-label="Go to homepage"
           >
-            Urban Manual®
+            <Image
+              src="/logo.png"
+              alt="Urban Manual"
+              width={120}
+              height={40}
+              className="h-8 w-auto dark:invert"
+              priority
+            />
           </button>
           
           {/* Right side: Account/Sign In button + Menu dropdown */}

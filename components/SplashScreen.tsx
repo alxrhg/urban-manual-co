@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 export function SplashScreen() {
   const [isVisible, setIsVisible] = useState(true);
@@ -46,9 +47,14 @@ export function SplashScreen() {
     >
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <h1 className="text-sm font-light text-gray-400 dark:text-gray-500 tracking-wide">
-                Urban Manual
-              </h1>
+              <Image
+                src="/logo.png"
+                alt="Urban Manual"
+                width={200}
+                height={67}
+                className="h-12 w-auto mx-auto dark:invert"
+                priority
+              />
             </div>
           </div>
     </div>

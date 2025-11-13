@@ -454,15 +454,17 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                 (trip.start_date || trip.end_date) && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5" />
+                    <span>
+                      {formatDate(trip.start_date)}
+                      {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                    </span>
                     <button
                       onClick={() => setIsEditingDates(true)}
-                      className="hover:underline flex items-center gap-1"
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                      title="Edit dates"
+                      aria-label="Edit dates"
                     >
-                      <span>
-                        {formatDate(trip.start_date)}
-                        {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                      </span>
-                      <Edit2 className="h-3 w-3 opacity-50" />
+                      <Edit2 className="h-3 w-3 text-gray-600 dark:text-gray-400" />
                     </button>
                   </div>
                 )

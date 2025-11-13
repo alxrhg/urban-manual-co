@@ -244,6 +244,7 @@ export default function Home() {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPOIDrawer, setShowPOIDrawer] = useState(false);
+  const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
@@ -2045,7 +2046,10 @@ export default function Home() {
                     {/* Create Trip / Add New POI Button */}
                     {isAdmin ? (
                       <button
-                        onClick={() => setShowPOIDrawer(true)}
+                        onClick={() => {
+                          setEditingDestination(null);
+                          setShowPOIDrawer(true);
+                        }}
                         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-colors hover:bg-gray-900 dark:hover:bg-gray-100 flex-shrink-0"
                         aria-label="Add New POI"
                       >
@@ -2194,6 +2198,11 @@ export default function Home() {
                           <DestinationCard
                             key={destination.slug}
                             destination={destination}
+                            isAdmin={isAdmin}
+                            onEdit={(dest) => {
+                              setEditingDestination(dest);
+                              setShowPOIDrawer(true);
+                            }}
                             onClick={() => {
                               setSelectedDestination(destination);
                               setIsDrawerOpen(true);
@@ -2380,12 +2389,19 @@ export default function Home() {
           {isAdmin && (
             <POIDrawer
               isOpen={showPOIDrawer}
-              onClose={() => setShowPOIDrawer(false)}
+              onClose={() => {
+                setShowPOIDrawer(false);
+                setEditingDestination(null);
+              }}
+              destination={editingDestination}
               onSave={async () => {
-                // Refresh destinations after creating POI
+                // Refresh destinations after creating/updating POI
                 // Add a small delay to ensure the database has updated
                 await new Promise(resolve => setTimeout(resolve, 500));
                 await fetchDestinations();
+                // Reset to first page to show the newly created POI at the top
+                setCurrentPage(1);
+                setEditingDestination(null);
               }}
             />
           )}
