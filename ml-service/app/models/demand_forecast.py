@@ -1,10 +1,12 @@
 """Demand forecasting using Prophet."""
 
-import pandas as pd
-import numpy as np
-from prophet import Prophet
-from typing import Dict, List, Tuple, Optional
+import calendar
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
+import numpy as np
+import pandas as pd
+from prophet import Prophet
 
 from app.config import get_settings
 from app.utils.logger import get_logger
@@ -25,7 +27,32 @@ class DemandForecastModel:
         """Initialize the demand forecast model."""
         self.models = {}  # destination_id -> Prophet model
         self.forecasts = {}  # destination_id -> forecast DataFrame
+        self.holidays = {}  # destination_id -> holiday DataFrame
         self.trained_at = None
+
+        # Additional multi-seasonality configuration for crowding/wait-time trends
+        self.additional_seasonalities: List[Dict] = [
+            {"name": "biweekly", "period": 14, "fourier_order": 5},
+            {"name": "monthly", "period": 30.5, "fourier_order": 7},
+            {"name": "quarterly", "period": 91.25, "fourier_order": 9},
+            {"name": "semiannual", "period": 182.5, "fourier_order": 7},
+        ]
+
+        # Travel-heavy holiday anchors (US-centric but captures global peaks)
+        self.holiday_definitions: List[Dict] = [
+            {"name": "new_years_day", "type": "fixed", "month": 1, "day": 1, "lower_window": 0, "upper_window": 1},
+            {"name": "valentines_day", "type": "fixed", "month": 2, "day": 14, "lower_window": 0, "upper_window": 0},
+            {"name": "memorial_day", "type": "last_weekday", "month": 5, "weekday": 0, "lower_window": -1, "upper_window": 2},
+            {"name": "independence_day", "type": "fixed", "month": 7, "day": 4, "lower_window": -1, "upper_window": 2},
+            {"name": "labor_day", "type": "nth_weekday", "month": 9, "weekday": 0, "n": 1, "lower_window": -2, "upper_window": 2},
+            {"name": "thanksgiving", "type": "nth_weekday", "month": 11, "weekday": 3, "n": 4, "lower_window": -1, "upper_window": 2},
+            {"name": "black_friday", "type": "relative", "reference": "thanksgiving", "days_offset": 1, "lower_window": 0, "upper_window": 0},
+            {"name": "christmas_eve", "type": "fixed", "month": 12, "day": 24, "lower_window": 0, "upper_window": 1},
+            {"name": "christmas_day", "type": "fixed", "month": 12, "day": 25, "lower_window": 0, "upper_window": 1},
+            {"name": "new_years_eve", "type": "fixed", "month": 12, "day": 31, "lower_window": 0, "upper_window": 0},
+        ]
+
+        self.holiday_buffer_days = 90
 
     def prepare_time_series(
         self,
@@ -60,6 +87,7 @@ class DemandForecastModel:
         ts_data = dest_data[['date', 'demand']].copy()
         ts_data.columns = ['ds', 'y']
         ts_data = ts_data.sort_values('ds')
+        ts_data['ds'] = pd.to_datetime(ts_data['ds'])
 
         # Fill missing dates with zero demand
         date_range = pd.date_range(
@@ -71,6 +99,71 @@ class DemandForecastModel:
         ts_data.columns = ['ds', 'y']
 
         return ts_data
+
+    @staticmethod
+    def _nth_weekday_of_month(year: int, month: int, weekday: int, n: int) -> datetime:
+        """Return the nth weekday (0=Monday) for a month."""
+        first_day = datetime(year, month, 1)
+        days_ahead = (weekday - first_day.weekday()) % 7
+        day = 1 + days_ahead + 7 * (n - 1)
+        return datetime(year, month, day)
+
+    @staticmethod
+    def _last_weekday_of_month(year: int, month: int, weekday: int) -> datetime:
+        """Return the last weekday (0=Monday) for a month."""
+        last_day = calendar.monthrange(year, month)[1]
+        last_date = datetime(year, month, last_day)
+        days_back = (last_date.weekday() - weekday) % 7
+        return last_date - timedelta(days=days_back)
+
+    def _resolve_holiday_date(self, year: int, holiday: Dict, references: Dict[str, datetime]) -> Optional[datetime]:
+        """Resolve a holiday definition into an actual date."""
+        h_type = holiday.get("type", "fixed")
+
+        if h_type == "fixed":
+            return datetime(year, holiday["month"], holiday["day"])
+        if h_type == "nth_weekday":
+            return self._nth_weekday_of_month(year, holiday["month"], holiday["weekday"], holiday["n"])
+        if h_type == "last_weekday":
+            return self._last_weekday_of_month(year, holiday["month"], holiday["weekday"])
+        if h_type == "relative":
+            reference = holiday.get("reference")
+            if reference and reference in references:
+                return references[reference] + timedelta(days=holiday.get("days_offset", 0))
+        return None
+
+    def _build_holiday_frame(self, ts_data: pd.DataFrame) -> Optional[pd.DataFrame]:
+        """Create a Prophet-compatible holiday dataframe covering training/future horizons."""
+        if ts_data.empty:
+            return None
+
+        start_date = ts_data['ds'].min() - timedelta(days=30)
+        end_date = ts_data['ds'].max() + timedelta(days=self.holiday_buffer_days)
+
+        holiday_rows: List[Dict] = []
+        for year in range(start_date.year - 1, end_date.year + 2):
+            resolved: Dict[str, datetime] = {}
+            for definition in self.holiday_definitions:
+                holiday_date = self._resolve_holiday_date(year, definition, resolved)
+                if holiday_date is None:
+                    continue
+
+                resolved[definition["name"]] = holiday_date
+
+                if not (start_date <= holiday_date <= end_date):
+                    continue
+
+                holiday_rows.append({
+                    "holiday": definition["name"],
+                    "ds": holiday_date,
+                    "lower_window": definition.get("lower_window", 0),
+                    "upper_window": definition.get("upper_window", 0),
+                })
+
+        if not holiday_rows:
+            return None
+
+        return pd.DataFrame(holiday_rows)
 
     def train_for_destination(
         self,
@@ -88,27 +181,41 @@ class DemandForecastModel:
             True if training succeeded, False otherwise
         """
         try:
-            # Initialize Prophet model
-            model = Prophet(
+            holidays = self._build_holiday_frame(ts_data)
+
+            prophet_kwargs = dict(
                 seasonality_mode=settings.prophet_seasonality_mode,
                 daily_seasonality=False,
                 weekly_seasonality=True,
                 yearly_seasonality=True,
                 changepoint_prior_scale=0.05,  # Conservative to avoid overfitting
+                seasonality_prior_scale=10.0,
+                holidays_prior_scale=15.0,
             )
 
-            # Add custom seasonalities
-            model.add_seasonality(
-                name='monthly',
-                period=30.5,
-                fourier_order=5
-            )
+            if holidays is not None:
+                prophet_kwargs["holidays"] = holidays
+
+            # Initialize Prophet model
+            model = Prophet(**prophet_kwargs)
+
+            # Add custom seasonalities to capture different wait-time cycles
+            for seasonality in self.additional_seasonalities:
+                model.add_seasonality(
+                    name=seasonality["name"],
+                    period=seasonality["period"],
+                    fourier_order=seasonality["fourier_order"],
+                    prior_scale=seasonality.get("prior_scale", 10.0),
+                    mode=seasonality.get("mode", settings.prophet_seasonality_mode),
+                )
 
             # Fit model
             with np.errstate(divide='ignore', invalid='ignore'):
                 model.fit(ts_data)
 
             self.models[destination_id] = model
+            if holidays is not None:
+                self.holidays[destination_id] = holidays
             return True
 
         except Exception as e:
@@ -289,10 +396,18 @@ class DemandForecastModel:
         low_idx = future_forecast['yhat'].idxmin()
         low_row = future_forecast.loc[low_idx]
 
+        peak_holiday = None
+        if destination_id in self.holidays:
+            holiday_df = self.holidays[destination_id]
+            matches = holiday_df[holiday_df['ds'] == peak_row['ds']]
+            if not matches.empty:
+                peak_holiday = matches['holiday'].tolist()
+
         return {
             "destination_id": destination_id,
             "peak_date": peak_row['ds'].isoformat(),
             "peak_demand": float(peak_row['yhat']),
+            "peak_holiday_labels": peak_holiday,
             "low_date": low_row['ds'].isoformat(),
             "low_demand": float(low_row['yhat']),
             "average_demand": float(future_forecast['yhat'].mean()),
