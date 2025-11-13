@@ -89,9 +89,107 @@ export default buildConfig({
       slug: 'destinations',
       admin: {
         useAsTitle: 'name',
+        description: 'Manage destinations from Supabase. Changes sync to Supabase automatically.',
       },
+      // Use existing Supabase table - don't create new one
+      dbName: 'destinations',
       access: {
         read: () => true,
+        create: () => true,
+        update: () => true,
+        delete: () => true,
+      },
+      hooks: {
+        afterChange: [
+          async ({ doc, operation, req }) => {
+            // Sync changes to Supabase after Payload operations
+            try {
+              const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+              const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+              
+              if (!supabaseUrl || !supabaseKey) {
+                console.warn('[Payload] Supabase credentials not found, skipping sync')
+                return
+              }
+
+              // Import Supabase client dynamically
+              const { createClient } = await import('@supabase/supabase-js')
+              const supabase = createClient(supabaseUrl, supabaseKey)
+
+              // Map Payload fields to Supabase columns
+              const supabaseData: any = {
+                name: doc.name,
+                slug: doc.slug,
+                city: doc.city,
+                category: doc.category,
+                description: doc.description || null,
+                content: doc.content ? (typeof doc.content === 'string' ? doc.content : JSON.stringify(doc.content)) : null,
+                image: doc.image || null,
+                latitude: doc.latitude || null,
+                longitude: doc.longitude || null,
+                michelin_stars: doc.michelin_stars || 0,
+                crown: doc.crown || false,
+                rating: doc.rating || null,
+                price_level: doc.price_level || null,
+              }
+
+              if (operation === 'create') {
+                const { error } = await supabase
+                  .from('destinations')
+                  .insert([supabaseData])
+                
+                if (error) {
+                  console.error('[Payload] Error syncing to Supabase (create):', error)
+                } else {
+                  console.log(`[Payload] ✅ Synced new destination "${doc.name}" to Supabase`)
+                }
+              } else if (operation === 'update') {
+                const { error } = await supabase
+                  .from('destinations')
+                  .update(supabaseData)
+                  .eq('slug', doc.slug)
+                
+                if (error) {
+                  console.error('[Payload] Error syncing to Supabase (update):', error)
+                } else {
+                  console.log(`[Payload] ✅ Synced updated destination "${doc.name}" to Supabase`)
+                }
+              }
+            } catch (error) {
+              console.error('[Payload] Error in afterChange hook:', error)
+            }
+          },
+        ],
+        afterDelete: [
+          async ({ doc, req }) => {
+            // Sync deletion to Supabase
+            try {
+              const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+              const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+              
+              if (!supabaseUrl || !supabaseKey) {
+                console.warn('[Payload] Supabase credentials not found, skipping sync')
+                return
+              }
+
+              const { createClient } = await import('@supabase/supabase-js')
+              const supabase = createClient(supabaseUrl, supabaseKey)
+
+              const { error } = await supabase
+                .from('destinations')
+                .delete()
+                .eq('slug', doc.slug)
+              
+              if (error) {
+                console.error('[Payload] Error syncing deletion to Supabase:', error)
+              } else {
+                console.log(`[Payload] ✅ Synced deletion of "${doc.name}" to Supabase`)
+              }
+            } catch (error) {
+              console.error('[Payload] Error in afterDelete hook:', error)
+            }
+          },
+        ],
       },
       fields: [
         {
@@ -126,8 +224,10 @@ export default buildConfig({
         },
         {
           name: 'image',
-          type: 'upload',
-          relationTo: 'media',
+          type: 'text', // Store URL string, not upload relation
+          admin: {
+            description: 'Image URL from Supabase',
+          },
         },
         {
           name: 'latitude',
