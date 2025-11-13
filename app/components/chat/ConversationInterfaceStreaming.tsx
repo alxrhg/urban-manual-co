@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ConversationBubble } from './ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackSuggestionAcceptance } from '@/lib/metrics/conversationMetrics';
+import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -33,6 +34,7 @@ export function ConversationInterfaceStreaming({
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [guestSessionToken, setGuestSessionToken] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -51,21 +53,40 @@ export function ConversationInterfaceStreaming({
 
   // Load conversation history
   useEffect(() => {
-    if (isOpen && (user?.id || sessionToken)) {
+    if (!user) {
+      const token = ensureConversationSessionToken();
+      if (token) {
+        setGuestSessionToken(token);
+      }
+    } else {
+      setGuestSessionToken(null);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen && (user?.id || sessionToken || guestSessionToken)) {
       loadConversationHistory();
     }
-  }, [isOpen, user?.id, sessionToken]);
+  }, [isOpen, user?.id, sessionToken, guestSessionToken]);
 
   async function loadConversationHistory() {
     try {
-      const userId = user?.id || 'anonymous';
+      const isGuest = !user?.id;
+      const resolvedToken = isGuest ? (sessionToken || guestSessionToken) : sessionToken;
+      if (isGuest && !resolvedToken) return;
+      const userId = user?.id || 'guest';
+      const tokenQuery = resolvedToken ? `?session_token=${resolvedToken}` : '';
       const response = await fetch(
-        `/api/conversation/${userId}?session_token=${sessionToken || ''}`
+        `/api/conversation/${userId}${tokenQuery}`
       );
       if (response.ok) {
         const data = await response.json();
         setMessages(data.messages || []);
         setSessionId(data.session_id || null);
+        if (isGuest && data.session_token) {
+          persistConversationSessionToken(data.session_token);
+          setGuestSessionToken(data.session_token);
+        }
       }
     } catch (error) {
       console.error('Error loading conversation:', error);
@@ -78,13 +99,21 @@ export function ConversationInterfaceStreaming({
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      const userId = user?.id || 'anonymous';
+      const isGuest = !user?.id;
+      let resolvedToken = isGuest ? (sessionToken || guestSessionToken) : sessionToken;
+      if (isGuest && !resolvedToken) {
+        resolvedToken = ensureConversationSessionToken();
+        if (resolvedToken) {
+          setGuestSessionToken(resolvedToken);
+        }
+      }
+      const userId = user?.id || 'guest';
       const response = await fetch(`/api/conversation-stream/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
-          session_token: sessionToken,
+          session_token: resolvedToken,
         }),
       });
 
@@ -143,6 +172,9 @@ export function ConversationInterfaceStreaming({
           suggestions: lastSuggestions,
         },
       ]);
+      if (isGuest && resolvedToken) {
+        persistConversationSessionToken(resolvedToken);
+      }
     } catch (error) {
       console.error('Streaming conversation error:', error);
       setMessages((prev) => [
@@ -163,13 +195,16 @@ export function ConversationInterfaceStreaming({
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      const userId = user?.id || 'anonymous';
+      const isGuest = !user?.id;
+      const resolvedToken = isGuest ? (sessionToken || guestSessionToken) : sessionToken;
+      if (isGuest && !resolvedToken) return;
+      const userId = user?.id || 'guest';
       const response = await fetch(`/api/conversation/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
-          session_token: sessionToken,
+          session_token: resolvedToken,
         }),
       });
 
@@ -186,6 +221,9 @@ export function ConversationInterfaceStreaming({
           suggestions: data.suggestions,
         },
       ]);
+      if (isGuest && resolvedToken) {
+        persistConversationSessionToken(resolvedToken);
+      }
     } catch (error) {
       console.error('Conversation error:', error);
       setMessages((prev) => [

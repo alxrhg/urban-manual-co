@@ -50,6 +50,11 @@ function createSSEMessage(data: any): string {
   return `data: ${JSON.stringify(data)}\n\n`;
 }
 
+function normalizeUserId(userId?: string | null) {
+  if (!userId) return undefined;
+  return ['anonymous', 'guest'].includes(userId) ? undefined : userId;
+}
+
 export async function POST(
   request: NextRequest,
   context: any
@@ -64,7 +69,7 @@ export async function POST(
       ? await context.params
       : context?.params;
     const { user_id } = paramsValue || {};
-    const userId = user?.id || user_id || undefined;
+    const userId = normalizeUserId(user?.id || user_id || undefined);
 
     // Rate limiting: 5 requests per 10 seconds for conversation
     const identifier = getIdentifier(request, userId);
@@ -432,7 +437,7 @@ export async function POST(
 
           // Log metrics
           await logConversationMetrics({
-            userId: userId || session_token || 'anonymous',
+            userId: userId || session.sessionToken || session_token || 'anonymous',
             messageCount: messages.length + 2,
             intentType: intent.primaryIntent,
             modelUsed: usedModel,
@@ -448,6 +453,7 @@ export async function POST(
             intent,
             suggestions: suggestions.slice(0, 3),
             session_id: session.sessionId,
+            session_token: session.sessionToken,
             model: usedModel,
           })));
 
