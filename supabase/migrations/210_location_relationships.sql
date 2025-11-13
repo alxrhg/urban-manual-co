@@ -16,15 +16,16 @@ CREATE TABLE IF NOT EXISTS locations (
   neighborhood_type TEXT,
   cultural_notes TEXT,
   description TEXT,
-  embedding vector(1536),
+  embedding vector(3072),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_locations_parent ON locations(parent_city);
 CREATE INDEX IF NOT EXISTS idx_locations_name ON locations(name);
-CREATE INDEX IF NOT EXISTS idx_locations_embedding ON locations 
-  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX IF NOT EXISTS idx_locations_embedding ON locations
+  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 200)
+  WHERE embedding IS NOT NULL;
 
 -- Seed Tokyo neighborhoods
 INSERT INTO locations (name, parent_city, country, latitude, longitude, nearby_locations, walking_time, neighborhood_type, cultural_notes, description) VALUES

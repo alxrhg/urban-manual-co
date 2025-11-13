@@ -12,7 +12,7 @@
 - ✅ `023_enable_vector_search.sql` - Enables pgvector extension
 - ✅ `024_hybrid_search_function.sql` - Creates hybrid search function
 - ✅ `025_conversation_tables.sql` - Creates conversation tables
-- ✅ `025_fix_embedding_dimension.sql` - Fixes embedding to vector(1536)
+- ✅ `025_fix_embedding_dimension.sql` - Fixes embedding to vector(3072)
 - ✅ `026_add_advanced_enrichment_fields.sql` - Adds enrichment fields
 - ✅ `210_location_relationships.sql` - Creates locations table
 - ✅ `300_conversational_ai.sql` - Creates conversation tables with embeddings

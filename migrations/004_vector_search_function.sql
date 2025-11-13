@@ -3,11 +3,11 @@
 -- Purpose: Create RPC function for semantic search using pgvector
 
 -- Drop existing function if it exists
-DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int);
+DROP FUNCTION IF EXISTS match_destinations(vector(3072), float, int);
 
 -- Create vector similarity search function
 CREATE OR REPLACE FUNCTION match_destinations(
-  query_embedding vector(768),
+  query_embedding vector(3072),
   match_threshold float DEFAULT 0.7,
   match_count int DEFAULT 50
 )

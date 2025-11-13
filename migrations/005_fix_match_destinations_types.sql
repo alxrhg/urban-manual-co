@@ -1,10 +1,10 @@
 -- Fix type mismatch in match_destinations function
 -- The rating column is numeric(2,1) but function expects float
 
-DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int);
+DROP FUNCTION IF EXISTS match_destinations(vector(3072), float, int);
 
 CREATE OR REPLACE FUNCTION match_destinations(
-  query_embedding vector(768),
+  query_embedding vector(3072),
   match_threshold float DEFAULT 0.7,
   match_count int DEFAULT 50
 )

@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS conversation_messages (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT CHECK (role IN ('user', 'assistant', 'system')),
   content TEXT NOT NULL,
-  embedding vector(1536),
+  embedding vector(3072),
   intent_data JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -46,9 +46,9 @@ CREATE INDEX IF NOT EXISTS idx_conv_messages_user
   ON conversation_messages(user_id, created_at DESC);
 
 -- Index for embedding similarity search
-CREATE INDEX IF NOT EXISTS idx_conv_messages_embedding 
+CREATE INDEX IF NOT EXISTS idx_conv_messages_embedding
   ON conversation_messages USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100)
+  WITH (lists = 200)
   WHERE embedding IS NOT NULL;
 
 -- ============================================================================

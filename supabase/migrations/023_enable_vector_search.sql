@@ -6,15 +6,16 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Add embedding columns to destinations
-ALTER TABLE destinations 
-  ADD COLUMN IF NOT EXISTS embedding vector(1536),
+ALTER TABLE destinations
+  ADD COLUMN IF NOT EXISTS embedding vector(3072),
   ADD COLUMN IF NOT EXISTS embedding_model TEXT DEFAULT 'text-embedding-3-large',
   ADD COLUMN IF NOT EXISTS embedding_generated_at TIMESTAMPTZ;
 
 -- Create vector index for fast similarity search
-CREATE INDEX IF NOT EXISTS idx_destinations_embedding 
+CREATE INDEX IF NOT EXISTS idx_destinations_embedding
   ON destinations USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
+  WITH (lists = 200)
+  WHERE embedding IS NOT NULL;
 
 -- Add additional columns if they don't exist
 ALTER TABLE destinations

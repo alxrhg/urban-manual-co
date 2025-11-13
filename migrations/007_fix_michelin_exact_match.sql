@@ -1,10 +1,10 @@
 -- Fix Michelin star filtering to use exact match (=) instead of >= 
 -- This ensures "3 star" only shows 3-star restaurants, not 1 or 2 stars
 
-DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int, text, text, int, numeric, int, text);
+DROP FUNCTION IF EXISTS match_destinations(vector(3072), float, int, text, text, int, numeric, int, text);
 
 CREATE OR REPLACE FUNCTION match_destinations(
-  query_embedding vector(768),
+  query_embedding vector(3072),
   match_threshold float DEFAULT 0.7,
   match_count int DEFAULT 50,
   filter_city text DEFAULT NULL,

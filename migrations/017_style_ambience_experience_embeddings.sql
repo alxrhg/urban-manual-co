@@ -19,10 +19,10 @@ ALTER TABLE destinations
 ALTER TABLE destinations
   ADD COLUMN IF NOT EXISTS experience_tags TEXT[];
 
--- 1536 dims typical for text-embedding-004; adjust if needed
+-- 3072 dims for text-embedding-3-large; adjust if needed
 DO $$
 BEGIN
-  ALTER TABLE destinations ADD COLUMN IF NOT EXISTS vector_embedding vector(1536);
+  ALTER TABLE destinations ADD COLUMN IF NOT EXISTS vector_embedding vector(3072);
 EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'vector column add skipped: %', SQLERRM;
 END $$;
@@ -35,7 +35,8 @@ CREATE INDEX IF NOT EXISTS idx_destinations_experience_tags_gin ON destinations 
 -- Vector index (if extension active)
 DO $$
 BEGIN
-  CREATE INDEX IF NOT EXISTS idx_destinations_vector_embedding ON destinations USING ivfflat (vector_embedding vector_l2_ops);
+  CREATE INDEX IF NOT EXISTS idx_destinations_vector_embedding ON destinations USING ivfflat (vector_embedding vector_cosine_ops) WITH (lists = 200)
+  WHERE vector_embedding IS NOT NULL;
 EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'ivfflat index skipped: %', SQLERRM;
 END $$;

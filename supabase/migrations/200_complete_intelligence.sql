@@ -429,7 +429,7 @@ CREATE POLICY "Users see own alerts" ON opportunity_alerts
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION search_destinations_intelligent(
-  query_embedding vector(1536),
+  query_embedding vector(3072),
   user_id_param UUID DEFAULT NULL,
   city_filter TEXT DEFAULT NULL,
   category_filter TEXT DEFAULT NULL,

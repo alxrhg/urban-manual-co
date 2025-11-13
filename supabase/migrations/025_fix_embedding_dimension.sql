@@ -1,7 +1,7 @@
 -- Migration: Fix embedding dimension mismatch
 -- The database has embedding vector(768) from old migration
--- But code uses text-embedding-3-large which produces 1536 dimensions
--- This migration updates the column to vector(1536) to match
+-- But code uses text-embedding-3-large which now produces 3072 dimensions
+-- This migration updates the column to vector(3072) to match
 
 BEGIN;
 
@@ -12,16 +12,16 @@ BEGIN
   -- Drop the column if it exists (CASCADE will drop dependent indexes/constraints)
   ALTER TABLE destinations DROP COLUMN IF EXISTS embedding CASCADE;
   
-  -- Add column with correct dimension for text-embedding-3-large (1536)
-  ALTER TABLE destinations ADD COLUMN embedding vector(1536);
+  -- Add column with correct dimension for text-embedding-3-large (3072)
+  ALTER TABLE destinations ADD COLUMN embedding vector(3072);
   
   -- Recreate index
-  CREATE INDEX IF NOT EXISTS idx_destinations_embedding 
+  CREATE INDEX IF NOT EXISTS idx_destinations_embedding
     ON destinations USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = 100)
+    WITH (lists = 200)
     WHERE embedding IS NOT NULL;
     
-  RAISE NOTICE 'Updated embedding column to vector(1536)';
+  RAISE NOTICE 'Updated embedding column to vector(3072)';
 END $$;
 
 -- Drop existing function first to allow changing return type
@@ -32,7 +32,7 @@ DROP FUNCTION IF EXISTS search_destinations_intelligent(vector(3072), uuid, text
 
 -- Create search_destinations_intelligent function with correct dimension
 CREATE OR REPLACE FUNCTION search_destinations_intelligent(
-  query_embedding vector(1536),
+  query_embedding vector(3072),
   user_id_param UUID DEFAULT NULL,
   city_filter TEXT DEFAULT NULL,
   category_filter TEXT DEFAULT NULL,
