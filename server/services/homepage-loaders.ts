@@ -55,14 +55,97 @@ export async function getFilterRows(limit = 1000) {
   return (data ?? []) as FilterRow[];
 }
 
-export async function getHomepageDestinations(limit = 500) {
+const HOMEPAGE_DESTINATION_COLUMNS = [
+  'slug',
+  'name',
+  'city',
+  'country',
+  'neighborhood',
+  'category',
+  'micro_description',
+  'image',
+  'primary_photo_url',
+  'michelin_stars',
+  'crown',
+  'tags',
+  'rating',
+  'price_level',
+  'timezone_id',
+  'utc_offset',
+  'opening_hours',
+].join(', ');
+
+const HOMEPAGE_FULL_DESTINATION_COLUMNS = [
+  'slug',
+  'name',
+  'city',
+  'country',
+  'neighborhood',
+  'category',
+  'micro_description',
+  'description',
+  'content',
+  'image',
+  'primary_photo_url',
+  'michelin_stars',
+  'crown',
+  'tags',
+  'parent_destination_id',
+  'opening_hours',
+  'opening_hours_json',
+  'timezone_id',
+  'utc_offset',
+  'rating',
+  'price_level',
+].join(', ');
+
+const DEFAULT_HOMEPAGE_LIMIT = 250;
+const MAX_HOMEPAGE_LIMIT = 500;
+
+function normalizeLimit(limit?: number) {
+  const value = typeof limit === 'number' ? limit : NaN;
+  if (!Number.isFinite(value) || value <= 0) {
+    return DEFAULT_HOMEPAGE_LIMIT;
+  }
+  return Math.min(MAX_HOMEPAGE_LIMIT, Math.floor(value));
+}
+
+function normalizeOffset(offset?: number) {
+  const value = typeof offset === 'number' ? offset : NaN;
+  if (!Number.isFinite(value) || value < 0) {
+    return 0;
+  }
+  return Math.floor(value);
+}
+
+export async function getHomepageDestinations(limit = DEFAULT_HOMEPAGE_LIMIT, offset = 0) {
+  const safeLimit = normalizeLimit(limit);
+  const safeOffset = normalizeOffset(offset);
   const adminClient = getAdminClient();
   const { data, error } = await adminClient
     .from('destinations')
-    .select('slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
+    .select(HOMEPAGE_DESTINATION_COLUMNS)
     .is('parent_destination_id', null)
-    .limit(limit)
-    .order('name');
+    .order('name')
+    .range(safeOffset, safeOffset + safeLimit - 1);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as Destination[];
+}
+
+export async function getHomepageDestinationDetails(limit = DEFAULT_HOMEPAGE_LIMIT, offset = 0) {
+  const safeLimit = normalizeLimit(limit);
+  const safeOffset = normalizeOffset(offset);
+  const adminClient = getAdminClient();
+  const { data, error } = await adminClient
+    .from('destinations')
+    .select(HOMEPAGE_FULL_DESTINATION_COLUMNS)
+    .is('parent_destination_id', null)
+    .order('name')
+    .range(safeOffset, safeOffset + safeLimit - 1);
 
   if (error) {
     throw error;

@@ -107,13 +107,29 @@ async function testDestinationHandlers() {
       category: 'Landmark',
     },
   ];
+  let receivedOptions: { limit?: number; offset?: number } | undefined;
   const okHandler = createHomepageDestinationsHandler({
-    loadDestinations: async () => destinations,
+    loadDestinations: async options => {
+      receivedOptions = options;
+      return destinations;
+    },
   });
-  const okResponse = await okHandler(buildRequest('/api/homepage/destinations'));
+  const okResponse = await okHandler(buildRequest('/api/homepage/destinations?limit=100&offset=20'));
   assert.equal(okResponse.status, 200);
   const okPayload = await okResponse.json();
   assert.deepEqual(okPayload.destinations, destinations);
+  assert.equal(receivedOptions?.limit, 100);
+  assert.equal(receivedOptions?.offset, 20);
+
+  const defaultHandler = createHomepageDestinationsHandler({
+    loadDestinations: async options => {
+      assert.equal(options?.limit, undefined);
+      assert.equal(options?.offset, undefined);
+      return destinations;
+    },
+  });
+  const defaultResponse = await defaultHandler(buildRequest('/api/homepage/destinations'));
+  assert.equal(defaultResponse.status, 200);
 
   const errorHandler = createHomepageDestinationsHandler({
     loadDestinations: async () => {
