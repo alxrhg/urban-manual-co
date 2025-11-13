@@ -159,7 +159,7 @@ export default function GooglePlacesAutocompleteNative({
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
         font-family: system-ui, -apple-system, sans-serif !important;
         margin-top: 0.25rem !important;
-        z-index: 1000 !important;
+        z-index: 9999 !important;
       }
       
       .dark .pac-container {
