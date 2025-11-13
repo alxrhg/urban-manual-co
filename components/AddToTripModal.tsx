@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { X, Plus, Calendar, MapPin, Loader2, Hotel } from 'lucide-react';
+import { X, Plus, Loader2 } from 'lucide-react';
 import type { Trip, ItineraryItemNotes } from '@/types/trip';
 
 interface AddToTripModalProps {
