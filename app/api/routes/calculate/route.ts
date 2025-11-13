@@ -1,39 +1,60 @@
-/**
- * API Route: Calculate route between destinations
- * POST /api/routes/calculate
- */
+import { NextRequest } from 'next/server';
 
-import { NextRequest, NextResponse } from 'next/server';
 import { calculateRoute } from '@/lib/enrichment/routes';
+import {
+  createNotFoundError,
+  createSuccessResponse,
+  createValidationError,
+  withErrorHandling,
+} from '@/lib/errors';
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
+type RouteRequestBody = {
+  origin?: { lat: number; lng: number } | string;
+  destination?: { lat: number; lng: number } | string;
+  mode?: 'walking' | 'driving' | 'transit' | 'bicycling';
+  waypoints?: Array<{ lat: number; lng: number } | string>;
+};
+
+const buildValidationErrors = (body: RouteRequestBody) => {
+  const details: Record<string, string[]> = {};
+
+  if (!body.origin) {
+    details.origin = ['Origin is required'];
+  }
+
+  if (!body.destination) {
+    details.destination = ['Destination is required'];
+  }
+
+  return details;
+};
+
+type CreateHandlerDeps = {
+  calculateRoute: typeof calculateRoute;
+};
+
+export const createCalculateRouteHandler = (
+  deps: CreateHandlerDeps = { calculateRoute }
+) =>
+  withErrorHandling(async (request: NextRequest) => {
+    const body: RouteRequestBody = await request.json();
     const { origin, destination, mode = 'walking', waypoints } = body;
 
-    if (!origin || !destination) {
-      return NextResponse.json(
-        { error: 'Origin and destination are required' },
-        { status: 400 }
-      );
+    const validationErrors = buildValidationErrors(body);
+    if (Object.keys(validationErrors).length > 0) {
+      throw createValidationError('Origin and destination are required', validationErrors);
     }
 
-    const route = await calculateRoute(origin, destination, mode, waypoints);
+    const route = await deps.calculateRoute(origin!, destination!, mode, waypoints);
 
     if (!route) {
-      return NextResponse.json(
-        { error: 'Route not found' },
-        { status: 404 }
-      );
+      throw createNotFoundError('Route');
     }
 
-    return NextResponse.json(route);
-  } catch (error: any) {
-    console.error('Error calculating route:', error);
-    return NextResponse.json(
-      { error: 'Failed to calculate route' },
-      { status: 500 }
-    );
-  }
-}
+    return createSuccessResponse(route, {
+      mode,
+      waypointCount: waypoints?.length ?? 0,
+    });
+  });
 
+export const POST = createCalculateRouteHandler();

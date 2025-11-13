@@ -18,15 +18,15 @@ export function withErrorHandling(
     } catch (error) {
       console.error('[API Error]', error);
       
+      // Handle CustomError
+      if (error instanceof CustomError) {
+        return createErrorResponse(error);
+      }
+
       // Handle Supabase errors
       if (error && typeof error === 'object' && 'code' in error) {
         const supabaseError = handleSupabaseError(error);
         return createErrorResponse(supabaseError);
-      }
-
-      // Handle CustomError
-      if (error instanceof CustomError) {
-        return createErrorResponse(error);
       }
 
       // Handle other errors
