@@ -10,14 +10,28 @@
    - Click on your Urban Manual project
 
 3. **Navigate to Database Settings**
-   - Click **Settings** in the left sidebar
-   - Click **Database** in the settings menu
+   - In the left sidebar, click **Settings** (gear icon at the bottom)
+   - In the Settings menu, click **Database** (not "Tables" - that's a different section)
 
-4. **Get Connection String**
-   - Scroll down to **Connection string** section
-   - Look for **Connection pooling** tab
-   - Select **Transaction** mode (recommended for serverless)
-   - Copy the connection string
+4. **Find Connection String**
+   - On the Database settings page, scroll down
+   - Look for a section called **Connection string** or **Connection pooling**
+   - You should see tabs like: **URI**, **JDBC**, **Connection pooling**
+   - Click the **Connection pooling** tab
+   - Under **Transaction** mode, you'll see the connection string
+   - It will look like: `postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@...`
+   - **Important**: You need to replace `[YOUR-PASSWORD]` with your actual database password
+
+5. **Get Your Database Password**
+   - If you don't know your password, on the same Database settings page
+   - Look for **Database password** section
+   - Click **Reset database password** if needed
+   - Copy the password (you'll only see it once!)
+
+6. **Construct the Full Connection String**
+   - Take the connection string from step 4
+   - Replace `[YOUR-PASSWORD]` with your actual password from step 5
+   - Make sure to URL-encode the password if it has special characters
 
 ## Connection String Format
 
