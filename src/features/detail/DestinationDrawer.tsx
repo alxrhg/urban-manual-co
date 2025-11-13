@@ -1005,18 +1005,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 if (isAddedToTrip) return;
                 setShowAddToTripModal(true);
                 }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 rounded-xl font-medium text-sm transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 isAddedToTrip
-                  ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 cursor-default'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               disabled={isAddedToTrip}
             >
               {isAddedToTrip ? (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-4 w-4" />
                   <span>Added</span>
                 </>
               ) : (
@@ -1721,18 +1719,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 if (isAddedToTrip) return;
                 setShowAddToTripModal(true);
                   }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-3 border-2 rounded-xl font-medium text-sm transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 isAddedToTrip
-                  ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 cursor-default'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               disabled={isAddedToTrip}
-                >
+            >
               {isAddedToTrip ? (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-4 w-4" />
                   <span>Added</span>
                 </>
               ) : (
