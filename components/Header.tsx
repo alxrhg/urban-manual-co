@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -111,8 +111,8 @@ export function Header() {
             Urban Manual®
           </button>
           
-          {/* Profile picture / Menu dropdown on right */}
-          <div className="flex items-center gap-4 shrink-0">
+          {/* Right side: Account/Sign In button + Menu dropdown */}
+          <div className="flex items-center gap-3 shrink-0">
             {isAdmin && buildVersion && (
               <span
                 className="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-100 rounded"
@@ -122,83 +122,48 @@ export function Header() {
                 {buildVersion}
               </span>
             )}
+            
+            {/* Separate Account/Sign In button */}
             {user ? (
               <button
-                ref={menuButtonRef}
-                onClick={() => {
-                  if (menuButtonRef.current) {
-                    const rect = menuButtonRef.current.getBoundingClientRect();
-                    setDropdownPosition({
-                      top: rect.bottom + 4, // Small gap for visual separation
-                      right: window.innerWidth - rect.right,
-                    });
-                  }
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-                className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 ease-out p-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-full ml-4 shrink-0"
-                aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-                aria-expanded={isMenuOpen}
-                aria-haspopup="true"
+                onClick={() => navigate('/account')}
+                className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                aria-label="Go to account"
               >
-                {avatarUrl ? (
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
-                    <Image
-                      src={avatarUrl}
-                      alt={user.email || 'Profile'}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                      onError={() => {
-                        // If image fails to load, clear the avatar URL to show fallback
-                        setAvatarUrl(null);
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-                    {user.email?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                )}
-                <svg
-                  className={`w-4 h-4 text-gray-600 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <User className="w-4 h-4" />
+                <span>Account</span>
               </button>
             ) : (
               <button
-                ref={menuButtonRef}
-                onClick={() => {
-                  if (menuButtonRef.current) {
-                    const rect = menuButtonRef.current.getBoundingClientRect();
-                    setDropdownPosition({
-                      top: rect.bottom + 4, // Small gap for visual separation
-                      right: window.innerWidth - rect.right,
-                    });
-                  }
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-                className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-black transition-colors font-normal py-3 px-2 -m-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded-lg ml-4 shrink-0"
-                aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-                aria-expanded={isMenuOpen}
-                aria-haspopup="true"
+                onClick={() => navigate('/auth/login')}
+                className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                aria-label="Sign in"
               >
-                Menu
-                <svg
-                  className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <User className="w-4 h-4" />
+                <span>Sign In</span>
               </button>
             )}
+
+            {/* Menu dropdown button */}
+            <button
+              ref={menuButtonRef}
+              onClick={() => {
+                if (menuButtonRef.current) {
+                  const rect = menuButtonRef.current.getBoundingClientRect();
+                  setDropdownPosition({
+                    top: rect.bottom + 4, // Small gap for visual separation
+                    right: window.innerWidth - rect.right,
+                  });
+                }
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-2 px-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg shrink-0"
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMenuOpen}
+              aria-haspopup="true"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
         </nav>
       </div>
@@ -325,15 +290,7 @@ export function Header() {
                     Sign Out
                   </button>
                 </>
-              ) : (
-                <button
-                  onClick={() => { navigate('/auth/login'); setIsMenuOpen(false); }}
-                  className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                  role="menuitem"
-                >
-                  Sign In
-                </button>
-              )}
+              ) : null}
             </div>
           </div>
         </>
