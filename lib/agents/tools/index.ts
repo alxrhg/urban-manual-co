@@ -95,17 +95,102 @@ export const routeOptimizationTool: Tool = {
   name: 'optimize_route',
   description: 'Optimize the order of destinations to minimize travel time',
   execute: async (params: { destinations: Array<{ id: number; lat?: number; lng?: number }> }) => {
-    // Simple distance-based optimization
-    // In production, use Google Maps Directions API
     const { destinations } = params;
-    
-    if (destinations.length <= 1) return destinations;
 
-    // For now, return destinations in original order
-    // TODO: Implement actual route optimization using Google Maps
-    return destinations;
+    if (!Array.isArray(destinations) || destinations.length <= 1) {
+      return destinations || [];
+    }
+
+    const withCoordinates = destinations.filter((dest) =>
+      typeof dest.lat === 'number' && typeof dest.lng === 'number'
+    );
+    const withoutCoordinates = destinations.filter(
+      (dest) => typeof dest.lat !== 'number' || typeof dest.lng !== 'number'
+    );
+
+    if (withCoordinates.length <= 1) {
+      // Nothing to optimize – return original order but make sure we include everything
+      return destinations;
+    }
+
+    const optimized = optimizeByNearestNeighbor(withCoordinates);
+
+    // Add back destinations without coordinates at the end, preserving original order
+    const optimizedWithAllDestinations = [
+      ...optimized,
+      ...withoutCoordinates,
+    ];
+
+    return optimizedWithAllDestinations;
   },
 };
+
+function optimizeByNearestNeighbor(destinations: Array<{ id: number; lat: number; lng: number }>) {
+  if (destinations.length <= 2) return destinations;
+
+  const remaining = new Set(destinations.map((d) => d.id));
+
+  // Choose a starting point close to the centroid so we don't always start at the first item
+  const centroid = destinations.reduce(
+    (acc, dest) => {
+      acc.lat += dest.lat;
+      acc.lng += dest.lng;
+      return acc;
+    },
+    { lat: 0, lng: 0 }
+  );
+  centroid.lat /= destinations.length;
+  centroid.lng /= destinations.length;
+
+  let current = destinations.reduce((closest, dest) => {
+    const distance = haversineDistance(centroid.lat, centroid.lng, dest.lat, dest.lng);
+    if (!closest || distance < closest.distance) {
+      return { dest, distance };
+    }
+    return closest;
+  }, null as null | { dest: { id: number; lat: number; lng: number }; distance: number })?.dest;
+
+  if (!current) {
+    return destinations;
+  }
+
+  const route: typeof destinations = [];
+  while (remaining.size > 0 && current) {
+    route.push(current);
+    remaining.delete(current.id);
+
+    if (remaining.size === 0) break;
+
+    let next: { id: number; lat: number; lng: number } | null = null;
+    let nextDistance = Number.POSITIVE_INFINITY;
+
+    destinations.forEach((candidate) => {
+      if (!remaining.has(candidate.id)) return;
+      const distance = haversineDistance(current!.lat, current!.lng, candidate.lat, candidate.lng);
+      if (distance < nextDistance) {
+        next = candidate;
+        nextDistance = distance;
+      }
+    });
+
+    current = next;
+  }
+
+  return route;
+}
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 /**
  * Opening Hours Tool - Check if destinations are open

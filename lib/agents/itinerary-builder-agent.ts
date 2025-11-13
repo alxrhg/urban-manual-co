@@ -47,6 +47,8 @@ export interface ItineraryResult {
 }
 
 export class ItineraryBuilderAgent extends BaseAgent {
+  private destinationLookup: Map<number, ItineraryRequest['destinations'][number]> = new Map();
+
   constructor() {
     super();
     // Register all available tools
@@ -57,6 +59,8 @@ export class ItineraryBuilderAgent extends BaseAgent {
     try {
       const steps: string[] = [];
       steps.push('Analyzing destinations...');
+
+      this.destinationLookup = new Map(request.destinations.map((dest) => [dest.id, dest]));
 
       // Step 1: Analyze destinations (autonomous)
       const analysis = await this.analyzeDestinations(request.destinations);
@@ -170,12 +174,56 @@ export class ItineraryBuilderAgent extends BaseAgent {
     days: ItineraryDay[],
     preferences?: ItineraryRequest['preferences']
   ): Promise<ItineraryDay[]> {
-    // Use route optimization tool if destinations have coordinates
     const optimized = await Promise.all(
       days.map(async (day) => {
-        // For now, keep original order
-        // TODO: Implement actual route optimization using Google Maps
-        return day;
+        const routeInput = day.items.map((item) => {
+          const destination = this.destinationLookup.get(item.destination_id);
+          const latitude = destination?.latitude ?? (destination as any)?.lat;
+          const longitude = destination?.longitude ?? (destination as any)?.lng;
+          return {
+            id: item.destination_id,
+            lat: typeof latitude === 'number' ? latitude : undefined,
+            lng: typeof longitude === 'number' ? longitude : undefined,
+          };
+        });
+
+        const coordinateCount = routeInput.filter(
+          (dest) => typeof dest.lat === 'number' && typeof dest.lng === 'number'
+        ).length;
+
+        if (coordinateCount < 2) {
+          return day;
+        }
+
+        try {
+          const optimizedRoute = await this.useTool('optimize_route', { destinations: routeInput });
+          const orderMap = new Map<number, number>();
+          optimizedRoute.forEach((dest: { id: number }, index: number) => {
+            orderMap.set(dest.id, index);
+          });
+
+          const optimizedItems: typeof day.items = [];
+          optimizedRoute.forEach((routeDest: { id: number }) => {
+            const match = day.items.find((item) => item.destination_id === routeDest.id);
+            if (match) {
+              optimizedItems.push(match);
+            }
+          });
+
+          const remainingItems = day.items.filter((item) => !orderMap.has(item.destination_id));
+          const finalItems = [...optimizedItems, ...remainingItems].map((item, index) => ({
+            ...item,
+            order: index + 1,
+          }));
+
+          return {
+            ...day,
+            items: finalItems,
+          };
+        } catch (error) {
+          console.error('[ItineraryBuilderAgent] Failed to optimize route', error);
+          return day;
+        }
       })
     );
 
