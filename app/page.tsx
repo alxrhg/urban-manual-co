@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { 
   Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus
@@ -858,20 +857,23 @@ export default function Home() {
     if (!user) return;
 
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        return;
-      }
-      const { data, error } = await supabaseClient
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const response = await fetch('/api/homepage/profile', {
+        credentials: 'include',
+      });
 
-      if (error) {
-        console.warn('Error fetching user profile:', error);
+      if (response.status === 401) {
+        setUserProfile(null);
+        setUserContext(null);
         return;
       }
+
+      if (!response.ok) {
+        console.warn('Error fetching user profile:', await response.text());
+        return;
+      }
+
+      const payload = await response.json();
+      const data = payload.profile;
 
       if (!data) {
         setUserProfile(null);
@@ -990,70 +992,39 @@ export default function Home() {
     try {
       console.log('[Filter Data] Starting fetch...');
       
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        console.warn('[Filter Data] Supabase client not available');
-        // Use the already-started Discovery Engine call
-        const discoveryBaseline = await discoveryBaselinePromise;
-        if (discoveryBaseline.length) {
-          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
-          React.startTransition(() => {
-            setCities(discoveryCities);
-            setCategories(discoveryCategories);
-          });
-          if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
-            const filtered = filterDestinationsWithData(
-              discoveryBaseline,
-              '', {}, '', '', user, visitedSlugs
-            );
-            setFilteredDestinations(filtered);
-          }
-        } else {
-          await applyFallbackData({ updateDestinations: destinations.length === 0 });
-        }
-        return;
-      }
-      
-      // Optimize query: only get distinct city/category pairs, limit to speed up
-      let data, error;
+      let filterRows: any[] | null = null;
+      let fetchError: any = null;
+      const controller = typeof window !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 30000) : null;
       try {
-        const queryPromise = supabaseClient
-        .from('destinations')
-          .select('city, category')
-          .is('parent_destination_id', null) // Only top-level destinations for filters
-          .limit(1000) // Limit to speed up initial query
-          .order('city');
-        
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Network timeout')), 30000)
-        );
-        
-        const result = await Promise.race([queryPromise, timeoutPromise]);
-        data = result.data;
-        error = result.error;
+        const response = await fetch('/api/homepage/filters', {
+          signal: controller?.signal,
+        });
+        if (!response.ok) {
+          fetchError = new Error(await response.text());
+        } else {
+          const payload = await response.json();
+          filterRows = payload.rows || [];
+        }
       } catch (networkError: any) {
-        // Handle network errors (connection lost, timeout, etc.)
         console.warn('[Filter Data] Network error:', networkError?.message || networkError);
-        error = networkError;
-        data = null;
+        fetchError = networkError;
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
 
-      // OPTIMIZATION: Use helper function for error checking
-      if (error || !data) {
-        if (error && !isIgnorableSupabaseError(error)) {
-          // Don't log network errors as warnings - they're expected in poor connectivity
-          if (!error.message?.includes('Network') && !error.message?.includes('timeout')) {
-            console.warn('[Filter Data] Error:', error.message || error);
+      if (fetchError || !filterRows) {
+        if (fetchError && !isIgnorableSupabaseError(fetchError)) {
+          if (!fetchError.message?.includes('Network') && !fetchError.message?.includes('timeout')) {
+            console.warn('[Filter Data] Error:', fetchError.message || fetchError);
           }
         }
 
-        // OPTIMIZATION: Reuse the already-started Discovery Engine call
         const discoveryBaseline = await discoveryBaselinePromise;
         if (discoveryBaseline.length) {
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
             setCities(discoveryCities);
             setCategories(discoveryCategories);
@@ -1072,7 +1043,7 @@ export default function Home() {
         return;
       }
 
-      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions((data || []) as any[]);
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(filterRows as any[]);
 
       // OPTIMIZATION: Batch state updates
       React.startTransition(() => {
@@ -1286,68 +1257,37 @@ export default function Home() {
     return filtered;
   }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs]);
   const fetchDestinations = useCallback(async () => {
-    // Step 1: Run Supabase query directly (no waiting)
     try {
-      // Select only essential columns to avoid issues with missing columns
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        console.warn('[Destinations] Supabase client not available');
-        // Fallback to Discovery Engine if Supabase not available
-        const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
-        if (discoveryBaseline.length) {
-          setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(
-            discoveryBaseline,
-            '', {}, '', '', user, visitedSlugs
-          );
-          setFilteredDestinations(filtered);
-          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
-          React.startTransition(() => {
-            if (discoveryCities.length) setCities(discoveryCities);
-            if (discoveryCategories.length) setCategories(discoveryCategories);
-          });
-        } else {
-          await applyFallbackData({ updateDestinations: true });
-        }
-        return;
-      }
-      
-      // Optimize query: limit initial results for faster load
-      // Exclude nested destinations (only show top-level destinations)
-      let data, error;
+      let destinationsData: Destination[] | null = null;
+      let fetchError: any = null;
+      const controller = typeof window !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 30000) : null;
       try {
-        const queryPromise = supabaseClient
-          .from('destinations')
-          .select('slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
-          .is('parent_destination_id', null) // Only top-level destinations
-          .limit(500) // Limit initial query for faster load
-          .order('name');
-        
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Network timeout')), 30000)
-        );
-        
-        const result = await Promise.race([queryPromise, timeoutPromise]);
-        data = result.data;
-        error = result.error;
+        const response = await fetch('/api/homepage/destinations', {
+          signal: controller?.signal,
+        });
+        if (!response.ok) {
+          fetchError = new Error(await response.text());
+        } else {
+          const payload = await response.json();
+          destinationsData = payload.destinations || [];
+        }
       } catch (networkError: any) {
-        // Handle network errors (connection lost, timeout, etc.)
         console.warn('[Destinations] Network error:', networkError?.message || networkError);
-        error = networkError;
-        data = null;
+        fetchError = networkError;
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
 
-      if (error || !data || !Array.isArray(data) || data.length === 0) {
-        // OPTIMIZATION: Use helper function for error checking
-        if (error && !isIgnorableSupabaseError(error)) {
-          // Don't log network errors as warnings - they're expected in poor connectivity
-          if (!error.message?.includes('Network') && !error.message?.includes('timeout')) {
-            console.warn('Error fetching destinations:', error.message || error);
+      if (fetchError || !destinationsData || !Array.isArray(destinationsData) || destinationsData.length === 0) {
+        if (fetchError && !isIgnorableSupabaseError(fetchError)) {
+          if (!fetchError.message?.includes('Network') && !fetchError.message?.includes('timeout')) {
+            console.warn('Error fetching destinations:', fetchError.message || fetchError);
           }
         }
 
-        // Fallback to Discovery Engine if Supabase fails
         const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
         if (discoveryBaseline.length) {
           setDestinations(discoveryBaseline);
@@ -1357,7 +1297,6 @@ export default function Home() {
           );
           setFilteredDestinations(filtered);
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
             if (discoveryCities.length) setCities(discoveryCities);
             if (discoveryCategories.length) setCategories(discoveryCategories);
@@ -1368,56 +1307,44 @@ export default function Home() {
         return;
       }
 
-      // Step 2: Show Supabase results immediately
-      setDestinations(data as Destination[]);
+      setDestinations(destinationsData as Destination[]);
 
-      // Extract unique cities and categories from full data
-      // IMPORTANT: Set cities/categories immediately (synchronously) to prevent empty filter flash
-      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(data as any[]);
-
-      // Set cities and categories immediately (no batching) to prevent empty filter flash
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(destinationsData as any[]);
       if (uniqueCities.length) {
         setCities(uniqueCities);
       }
       if (uniqueCategories.length) {
         setCategories(uniqueCategories);
       }
-      
-      // Filter destinations immediately with the new data (no filters on initial load)
+
       const filtered = filterDestinationsWithData(
-        data as Destination[],
-        '', // no search term
-        {}, // no advanced filters
-        '', // no selected city
-        '', // no selected category
-        user, // current user
-        visitedSlugs // current visited slugs
+        destinationsData as Destination[],
+        '',
+        {},
+        '',
+        '',
+        user,
+        visitedSlugs
       );
       setFilteredDestinations(filtered);
 
-      // Step 3: Run Discovery Engine AFTER Supabase completes (as enhancement/filter)
-      // This runs in background and can enhance the results
       setDiscoveryEngineLoading(true);
       fetchDiscoveryBootstrap()
         .then((discoveryBaseline) => {
           if (discoveryBaseline.length > 0) {
-            // Merge Discovery Engine results with Supabase results
-            // Discovery Engine can provide better ranking/personalization
-            const merged = [...(data as Destination[]), ...discoveryBaseline];
-            const uniqueMerged = merged.filter((dest, index, self) => 
+            const merged = [...(destinationsData as Destination[]), ...discoveryBaseline];
+            const uniqueMerged = merged.filter((dest, index, self) =>
               index === self.findIndex(d => d.slug === dest.slug)
             );
-            
-            // Only update if Discovery Engine provides additional value
-            if (uniqueMerged.length > data.length) {
+
+            if (uniqueMerged.length > destinationsData!.length) {
               setDestinations(uniqueMerged);
-              const filtered = filterDestinationsWithData(
+              const filteredMerged = filterDestinationsWithData(
                 uniqueMerged,
                 '', {}, '', '', user, visitedSlugs
               );
-              setFilteredDestinations(filtered);
-              
-              // OPTIMIZATION: Batch state updates - only update if Discovery Engine has more
+              setFilteredDestinations(filteredMerged);
+
               const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
               const updates: { cities?: string[]; categories?: string[] } = {};
               if (discoveryCities.length > uniqueCities.length) {
@@ -1436,18 +1363,16 @@ export default function Home() {
           }
         })
         .catch(() => {
-          // Discovery Engine failed - that's fine, we already have Supabase data
+          // Discovery Engine failed - that's fine, we already have initial data
         })
         .finally(() => {
           setDiscoveryEngineLoading(false);
         });
     } catch (error: any) {
-      // OPTIMIZATION: Use helper function for error checking
       if (!isIgnorableSupabaseError(error)) {
         console.warn('Error fetching destinations:', error?.message || error);
       }
 
-      // Fallback to Discovery Engine if Supabase fails
       const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
       if (!discoveryBaseline.length) {
         await applyFallbackData({ updateDestinations: true });
@@ -1459,24 +1384,21 @@ export default function Home() {
     if (!user) return;
 
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        return;
-      }
-      const { data, error } = await supabaseClient
-        .from('visited_places')
-        .select('destination_slug')
-        .eq('user_id', user.id);
+      const response = await fetch('/api/homepage/visited', {
+        credentials: 'include',
+      });
 
-      // Handle missing table or RLS errors gracefully
-      if (error && (error.code === 'PGRST116' || error.code === 'PGRST301')) {
-        // Table doesn't exist or RLS blocking - that's fine, just continue
+      if (response.status === 401) {
         return;
       }
 
-      if (error) throw error;
+      if (!response.ok) {
+        console.warn('Error fetching visited places:', await response.text());
+        return;
+      }
 
-      const slugs = new Set((data as any[])?.map((v: any) => v.destination_slug) || []);
+      const payload = await response.json();
+      const slugs = new Set((payload.slugs as string[] | undefined) || []);
       setVisitedSlugs(slugs);
     } catch (error) {
       // Expected error if user is not logged in - suppress
