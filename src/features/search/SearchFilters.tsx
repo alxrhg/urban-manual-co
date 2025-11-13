@@ -109,7 +109,11 @@ export function SearchFiltersComponent({
     }
   }, [hasLocation, latitude, longitude, filters.nearMe, nearMeRadius]);
 
-  const hasActiveFilters = Object.keys(filters).length > 0;
+  const activeFilterCount = Object.keys(filters).length;
+  const hasActiveFilters = activeFilterCount > 0;
+  const activeFiltersAnnouncement = hasActiveFilters
+    ? `${activeFilterCount} active ${activeFilterCount === 1 ? 'filter' : 'filters'}`
+    : 'No filters applied';
 
   const formatDistance = (km: number) => {
     if (km < 1) return `${Math.round(km * 1000)}m`;
@@ -144,6 +148,9 @@ export function SearchFiltersComponent({
           </span>
         )}
       </button>
+      <span aria-live="polite" role="status" className="sr-only">
+        {activeFiltersAnnouncement}
+      </span>
 
       {isOpen && (
         <div className="w-full mt-4">
@@ -164,11 +171,15 @@ export function SearchFiltersComponent({
           <div className="space-y-6">
 
               {/* Text Search - Only filters grid, doesn't trigger top search */}
-              <div>
-                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Search</div>
+              <fieldset className="space-y-3">
+                <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Search</legend>
                 <div className="relative">
+                  <label htmlFor="search-filter" className="sr-only">
+                    Filter destinations
+                  </label>
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-600" />
                   <input
+                    id="search-filter"
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -188,51 +199,58 @@ export function SearchFiltersComponent({
                     </button>
                   )}
                 </div>
-              </div>
+              </fieldset>
 
               {/* Special Filters */}
-              <div>
-                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Special</div>
+              <fieldset>
+                <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Special</legend>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                   <button
+                    type="button"
                     onClick={() => updateFilter('michelin', filters.michelin ? undefined : true)}
                     className={`transition-all ${
                       filters.michelin
                         ? "font-medium text-black dark:text-white"
                         : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
                     }`}
+                    aria-pressed={Boolean(filters.michelin)}
                   >
                     Michelin
                   </button>
                   <button
+                    type="button"
                     onClick={() => updateFilter('openNow', filters.openNow ? undefined : true)}
                     className={`transition-all ${
                       filters.openNow
                         ? "font-medium text-black dark:text-white"
                         : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
                     }`}
+                    aria-pressed={Boolean(filters.openNow)}
                   >
                     Open Now
                   </button>
                 </div>
-              </div>
+              </fieldset>
 
               {/* Rating Filter */}
-              <div>
-                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Minimum Rating</div>
+              <fieldset>
+                <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Minimum Rating</legend>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                   <button
+                    type="button"
                     onClick={() => updateFilter('minRating', undefined)}
                     className={`transition-all ${
                       !filters.minRating
                         ? "font-medium text-black dark:text-white"
                         : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
                     }`}
+                    aria-pressed={!filters.minRating}
                   >
                     Any
                   </button>
                   {[4.5, 4.0, 3.5, 3.0].map((rating) => (
                     <button
+                      type="button"
                       key={rating}
                       onClick={() => updateFilter('minRating', filters.minRating === rating ? undefined : rating)}
                       className={`transition-all ${
@@ -240,18 +258,20 @@ export function SearchFiltersComponent({
                           ? "font-medium text-black dark:text-white"
                           : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
                       }`}
+                      aria-pressed={filters.minRating === rating}
                     >
                       {rating}+
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               {/* Price Filter */}
-              <div>
-                <div className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Price Level</div>
+              <fieldset>
+                <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Price Level</legend>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                   <button
+                    type="button"
                     onClick={() => {
                       updateFilter('minPrice', undefined);
                       updateFilter('maxPrice', undefined);
@@ -261,11 +281,13 @@ export function SearchFiltersComponent({
                         ? "font-medium text-black dark:text-white"
                         : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
                     }`}
+                    aria-pressed={!filters.minPrice && !filters.maxPrice}
                   >
                     Any
                   </button>
                   {[1, 2, 3, 4].map((level) => (
                     <button
+                      type="button"
                       key={level}
                       onClick={() => {
                         if (filters.minPrice === level && filters.maxPrice === level) {
@@ -281,26 +303,32 @@ export function SearchFiltersComponent({
                           ? "font-medium text-black dark:text-white"
                           : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
                       }`}
+                      aria-pressed={filters.minPrice === level && filters.maxPrice === level}
                     >
                       {'$'.repeat(level)}
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               {/* Near Me Filter */}
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+              <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                <legend className="flex items-center gap-2 mb-3 text-xs font-medium text-gray-500 dark:text-gray-500">
+                  <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                  Near Me
+                </legend>
+
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-500">Near Me</span>
-                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-500">Use current location</span>
                   <button
+                    type="button"
                     onClick={() => toggleNearMe(!filters.nearMe)}
                     disabled={loading}
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                       filters.nearMe ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'
                     }`}
+                    aria-pressed={Boolean(filters.nearMe)}
+                    aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
                   >
                     <span
                       className={`inline-block h-3 w-3 transform rounded-full bg-white dark:bg-black transition-transform ${
@@ -325,11 +353,12 @@ export function SearchFiltersComponent({
 
                 {filters.nearMe && hasLocation && !error && (
                   <div className="space-y-3 mt-4">
-                    <div className="flex items-center justify-between text-xs">
+                    <label htmlFor="near-me-radius" className="flex items-center justify-between text-xs">
                       <span className="text-gray-500 dark:text-gray-500">Radius</span>
                       <span className="font-medium text-black dark:text-white">{formatDistance(nearMeRadius)}</span>
-                    </div>
+                    </label>
                     <input
+                      id="near-me-radius"
                       type="range"
                       min="0.5"
                       max="25"
@@ -337,6 +366,8 @@ export function SearchFiltersComponent({
                       value={nearMeRadius}
                       onChange={(e) => updateRadius(parseFloat(e.target.value))}
                       className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
+                      aria-valuenow={nearMeRadius}
+                      aria-valuetext={formatDistance(nearMeRadius)}
                     />
                     <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
                       <span>500m</span>
@@ -344,7 +375,7 @@ export function SearchFiltersComponent({
                     </div>
                   </div>
                 )}
-              </div>
+              </fieldset>
             </div>
           </div>
         )}
