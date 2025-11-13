@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import {
+  apiRatelimit,
+  memoryApiRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 /**
  * DELETE /api/visited-countries/[country_code]
@@ -26,6 +31,18 @@ export async function DELETE(
         { error: 'Missing country_code' },
         { status: 400 }
       );
+    }
+
+    const rateLimitResponse = await enforceRateLimit({
+      request,
+      userId: user.id,
+      message: 'Too many visited country updates. Please wait a moment.',
+      limiter: apiRatelimit,
+      memoryLimiter: memoryApiRatelimit,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const { error } = await supabase

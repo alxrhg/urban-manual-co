@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { checkAndAwardAchievements } from '@/lib/achievements';
+import {
+  apiRatelimit,
+  memoryApiRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +14,18 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResponse = await enforceRateLimit({
+      request,
+      userId: user.id,
+      message: 'Too many achievement checks. Please wait a moment.',
+      limiter: apiRatelimit,
+      memoryLimiter: memoryApiRatelimit,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Check and award achievements

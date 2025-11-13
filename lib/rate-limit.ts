@@ -146,7 +146,10 @@ class MemoryRatelimit {
     this.windowMs = windowMs;
 
     // Clean up old entries every minute
-    setInterval(() => this.cleanup(), 60000);
+    const interval = setInterval(() => this.cleanup(), 60000);
+    if (typeof interval.unref === "function") {
+      interval.unref();
+    }
   }
 
   async limit(identifier: string) {
@@ -205,3 +208,46 @@ export const isUpstashConfigured = () => {
     process.env.UPSTASH_REDIS_REST_TOKEN
   );
 };
+
+type RateLimitResult = {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+};
+
+type RateLimiter = {
+  limit: (identifier: string) => Promise<RateLimitResult>;
+};
+
+interface EnforceRateLimitOptions {
+  request: Request;
+  userId?: string | null;
+  message: string;
+  limiter: RateLimiter;
+  memoryLimiter: RateLimiter;
+}
+
+/**
+ * Shared helper to run the configured rate limiter and return
+ * a properly formatted 429 response if the request exceeds the quota.
+ */
+export async function enforceRateLimit({
+  request,
+  userId,
+  message,
+  limiter,
+  memoryLimiter,
+}: EnforceRateLimitOptions): Promise<Response | null> {
+  const identifier = getIdentifier(request, userId ?? undefined);
+  const activeLimiter = isUpstashConfigured() ? limiter : memoryLimiter;
+  const { success, limit, remaining, reset } = await activeLimiter.limit(
+    identifier
+  );
+
+  if (!success) {
+    return createRateLimitResponse(message, limit, remaining, reset);
+  }
+
+  return null;
+}
