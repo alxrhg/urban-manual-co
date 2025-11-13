@@ -332,10 +332,12 @@ export default function TripDetailPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push('/trips')}
-              className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Back to Trips"
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Trips</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
             {trip.user_id === user?.id && (
               <button
