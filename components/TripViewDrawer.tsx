@@ -187,8 +187,12 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
         }
       }
 
+      // Generate location ID from item ID for display, but store original item ID
+      const locationId = parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now();
+
       return {
-        id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+        id: locationId,
+        _itemId: item.id, // Store original item ID for deletion
         name: destination?.name || item.title,
         city: destination?.city || notesData.city || '',
         category: destination?.category || item.description || '',
@@ -275,9 +279,17 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
   };
 
   const handleRemoveLocation = async (locationId: number) => {
-    const itemId = itineraryItems.find(item => parseInt(item.id) === locationId)?.id;
-    if (itemId) {
-      await deleteItineraryItem(itemId);
+    // Find the item by matching the location ID transformation
+    const item = itineraryItems.find(item => {
+      const transformedId = parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now();
+      return transformedId === locationId;
+    });
+
+    if (item) {
+      await deleteItineraryItem(item.id);
+    } else {
+      console.error('Could not find item ID for location:', locationId);
+      alert('Failed to find location to delete');
     }
   };
 
