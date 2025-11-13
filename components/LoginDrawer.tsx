@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -12,7 +12,7 @@ interface LoginDrawerProps {
   onClose: () => void;
 }
 
-export function LoginDrawer({ isOpen, onClose }: LoginDrawerProps) {
+function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, signUp, signInWithApple } = useAuth();
@@ -225,6 +225,14 @@ export function LoginDrawer({ isOpen, onClose }: LoginDrawerProps) {
     >
       {loginContent}
     </Drawer>
+  );
+}
+
+export function LoginDrawer({ isOpen, onClose }: LoginDrawerProps) {
+  return (
+    <Suspense fallback={null}>
+      <LoginDrawerContent isOpen={isOpen} onClose={onClose} />
+    </Suspense>
   );
 }
 
