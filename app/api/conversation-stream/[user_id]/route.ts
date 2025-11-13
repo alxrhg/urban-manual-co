@@ -260,9 +260,7 @@ export async function POST(
                         temperature: 0.8,
                         maxOutputTokens: 500,
                       },
-                      systemInstruction: {
-                        parts: [{ text: CHAT_SYSTEM_PROMPT }],
-                      },
+                      systemInstruction: CHAT_SYSTEM_PROMPT,
                     });
 
                     // Build conversation history for chat
@@ -329,9 +327,7 @@ export async function POST(
                       temperature: 0.9,
                       maxOutputTokens: 600,
                     },
-                    systemInstruction: {
-                      parts: [{ text: CHAT_SYSTEM_PROMPT }],
-                    },
+                    systemInstruction: CHAT_SYSTEM_PROMPT,
                   });
 
                   // Build conversation history for chat
