@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
-import config from '@/payload.config'
+import config from '@payload-config'
 import { createServerClient } from '@/lib/supabase/server'
 import { getUserFromRequest, AuthError } from '@/lib/adminAuth'
 
