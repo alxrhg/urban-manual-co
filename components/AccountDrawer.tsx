@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Settings, Heart, Check, Map, LogOut, ExternalLink } from 'lucide-react';
+import { User, Settings, Heart, Check, Map, LogOut, ExternalLink, Camera, Loader2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { Drawer } from '@/components/ui/Drawer';
@@ -11,6 +11,7 @@ import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 import { TripsDrawer } from '@/components/TripsDrawer';
 import { SettingsDrawer } from '@/components/SettingsDrawer';
+import { useToast } from '@/hooks/useToast';
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -20,12 +21,17 @@ interface AccountDrawerProps {
 export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const toast = useToast();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(false);
   const [isVisitedPlacesOpen, setIsVisitedPlacesOpen] = useState(false);
   const [isTripsOpen, setIsTripsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showAvatarUpload, setShowAvatarUpload] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch user profile and avatar
   useEffect(() => {
@@ -78,14 +84,85 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     }, 300);
   };
 
+  const handleAvatarClick = () => {
+    setShowAvatarUpload(true);
+  };
+
+  const handleAvatarFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be smaller than 2MB');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setAvatarPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-profile-picture', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      setAvatarUrl(data.url);
+      
+      // Update profile in database
+      const supabaseClient = createClient();
+      await supabaseClient
+        .from('profiles')
+        .upsert({
+          id: user?.id,
+          avatar_url: data.url,
+        });
+
+      toast.success('Profile picture updated');
+      setShowAvatarUpload(false);
+      setAvatarPreview(null);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+      setAvatarPreview(null);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const accountContent = (
     <div className="px-6 py-6">
       {user ? (
         <div className="space-y-6">
               {/* User Profile Section */}
               <div className="flex items-center gap-4">
-                {avatarUrl ? (
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <button
+                  onClick={handleAvatarClick}
+                  className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center group cursor-pointer hover:opacity-80 transition-opacity"
+                  aria-label="Change profile picture"
+                >
+                  {avatarUrl ? (
                     <Image
                       src={avatarUrl}
                       alt="Profile"
@@ -93,12 +170,13 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                       className="object-cover"
                       sizes="64px"
                     />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  ) : (
                     <User className="w-8 h-8 text-gray-400" />
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Camera className="w-5 h-5 text-white" />
                   </div>
-                )}
+                </button>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-black dark:text-white">
                     {user.email?.split('@')[0] || 'User'}
@@ -228,6 +306,88 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
+
+      {/* Avatar Upload Modal */}
+      {showAvatarUpload && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-50 transition-opacity"
+            onClick={() => {
+              setShowAvatarUpload(false);
+              setAvatarPreview(null);
+            }}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <div
+              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">Change Profile Picture</h3>
+                <button
+                  onClick={() => {
+                    setShowAvatarUpload(false);
+                    setAvatarPreview(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Preview */}
+                {avatarPreview && (
+                  <div className="flex justify-center">
+                    <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      <Image
+                        src={avatarPreview}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                        sizes="128px"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* File Input */}
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarFileSelect}
+                    className="hidden"
+                    id="avatar-upload-input"
+                  />
+                  <label
+                    htmlFor="avatar-upload-input"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer text-sm font-medium"
+                  >
+                    {uploadingAvatar ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-4 h-4" />
+                        Choose Photo
+                      </>
+                    )}
+                  </label>
+                </div>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  Max size: 2MB
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

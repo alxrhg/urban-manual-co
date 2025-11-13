@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AvatarUpload } from './AvatarUpload';
 import { Save, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cityCountryMap, countryOrder } from '@/data/cityCountryMap';
 import { Button } from '@/components/ui/button';
@@ -127,13 +126,10 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
     }
   }
 
-  function handleAvatarUpload(newAvatarUrl: string) {
-    setProfile({ ...profile, avatar_url: newAvatarUrl });
-  }
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
@@ -173,27 +169,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
   }, {} as Record<string, string[]>);
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-light text-black dark:text-white">Edit Profile</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Update your profile information and preferences
-          </p>
-        </div>
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
-
+    <div className="w-full space-y-6">
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
@@ -212,28 +188,11 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Left Column - Avatar Upload */}
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-medium text-black dark:text-white mb-4">Profile Picture</h3>
-            <div className="flex justify-center py-6">
-              <AvatarUpload
-                currentAvatarUrl={profile.avatar_url}
-                displayName={profile.display_name || 'User'}
-                onUploadComplete={handleAvatarUpload}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Form Fields */}
-        <div className="space-y-6">
-          {/* Personal Information Section */}
-          <div className="space-y-5">
-          <div>
-            <h3 className="text-sm font-medium text-black dark:text-white mb-4">Personal Information</h3>
-            <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Personal Information Section */}
+        <div>
+          <h3 className="text-xs font-medium mb-4 text-gray-700 dark:text-gray-300">Personal Information</h3>
+          <div className="space-y-4">
               {/* Display Name */}
               <div className="space-y-2">
                 <Label htmlFor="display_name">Display Name</Label>
@@ -274,13 +233,11 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
               </div>
             </div>
           </div>
-        </div>
 
         {/* Location & Details Section */}
-        <div className="space-y-5 pt-6 border-t border-gray-200 dark:border-gray-800">
-          <div>
-            <h3 className="text-sm font-medium text-black dark:text-white mb-4">Location & Details</h3>
-            <div className="space-y-4">
+        <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
+          <h3 className="text-xs font-medium mb-4 text-gray-700 dark:text-gray-300">Location & Details</h3>
+          <div className="space-y-4">
               {/* Location - City Selector */}
               <div className="space-y-2">
                 <Label htmlFor="location">Main City</Label>
@@ -340,7 +297,6 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
               </div>
             </div>
           </div>
-        </div>
 
         {/* Privacy Setting */}
         <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
@@ -362,8 +318,8 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
           </div>
         </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
             <Button
               onClick={handleSave}
               disabled={saving}
@@ -392,7 +348,6 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
               </Button>
             )}
           </div>
-        </div>
       </div>
     </div>
   );
