@@ -239,7 +239,13 @@ export async function POST(request: NextRequest) {
     let imageUrl = null;
     if (details.photos && details.photos.length > 0) {
       const photo = details.photos[0];
-      imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
+      // New Places API uses 'name' property which is a full path like 'places/ChIJ.../photos/photo_reference'
+      if (photo.name) {
+        imageUrl = `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=1200&key=${GOOGLE_API_KEY}`;
+      } else if (photo.photo_reference) {
+        // Fallback to old API format if photo_reference exists
+        imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
+      }
     }
 
     // Build response with form-friendly data

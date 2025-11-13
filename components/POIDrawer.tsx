@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Drawer } from '@/components/ui/Drawer';
 import { Loader2, X } from 'lucide-react';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
-import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
+import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
 
 interface POIDrawerProps {
@@ -214,7 +214,8 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
   };
 
   const handleGooglePlaceSelect = async (placeDetails: any) => {
-    if (!placeDetails?.place_id) return;
+    const placeId = placeDetails?.place_id || placeDetails?.placeId;
+    if (!placeId) return;
     
     try {
       const supabase = createClient();
@@ -231,7 +232,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ placeId: placeDetails.place_id }),
+        body: JSON.stringify({ placeId }),
       });
 
       if (!response.ok) {
@@ -240,15 +241,16 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
 
       const data = await response.json();
       
-      if (data.place) {
+      if (data) {
         setFormData(prev => ({
           ...prev,
-          name: data.place.name || prev.name,
-          city: data.place.city || prev.city,
-          category: data.place.category || prev.category,
-          description: data.place.description || prev.description,
-          image: data.place.image || prev.image,
-          michelin_stars: data.place.michelin_stars || prev.michelin_stars,
+          name: data.name || prev.name,
+          city: data.city || prev.city,
+          category: data.category || prev.category,
+          description: data.description || prev.description,
+          content: data.content || prev.content,
+          image: data.image || prev.image,
+          michelin_stars: data.michelin_stars || prev.michelin_stars,
         }));
         setGooglePlaceQuery('');
         toast.success('Place details loaded from Google');
@@ -267,11 +269,13 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
           <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
             Search Google Places (optional)
           </label>
-          <GooglePlacesAutocomplete
+          <GooglePlacesAutocompleteNative
             value={googlePlaceQuery}
             onChange={setGooglePlaceQuery}
             onPlaceSelect={handleGooglePlaceSelect}
             placeholder="Search for a place on Google..."
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+            types={['establishment']}
           />
         </div>
 

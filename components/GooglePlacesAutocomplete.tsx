@@ -122,7 +122,8 @@ export default function GooglePlacesAutocomplete({
     // Return placeId to parent - let parent component handle the API call
     // This avoids needing admin email in the component
     return {
-      placeId,
+      place_id: placeId,
+      placeId: placeId, // Support both formats
       description: predictions.find(p => p.place_id === placeId)?.description || '',
     };
   };
