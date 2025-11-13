@@ -30,7 +30,6 @@ export interface RichQueryContext {
       weather?: any;
       events?: any[];
       closures?: any[];
-      crowding?: any;
     };
     intelligence?: {
       demandForecast?: any;

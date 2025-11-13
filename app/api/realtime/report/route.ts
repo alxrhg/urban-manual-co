@@ -8,10 +8,9 @@ import { createServiceRoleClient } from '@/lib/supabase-server';
  * Body:
  * {
  *   destination_id: number;
- *   report_type: 'wait_time' | 'crowding' | 'closed' | 'special_offer';
+ *   report_type: 'wait_time' | 'closed' | 'special_offer';
  *   report_data: {
  *     wait_time?: number; // minutes
- *     crowding_level?: 'quiet' | 'moderate' | 'busy' | 'very_busy';
  *     message?: string;
  *   };
  * }
@@ -70,31 +69,6 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to create report', details: reportError.message },
         { status: 500 }
       );
-    }
-
-    // If report type is crowding, also update destination_status for immediate use
-    if (report_type === 'crowding' && report_data.crowding_level) {
-      const crowdingLevel = report_data.crowding_level as 'quiet' | 'moderate' | 'busy' | 'very_busy';
-      const crowdingScore = {
-        quiet: 25,
-        moderate: 50,
-        busy: 75,
-        very_busy: 100,
-      }[crowdingLevel] || 50;
-
-      await supabase
-        .from('destination_status')
-        .insert({
-          destination_id,
-          status_type: 'crowding',
-          status_value: {
-            level: report_data.crowding_level,
-            score: crowdingScore,
-          },
-          data_source: 'user_reported',
-          confidence_score: 0.7, // User reports have medium confidence
-          expires_at: expiresAt.toISOString(),
-        });
     }
 
     // If report type is wait_time, update destination_status

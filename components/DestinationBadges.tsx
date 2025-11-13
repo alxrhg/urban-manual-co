@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getTrendingBadge, getCrowdLevelBadge, formatBestTimeText, type PeakTimeRecommendation, type TrendingDestination } from '@/lib/ml/forecasting';
+import { getTrendingBadge, formatBestTimeText, type PeakTimeRecommendation, type TrendingDestination } from '@/lib/ml/forecasting';
 
 interface DestinationBadgesProps {
   destinationId: number;
@@ -60,13 +60,11 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
               const bestTimes = allTimes.slice(0, 3).map((pt: any) => ({
                 day: pt.day_of_week,
                 timeRange: formatTimeRange(pt.hour),
-                crowd_level: 'low' as const,
               }));
 
               const worstTimes = allTimes.slice(-3).map((pt: any) => ({
                 day: pt.day_of_week,
                 timeRange: formatTimeRange(pt.hour),
-                crowd_level: 'high' as const,
               }));
 
               setPeakTimes({ best_times: bestTimes, worst_times: worstTimes });
@@ -87,17 +85,7 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
   if (loading) return null;
 
   const trendingBadge = trendingData ? getTrendingBadge(trendingData.trend_direction) : null;
-  const crowdLevel = peakTimes
-    ? peakTimes.best_times.length > peakTimes.worst_times.length
-      ? 'low'
-      : peakTimes.worst_times.length > peakTimes.best_times.length
-      ? 'high'
-      : 'medium'
-    : null;
-
-  const crowdBadge = crowdLevel ? getCrowdLevelBadge(crowdLevel) : null;
-
-  if (!trendingBadge && !crowdBadge && !peakTimes) {
+  if (!trendingBadge && !peakTimes) {
     return null;
   }
 
@@ -107,11 +95,6 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
         {trendingBadge && (
           <div className={`text-xs ${trendingBadge.color} flex items-center gap-1`}>
             <span>{trendingBadge.emoji}</span>
-          </div>
-        )}
-        {crowdBadge && (
-          <div className={`text-xs ${crowdBadge.color} flex items-center gap-1`}>
-            <span>{crowdBadge.emoji}</span>
           </div>
         )}
       </div>
@@ -126,14 +109,6 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
             <span className={`text-xs font-medium ${trendingBadge.color} flex items-center gap-1`}>
               <span>{trendingBadge.emoji}</span>
               <span>{trendingBadge.text}</span>
-            </span>
-          </div>
-        )}
-        {crowdBadge && (
-          <div className="px-2 py-0.5 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200 dark:border-gray-800">
-            <span className={`text-xs font-medium ${crowdBadge.color} flex items-center gap-1`}>
-              <span>{crowdBadge.emoji}</span>
-              <span>{crowdBadge.text}</span>
             </span>
           </div>
         )}
