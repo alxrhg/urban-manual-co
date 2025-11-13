@@ -365,6 +365,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       if (!user) {
         setIsSaved(false);
         setIsVisited(false);
+        setIsAddedToTrip(false);
         return;
       }
 
@@ -396,9 +397,36 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       if (visitedData) {
         console.log('Visited status loaded:', visitedData);
       }
+
+      // Check if destination is in any of user's trips
+      if (destination.slug) {
+        // First get all user's trips
+        const { data: userTrips } = await supabaseClient
+          .from('trips')
+          .select('id')
+          .eq('user_id', user.id);
+
+        if (userTrips && userTrips.length > 0) {
+          const tripIds = userTrips.map(t => t.id);
+          // Check if destination is in any of these trips
+          const { data: tripItems } = await supabaseClient
+            .from('itinerary_items')
+            .select('id')
+            .eq('destination_slug', destination.slug)
+            .in('trip_id', tripIds)
+            .limit(1);
+
+          setIsAddedToTrip(!!tripItems && tripItems.length > 0);
+        } else {
+          setIsAddedToTrip(false);
+        }
+      } else {
+        setIsAddedToTrip(false);
+      }
       } else {
         setIsSaved(false);
         setIsVisited(false);
+        setIsAddedToTrip(false);
       }
     }
 
