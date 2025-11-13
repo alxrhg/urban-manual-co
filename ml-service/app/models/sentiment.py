@@ -2,9 +2,10 @@
 
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
-import pandas as pd
 from transformers import pipeline
 import numpy as np
+import re
+from html import unescape
 
 from app.config import get_settings
 from app.utils.logger import get_logger
@@ -20,6 +21,10 @@ class SentimentAnalysisModel:
     
     Uses RoBERTa-based model for accurate sentiment classification.
     """
+
+    TEXT_PAGE_SIZE = 100
+    MAX_TEXTS = 500
+    TEXT_MAX_LENGTH = 500
 
     def __init__(self):
         """Initialize the sentiment analyzer."""
@@ -204,14 +209,60 @@ class SentimentAnalysisModel:
         - user_reviews (if exists)
         - social_mentions (if exists)
         """
-        try:
-            # Placeholder: In production, query Supabase for user notes
-            # For now, return empty list
-            # This would be implemented with DataFetcher
-            return []
-        except Exception as e:
-            logger.error(f"Error fetching destination texts: {e}")
-            return []
+        texts: List[str] = []
+        seen: set[str] = set()
+        offset = 0
+
+        while len(texts) < self.MAX_TEXTS:
+            try:
+                df = DataFetcher.fetch_destination_texts(
+                    destination_id=destination_id,
+                    days=days,
+                    limit=self.TEXT_PAGE_SIZE,
+                    offset=offset,
+                )
+            except Exception as e:
+                logger.error(f"Error fetching destination texts: {e}")
+                break
+
+            if df is None or df.empty:
+                break
+
+            for raw_text in df['text'].tolist():
+                cleaned = self._normalize_text(raw_text, max_length=self.TEXT_MAX_LENGTH)
+                if cleaned and cleaned not in seen:
+                    texts.append(cleaned)
+                    seen.add(cleaned)
+                    if len(texts) >= self.MAX_TEXTS:
+                        break
+
+            if len(df) < self.TEXT_PAGE_SIZE:
+                break
+
+            offset += self.TEXT_PAGE_SIZE
+
+        return texts
+
+    @staticmethod
+    def _normalize_text(text: Optional[str], max_length: int = 500) -> str:
+        """Normalize markdown/HTML text into a clean sentence."""
+        if not text:
+            return ""
+
+        normalized = unescape(str(text))
+        normalized = re.sub(r'<[^>]+>', ' ', normalized)
+        normalized = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', normalized)
+        normalized = re.sub(r'https?://\S+', ' ', normalized)
+        normalized = re.sub(r'[\*`_>#~\-]', ' ', normalized)
+        normalized = re.sub(r'\s+', ' ', normalized).strip()
+
+        if not normalized:
+            return ""
+
+        if len(normalized) > max_length:
+            normalized = normalized[:max_length].strip()
+
+        return normalized
 
 
 # Global model instance
