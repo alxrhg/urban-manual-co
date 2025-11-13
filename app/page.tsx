@@ -37,7 +37,10 @@ import { DistanceBadge } from '@/components/DistanceBadge';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
 import { SessionResume } from '@/components/SessionResume';
 import { ContextCards } from '@/components/ContextCards';
-import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
+import { HeroShell } from '@/components/design-system/homepage/HeroShell';
+import { ContextStack } from '@/components/design-system/homepage/ContextStack';
+import { SearchField } from '@/components/design-system/homepage/SearchField';
+import { IntentChipGroup } from '@/components/design-system/homepage/IntentChipGroup';
 import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
 import { DestinationBadges } from '@/components/DestinationBadges';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
@@ -1873,264 +1876,252 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 lg:px-12 py-16 md:py-24 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-              {/* Greeting - Always vertically centered */}
-              <div className="flex-1 flex items-center">
-                <div className="w-full">
-                  {/* Show GreetingHero only when no active search */}
-                  {!submittedQuery && (
-                    <>
-                      {/* Session Resume - Show if there's a recent session */}
-                      {showSessionResume && lastSession && (
-                        <div className="mb-6">
-                          <SessionResume
-                            session={lastSession}
-                            onResume={handleResumeSession}
-                            onDismiss={() => setShowSessionResume(false)}
-                          />
-                        </div>
-                      )}
-
-                      {/* Context Cards - Show user's saved preferences */}
-                      {userContext && user && !searchTerm && (
-                        <div className="mb-6">
-                          <ContextCards context={userContext} />
-                        </div>
-                      )}
-
-                  <GreetingHero
-                searchQuery={searchTerm}
-                onSearchChange={(value) => {
-                  setSearchTerm(value);
-                  // Clear conversation history only if search is cleared
-                  if (!value.trim()) {
-                    setConversationHistory([]);
-                    setSearchIntent(null);
-                    setSeasonalContext(null);
-                    setSearchTier(null);
-                    setChatResponse('');
-                    setFilteredDestinations([]);
-                            setSubmittedQuery('');
-                  }
-                }}
-                onSubmit={(query) => {
-                  // CHAT MODE: Explicit submit on Enter key (like chat component)
-                  if (query.trim() && !searching) {
-                    performAISearch(query);
-                  }
-                }}
-                userName={(function () {
-                  const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                  if (!raw) return undefined;
-                  return raw
-                    .split(/[\s._-]+/)
-                    .filter(Boolean)
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(' ');
-                })()}
-                        userProfile={userProfile}
-                        lastSession={lastSession}
-                        enrichedContext={enrichedGreetingContext}
-                isAIEnabled={isAIEnabled}
-                isSearching={searching}
-                filters={advancedFilters}
-                onFiltersChange={(newFilters) => {
-                  setAdvancedFilters(newFilters);
-                  // Sync with legacy state for backward compatibility
-                  if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
-                  }
-                  if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
-                  }
-                  // Track filter changes
-                  Object.entries(newFilters).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null && value !== '') {
-                      trackFilterChange({ filterType: key, value });
+        <HeroShell
+          aria-label="Personalized discovery hero"
+          renderHero={() =>
+            !submittedQuery ? (
+              <ContextStack
+                renderSession={
+                  showSessionResume && lastSession
+                    ? () => (
+                        <SessionResume
+                          session={lastSession}
+                          onResume={handleResumeSession}
+                          onDismiss={() => setShowSessionResume(false)}
+                        />
+                      )
+                    : undefined
+                }
+                renderContext={
+                  userContext && user && !searchTerm
+                    ? () => <ContextCards context={userContext} />
+                    : undefined
+                }
+              >
+                <GreetingHero
+                  searchQuery={searchTerm}
+                  onSearchChange={(value) => {
+                    setSearchTerm(value);
+                    // Clear conversation history only if search is cleared
+                    if (!value.trim()) {
+                      setConversationHistory([]);
+                      setSearchIntent(null);
+                      setSeasonalContext(null);
+                      setSearchTier(null);
+                      setChatResponse('');
+                      setFilteredDestinations([]);
+                      setSubmittedQuery('');
                     }
-                  });
-                }}
-                availableCities={cities}
-                availableCategories={categories}
-                  />
-                    </>
-                  )}
+                  }}
+                  onSubmit={(query) => {
+                    // CHAT MODE: Explicit submit on Enter key (like chat component)
+                    if (query.trim() && !searching) {
+                      performAISearch(query);
+                    }
+                  }}
+                  userName={(function () {
+                    const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                    if (!raw) return undefined;
+                    return raw
+                      .split(/[\s._-]+/)
+                      .filter(Boolean)
+                      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                      .join(' ');
+                  })()}
+                  userProfile={userProfile}
+                  lastSession={lastSession}
+                  enrichedContext={enrichedGreetingContext}
+                  isAIEnabled={isAIEnabled}
+                  isSearching={searching}
+                  filters={advancedFilters}
+                  onFiltersChange={(newFilters) => {
+                    setAdvancedFilters(newFilters);
+                    // Sync with legacy state for backward compatibility
+                    if (newFilters.city !== undefined) {
+                      setSelectedCity(newFilters.city || '');
+                    }
+                    if (newFilters.category !== undefined) {
+                      setSelectedCategory(newFilters.category || '');
+                    }
+                    // Track filter changes
+                    Object.entries(newFilters).forEach(([key, value]) => {
+                      if (value !== undefined && value !== null && value !== '') {
+                        trackFilterChange({ filterType: key, value });
+                      }
+                    });
+                  }}
+                  availableCities={cities}
+                  availableCategories={categories}
+                />
+              </ContextStack>
+            ) : (
+              <div className="w-full">
+                {/* Greeting */}
+                <div className="text-left mb-6">
+                  <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+                    {(() => {
+                      const now = new Date();
+                      const currentHour = now.getHours();
+                      let greeting = 'GOOD EVENING';
+                      if (currentHour < 12) greeting = 'GOOD MORNING';
+                      else if (currentHour < 18) greeting = 'GOOD AFTERNOON';
 
-                  {/* Chat-like display when search is active */}
-                  {submittedQuery && (
-                    <div className="w-full">
-                      {/* Greeting */}
-                      <div className="text-left mb-6">
-                        <h2 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-                          {(() => {
-                            const now = new Date();
-                            const currentHour = now.getHours();
-                            let greeting = 'GOOD EVENING';
-                            if (currentHour < 12) greeting = 'GOOD MORNING';
-                            else if (currentHour < 18) greeting = 'GOOD AFTERNOON';
+                      const userName = (function () {
+                        const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
+                        if (!raw) return undefined;
+                        return raw
+                          .split(/[\s._-]+/)
+                          .filter(Boolean)
+                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                          .join(' ');
+                      })();
 
-                            const userName = (function () {
-                              const raw = ((user?.user_metadata as any)?.name || (user?.email ? user.email.split('@')[0] : undefined)) as string | undefined;
-                              if (!raw) return undefined;
-                              return raw
-                                .split(/[\s._-]+/)
-                                .filter(Boolean)
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(' ');
-                            })();
+                      return `${greeting}${userName ? `, ${userName}` : ''}`;
+                    })()}
+                  </h2>
+                </div>
 
-                            return `${greeting}${userName ? `, ${userName}` : ''}`;
-                          })()}
-                        </h2>
+                {/* Refinement Chips - Active Filters */}
+                {inferredTags && !searching && (() => {
+                  const activeTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
+                  if (activeTags.length === 0) return null;
+                  return (
+                    <div className="mb-4">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Filtered by:</div>
+                      <RefinementChips
+                        tags={activeTags}
+                        onChipClick={(tag) => handleChipClick(tag)}
+                        onChipRemove={(tag) => handleChipRemove(tag)}
+                        activeTags={activeFilters}
+                      />
+                    </div>
+                  );
+                })()}
+
+                {/* Refinement Chips - Suggestions */}
+                {inferredTags && !searching && (() => {
+                  const suggestionTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, false);
+                  if (suggestionTags.length === 0) return null;
+                  return (
+                    <div className="mb-6">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggestions:</div>
+                      <RefinementChips
+                        tags={suggestionTags}
+                        onChipClick={(tag) => handleChipClick(tag)}
+                        activeTags={activeFilters}
+                      />
+                    </div>
+                  );
+                })()}
+
+                {/* Scrollable chat history - Fixed height for about 2 message pairs */}
+                <div
+                  ref={chatContainerRef}
+                  className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+                >
+                  {chatMessages.length > 0 ? (
+                    chatMessages.map((message, index) => (
+                      <div key={index} className="space-y-2">
+                        {message.type === 'user' ? (
+                          <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                            {message.content}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <MarkdownRenderer
+                              content={message.content}
+                              className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                            />
+                            {message.contextPrompt && (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                {message.contextPrompt}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
+                    ))
+                  ) : null}
 
-                      {/* Refinement Chips - Active Filters */}
-                      {inferredTags && !searching && (() => {
-                        const activeTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
-                        if (activeTags.length === 0) return null;
-                        return (
-                          <div className="mb-4">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Filtered by:</div>
-                            <RefinementChips
-                              tags={activeTags}
-                              onChipClick={(tag) => handleChipClick(tag)}
-                              onChipRemove={(tag) => handleChipRemove(tag)}
-                              activeTags={activeFilters}
-                            />
-                          </div>
-                        );
-                      })()}
-
-                      {/* Refinement Chips - Suggestions */}
-                      {inferredTags && !searching && (() => {
-                        const suggestionTags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, false);
-                        if (suggestionTags.length === 0) return null;
-                        return (
-                          <div className="mb-6">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggestions:</div>
-                            <RefinementChips
-                              tags={suggestionTags}
-                              onChipClick={(tag) => handleChipClick(tag)}
-                              activeTags={activeFilters}
-                            />
-                          </div>
-                        );
-                      })()}
-
-                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
-                      <div
-                        ref={chatContainerRef}
-                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
-                      >
-                        {chatMessages.length > 0 ? (
-                          chatMessages.map((message, index) => (
-                            <div key={index} className="space-y-2">
-                              {message.type === 'user' ? (
-                                <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                  {message.content}
-                                </div>
-                              ) : (
-                                <div className="space-y-4">
-                                  <MarkdownRenderer
-                                    content={message.content}
-                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                  />
-                                  {message.contextPrompt && (
-                                    <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                      {message.contextPrompt}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          ))
-                        ) : null}
-
-                        {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
-                        {(searching || (submittedQuery && chatMessages.length === 0)) && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                  {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
+                  {(searching || (submittedQuery && chatMessages.length === 0)) && (
+                    <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                       <div className="flex items-center gap-2">
-                              {discoveryEngineLoading && (
-                                <div className="flex gap-1">
-                                  <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
-                                </div>
-                              )}
-                              <span>{currentLoadingText}</span>
+                        {discoveryEngineLoading && (
+                          <div className="flex gap-1">
+                            <span className="animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }}>.</span>
+                          </div>
+                        )}
+                        <span>{currentLoadingText}</span>
                       </div>
-                    </div>
-                  )}
-                      </div>
-
-                      {/* Follow-up input field - Chat style */}
-                      {!searching && chatMessages.length > 0 && (
-                        <div className="relative">
-                          <input
-                            placeholder="Refine your search or ask a follow-up..."
-                            value={followUpInput}
-                            onChange={(e) => setFollowUpInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey && followUpInput.trim()) {
-                                e.preventDefault();
-                                const query = followUpInput.trim();
-                                setSearchTerm(query);
-                                setFollowUpInput('');
-                                performAISearch(query);
-                              }
-                            }}
-                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-                          />
-                        </div>
-                      )}
-
-                      {/* Intent Confirmation Chips - Always under text input */}
-                      {searchIntent && !searching && (
-                        <div className="mt-4">
-                          <IntentConfirmationChips
-                            intent={searchIntent}
-                            onChipRemove={(chipType, value) => {
-                              // Modify the search based on what was removed
-                              setSearchTerm('');
-                              setSubmittedQuery('');
-                              setSearchIntent(null);
-                              setInferredTags(null);
-                              setActiveFilters(new Set());
-                            }}
-                            editable={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* No results message */}
-                  {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
-                    <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                      <span>No results found. Try refining your search.</span>
                     </div>
                   )}
                 </div>
+
+                {/* Follow-up input field - Chat style */}
+                {!searching && chatMessages.length > 0 && (
+                  <SearchField
+                    id="follow-up-search"
+                    label="Refine search"
+                    placeholder="Refine your search or ask a follow-up..."
+                    value={followUpInput}
+                    onChange={(e) => setFollowUpInput(e.target.value)}
+                    onSubmit={(value) => {
+                      const query = value.trim();
+                      if (!query) return;
+                      setSearchTerm(query);
+                      setFollowUpInput('');
+                      performAISearch(query);
+                    }}
+                    autoComplete="off"
+                    inputMode="search"
+                  />
+                )}
+
+                {/* Intent Confirmation Chips - Always under text input */}
+                {!searching && (
+                  <IntentChipGroup
+                    intent={searchIntent}
+                    onChipRemove={(chipType, value) => {
+                      if (!searchIntent) return;
+                      // Modify the search based on what was removed
+                      setSearchTerm('');
+                      setSubmittedQuery('');
+                      setSearchIntent(null);
+                      setInferredTags(null);
+                      setActiveFilters(new Set());
+                    }}
+                    emptyState={null}
+                  />
+                )}
+
+                {/* No results message */}
+                {submittedQuery && !searching && filteredDestinations.length === 0 && !chatResponse && (
+                  <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                    <span>No results found. Try refining your search.</span>
+                  </div>
+                )}
               </div>
-              
-              {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
-              {!submittedQuery && (
-                <div className="flex-1 flex items-end">
-                  <div className="w-full pt-6">
+            )
+          }
+          renderFooter={
+            !submittedQuery
+              ? () => (
+                  <>
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs mb-[50px]">
                       <button
                         onClick={() => {
-                          setSelectedCity("");
+                          setSelectedCity('');
                           setCurrentPage(1);
                           trackFilterChange({ filterType: 'city', value: 'all' });
                         }}
                         className={`transition-all duration-200 ease-out ${
                           !selectedCity
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            ? 'font-medium text-black dark:text-white'
+                            : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                         }`}
                       >
                         All Cities
@@ -2139,36 +2130,36 @@ export default function Home() {
                         <button
                           key={city}
                           onClick={() => {
-                            const newCity = city === selectedCity ? "" : city;
+                            const newCity = city === selectedCity ? '' : city;
                             setSelectedCity(newCity);
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                           }}
                           className={`transition-all duration-200 ease-out ${
                             selectedCity === city
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                           }`}
                         >
                           {capitalizeCity(city)}
                         </button>
                       ))}
                     </div>
-                    
+
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
                       <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
                           onClick={() => {
-                            setSelectedCategory("");
-                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+                            setSelectedCategory('');
+                            setAdvancedFilters((prev) => ({ ...prev, category: undefined, michelin: undefined }));
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
                           className={`transition-all duration-200 ease-out ${
                             !selectedCategory && !advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                           }`}
                         >
                           All Categories
@@ -2177,15 +2168,15 @@ export default function Home() {
                         <button
                           onClick={() => {
                             const newValue = !advancedFilters.michelin;
-                            setSelectedCategory("");
-                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                            setSelectedCategory('');
+                            setAdvancedFilters((prev) => ({ ...prev, category: undefined, michelin: newValue || undefined }));
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
                           className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
                             advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                              ? 'font-medium text-black dark:text-white'
+                              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                           }`}
                         >
                           <img
@@ -2198,36 +2189,37 @@ export default function Home() {
                         {categories.map((category) => {
                           const IconComponent = getCategoryIcon(category);
                           return (
-                          <button
-                            key={category}
-                            onClick={() => {
-                              const newCategory = category === selectedCategory ? "" : category;
-                              setSelectedCategory(newCategory);
-                                setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                            <button
+                              key={category}
+                              onClick={() => {
+                                const newCategory = category === selectedCategory ? '' : category;
+                                setSelectedCategory(newCategory);
+                                setAdvancedFilters((prev) => ({
+                                  ...prev,
+                                  category: newCategory || undefined,
+                                  michelin: undefined,
+                                }));
                                 setCurrentPage(1);
-                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                            }}
+                                trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                              }}
                               className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                selectedCategory === category && !advancedFilters.michelin
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
-                          >
-                              {IconComponent && (
-                                <IconComponent className="h-3 w-3" size={12} />
-                              )}
-                            {capitalizeCategory(category)}
-                          </button>
+                                selectedCategory === category
+                                  ? 'font-medium text-black dark:text-white'
+                                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                              }`}
+                            >
+                              {IconComponent && <IconComponent className="h-3 w-3" />}
+                              {category}
+                            </button>
                           );
                         })}
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+                  </>
+                )
+              : undefined
+          }
+        />
 
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 mt-8">
