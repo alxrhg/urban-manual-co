@@ -10,8 +10,12 @@ export function createHomepageFiltersHandler(deps: FiltersHandlerDeps) {
     try {
       const rows = await deps.loadFilterRows();
       return NextResponse.json({ success: true, rows });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading homepage filter rows', error);
+      // Check if it's a Supabase config error
+      if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+        return NextResponse.json({ success: true, rows: [] }, { status: 200 });
+      }
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   };

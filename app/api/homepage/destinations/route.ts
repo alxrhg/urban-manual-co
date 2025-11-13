@@ -11,8 +11,12 @@ export function createHomepageDestinationsHandler(deps: DestinationsHandlerDeps)
     try {
       const destinations = await deps.loadDestinations();
       return NextResponse.json({ success: true, destinations });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading homepage destinations', error);
+      // Check if it's a Supabase config error
+      if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+        return NextResponse.json({ success: true, destinations: [] }, { status: 200 });
+      }
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   };

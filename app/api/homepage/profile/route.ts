@@ -22,8 +22,12 @@ export function createHomepageProfileHandler(deps: ProfileHandlerDeps) {
         success: true,
         profile: profile ?? null,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading homepage profile', error);
+      // Check if it's a Supabase config error
+      if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+        return NextResponse.json({ success: true, profile: null }, { status: 200 });
+      }
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   };

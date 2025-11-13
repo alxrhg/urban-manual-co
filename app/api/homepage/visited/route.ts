@@ -17,8 +17,12 @@ export function createHomepageVisitedHandler(deps: VisitedHandlerDeps) {
 
       const slugs = await deps.loadVisitedSlugs(userId);
       return NextResponse.json({ success: true, slugs });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading visited places for homepage', error);
+      // Check if it's a Supabase config error
+      if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+        return NextResponse.json({ success: true, slugs: [] }, { status: 200 });
+      }
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   };
