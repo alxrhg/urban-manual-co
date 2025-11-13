@@ -48,6 +48,7 @@ import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
+import { POIDrawer } from '@/components/POIDrawer';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -241,6 +242,8 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
   
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
@@ -605,6 +608,10 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
+      // Check if user is admin
+      const role = (user.app_metadata as Record<string, any> | undefined)?.role;
+      setIsAdmin(role === 'admin');
+      
       // Priority: Fetch visited places FIRST (needed for filtering)
       // Then fetch profile and session in parallel
       fetchVisitedPlaces().then(() => {
@@ -615,6 +622,8 @@ export default function Home() {
       });
       fetchLastSession();
       fetchUserProfile();
+    } else {
+      setIsAdmin(false);
     }
   }, [user]);
 
@@ -2031,15 +2040,26 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Create Trip Button */}
-                    <button
-                      onClick={() => setShowTripPlanner(true)}
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-colors hover:bg-gray-900 dark:hover:bg-gray-100 flex-shrink-0"
-                      aria-label="Create Trip"
-                    >
-                      <Plus className="h-5 w-5" />
-                      <span className="text-sm font-medium">Create Trip</span>
-                    </button>
+                    {/* Create Trip / Add New POI Button */}
+                    {isAdmin ? (
+                      <button
+                        onClick={() => setShowPOIDrawer(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-colors hover:bg-gray-900 dark:hover:bg-gray-100 flex-shrink-0"
+                        aria-label="Add New POI"
+                      >
+                        <Plus className="h-5 w-5" />
+                        <span className="text-sm font-medium">Add New POI</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowTripPlanner(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-colors hover:bg-gray-900 dark:hover:bg-gray-100 flex-shrink-0"
+                        aria-label="Create Trip"
+                      >
+                        <Plus className="h-5 w-5" />
+                        <span className="text-sm font-medium">Create Trip</span>
+                      </button>
+                    )}
                   </div>
                 </div>
             
@@ -2353,6 +2373,18 @@ export default function Home() {
             isOpen={showTripPlanner}
             onClose={() => setShowTripPlanner(false)}
           />
+
+          {/* POI Drawer (Admin only) */}
+          {isAdmin && (
+            <POIDrawer
+              isOpen={showPOIDrawer}
+              onClose={() => setShowPOIDrawer(false)}
+              onSave={() => {
+                // Refresh destinations after creating POI
+                fetchDestinations();
+              }}
+            />
+          )}
       </main>
     </ErrorBoundary>
   );
