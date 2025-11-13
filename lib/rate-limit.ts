@@ -101,7 +101,7 @@ export function getIdentifier(request: Request, userId?: string | null): string 
   const realIp = request.headers.get("x-real-ip");
   const cfConnectingIp = request.headers.get("cf-connecting-ip");
 
-  const ip = cfConnectingIp || realIp || forwarded?.split(",")[0] || "anonymous";
+  const ip = cfConnectingIp || realIp || forwarded?.split(",")?.[0] || "anonymous";
   return `ip:${ip}`;
 }
 
