@@ -42,7 +42,7 @@
 - **Status:** Fully implemented
 - **Features:**
   - `generateJSON()` - Structured JSON generation from LLM
-  - `embedText()` - Text embedding generation (1536 dimensions)
+  - `embedText()` - Text embedding generation (3072 dimensions)
   - OpenAI-first approach with fallback handling
   - Explicit dimension control for embeddings
 
@@ -62,7 +62,7 @@
 - **Migrations:** `023_enable_vector_search.sql`, `025_fix_embedding_dimension.sql`
 - **Status:** Fully implemented
 - **Schema:**
-  - `destinations.embedding` - `vector(1536)` column
+  - `destinations.embedding` - `vector(3072)` column
   - `embedding_model` - Model tracking
   - `embedding_generated_at` - Timestamp tracking
   - IVFFlat index for fast similarity search

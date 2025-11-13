@@ -135,7 +135,7 @@ The `search_destinations_hybrid` function provides:
 
 ## 🚨 Notes
 
-- The `embedding` column uses `vector(1536)` type (for text-embedding-3-large)
+- The `embedding` column uses `vector(3072)` type (for text-embedding-3-large)
 - Embeddings are generated once and stored - no need to regenerate unless destination content changes
 - The hybrid search function requires embeddings to exist (`WHERE d.embedding IS NOT NULL`)
 

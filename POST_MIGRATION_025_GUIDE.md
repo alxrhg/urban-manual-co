@@ -3,8 +3,8 @@
 ## ✅ Migration 025 Complete
 
 Migration 025 has successfully:
-- Updated `embedding` column from `vector(768)` to `vector(1536)`
-- Updated `search_destinations_intelligent` function to use `vector(1536)`
+- Updated `embedding` column from `vector(768)` to `vector(3072)`
+- Updated `search_destinations_intelligent` function to use `vector(3072)`
 - Recreated the vector index
 
 ## ⚠️ Important: Regenerate Embeddings
@@ -31,7 +31,7 @@ npm run backfill-embeddings
 
 This will:
 - Process destinations in batches of 50
-- Generate 1536-dimension embeddings using OpenAI `text-embedding-3-large`
+- Generate 3072-dimension embeddings using OpenAI `text-embedding-3-large`
 - Update the `destinations.embedding` column
 - Rate limit to 25ms between requests (to avoid API limits)
 - Skip destinations that already have embeddings (though all should be NULL after migration 025)
@@ -86,7 +86,7 @@ Or test via the API:
 
 ### Search still returns dimension errors
 - Verify migration 025 ran successfully
-- Check that `search_destinations_intelligent` function signature uses `vector(1536)`
+- Check that `search_destinations_intelligent` function signature uses `vector(3072)`
 - Ensure embeddings are actually 1536 dimensions (check a sample destination)
 
 ## 📊 Next Steps After Embeddings

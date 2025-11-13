@@ -4,7 +4,7 @@
 
 **What you're using:**
 - ✅ **GPT-4o-mini** - Chat, intent analysis, response generation
-- ✅ **text-embedding-3-large** - Vector embeddings (1536 dimensions)
+- ✅ **text-embedding-3-large** - Vector embeddings (3072 dimensions)
 - ✅ **OpenAI SDK v4.104.0** - Latest version
 
 ---

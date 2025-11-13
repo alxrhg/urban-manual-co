@@ -5,9 +5,9 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- 2. Add embedding column to destinations table (if not exists)
--- Using text-embedding-004 which produces 768-dimensional embeddings
+-- Using text-embedding-3-large which produces 3072-dimensional embeddings
 DO $$ BEGIN
-  ALTER TABLE destinations ADD COLUMN IF NOT EXISTS embedding vector(768);
+  ALTER TABLE destinations ADD COLUMN IF NOT EXISTS embedding vector(3072);
 EXCEPTION WHEN others THEN NULL; END $$;
 
 -- 3. Create search_text column for full-text search (combines name, description, content, keywords, etc.)
@@ -63,7 +63,7 @@ WHERE search_text IS NULL OR search_text = '';
 
 -- 9. Create RPC function for vector similarity search with filters
 CREATE OR REPLACE FUNCTION match_destinations(
-  query_embedding vector(768),
+  query_embedding vector(3072),
   match_threshold float DEFAULT 0.7,
   match_count int DEFAULT 50,
   filter_city text DEFAULT NULL,

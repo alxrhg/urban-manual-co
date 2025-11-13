@@ -84,12 +84,10 @@ export async function embedText(input: string): Promise<number[] | null> {
   const openai = getOpenAI();
   if (openai) {
     try {
-      // text-embedding-3-large default is 3072 dimensions, but we need 1536
-      // Explicitly specify dimensions to match our database schema
-      const emb = await openai.embeddings.create({ 
-        model: OPENAI_EMBEDDING_MODEL, 
-        input,
-        dimensions: 1536  // Explicitly set to 1536 to match database schema
+      // text-embedding-3-large default is 3072 dimensions, which now matches our database schema
+      const emb = await openai.embeddings.create({
+        model: OPENAI_EMBEDDING_MODEL,
+        input
       });
       return emb.data?.[0]?.embedding || null;
     } catch (error: any) {

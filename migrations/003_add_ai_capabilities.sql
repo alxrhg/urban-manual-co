@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Add embedding column (768 dimensions for Google text-embedding-004)
 ALTER TABLE destinations 
-ADD COLUMN IF NOT EXISTS embedding vector(768);
+ADD COLUMN IF NOT EXISTS embedding vector(3072);
 
 -- Add metadata for embeddings
 ALTER TABLE destinations
@@ -123,7 +123,7 @@ COMMENT ON COLUMN destinations.ai_generated_at IS 'Timestamp of when AI fields w
 -- Function for hybrid search (vector + keyword)
 CREATE OR REPLACE FUNCTION search_destinations(
   query_text text,
-  query_embedding vector(768) DEFAULT NULL,
+  query_embedding vector(3072) DEFAULT NULL,
   match_threshold float DEFAULT 0.7,
   match_count int DEFAULT 10
 )

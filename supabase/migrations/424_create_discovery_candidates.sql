@@ -17,7 +17,7 @@ create table if not exists discovery_candidates (
 -- Create index for faster lookups
 create index if not exists idx_discovery_candidates_place_id on discovery_candidates(place_id);
 create index if not exists idx_discovery_candidates_city on discovery_candidates(city);
-create index if not exists idx_discovery_candidates_embedding on discovery_candidates using ivfflat (embedding vector_cosine_ops) with (lists = 100);
+create index if not exists idx_discovery_candidates_embedding on discovery_candidates using ivfflat (embedding vector_cosine_ops) with (lists = 200) where embedding is not null;
 
 -- Enable pgvector extension if not already enabled
 create extension if not exists vector;

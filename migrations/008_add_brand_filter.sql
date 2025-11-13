@@ -1,9 +1,9 @@
 -- Add brand filter to match_destinations function
 
-DROP FUNCTION IF EXISTS match_destinations(vector(768), float, int, text, text, int, numeric, int, text);
+DROP FUNCTION IF EXISTS match_destinations(vector(3072), float, int, text, text, int, numeric, int, text);
 
 CREATE OR REPLACE FUNCTION match_destinations(
-  query_embedding vector(768),
+  query_embedding vector(3072),
   match_threshold float DEFAULT 0.7,
   match_count int DEFAULT 50,
   filter_city text DEFAULT NULL,
