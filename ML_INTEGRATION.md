@@ -42,7 +42,7 @@ docker-compose up -d
 
 ```bash
 # Train collaborative filtering model
-curl -X POST http://localhost:8000/api/recommend/train \
+curl -X POST http://localhost:8000/api/recommendations/train \
   -H "Content-Type: application/json" \
   -d '{"epochs": 50, "num_threads": 4}'
 
@@ -52,7 +52,7 @@ curl -X POST http://localhost:8000/api/forecast/train \
   -d '{"top_n": 200, "historical_days": 180}'
 
 # Check status
-curl http://localhost:8000/health
+curl http://localhost:8000/api/health
 ```
 
 ### 4. Configure Next.js
@@ -320,7 +320,7 @@ Set up cron jobs or scheduled tasks:
 
 ```bash
 # Every week (Sunday at 2 AM)
-0 2 * * 0 curl -X POST https://your-ml-service/api/recommend/train
+0 2 * * 0 curl -X POST https://your-ml-service/api/recommendations/train
 
 # Every day (at 3 AM)
 0 3 * * * curl -X POST https://your-ml-service/api/forecast/train
@@ -335,7 +335,7 @@ Set up cron jobs or scheduled tasks:
 **Check**:
 ```bash
 # Test ML service directly
-curl http://localhost:8000/health
+curl http://localhost:8000/api/health
 
 # Check Next.js can reach ML service
 curl http://localhost:3000/api/ml/status
@@ -348,7 +348,7 @@ curl http://localhost:3000/api/ml/status
 **Solution**:
 ```bash
 # Train both models
-curl -X POST http://localhost:8000/api/recommend/train
+curl -X POST http://localhost:8000/api/recommendations/train
 curl -X POST http://localhost:8000/api/forecast/train
 
 # Wait for training to complete (check logs)

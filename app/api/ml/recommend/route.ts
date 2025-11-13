@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+const CF_ENDPOINT_BASE = `${ML_SERVICE_URL}/api/recommendations`;
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Call ML service
     const mlResponse = await fetch(
-      `${ML_SERVICE_URL}/api/recommend/collaborative/${user.id}?top_n=${topN}&exclude_visited=${excludeVisited}&exclude_saved=${excludeSaved}`,
+      `${CF_ENDPOINT_BASE}/collaborative/${user.id}?top_n=${topN}&exclude_visited=${excludeVisited}&exclude_saved=${excludeSaved}`,
       {
         method: 'GET',
         headers: {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Call ML service
     const mlResponse = await fetch(
-      `${ML_SERVICE_URL}/api/recommend/collaborative`,
+      `${CF_ENDPOINT_BASE}/collaborative`,
       {
         method: 'POST',
         headers: {
