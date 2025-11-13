@@ -731,16 +731,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-bold">Destination</h2>
           <div className="flex items-center gap-2">
-            {isAdmin && destination && (
-              <button
-                onClick={() => setIsEditDrawerOpen(true)}
-                className="p-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                title="Edit destination"
-                aria-label="Edit destination"
-              >
-                <Edit className="h-5 w-5" />
-              </button>
-            )}
             {destination?.slug && (
               <button
                 onClick={() => {
@@ -1293,8 +1283,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
 
-          {/* Share Button */}
-          <div className="flex justify-center">
+          {/* Share and Edit Buttons */}
+          <div className="flex justify-center gap-3">
+            {isAdmin && destination && (
+              <button
+                onClick={() => setIsEditDrawerOpen(true)}
+                className="flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg font-medium"
+                title="Edit destination"
+                aria-label="Edit destination"
+              >
+                <Edit className="h-4 w-4" />
+                <span>Edit</span>
+              </button>
+            )}
             <button
               onClick={handleShare}
               className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-lg font-medium"
