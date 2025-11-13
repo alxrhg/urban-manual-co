@@ -53,7 +53,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
   // Custom filter function for multi-column search
-  const globalFilterFn: FilterFn<any> = React.useCallback((row, columnId, filterValue) => {
+  const globalFilterFn = React.useCallback<FilterFn<TData>>((row, columnId, filterValue) => {
     if (!filterValue) return true;
     const search = String(filterValue).toLowerCase();
     const name = String(row.getValue('name') || '').toLowerCase();

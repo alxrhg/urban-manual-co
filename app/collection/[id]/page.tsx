@@ -7,6 +7,9 @@ import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { PageLoader } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
+import type { User } from '@supabase/supabase-js';
+import type { Collection } from '@/types/personalization';
+import type { Destination } from '@/types/destination';
 
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {
@@ -16,14 +19,16 @@ function capitalizeCity(city: string): string {
     .join(' ');
 }
 
+type ListItemRow = { destination_slug: string };
+
 export default function CollectionDetailPage() {
   const router = useRouter();
   const params = useParams();
   const collectionId = params.id as string;
 
-  const [user, setUser] = useState<any>(null);
-  const [collection, setCollection] = useState<any>(null);
-  const [destinations, setDestinations] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -62,11 +67,11 @@ export default function CollectionDetailPage() {
           return;
         }
 
-        const collection = collectionData as any;
-        setCollection(collection);
-        setEditName(collection.name);
-        setEditDescription(collection.description || '');
-        setEditPublic(collection.is_public);
+        const collectionRecord = collectionData as Collection;
+        setCollection(collectionRecord);
+        setEditName(collectionRecord.name);
+        setEditDescription(collectionRecord.description || '');
+        setEditPublic(collectionRecord.is_public);
 
         // Fetch collection items (using lists/list_items tables as they exist)
         const { data: listItems, error: itemsError } = await supabase
@@ -77,14 +82,15 @@ export default function CollectionDetailPage() {
         if (itemsError) throw itemsError;
 
         if (listItems && listItems.length > 0) {
-          const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
+          const listRows: ListItemRow[] = listItems;
+          const slugs = listRows.map((item) => item.destination_slug);
           const { data: destData } = await supabase
             .from('destinations')
             .select('slug, name, city, category, image')
             .in('slug', slugs);
 
           if (destData) {
-            setDestinations(destData);
+            setDestinations(destData as Destination[]);
           }
         }
       } catch (error) {
@@ -98,13 +104,13 @@ export default function CollectionDetailPage() {
   }, [user, collectionId, router]);
 
   const handleUpdateCollection = async () => {
-    if (!editName.trim()) return;
+    if (!editName.trim() || !user || !collection) return;
 
     setUpdating(true);
     try {
-      const { error } = await (supabase
+      const { error } = await supabase
         .from('collections')
-        .update as any)({
+        .update({
           name: editName.trim(),
           description: editDescription.trim() || null,
           is_public: editPublic,
@@ -115,12 +121,12 @@ export default function CollectionDetailPage() {
 
       if (error) throw error;
 
-      setCollection({
-        ...collection,
+      setCollection(prev => prev ? {
+        ...prev,
         name: editName.trim(),
         description: editDescription.trim(),
         is_public: editPublic
-      });
+      } : prev);
       setShowEditModal(false);
     } catch (error) {
       console.error('Error updating collection:', error);
@@ -168,11 +174,14 @@ export default function CollectionDetailPage() {
 
       setDestinations(destinations.filter(d => d.slug !== slug));
 
-      // Update count
-      await (supabase
-        .from('collections')
-        .update as any)({ destination_count: Math.max(0, (collection.destination_count || 0) - 1) })
-        .eq('id', collectionId);
+      if (collection) {
+        const nextCount = Math.max(0, (collection.destination_count || 0) - 1);
+        await supabase
+          .from('collections')
+          .update({ destination_count: nextCount })
+          .eq('id', collectionId);
+        setCollection(prev => prev ? { ...prev, destination_count: nextCount } : prev);
+      }
     } catch (error) {
       console.error('Error removing destination:', error);
     }

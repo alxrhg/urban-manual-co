@@ -3,26 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { BarChart3, TrendingUp, Search, Eye, MousePointerClick } from 'lucide-react';
-
-interface AnalyticsData {
-  summary: {
-    totalSearches: number;
-    totalViews: number;
-    discoveryEngineEnabled: boolean;
-    dateRange: {
-      start: string | null;
-      end: string | null;
-    };
-  };
-  popularQueries: Array<{ query: string; count: number }>;
-  popularDestinations: Array<{ slug: string; count: number }>;
-  searchTrends: Array<{ date: string; count: number }>;
-  metrics: {
-    averageResultsPerQuery: number;
-    clickThroughRate: number;
-    searchToSaveRate: number;
-  };
-}
+import type { AnalyticsData } from '@/types/analytics';
 
 export default function AnalyticsPage() {
   const { user } = useAuth();

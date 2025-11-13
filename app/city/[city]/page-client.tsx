@@ -13,6 +13,7 @@ import { DestinationCard } from '@/components/DestinationCard';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import type { SavedPlace, VisitedPlace } from '@/types/database';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -35,6 +36,10 @@ function capitalizeCategory(category: string): string {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
+
+type SavedPlaceInsert = Pick<SavedPlace, 'user_id' | 'destination_slug'>;
+type VisitedPlaceRow = Pick<VisitedPlace, 'destination_slug'>;
+type VisitedPlaceInsert = SavedPlaceInsert;
 
 export default function CityPageClient() {
   const { user } = useAuth();
@@ -89,14 +94,14 @@ export default function CityPageClient() {
 
       if (error) throw error;
 
-      const results = (data || []) as any[];
+      const results: Destination[] = data ?? [];
       setDestinations(results);
 
       // Count destinations per category and only show categories with at least 2 destinations
       const categoryCounts = new Map<string, number>();
-      results.forEach((d: any) => {
-        if (d.category) {
-          categoryCounts.set(d.category, (categoryCounts.get(d.category) || 0) + 1);
+      results.forEach((destination) => {
+        if (destination.category) {
+          categoryCounts.set(destination.category, (categoryCounts.get(destination.category) || 0) + 1);
         }
       });
 
@@ -179,7 +184,8 @@ export default function CityPageClient() {
 
       if (error) throw error;
 
-      const slugSet = new Set((data as any[])?.map((entry: any) => entry.destination_slug) || []);
+      const rows: VisitedPlaceRow[] = data ?? [];
+      const slugSet = new Set(rows.map((entry) => entry.destination_slug));
       setVisitedSlugs(slugSet);
     } catch (err) {
       console.error('Error fetching visited destinations:', err);
@@ -421,7 +427,8 @@ export default function CityPageClient() {
           if (data) {
             await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', slug);
           } else {
-            await (supabase.from('saved_places').insert as any)({ user_id: user.id, destination_slug: slug });
+            const payload: SavedPlaceInsert = { user_id: user.id, destination_slug: slug };
+            await supabase.from('saved_places').insert(payload);
           }
         }}
         onVisitToggle={async (slug: string) => {
@@ -442,7 +449,8 @@ export default function CityPageClient() {
               return next;
             });
           } else {
-            await (supabase.from('visited_places').insert as any)({ user_id: user.id, destination_slug: slug });
+            const payload: VisitedPlaceInsert = { user_id: user.id, destination_slug: slug };
+            await supabase.from('visited_places').insert(payload);
             setVisitedSlugs(prev => {
               const next = new Set(prev);
               next.add(slug);

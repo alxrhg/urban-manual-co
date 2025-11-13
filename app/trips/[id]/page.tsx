@@ -93,12 +93,13 @@ export default function TripDetailPage() {
       if (itemsError) {
         console.error('Error fetching itinerary items:', itemsError);
       } else {
-        setItineraryItems(itemsData || []);
+        const itineraryRows: ItineraryItem[] = itemsData ?? [];
+        setItineraryItems(itineraryRows);
 
         // Fetch destinations for items with destination_slug
-        const slugs = (itemsData || [])
-          .map((item: any) => item.destination_slug)
-          .filter((slug: string | null) => slug !== null) as string[];
+        const slugs = itineraryRows
+          .map((item) => item.destination_slug)
+          .filter((slug): slug is string => Boolean(slug));
 
         if (slugs.length > 0) {
           const { data: destData, error: destError } = await supabaseClient
@@ -108,7 +109,8 @@ export default function TripDetailPage() {
 
           if (!destError && destData) {
             const destMap = new Map<string, Destination>();
-            destData.forEach((dest: any) => {
+            const destinationRows: Destination[] = destData as Destination[];
+            destinationRows.forEach((dest) => {
               destMap.set(dest.slug, dest);
             });
             setDestinations(destMap);

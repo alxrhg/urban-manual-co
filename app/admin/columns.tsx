@@ -12,22 +12,37 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import type { Destination as DestinationRecord } from '@/types/destination';
 
-export type Destination = {
-  slug: string;
-  name: string;
-  city: string;
-  category: string;
-  description?: string;
-  content?: string;
-  image?: string;
-  google_place_id?: string;
-  formatted_address?: string;
-  rating?: number;
-  michelin_stars?: number;
-  crown?: boolean;
-  parent_destination_id?: number | null;
-};
+export type Destination = Pick<
+  DestinationRecord,
+  |
+    'slug'
+  |
+    'name'
+  |
+    'city'
+  |
+    'category'
+  |
+    'description'
+  |
+    'content'
+  |
+    'image'
+  |
+    'google_place_id'
+  |
+    'formatted_address'
+  |
+    'rating'
+  |
+    'michelin_stars'
+  |
+    'crown'
+  |
+    'parent_destination_id'
+>;
 
 export const createColumns = (
   onEdit: (destination: Destination) => void,

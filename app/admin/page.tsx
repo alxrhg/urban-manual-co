@@ -9,11 +9,35 @@ import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
-import { createColumns, type Destination } from "./columns";
+import { createColumns, type Destination as DestinationTableRow } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
+import type { User } from '@supabase/supabase-js';
+import type { Destination as DestinationRecord } from '@/types/destination';
+import type {
+  DestinationFormValues,
+  DestinationPayload,
+  ParentDestinationSummary,
+  GooglePlaceSuggestion,
+  DestinationSearchResult,
+  SearchLogEntry,
+  AdminAnalyticsState,
+  UserInteractionRow,
+  RegenerationResult,
+} from '@/types/admin';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+type ToastApi = ReturnType<typeof useToast>;
+type AdminTab = 'destinations' | 'analytics' | 'searches' | 'discover';
+interface AutocompletePlaceDetails extends GooglePlaceSuggestion {
+  placeId?: string;
+}
+type GooglePlaceResponse = GooglePlaceSuggestion & { error?: string };
+interface UserIdRow {
+  user_id: string | null;
+}
+const ADMIN_TABS: AdminTab[] = ['destinations', 'analytics', 'searches', 'discover'];
 
 // Destination Form Component
 function DestinationForm({
@@ -23,13 +47,13 @@ function DestinationForm({
   isSaving,
   toast
 }: {
-  destination?: any;
-  onSave: (data: any) => Promise<void>;
+  destination?: DestinationRecord | null;
+  onSave: (data: DestinationPayload) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
-  toast: any;
+  toast: ToastApi;
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<DestinationFormValues>({
     slug: destination?.slug || '',
     name: destination?.name || '',
     city: destination?.city || '',
@@ -42,15 +66,15 @@ function DestinationForm({
     parent_destination_id: destination?.parent_destination_id || null,
   });
   const [parentSearchQuery, setParentSearchQuery] = useState('');
-  const [parentSearchResults, setParentSearchResults] = useState<any[]>([]);
+  const [parentSearchResults, setParentSearchResults] = useState<ParentDestinationSummary[]>([]);
   const [isSearchingParent, setIsSearchingParent] = useState(false);
-  const [selectedParent, setSelectedParent] = useState<any>(null);
+  const [selectedParent, setSelectedParent] = useState<ParentDestinationSummary | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [fetchingGoogle, setFetchingGoogle] = useState(false);
-  const [placeRecommendations, setPlaceRecommendations] = useState<any[]>([]);
+  const [placeRecommendations, setPlaceRecommendations] = useState<GooglePlaceSuggestion[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Update form when destination changes
@@ -78,10 +102,10 @@ function DestinationForm({
             const supabase = createClient();
             const { data } = await supabase
               .from('destinations')
-              .select('id, slug, name, city')
+              .select('id, slug, name, city, category')
               .eq('id', destination.parent_destination_id)
               .single();
-            if (data) setSelectedParent(data);
+            if (data) setSelectedParent(data as ParentDestinationSummary);
           } catch {
             setSelectedParent(null);
           }
@@ -131,7 +155,8 @@ function DestinationForm({
         .or(`name.ilike.%${query}%,city.ilike.%${query}%,slug.ilike.%${query}%`)
         .limit(10);
       if (error) throw error;
-      setParentSearchResults(data || []);
+      const results: ParentDestinationSummary[] = data ?? [];
+      setParentSearchResults(results);
     } catch (error) {
       console.error('Error searching parent destinations:', error);
       setParentSearchResults([]);
@@ -206,15 +231,16 @@ function DestinationForm({
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Upload failed');
+        const errorResponse = await res.json() as { error?: string };
+        throw new Error(errorResponse.error || 'Upload failed');
       }
 
-      const data = await res.json();
+      const data = await res.json() as { url: string };
       return data.url;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Upload error:', error);
-      toast.error(`Image upload failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Image upload failed: ${message}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -249,11 +275,11 @@ function DestinationForm({
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch from Google');
+        const errorResponse = await res.json() as { error?: string };
+        throw new Error(errorResponse.error || 'Failed to fetch from Google');
       }
 
-      const data = await res.json();
+      const data = await res.json() as GooglePlaceResponse;
 
       // Auto-fill form with fetched data
       setFormData(prev => ({
@@ -273,9 +299,10 @@ function DestinationForm({
 
       // Show success message
       toast.success(`Fetched data from Google Places! Name: ${data.name}, City: ${data.city}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Fetch Google error:', error);
-      toast.error(`Failed to fetch from Google: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to fetch from Google: ${message}`);
     } finally {
       setFetchingGoogle(false);
     }
@@ -297,7 +324,7 @@ function DestinationForm({
       }
     }
 
-    const data: any = {
+    const data: DestinationPayload = {
       ...formData,
       image: imageUrl,
       michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : null,
@@ -318,7 +345,7 @@ function DestinationForm({
               <GooglePlacesAutocomplete
                 value={formData.name}
                 onChange={(value) => setFormData({ ...formData, name: value })}
-                onPlaceSelect={async (placeDetails: any) => {
+                onPlaceSelect={async (placeDetails: AutocompletePlaceDetails) => {
                   if (placeDetails.placeId) {
                     setFetchingGoogle(true);
                     try {
@@ -337,7 +364,7 @@ function DestinationForm({
                         },
                         body: JSON.stringify({ placeId: placeDetails.placeId }),
                       });
-                      const data = await response.json();
+                      const data = await response.json() as GooglePlaceResponse;
                       if (data.error) {
                         console.error('Error fetching place:', data.error);
                         return;
@@ -710,30 +737,30 @@ export default function AdminPage() {
   const router = useRouter();
   const toast = useToast();
   const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<DestinationSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [destinationList, setDestinationList] = useState<any[]>([]);
+  const [destinationList, setDestinationList] = useState<DestinationTableRow[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [listOffset, setListOffset] = useState(0);
-  
+
   // Regenerate content state
   const [regenerateRunning, setRegenerateRunning] = useState(false);
-  const [regenerateResult, setRegenerateResult] = useState<any>(null);
+  const [regenerateResult, setRegenerateResult] = useState<RegenerationResult | null>(null);
   const [regenerateSlug, setRegenerateSlug] = useState('');
   const [regenerateLimit, setRegenerateLimit] = useState(10);
   const [regenerateOffset, setRegenerateOffset] = useState(0);
   const [listSearchQuery, setListSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingDestination, setEditingDestination] = useState<any>(null);
+  const [editingDestination, setEditingDestination] = useState<DestinationRecord | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover'>('destinations');
+  const [activeTab, setActiveTab] = useState<AdminTab>('destinations');
 
   // Analytics state
-  const [analyticsStats, setAnalyticsStats] = useState({
+  const [analyticsStats, setAnalyticsStats] = useState<AdminAnalyticsState>({
     totalViews: 0,
     totalSearches: 0,
     totalSaves: 0,
@@ -743,7 +770,7 @@ export default function AdminPage() {
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   // Searches state
-  const [searchLogs, setSearchLogs] = useState<any[]>([]);
+  const [searchLogs, setSearchLogs] = useState<SearchLogEntry[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(false);
 
   // Check authentication
@@ -758,7 +785,8 @@ export default function AdminPage() {
       }
 
       setUser(session.user);
-      const role = (session.user.app_metadata as Record<string, any> | null)?.role;
+      const metadata = session.user.app_metadata as { role?: string } | null;
+      const role = metadata?.role;
       const admin = role === 'admin';
       setIsAdmin(admin);
       setAuthChecked(true);
@@ -796,12 +824,14 @@ export default function AdminPage() {
         setDestinationList([]);
         return;
       }
-      
+
       console.log('[Admin] Loaded destinations:', data?.length || 0);
-      setDestinationList(data || []);
-    } catch (e: any) {
-      console.error('[Admin] Error loading destinations:', e);
-      toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
+      const destinations = (data ?? []) as DestinationTableRow[];
+      setDestinationList(destinations);
+    } catch (error) {
+      console.error('[Admin] Error loading destinations:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error loading destinations: ${message}`);
       setDestinationList([]);
     } finally {
       setIsLoadingList(false);
@@ -815,42 +845,45 @@ export default function AdminPage() {
       // Get user interactions stats
       const { data: interactions } = await supabase
         .from('user_interactions')
-        .select('interaction_type, created_at');
+        .select('interaction_type, created_at, user_id, metadata');
 
-      if (interactions) {
-        const views = interactions.filter(i => i.interaction_type === 'view').length;
-        const searches = interactions.filter(i => i.interaction_type === 'search').length;
-        const saves = interactions.filter(i => i.interaction_type === 'save').length;
+      const interactionRows: UserInteractionRow[] = interactions ?? [];
+      const views = interactionRows.filter(i => i.interaction_type === 'view').length;
+      const searches = interactionRows.filter(i => i.interaction_type === 'search').length;
+      const saves = interactionRows.filter(i => i.interaction_type === 'save').length;
 
-        // Get unique users
-        const { data: users } = await supabase
-          .from('user_interactions')
-          .select('user_id')
-          .not('user_id', 'is', null);
+      // Get unique users
+      const { data: users } = await supabase
+        .from('user_interactions')
+        .select('user_id')
+        .not('user_id', 'is', null);
 
-        const uniqueUsers = new Set((users || []).map((u: any) => u.user_id));
-        
-        // Get top searches
-        const searchInteractions = interactions.filter(i => i.interaction_type === 'search');
-        const searchCounts = new Map<string, number>();
-        searchInteractions.forEach((i: any) => {
-          const query = i.metadata?.query || 'Unknown';
-          searchCounts.set(query, (searchCounts.get(query) || 0) + 1);
-        });
+      const uniqueUsers = new Set(
+        (users ?? [])
+          .map((user: UserIdRow) => user.user_id)
+          .filter((id): id is string => Boolean(id))
+      );
 
-        const topSearches = Array.from(searchCounts.entries())
-          .map(([query, count]) => ({ query, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
+      // Get top searches
+      const searchInteractions = interactionRows.filter(i => i.interaction_type === 'search');
+      const searchCounts = new Map<string, number>();
+      searchInteractions.forEach((interaction) => {
+        const query = interaction.metadata?.query || 'Unknown';
+        searchCounts.set(query, (searchCounts.get(query) || 0) + 1);
+      });
 
-        setAnalyticsStats({
-          totalViews: views,
-          totalSearches: searches,
-          totalSaves: saves,
-          totalUsers: uniqueUsers.size,
-          topSearches,
-        });
-      }
+      const topSearches = Array.from(searchCounts.entries())
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      setAnalyticsStats({
+        totalViews: views,
+        totalSearches: searches,
+        totalSaves: saves,
+        totalUsers: uniqueUsers.size,
+        topSearches,
+      });
     } catch (error) {
       console.error('[Admin] Error loading analytics:', error);
       toast.error('Failed to load analytics');
@@ -871,7 +904,8 @@ export default function AdminPage() {
         .limit(100);
 
       if (error) throw error;
-      setSearchLogs(data || []);
+      const logs = (data ?? []) as SearchLogEntry[];
+      setSearchLogs(logs);
     } catch (error) {
       console.error('[Admin] Error loading search logs:', error);
       toast.error('Failed to load search logs');
@@ -937,9 +971,10 @@ export default function AdminPage() {
           await loadDestinationList();
 
           toast.success(`Successfully deleted "${name}"`);
-        } catch (e: any) {
-          console.error('Delete error:', e);
-          toast.error(`Failed to delete: ${e.message}`);
+        } catch (error) {
+          console.error('Delete error:', error);
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          toast.error(`Failed to delete: ${message}`);
         }
       }
     });
@@ -956,10 +991,11 @@ export default function AdminPage() {
         .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`)
         .limit(10);
       if (error) throw error;
-      setSearchResults(data || []);
-    } catch (e: any) {
+      const results = (data ?? []) as DestinationSearchResult[];
+      setSearchResults(results);
+    } catch (error) {
       setSearchResults([]);
-      console.error('Search error:', e);
+      console.error('Search error:', error);
     } finally {
       setIsSearching(false);
     }
@@ -1003,10 +1039,10 @@ export default function AdminPage() {
         {/* Tab Navigation - Matches account page style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-3">
-            {['destinations', 'analytics', 'searches', 'discover'].map((tab) => (
+            {ADMIN_TABS.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => setActiveTab(tab)}
                 className={`transition-all pb-1 ${
                   activeTab === tab
                     ? "font-medium text-black dark:text-white border-b-2 border-black dark:border-white"
@@ -1241,7 +1277,7 @@ export default function AdminPage() {
 
                         const { error } = await supabase
                           .from('destinations')
-                          .insert([data] as any);
+                          .insert([data]);
 
                         if (error) throw error;
                       }
@@ -1250,8 +1286,9 @@ export default function AdminPage() {
                       setEditingDestination(null);
                       await loadDestinationList();
                       toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
-                    } catch (e: any) {
-                      toast.error(`Error: ${e.message}`);
+                    } catch (error) {
+                      const message = error instanceof Error ? error.message : 'Unknown error';
+                      toast.error(`Error: ${message}`);
                     } finally {
                       setIsSaving(false);
                     }

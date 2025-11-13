@@ -1,3 +1,38 @@
+export interface OpeningHoursPeriod {
+  open: {
+    day: number;
+    time: string;
+    date?: string;
+  };
+  close?: {
+    day: number;
+    time: string;
+    date?: string;
+  };
+}
+
+export interface OpeningHours {
+  periods?: OpeningHoursPeriod[];
+  weekday_text?: string[];
+}
+
+export interface GooglePhoto {
+  photo_reference: string;
+  height: number;
+  width: number;
+  html_attributions?: string[];
+}
+
+export interface GoogleReview {
+  author_name: string;
+  rating: number;
+  relative_time_description: string;
+  text: string;
+  time: number;
+  language?: string;
+  profile_photo_url?: string;
+}
+
 export interface Destination {
   id?: number; // Database primary key
   slug: string;
@@ -19,9 +54,10 @@ export interface Destination {
   nested_destinations?: Destination[]; // Array of nested destinations (populated by queries)
   // Enrichment fields
   place_id?: string | null;
+  google_place_id?: string | null;
   rating?: number | null;
   price_level?: number | null;
-  opening_hours?: any | null;
+  opening_hours?: OpeningHours | null;
   phone_number?: string | null;
   website?: string | null;
   google_maps_url?: string | null;
@@ -34,12 +70,12 @@ export interface Destination {
   formatted_address?: string | null;
   international_phone_number?: string | null;
   user_ratings_total?: number | null;
-  opening_hours_json?: any | null;
-  reviews_json?: any | null;
-  photos_json?: any | null;
+  opening_hours_json?: OpeningHours | null;
+  reviews_json?: GoogleReview[] | null;
+  photos_json?: GooglePhoto[] | null;
   editorial_summary?: string | null;
   google_name?: string | null;
-  place_types_json?: any | null;
+  place_types_json?: string[] | null;
   utc_offset?: number | null;
   vicinity?: string | null;
   timezone_id?: string | null;
