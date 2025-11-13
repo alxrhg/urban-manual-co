@@ -215,8 +215,6 @@ export function LoginDrawer({ isOpen, onClose }: LoginDrawerProps) {
             </div>
           </div>
         </div>
-      </div>
-    </div>
   );
 
   return (
