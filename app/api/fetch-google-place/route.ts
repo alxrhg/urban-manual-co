@@ -71,6 +71,7 @@ async function getPlaceDetails(placeId: string) {
       'X-Goog-FieldMask': [
         'displayName',
         'formattedAddress',
+        'addressComponents',
         'internationalPhoneNumber',
         'websiteUri',
         'priceLevel',
@@ -112,6 +113,7 @@ async function getPlaceDetails(placeId: string) {
     types: place.types || [],
     primary_type_display_name: place.primaryTypeDisplayName?.text || null,
     photos: place.photos || null,
+    address_components: place.addressComponents || null,
     geometry: place.location ? {
       location: {
         lat: place.location.latitude,
@@ -195,12 +197,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch place details' }, { status: 500 });
     }
 
-    // Extract city from address if not provided
+    // Extract city from address components (more reliable) or formatted address
     let extractedCity = city;
+    if (!extractedCity && details.address_components) {
+      // Try to find city from address components
+      for (const component of details.address_components) {
+        if (component.types?.includes('locality')) {
+          extractedCity = component.longText || component.shortText || extractedCity;
+          break;
+        }
+      }
+      // Fallback to administrative_area_level_1 if locality not found
+      if (!extractedCity) {
+        for (const component of details.address_components) {
+          if (component.types?.includes('administrative_area_level_1')) {
+            extractedCity = component.longText || component.shortText || extractedCity;
+            break;
+          }
+        }
+      }
+    }
+    // Last resort: extract from formatted address
     if (!extractedCity && details.formatted_address) {
-      const addressParts = details.formatted_address.split(',');
+      const addressParts = details.formatted_address.split(',').map((p: string) => p.trim());
       if (addressParts.length >= 2) {
-        extractedCity = addressParts[addressParts.length - 3]?.trim() || addressParts[addressParts.length - 2]?.trim();
+        // Usually city is second-to-last (before country) or third-to-last
+        extractedCity = addressParts[addressParts.length - 3] || addressParts[addressParts.length - 2] || '';
       }
     }
 

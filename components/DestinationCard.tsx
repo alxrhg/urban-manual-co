@@ -88,10 +88,10 @@ export function DestinationCard({
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
         )}
 
-        {/* Actual Image */}
-        {isInView && destination.image && !imageError ? (
+        {/* Actual Image - Use thumbnail for cards, fallback to full image */}
+        {isInView && (destination.image_thumbnail || destination.image) && !imageError ? (
           <Image
-            src={destination.image}
+            src={destination.image_thumbnail || destination.image!}
             alt={`${destination.name} in ${capitalizeCity(destination.city)}${destination.category ? ` - ${destination.category}` : ''}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

@@ -242,16 +242,27 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
       const data = await response.json();
       
       if (data) {
+        // Update form with fetched data, always using fetched values when available
         setFormData(prev => ({
           ...prev,
-          name: data.name || prev.name,
-          city: data.city || prev.city,
-          category: data.category || prev.category,
-          description: data.description || prev.description,
-          content: data.content || prev.content,
-          image: data.image || prev.image,
-          michelin_stars: data.michelin_stars || prev.michelin_stars,
+          // Use fetched data if it exists, otherwise keep previous value
+          name: data.name !== undefined && data.name !== null ? data.name : prev.name,
+          city: data.city !== undefined && data.city !== null ? data.city : prev.city,
+          category: data.category !== undefined && data.category !== null ? data.category : prev.category,
+          description: data.description !== undefined && data.description !== null ? data.description : prev.description,
+          content: data.content !== undefined && data.content !== null ? data.content : prev.content,
+          image: data.image !== undefined && data.image !== null ? data.image : prev.image,
+          michelin_stars: data.michelin_stars !== undefined && data.michelin_stars !== null ? data.michelin_stars : prev.michelin_stars,
         }));
+        
+        // Update image preview if image URL is provided
+        if (data.image) {
+          setImagePreview(data.image);
+        } else {
+          // Clear preview if no image
+          setImagePreview(null);
+        }
+        
         setGooglePlaceQuery('');
         toast.success('Place details loaded from Google');
       }

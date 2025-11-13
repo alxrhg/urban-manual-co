@@ -75,7 +75,7 @@ export function ForYouSection() {
             className={`${CARD_WRAPPER} text-left`}
           >
             <div className={`${CARD_MEDIA} mb-3`}>
-              {dest.image ? (
+              {(dest.image) ? (
                 <Image
                   src={dest.image}
                   alt={dest.name}

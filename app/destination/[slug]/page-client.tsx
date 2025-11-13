@@ -643,7 +643,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     className={`${CARD_WRAPPER} text-left group`}
                   >
                     <div className={`${CARD_MEDIA} mb-2`}>
-                      {rec.image ? (
+                      {(rec.image) ? (
                         <Image
                           src={rec.image}
                           alt={`${rec.name} - ${rec.category} in ${rec.city}`}

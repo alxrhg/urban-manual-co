@@ -370,9 +370,9 @@ export default function ListDetailPage() {
               <div key={destination.slug} className={`${CARD_WRAPPER} group flex flex-col`}>
                 <Link href={`/destination/${destination.slug}`} className="flex flex-col flex-1">
                   <div className={`${CARD_MEDIA} mb-2 hover-lift`}>
-                    {destination.image ? (
+                    {(destination.image_thumbnail || destination.image) ? (
                       <Image
-                        src={destination.image}
+                        src={destination.image_thumbnail || destination.image!}
                         alt={destination.name}
                         fill
                         className="object-cover"

@@ -51,7 +51,7 @@ export default function MapPage() {
         // Fetch destinations with location data
         const { data: destData, error: destError } = await supabaseClient
           .from('destinations')
-          .select('id, slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id, rating')
+          .select('id, slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id, rating')
           .is('parent_destination_id', null)
           .or('latitude.not.is.null,longitude.not.is.null,place_id.not.is.null')
           .order('name')

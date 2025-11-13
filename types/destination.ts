@@ -10,6 +10,8 @@ export interface Destination {
   description?: string;
   content?: string;
   image?: string;
+  image_thumbnail?: string; // Optimized thumbnail from Supabase Storage
+  image_original?: string; // Backup of original URL before migration
   michelin_stars?: number;
   crown?: boolean;
   brand?: string | null;

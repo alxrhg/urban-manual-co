@@ -107,7 +107,7 @@ export async function getHomepageDestinations(limit = 500) {
   try {
     const { data, error } = await adminClient
       .from('destinations')
-      .select('slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
+      .select('slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
       .is('parent_destination_id', null)
       .limit(limit)
       .order('name');

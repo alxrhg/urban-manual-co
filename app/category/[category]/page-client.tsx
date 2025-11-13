@@ -145,9 +145,9 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
                 className={`${CARD_WRAPPER} group text-left`}
               >
                 <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
-                  {destination.image ? (
+                  {(destination.image_thumbnail || destination.image) ? (
                     <Image
-                      src={destination.image}
+                      src={destination.image_thumbnail || destination.image!}
                       alt={destination.name}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
