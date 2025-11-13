@@ -1,4 +1,4 @@
-import { buildConfig } from 'payload/config'
+import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
@@ -101,7 +101,7 @@ export default buildConfig({
       },
       hooks: {
         afterChange: [
-          async ({ doc, operation, req }) => {
+          async ({ doc, operation, req }: { doc: any; operation: 'create' | 'update'; req: any }) => {
             // Sync changes to Supabase after Payload operations
             try {
               const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -161,7 +161,7 @@ export default buildConfig({
           },
         ],
         afterDelete: [
-          async ({ doc, req }) => {
+          async ({ doc, req }: { doc: any; req: any }) => {
             // Sync deletion to Supabase
             try {
               const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL

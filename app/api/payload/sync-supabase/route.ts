@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 
 /**
  * API endpoint to sync Supabase destinations to Payload
@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server'
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerClient()
     
     // Fetch all destinations from Supabase
     const { data: destinations, error } = await supabase
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       success: true,
       count: destinations?.length || 0,
       message: 'Use Payload admin UI to import these destinations',
-      destinations: destinations?.map(dest => ({
+      destinations: destinations?.map((dest: any) => ({
         name: dest.name,
         slug: dest.slug,
         city: dest.city,
