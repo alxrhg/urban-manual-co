@@ -798,40 +798,62 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Mobile-Optimized Popup (inspired by simple mobile design) */}
+      {/* Mobile Drawer (mimics desktop design) */}
       <div
-        className={`md:hidden fixed inset-x-0 bottom-0 top-[10vh] bg-white dark:bg-gray-950 z-50 rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
+        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex flex-col`}
       >
-        {/* Close Button - Top Right */}
-              <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-        </button>
-
-        {/* Large Header Image (40% of viewport) */}
-        {destination.image && (
-          <div className="relative w-full h-[40vh] flex-shrink-0">
-            <Image
-              src={destination.image}
-              alt={destination.name}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-              quality={90}
-            />
+        {/* Header with Close Button */}
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
+          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+          <div className="flex items-center gap-2">
+            {destination?.slug && destination.slug.trim() && (
+              <Link
+                href={`/destination/${destination.slug}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                title="Open destination page"
+                aria-label="Open destination page"
+              >
+                <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              </Link>
+            )}
           </div>
-        )}
+          {/* Close Button - Top Right */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+          </button>
+        </div>
 
-        {/* Content Area - Scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Hotel Summary Section (30%) */}
-          <div className="px-6 pt-6 pb-4 space-y-3">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Image */}
+          {destination.image && (
+            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
+              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
+                <Image
+                  src={destination.image}
+                  alt={destination.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 420px"
+                  priority={false}
+                  quality={85}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Hotel Summary Section */}
+          <div className="mt-6 space-y-3">
             {/* Name */}
             <h1 className="text-2xl font-semibold text-black dark:text-white leading-tight">
               {destination.name}
@@ -872,8 +894,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
           </div>
 
-          {/* Details Section (20%) */}
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          {/* Details Section */}
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
             <h3 className="text-sm font-semibold text-black dark:text-white mb-3">Details</h3>
             <div className="space-y-2 text-sm">
               {destination.category && (
@@ -898,7 +920,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
         </div>
 
-        {/* Action Buttons (Bottom 10%) */}
+        {/* Action Buttons */}
         <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
           {/* Favorite and Share Buttons */}
           <div className="flex items-center justify-end gap-3 mb-4">
