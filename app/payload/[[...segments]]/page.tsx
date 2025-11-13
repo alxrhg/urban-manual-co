@@ -10,7 +10,8 @@ export default function PayloadAdminPage() {
   // Payload's admin UI is automatically rendered by Next.js integration
   // The withPayload() wrapper in next.config.ts handles the routing
   // Authentication is checked in middleware.ts
-  // We return null to let Payload's internal routing take over
+  // Returning null allows Payload's internal routing to take over
+  // The admin UI will be injected by Payload's Next.js integration
   return null
 }
 

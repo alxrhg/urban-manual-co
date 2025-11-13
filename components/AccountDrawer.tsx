@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Settings, Heart, Check, Map, LogOut, ExternalLink, Camera, Loader2, X } from 'lucide-react';
+import { User, Settings, Heart, Check, Map, LogOut, ExternalLink, Camera, Loader2, X, Database } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { Drawer } from '@/components/ui/Drawer';
@@ -246,13 +246,23 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 </button>
 
                 {isAdmin && (
-                  <button
-                    onClick={() => handleNavigate('/admin')}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-                  >
-                    <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Panel</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleNavigate('/admin')}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    >
+                      <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Panel</span>
+                    </button>
+                    <button
+                      onClick={() => handleNavigate('/payload')}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    >
+                      <Database className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">Payload CMS</span>
+                      <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                    </button>
+                  </>
                 )}
               </div>
 
