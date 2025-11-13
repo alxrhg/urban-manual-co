@@ -18,8 +18,6 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PageIntro } from '@/components/PageIntro';
-import { PageContainer } from '@/components/PageContainer';
 import { DestinationCard } from '@/components/DestinationCard';
 import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
@@ -323,35 +321,44 @@ export default function TripDetailPage() {
   }
 
   return (
-    <div className="pb-16">
-      <PageIntro
-        eyebrow="Trip Details"
-        title={trip.title}
-        description={trip.description || undefined}
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push('/trips')}
-              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Back to Trips"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+      <div className="w-full max-w-[1800px] mx-auto">
+        {/* Header - Matches trips page style */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex-1">
+              <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+                ITINERARY STUDIO
+              </div>
+              <div className="flex items-center gap-3 mb-1">
+                <button
+                  onClick={() => router.push('/trips')}
+                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Back to Trips"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <h1 className="text-2xl font-light text-black dark:text-white">{trip.title}</h1>
+              </div>
+              {trip.description && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-11">
+                  {trip.description}
+                </p>
+              )}
+            </div>
             {trip.user_id === user?.id && (
               <button
                 onClick={deleteTrip}
-                className="px-4 py-2 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                className="p-2 text-red-600 dark:text-red-400 hover:opacity-80 transition-opacity"
+                aria-label="Delete trip"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
             )}
           </div>
-        }
-      />
+        </div>
 
-      <PageContainer className="space-y-8">
+        <div className="space-y-8">
         {/* Trip Metadata */}
         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           {trip.destination && (
@@ -485,7 +492,9 @@ export default function TripDetailPage() {
               })}
           </div>
         )}
-      </PageContainer>
+        </div>
+      </div>
+    </main>
 
       {/* Destination Drawer */}
       {selectedDestination && (
