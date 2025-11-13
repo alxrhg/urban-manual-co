@@ -13,6 +13,9 @@ import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 
+const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const sentryEnvironment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.VERCEL_ENV || process.env.NODE_ENV || 'development';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -66,12 +69,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-sentry-environment={sentryEnvironment}>
       <head>
         <meta name="color-scheme" content="dark light" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
         <meta name="google-adsense-account" content="ca-pub-3052286230434362" />
+        {sentryDsn && <meta name="sentry-dsn" content={sentryDsn} />}
+        {sentryEnvironment && <meta name="sentry-environment" content={sentryEnvironment} />}
         {/* Revert iOS-specific app meta to default web behavior */}
 
         {/* Preconnect hints for faster resource loading */}

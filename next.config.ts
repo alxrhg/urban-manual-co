@@ -5,6 +5,17 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
+  env: {
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+    SENTRY_DSN: process.env.SENTRY_DSN,
+    SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
+  },
+
+  sentry: {
+    hideSourceMaps: true,
+  },
+
   // Optimize CSS
   experimental: {
     optimizeCss: true,

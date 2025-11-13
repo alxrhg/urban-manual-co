@@ -116,6 +116,39 @@ Rate limiting will automatically use:
 
 ---
 
+## Monitoring & Incident Response Runbook
+
+### Alert Sources
+
+- **Sentry** – Enabled globally via `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN`. Route handlers use `lib/monitoring/sentry.ts` to ship structured events (see `lib/monitoring/alerts.ts`).
+- **Vercel Webhooks** – Configure `VERCEL_ALERT_WEBHOOK_URL` or service-specific overrides (`VERCEL_ALERT_WEBHOOK_AI`, `VERCEL_ALERT_WEBHOOK_SEARCH`, `VERCEL_ALERT_WEBHOOK_AUTH`) to receive JSON alerts in Slack/PagerDuty/etc.
+- **Structured Logs** – All production logging now runs through `lib/logger.ts`, making it easy to search for `namespace="api:ai-chat"`, `namespace="api:search"`, etc. in Vercel/Datadog.
+
+Environment variables exposed through `next.config.ts` ensure the DSN/environment metadata is available to both the server and client runtime. `app/layout.tsx` also emits `<meta name="sentry-dsn">` and `<meta name="sentry-environment">` so browser tooling can confirm monitoring state.
+
+### Service Runbooks
+
+| Service | Alert Trigger | First Response |
+|---------|---------------|----------------|
+| **Auth (`app/api/account/profile/route.ts`)** | Sentry issue or webhook tagged `service=auth` | 1. Inspect Sentry event payload for request path/method. 2. Reproduce with `curl -H "Authorization: Bearer <token>" https://.../api/account/profile`. 3. Check Supabase logs for RLS errors. 4. Hotfix via `withErrorHandling(..., { service: 'auth' })` to adjust messaging if needed. |
+| **AI Chat (`app/api/ai-chat/route.ts`)** | Non-2xx response, handler exception, or anomaly in Discovery Engine fallback | 1. Confirm if Discovery Engine is degraded (Sentry tag `searchTier`). 2. Use `npm run dev` locally and hit `/api/ai-chat` with the failing payload from Sentry breadcrumbs. 3. If OpenAI/Gemini is unavailable, toggle fallback by updating `lib/monitoring/sentry.ts` thresholds and check caching (`pendingRequests`). 4. Communicate status in #ai-alerts. |
+| **Search (`app/api/search/route.ts`)** | Rate-limit spikes, vector RPC failures, or webhook `service=search` | 1. Review the associated log fields (`vector-semantic`, `fulltext`, etc.). 2. Run `curl -X POST /api/search -d '{"query":"..."}'` against Vercel preview to reproduce. 3. Validate Supabase RPC health (`match_destinations`, `search_by_ai_fields`). 4. If degraded, set `searchTier='keyword'` temporarily by forcing fallback in `app/api/search/route.ts`. |
+
+### On-call Checklist
+
+1. **Acknowledge alert** in your webhook target within 5 minutes.
+2. **Check Sentry dashboard** for correlated events using the `service` tag.
+3. **Inspect recent deployments** via `/api/build-version` or Vercel UI when alerts start immediately after a release.
+4. **Capture mitigation notes** in Sentry (comment/resolve) and, if necessary, open a GitHub issue referencing the failing route.
+5. **Post-mortem**: update this runbook if new failure modes are discovered.
+
+Reference implementations:
+- `lib/logger.ts` – shared structured logger with dev-only debug output.
+- `lib/monitoring/alerts.ts` – helper to wrap routes (`withMonitoredRoute`) and push anomalies to both Sentry and Vercel webhooks.
+- `lib/errors/api-handler.ts` – now notifies on `withErrorHandling` failures when a `service` option is provided.
+
+---
+
 ## Security Headers
 
 **Location**: `next.config.ts`

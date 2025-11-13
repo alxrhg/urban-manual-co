@@ -8,6 +8,10 @@ import {
   isUpstashConfigured,
 } from '@/lib/rate-limit';
 import { createServerClient } from '@/lib/supabase/server';
+import { getLogger } from '@/lib/logger';
+import { withMonitoredRoute } from '@/lib/monitoring/alerts';
+
+const logger = getLogger('api:search');
 
 // Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
@@ -15,7 +19,7 @@ async function generateEmbedding(query: string): Promise<number[] | null> {
     const embedding = await embedText(query);
     return embedding || null;
   } catch (error) {
-    console.error('[Search API] Error generating embedding:', error);
+    logger.error('Error generating search embedding', { error });
     return null;
   }
 }
@@ -99,7 +103,7 @@ function parseQueryFallback(query: string): {
   return { keywords, city, category, brand };
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   const supabase = await createServerClient();
   try {
     const body = await request.json();
@@ -199,7 +203,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log('[Search API] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
+    logger.debug('Processing search query', { query, intent });
 
     // Generate embedding for vector search
     const queryEmbedding = await generateEmbedding(query);
@@ -226,22 +230,22 @@ export async function POST(request: NextRequest) {
         if (!vectorError && vectorResults && vectorResults.length > 0) {
           results = vectorResults;
           searchTier = 'vector-semantic';
-          console.log('[Search API] Vector search found', results.length, 'results');
+          logger.info('Vector search results', { count: results.length });
         } else if (vectorError) {
           // If function doesn't exist or embeddings not ready, silently fall through to next strategy
-          if (vectorError.code === '42883' || vectorError.message?.includes('does not exist') || 
+          if (vectorError.code === '42883' || vectorError.message?.includes('does not exist') ||
               vectorError.message?.includes('embedding') || vectorError.code === 'P0001') {
-            console.log('[Search API] Vector search not available (embeddings may not be generated yet), using fallback');
+            logger.debug('Vector search not available (embeddings may not be generated yet), using fallback');
           } else {
-            console.error('[Search API] Vector search error:', vectorError);
+            logger.error('Vector search error', { error: vectorError });
           }
         }
       } catch (error: any) {
         // Handle gracefully if vector search isn't ready
         if (error.message?.includes('match_destinations') || error.message?.includes('embedding')) {
-          console.log('[Search API] Vector search not available, using fallback');
+          logger.debug('Vector search not available, using fallback');
         } else {
-          console.error('[Search API] Vector search exception:', error);
+          logger.error('Vector search exception', { error });
         }
       }
     }
@@ -291,12 +295,12 @@ export async function POST(request: NextRequest) {
         if (!fullTextError && fullTextResults) {
           results = fullTextResults;
           searchTier = 'fulltext';
-          console.log('[Search API] Full-text search found', results.length, 'results');
+          logger.info('Full-text search results', { count: results.length });
         } else if (fullTextError) {
-          console.error('[Search API] Full-text search error:', fullTextError);
+          logger.error('Full-text search error', { error: fullTextError });
         }
       } catch (error) {
-        console.error('[Search API] Full-text search exception:', error);
+        logger.error('Full-text search exception', { error });
       }
     }
 
@@ -322,25 +326,25 @@ export async function POST(request: NextRequest) {
             const orderedResults = slugs
               .map((slug: string) => fullData.find((d: any) => d.slug === slug))
               .filter(Boolean);
-            
+
             results = orderedResults;
             searchTier = 'ai-fields';
-            console.log('[Search API] AI field search found', results.length, 'results');
+            logger.info('AI field search results', { count: results.length });
           }
         } else if (aiFieldError) {
           // Handle gracefully if function doesn't exist
           if (aiFieldError.code === '42883' || aiFieldError.message?.includes('does not exist')) {
-            console.log('[Search API] AI field search function not available, using fallback');
+            logger.debug('AI field search function not available, using fallback');
           } else {
-            console.error('[Search API] AI field search error:', aiFieldError);
+            logger.error('AI field search error', { error: aiFieldError });
           }
         }
       } catch (error: any) {
         // Handle gracefully if RPC doesn't exist
         if (error.message?.includes('search_by_ai_fields') || error.code === '42883') {
-          console.log('[Search API] AI field search not available, using fallback');
+          logger.debug('AI field search not available, using fallback');
         } else {
-          console.error('[Search API] AI field search exception:', error);
+          logger.error('AI field search exception', { error });
         }
       }
     }
@@ -400,7 +404,7 @@ export async function POST(request: NextRequest) {
       if (!fallbackError && fallbackResults) {
         results = fallbackResults;
         searchTier = 'keyword';
-        console.log('[Search API] Keyword search found', results.length, 'results');
+        logger.info('Keyword search results', { count: results.length });
       }
     }
 
@@ -422,10 +426,10 @@ export async function POST(request: NextRequest) {
             personalizedScores.set(rec.destinationId, rec.score);
           });
         }
-      } catch (error) {
-        // Silently fail - personalization is optional
-        console.log('[Search] Could not fetch personalized scores:', error);
-      }
+    } catch (error) {
+      // Silently fail - personalization is optional
+      logger.debug('Could not fetch personalized scores', { error });
+    }
     }
 
     // Rank and sort results
@@ -518,7 +522,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Search API error:', error);
+    logger.error('Search API error', { error });
     return NextResponse.json({
       results: [],
       searchTier: 'basic',
@@ -526,3 +530,8 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
+export const POST = withMonitoredRoute(postHandler, {
+  service: 'search',
+  name: 'api/search:POST',
+});

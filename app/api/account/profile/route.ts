@@ -27,6 +27,9 @@ export const GET = withErrorHandling(async () => {
   }
 
   return NextResponse.json({ profile: profile || null });
+}, {
+  service: 'auth',
+  operation: 'account/profile:GET',
 });
 
 export const PUT = withErrorHandling(async (request: NextRequest) => {
@@ -120,4 +123,7 @@ export const PUT = withErrorHandling(async (request: NextRequest) => {
     success: true,
     profile: updatedProfile,
   });
+}, {
+  service: 'auth',
+  operation: 'account/profile:PUT',
 });

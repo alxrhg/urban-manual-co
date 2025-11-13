@@ -7,6 +7,8 @@ import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase/server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getLogger } from '@/lib/logger';
+import { withMonitoredRoute } from '@/lib/monitoring/alerts';
 
 // Initialize Gemini as fallback
 const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
@@ -24,6 +26,7 @@ const embeddingCache = new Map<string, { embedding: number[], timestamp: number 
 const intentCache = new Map<string, { intent: any, timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
+const logger = getLogger('api:ai-chat');
 
 // Request deduplication map
 const pendingRequests = new Map<string, Promise<any>>();
@@ -92,7 +95,7 @@ const CATEGORY_SYNONYMS: Record<string, string> = {
 // Generate embedding using OpenAI with caching
 async function generateEmbedding(text: string): Promise<number[] | null> {
   if (!openai?.embeddings) {
-    console.error('[AI Chat] No OpenAI client available');
+    logger.error('No OpenAI embedding client available');
     return null;
   }
 
@@ -100,7 +103,7 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   const cacheKey = text.toLowerCase().trim();
   const cached = embeddingCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    console.log('[AI Chat] Using cached embedding');
+    logger.debug('Using cached embedding');
     return cached.embedding;
   }
 
@@ -122,7 +125,7 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
 
     return embedding;
   } catch (error) {
-    console.error('[AI Chat] Error generating embedding:', error);
+    logger.error('Error generating embedding', { error });
     return null;
   }
 }
@@ -161,7 +164,7 @@ async function understandQuery(
     const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
     const cached = intentCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log('[AI Chat] Using cached intent');
+      logger.debug('Using cached intent');
       return cached.intent;
     }
   }
@@ -201,7 +204,7 @@ async function understandQuery(
         }
       } catch (error) {
         // Silently fail - user context is optional
-        console.debug('User profile fetch failed (optional):', error);
+        logger.debug('User profile fetch failed (optional)', { error });
       }
     }
 
@@ -270,7 +273,7 @@ Return only the JSON, no other text.`;
           text = response.choices?.[0]?.message?.content || '';
         }
       } catch (error) {
-        console.error('[AI Chat] OpenAI intent parsing error, falling back to Gemini:', error);
+        logger.error('OpenAI intent parsing error, falling back to Gemini', { error });
       }
     }
 
@@ -294,19 +297,19 @@ Return only the JSON, no other text.`;
           text = result.response.text();
         }
       } catch (error) {
-        console.error('[AI Chat] Gemini intent parsing error:', error);
+        logger.error('Gemini intent parsing error', { error });
       }
     }
 
     if (!text) {
-      console.warn('[AI Chat] Intent parsing failed, using fallback');
+      logger.warn('Intent parsing failed, using fallback');
       return parseQueryFallback(query);
     }
-    
+
     if (text) {
       try {
         const parsed = JSON.parse(text);
-        console.log('[AI Chat] Enhanced parsed intent:', parsed);
+        logger.debug('Enhanced parsed intent', { intent: parsed });
         
         // If query contains relative terms, enhance intent from conversation
         const lowerQuery = query.toLowerCase();
@@ -340,11 +343,11 @@ Return only the JSON, no other text.`;
 
         return parsed;
       } catch (parseError) {
-        console.error('Failed to parse AI response:', parseError);
+        logger.error('Failed to parse AI response', { error: parseError });
       }
     }
   } catch (error) {
-    console.error('[AI Chat] LLM error:', error);
+    logger.error('LLM error during intent parsing', { error });
   }
 
   return parseQueryFallback(query);
@@ -615,7 +618,7 @@ Generate a natural, helpful response that incorporates relevant context (weather
         return aiResponse.trim();
       }
     } catch (error) {
-      console.error('[AI Chat] OpenAI response generation error, falling back to Gemini:', error);
+      logger.error('OpenAI response generation error, falling back to Gemini', { error });
     }
   }
 
@@ -642,7 +645,7 @@ Generate a natural, helpful response that incorporates relevant context (weather
         }
       }
     } catch (error) {
-      console.error('[AI Chat] Gemini response generation error:', error);
+      logger.error('Gemini response generation error', { error });
     }
   }
 
@@ -665,7 +668,7 @@ function generateResponse(count: number, city?: string, category?: string): stri
   return `I found ${count}${categoryText}s${location}.`;
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     const supabase = await createServerClient();
     const body = await request.json();
@@ -683,7 +686,7 @@ export async function POST(request: NextRequest) {
     const existingRequest = pendingRequests.get(requestKey);
 
     if (existingRequest) {
-      console.log('[AI Chat] Deduplicating request:', query);
+      logger.debug('Deduplicating AI chat request', { query });
       try {
         return await existingRequest;
       } catch (error) {
@@ -707,13 +710,18 @@ export async function POST(request: NextRequest) {
 
     return await requestPromise;
   } catch (error: any) {
-    console.error('AI Chat API error:', error);
+    logger.error('AI Chat API error', { error });
     return NextResponse.json({
       content: 'Sorry, I encountered an error. Please try again.',
       destinations: []
     }, { status: 500 });
   }
 }
+
+export const POST = withMonitoredRoute(postHandler, {
+  service: 'ai',
+  name: 'api/ai-chat:POST',
+});
 
 // Extract main logic into separate function for cleaner deduplication
 async function processAIChatRequest(
@@ -738,14 +746,14 @@ async function processAIChatRequest(
       }
     }
 
-    console.log('[AI Chat] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
+    logger.debug('Processing AI chat request', { query, intent });
 
     // Check cache for non-personalized searches
     if (!userId) {
       const cacheKey = getCacheKey(query, intent);
       const cachedResult = getFromCache(cacheKey);
       if (cachedResult) {
-        console.log('[AI Chat] Returning cached results for:', query);
+        logger.debug('Returning cached AI chat results', { query });
         return NextResponse.json(cachedResult);
       }
     }
@@ -791,10 +799,10 @@ async function processAIChatRequest(
                 totalSize: convResults.totalSize,
               };
               searchTier = 'conversational-search';
-              console.log(`[AI Chat] Discovery Engine (conversational) found ${discoveryResult.results.length} results`);
+              logger.info('Discovery Engine conversational results', { count: discoveryResult.results.length });
             }
           } catch (convError) {
-            console.warn('[AI Chat] Conversational search failed, trying regular Discovery Engine:', convError);
+            logger.warn('Conversational discovery search failed, falling back to default search', { error: convError });
           }
         }
         
@@ -818,10 +826,10 @@ async function processAIChatRequest(
                 totalSize: nlResults.totalSize,
               };
               searchTier = 'natural-language-search';
-              console.log(`[AI Chat] Discovery Engine (natural language) found ${nlResults.results.length} results`);
+              logger.info('Discovery Engine natural language results', { count: nlResults.results.length });
             }
           } catch (nlError) {
-            console.warn('[AI Chat] Natural language search failed, trying regular Discovery Engine:', nlError);
+            logger.warn('Natural language discovery search failed, using standard search', { error: nlError });
           }
         }
         
@@ -857,7 +865,7 @@ async function processAIChatRequest(
             relevanceScore: result.relevanceScore || 0,
           }));
           searchTier = searchTier === 'ai-chat' ? 'discovery-engine' : searchTier;
-          console.log(`[AI Chat] Discovery Engine (primary) found ${results.length} results`);
+          logger.info('Discovery Engine primary search results', { count: results.length });
           
           // Track search event for personalization
           if (userId) {
@@ -868,15 +876,17 @@ async function processAIChatRequest(
                 searchQuery: query,
               });
             } catch (trackError) {
-              console.warn('[AI Chat] Failed to track search event:', trackError);
+              logger.warn('Failed to track AI chat search event', { error: trackError });
             }
           }
         }
       } else {
-        console.log('[AI Chat] Discovery Engine not available, using fallback search');
+        logger.info('Discovery Engine not available, using fallback search');
       }
     } catch (discoveryError: any) {
-      console.debug('[AI Chat] Discovery Engine search failed (expected if not configured), falling back to Supabase:', discoveryError?.message || discoveryError);
+      logger.debug('Discovery Engine search failed (expected if not configured), falling back to Supabase', {
+        error: discoveryError,
+      });
     }
 
     // Strategy 2: Fallback to Supabase vector search (if Discovery Engine didn't return results)
@@ -897,10 +907,10 @@ async function processAIChatRequest(
         if (!error && data && data.length > 0) {
           results = data;
           searchTier = 'vector-search';
-          console.log(`[AI Chat] Vector search found ${results.length} results`);
+          logger.info('Vector search results', { count: results.length });
         }
       } catch (error: any) {
-        console.error('[AI Chat] Vector search error:', error);
+        logger.error('Vector search error', { error });
       }
     }
 
@@ -943,10 +953,10 @@ async function processAIChatRequest(
         if (!error && data && data.length > 0) {
           results = data;
           searchTier = 'keyword-search';
-          console.log(`[AI Chat] Keyword search found ${results.length} results`);
+          logger.info('Keyword search results', { count: results.length });
         }
       } catch (error: any) {
-        console.error('[AI Chat] Keyword search error:', error);
+        logger.error('Keyword search error', { error });
       }
     }
 
@@ -963,10 +973,10 @@ async function processAIChatRequest(
 
         if (cityResults && cityResults.length > 0) {
           results = cityResults;
-          console.log('[AI Chat] City fallback found', results.length, 'results');
+          logger.info('City fallback search results', { count: results.length });
         }
       } catch (error: any) {
-        console.error('[AI Chat] City fallback exception:', error);
+        logger.error('City fallback exception', { error });
       }
     }
 
@@ -990,7 +1000,7 @@ async function processAIChatRequest(
                     }
                   } catch (error) {
                     // Silently fail - enrichment is optional
-                    console.debug('Enrichment batch fetch failed:', error);
+                    logger.debug('Enrichment batch fetch failed', { error });
                   }
                 }
 
@@ -1124,7 +1134,7 @@ async function processAIChatRequest(
                 return NextResponse.json(responseData);
 
   } catch (error: any) {
-    console.error('AI Chat request processing error:', error);
+    logger.error('AI Chat request processing error', { error });
     return NextResponse.json({
       content: 'Sorry, I encountered an error. Please try again.',
       destinations: []
