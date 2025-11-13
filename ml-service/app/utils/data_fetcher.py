@@ -1,7 +1,7 @@
 """Data fetching utilities from Supabase."""
 
 import pandas as pd
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from datetime import datetime, timedelta
 
 from app.utils.database import get_db_connection
@@ -227,6 +227,114 @@ class DataFetcher:
         except Exception as e:
             logger.error(f"Error fetching analytics data: {e}")
             raise
+
+    @staticmethod
+    def _table_exists(conn, table_name: str) -> bool:
+        """Check if a table exists in the current database."""
+        with conn.cursor() as cur:
+            cur.execute("SELECT to_regclass(%s)", (f"public.{table_name}",))
+            return cur.fetchone()[0] is not None
+
+    @staticmethod
+    def fetch_destination_texts(
+        destination_id: int,
+        days: int = 30,
+        limit: int = 200,
+        offset: int = 0
+    ) -> pd.DataFrame:
+        """Fetch user generated text for a destination.
+
+        Combines notes from saved/visited places and long-form reviews when
+        available. Results are ordered by recency and paginated via ``limit``
+        and ``offset`` so higher level services can iterate through large
+        histories without loading everything into memory at once.
+        """
+
+        if limit <= 0:
+            return pd.DataFrame(columns=["text", "created_at", "source"])
+
+        logger.info(
+            "Fetching destination texts for %s (days=%s, limit=%s, offset=%s)",
+            destination_id,
+            days,
+            limit,
+            offset,
+        )
+
+        offset = max(offset, 0)
+
+        try:
+            with get_db_connection() as conn:
+                include_reviews = DataFetcher._table_exists(conn, "reviews")
+
+                reviews_union = ""
+                if include_reviews:
+                    reviews_union = """
+                    UNION ALL
+                    SELECT
+                        r.content AS text,
+                        r.created_at AS created_at,
+                        'reviews' AS source
+                    FROM reviews r
+                    JOIN target_destination td ON r.destination_slug = td.slug
+                    WHERE r.content IS NOT NULL
+                      AND r.content <> ''
+                      AND r.created_at >= NOW() - (%(days)s || ' days')::INTERVAL
+                """
+
+                query = f"""
+                WITH target_destination AS (
+                    SELECT id, slug
+                    FROM destinations
+                    WHERE id = %(destination_id)s
+                ),
+                saved AS (
+                    SELECT
+                        sp.notes AS text,
+                        sp.saved_at AS created_at,
+                        'saved_places' AS source
+                    FROM saved_places sp
+                    JOIN target_destination td ON sp.destination_slug = td.slug
+                    WHERE sp.notes IS NOT NULL
+                      AND sp.notes <> ''
+                      AND sp.saved_at >= NOW() - (%(days)s || ' days')::INTERVAL
+                ),
+                visited AS (
+                    SELECT
+                        vp.notes AS text,
+                        vp.visited_at AS created_at,
+                        'visited_places' AS source
+                    FROM visited_places vp
+                    JOIN target_destination td ON vp.destination_slug = td.slug
+                    WHERE vp.notes IS NOT NULL
+                      AND vp.notes <> ''
+                      AND vp.visited_at >= NOW() - (%(days)s || ' days')::INTERVAL
+                ),
+                combined AS (
+                    SELECT * FROM saved
+                    UNION ALL
+                    SELECT * FROM visited
+                    {reviews_union}
+                )
+                SELECT text, created_at, source
+                FROM combined
+                ORDER BY created_at DESC
+                LIMIT %(limit)s OFFSET %(offset)s
+                """
+
+                params = {
+                    "destination_id": destination_id,
+                    "days": days,
+                    "limit": limit,
+                    "offset": offset,
+                }
+
+                df = pd.read_sql_query(query, conn, params=params)
+                return df
+
+        except Exception as e:
+            logger.error(f"Error fetching destination texts: {e}")
+            return pd.DataFrame(columns=["text", "created_at", "source"])
 
     @staticmethod
     def get_top_destinations(limit: int = 200) -> List[int]:
