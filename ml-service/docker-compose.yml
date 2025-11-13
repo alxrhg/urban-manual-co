@@ -2,26 +2,36 @@ version: '3.8'
 
 services:
   ml-service:
-    build: .
+    image: urban-manual-ml-service:dev
+    build:
+      context: ..
+      dockerfile: ml-service/Dockerfile
     container_name: urban-manual-ml
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      - ML_SERVICE_HOST=0.0.0.0
-      - ML_SERVICE_PORT=8000
-      - LOG_LEVEL=INFO
+      ML_SERVICE_HOST: 0.0.0.0
+      ML_SERVICE_PORT: 8000
+      LOG_LEVEL: INFO
+      MODEL_STORAGE_PATH: /app/storage/models
+      CONTRACTS_DIR: /contracts
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     volumes:
-      # Optional: Mount logs directory
+      - ml-models:/app/storage/models
       - ./logs:/app/logs
+
+volumes:
+  ml-models:
+    driver: local
 
 networks:
   default:

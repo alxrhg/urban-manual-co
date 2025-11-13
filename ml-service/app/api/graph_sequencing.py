@@ -5,7 +5,11 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 from datetime import datetime
 
-from app.models.graph_sequencing import get_graph_model, GraphSequencingModel
+from app.contracts.validators import (
+    validate_optimization_request,
+    validate_optimization_response,
+)
+from app.models.graph_sequencing import get_graph_model
 from app.utils.database import get_db_connection
 from app.utils.logger import get_logger
 from app.config import get_settings
@@ -146,6 +150,11 @@ async def optimize_itinerary(request: OptimizeItineraryRequest):
     logger.info(f"Optimizing itinerary for {len(request.destination_ids)} destinations")
 
     try:
+        try:
+            validate_optimization_request(request.model_dump())
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+
         model = get_graph_model()
 
         if not model.graph:
@@ -162,10 +171,18 @@ async def optimize_itinerary(request: OptimizeItineraryRequest):
             max_days=request.max_days
         )
 
-        return {
+        response_payload = {
             **optimized,
             "generated_at": datetime.utcnow().isoformat(),
         }
+
+        try:
+            validate_optimization_response(response_payload)
+        except ValueError as exc:
+            logger.error("Response contract validation failed: %s", exc)
+            raise HTTPException(status_code=500, detail="Generated itinerary failed validation")
+
+        return response_payload
 
     except HTTPException:
         raise

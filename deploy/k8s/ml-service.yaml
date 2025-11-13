@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-service-models
+  namespace: ml-service
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  namespace: ml-service
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: ml-service
+  template:
+    metadata:
+      labels:
+        app: ml-service
+    spec:
+      containers:
+        - name: ml-service
+          image: ghcr.io/urban-manual/urban-manual-ml-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: MODEL_STORAGE_PATH
+              value: /app/storage/models
+            - name: CONTRACTS_DIR
+              value: /contracts
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: otlp-endpoint
+                  key: url
+          envFrom:
+            - secretRef:
+                name: ml-service-secrets
+          volumeMounts:
+            - name: model-storage
+              mountPath: /app/storage/models
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1
+              memory: 1Gi
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: ml-service-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-service
+  namespace: ml-service
+spec:
+  type: ClusterIP
+  selector:
+    app: ml-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ml-service
+  namespace: ml-service
+spec:
+  minReplicas: 2
+  maxReplicas: 10
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ml-service
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65

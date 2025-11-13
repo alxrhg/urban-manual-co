@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import recommendations, forecast, health, graph_sequencing, insights, optimization
 from app.config import get_settings
+from app.utils.observability import setup_observability
 
 settings = get_settings()
 
@@ -30,6 +31,13 @@ app.include_router(forecast.router, prefix="/api/forecast", tags=["Forecasting"]
 app.include_router(graph_sequencing.router, prefix="/api/graph", tags=["Graph Sequencing"])
 app.include_router(insights.router, prefix="/api", tags=["Phase 3: Advanced Features"])
 app.include_router(optimization.router, prefix="/api", tags=["Phase 4: Optimization & Polish"])
+
+# Expose orchestrator-friendly endpoints
+app.add_api_route("/health", health.health_check, include_in_schema=False)
+app.add_api_route("/readiness", health.readiness_check, include_in_schema=False)
+
+# Observability
+setup_observability(app)
 
 @app.get("/")
 async def root():

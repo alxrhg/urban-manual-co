@@ -10,6 +10,7 @@ from collections import defaultdict
 from app.config import get_settings
 from app.utils.logger import get_logger
 from app.utils.data_fetcher import DataFetcher
+from app.utils.model_registry import GRAPH_MODEL_ARTIFACT, model_registry
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -30,6 +31,7 @@ class GraphSequencingModel:
         self.graph: Optional[nx.DiGraph] = None
         self.trained_at: Optional[datetime] = None
         self.stats: Dict = {}
+        self.storage_artifact = GRAPH_MODEL_ARTIFACT
 
     def build_co_visitation_graph(
         self,
@@ -93,6 +95,7 @@ class GraphSequencingModel:
 
         self.graph = G
         self.trained_at = datetime.utcnow()
+        self.save_to_storage()
         return G
 
     def suggest_next_places(
@@ -269,23 +272,32 @@ class GraphSequencingModel:
             Optimized itinerary with day-by-day breakdown
         """
         if not self.graph or not destination_ids:
-            return {'days': [], 'total_distance_km': 0}
+            return {'days': [], 'total_distance_km': 0, 'optimization_method': 'graph_and_distance'}
 
         # Get destination details
         destinations = []
         for dest_id in destination_ids:
             details = DataFetcher.get_destination_details(dest_id)
             if details:
+                name = details.get('name') or f'Destination {dest_id}'
+                category = details.get('category') or 'unknown'
                 destinations.append({
                     'id': dest_id,
-                    'name': details.get('name'),
-                    'category': details.get('category'),
+                    'name': name,
+                    'category': category,
                     'lat': details.get('latitude'),
                     'lng': details.get('longitude'),
                 })
 
-        if len(destinations) < 2:
-            return {'days': [{'places': destinations}], 'total_distance_km': 0}
+        if len(destinations) == 0:
+            return {'days': [], 'total_distance_km': 0, 'optimization_method': 'graph_and_distance'}
+
+        if len(destinations) == 1:
+            return {
+                'days': [{'places': destinations}],
+                'total_distance_km': 0,
+                'optimization_method': 'graph_and_distance',
+            }
 
         # Simple optimization: group by graph sequences and distance
         # More sophisticated: use TSP solver or clustering
@@ -449,10 +461,33 @@ class GraphSequencingModel:
                 'edges': G.number_of_edges(),
             }
             logger.info(f"Loaded graph from database: {self.stats['nodes']} nodes, {self.stats['edges']} edges")
+            self.save_to_storage()
             return True
         except Exception as e:
             logger.error(f"Error loading graph from database: {e}")
             return False
+
+    def save_to_storage(self) -> bool:
+        """Persist the trained graph to the model registry."""
+        if not self.graph:
+            return False
+        payload = {
+            'graph': self.graph,
+            'stats': self.stats,
+            'trained_at': self.trained_at,
+        }
+        return model_registry.save(self.storage_artifact, payload)
+
+    def load_from_storage(self) -> bool:
+        """Load the graph from the persisted artifact if available."""
+        payload = model_registry.load(self.storage_artifact)
+        if not payload:
+            return False
+
+        self.graph = payload.get('graph')
+        self.stats = payload.get('stats', {})
+        self.trained_at = payload.get('trained_at')
+        return self.graph is not None
 
 
 # Global model instance
@@ -465,6 +500,7 @@ def get_graph_model() -> GraphSequencingModel:
 
     if _model_instance is None:
         _model_instance = GraphSequencingModel()
+        _model_instance.load_from_storage()
 
     return _model_instance
 

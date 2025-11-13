@@ -29,6 +29,7 @@ CLEANUP_TEMPORARY_FILES.sh
 
 # Large JSON data files (if not needed in repo)
 *.json
+!/contracts/itinerary.schema.json
 !package.json
 !package-lock.json
 !tsconfig.json
