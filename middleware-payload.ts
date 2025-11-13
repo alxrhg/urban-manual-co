@@ -7,8 +7,8 @@ import { createClient } from '@supabase/supabase-js'
  * Only allows access if user is authenticated via Supabase AND has admin role
  */
 export async function payloadAuthMiddleware(request: NextRequest) {
-  // Only protect /admin routes
-  if (!request.nextUrl.pathname.startsWith('/admin')) {
+  // Only protect /payload routes (Payload CMS)
+  if (!request.nextUrl.pathname.startsWith('/payload')) {
     return NextResponse.next()
   }
 
@@ -44,7 +44,7 @@ export async function payloadAuthMiddleware(request: NextRequest) {
 
     if (error || !session) {
       // Redirect to login if not authenticated
-      return NextResponse.redirect(new URL('/auth/login?redirect=/admin', request.url))
+      return NextResponse.redirect(new URL('/auth/login?redirect=/payload', request.url))
     }
 
     // Check if user has admin role

@@ -68,10 +68,12 @@ WHERE email = 'your-email@example.com';
 
 ### Step 3: Access Payload
 
-1. After signing in, visit `/admin`
+1. After signing in, visit `/payload`
 2. The page will check your Supabase session
 3. If you're an admin, Payload admin UI loads
 4. If not, you'll be redirected
+
+**Note:** The custom admin page is still available at `/admin`
 
 ## Benefits
 

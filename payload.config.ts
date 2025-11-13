@@ -120,6 +120,7 @@ export default buildConfig({
   // Payload admin UI will still work, but we protect it with Supabase
   admin: {
     user: 'users', // Minimal users collection for Payload internals
+    baseURL: '/payload', // Custom admin route - use /payload instead of /admin
     meta: {
       titleSuffix: '- Urban Manual CMS',
     },
