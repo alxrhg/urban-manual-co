@@ -10,7 +10,6 @@ interface TripLocation {
   city: string;
   category: string;
   image: string;
-  slug?: string;
   time?: string;
   notes?: string;
   cost?: number;
@@ -95,9 +94,8 @@ export function TripProvider({ children }: { children: ReactNode }) {
               id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now() + index,
               name: item.title,
               city: notesData.city || trip.destination || '',
-              category: notesData.category || item.description || '',
+              category: item.description || '',
               image: notesData.image || '/placeholder-image.jpg',
-              slug: notesData.slug || item.destination_slug || undefined,
               time: item.time || undefined,
               notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
               cost: notesData.cost || undefined,

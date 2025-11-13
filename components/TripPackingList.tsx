@@ -9,7 +9,6 @@ interface TripLocation {
   city: string;
   category: string;
   image: string;
-  slug?: string;
   time?: string;
   notes?: string;
   cost?: number;
@@ -20,7 +19,6 @@ interface TripLocation {
 interface DayItinerary {
   date: string;
   locations: TripLocation[];
-  budget?: number;
   notes?: string;
 }
 

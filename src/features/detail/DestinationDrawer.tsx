@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
+import { AddToTripModal } from '@/components/AddToTripModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -25,7 +26,6 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
-import { useTripInterface } from '@/contexts/TripInterfaceContext';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { 
@@ -169,11 +169,11 @@ function parseTime(timeStr: string): number {
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const { openTripPlanner } = useTripInterface();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
+  const [showAddToTripModal, setShowAddToTripModal] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -965,20 +965,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   router.push('/auth/login');
                   return;
                 }
-                if (!destination) return;
-                onClose();
-                openTripPlanner({
-                  destination: {
-                    slug: destination.slug,
-                    name: destination.name,
-                    city: destination.city || destination.country || '',
-                    category: destination.category,
-                    image: destination.image,
-                  },
-                });
-              }}
+                setShowAddToTripModal(true);
+                }}
               className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
+              >
               <Plus className="h-4 w-4" />
               <span>Add to Trip</span>
               </button>
@@ -1612,29 +1602,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       )}
             
             {/* Add to Trip Button */}
-            <button
-              onClick={() => {
+                <button
+                  onClick={() => {
                 if (!user) {
                   router.push('/auth/login');
                   return;
                 }
-                if (!destination) return;
-                onClose();
-                openTripPlanner({
-                  destination: {
-                    slug: destination.slug,
-                    name: destination.name,
-                    city: destination.city || destination.country || '',
-                    category: destination.category,
-                    image: destination.image,
-                  },
-                });
-              }}
+                setShowAddToTripModal(true);
+                  }}
               className="flex items-center justify-center gap-1.5 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
+                >
               <Plus className="h-4 w-4" />
               <span>Add to Trip</span>
-            </button>
+                </button>
           </div>
         </div>
             </div>
@@ -1721,6 +1701,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         />
       )}
 
+      {/* Add to Trip Modal */}
+      {destination && (
+        <AddToTripModal
+          destinationSlug={destination.slug}
+          destinationName={destination.name}
+          isOpen={showAddToTripModal}
+          onClose={() => setShowAddToTripModal(false)}
+          onAdd={(tripId) => {
+            // Optionally show a success message or refresh data
+            console.log(`Added ${destination.name} to trip ${tripId}`);
+          }}
+        />
+      )}
     </>
   );
 }

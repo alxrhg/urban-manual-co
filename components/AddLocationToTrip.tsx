@@ -17,7 +17,6 @@ interface TripLocation {
   city: string;
   category: string;
   image: string;
-  slug?: string;
   time?: string;
   notes?: string;
   cost?: number;
@@ -90,7 +89,6 @@ export function AddLocationToTrip({
       city: selectedDestination.city || '',
       category: selectedDestination.category || '',
       image: selectedDestination.image || '/placeholder-image.jpg',
-      slug: selectedDestination.slug,
       time: selectedTime,
       cost: estimatedCost,
       duration,

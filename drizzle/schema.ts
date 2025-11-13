@@ -58,7 +58,6 @@ export const trips = mysqlTable("trips", {
   status: varchar("status", { length: 50 }).notNull().default("planning"), // 'planning', 'upcoming', 'ongoing', 'completed'
   isPublic: int("is_public").notNull().default(0), // 0 = private, 1 = public
   coverImage: varchar("cover_image", { length: 500 }),
-  budget: int("budget"),
   createdAt: datetime("created_at").notNull(),
   updatedAt: datetime("updated_at").notNull(),
 });

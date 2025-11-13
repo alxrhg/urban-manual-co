@@ -8,7 +8,6 @@ import {
   ShareIcon,
   DownloadIcon,
   SparklesIcon,
-  WalletIcon,
   PrinterIcon,
   SaveIcon,
   Loader2,
@@ -18,10 +17,15 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
-import { TripBudgetTracker } from './TripBudgetTracker';
 import { TripWeatherForecast } from './TripWeatherForecast';
 import { TripPackingList } from './TripPackingList';
 import { TripShareModal } from './TripShareModal';
+
+interface TripPlannerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tripId?: string; // If provided, load existing trip
+}
 
 interface TripLocation {
   id: number;
@@ -29,7 +33,6 @@ interface TripLocation {
   city: string;
   category: string;
   image: string;
-  slug?: string;
   time?: string;
   notes?: string;
   cost?: number;
@@ -40,39 +43,10 @@ interface TripLocation {
 interface DayItinerary {
   date: string;
   locations: TripLocation[];
-  budget?: number;
   notes?: string;
 }
 
-type TripSummary = {
-  id: string;
-  title: string;
-  destination: string | null;
-  start_date: string | null;
-  end_date: string | null;
-};
-
-type TripPlannerDestination = {
-  slug?: string | null;
-  name: string;
-  city?: string | null;
-  category?: string | null;
-  image?: string | null;
-};
-
-interface TripPlannerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  tripId?: string;
-  initialDestination?: TripPlannerDestination | null;
-}
-
-export function TripPlanner({
-  isOpen,
-  onClose,
-  tripId,
-  initialDestination,
-}: TripPlannerProps) {
+export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [tripName, setTripName] = useState('');
@@ -82,18 +56,14 @@ export function TripPlanner({
   const [days, setDays] = useState<DayItinerary[]>([]);
   const [showAddLocation, setShowAddLocation] = useState<number | null>(null);
   const [step, setStep] = useState<'create' | 'plan'>('create');
-  const [totalBudget, setTotalBudget] = useState<number>(0);
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
-  const [activeTab, setActiveTab] = useState<
-    'itinerary' | 'budget' | 'weather' | 'packing'
-  >('itinerary');
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'weather' | 'packing'>(
+    'itinerary'
+  );
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [availableTrips, setAvailableTrips] = useState<TripSummary[]>([]);
-  const [pendingLocation, setPendingLocation] = useState<TripLocation | null>(null);
-  const [autoAddMessage, setAutoAddMessage] = useState<string | null>(null);
 
   // Load existing trip if tripId is provided
   useEffect(() => {
@@ -117,64 +87,15 @@ export function TripPlanner({
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen || !user) return;
-    fetchAvailableTrips();
-  }, [isOpen, user]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setPendingLocation(null);
-      setAutoAddMessage(null);
-      return;
-    }
-
-    if (initialDestination) {
-      setPendingLocation({
-        id: Date.now() + Math.floor(Math.random() * 1000),
-        name: initialDestination.name,
-        city: initialDestination.city || '',
-        category: initialDestination.category || '',
-        image: initialDestination.image || '/placeholder-image.jpg',
-        slug: initialDestination.slug || undefined,
-      });
-
-      if (initialDestination.city && !destination) {
-        setDestination(initialDestination.city);
-      }
-    }
-  }, [isOpen, initialDestination, destination]);
-
   const resetForm = () => {
     setTripName('');
     setDestination('');
     setStartDate('');
     setEndDate('');
     setDays([]);
-    setTotalBudget(0);
     setHotelLocation('');
     setStep('create');
     setCurrentTripId(null);
-    setAutoAddMessage(null);
-  };
-
-  const fetchAvailableTrips = async () => {
-    try {
-      const supabaseClient = createClient();
-      if (!supabaseClient || !user) return;
-
-      const { data, error } = await supabaseClient
-        .from('trips')
-        .select('id,title,destination,start_date,end_date')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAvailableTrips((data as TripSummary[]) || []);
-    } catch (error) {
-      console.error('Error fetching trips list:', error);
-      setAvailableTrips([]);
-    }
   };
 
   const loadTrip = async (id: string) => {
@@ -256,15 +177,11 @@ export function TripPlanner({
           const location: TripLocation = {
             id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
             name: item.title,
-            city: notesData.city || destination || '',
-            category: notesData.category || item.description || '',
+            city: destination || '',
+            category: item.description || '',
             image: notesData.image || '/placeholder-image.jpg',
-            slug: notesData.slug || item.destination_slug || undefined,
             time: item.time || undefined,
-            notes:
-              typeof notesData === 'string'
-                ? notesData
-                : notesData.raw || undefined,
+            notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
             cost: notesData.cost || undefined,
             duration: notesData.duration || undefined,
             mealType: notesData.mealType || undefined,
@@ -286,7 +203,6 @@ export function TripPlanner({
           newDays.push({
             date: date.toISOString().split('T')[0],
             locations: daysMap.get(dayNum) || [],
-            budget: 0,
           });
         }
 
@@ -304,7 +220,6 @@ export function TripPlanner({
           newDays.push({
             date: date.toISOString().split('T')[0],
             locations: [],
-            budget: 0,
           });
         }
         setDays(newDays);
@@ -364,7 +279,6 @@ export function TripPlanner({
         newDays.push({
           date: date.toISOString().split('T')[0],
           locations: [],
-          budget: 0,
         });
       }
 
@@ -389,7 +303,7 @@ export function TripPlanner({
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
-      // Update trip (including budget)
+      // Update trip details
       const { error: tripError } = await supabaseClient
         .from('trips')
         .update({
@@ -398,7 +312,6 @@ export function TripPlanner({
           destination: destination,
           start_date: startDate,
           end_date: endDate,
-          budget: totalBudget > 0 ? totalBudget : null,
         })
         .eq('id', currentTripId)
         .eq('user_id', user.id);
@@ -435,13 +348,11 @@ export function TripPlanner({
             image: location.image,
             city: location.city,
             category: location.category,
-            slug: location.slug,
           };
 
           itemsToInsert.push({
             trip_id: currentTripId,
-            destination_slug:
-              location.slug || location.name.toLowerCase().replace(/\s+/g, '-'),
+            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
             day: dayIndex + 1,
             order_index: locationIndex,
             time: location.time || null,
@@ -482,22 +393,14 @@ export function TripPlanner({
 
   const handleAddLocation = async (dayIndex: number, location: TripLocation) => {
     setDays((prev) =>
-      prev.map((day, idx) => {
-        if (idx !== dayIndex) return day;
-
-        const exists = day.locations.some((loc) =>
-          location.slug ? loc.slug === location.slug : loc.name === location.name,
-        );
-
-        if (exists) {
-          return day;
-        }
-
-        return {
-          ...day,
-          locations: [...day.locations, location],
-        };
-      }),
+      prev.map((day, idx) =>
+        idx === dayIndex
+          ? {
+              ...day,
+              locations: [...day.locations, location],
+            }
+          : day
+      )
     );
     setShowAddLocation(null);
 
@@ -506,49 +409,6 @@ export function TripPlanner({
       await handleSaveTrip();
     }
   };
-
-  useEffect(() => {
-    if (!pendingLocation || step !== 'plan' || days.length === 0) return;
-
-    const alreadyAdded = days.some((day) =>
-      day.locations.some((loc) =>
-        pendingLocation.slug
-          ? loc.slug === pendingLocation.slug
-          : loc.name === pendingLocation.name,
-      ),
-    );
-
-    if (alreadyAdded) {
-      setAutoAddMessage(`${pendingLocation.name} is already in your trip`);
-      setPendingLocation(null);
-      return;
-    }
-
-    const addLocationToPlan = async () => {
-      try {
-        const target = days.reduce(
-          (acc, day, index) => {
-            if (day.locations.length < acc.count) {
-              return { index, count: day.locations.length };
-            }
-            return acc;
-          },
-          { index: 0, count: days[0].locations.length },
-        );
-
-        await handleAddLocation(target.index, pendingLocation);
-        setAutoAddMessage(
-          `Added ${pendingLocation.name} to Day ${target.index + 1}`,
-        );
-      } catch (error) {
-        console.error('Error adding destination to trip automatically:', error);
-      } finally {
-        setPendingLocation(null);
-      }
-    };
-
-    addLocationToPlan();
-  }, [pendingLocation, step, days, handleAddLocation]);
 
   const handleRemoveLocation = async (dayIndex: number, locationId: number) => {
     setDays((prev) =>
@@ -667,15 +527,6 @@ export function TripPlanner({
     window.print();
   };
 
-  const getTotalSpent = () => {
-    return days.reduce((total, day) => {
-      return (
-        total +
-        day.locations.reduce((dayTotal, loc) => dayTotal + (loc.cost || 0), 0)
-      );
-    }, 0);
-  };
-
   const getAISuggestions = () => {
     // Mock AI suggestions - in real app would call AI API
     return [
@@ -683,24 +534,6 @@ export function TripPlanner({
       'Your dinner reservation is 2km from your last location - allow 30 min travel time',
       'Weather forecast shows rain on Day 3 - indoor activities recommended',
     ];
-  };
-
-  const formatTripDates = (trip: TripSummary) => {
-    if (trip.start_date && trip.end_date) {
-      return `${new Date(trip.start_date).toLocaleDateString()} – ${new Date(
-        trip.end_date,
-      ).toLocaleDateString()}`;
-    }
-
-    if (trip.start_date) {
-      return `Starts ${new Date(trip.start_date).toLocaleDateString()}`;
-    }
-
-    if (trip.end_date) {
-      return `Ends ${new Date(trip.end_date).toLocaleDateString()}`;
-    }
-
-    return 'Dates not set';
   };
 
   if (!isOpen) return null;
@@ -734,50 +567,6 @@ export function TripPlanner({
         <div className="flex-1 overflow-y-auto px-6 pt-6 pb-24">
           {step === 'create' ? (
             <div className="space-y-8">
-              {initialDestination && (
-                <div className="p-4 border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 rounded-2xl">
-                  <p className="text-sm text-neutral-700 dark:text-neutral-200">
-                    We'll add <span className="font-medium">{initialDestination.name}</span> to your itinerary as soon as you pick or create a trip.
-                  </p>
-                </div>
-              )}
-
-              {availableTrips.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
-                    Continue planning an existing trip
-                  </p>
-                  <div className="space-y-2">
-                    {availableTrips.map((trip) => (
-                      <button
-                        key={trip.id}
-                        onClick={() => loadTrip(trip.id)}
-                        className="w-full text-left px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-xl hover:border-neutral-900 dark:hover:border-neutral-100 transition-colors"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm text-neutral-900 dark:text-neutral-100 font-medium">
-                              {trip.title}
-                            </p>
-                            {trip.destination && (
-                              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                {trip.destination}
-                              </p>
-                            )}
-                            <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                              {formatTripDates(trip)}
-                            </p>
-                          </div>
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 whitespace-nowrap">
-                            Open
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div>
                 <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
                   Trip Name
@@ -843,19 +632,6 @@ export function TripPlanner({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Total Budget (Optional)
-                </label>
-                <input
-                  type="number"
-                  value={totalBudget || ''}
-                  onChange={(e) => setTotalBudget(Number(e.target.value))}
-                  placeholder="2000"
-                  className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-
               <button
                 onClick={handleCreateTrip}
                 disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
@@ -873,20 +649,6 @@ export function TripPlanner({
             </div>
           ) : (
             <div className="space-y-8">
-              {autoAddMessage && (
-                <div className="flex items-start justify-between gap-4 p-4 border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 rounded-2xl">
-                  <p className="text-sm text-neutral-700 dark:text-neutral-200">
-                    {autoAddMessage}
-                  </p>
-                  <button
-                    onClick={() => setAutoAddMessage(null)}
-                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
-
               {/* Mobile tabs */}
               {step === 'plan' && (
                 <div className="flex items-center gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-800">
@@ -899,16 +661,6 @@ export function TripPlanner({
                     }`}
                   >
                     Itinerary
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('budget')}
-                    className={`text-xs transition-colors ${
-                      activeTab === 'budget'
-                        ? 'text-neutral-900 dark:text-neutral-100'
-                        : 'text-neutral-400 dark:text-neutral-500'
-                    }`}
-                  >
-                    Budget
                   </button>
                   <button
                     onClick={() => setActiveTab('weather')}
@@ -956,13 +708,6 @@ export function TripPlanner({
                   ))}
                 </div>
               )}
-              {activeTab === 'budget' && (
-                <TripBudgetTracker
-                  days={days}
-                  totalBudget={totalBudget}
-                  onUpdateBudget={setTotalBudget}
-                />
-              )}
               {activeTab === 'weather' && (
                 <TripWeatherForecast
                   destination={destination}
@@ -1006,16 +751,6 @@ export function TripPlanner({
                   }`}
                 >
                   Itinerary
-                </button>
-                <button
-                  onClick={() => setActiveTab('budget')}
-                  className={`text-[11px] tracking-wide transition-colors ${
-                    activeTab === 'budget'
-                      ? 'text-neutral-900 dark:text-neutral-100'
-                      : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                  }`}
-                >
-                  Budget
                 </button>
                 <button
                   onClick={() => setActiveTab('weather')}
@@ -1095,50 +830,6 @@ export function TripPlanner({
           {step === 'create' ? (
             <div className="p-8 max-w-2xl mx-auto">
               <div className="space-y-8">
-                {initialDestination && (
-                  <div className="p-5 border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 rounded-2xl">
-                    <p className="text-sm text-neutral-700 dark:text-neutral-200">
-                      We'll add <span className="font-medium">{initialDestination.name}</span> once you choose a trip.
-                    </p>
-                  </div>
-                )}
-
-                {availableTrips.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
-                      Continue planning an existing trip
-                    </p>
-                    <div className="space-y-2">
-                      {availableTrips.map((trip) => (
-                        <button
-                          key={trip.id}
-                          onClick={() => loadTrip(trip.id)}
-                          className="w-full text-left px-5 py-4 border border-neutral-200 dark:border-neutral-800 rounded-xl hover:border-neutral-900 dark:hover:border-neutral-100 transition-colors"
-                        >
-                          <div className="flex items-center justify-between gap-4">
-                            <div>
-                              <p className="text-sm text-neutral-900 dark:text-neutral-100 font-medium">
-                                {trip.title}
-                              </p>
-                              {trip.destination && (
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                  {trip.destination}
-                                </p>
-                              )}
-                              <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                                {formatTripDates(trip)}
-                              </p>
-                            </div>
-                            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.2em]">
-                              Open
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
                     Trip Name
@@ -1204,19 +895,6 @@ export function TripPlanner({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Total Budget (Optional)
-                  </label>
-                  <input
-                    type="number"
-                    value={totalBudget || ''}
-                    onChange={(e) => setTotalBudget(Number(e.target.value))}
-                    placeholder="2000"
-                    className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-
                 <button
                   onClick={handleCreateTrip}
                   disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
@@ -1235,20 +913,6 @@ export function TripPlanner({
             </div>
           ) : (
             <>
-              {autoAddMessage && (
-                <div className="mx-8 mt-8 flex items-start justify-between gap-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 px-6 py-4">
-                  <p className="text-sm text-neutral-700 dark:text-neutral-200">
-                    {autoAddMessage}
-                  </p>
-                  <button
-                    onClick={() => setAutoAddMessage(null)}
-                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
-
               {activeTab === 'itinerary' && (
                 <div className="p-8">
                   {/* Trip Overview */}
@@ -1269,13 +933,6 @@ export function TripPlanner({
                           day: 'numeric',
                           year: 'numeric',
                         })}
-                        {totalBudget > 0 && (
-                          <>
-                            <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                            <WalletIcon className="w-3.5 h-3.5" />$
-                            {getTotalSpent()} / ${totalBudget}
-                          </>
-                        )}
                       </div>
                     </div>
                     {/* AI Suggestions */}
@@ -1320,14 +977,6 @@ export function TripPlanner({
                     ))}
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'budget' && (
-                <TripBudgetTracker
-                  days={days}
-                  totalBudget={totalBudget}
-                  onUpdateBudget={setTotalBudget}
-                />
               )}
 
               {activeTab === 'weather' && (

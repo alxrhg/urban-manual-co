@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Calendar, MapPin, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Calendar, MapPin, Trash2, X, Edit2 } from 'lucide-react';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
-import { useTripInterface } from '@/contexts/TripInterfaceContext';
+import { TripPlanner } from '@/components/TripPlanner';
 
 interface Trip {
   id: string;
@@ -25,9 +25,17 @@ interface Trip {
 export default function TripsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { openTripPlanner } = useTripInterface();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
+  const [newTrip, setNewTrip] = useState({
+    title: '',
+    description: '',
+    destination: '',
+    start_date: '',
+    end_date: '',
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,6 +66,54 @@ export default function TripsPage() {
       console.error('Error fetching trips:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createTrip = async () => {
+    if (!newTrip.title.trim()) {
+      alert('Please enter a trip title');
+      return;
+    }
+
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient || !user) return;
+
+      const { data, error } = await supabaseClient
+        .from('trips')
+        .insert({
+          title: newTrip.title,
+          description: newTrip.description || null,
+          destination: newTrip.destination || null,
+          start_date: newTrip.start_date || null,
+          end_date: newTrip.end_date || null,
+          status: 'planning',
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      setTrips([data, ...trips]);
+      setShowCreateDialog(false);
+      setNewTrip({ title: '', description: '', destination: '', start_date: '', end_date: '' });
+    } catch (error: any) {
+      console.error('Error creating trip:', error);
+
+      // Show detailed error message
+      let errorMessage = 'Failed to create trip';
+      if (error?.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      if (error?.code === '42P01') {
+        errorMessage = 'Database table "trips" does not exist. Please run the migrations in Supabase. See migrations/README.md for instructions.';
+      }
+
+      alert(errorMessage);
     }
   };
 
@@ -130,13 +186,7 @@ export default function TripsPage() {
         description={introDescription}
         actions={
           <button
-            onClick={() =>
-              openTripPlanner({
-                onClose: () => {
-                  fetchTrips();
-                },
-              })
-            }
+            onClick={() => setShowCreateDialog(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80"
           >
             <Plus className="h-4 w-4" />
@@ -154,13 +204,7 @@ export default function TripsPage() {
               Start by outlining a destination, and we will help you craft the rest.
             </p>
             <button
-              onClick={() =>
-                openTripPlanner({
-                  onClose: () => {
-                    fetchTrips();
-                  },
-                })
-              }
+              onClick={() => setShowCreateDialog(true)}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80"
             >
               <Plus className="h-4 w-4" />
@@ -173,12 +217,8 @@ export default function TripsPage() {
               <article
                 key={trip.id}
                 onClick={() => {
-                  openTripPlanner({
-                    tripId: trip.id,
-                    onClose: () => {
-                      fetchTrips();
-                    },
-                  });
+                  setEditingTripId(trip.id);
+                  setShowCreateDialog(true);
                 }}
                 className="flex flex-col overflow-hidden rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 shadow-sm transition-transform duration-300 hover:-translate-y-1 cursor-pointer"
               >
@@ -232,12 +272,8 @@ export default function TripsPage() {
                     <button
                       onClick={e => {
                         e.stopPropagation();
-                        openTripPlanner({
-                          tripId: trip.id,
-                          onClose: () => {
-                            fetchTrips();
-                          },
-                        });
+                        setEditingTripId(trip.id);
+                        setShowCreateDialog(true);
                       }}
                       className="p-2 rounded-full text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                       aria-label={`Edit ${trip.title}`}
@@ -262,6 +298,20 @@ export default function TripsPage() {
         )}
       </PageContainer>
 
+      {/* Trip Planner Modal */}
+      <TripPlanner
+        isOpen={showCreateDialog}
+        tripId={editingTripId || undefined}
+        onClose={() => {
+          setShowCreateDialog(false);
+          setEditingTripId(null);
+          setNewTrip({ title: '', description: '', destination: '', start_date: '', end_date: '' });
+          // Refresh trips list after closing
+          if (user) {
+            fetchTrips();
+          }
+        }}
+      />
     </div>
   );
 }

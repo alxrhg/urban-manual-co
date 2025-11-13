@@ -21,7 +21,6 @@ interface TripLocation {
   city: string;
   category: string;
   image: string;
-  slug?: string;
   time?: string;
   notes?: string;
   cost?: number;

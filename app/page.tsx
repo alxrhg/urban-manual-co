@@ -46,6 +46,7 @@ import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { TripPlanner } from '@/components/TripPlanner';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -459,6 +460,8 @@ export default function Home() {
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [showTripPlanner, setShowTripPlanner] = useState(false);
+  const [showTripSidebar, setShowTripSidebar] = useState(false);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   // Calculate items per page based on 4 full rows × current grid columns
@@ -2591,6 +2594,11 @@ export default function Home() {
             }}
           />
 
+          {/* Trip Planner Modal */}
+          <TripPlanner
+            isOpen={showTripPlanner}
+            onClose={() => setShowTripPlanner(false)}
+          />
       </main>
     </ErrorBoundary>
   );
