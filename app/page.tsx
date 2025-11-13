@@ -44,6 +44,7 @@ import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
+import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
 
@@ -481,6 +482,8 @@ export default function Home() {
   // Near Me state
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
+  // City list expansion state
+  const [cityDisplayCount, setCityDisplayCount] = useState(4); // Show 4 cities initially
 
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
@@ -1744,11 +1747,8 @@ export default function Home() {
     setFilteredDestinations(filtered);
   }, [destinations, filterDestinationsWithData]);
 
-  // Filter cities to only show: Taipei, Tokyo, New York, and London
-  const allowedCities = ['taipei', 'tokyo', 'new-york', 'london'];
-  const displayedCities = cities.filter(city => 
-    allowedCities.includes(city.toLowerCase())
-  );
+  // Display cities with expandable list
+  const displayedCities = cities.slice(0, cityDisplayCount);
 
   return (
     <ErrorBoundary>
@@ -2087,7 +2087,7 @@ export default function Home() {
                       {/* More Cities Button */}
                       {cities.length > displayedCities.length && (
                         <button
-                          onClick={() => router.push('/cities')}
+                          onClick={() => setCityDisplayCount(cities.length)}
                           className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
                         >
                           + More cities ({cities.length - displayedCities.length})
@@ -2360,66 +2360,67 @@ export default function Home() {
                       const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
                   return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
-                    {paginatedDestinations.map((destination, index) => {
-                      const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                      const globalIndex = startIndex + index;
-                      
-                      return (
-                        <DestinationCard
-                    key={destination.slug}
-                          destination={destination}
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setIsDrawerOpen(true);
-
-                      // Track destination click
-                      trackDestinationClick({
-                        destinationSlug: destination.slug,
-                              position: globalIndex,
-                        source: 'grid',
-                      });
-                      
-                      // Also track with new analytics system
-                      if (destination.id) {
-                        import('@/lib/analytics/track').then(({ trackEvent }) => {
-                          trackEvent({
-                            event_type: 'click',
-                            destination_id: destination.id,
-                            destination_slug: destination.slug,
-                            metadata: {
-                              category: destination.category,
-                              city: destination.city,
-                              source: 'homepage_grid',
-                                    position: globalIndex,
-                            },
-                          });
-                        });
-                      }
+                    <UniversalGrid
+                      items={paginatedDestinations}
+                      renderItem={(destination, index) => {
+                        const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                        const globalIndex = startIndex + index;
                         
-                            // Track click event to Discovery Engine for personalization
-                            if (user?.id) {
-                              fetch('/api/discovery/track-event', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  userId: user.id,
-                                  eventType: 'click',
-                                  documentId: destination.slug,
-                                }),
-                              }).catch((error) => {
-                                console.warn('Failed to track click event:', error);
+                        return (
+                          <DestinationCard
+                            key={destination.slug}
+                            destination={destination}
+                            onClick={() => {
+                              setSelectedDestination(destination);
+                              setIsDrawerOpen(true);
+
+                              // Track destination click
+                              trackDestinationClick({
+                                destinationSlug: destination.slug,
+                                position: globalIndex,
+                                source: 'grid',
                               });
-                            }
-                          }}
-                          index={globalIndex}
-                          isVisited={isVisited}
-                          showBadges={true}
-                        />
-                      );
-                      })}
-                        </div>
-                      );
+                              
+                              // Also track with new analytics system
+                              if (destination.id) {
+                                import('@/lib/analytics/track').then(({ trackEvent }) => {
+                                  trackEvent({
+                                    event_type: 'click',
+                                    destination_id: destination.id,
+                                    destination_slug: destination.slug,
+                                    metadata: {
+                                      category: destination.category,
+                                      city: destination.city,
+                                      source: 'homepage_grid',
+                                      position: globalIndex,
+                                    },
+                                  });
+                                });
+                              }
+                                
+                              // Track click event to Discovery Engine for personalization
+                              if (user?.id) {
+                                fetch('/api/discovery/track-event', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    userId: user.id,
+                                    eventType: 'click',
+                                    documentId: destination.slug,
+                                  }),
+                                }).catch((error) => {
+                                  console.warn('Failed to track click event:', error);
+                                });
+                              }
+                            }}
+                            index={globalIndex}
+                            isVisited={isVisited}
+                            showBadges={true}
+                          />
+                        );
+                      }}
+                    />
+                  );
                     })()
                   )}
 

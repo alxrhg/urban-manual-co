@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, SlidersHorizontal, MapPin, Loader2, Search } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
@@ -34,6 +34,8 @@ export function SearchFiltersComponent({
   onLocationChange,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownTop, setDropdownTop] = useState(0);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
   const [searchQuery, setSearchQuery] = useState(filters.searchQuery || '');
@@ -132,9 +134,18 @@ export function SearchFiltersComponent({
     ).join(' ');
   };
 
+  // Calculate dropdown position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownTop(rect.bottom + 16); // 16px = 1rem gap
+    }
+  }, [isOpen]);
+
   return (
-    <div className="w-full">
+    <div className="relative w-full">
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
         aria-label="Toggle filters"
@@ -153,7 +164,19 @@ export function SearchFiltersComponent({
       </span>
 
       {isOpen && (
-        <div className="w-full mt-4">
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Full-width dropdown */}
+          <div 
+            className="fixed left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-2xl"
+            style={{ top: `${dropdownTop}px` }}
+          >
+            <div className="w-full px-6 md:px-10 lg:px-12 py-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
@@ -377,8 +400,10 @@ export function SearchFiltersComponent({
                 )}
               </fieldset>
             </div>
+            </div>
           </div>
-        )}
+        </>
+      )}
     </div>
   );
 }

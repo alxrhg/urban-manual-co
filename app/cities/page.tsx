@@ -7,6 +7,7 @@ import { Destination } from '@/types/destination';
 import { MapPin, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
+import { UniversalGrid } from '@/components/UniversalGrid';
 import Image from 'next/image';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
@@ -289,69 +290,67 @@ export default function CitiesPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-                {(() => {
-                  const displayedCities = filteredCities.slice(0, displayCount);
-
-                  return displayedCities.map((cityData) => {
-                    const { city, country, count, featuredImage } = cityData;
-                    return (
-                    <button
-                      key={city}
-                      onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
-                      className="text-left group"
-                    >
-                      {/* Square Image Container */}
-                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-100 dark:border-gray-700 shadow-sm group-hover:shadow-md transition-shadow">
-                        {featuredImage ? (
-                          <Image
-                            src={featuredImage}
-                            alt={capitalizeCity(city)}
-                            fill
-                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            quality={80}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                            <MapPin className="h-12 w-12 opacity-20" />
+                  <UniversalGrid
+                    items={filteredCities.slice(0, displayCount)}
+                    gap="sm"
+                    renderItem={(cityData) => {
+                      const { city, country, count, featuredImage } = cityData;
+                      return (
+                        <button
+                          key={city}
+                          onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
+                          className="text-left group"
+                        >
+                          {/* Square Image Container */}
+                          <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-100 dark:border-gray-700 shadow-sm group-hover:shadow-md transition-shadow">
+                            {featuredImage ? (
+                              <Image
+                                src={featuredImage}
+                                alt={capitalizeCity(city)}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                quality={80}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                                <MapPin className="h-12 w-12 opacity-20" />
+                              </div>
+                            )}
+                            
+                            {/* Softer overlay gradient */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            
+                            {/* Subdued count badge */}
+                            <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 px-2 py-1 rounded-lg text-xs font-normal border border-gray-200/50 dark:border-gray-700/50">
+                              {count}
+                            </div>
+                            
+                            {/* Follow button */}
+                            <div className="absolute top-2 right-2">
+                              <FollowCityButton 
+                                citySlug={city}
+                                cityName={capitalizeCity(city)}
+                                variant="compact"
+                                showLabel={false}
+                              />
+                            </div>
                           </div>
-                        )}
-                        
-                        {/* Softer overlay gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        
-                        {/* Subdued count badge */}
-                        <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 px-2 py-1 rounded-lg text-xs font-normal border border-gray-200/50 dark:border-gray-700/50">
-                          {count}
-                        </div>
-                        
-                        {/* Follow button */}
-                        <div className="absolute top-2 right-2">
-                          <FollowCityButton 
-                            citySlug={city}
-                            cityName={capitalizeCity(city)}
-                            variant="compact"
-                            showLabel={false}
-                          />
-                        </div>
-                      </div>
 
-                      {/* Info */}
-                      <div className="space-y-1">
-                        <h3 className="text-sm font-medium text-black dark:text-white line-clamp-1">
-                          {capitalizeCity(city)}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 line-clamp-1 flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {country}
-                        </p>
-                      </div>
-                    </button>
-                    );
-                  });
-                })()}
-                  </div>
+                          {/* Info */}
+                          <div className="space-y-1">
+                            <h3 className="text-sm font-medium text-black dark:text-white line-clamp-1">
+                              {capitalizeCity(city)}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 line-clamp-1 flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {country}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    }}
+                  />
 
                   {/* Show More Button */}
                   {displayCount < filteredCities.length && (

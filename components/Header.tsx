@@ -5,8 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import { AccountDrawer } from "@/components/AccountDrawer";
+import { ChatDrawer } from "@/components/ChatDrawer";
 
 export function Header() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export function Header() {
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+  const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -98,7 +99,7 @@ export function Header() {
 
   return (
     <header 
-      className="mt-6 md:mt-8 relative z-50" 
+      className="mt-6 md:mt-8 relative z-50 bg-white dark:bg-gray-900" 
       role="banner"
     >
       {/* Primary Nav: Brand + Menu */}
@@ -226,34 +227,6 @@ export function Header() {
               {user ? (
                 <>
                   <button
-                    onClick={() => { navigate('/trips'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                    role="menuitem"
-                  >
-                    Trips
-                  </button>
-                  <button
-                    onClick={() => { navigate('/saved'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                    role="menuitem"
-                  >
-                    Saved
-                  </button>
-                  <button
-                    onClick={() => { navigate('/recent'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                    role="menuitem"
-                  >
-                    Recent
-                  </button>
-                  <button
-                    onClick={() => { navigate('/lists'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                    role="menuitem"
-                  >
-                    Lists
-                  </button>
-                  <button
                     onClick={() => { navigate('/itinerary'); setIsMenuOpen(false); }}
                     className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
@@ -261,20 +234,13 @@ export function Header() {
                     Itinerary
                   </button>
                   <button
-                    onClick={() => { navigate('/chat'); setIsMenuOpen(false); }}
+                    onClick={() => { setIsMenuOpen(false); setTimeout(() => setIsChatDrawerOpen(true), 300); }}
                     className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Chat
                   </button>
                   <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
-                  <button
-                    onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                    role="menuitem"
-                  >
-                    Account
-                  </button>
                   {isAdmin && (
                     <button
                       onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
@@ -302,6 +268,12 @@ export function Header() {
       <AccountDrawer
         isOpen={isAccountDrawerOpen}
         onClose={() => setIsAccountDrawerOpen(false)}
+      />
+      
+      {/* Chat Drawer */}
+      <ChatDrawer
+        isOpen={isChatDrawerOpen}
+        onClose={() => setIsChatDrawerOpen(false)}
       />
     </header>
   );

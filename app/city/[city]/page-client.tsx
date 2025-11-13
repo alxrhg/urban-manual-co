@@ -424,31 +424,22 @@ export default function CityPageClient() {
             await (supabase.from('saved_places').insert as any)({ user_id: user.id, destination_slug: slug });
           }
         }}
-        onVisitToggle={async (slug: string) => {
+        onVisitToggle={async (slug: string, visited: boolean) => {
           if (!user) return;
 
-          const { data } = await supabase
-            .from('visited_places')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('destination_slug', slug)
-            .single();
-
-          if (data) {
-            await supabase.from('visited_places').delete().eq('user_id', user.id).eq('destination_slug', slug);
-            setVisitedSlugs(prev => {
-              const next = new Set(prev);
-              next.delete(slug);
-              return next;
-            });
-          } else {
-            await (supabase.from('visited_places').insert as any)({ user_id: user.id, destination_slug: slug });
-            setVisitedSlugs(prev => {
-              const next = new Set(prev);
+          // Update local state based on the visited parameter
+          setVisitedSlugs(prev => {
+            const next = new Set(prev);
+            if (visited) {
               next.add(slug);
-              return next;
-            });
-          }
+            } else {
+              next.delete(slug);
+            }
+            return next;
+          });
+
+          // The DestinationDrawer already handles the database update,
+          // so we just need to sync our local state
         }}
       />
     </>
