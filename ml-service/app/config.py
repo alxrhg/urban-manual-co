@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     lightfm_threads: int = 4
     prophet_seasonality_mode: str = "multiplicative"
     cache_ttl_hours: int = 24
+    anomaly_traffic_lookback_days: int = 30
+    anomaly_sentiment_lookback_days: int = 45
+    anomaly_city_lookback_days: int = 30
+    anomaly_traffic_contamination: float = 0.1
+    anomaly_city_contamination: float = 0.1
 
     # Performance
     max_requests_per_minute: int = 60
