@@ -6,6 +6,7 @@ import { generateSearchResponseContext } from '@/lib/search/generateSearchContex
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
 import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
+import { normalizeCategoryTerm } from '@/lib/search/refinementFilters';
 
 /**
  * POST /api/search/follow-up
@@ -82,17 +83,7 @@ export async function POST(request: NextRequest) {
     // CRITICAL FIX: If no category found in combined query, use original intent category
     // This prevents "cheap" from losing the "hotel" context
     if (!category && intent?.category) {
-      // Normalize intent category to match our database categories
-      const categorySynonyms: Record<string, string> = {
-        'restaurant': 'Restaurant',
-        'dining': 'Restaurant',
-        'hotel': 'Hotel',
-        'cafe': 'Cafe',
-        'bar': 'Bar',
-        'museum': 'Culture',
-        'gallery': 'Culture',
-      };
-      category = categorySynonyms[intent.category.toLowerCase()] || intent.category;
+      category = normalizeCategoryTerm(intent.category) || intent.category;
     }
 
     // Intelligent search

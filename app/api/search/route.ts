@@ -8,6 +8,7 @@ import {
   isUpstashConfigured,
 } from '@/lib/rate-limit';
 import { createServerClient } from '@/lib/supabase/server';
+import { normalizeCategoryTerm } from '@/lib/search/refinementFilters';
 
 // Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
@@ -168,32 +169,9 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Map category synonyms to database categories
-    const categorySynonyms: Record<string, string> = {
-      'restaurant': 'Restaurant',
-      'dining': 'Restaurant',
-      'food': 'Restaurant',
-      'eat': 'Restaurant',
-      'meal': 'Restaurant',
-      'hotel': 'Hotel',
-      'stay': 'Hotel',
-      'accommodation': 'Hotel',
-      'lodging': 'Hotel',
-      'cafe': 'Cafe',
-      'coffee': 'Cafe',
-      'bar': 'Bar',
-      'drink': 'Bar',
-      'cocktail': 'Bar',
-      'nightlife': 'Bar',
-      'culture': 'Culture',
-      'museum': 'Culture',
-      'art': 'Culture',
-      'gallery': 'Culture'
-    };
-    
     // Normalize category
     if (intent.category) {
-      const normalized = categorySynonyms[intent.category.toLowerCase()];
+      const normalized = normalizeCategoryTerm(intent.category);
       if (normalized) {
         intent.category = normalized;
       }

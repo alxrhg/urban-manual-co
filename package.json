@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "test:intelligence": "tsx scripts/test-intelligence-endpoints.ts",
+    "test:refinements": "tsx tests/refinement-filters.test.ts",
+    "benchmark:refinements": "tsx tests/refinement-benchmark.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
