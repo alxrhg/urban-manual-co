@@ -7,6 +7,7 @@
 
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { validateSupabaseUrl, validateSupabaseAnonKey, formatValidationErrors } from './validation';
 
 /**
  * Get Supabase URL from environment variables
@@ -36,13 +37,34 @@ function getSupabaseAnonKey(): string {
  * Create Supabase client for middleware
  * 
  * Middleware runs on the edge, so we need a special client setup.
+ * 
+ * @throws {Error} In production if configuration is invalid
  */
 export function createClient(request: NextRequest) {
   const url = getSupabaseUrl();
   const key = getSupabaseAnonKey();
 
-  if (!url || !key || url.includes('placeholder') || key.includes('placeholder')) {
-    // Return a dummy client for middleware
+  const urlValidation = validateSupabaseUrl(url);
+  const keyValidation = validateSupabaseAnonKey(key);
+  const allErrors = [...urlValidation.errors, ...keyValidation.errors];
+  const isValid = allErrors.length === 0;
+
+  if (!isValid) {
+    const errorMessage = formatValidationErrors(allErrors);
+    
+    // Log error in all environments
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Supabase Middleware] Configuration Validation Failed:');
+      console.error(errorMessage);
+      console.warn('[Supabase Middleware] Using placeholder client. Fix configuration to enable authentication.');
+    } else {
+      // In production, log error but don't throw during build
+      console.error('[Supabase Middleware] Configuration Validation Failed (production):');
+      console.error(errorMessage);
+    }
+
+    // Return placeholder client (allows build to proceed)
+    // Actual runtime errors will occur when middleware tries to use the client
     let dummyResponse = NextResponse.next({
       request: {
         headers: request.headers,

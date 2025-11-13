@@ -6,6 +6,7 @@
  */
 
 import { createBrowserClient } from '@supabase/ssr';
+import { validateSupabaseUrl, validateSupabaseAnonKey, formatValidationErrors } from './validation';
 
 /**
  * Get Supabase URL from environment variables
@@ -34,38 +35,55 @@ function getSupabaseKey(): string {
 }
 
 /**
- * Validate Supabase configuration
+ * Validate Supabase configuration with strict checks
  */
-function isValidConfig(url: string, key: string): boolean {
-  if (!url || !key) return false;
-  if (url.includes('placeholder') || url.includes('invalid')) return false;
-  if (key.includes('placeholder') || key.includes('invalid')) return false;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
-  if (key.length < 20) return false; // Keys are typically much longer
-  return true;
+function validateConfig(url: string, key: string): { valid: boolean; errors: string[] } {
+  const urlValidation = validateSupabaseUrl(url);
+  const keyValidation = validateSupabaseAnonKey(key);
+  
+  const allErrors = [...urlValidation.errors, ...keyValidation.errors];
+  
+  return {
+    valid: allErrors.length === 0,
+    errors: allErrors,
+  };
 }
 
 /**
  * Create Supabase browser client
  * This is the main client for client-side components
+ * 
+ * @throws {Error} In production if configuration is invalid
  */
 export function createClient() {
   const url = getSupabaseUrl();
   const key = getSupabaseKey();
 
-  if (!isValidConfig(url, key)) {
-    // In development, log helpful error
-    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      console.warn('[Supabase] Missing or invalid configuration:', {
-        hasUrl: !!url,
-        hasKey: !!key,
-        urlPreview: url ? url.substring(0, 30) + '...' : 'missing',
-        keyLength: key.length,
-      });
-      console.warn('[Supabase] Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or PUBLISHABLE_KEY)');
+  const validation = validateConfig(url, key);
+
+  if (!validation.valid) {
+    const errorMessage = formatValidationErrors(validation.errors);
+    
+    // Only throw in production runtime (not during build)
+    // Check if we're in a browser context (runtime) vs build time
+    const isRuntime = typeof window !== 'undefined';
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    if (isProduction && isRuntime) {
+      throw new Error(
+        `Invalid Supabase configuration detected in production:\n\n${errorMessage}\n` +
+        `This is a critical error. Please check your environment variables.`
+      );
     }
 
-    // Return a dummy client that won't crash the app
+    // In development or build time, log detailed error but allow placeholder client
+    if (process.env.NODE_ENV === 'development' && isRuntime) {
+      console.error('[Supabase Client] Configuration Validation Failed:');
+      console.error(errorMessage);
+      console.warn('[Supabase Client] Using placeholder client. Fix configuration to enable Supabase features.');
+    }
+
+    // Return placeholder client (allows build to proceed, but will fail at runtime in production)
     return createBrowserClient(
       'https://placeholder.supabase.co',
       'placeholder-key',

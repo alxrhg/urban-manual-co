@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 function getSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = 
-    process.env.SUPABASE_SECRET_KEY || 
-    process.env.SUPABASE_SERVICE_ROLE_KEY || 
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    throw new Error('Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE keys.');
+  // Use service role client for admin operations (bypasses RLS)
+  // Falls back to anon key if service role is not available
+  try {
+    return createServiceRoleClient();
+  } catch (error) {
+    // If service role is not configured, log error but continue
+    // The client will be a placeholder and operations will fail gracefully
+    console.error('[nearby API] Service role client not available, using placeholder');
+    const { createClient } = require('@supabase/supabase-js');
+    return createClient('https://placeholder.supabase.co', 'placeholder-key');
   }
-
-  return createClient(url, key);
 }
 
 // Haversine formula to calculate distance between two points

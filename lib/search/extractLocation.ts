@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { validateSupabaseUrl, validateSupabaseAnonKey } from '@/lib/supabase/validation';
 
 // Get Supabase client (works in both server and client contexts)
 function getSupabaseClient() {
@@ -10,7 +11,13 @@ function getSupabaseClient() {
     process.env.SUPABASE_ANON_KEY ||
     '';
   
-  if (!url || !key) {
+  const urlValidation = validateSupabaseUrl(url);
+  const keyValidation = validateSupabaseAnonKey(key);
+  
+  if (!urlValidation.valid || !keyValidation.valid) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[extractLocation] Invalid Supabase configuration');
+    }
     return createClient('https://placeholder.supabase.co', 'placeholder-key');
   }
   
