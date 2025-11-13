@@ -734,7 +734,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {isAdmin && destination && (
               <button
                 onClick={() => setIsEditDrawerOpen(true)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+                className="p-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
                 title="Edit destination"
                 aria-label="Edit destination"
               >
