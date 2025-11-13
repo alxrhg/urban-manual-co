@@ -95,10 +95,16 @@ export default function GooglePlacesAutocompleteNative({
     if (!isScriptLoaded || !inputRef.current || !window.google?.maps?.places) return;
 
     // Create autocomplete instance
-    const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
-      types: types.length > 0 ? types : undefined,
+    const autocompleteOptions: google.maps.places.AutocompleteOptions = {
       fields: ['place_id', 'name', 'formatted_address', 'geometry', 'types', 'photos'],
-    });
+    };
+    
+    // Only add types if provided and not empty
+    if (types && types.length > 0) {
+      autocompleteOptions.types = types;
+    }
+    
+    const autocomplete = new google.maps.places.Autocomplete(inputRef.current, autocompleteOptions);
 
     autocompleteRef.current = autocomplete;
 
