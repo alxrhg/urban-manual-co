@@ -163,7 +163,7 @@ export default function MapPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white text-gray-900">
+      <main className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-white">
         <div className="flex items-center justify-center h-screen">
           <div className="text-sm text-neutral-500">Loading map…</div>
         </div>
