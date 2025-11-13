@@ -1,4 +1,4 @@
-import { getOpenAI, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
+import { getOpenAI, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL, getOpenAIEmbeddingConfig } from '@/lib/openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
@@ -83,15 +83,35 @@ export async function embedText(input: string): Promise<number[] | null> {
   // Prefer OpenAI embeddings
   const openai = getOpenAI();
   if (openai) {
+    const embeddingOptions = getOpenAIEmbeddingConfig();
     try {
-      // text-embedding-3-large default is 3072 dimensions, but we need 1536
-      // Explicitly specify dimensions to match our database schema
-      const emb = await openai.embeddings.create({ 
-        model: OPENAI_EMBEDDING_MODEL, 
+      const requestPayload: Record<string, any> = {
+        model: OPENAI_EMBEDDING_MODEL,
         input,
-        dimensions: 1536  // Explicitly set to 1536 to match database schema
-      });
-      return emb.data?.[0]?.embedding || null;
+      };
+
+      if (typeof embeddingOptions.dimensions === 'number') {
+        requestPayload.dimensions = embeddingOptions.dimensions;
+      }
+
+      const emb = await openai.embeddings.create(requestPayload);
+      const embedding = emb.data?.[0]?.embedding || null;
+
+      if (!embedding) {
+        return null;
+      }
+
+      if (
+        typeof embeddingOptions.dimensions === 'number' &&
+        embedding.length !== embeddingOptions.dimensions
+      ) {
+        const mismatchMessage =
+          `[embedText] Embedding dimension mismatch. Expected ${embeddingOptions.dimensions} but provider returned ${embedding.length} values for model ${embeddingOptions.model}.`;
+        console.error(mismatchMessage);
+        throw new Error(mismatchMessage);
+      }
+
+      return embedding;
     } catch (error: any) {
       console.error('[embedText] OpenAI error:', error.message || error);
       throw error; // Re-throw to see actual error

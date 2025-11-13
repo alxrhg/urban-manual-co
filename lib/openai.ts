@@ -12,10 +12,52 @@ try {
 let _apiKey: string | undefined = process.env.OPENAI_API_KEY;
 let _openai: any = null;
 
+export type EmbeddingProviderHints = {
+  model: string;
+  dimensions?: number;
+  truncate?: string;
+  pooling?: string;
+};
+
+const DEFAULT_EMBEDDING_HINTS: EmbeddingProviderHints = {
+  model: 'text-embedding-3-large',
+  dimensions: 1536,
+  truncate: 'END',
+};
+
+function parseDimension(value?: string | null): number | undefined {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function resolveEmbeddingHints(): EmbeddingProviderHints {
+  return {
+    ...DEFAULT_EMBEDDING_HINTS,
+    model: process.env.OPENAI_EMBEDDING_MODEL || DEFAULT_EMBEDDING_HINTS.model,
+    dimensions: parseDimension(process.env.OPENAI_EMBEDDING_DIMENSIONS) ?? DEFAULT_EMBEDDING_HINTS.dimensions,
+    truncate: process.env.OPENAI_EMBEDDING_TRUNCATE || DEFAULT_EMBEDDING_HINTS.truncate,
+    pooling: process.env.OPENAI_EMBEDDING_POOLING || DEFAULT_EMBEDDING_HINTS.pooling,
+  };
+}
+
+let _embeddingHints = resolveEmbeddingHints();
+export let OPENAI_EMBEDDING_MODEL = _embeddingHints.model;
+export let OPENAI_EMBEDDING_DIMENSIONS = _embeddingHints.dimensions;
+export let OPENAI_EMBEDDING_HINTS: EmbeddingProviderHints = _embeddingHints;
+
+function refreshEmbeddingHints() {
+  _embeddingHints = resolveEmbeddingHints();
+  OPENAI_EMBEDDING_MODEL = _embeddingHints.model;
+  OPENAI_EMBEDDING_DIMENSIONS = _embeddingHints.dimensions;
+  OPENAI_EMBEDDING_HINTS = _embeddingHints;
+}
+
 // Function to initialize/reinitialize OpenAI client
 export function initOpenAI() {
   _apiKey = process.env.OPENAI_API_KEY;
   _openai = _apiKey && OpenAILib ? new OpenAILib({ apiKey: _apiKey }) : null;
+  refreshEmbeddingHints();
   return _openai;
 }
 
@@ -64,7 +106,10 @@ export const getOpenAI = () => {
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 export const OPENAI_MODEL_COMPLEX = process.env.OPENAI_MODEL_COMPLEX || 'gpt-4.1'; // For complex queries
 export const OPENAI_MODEL_VISION = process.env.OPENAI_MODEL_VISION || 'gpt-4o'; // For image analysis
-export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';
+
+export function getOpenAIEmbeddingConfig(): EmbeddingProviderHints {
+  return { ..._embeddingHints };
+}
 
 /**
  * Determine if a query is complex and should use GPT-4.1

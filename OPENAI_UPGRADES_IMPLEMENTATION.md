@@ -331,7 +331,14 @@ OPENAI_ASSISTANT_ID=asst_xxx                # Reuse existing assistant
 # Existing
 OPENAI_API_KEY=sk-xxx
 OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+# Embedding schema safety
+OPENAI_EMBEDDING_DIMENSIONS=1536             # Matches Supabase vector columns
+# Optional provider hints
+# OPENAI_EMBEDDING_TRUNCATE=END
+# OPENAI_EMBEDDING_POOLING=mean
 ```
+
+Store the above in `.env.local` so that local maintenance scripts (which load dotenv before initializing `lib/openai`) automatically inherit the correct embedding dimensions.
 
 ---
 
