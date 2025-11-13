@@ -6,19 +6,19 @@ import { Menu, X, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
+import { AccountDrawer } from "@/components/AccountDrawer";
 
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [featuredImages, setFeaturedImages] = useState<Array<{ image: string; slug: string; name: string }>>([]);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const isHome = pathname === '/';
   const isMap = pathname === '/map';
@@ -90,43 +90,6 @@ export function Header() {
     setMounted(true);
   }, []);
 
-  // Handle scroll detection
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY || window.pageYOffset;
-      setIsScrolled(scrollY > 100);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Fetch featured destination images for the banner
-  useEffect(() => {
-    async function fetchFeaturedImages() {
-      try {
-        const supabaseClient = createClient();
-        const { data, error } = await supabaseClient
-          .from('destinations')
-          .select('image, slug, name')
-          .not('image', 'is', null)
-          .limit(6)
-          .order('created_at', { ascending: false });
-
-        if (!error && data) {
-          setFeaturedImages(data.filter(d => d.image && d.slug && d.name));
-        }
-      } catch (error) {
-        // Silently fail - banner will just not show images
-        console.debug('Could not fetch featured images for banner:', error);
-      }
-    }
-
-    if (isScrolled) {
-      fetchFeaturedImages();
-    }
-  }, [isScrolled]);
-
 
   const navigate = (path: string) => {
     router.push(path);
@@ -134,101 +97,21 @@ export function Header() {
   };
 
   return (
-    <>
-      <header 
-        className={`mt-6 md:mt-8 relative z-50 transition-all duration-300 ${isScrolled ? 'mt-0' : ''}`}
-        role="banner"
-      >
-        {/* Horizontal Image Banner - Shows after scroll */}
-        {isScrolled && featuredImages.length > 0 && (
-          <div className="fixed top-0 left-0 right-0 h-20 z-40 overflow-hidden">
-            {/* Image Strip */}
-            <div className="flex h-full">
-              {featuredImages.map((item, index) => (
-                <div
-                  key={item.slug || index}
-                  className="flex-1 h-full relative overflow-hidden"
-                >
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 16vw, 8vw"
-                  />
-                </div>
-              ))}
-            </div>
-            
-            {/* Overlay with Brand and Navigation */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-transparent dark:from-gray-900/80 dark:via-gray-900/60">
-              <div className="h-full flex items-center justify-between px-6 md:px-10 lg:px-12">
-                <button
-                  onClick={() => navigate("/")}
-                  className="font-medium text-sm text-gray-700 dark:text-gray-300 hover:opacity-70 transition-opacity"
-                  aria-label="Go to homepage"
-                >
-                  Urban Manual®
-                </button>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-500 dark:text-gray-400 font-light">Information</span>
-                  <div className="flex items-center gap-3">
-                    {user ? (
-                      <button
-                        onClick={() => navigate('/account')}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
-                        aria-label="Go to account"
-                      >
-                        <User className="w-4 h-4" />
-                        <span>Account</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => navigate('/auth/login')}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
-                        aria-label="Sign in"
-                      >
-                        <User className="w-4 h-4" />
-                        <span>Sign In</span>
-                      </button>
-                    )}
-                    <button
-                      ref={menuButtonRef}
-                      onClick={() => {
-                        if (menuButtonRef.current) {
-                          const rect = menuButtonRef.current.getBoundingClientRect();
-                          setDropdownPosition({
-                            top: rect.bottom + 4,
-                            right: window.innerWidth - rect.right,
-                          });
-                        }
-                        setIsMenuOpen(!isMenuOpen);
-                      }}
-                      className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                      aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-                      aria-expanded={isMenuOpen}
-                      aria-haspopup="true"
-                    >
-                      <Menu className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Primary Nav: Brand + Menu */}
-        <div className={`w-full px-6 md:px-10 lg:px-12 ${isScrolled ? 'pt-20' : ''}`}>
-          <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
-            {/* Logo - Left */}
-            <button
-              onClick={() => navigate("/")}
-              className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
-              aria-label="Go to homepage"
-            >
-              Urban Manual®
-            </button>
+    <header 
+      className="mt-6 md:mt-8 relative z-50" 
+      role="banner"
+    >
+      {/* Primary Nav: Brand + Menu */}
+      <div className="w-full px-6 md:px-10 lg:px-12">
+        <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
+          {/* Logo - Left */}
+          <button
+            onClick={() => navigate("/")}
+            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+            aria-label="Go to homepage"
+          >
+            Urban Manual®
+          </button>
           
           {/* Right side: Account/Sign In button + Menu dropdown */}
           <div className="flex items-center gap-3 shrink-0">
@@ -245,9 +128,9 @@ export function Header() {
             {/* Separate Account/Sign In button */}
             {user ? (
               <button
-                onClick={() => navigate('/account')}
+                onClick={() => setIsAccountDrawerOpen(true)}
                 className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-                aria-label="Go to account"
+                aria-label="Open account drawer"
               >
                 <User className="w-4 h-4" />
                 <span>Account</span>
@@ -313,28 +196,28 @@ export function Header() {
             <div className="py-2">
               <button
                 onClick={() => { navigate('/cities'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Cities
               </button>
               <button
                 onClick={() => { navigate('/map'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Map
               </button>
               <button
                 onClick={() => { navigate('/discover'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Discover Collections
               </button>
               <button
                 onClick={() => { navigate('/collections'); setIsMenuOpen(false); }}
-                className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                 role="menuitem"
               >
                 Collections
@@ -344,42 +227,42 @@ export function Header() {
                 <>
                   <button
                     onClick={() => { navigate('/trips'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Trips
                   </button>
                   <button
                     onClick={() => { navigate('/saved'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Saved
                   </button>
                   <button
                     onClick={() => { navigate('/recent'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Recent
                   </button>
                   <button
                     onClick={() => { navigate('/lists'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Lists
                   </button>
                   <button
                     onClick={() => { navigate('/itinerary'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Itinerary
                   </button>
                   <button
                     onClick={() => { navigate('/chat'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Chat
@@ -387,7 +270,7 @@ export function Header() {
                   <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
                   <button
                     onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Account
@@ -395,7 +278,7 @@ export function Header() {
                   {isAdmin && (
                     <button
                       onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
-                      className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                      className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                       role="menuitem"
                     >
                       Admin
@@ -403,7 +286,7 @@ export function Header() {
                   )}
                   <button
                     onClick={async () => { await signOut(); setIsMenuOpen(false); navigate('/'); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:rounded-lg transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:rounded-lg"
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
                   >
                     Sign Out
@@ -414,7 +297,12 @@ export function Header() {
           </div>
         </>
       )}
-      </header>
-    </>
+
+      {/* Account Drawer */}
+      <AccountDrawer
+        isOpen={isAccountDrawerOpen}
+        onClose={() => setIsAccountDrawerOpen(false)}
+      />
+    </header>
   );
 }
