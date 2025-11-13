@@ -2,6 +2,19 @@
 
 import { useEffect, useRef } from 'react';
 
+type AdsByGoogleQueue = Array<Record<string, unknown>>;
+
+declare global {
+  interface Window {
+    adsbygoogle?: AdsByGoogleQueue;
+  }
+}
+
+const pushAdToGoogle = () => {
+  const queue = (window.adsbygoogle ||= []);
+  queue.push({});
+};
+
 interface GoogleAdProps {
   slot: string;
   format?: 'auto' | 'fluid' | 'rectangle' | 'vertical' | 'horizontal';
@@ -40,8 +53,7 @@ export function GoogleAd({
           }
 
           try {
-            // @ts-ignore
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            pushAdToGoogle();
             initializedRef.current = true;
           } catch (err) {
             // Silently handle duplicate initialization errors
@@ -63,8 +75,7 @@ export function GoogleAd({
     }
 
     try {
-      // @ts-ignore
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      pushAdToGoogle();
       initializedRef.current = true;
     } catch (err) {
       // Silently handle duplicate initialization errors
@@ -132,8 +143,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
           }
 
           try {
-            // @ts-ignore
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            pushAdToGoogle();
             initializedRef.current = true;
           } catch (err) {
             // Silently handle duplicate initialization errors
@@ -155,8 +165,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
     }
 
     try {
-      // @ts-ignore
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      pushAdToGoogle();
       initializedRef.current = true;
 
       // Check if ad loaded after a delay
