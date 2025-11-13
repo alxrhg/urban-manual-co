@@ -4,18 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { X, Plus, Calendar, MapPin, Loader2 } from 'lucide-react';
-
-interface Trip {
-  id: string;
-  title: string;
-  description: string | null;
-  destination: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  status: string;
-  cover_image: string | null;
-  created_at: string;
-}
+import type { Trip, ItineraryItemNotes } from '@/types/trip';
 
 interface AddToTripModalProps {
   destinationSlug: string;
@@ -134,14 +123,8 @@ export function AddToTripModal({
       }
 
       // Prepare notes data with destination information
-      const notesData = {
+      const notesData: ItineraryItemNotes = {
         raw: '',
-        cost: undefined,
-        duration: undefined,
-        mealType: undefined,
-        image: undefined,
-        city: undefined,
-        category: undefined,
       };
 
       // Add destination to itinerary
@@ -153,7 +136,7 @@ export function AddToTripModal({
           day: nextDay,
           order_index: nextOrder,
           title: destinationName,
-          description: '', // Required field
+          description: null, // TEXT field, can be null
           notes: JSON.stringify(notesData), // Store as JSON
         })
         .select()

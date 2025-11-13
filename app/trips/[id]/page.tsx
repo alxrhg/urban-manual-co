@@ -24,34 +24,7 @@ import { DestinationCard } from '@/components/DestinationCard';
 import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';
-
-interface Trip {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string | null;
-  destination: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  status: string;
-  is_public: boolean;
-  cover_image: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ItineraryItem {
-  id: string;
-  trip_id: string;
-  destination_slug: string | null;
-  day: number;
-  order_index: number;
-  time: string | null;
-  title: string;
-  description: string | null;
-  notes: string | null;
-  created_at: string;
-}
+import type { Trip, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 
 export default function TripDetailPage() {
   const { user, loading: authLoading } = useAuth();
@@ -99,7 +72,7 @@ export default function TripDetailPage() {
         return;
       }
 
-      const trip = tripData as any;
+      const trip = tripData as Trip;
       
       // Check if user owns this trip or if it's public
       if (!trip.is_public && trip.user_id !== user?.id) {
@@ -213,37 +186,37 @@ export default function TripDetailPage() {
     return startDate.toISOString().split('T')[0];
   };
 
-  // Transform itinerary items to TripLocation format
-  const transformItemsToLocations = (items: ItineraryItem[]) => {
-    return items.map((item) => {
-      const destination = item.destination_slug
-        ? destinations.get(item.destination_slug)
-        : null;
+      // Transform itinerary items to TripLocation format
+      const transformItemsToLocations = (items: ItineraryItem[]) => {
+        return items.map((item) => {
+          const destination = item.destination_slug
+            ? destinations.get(item.destination_slug)
+            : null;
 
-      // Parse notes for additional data (cost, duration, mealType)
-      let notesData: any = {};
-      if (item.notes) {
-        try {
-          notesData = JSON.parse(item.notes);
-        } catch {
-          notesData = { raw: item.notes };
-        }
-      }
+          // Parse notes for additional data (cost, duration, mealType)
+          let notesData: ItineraryItemNotes = {};
+          if (item.notes) {
+            try {
+              notesData = JSON.parse(item.notes) as ItineraryItemNotes;
+            } catch {
+              notesData = { raw: item.notes };
+            }
+          }
 
-      return {
-        id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
-        name: destination?.name || item.title,
-        city: destination?.city || notesData.city || '',
-        category: destination?.category || item.description || '',
-        image: destination?.image || notesData.image || '/placeholder-image.jpg',
-        time: item.time || undefined,
-        notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
-        cost: notesData.cost || undefined,
-        duration: notesData.duration || undefined,
-        mealType: notesData.mealType || undefined,
+          return {
+            id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+            name: destination?.name || item.title,
+            city: destination?.city || notesData.city || '',
+            category: destination?.category || item.description || '',
+            image: destination?.image || notesData.image || '/placeholder-image.jpg',
+            time: item.time || undefined,
+            notes: notesData.raw || undefined,
+            cost: notesData.cost || undefined,
+            duration: notesData.duration || undefined,
+            mealType: notesData.mealType || undefined,
+          };
+        });
       };
-    });
-  };
 
   const handleAddLocation = (dayNumber: number) => {
     setSelectedDay(dayNumber);
@@ -452,10 +425,10 @@ export default function TripDetailPage() {
                           );
                           
                           // Parse notes if it contains JSON data
-                          let notesData: any = {};
+                          let notesData: ItineraryItemNotes = {};
                           if (originalItem?.notes) {
                             try {
-                              notesData = JSON.parse(originalItem.notes);
+                              notesData = JSON.parse(originalItem.notes) as ItineraryItemNotes;
                             } catch {
                               notesData = { raw: originalItem.notes };
                             }

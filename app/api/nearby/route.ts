@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const key = 
+    process.env.SUPABASE_SECRET_KEY || 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error('Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE keys.');
+  }
+
+  return createClient(url, key);
+}
 
 // Haversine formula to calculate distance between two points
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -42,6 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Try using the database function first (if migration has been run)
+    const supabase = getSupabaseClient();
     let destinations: any[] = [];
     let usesFallback = false;
 

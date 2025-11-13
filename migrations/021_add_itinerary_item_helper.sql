@@ -60,3 +60,4 @@ $$;
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION get_next_itinerary_order(uuid, integer) TO authenticated;
 
+

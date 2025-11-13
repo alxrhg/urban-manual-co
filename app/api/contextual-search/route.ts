@@ -5,17 +5,17 @@ import { generateContext } from '@/services/gemini';
 import { getSeasonalContext } from '@/services/seasonality';
 import type { Listing } from '@/services/gemini';
 
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co') as string;
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const SUPABASE_KEY = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-  'placeholder-key'
-) as string;
+function getSupabaseClient() {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const key = 
+    process.env.SUPABASE_SECRET_KEY || 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+    'placeholder-key';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  return createClient(url, key);
+}
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
@@ -236,6 +236,8 @@ export async function POST(request: NextRequest) {
     // Extract intent (city, category, modifiers)
     const intent = await extractIntent(query);
     console.log('[Contextual Search] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
+    
+    const supabase = getSupabaseClient();
     
     // Build base query
     let baseQuery = supabase

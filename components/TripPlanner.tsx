@@ -22,6 +22,7 @@ import { TripBudgetTracker } from './TripBudgetTracker';
 import { TripWeatherForecast } from './TripWeatherForecast';
 import { TripPackingList } from './TripPackingList';
 import { TripShareModal } from './TripShareModal';
+import type { Trip as TripSchema, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 
 interface TripPlannerProps {
   isOpen: boolean;
@@ -123,12 +124,14 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         return;
       }
 
-      setTripName(trip.title);
-      setDestination(trip.destination || '');
-      setStartDate(trip.start_date || '');
-      setEndDate(trip.end_date || '');
-      setHotelLocation(trip.description || ''); // Using description for hotel location
-      setCurrentTripId(trip.id);
+      const tripData = trip as TripSchema;
+
+      setTripName(tripData.title);
+      setDestination(tripData.destination || '');
+      setStartDate(tripData.start_date || '');
+      setEndDate(tripData.end_date || '');
+      setHotelLocation(tripData.description || ''); // Using description for hotel location
+      setCurrentTripId(tripData.id);
 
       // Load itinerary items
       // First verify trip ownership to avoid RLS recursion
@@ -163,17 +166,17 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       // Group items by day
       if (items && items.length > 0) {
         const daysMap = new Map<number, TripLocation[]>();
-        items.forEach((item) => {
+        (items as ItineraryItem[]).forEach((item) => {
           const day = item.day;
           if (!daysMap.has(day)) {
             daysMap.set(day, []);
           }
 
           // Parse notes for additional data (cost, duration, mealType)
-          let notesData: any = {};
+          let notesData: ItineraryItemNotes = {};
           if (item.notes) {
             try {
-              notesData = JSON.parse(item.notes);
+              notesData = JSON.parse(item.notes) as ItineraryItemNotes;
             } catch {
               notesData = { raw: item.notes };
             }
@@ -186,7 +189,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             category: item.description || '',
             image: notesData.image || '/placeholder-image.jpg',
             time: item.time || undefined,
-            notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+            notes: notesData.raw || undefined,
             cost: notesData.cost || undefined,
             duration: notesData.duration || undefined,
             mealType: notesData.mealType || undefined,
@@ -196,8 +199,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         });
 
         // Create days array
-        const start = new Date(trip.start_date || Date.now());
-        const end = new Date(trip.end_date || Date.now());
+        const start = new Date(tripData.start_date || Date.now());
+        const end = new Date(tripData.end_date || Date.now());
         const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
         const newDays: DayItinerary[] = [];
@@ -215,8 +218,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         setDays(newDays);
       } else {
         // No items, create empty days
-        const start = new Date(trip.start_date || Date.now());
-        const end = new Date(trip.end_date || Date.now());
+        const start = new Date(tripData.start_date || Date.now());
+        const end = new Date(tripData.end_date || Date.now());
         const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
         const newDays: DayItinerary[] = [];
@@ -311,16 +314,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
-      // Update trip (including budget)
+      // Update trip (note: budget is not in schema, storing in description or notes)
       const { error: tripError } = await supabaseClient
         .from('trips')
         .update({
           title: tripName,
           description: hotelLocation || null,
-          destination: destination,
-          start_date: startDate,
-          end_date: endDate,
-          budget: totalBudget > 0 ? totalBudget : null,
+          destination: destination || null,
+          start_date: startDate || null,
+          end_date: endDate || null,
         })
         .eq('id', currentTripId)
         .eq('user_id', user.id);
@@ -338,18 +340,18 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       // Insert all itinerary items
       const itemsToInsert: Array<{
         trip_id: string;
-        destination_slug: string;
+        destination_slug: string | null;
         day: number;
         order_index: number;
         time: string | null;
         title: string;
-        description: string;
-        notes: string;
+        description: string | null;
+        notes: string | null;
       }> = [];
       days.forEach((day, dayIndex) => {
         day.locations.forEach((location, locationIndex) => {
           // Store additional data in notes as JSON
-          const notesData: any = {
+          const notesData: ItineraryItemNotes = {
             raw: location.notes || '',
             cost: location.cost,
             duration: location.duration,
@@ -361,12 +363,12 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
           itemsToInsert.push({
             trip_id: currentTripId,
-            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
+            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-') || null,
             day: dayIndex + 1,
             order_index: locationIndex,
             time: location.time || null,
             title: location.name,
-            description: location.category,
+            description: location.category || null,
             notes: JSON.stringify(notesData),
           });
         });

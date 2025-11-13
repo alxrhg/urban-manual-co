@@ -8,19 +8,7 @@ import { Plus, Calendar, MapPin, Trash2, X, Edit2 } from 'lucide-react';
 import { PageIntro } from '@/components/PageIntro';
 import { PageContainer } from '@/components/PageContainer';
 import { TripPlanner } from '@/components/TripPlanner';
-
-interface Trip {
-  id: string;
-  title: string;
-  description: string | null;
-  destination: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  status: string;
-  is_public: boolean;
-  cover_image: string | null;
-  created_at: string;
-}
+import type { Trip } from '@/types/trip';
 
 export default function TripsPage() {
   const router = useRouter();

@@ -121,7 +121,7 @@ export function CompactResponseSection({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask a follow-up..."
             disabled={isLoading}
-            className="w-full px-0 py-2 text-sm border-b border-neutral-200 focus:border-neutral-900 focus:outline-none placeholder:text-neutral-400 bg-transparent disabled:opacity-50 transition-colors duration-200"
+            className="w-full px-0 py-2 text-sm border-b border-neutral-200 dark:border-neutral-700 focus:border-neutral-900 dark:focus:border-neutral-100 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 bg-transparent text-neutral-900 dark:text-neutral-100 disabled:opacity-50 transition-colors duration-200"
           />
         </form>
       )}

@@ -324,3 +324,5 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
   );
 }
 
+
+

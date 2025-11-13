@@ -12,14 +12,20 @@ import { calculateRouteFromCityCenter } from '@/lib/enrichment/routes';
 import { generateDestinationMap } from '@/lib/enrichment/static-maps';
 import { getCurrencyCodeForCity, getExchangeRate } from '@/lib/enrichment/currency';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const key = 
+    process.env.SUPABASE_SECRET_KEY || 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error('Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE keys.');
+  }
+
+  return createClient(url, key);
+}
 
 export async function GET(
   request: NextRequest,
@@ -27,6 +33,7 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+    const supabase = getSupabaseClient();
 
     // Fetch destination
     const { data: destination, error } = await supabase

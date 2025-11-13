@@ -8,14 +8,20 @@ import { createClient } from '@supabase/supabase-js';
 import { findNearbyDestinations } from '@/lib/enrichment/distance-matrix';
 import { withErrorHandling, createValidationError, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  // Support both new (publishable/secret) and legacy (anon/service_role) key naming
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const key = 
+    process.env.SUPABASE_SECRET_KEY || 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error('Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE keys.');
+  }
+
+  return createClient(url, key);
+}
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
@@ -28,6 +34,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   if (!lat || !lng) {
     throw createValidationError('Latitude and longitude are required');
   }
+
+  const supabase = getSupabaseClient();
 
   // Fetch destinations in the area
   let query = supabase

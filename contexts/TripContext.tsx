@@ -3,20 +3,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Trip as TripSchema, ItineraryItem, TripLocation, ItineraryItemNotes } from '@/types/trip';
 
-interface TripLocation {
-  id: number;
-  name: string;
-  city: string;
-  category: string;
-  image: string;
-  time?: string;
-  notes?: string;
-  cost?: number;
-  duration?: number;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-}
-
+// Simplified Trip interface for context (UI-friendly)
 interface Trip {
   id: string;
   name: string;
@@ -61,7 +50,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
 
       // Fetch locations for each trip
       const tripsWithLocations = await Promise.all(
-        (tripsData || []).map(async (trip) => {
+        (tripsData as TripSchema[] || []).map(async (trip) => {
           const { data: itemsData, error: itemsError } = await supabaseClient
             .from('itinerary_items')
             .select('*')
@@ -79,12 +68,12 @@ export function TripProvider({ children }: { children: ReactNode }) {
             };
           }
 
-          const locations: TripLocation[] = (itemsData || []).map((item, index) => {
+          const locations: TripLocation[] = (itemsData as ItineraryItem[] || []).map((item, index) => {
             // Parse notes for additional data
-            let notesData: any = {};
+            let notesData: ItineraryItemNotes = {};
             if (item.notes) {
               try {
-                notesData = JSON.parse(item.notes);
+                notesData = JSON.parse(item.notes) as ItineraryItemNotes;
               } catch {
                 notesData = { raw: item.notes };
               }
@@ -97,7 +86,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
               category: item.description || '',
               image: notesData.image || '/placeholder-image.jpg',
               time: item.time || undefined,
-              notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+              notes: notesData.raw || undefined,
               cost: notesData.cost || undefined,
               duration: notesData.duration || undefined,
               mealType: notesData.mealType || undefined,
@@ -149,9 +138,10 @@ export function TripProvider({ children }: { children: ReactNode }) {
         .from('trips')
         .insert({
           title: name,
-          destination: destination,
+          destination: destination || null,
           status: 'planning',
           user_id: user.id,
+          is_public: false,
         })
         .select()
         .single();
@@ -229,4 +219,6 @@ export function useTrip() {
   }
   return context;
 }
+
+
 

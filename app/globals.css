@@ -168,6 +168,10 @@
     transition: opacity 0.2s;
   }
 
+  .dark .um-input-wrap::before {
+    background: #737373;
+  }
+
   .um-input-wrap.um-input-empty::before {
     opacity: 1;
   }
@@ -180,11 +184,22 @@
     border: 1px solid #E6E6E6;
     border-radius: 6px;
     background: #FFFFFF;
+    color: #000000;
+  }
+
+  .dark .um-input {
+    border-color: #404040;
+    background: #171717;
+    color: #FFFFFF;
   }
 
   .um-input::placeholder {
     color: #9A9A9A;
     font-weight: 300;
+  }
+
+  .dark .um-input::placeholder {
+    color: #737373;
   }
 
   @keyframes umBlinkCursor {
