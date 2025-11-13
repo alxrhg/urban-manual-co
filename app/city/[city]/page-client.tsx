@@ -10,6 +10,7 @@ import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { DestinationCard } from '@/components/DestinationCard';
+import { UniversalGrid } from '@/components/UniversalGrid';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
@@ -215,108 +216,111 @@ export default function CityPageClient() {
 
   return (
     <>
-      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen space-y-12">
-          {/* Header */}
-          <div>
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+        <div className="max-w-[1800px] mx-auto">
+          {/* Header - Minimal design matching homepage */}
+          <div className="mb-12">
             <button
               onClick={() => router.push('/')}
-              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors mb-6"
+              className="mb-6 text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
               aria-label="Back"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
+              ← Back
             </button>
 
-            <div className="space-y-2">
-              {country && <p className="text-xs text-gray-500">{country}</p>}
+            <div className="mb-8">
+              {country && (
+                <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+                  {country}
+                </div>
+              )}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <h1 className="text-3xl sm:text-4xl font-light">{cityDisplayName}</h1>
-                  <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-                    A city shaped by rhythm, craft, and atmosphere. Best explored slowly.
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <h1 className="text-2xl font-light text-black dark:text-white mb-1">{cityDisplayName}</h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
                   </p>
                 </div>
                 <CityClock citySlug={citySlug} />
               </div>
             </div>
-          </div>
 
-          {/* Filters */}
-          <div className="space-y-6">
-            {/* Categories */}
-            {categories.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                <button
-                  onClick={() => handleCategorySelect('')}
-                  className={`transition-all ${
-                    !selectedCategory
-                      ? 'font-medium text-black dark:text-white'
-                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {categories.map(category => (
+            {/* Filters - Matching homepage style */}
+            <div className="space-y-4">
+              {/* Categories */}
+              {categories.length > 0 && (
+                <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                   <button
-                    key={category}
-                    onClick={() => handleCategorySelect(category)}
-                    className={`transition-all ${
-                      selectedCategory === category
+                    onClick={() => handleCategorySelect('')}
+                    className={`transition-all duration-200 ease-out ${
+                      !selectedCategory
                         ? 'font-medium text-black dark:text-white'
                         : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                     }`}
                   >
-                    {capitalizeCategory(category)}
+                    All Categories
                   </button>
-                ))}
-              </div>
-            )}
+                  {categories.map(category => (
+                    <button
+                      key={category}
+                      onClick={() => handleCategorySelect(category)}
+                      className={`transition-all duration-200 ease-out ${
+                        selectedCategory === category
+                          ? 'font-medium text-black dark:text-white'
+                          : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      {capitalizeCategory(category)}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {/* Advanced Filters */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-              <button
-                onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
-                className={`flex items-center gap-1.5 transition-all ${
-                  advancedFilters.michelin
-                    ? 'font-medium text-black dark:text-white'
-                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                }`}
-              >
-                <img
-                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                  alt="Michelin star"
-                  className="h-3 w-3"
-                />
-                Michelin
-              </button>
-              <button
-                onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
-                className={`flex items-center gap-1.5 transition-all ${
-                  advancedFilters.crown
-                    ? 'font-medium text-black dark:text-white'
-                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                }`}
-              >
-                Crown
-              </button>
+              {/* Advanced Filters */}
+              <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                <button
+                  onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
+                  className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                    advancedFilters.michelin
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                  />
+                  Michelin
+                </button>
+                <button
+                  onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
+                  className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                    advancedFilters.crown
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Crown
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Destinations Grid */}
+          {/* Destinations Grid - Using UniversalGrid */}
           {filteredDestinations.length === 0 ? (
             <div className="text-center py-20">
-              <div className="text-4xl mb-4">🔍</div>
-              <p className="text-sm text-gray-500">No destinations found in {cityDisplayName}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                No destinations found in {cityDisplayName}
+              </p>
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-                {paginatedDestinations.map((destination, index) => {
+              <UniversalGrid
+                items={paginatedDestinations}
+                renderItem={(destination, index) => {
                   const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                  const globalIndex = (currentPage - 1) * itemsPerPage + index;
 
                   return (
                     <DestinationCard
@@ -326,17 +330,24 @@ export default function CityPageClient() {
                         setSelectedDestination(destination);
                         setIsDrawerOpen(true);
                       }}
-                      index={index}
+                      index={globalIndex}
                       isVisited={isVisited}
                       showBadges={true}
                     />
                   );
-                })}
-              </div>
+                }}
+                emptyState={
+                  <div className="text-center py-20">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No destinations found
+                    </p>
+                  </div>
+                }
+              />
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="w-full flex flex-wrap items-center justify-center gap-2">
+                <div className="w-full flex flex-wrap items-center justify-center gap-2 pt-8">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
@@ -399,6 +410,7 @@ export default function CityPageClient() {
               <MultiplexAd slot="3271683710" />
             </div>
           )}
+        </div>
       </main>
 
       <DestinationDrawer
