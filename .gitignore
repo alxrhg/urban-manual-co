@@ -36,6 +36,7 @@ CLEANUP_TEMPORARY_FILES.sh
 !next.config.ts
 !vercel.json
 !capacitor.config.ts
+!automation/key-rotation/schedule.json
 
 # IDE and editor files
 .vscode/

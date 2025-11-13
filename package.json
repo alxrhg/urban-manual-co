@@ -24,7 +24,10 @@
     "discovery:export": "tsx scripts/discovery-engine-export.ts",
     "discovery:import": "tsx scripts/discovery-engine-import.ts",
     "fetch:categories": "tsx scripts/fetch-categories-from-google.ts",
-    "generate:micro-descriptions": "tsx scripts/generate_micro_descriptions.ts"
+    "generate:micro-descriptions": "tsx scripts/generate_micro_descriptions.ts",
+    "key-rotation:check": "tsx scripts/check-key-rotation.ts",
+    "key-rotation:openai": "tsx scripts/rotate-openai-key.ts",
+    "key-rotation:supabase": "tsx scripts/rotate-supabase-service-role.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.4",

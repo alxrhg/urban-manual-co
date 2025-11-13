@@ -27,6 +27,13 @@ This document outlines the security measures implemented in Urban Manual and pro
 - ✅ **Environment-based Secrets**: No hardcoded credentials
 - ✅ **Admin-only Routes**: Bearer token + role verification
 
+### Secret Rotation Automation
+
+- 🗓️ **Policy Source**: `docs/security/key-rotation.md` defines cadences, owners, and emergency steps.
+- 🤖 **Automation**: `scripts/rotate-openai-key.ts` & `scripts/rotate-supabase-service-role.ts` mint new credentials and push them into Vercel + Supabase secret stores.
+- 🔔 **Monitoring**: `.github/workflows/key-rotation.yml` runs `npm run key-rotation:check` to alert when a key is within 5 days of expiring or overdue.
+- 📄 **Incident Playbooks**: `docs/security/incident-playbooks.md` details who to notify and how to respond when the workflow fails or a leak is confirmed.
+
 ---
 
 ## Authentication & Authorization
@@ -334,8 +341,9 @@ npx snyk test
 ### Contact Information
 
 **For Security Reports**:
-- Email: [Your security email]
-- Response time: Within 24 hours
+- Email: security@urbanmanual.com
+- Escalation: oncall@pagerduty.urbanmanual.com (PagerDuty bridge)
+- Response time: Within 24 hours (SEV2) / immediate for SEV1 via PagerDuty
 
 ---
 

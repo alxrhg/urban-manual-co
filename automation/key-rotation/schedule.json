@@ -1,0 +1,79 @@
+{
+  "providers": [
+    {
+      "name": "OpenAI",
+      "secretName": "OPENAI_API_KEY",
+      "cadenceDays": 30,
+      "lastRotated": "2025-11-01",
+      "owner": "AI Platform (Lena Ortiz)",
+      "escalationContacts": ["security@urbanmanual.com", "oncall@pagerduty.urbanmanual.com"],
+      "vercel": {
+        "projectId": "prj_urban_manual",
+        "targets": ["production", "preview"]
+      },
+      "supabase": {
+        "projectRef": "abcd1234",
+        "secretName": "OPENAI_API_KEY"
+      }
+    },
+    {
+      "name": "Supabase Service Role",
+      "secretName": "SUPABASE_SERVICE_ROLE_KEY",
+      "cadenceDays": 45,
+      "lastRotated": "2025-10-20",
+      "owner": "Data Platform (Rami Choi)",
+      "escalationContacts": ["security@urbanmanual.com"],
+      "vercel": {
+        "projectId": "prj_urban_manual",
+        "targets": ["production", "preview"]
+      },
+      "supabase": {
+        "projectRef": "abcd1234",
+        "secretName": "SUPABASE_SERVICE_ROLE_KEY"
+      }
+    },
+    {
+      "name": "Supabase Anon Key",
+      "secretName": "SUPABASE_ANON_KEY",
+      "cadenceDays": 60,
+      "lastRotated": "2025-10-15",
+      "owner": "Data Platform (Rami Choi)",
+      "escalationContacts": ["security@urbanmanual.com"],
+      "vercel": {
+        "projectId": "prj_urban_manual",
+        "targets": ["production", "preview", "development"]
+      },
+      "supabase": {
+        "projectRef": "abcd1234",
+        "secretName": "SUPABASE_ANON_KEY"
+      }
+    },
+    {
+      "name": "Vercel Automation Token",
+      "secretName": "VERCEL_TOKEN",
+      "cadenceDays": 90,
+      "lastRotated": "2025-09-15",
+      "owner": "DevInfra (Noor Said)",
+      "escalationContacts": ["security@urbanmanual.com", "devinfra@urbanmanual.com"],
+      "vercel": null,
+      "supabase": null
+    },
+    {
+      "name": "Google Maps",
+      "secretName": "GOOGLE_MAPS_KEY",
+      "cadenceDays": 60,
+      "lastRotated": "2025-10-05",
+      "owner": "Product Eng (Priya Patel)",
+      "escalationContacts": ["security@urbanmanual.com"],
+      "vercel": {
+        "projectId": "prj_urban_manual",
+        "targets": ["production", "preview"]
+      },
+      "supabase": {
+        "projectRef": "abcd1234",
+        "secretName": "GOOGLE_MAPS_KEY"
+      }
+    }
+  ],
+  "warningWindowDays": 5
+}

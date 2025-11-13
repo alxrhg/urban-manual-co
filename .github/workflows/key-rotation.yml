@@ -1,0 +1,33 @@
+name: key-rotation
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'automation/key-rotation/**'
+      - 'scripts/check-key-rotation.ts'
+      - 'docs/security/key-rotation.md'
+      - '.github/workflows/key-rotation.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run rotation policy check
+        env:
+          TZ: UTC
+        run: npm run key-rotation:check
