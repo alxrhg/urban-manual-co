@@ -38,6 +38,10 @@ export default function TripDetailPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [isEditingDates, setIsEditingDates] = useState(false);
+  const [editedStartDate, setEditedStartDate] = useState('');
+  const [editedEndDate, setEditedEndDate] = useState('');
+  const [savingDates, setSavingDates] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -79,6 +83,8 @@ export default function TripDetailPage() {
       }
 
       setTrip(trip);
+      setEditedStartDate(trip.start_date || '');
+      setEditedEndDate(trip.end_date || '');
 
       // Fetch itinerary items
       const { data: itemsData, error: itemsError } = await supabaseClient
@@ -308,6 +314,56 @@ export default function TripDetailPage() {
     }
   };
 
+  const formatDateForInput = (dateStr: string | null) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  const handleSaveDates = async () => {
+    if (!trip || !user) return;
+
+    try {
+      setSavingDates(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .update({
+          start_date: editedStartDate || null,
+          end_date: editedEndDate || null,
+        })
+        .eq('id', trip.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setTrip({
+        ...trip,
+        start_date: editedStartDate || null,
+        end_date: editedEndDate || null,
+      });
+
+      setIsEditingDates(false);
+    } catch (error) {
+      console.error('Error updating dates:', error);
+      alert('Failed to update dates. Please try again.');
+    } finally {
+      setSavingDates(false);
+    }
+  };
+
+  const handleCancelEditDates = () => {
+    setEditedStartDate(trip?.start_date || '');
+    setEditedEndDate(trip?.end_date || '');
+    setIsEditingDates(false);
+  };
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -367,14 +423,65 @@ export default function TripDetailPage() {
               <span>{trip.destination}</span>
             </div>
           )}
-          {(trip.start_date || trip.end_date) && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>
-                {formatDate(trip.start_date)}
-                {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-              </span>
-            </div>
+          {trip.user_id === user?.id ? (
+            isEditingDates ? (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedStartDate)}
+                    onChange={(e) => setEditedStartDate(e.target.value)}
+                    className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  />
+                  <span>–</span>
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedEndDate)}
+                    onChange={(e) => setEditedEndDate(e.target.value)}
+                    className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  />
+                  <button
+                    onClick={handleSaveDates}
+                    disabled={savingDates}
+                    className="px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                  >
+                    {savingDates ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleCancelEditDates}
+                    disabled={savingDates}
+                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <button
+                  onClick={() => setIsEditingDates(true)}
+                  className="hover:underline flex items-center gap-1"
+                >
+                  <span>
+                    {formatDate(trip.start_date)}
+                    {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                  </span>
+                  <Edit2 className="h-3 w-3 opacity-50" />
+                </button>
+              </div>
+            )
+          ) : (
+            (trip.start_date || trip.end_date) && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {formatDate(trip.start_date)}
+                  {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                </span>
+              </div>
+            )
           )}
           <div className="flex items-center gap-2">
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
