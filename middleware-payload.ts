@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
 
 /**
  * Middleware to protect Payload admin routes with Supabase authentication
@@ -25,16 +25,22 @@ export async function payloadAuthMiddleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/login?error=config', request.url))
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    })
+
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
+        getAll() {
+          return request.cookies.getAll()
         },
-        set(name: string, value: string, options: any) {
-          // Cookies are set by the response
-        },
-        remove(name: string, options: any) {
-          // Cookies are removed by the response
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            response.cookies.set(name, value, options)
+          })
         },
       },
     })
@@ -55,7 +61,7 @@ export async function payloadAuthMiddleware(request: NextRequest) {
     }
 
     // User is authenticated and is admin - allow access
-    return NextResponse.next()
+    return response
   } catch (error) {
     console.error('[Payload Auth Middleware] Error:', error)
     return NextResponse.redirect(new URL('/auth/login?error=auth_failed', request.url))
