@@ -3,6 +3,64 @@
 import { useState, useEffect } from 'react';
 import { X, Cookie } from 'lucide-react';
 
+const CONSENT_STORAGE_KEY = 'cookie_consent';
+const CONSENT_COOKIE_NAME = 'cookie_consent';
+const CONSENT_UPDATED_EVENT = 'cookie-consent-updated';
+
+type StoredCookieConsent = CookiePreferences & { timestamp?: string };
+
+function parseConsent(rawValue: string | null): CookiePreferences | null {
+  if (!rawValue) return null;
+
+  try {
+    const parsed = JSON.parse(rawValue) as StoredCookieConsent;
+    return {
+      necessary: parsed.necessary ?? true,
+      analytics: parsed.analytics ?? false,
+      marketing: parsed.marketing ?? false,
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+function readCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+
+  const cookieEntry = document.cookie
+    .split('; ')
+    .find(entry => entry.startsWith(`${name}=`));
+
+  if (!cookieEntry) return null;
+
+  return decodeURIComponent(cookieEntry.split('=').slice(1).join('='));
+}
+
+function getStoredConsent(): CookiePreferences | null {
+  if (typeof window === 'undefined') return null;
+
+  const stored = parseConsent(localStorage.getItem(CONSENT_STORAGE_KEY));
+  if (stored) return stored;
+
+  return parseConsent(readCookie(CONSENT_COOKIE_NAME));
+}
+
+function persistConsent(prefs: CookiePreferences) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  const payload = JSON.stringify({
+    ...prefs,
+    timestamp: new Date().toISOString(),
+  });
+
+  localStorage.setItem(CONSENT_STORAGE_KEY, payload);
+
+  const secureFlag = window.location.protocol === 'https:' ? ' Secure;' : '';
+  document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(payload)}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax;${secureFlag}`;
+
+  window.dispatchEvent(new Event(CONSENT_UPDATED_EVENT));
+}
+
 /**
  * Cookie Consent Banner
  * GDPR/CCPA compliant cookie consent
@@ -25,19 +83,20 @@ export function CookieConsent() {
   });
 
   useEffect(() => {
-    // Check if user has already made a choice
-    const consent = localStorage.getItem('cookie_consent');
-    if (!consent) {
-      // Show banner after a small delay for better UX
-      setTimeout(() => setIsVisible(true), 1000);
+    const consent = getStoredConsent();
+
+    if (consent) {
+      setPreferences(prev => ({ ...prev, ...consent }));
+      return;
     }
+
+    // Show banner after a small delay for better UX when no consent is stored
+    const timer = setTimeout(() => setIsVisible(true), 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   const savePreferences = (prefs: CookiePreferences) => {
-    localStorage.setItem('cookie_consent', JSON.stringify({
-      ...prefs,
-      timestamp: new Date().toISOString(),
-    }));
+    persistConsent(prefs);
 
     // Set cookies based on preferences
     if (prefs.analytics) {
@@ -246,15 +305,22 @@ export function useCookieConsent() {
   const [consent, setConsent] = useState<CookiePreferences | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('cookie_consent');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setConsent(parsed);
-      } catch (e) {
-        setConsent(null);
-      }
-    }
+    const updateConsent = () => {
+      setConsent(getStoredConsent());
+    };
+
+    const handleStorage = () => updateConsent();
+    const handleCustomEvent = () => updateConsent();
+
+    updateConsent();
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener(CONSENT_UPDATED_EVENT, handleCustomEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(CONSENT_UPDATED_EVENT, handleCustomEvent);
+    };
   }, []);
 
   return {
