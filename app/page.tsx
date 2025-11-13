@@ -452,7 +452,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [showAllCities, setShowAllCities] = useState(false);
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
@@ -1823,9 +1822,11 @@ export default function Home() {
     setFilteredDestinations(filtered);
   }, [destinations, filterDestinationsWithData]);
 
-  // Use cities from state (loaded from fetchFilterData or fetchDestinations)
-  // Limit to 2 rows of cities (approximately 10-12 cities per row on desktop)
-  const displayedCities = showAllCities ? cities : cities.slice(0, 24);
+  // Filter cities to only show: Taipei, Tokyo, New York, and London
+  const allowedCities = ['taipei', 'tokyo', 'new-york', 'london'];
+  const displayedCities = cities.filter(city => 
+    allowedCities.includes(city.toLowerCase())
+  );
 
   return (
     <ErrorBoundary>
@@ -2152,14 +2153,6 @@ export default function Home() {
                           {capitalizeCity(city)}
                         </button>
                       ))}
-                      {cities.length > 24 && (
-                        <button
-                          onClick={() => setShowAllCities(!showAllCities)}
-                          className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
-                        >
-                          {showAllCities ? '- Show Less' : '+ Show More'}
-                        </button>
-                      )}
                     </div>
                     
                     {/* Category List (including Michelin) */}
