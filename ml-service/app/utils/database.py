@@ -1,11 +1,16 @@
 """Database connection utilities for Supabase PostgreSQL."""
 
-import psycopg2
-from psycopg2 import pool
 from contextlib import contextmanager
-from typing import Generator
+from typing import Generator, Optional
 import os
 from urllib.parse import urlparse
+
+try:
+    import psycopg2
+    from psycopg2 import pool
+except ImportError:  # pragma: no cover - handled via feature flags/tests
+    psycopg2 = None  # type: ignore
+    pool = None  # type: ignore
 
 from app.config import get_settings
 from app.utils.logger import get_logger
@@ -14,7 +19,10 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 # Connection pool
-_connection_pool = None
+if pool is not None:
+    _connection_pool: Optional[pool.ThreadedConnectionPool] = None  # type: ignore
+else:  # pragma: no cover - fallback when psycopg2 unavailable
+    _connection_pool = None
 
 
 def init_db_pool(minconn: int = 1, maxconn: int = 10):
@@ -26,6 +34,9 @@ def init_db_pool(minconn: int = 1, maxconn: int = 10):
         maxconn: Maximum number of connections
     """
     global _connection_pool
+
+    if psycopg2 is None or pool is None:
+        raise RuntimeError("psycopg2 is required for database connectivity")
 
     if _connection_pool is None:
         try:
@@ -70,11 +81,14 @@ def get_db_connection() -> Generator:
                 cur.execute("SELECT * FROM destinations")
                 results = cur.fetchall()
     """
-    pool = get_db_pool()
+    if psycopg2 is None or pool is None:
+        raise RuntimeError("psycopg2 is required for database connectivity")
+
+    pool_obj = get_db_pool()
     conn = None
 
     try:
-        conn = pool.getconn()
+        conn = pool_obj.getconn()
         yield conn
         conn.commit()
     except Exception as e:
@@ -84,7 +98,7 @@ def get_db_connection() -> Generator:
         raise
     finally:
         if conn:
-            pool.putconn(conn)
+            pool_obj.putconn(conn)
 
 
 def close_db_pool():

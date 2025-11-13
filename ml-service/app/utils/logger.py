@@ -2,7 +2,11 @@
 
 import logging
 import sys
-from pythonjsonlogger import jsonlogger
+
+try:
+    from pythonjsonlogger import jsonlogger
+except ImportError:  # pragma: no cover - fallback when dependency missing
+    jsonlogger = None
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -20,11 +24,12 @@ def get_logger(name: str) -> logging.Logger:
     if not logger.handlers:
         # Console handler with JSON formatting
         handler = logging.StreamHandler(sys.stdout)
-        formatter = jsonlogger.JsonFormatter(
-            '%(asctime)s %(name)s %(levelname)s %(message)s',
-            timestamp=True
-        )
-        handler.setFormatter(formatter)
+        if jsonlogger:
+            formatter = jsonlogger.JsonFormatter(
+                '%(asctime)s %(name)s %(levelname)s %(message)s',
+                timestamp=True
+            )
+            handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
 
