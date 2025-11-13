@@ -109,11 +109,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Create destination in Payload
+        // Note: Hooks will run and sync back to Supabase, but since we're importing
+        // FROM Supabase, this is idempotent (same data will be synced back)
         await payload.create({
           collection: 'destinations',
           data: payloadData,
-          // Skip hooks to avoid circular sync (we're importing FROM Supabase)
-          disableHooks: true,
         })
 
         results.imported++
