@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
+import { intelligenceLimiter, memoryIntelligenceLimiter, withRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/intelligence/taste-profile/:userId
@@ -9,24 +10,32 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  try {
-    const resolvedParams = await params;
-    const userId = resolvedParams.userId;
+  return withRateLimit({
+    request,
+    limiter: intelligenceLimiter,
+    fallbackLimiter: memoryIntelligenceLimiter,
+    message: 'Intelligence API usage is limited to 30 requests per minute.',
+    handler: async () => {
+      try {
+        const resolvedParams = await params;
+        const userId = resolvedParams.userId;
 
-    const profile = await tasteProfileEvolutionService.getTasteProfile(userId);
+        const profile = await tasteProfileEvolutionService.getTasteProfile(userId);
 
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-    }
+        if (!profile) {
+          return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+        }
 
-    return NextResponse.json(profile);
-  } catch (error: any) {
-    console.error('Error getting taste profile:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    );
-  }
+        return NextResponse.json(profile);
+      } catch (error: any) {
+        console.error('Error getting taste profile:', error);
+        return NextResponse.json(
+          { error: 'Internal server error', details: error.message },
+          { status: 500 }
+        );
+      }
+    },
+  });
 }
 
 /**
@@ -37,28 +46,36 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  try {
-    const resolvedParams = await params;
-    const userId = resolvedParams.userId;
+  return withRateLimit({
+    request,
+    limiter: intelligenceLimiter,
+    fallbackLimiter: memoryIntelligenceLimiter,
+    message: 'Intelligence API usage is limited to 30 requests per minute.',
+    handler: async () => {
+      try {
+        const resolvedParams = await params;
+        const userId = resolvedParams.userId;
 
-    const { interactions } = await request.json();
+        const { interactions } = await request.json();
 
-    if (!interactions || !Array.isArray(interactions)) {
-      return NextResponse.json(
-        { error: 'interactions array is required' },
-        { status: 400 }
-      );
-    }
+        if (!interactions || !Array.isArray(interactions)) {
+          return NextResponse.json(
+            { error: 'interactions array is required' },
+            { status: 400 }
+          );
+        }
 
-    await tasteProfileEvolutionService.updateTasteProfile(userId, interactions);
+        await tasteProfileEvolutionService.updateTasteProfile(userId, interactions);
 
-    return NextResponse.json({ status: 'success' });
-  } catch (error: any) {
-    console.error('Error updating taste profile:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    );
-  }
+        return NextResponse.json({ status: 'success' });
+      } catch (error: any) {
+        console.error('Error updating taste profile:', error);
+        return NextResponse.json(
+          { error: 'Internal server error', details: error.message },
+          { status: 500 }
+        );
+      }
+    },
+  });
 }
 

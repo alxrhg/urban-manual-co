@@ -5,6 +5,7 @@ import { rerankDestinations } from '@/lib/search/reranker';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase/server';
+import { chatLimiter, memoryChatLimiter, withRateLimit } from '@/lib/rate-limit';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -666,53 +667,61 @@ function generateResponse(count: number, city?: string, category?: string): stri
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createServerClient();
-    const body = await request.json();
-    const { query, userId, conversationHistory = [] } = body;
-
-    if (!query || query.trim().length < 2) {
-      return NextResponse.json({
-        content: 'What are you looking for? Try searching for a place, city, or experience.',
-        destinations: []
-      });
-    }
-
-    // Request deduplication: prevent duplicate in-flight requests
-    const requestKey = `${query.toLowerCase().trim()}_${userId || 'anon'}_${conversationHistory.length}`;
-    const existingRequest = pendingRequests.get(requestKey);
-
-    if (existingRequest) {
-      console.log('[AI Chat] Deduplicating request:', query);
+  return withRateLimit({
+    request,
+    limiter: chatLimiter,
+    fallbackLimiter: memoryChatLimiter,
+    message: 'AI chat usage is limited to 3 requests every 30 seconds.',
+    handler: async () => {
       try {
-        return await existingRequest;
-      } catch (error) {
-        // If the existing request failed, continue with a new one
-        pendingRequests.delete(requestKey);
+        const supabase = await createServerClient();
+        const body = await request.json();
+        const { query, userId, conversationHistory = [] } = body;
+
+        if (!query || query.trim().length < 2) {
+          return NextResponse.json({
+            content: 'What are you looking for? Try searching for a place, city, or experience.',
+            destinations: []
+          });
+        }
+
+        // Request deduplication: prevent duplicate in-flight requests
+        const requestKey = `${query.toLowerCase().trim()}_${userId || 'anon'}_${conversationHistory.length}`;
+        const existingRequest = pendingRequests.get(requestKey);
+
+        if (existingRequest) {
+          console.log('[AI Chat] Deduplicating request:', query);
+          try {
+            return await existingRequest;
+          } catch (error) {
+            // If the existing request failed, continue with a new one
+            pendingRequests.delete(requestKey);
+          }
+        }
+
+        // Create a new request promise
+        const requestPromise = (async () => {
+          try {
+            return await processAIChatRequest(query, userId, conversationHistory);
+          } finally {
+            // Clean up after request completes
+            pendingRequests.delete(requestKey);
+          }
+        })();
+
+        // Store the promise for deduplication
+        pendingRequests.set(requestKey, requestPromise);
+
+        return await requestPromise;
+      } catch (error: any) {
+        console.error('AI Chat API error:', error);
+        return NextResponse.json({
+          content: 'Sorry, I encountered an error. Please try again.',
+          destinations: []
+        }, { status: 500 });
       }
-    }
-
-    // Create a new request promise
-    const requestPromise = (async () => {
-      try {
-        return await processAIChatRequest(query, userId, conversationHistory);
-      } finally {
-        // Clean up after request completes
-        pendingRequests.delete(requestKey);
-      }
-    })();
-
-    // Store the promise for deduplication
-    pendingRequests.set(requestKey, requestPromise);
-
-    return await requestPromise;
-  } catch (error: any) {
-    console.error('AI Chat API error:', error);
-    return NextResponse.json({
-      content: 'Sorry, I encountered an error. Please try again.',
-      destinations: []
-    }, { status: 500 });
-  }
+    },
+  });
 }
 
 // Extract main logic into separate function for cleaner deduplication

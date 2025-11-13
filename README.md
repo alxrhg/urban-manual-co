@@ -128,6 +128,15 @@ Run these SQL commands in Supabase SQL Editor:
 - Itinerary generation
 - Personalized greetings when logged in
 
+## API Rate Limits
+
+To keep AI usage safe and predictable, the platform enforces strict quotas:
+
+- `/api/ai-chat`: **3 requests every 30 seconds** per user/IP
+- `/api/intelligence/*`: **30 requests every 60 seconds** per user/IP
+
+When the limit is exceeded the APIs respond with HTTP 429 plus helpful `Retry-After` headers, mirroring the behavior defined in `lib/rate-limit.ts`.
+
 ### Account Page
 - Travel statistics (places visited, cities explored, countries)
 - Visited places grid with images and details

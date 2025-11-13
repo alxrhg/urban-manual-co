@@ -47,6 +47,17 @@ const redis = new Redis({
  * Rate limiters for different use cases
  */
 
+export type RateLimitResult = {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+};
+
+export type RateLimiter = {
+  limit: (identifier: string) => Promise<RateLimitResult>;
+};
+
 // General API endpoints: 10 requests per 10 seconds
 export const apiRatelimit = new Ratelimit({
   redis,
@@ -85,6 +96,22 @@ export const authRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(5, "60 s"),
   analytics: true,
   prefix: "ratelimit:auth",
+});
+
+// AI chat endpoints: 3 requests per 30 seconds
+export const chatLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(3, "30 s"),
+  analytics: true,
+  prefix: "ratelimit:chat",
+});
+
+// Intelligence API endpoints: 30 requests per 60 seconds
+export const intelligenceLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "60 s"),
+  analytics: true,
+  prefix: "ratelimit:intelligence",
 });
 
 /**
@@ -149,7 +176,7 @@ class MemoryRatelimit {
     setInterval(() => this.cleanup(), 60000);
   }
 
-  async limit(identifier: string) {
+  async limit(identifier: string): Promise<RateLimitResult> {
     const now = Date.now();
     const cached = this.cache.get(identifier);
 
@@ -187,6 +214,10 @@ class MemoryRatelimit {
       }
     }
   }
+
+  reset() {
+    this.cache.clear();
+  }
 }
 
 // Fallback rate limiters (in-memory)
@@ -195,6 +226,8 @@ export const memoryConversationRatelimit = new MemoryRatelimit(5, 10000);
 export const memorySearchRatelimit = new MemoryRatelimit(20, 10000);
 export const memoryUploadRatelimit = new MemoryRatelimit(3, 60000);
 export const memoryAuthRatelimit = new MemoryRatelimit(5, 60000);
+export const memoryChatLimiter = new MemoryRatelimit(3, 30000);
+export const memoryIntelligenceLimiter = new MemoryRatelimit(30, 60000);
 
 /**
  * Check if Upstash is configured
@@ -205,3 +238,51 @@ export const isUpstashConfigured = () => {
     process.env.UPSTASH_REDIS_REST_TOKEN
   );
 };
+
+interface EnforceRateLimitOptions {
+  request: Request;
+  limiter: RateLimiter;
+  fallbackLimiter: RateLimiter;
+  identifier?: string;
+  message?: string;
+}
+
+export async function enforceRateLimit({
+  request,
+  limiter,
+  fallbackLimiter,
+  identifier,
+  message = "Rate limit exceeded",
+}: EnforceRateLimitOptions): Promise<Response | undefined> {
+  const activeLimiter = isUpstashConfigured() ? limiter : fallbackLimiter;
+  const rateLimitIdentifier = identifier || getIdentifier(request);
+  const result = await activeLimiter.limit(rateLimitIdentifier);
+
+  if (!result.success) {
+    return createRateLimitResponse(
+      message,
+      result.limit,
+      result.remaining,
+      result.reset
+    );
+  }
+
+  return undefined;
+}
+
+interface WithRateLimitOptions extends EnforceRateLimitOptions {
+  handler: () => Promise<Response> | Response;
+}
+
+export async function withRateLimit({
+  handler,
+  ...options
+}: WithRateLimitOptions): Promise<Response> {
+  const rateLimitResponse = await enforceRateLimit(options);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
+  return Promise.resolve(handler());
+}

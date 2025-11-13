@@ -73,6 +73,8 @@ We've implemented rate limiting using **Upstash Redis** (with in-memory fallback
 
 | Endpoint Type | Limit | Window | Purpose |
 |--------------|-------|--------|---------|
+| AI Chat (`/api/ai-chat`) | 3 requests | 30 seconds | Protect expensive LLM usage |
+| Intelligence API (`/api/intelligence/*`) | 30 requests | 60 seconds | Guard the entire intelligence suite |
 | Conversation API | 5 requests | 10 seconds | Prevent AI API abuse |
 | Search API | 20 requests | 10 seconds | Balance performance and abuse prevention |
 | File Uploads | 3 requests | 60 seconds | Prevent storage abuse |
@@ -109,10 +111,11 @@ Rate limiting will automatically use:
 
 ### Protected Endpoints
 
+- ✅ `/api/ai-chat` - 3 req/30s (chatLimiter)
+- ✅ `/api/intelligence/*` - 30 req/60s (intelligenceLimiter)
 - ✅ `/api/conversation/[user_id]` - 5 req/10s
 - ✅ `/api/search` - 20 req/10s
 - ✅ `/api/upload-profile-picture` - 3 req/min
-- ⚠️ Consider adding to: `/api/ai-chat`, `/api/intelligence/*`
 
 ---
 
@@ -227,9 +230,9 @@ headers: {
    - **Solution**: Add Sentry or similar monitoring
    - **Priority**: HIGH
 
-2. **Limited Rate Limiting Coverage**
+2. **Limited Rate Limiting Coverage** *(Resolved)*
    - **Risk**: Some API endpoints still unprotected
-   - **Solution**: Add rate limiting to `/api/ai-chat`, `/api/intelligence/*`
+   - **Solution**: chat/intelligence limiters now wrap `/api/ai-chat` and every `/api/intelligence/*` handler via `lib/rate-limit.ts`
    - **Priority**: MEDIUM
 
 3. **No API Key Rotation Policy**
