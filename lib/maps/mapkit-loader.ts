@@ -60,12 +60,16 @@ declare global {
 }
 
 function fetchAuthorizationToken(done: (token: string) => void) {
+  // Create abort controller for timeout (with fallback for older browsers)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
   fetch('/api/mapkit-token', { 
     credentials: 'same-origin',
-    // Add timeout to prevent hanging
-    signal: AbortSignal.timeout(10000) // 10 second timeout
+    signal: controller.signal
   })
     .then(res => {
+      clearTimeout(timeoutId);
       if (!res.ok) {
         throw new Error(`Token request failed: ${res.status} ${res.statusText}`);
       }
@@ -78,7 +82,12 @@ function fetchAuthorizationToken(done: (token: string) => void) {
       done(data.token);
     })
     .catch(error => {
-      console.error('MapKit authorization error:', error);
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.error('MapKit authorization error: Request timeout');
+      } else {
+        console.error('MapKit authorization error:', error);
+      }
       // Pass empty token but log the error - MapKit will handle the failure
       done('');
     });
