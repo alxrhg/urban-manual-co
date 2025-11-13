@@ -4,6 +4,8 @@ A modern, curated travel guide featuring 897 destinations across the world.
 
 > **⚠️ IMPORTANT**: This project is being migrated to Next.js 16. Please use the **`urban-manual-next/`** directory for active development.
 
+Need to work on the tagging/enrichment system? Read the [Semantic Tags Guide](docs/semantic_tags.md) for rule syntax, testing steps, and taxonomy tips.
+
 ## Active Development (Next.js 16)
 
 **Location**: `/urban-manual-next/`
