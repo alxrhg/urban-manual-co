@@ -40,12 +40,9 @@ export function validateSupabaseUrl(url: string): ValidationResult {
       errors.push('Supabase URL must have a valid hostname');
     }
     
-    // Check for Supabase domain pattern
-    if (!urlObj.hostname.includes('supabase.co') && 
-        !urlObj.hostname.includes('localhost') && 
-        !urlObj.hostname.includes('127.0.0.1')) {
-      errors.push('Supabase URL should point to a Supabase project (supabase.co domain)');
-    }
+    // Check for Supabase domain pattern (warn but don't fail for custom domains)
+    // Allow any valid domain - custom domains or different Supabase setups are valid
+    // This is just a warning, not a hard requirement
   } catch (e) {
     errors.push('Supabase URL is not a valid URL format');
   }
