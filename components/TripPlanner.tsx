@@ -802,7 +802,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               <>
                 {currentTripId && (
                   <button
-                    onClick={handleSaveTrip}
+                    onClick={() => handleSaveTrip()}
                     disabled={saving}
                     className="flex items-center gap-2 px-4 py-2 text-xs border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save trip"
