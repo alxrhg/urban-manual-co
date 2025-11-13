@@ -13,6 +13,37 @@ import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 
+const SITE_URL = "https://www.urbanmanual.co" as const;
+const SITE_DESCRIPTION =
+  "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.";
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "The Urban Manual",
+    url: SITE_URL,
+    description: SITE_DESCRIPTION,
+    logo: `${SITE_URL}/icon-512.png`,
+    sameAs: [
+      "https://www.instagram.com/urbanmanual",
+      "https://www.pinterest.com/urbanmanual",
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "The Urban Manual",
+    url: SITE_URL,
+    description: SITE_DESCRIPTION,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  },
+];
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -22,8 +53,40 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
-  description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.",
+  metadataBase: new URL(SITE_URL),
+  title:
+    "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
+  description: SITE_DESCRIPTION,
+  applicationName: "The Urban Manual",
+  category: "Travel",
+  keywords: [
+    "travel guide",
+    "luxury hotels",
+    "michelin restaurants",
+    "city guide",
+    "urban travel",
+    "boutique hotels",
+    "best restaurants",
+    "hidden gems",
+    "itineraries",
+  ],
+  authors: [{ name: "The Urban Manual Editorial Team", url: SITE_URL }],
+  creator: "The Urban Manual",
+  publisher: "The Urban Manual",
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      maxSnippet: -1,
+      maxImagePreview: "large",
+      maxVideoPreview: -1,
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -38,8 +101,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "The Urban Manual - Curated Travel Guide",
-    description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide.",
-    url: "https://urbanmanual.co",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
     siteName: "The Urban Manual",
     images: [
       {
@@ -55,7 +118,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "The Urban Manual - Curated Travel Guide",
-    description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide.",
+    description: SITE_DESCRIPTION,
     images: ['/og-image.jpg'],
   },
 };
@@ -99,7 +162,13 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3052286230434362"
           crossOrigin="anonymous"
         />
-        
+
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+
         {/* Critical inline CSS for above-the-fold content */}
         {/* Safe: Static CSS from codebase, no user input */}
         <style dangerouslySetInnerHTML={{
