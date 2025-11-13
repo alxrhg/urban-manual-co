@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `trips` (
   `status` VARCHAR(50) NOT NULL DEFAULT 'planning',
   `is_public` INT NOT NULL DEFAULT 0,
   `cover_image` VARCHAR(500),
+  `budget` DECIMAL(12, 2) DEFAULT NULL,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NOT NULL,
   INDEX `idx_trips_user_id` (`user_id`),
