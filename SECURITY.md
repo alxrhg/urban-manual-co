@@ -187,6 +187,19 @@ headers: {
 // Forbids attributes: onerror, onclick, onload
 ```
 
+### Account Data Requests & Privacy Logging
+
+- **APIs**: `app/api/account/export`, `app/api/account/delete`, `app/api/account/privacy`
+  - All routes require an authenticated Supabase session via `createServerClient()`
+  - Inserts/selects go through RLS-safe tables (`account_data_requests`, `account_privacy_audit`)
+- **Background job**: `app/api/cron/account-data-requests`
+  - Called by Vercel Cron (or any worker) with `CRON_SECRET`
+  - Uses `createServiceRoleClient()` to gather exports, purge deletions, and email confirmations via Resend
+- **Data model**: `migrations/029_account_privacy_requests.sql`
+  - Tracks request type, status, payloads, and processed timestamps
+  - Privacy audit table keeps a tamper-resistant log of every change or destructive action
+- **Support expectations**: users receive an email when exports are ready or deletions finish. Failed jobs set `account_data_requests.last_error` so support@ or privacy@ inboxes can triage within 72 hours.
+
 ---
 
 ## Production Security Checklist

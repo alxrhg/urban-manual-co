@@ -16,6 +16,7 @@ import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import { TripPlanner } from "@/components/TripPlanner";
+import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -721,7 +722,7 @@ export default function Account() {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && user && (
-          <div className="fade-in">
+          <div className="fade-in space-y-10">
             <ProfileEditor
               userId={user.id}
               onSaveComplete={() => {
@@ -729,6 +730,7 @@ export default function Account() {
                 alert('Profile updated successfully!');
               }}
             />
+            <AccountPrivacyManager />
           </div>
         )}
       </div>

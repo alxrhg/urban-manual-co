@@ -10,7 +10,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-2xl font-bold mb-4">Introduction</h2>
           <span className="text-gray-600 dark:text-gray-400">
-            The Urban Manual ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our website and services.
+            The Urban Manual (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our website and services.
           </span>
         </section>
 
@@ -71,6 +71,18 @@ export default function PrivacyPage() {
             <li>Correct inaccurate data</li>
             <li>Request deletion of your data</li>
             <li>Opt-out of communications</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Data Export & Deletion Requests</h2>
+          <span className="text-gray-600 dark:text-gray-400 mb-4">
+            You can trigger these requests from <strong>Account → Settings</strong>. Every request is logged in Supabase, processed by a background job, and followed by an email confirmation.
+          </span>
+          <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-2 ml-4">
+            <li><strong>Export:</strong> We compile your profile, saved and visited places, collections, trips, and interaction history. Expect an email with a secure download link within 24 hours.</li>
+            <li><strong>Deletion:</strong> We queue a permanent purge of your account, remove saved data, and delete your Supabase auth record. This is irreversible.</li>
+            <li><strong>Support:</strong> If you do not receive a confirmation within 72 hours, email <a className="underline" href="mailto:privacy@theurbanmanual.com">privacy@theurbanmanual.com</a> with your account email.</li>
           </ul>
         </section>
 
