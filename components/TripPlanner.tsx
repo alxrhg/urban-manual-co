@@ -40,6 +40,20 @@ interface TripLocation {
   mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
 }
 
+type StoredLocationMeta = {
+  raw?: string;
+  cost?: number;
+  duration?: number;
+  mealType?: TripLocation['mealType'];
+  image?: string;
+  city?: string;
+  category?: string;
+};
+
+const isStoredLocationMeta = (value: unknown): value is StoredLocationMeta => {
+  return typeof value === 'object' && value !== null;
+};
+
 interface DayItinerary {
   date: string;
   locations: TripLocation[];
@@ -165,10 +179,17 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           }
 
           // Parse notes for additional data (cost, duration, mealType)
-          let notesData: any = {};
+          let notesData: StoredLocationMeta = {};
           if (item.notes) {
             try {
-              notesData = JSON.parse(item.notes);
+              const parsedNotes = JSON.parse(item.notes) as unknown;
+              if (typeof parsedNotes === 'string') {
+                notesData = { raw: parsedNotes };
+              } else if (isStoredLocationMeta(parsedNotes)) {
+                notesData = parsedNotes;
+              } else {
+                notesData = { raw: String(parsedNotes) };
+              }
             } catch {
               notesData = { raw: item.notes };
             }
@@ -181,7 +202,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             category: item.description || '',
             image: notesData.image || '/placeholder-image.jpg',
             time: item.time || undefined,
-            notes: typeof notesData === 'string' ? notesData : notesData.raw || undefined,
+            notes: notesData.raw || undefined,
             cost: notesData.cost || undefined,
             duration: notesData.duration || undefined,
             mealType: notesData.mealType || undefined,
@@ -284,15 +305,16 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       setDays(newDays);
       setStep('plan');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating trip:', error);
-      alert(error?.message || 'Failed to create trip. Please try again.');
+      const message = error instanceof Error ? error.message : undefined;
+      alert(message || 'Failed to create trip. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveTrip = async () => {
+  const handleSaveTrip = async (overrideDays?: DayItinerary[]) => {
     if (!currentTripId || !user) {
       alert('No trip to save');
       return;
@@ -302,6 +324,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
+
+      const daysToPersist = overrideDays ?? days;
 
       // Update trip details
       const { error: tripError } = await supabaseClient
@@ -337,10 +361,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         description: string;
         notes: string;
       }> = [];
-      days.forEach((day, dayIndex) => {
+      daysToPersist.forEach((day, dayIndex) => {
         day.locations.forEach((location, locationIndex) => {
           // Store additional data in notes as JSON
-          const notesData: any = {
+          const notesData: StoredLocationMeta = {
             raw: location.notes || '',
             cost: location.cost,
             duration: location.duration,
@@ -383,48 +407,47 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           saveButton.disabled = false;
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving trip:', error);
-      alert(error?.message || 'Failed to save trip. Please try again.');
+      const message = error instanceof Error ? error.message : undefined;
+      alert(message || 'Failed to save trip. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleAddLocation = async (dayIndex: number, location: TripLocation) => {
-    setDays((prev) =>
-      prev.map((day, idx) =>
-        idx === dayIndex
-          ? {
-              ...day,
-              locations: [...day.locations, location],
-            }
-          : day
-      )
+    const nextDays = days.map((day, idx) =>
+      idx === dayIndex
+        ? {
+            ...day,
+            locations: [...day.locations, location],
+          }
+        : day
     );
+    setDays(nextDays);
     setShowAddLocation(null);
 
     // Auto-save if trip exists
     if (currentTripId) {
-      await handleSaveTrip();
+      await handleSaveTrip(nextDays);
     }
   };
 
   const handleRemoveLocation = async (dayIndex: number, locationId: number) => {
-    setDays((prev) =>
-      prev.map((day, idx) =>
-        idx === dayIndex
-          ? {
-              ...day,
-              locations: day.locations.filter((loc) => loc.id !== locationId),
-            }
-          : day
-      )
+    const nextDays = days.map((day, idx) =>
+      idx === dayIndex
+        ? {
+            ...day,
+            locations: day.locations.filter((loc) => loc.id !== locationId),
+          }
+        : day
     );
+    setDays(nextDays);
 
     // Auto-save if trip exists
     if (currentTripId) {
-      await handleSaveTrip();
+      await handleSaveTrip(nextDays);
     }
   };
 
@@ -432,20 +455,19 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     dayIndex: number,
     locations: TripLocation[]
   ) => {
-    setDays((prev) =>
-      prev.map((day, idx) =>
-        idx === dayIndex
-          ? {
-              ...day,
-              locations,
-            }
-          : day
-      )
+    const nextDays = days.map((day, idx) =>
+      idx === dayIndex
+        ? {
+            ...day,
+            locations,
+          }
+        : day
     );
+    setDays(nextDays);
 
     // Auto-save if trip exists
     if (currentTripId) {
-      await handleSaveTrip();
+      await handleSaveTrip(nextDays);
     }
   };
 
