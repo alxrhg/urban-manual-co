@@ -123,7 +123,8 @@ export default buildConfig({
   // Payload admin UI will still work, but we protect it with Supabase
   admin: {
     user: 'users', // Minimal users collection for Payload internals
-    baseURL: '/payload', // Custom admin route - use /payload instead of /admin
+    // Note: Admin route is determined by Next.js file structure
+    // app/payload/[[...segments]]/page.tsx serves at /payload
     meta: {
       titleSuffix: '- Urban Manual CMS',
     },
@@ -135,9 +136,7 @@ export default buildConfig({
       slug: 'users',
       // Minimal user collection - only for Payload internals
       // Actual auth is handled by Supabase
-      auth: {
-        disableLocalStrategy: false, // Keep for initial setup, but we'll protect routes
-      },
+      auth: true, // Enable auth for Payload internals, but we protect routes with Supabase
       access: {
         read: () => true,
         // Only allow reading - creation/updates handled by Supabase
