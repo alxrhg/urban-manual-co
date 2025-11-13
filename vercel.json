@@ -15,10 +15,6 @@
     {
       "path": "/api/realtime/check-price-alerts",
       "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/realtime/aggregate-crowding",
-      "schedule": "0 */6 * * *"
     }
   ]
 }

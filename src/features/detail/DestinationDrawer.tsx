@@ -1369,7 +1369,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <RealtimeStatusBadge
                   destinationId={destination.id}
                   compact={false}
-                  showCrowding={true}
                   showWaitTime={true}
                   showAvailability={true}
                 />
