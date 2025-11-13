@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { applyCors, corsOptionsResponse } from '@/lib/cors';
 
 // Get build version from environment or package.json
-export async function GET() {
+export function OPTIONS(request: Request) {
+  return corsOptionsResponse(request);
+}
+
+export async function GET(request: Request) {
   // Try Vercel's build environment variables first
   const vercelCommitSha = process.env.VERCEL_GIT_COMMIT_SHA;
   const vercelEnv = process.env.VERCEL_ENV;
@@ -27,12 +32,14 @@ export async function GET() {
     ? shortSha + (vercelEnv && vercelEnv !== 'production' ? ` (${vercelEnv})` : '')
     : (process.env.NEXT_PUBLIC_BUILD_VERSION || `${packageVersion}-dev`);
 
-  return NextResponse.json({ 
+  const response = NextResponse.json({
     version: buildVersion,
     commitSha: commitSha || null,
     shortSha: shortSha || null,
     packageVersion,
     environment: vercelEnv || null
   });
+
+  return applyCors(request, response);
 }
 

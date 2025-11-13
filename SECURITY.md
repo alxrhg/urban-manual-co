@@ -133,6 +133,39 @@ headers: {
 
 ---
 
+## CORS Policy
+
+**Location**: `lib/cors.ts`
+
+We centralize Cross-Origin Resource Sharing logic in `lib/cors.ts` so every API route uses a single allowlist and identical headers.
+
+**Allowed origins:**
+
+- Production: `https://www.urbanmanual.co`, `https://urbanmanual.co`, `https://www.urbanmanual.com`, `https://urbanmanual.com`
+- Staging: `https://staging.urbanmanual.co`, `https://staging.urbanmanual.com`
+- Preview: any Vercel preview generated for this project (`https://urbanmanual*.vercel.app`, `https://urban-manual*.vercel.app`, `https://urbanmanual-next*.vercel.app`)
+- Local development: `http://localhost:3000`, `http://localhost:3001`, `http://127.0.0.1:3000`
+- Additional domains must be passed via `CORS_EXTRA_ORIGINS` **after** a security review
+
+**Headers emitted for approved origins:**
+
+- `Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS`
+- `Access-Control-Allow-Headers`: echoes `Access-Control-Request-Headers` or defaults to `Content-Type, Authorization, X-Requested-With, Accept, Origin, Referer`
+- `Access-Control-Expose-Headers: Content-Length, Content-Type, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset`
+- `Access-Control-Allow-Credentials: true`
+- `Access-Control-Max-Age: 43200` (12 hours) for preflight caching
+
+**Rationale:**
+
+- Protects destination, itinerary, and personalization data from untrusted embeds
+- Ensures preview/staging URLs used by QA are unblocked without opening the API to `*.vercel.app`
+- Forces manual approval before any new partner domain can query authenticated APIs
+- Keeps `OPTIONS` responses consistent so automated tests can validate the policy
+
+All API routes should call `applyCors()` on their responses and export an `OPTIONS` handler via `corsOptionsResponse()` so browsers see the documented headers.
+
+---
+
 ## Data Protection
 
 ### Row-Level Security (RLS)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { embedText } from '@/lib/llm';
+import { applyCors, corsOptionsResponse } from '@/lib/cors';
 import {
   searchRatelimit,
   memorySearchRatelimit,
@@ -99,8 +100,13 @@ function parseQueryFallback(query: string): {
   return { keywords, city, category, brand };
 }
 
+export function OPTIONS(request: NextRequest) {
+  return corsOptionsResponse(request);
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient();
+  const respond = (res: NextResponse) => applyCors(request, res);
   try {
     const body = await request.json();
     const { query, filters = {}, userId, session_token } = body;
@@ -115,11 +121,13 @@ export async function POST(request: NextRequest) {
     const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
 
     if (!success) {
-      return createRateLimitResponse(
-        'Too many search requests. Please wait a moment.',
-        limit,
-        remaining,
-        reset
+      return respond(
+        createRateLimitResponse(
+          'Too many search requests. Please wait a moment.',
+          limit,
+          remaining,
+          reset
+        ),
       );
     }
     let conversationContext: any = null;
@@ -147,11 +155,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (!query || query.trim().length < 2) {
-      return NextResponse.json({ 
-        results: [], 
+      return respond(NextResponse.json({
+        results: [],
         searchTier: 'basic',
-        error: 'Query too short' 
-      });
+        error: 'Query too short'
+      }));
     }
 
     // Extract structured filters using AI (with conversation context)
@@ -508,21 +516,21 @@ export async function POST(request: NextRequest) {
       });
     } catch {}
 
-    return NextResponse.json({
+    return respond(NextResponse.json({
       results: rankedResults,
       searchTier: searchTier,
       conversationContext: conversationContext || undefined,
       aiInsightBanner: aiInsightBanner || undefined,
       intent,
       suggestions: suggestions.length > 0 ? suggestions : undefined,
-    });
+    }));
 
   } catch (error: any) {
     console.error('Search API error:', error);
-    return NextResponse.json({
+    return respond(NextResponse.json({
       results: [],
       searchTier: 'basic',
       error: error.message || 'Search failed',
-    }, { status: 500 });
+    }, { status: 500 }));
   }
 }

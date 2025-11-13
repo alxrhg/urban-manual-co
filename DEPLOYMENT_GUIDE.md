@@ -115,6 +115,7 @@ npm run dev
 - [ ] Look at destination cards - badges appear (if data exists)
 - [ ] Test in dark mode - everything looks correct
 - [ ] Test on mobile (Chrome DevTools) - UI is responsive
+- [ ] If a new domain needs access to APIs, get security approval before editing `lib/cors.ts` and document the change in `SECURITY.md`
 
 ---
 
