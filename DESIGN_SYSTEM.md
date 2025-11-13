@@ -116,6 +116,77 @@ export const CARD_TITLE = "font-medium text-sm leading-tight line-clamp-2 text-b
 export const CARD_META = "flex items-center gap-1.5";
 ```
 
+## 🧱 Layout Modules
+
+To eliminate bespoke markup in each surface, the homepage now composes sections from a shared toolkit. These modules live under `/components/design-system` and are SSR-safe.
+
+### FilterChip & ChipGroup
+```tsx
+import { ChipGroup, FilterChip } from '@/components/design-system/Chip';
+
+<ChipGroup ariaLabel="City filters">
+  <FilterChip label="All Cities" selected={!city} tone="gray" onClick={() => setCity('')} />
+  {cities.map((city) => (
+    <FilterChip key={city} label={city} selected={selectedCity === city} tone="gray" onClick={() => setCity(city)} />
+  ))}
+</ChipGroup>
+```
+*Props:* `tone` (visual palette), `selected`, `leadingVisual`, `trailingVisual`, regular button props.
+
+### Section, SectionHeader, SectionRail
+```tsx
+import { Section, SectionHeader, SectionRail } from '@/components/design-system/Section';
+
+<Section id="trending">
+  <SectionHeader
+    eyebrow="Trending"
+    title="This Week"
+    description="Auto-aligned actions + metadata"
+    actions={<button className="px-3 py-1 rounded-full">See all</button>}
+  />
+  <SectionRail className="space-y-8">
+    {/* grid, carousels, etc. */}
+  </SectionRail>
+</Section>
+```
+`Section` handles spacing/refs, `SectionHeader` manages eyebrow/title/description/action layout, `SectionRail` adds optional background/border framing.
+
+### ResultsGrid
+```tsx
+import { ResultsGrid } from '@/components/design-system/ResultsGrid';
+
+<ResultsGrid
+  items={destinations}
+  keyExtractor={(destination) => destination.slug}
+  isLoading={loading}
+  skeletonCount={8}
+  renderSkeleton={(index) => <PlaceholderCard key={index} />}
+  emptyState={<p className="text-sm text-gray-500">No matches.</p>}
+  renderItem={(destination) => <DestinationCardV2 destination={destination} />}
+/>;
+```
+Accepts dynamic breakpoints, skeleton renderers, and an `emptyState` slot so every grid uses identical spacing.
+
+### DestinationCardV2, CardShell & MediaBadge
+```tsx
+import { DestinationCardV2, MediaBadge } from '@/components/design-system/DestinationCardV2';
+
+<DestinationCardV2
+  destination={destination}
+  onSelect={() => openDrawer(destination)}
+  showIntelligenceBadges
+  mediaBadges={{
+    bottomLeft: destination.michelin_stars ? (
+      <MediaBadge>
+        <img src="/star.svg" alt="Michelin" className="h-3 w-3" />
+        <span>{destination.michelin_stars}</span>
+      </MediaBadge>
+    ) : undefined,
+  }}
+/>;
+```
+`CardShell` wraps shared focus/hover treatment, `DestinationCardV2` wires up lazy-loading imagery, visited state, DestinationBadges integration, and exposes slots (`mediaBadges`, `badgeSlot`, `footerSlot`). `MediaBadge` gives a consistent pill treatment for contextual overlays.
+
 ### Buttons
 
 #### Primary Button

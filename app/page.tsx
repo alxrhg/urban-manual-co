@@ -40,13 +40,16 @@ import { ContextCards } from '@/components/ContextCards';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
 import { DestinationBadges } from '@/components/DestinationBadges';
-import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
-import { DestinationCard } from '@/components/DestinationCard';
+import { ChipGroup, FilterChip } from '@/components/design-system/Chip';
+import { Section, SectionHeader, SectionRail } from '@/components/design-system/Section';
+import { ResultsGrid } from '@/components/design-system/ResultsGrid';
+import { DestinationCardV2, MediaBadge } from '@/components/design-system/DestinationCardV2';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
+import { DestinationCardSkeleton } from '@/components/skeletons/DestinationCardSkeleton';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -1823,10 +1826,84 @@ export default function Home() {
   }, [destinations, filterDestinationsWithData]);
 
   // Filter cities to only show: Taipei, Tokyo, New York, and London
+  const handleDestinationOpen = useCallback((destination: Destination, position: number, source: 'grid' | 'map' | 'smart_recommendations') => {
+    setSelectedDestination(destination);
+    setIsDrawerOpen(true);
+
+    trackDestinationClick({
+      destinationSlug: destination.slug,
+      position,
+      source,
+    });
+
+    if (destination.id) {
+      import('@/lib/analytics/track').then(({ trackEvent }) => {
+        trackEvent({
+          event_type: 'click',
+          destination_id: destination.id,
+          destination_slug: destination.slug,
+          metadata: {
+            category: destination.category,
+            city: destination.city,
+            source: source === 'grid' ? 'homepage_grid' : source,
+            position,
+          },
+        });
+      });
+    }
+
+    if (user?.id) {
+      fetch('/api/discovery/track-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          eventType: 'click',
+          documentId: destination.slug,
+          source,
+        }),
+      }).catch((error) => {
+        console.warn('Failed to track click event:', error);
+      });
+    }
+  }, [user?.id]);
+
   const allowedCities = ['taipei', 'tokyo', 'new-york', 'london'];
-  const displayedCities = cities.filter(city => 
+  const displayedCities = cities.filter(city =>
     allowedCities.includes(city.toLowerCase())
   );
+
+  const displayDestinations = advancedFilters.nearMe && nearbyDestinations.length > 0
+    ? nearbyDestinations
+    : filteredDestinations;
+
+  const sectionTitle = submittedQuery
+    ? `Results for “${submittedQuery}”`
+    : selectedCity
+      ? `${capitalizeCity(selectedCity)} Highlights`
+      : selectedCategory
+        ? `${capitalizeCategory(selectedCategory)} Picks`
+        : 'Curated Destinations';
+
+  const sectionEyebrow = submittedQuery ? 'Search Results' : 'Featured Collection';
+  const sectionDescription = advancedFilters.nearMe
+    ? `Showing spots within ${advancedFilters.nearMeRadius || 5}km of your location.`
+    : 'Handpicked experiences from The Urban Manual.';
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
+  const gridIsLoading = destinations.length === 0 && !advancedFilters.nearMe;
+
+  const gridEmptyState = advancedFilters.nearMe
+    ? null
+    : (
+        <div className="text-center py-12 px-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {gridIsLoading ? 'Loading destinations...' : 'No destinations match your filters.'}
+          </p>
+        </div>
+      );
 
   return (
     <ErrorBoundary>
@@ -2118,109 +2195,83 @@ export default function Home() {
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
-                  <div className="w-full pt-6">
-                    {/* City List - Only shows Taipei, Tokyo, New York, and London */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs mb-[50px]">
-                      <button
+                  <div className="w-full pt-6 space-y-6">
+                    <ChipGroup ariaLabel="City filters" className="mb-6">
+                      <FilterChip
+                        label="All Cities"
+                        selected={!selectedCity}
+                        tone="gray"
                         onClick={() => {
-                          setSelectedCity("");
+                          setSelectedCity('');
                           setCurrentPage(1);
                           trackFilterChange({ filterType: 'city', value: 'all' });
                         }}
-                        className={`transition-all duration-200 ease-out ${
-                          !selectedCity
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                        }`}
-                      >
-                        All Cities
-                      </button>
+                      />
                       {displayedCities.map((city) => (
-                        <button
+                        <FilterChip
                           key={city}
+                          label={capitalizeCity(city)}
+                          selected={selectedCity === city}
+                          tone="gray"
                           onClick={() => {
-                            const newCity = city === selectedCity ? "" : city;
+                            const newCity = city === selectedCity ? '' : city;
                             setSelectedCity(newCity);
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
-                            selectedCity === city
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          {capitalizeCity(city)}
-                        </button>
+                        />
                       ))}
-                    </div>
-                    
-                    {/* Category List (including Michelin) */}
+                    </ChipGroup>
+
                     {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
+                      <ChipGroup ariaLabel="Category filters">
+                        <FilterChip
+                          label="All Categories"
+                          selected={!selectedCategory && !advancedFilters.michelin}
                           onClick={() => {
-                            setSelectedCategory("");
+                            setSelectedCategory('');
                             setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCategory && !advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          All Categories
-                        </button>
-                        {/* Michelin right after All Categories */}
-                        <button
+                        />
+                        <FilterChip
+                          label="Michelin"
+                          leadingVisual={(
+                            <img
+                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                              alt="Michelin star"
+                              className="h-3 w-3"
+                            />
+                          )}
+                          selected={!!advancedFilters.michelin}
                           onClick={() => {
                             const newValue = !advancedFilters.michelin;
-                            setSelectedCategory("");
+                            setSelectedCategory('');
                             setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                            advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                            alt="Michelin star"
-                            className="h-3 w-3"
-                          />
-                          Michelin
-                        </button>
+                        />
                         {categories.map((category) => {
                           const IconComponent = getCategoryIcon(category);
                           return (
-                          <button
-                            key={category}
-                            onClick={() => {
-                              const newCategory = category === selectedCategory ? "" : category;
-                              setSelectedCategory(newCategory);
+                            <FilterChip
+                              key={category}
+                              label={capitalizeCategory(category)}
+                              selected={selectedCategory === category && !advancedFilters.michelin}
+                              leadingVisual={IconComponent ? <IconComponent className="h-3 w-3" size={12} /> : undefined}
+                              onClick={() => {
+                                const newCategory = category === selectedCategory ? '' : category;
+                                setSelectedCategory(newCategory);
                                 setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
                                 setCurrentPage(1);
-                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                            }}
-                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                selectedCategory === category && !advancedFilters.michelin
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
-                          >
-                              {IconComponent && (
-                                <IconComponent className="h-3 w-3" size={12} />
-                              )}
-                            {capitalizeCategory(category)}
-                          </button>
+                                trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                              }}
+                            />
                           );
                         })}
-                      </div>
+                      </ChipGroup>
                     )}
                   </div>
                 </div>
@@ -2231,334 +2282,216 @@ export default function Home() {
 
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 mt-8">
-                <div className="max-w-[1800px] mx-auto">
-                {/* Filter and View Toggle - Top right of grid section */}
-                <div className="mb-8 md:mb-10">
-                  <div className="flex justify-end items-center gap-3 relative flex-wrap">
-                    {/* Wrapper for Filter and Map Toggle to ensure alignment */}
-                    <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
-                      {/* Filter Button - Expands inline below */}
-                      <div className="w-full md:w-auto">
-                        <SearchFiltersComponent
-                          filters={advancedFilters}
-                          onFiltersChange={(newFilters) => {
-                            setAdvancedFilters(newFilters);
-                            if (newFilters.city !== undefined) {
-                              setSelectedCity(newFilters.city || '');
-                            }
-                            if (newFilters.category !== undefined) {
-                              setSelectedCategory(newFilters.category || '');
-                            }
-                            Object.entries(newFilters).forEach(([key, value]) => {
-                              if (value !== undefined && value !== null && value !== '') {
-                                trackFilterChange({ filterType: key, value });
-                              }
-                            });
-                          }}
-                          availableCities={cities}
-                          availableCategories={categories}
-                          onLocationChange={handleLocationChange}
-                        />
-                      </div>
-
-                      {/* Grid/Map Toggle */}
-                      <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
-                        <button
-                          onClick={() => setViewMode('grid')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'grid'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Grid view"
-                        >
-                          <LayoutGrid className="h-4 w-4" />
-                          <span>Grid</span>
-                        </button>
-                        <button
-                          onClick={() => setViewMode('map')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'map'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Map view"
-                        >
-                          <Map className="h-4 w-4" />
-                          <span>Map</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Create Trip Button */}
-                    <button
-                      onClick={() => setShowTripPlanner(true)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80 flex-shrink-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Create Trip</span>
-                    </button>
-                  </div>
-                </div>
-            
-
-            {/* Smart Recommendations - Show only when user is logged in and no active search */}
-            {user && !submittedQuery && !selectedCity && !selectedCategory && (
-              <div className="mb-12 md:mb-16">
-                <SmartRecommendations
-                onCardClick={(destination) => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
-
-                  // Track destination click
-                  trackDestinationClick({
-                    destinationSlug: destination.slug,
-                    position: 0,
-                    source: 'smart_recommendations',
-                  });
-
-                  // Also track with new analytics system
-                  if (destination.id) {
-                    import('@/lib/analytics/track').then(({ trackEvent }) => {
-                      trackEvent({
-                        event_type: 'click',
-                        destination_id: destination.id,
-                        destination_slug: destination.slug,
-                        metadata: {
-                          category: destination.category,
-                          city: destination.city,
-                          source: 'smart_recommendations',
-                        },
-                      });
-                    });
-                  }
-
-                  // Track click event to Discovery Engine for personalization
-                  if (user?.id) {
-                    fetch('/api/discovery/track-event', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        userId: user.id,
-                        eventType: 'click',
-                        documentId: destination.slug,
-                        source: 'smart_recommendations',
-                      }),
-                    }).catch((error) => {
-                      console.warn('Failed to track Discovery Engine event:', error);
-                    });
-                  }
-                }}
-              />
-              </div>
-            )}
-            
-            {/* Trending Section - Show when no active search */}
-            {!submittedQuery && (
-              <div className="mb-12 md:mb-16">
-              <TrendingSection />
-              </div>
-            )}
-
-            {/* Near Me - No Results Message */}
-            {advancedFilters.nearMe && userLocation && nearbyDestinations.length === 0 && (
-              <div className="text-center py-12 px-4">
-                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  No destinations found nearby
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">
-                  We couldn't find any destinations within {advancedFilters.nearMeRadius || 5}km of your location.
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 max-w-md mx-auto">
-                  This feature requires destination coordinates to be populated.
-                  <br />
-                  See <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">/DEPLOYMENT_GUIDE.md</code> for setup instructions.
-                </p>
-              </div>
-            )}
-
-            {/* Destination Grid - Original design */}
-                {(() => {
-              // Determine which destinations to show
-              const displayDestinations = advancedFilters.nearMe && nearbyDestinations.length > 0
-                ? nearbyDestinations
-                : filteredDestinations;
-
-              // Always render the grid structure, even if empty (for instant page load)
-              // Show empty state if no destinations
-              if (displayDestinations.length === 0 && !advancedFilters.nearMe) {
-                return (
-                  <div className="text-center py-12 px-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Loading destinations...
-                    </p>
-                  </div>
-                );
-              }
-              
-              if (displayDestinations.length === 0 && advancedFilters.nearMe) {
-                return null; // Message shown above
-              }
-
-              return (
-                <>
-                  {viewMode === 'map' ? (
-                    <div className="w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 relative">
-                      <MapView
-                        destinations={displayDestinations}
-                        onMarkerClick={(dest) => {
-                          setSelectedDestination(dest);
-                          setIsDrawerOpen(true);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    (() => {
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
-                      const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
-
-                  return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
-                    {paginatedDestinations.map((destination, index) => {
-                      const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                      const globalIndex = startIndex + index;
-                      
-                      return (
-                        <DestinationCard
-                    key={destination.slug}
-                          destination={destination}
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setIsDrawerOpen(true);
-
-                      // Track destination click
-                      trackDestinationClick({
-                        destinationSlug: destination.slug,
-                              position: globalIndex,
-                        source: 'grid',
-                      });
-                      
-                      // Also track with new analytics system
-                      if (destination.id) {
-                        import('@/lib/analytics/track').then(({ trackEvent }) => {
-                          trackEvent({
-                            event_type: 'click',
-                            destination_id: destination.id,
-                            destination_slug: destination.slug,
-                            metadata: {
-                              category: destination.category,
-                              city: destination.city,
-                              source: 'homepage_grid',
-                                    position: globalIndex,
-                            },
-                          });
-                        });
-                      }
-                        
-                            // Track click event to Discovery Engine for personalization
-                            if (user?.id) {
-                              fetch('/api/discovery/track-event', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  userId: user.id,
-                                  eventType: 'click',
-                                  documentId: destination.slug,
-                                }),
-                              }).catch((error) => {
-                                console.warn('Failed to track click event:', error);
-                              });
-                            }
-                          }}
-                          index={globalIndex}
-                          isVisited={isVisited}
-                          showBadges={true}
-                        />
-                      );
-                      })}
+                <div className="max-w-[1800px] mx-auto space-y-12">
+                  <Section id="destination-results" className="space-y-6">
+                    <SectionHeader
+                      eyebrow={sectionEyebrow}
+                      title={sectionTitle}
+                      description={sectionDescription}
+                      actions={
+                        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                          <div className="w-full md:w-auto">
+                            <SearchFiltersComponent
+                              filters={advancedFilters}
+                              onFiltersChange={(newFilters) => {
+                                setAdvancedFilters(newFilters);
+                                if (newFilters.city !== undefined) {
+                                  setSelectedCity(newFilters.city || '');
+                                }
+                                if (newFilters.category !== undefined) {
+                                  setSelectedCategory(newFilters.category || '');
+                                }
+                                Object.entries(newFilters).forEach(([key, value]) => {
+                                  if (value !== undefined && value !== null && value !== '') {
+                                    trackFilterChange({ filterType: key, value });
+                                  }
+                                });
+                              }}
+                              availableCities={cities}
+                              availableCategories={categories}
+                              onLocationChange={handleLocationChange}
+                            />
+                          </div>
+                          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                            <button
+                              onClick={() => setViewMode('grid')}
+                              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                                viewMode === 'grid'
+                                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                              }`}
+                              aria-label="Grid view"
+                            >
+                              <LayoutGrid className="h-4 w-4" />
+                              <span>Grid</span>
+                            </button>
+                            <button
+                              onClick={() => setViewMode('map')}
+                              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                                viewMode === 'map'
+                                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                              }`}
+                              aria-label="Map view"
+                            >
+                              <Map className="h-4 w-4" />
+                              <span>Map</span>
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => setShowTripPlanner(true)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80 flex-shrink-0"
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span>Create Trip</span>
+                          </button>
                         </div>
-                      );
-                    })()
+                      }
+                    />
+                    <SectionRail className="space-y-8">
+                      {advancedFilters.nearMe && userLocation && nearbyDestinations.length === 0 && (
+                        <div className="text-center py-12 px-4">
+                          <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                            No destinations found nearby
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">
+                            We couldn't find any destinations within {advancedFilters.nearMeRadius || 5}km of your location.
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 max-w-md mx-auto">
+                            This feature requires destination coordinates to be populated.
+                            <br />
+                            See <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">/DEPLOYMENT_GUIDE.md</code> for setup instructions.
+                          </p>
+                        </div>
+                      )}
+                      {viewMode === 'map' ? (
+                        displayDestinations.length === 0 ? (
+                          gridEmptyState
+                        ) : (
+                          <div className="w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 relative">
+                            <MapView
+                              destinations={displayDestinations}
+                              onMarkerClick={(dest) => handleDestinationOpen(dest, 0, 'map')}
+                            />
+                          </div>
+                        )
+                      ) : (
+                        <ResultsGrid
+                          items={paginatedDestinations}
+                          keyExtractor={(destination) => destination.slug}
+                          isLoading={gridIsLoading}
+                          skeletonCount={itemsPerPage}
+                          renderSkeleton={(index) => <DestinationCardSkeleton key={index} />}
+                          emptyState={gridEmptyState}
+                          renderItem={(destination, index) => {
+                            const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                            const globalIndex = startIndex + index;
+                            const michelinBadge =
+                              destination.michelin_stars && typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 ? (
+                                <MediaBadge>
+                                  <img
+                                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                                    alt="Michelin star"
+                                    className="h-3 w-3"
+                                  />
+                                  <span>{destination.michelin_stars}</span>
+                                </MediaBadge>
+                              ) : undefined;
+
+                            return (
+                              <DestinationCardV2
+                                destination={destination}
+                                index={globalIndex}
+                                isVisited={isVisited}
+                                showIntelligenceBadges
+                                onSelect={() => handleDestinationOpen(destination, globalIndex, 'grid')}
+                                mediaBadges={{
+                                  bottomLeft: michelinBadge,
+                                }}
+                              />
+                            );
+                          }}
+                        />
+                      )}
+                      {viewMode === 'grid' && (() => {
+                        const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
+                        if (totalPages <= 1) return null;
+
+                        return (
+                          <div className="w-full flex flex-wrap items-center justify-center gap-2">
+                            <button
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                              disabled={currentPage === 1}
+                              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              aria-label="Previous page"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                              </svg>
+                            </button>
+                            <div className="flex items-center gap-2">
+                              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                  pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                  pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                  pageNum = totalPages - 4 + i;
+                                } else {
+                                  pageNum = currentPage - 2 + i;
+                                }
+
+                                const isActive = currentPage === pageNum;
+
+                                return (
+                                  <button
+                                    key={pageNum}
+                                    onClick={() => setCurrentPage(pageNum)}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                                      isActive
+                                        ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                                    }`}
+                                    aria-label={`Page ${pageNum}`}
+                                    aria-current={isActive ? 'page' : undefined}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <button
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                              disabled={currentPage === totalPages}
+                              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              aria-label="Next page"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })()}
+                      {viewMode === 'grid' && displayDestinations.length > 0 && (
+                        <div className="mt-4 w-full">
+                          <MultiplexAd slot="3271683710" />
+                        </div>
+                      )}
+                    </SectionRail>
+                  </Section>
+
+                  {user && !submittedQuery && !selectedCity && !selectedCategory && (
+                    <SmartRecommendations
+                      onCardClick={(destination) => handleDestinationOpen(destination, 0, 'smart_recommendations')}
+                    />
                   )}
 
-                  {/* Pagination - Only show in grid view */}
-                  {viewMode === 'grid' && (() => {
-                    const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
-            if (totalPages <= 1) return null;
-            
-            return (
-                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="Previous page"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    
-                    const isActive = currentPage === pageNum;
-                    
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
-                          isActive
-                            ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                        }`}
-                        aria-label={`Page ${pageNum}`}
-                        aria-current={isActive ? 'page' : undefined}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
+                  {!submittedQuery && <TrendingSection />}
                 </div>
-                
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="Next page"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
               </div>
-            );
-          })()}
-
-                  {/* Ad below pagination */}
-                  {displayDestinations.length > 0 && (
-                    <div className="mt-8 w-full">
-                      <MultiplexAd slot="3271683710" />
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-                </div>
-          </div>
 
           {/* Destination Drawer */}
           <DestinationDrawer
