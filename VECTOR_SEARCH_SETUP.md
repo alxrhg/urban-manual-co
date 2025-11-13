@@ -6,6 +6,7 @@
    - `023_enable_vector_search.sql` - Enables pgvector extension and adds embedding columns
    - `024_hybrid_search_function.sql` - Creates hybrid search function with user context
    - `025_conversation_tables.sql` - Conversation tables (if not already exist)
+   - `027_embedding_metadata.sql` - Embedding metadata columns + trigger-based invalidation
 
 2. **Utilities Created:**
    - `lib/embeddings/generate.ts` - Embedding generation utility
@@ -27,34 +28,61 @@ Run these migrations in order in your Supabase SQL Editor:
 -- 2. Create hybrid search function
 -- Run: supabase/migrations/024_hybrid_search_function.sql
 
--- 3. Conversation tables (if needed)
+-- 3. Embedding metadata + trigger-based invalidation
+-- Run: supabase/migrations/027_embedding_metadata.sql
+
+-- 4. Conversation tables (if needed)
 -- Run: supabase/migrations/025_conversation_tables.sql
 ```
 
 ### 2. Set Environment Variables
 
-Ensure these are set in your `.env.local`:
+Ensure these are set in your `.env.local` (and production secrets) so the worker can run continuously:
 
 ```bash
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_EMBEDDING_MODEL=text-embedding-3-large  # Optional, defaults to this
+EMBEDDING_VERSION=2024-06-initial              # Bump to force re-embedding
+EMBEDDING_WORKER_BATCH_SIZE=50                 # Optional overrides
+EMBEDDING_WORKER_RATE_LIMIT_MS=25
+EMBEDDING_WORKER_POLL_INTERVAL_MS=15000
 ```
 
-### 3. Backfill Embeddings
+### 3. Continuous Embedding Worker
 
-Run the backfill script to generate embeddings for all existing destinations:
+`scripts/backfill-embeddings.ts` now doubles as a long-running worker. It polls for destinations where `embedding` is missing or `embedding_needs_update = true`, regenerates embeddings via `generateDestinationEmbedding`, and writes back the vector plus metadata (`embedding_model`, `embedding_version`, `embedding_generated_at`).
 
-```bash
-npm run backfill-embeddings
+- **One-shot mode (drain queue locally):** `npm run backfill-embeddings -- --once`
+- **Continuous mode (recommended for staging/prod):** `npm run backfill-embeddings`
+- **Production tip:** run it under a process manager (systemd, PM2, Fly Machines, Supabase Edge Function, etc.) so it restarts automatically.
+
+Worker behavior:
+
+- Processes batches (default 50) with the existing 25ms rate limiter
+- Respects `embedding_needs_update` so content edits reflow automatically
+- Writes `embedding_version` + clears the flag after a successful update
+- Polls again every `EMBEDDING_WORKER_POLL_INTERVAL_MS` when the queue is empty
+
+### 4. How embeddings become stale
+
+- New rows default to `embedding_needs_update = true`
+- Trigger `mark_destination_embedding_stale` flips the flag when user-facing fields (`name`, `city`, `category`, `content`, `description`, `tags`, `style_tags`, `ambience_tags`, `experience_tags`) change
+- Ops can also run manual SQL: `UPDATE destinations SET embedding_needs_update = true WHERE slug = 'example';`
+
+### 5. Force a controlled re-embed
+
+1. Pick a new `EMBEDDING_VERSION` (e.g., `2024-07-gpt4o-mini`) and update env vars wherever the worker runs
+2. Mark rows for refresh:
+
+```sql
+UPDATE destinations
+SET embedding_needs_update = TRUE
+WHERE embedding_version IS DISTINCT FROM '2024-07-gpt4o-mini';
 ```
 
-This will:
-- Process destinations in batches of 50
-- Generate embeddings using OpenAI `text-embedding-3-large`
-- Update the `destinations.embedding` column
-- Rate limit to 25ms between requests
+3. Restart the worker. It will pick up the queue, respect rate limits, and write the new version metadata as it progresses.
 
-### 4. Test Hybrid Search
+### 6. Test Hybrid Search
 
 Test the hybrid search function:
 
@@ -113,8 +141,8 @@ The `search_destinations_hybrid` function provides:
 
 ## 🔄 Future Enhancements
 
-1. **Auto-update embeddings** when destination content changes
-2. **Incremental backfill** for new destinations
-3. **Embedding versioning** for model upgrades
+1. **Auto-update embeddings** when destination content changes ✅ (trigger + worker in place)
+2. **Incremental backfill** for new destinations ✅ (continuous worker)
+3. **Embedding versioning** for model upgrades ✅ (`embedding_version` column + env var)
 4. **Caching** frequently searched embeddings
 

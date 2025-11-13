@@ -5,7 +5,7 @@ dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 import { createClient } from '@supabase/supabase-js';
 import { generateDestinationEmbedding } from '../lib/embeddings/generate';
-import { initOpenAI } from '../lib/openai';
+import { initOpenAI, OPENAI_EMBEDDING_MODEL } from '../lib/openai';
 
 // Reinitialize OpenAI after dotenv loads
 initOpenAI();
@@ -38,106 +38,138 @@ console.log('');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function backfillEmbeddings(batchSize = 50) {
-  let offset = 0;
+const EMBEDDING_VERSION = process.env.EMBEDDING_VERSION || '2024-06-initial';
+const BATCH_SIZE = parseInt(process.env.EMBEDDING_WORKER_BATCH_SIZE || '50', 10);
+const RATE_LIMIT_MS = parseInt(process.env.EMBEDDING_WORKER_RATE_LIMIT_MS || '25', 10);
+const POLL_INTERVAL_MS = parseInt(process.env.EMBEDDING_WORKER_POLL_INTERVAL_MS || '15000', 10);
+const RUN_ONCE = process.argv.includes('--once');
+
+type DestinationRecord = {
+  id: number;
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  content?: string | null;
+  description?: string | null;
+  tags?: string[] | null;
+  embedding_version?: string | null;
+};
+
+async function fetchDestinationsNeedingEmbeddings(limit: number) {
+  const { data, error } = await supabase
+    .from('destinations')
+    .select('id, slug, name, city, category, content, description, tags, embedding_version')
+    .or('embedding.is.null,embedding_needs_update.eq.true')
+    .order('embedding_generated_at', { ascending: true, nullsFirst: true })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return data as DestinationRecord[];
+}
+
+async function processBatch() {
+  const destinations = await fetchDestinationsNeedingEmbeddings(BATCH_SIZE);
+
+  if (!destinations || destinations.length === 0) {
+    return { processed: 0, errors: 0 };
+  }
+
+  console.log(`\nProcessing ${destinations.length} destinations needing embeddings...`);
+
   let processed = 0;
   let errors = 0;
 
-  // First, check how many destinations need embeddings
-  const { count: totalWithoutEmbeddings } = await supabase
-    .from('destinations')
-    .select('*', { count: 'exact', head: true })
-    .is('embedding', null);
-  
-  console.log(`Starting embedding backfill...`);
-  console.log(`Total destinations without embeddings: ${totalWithoutEmbeddings}`);
-  console.log(`Using batch size: ${batchSize}`);
-  console.log('');
+  for (const dest of destinations) {
+    try {
+      const embedding = await generateDestinationEmbedding({
+        name: dest.name || '',
+        city: dest.city || '',
+        category: dest.category || '',
+        content: dest.content || undefined,
+        description: dest.description || undefined,
+        tags: dest.tags || []
+      });
 
-  while (true) {
-    const { data: destinations, error: fetchError } = await supabase
-      .from('destinations')
-      .select('*')
-      .is('embedding', null)
-      .order('id', { ascending: true }) // Order for consistent pagination
-      .range(offset, offset + batchSize - 1); // range() already sets the limit
-
-    if (fetchError) {
-      console.error('Error fetching destinations:', fetchError);
-      break;
-    }
-
-    if (!destinations || destinations.length === 0) {
-      console.log('\nNo more destinations to process');
-      break;
-    }
-
-    console.log(`\nProcessing batch ${Math.floor(offset / batchSize) + 1} (${destinations.length} destinations, offset: ${offset})...`);
-
-    for (const dest of destinations) {
-      try {
-        const embedding = await generateDestinationEmbedding({
-          name: dest.name || '',
-          city: dest.city || '',
-          category: dest.category || '',
-          content: dest.content,
-          description: dest.description,
-          tags: dest.tags || []
-        });
-
-        if (!embedding) {
-          console.error(`\n✗ Failed ${dest.slug}: No embedding returned`);
-          errors++;
-          continue;
-        }
-
-        // Update destination with embedding
-        // Supabase/PostgreSQL vector type expects array format
-        const { error: updateError } = await supabase
-          .from('destinations')
-          .update({
-            embedding: `[${embedding.join(',')}]` as any, // Cast to any for vector type
-            embedding_model: 'text-embedding-3-large',
-            embedding_generated_at: new Date().toISOString(),
-          })
-          .eq('id', dest.id);
-
-        if (updateError) {
-          console.error(`✗ Failed to update ${dest.slug}:`, updateError.message);
-          errors++;
-        } else {
-          processed++;
-          if (processed % 10 === 0) {
-            process.stdout.write(`\r✓ Processed: ${processed} | Errors: ${errors} | Remaining: ${totalWithoutEmbeddings! - processed}`);
-          }
-        }
-
-        // Rate limiting: wait 25ms between requests
-        await new Promise(r => setTimeout(r, 25));
-      } catch (err: any) {
-        console.error(`\n✗ Failed ${dest.slug}:`, err.message || err);
+      if (!embedding) {
+        console.error(`\n✗ Failed ${dest.slug}: No embedding returned`);
         errors++;
+        continue;
       }
-    }
 
-    offset += batchSize;
-    
-    // Safety check: if we've processed more than the total, break
-    if (processed >= (totalWithoutEmbeddings || 0)) {
-      break;
+      const { error: updateError } = await supabase
+        .from('destinations')
+        .update({
+          embedding: `[${embedding.join(',')}]` as any,
+          embedding_model: OPENAI_EMBEDDING_MODEL,
+          embedding_generated_at: new Date().toISOString(),
+          embedding_version: EMBEDDING_VERSION,
+          embedding_needs_update: false
+        })
+        .eq('id', dest.id);
+
+      if (updateError) {
+        console.error(`✗ Failed to update ${dest.slug}:`, updateError.message);
+        errors++;
+      } else {
+        processed++;
+        if (processed % 10 === 0) {
+          process.stdout.write(`\r✓ Processed this batch: ${processed} | Errors: ${errors}`);
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_MS));
+    } catch (err: any) {
+      console.error(`\n✗ Failed ${dest.slug}:`, err.message || err);
+      errors++;
     }
   }
 
-  console.log(`\n\n✅ Complete! Processed ${processed} destinations with ${errors} errors.`);
-  
-  // Final check
-  const { count: remaining } = await supabase
-    .from('destinations')
-    .select('*', { count: 'exact', head: true })
-    .is('embedding', null);
-  
-  console.log(`Remaining destinations without embeddings: ${remaining}`);
+  return { processed, errors };
 }
 
-backfillEmbeddings().catch(console.error);
+async function runEmbeddingWorker() {
+  console.log('Starting embedding worker...');
+  console.log(`- Embedding model: ${OPENAI_EMBEDDING_MODEL}`);
+  console.log(`- Embedding version: ${EMBEDDING_VERSION}`);
+  console.log(`- Batch size: ${BATCH_SIZE}`);
+  console.log(`- Rate limit delay: ${RATE_LIMIT_MS}ms`);
+  console.log(`- Poll interval: ${RUN_ONCE ? 'until queue drains' : `${POLL_INTERVAL_MS}ms`}`);
+
+  let totalProcessed = 0;
+  let totalErrors = 0;
+
+  const processUntilEmpty = async () => {
+    while (true) {
+      const { processed, errors } = await processBatch();
+      totalProcessed += processed;
+      totalErrors += errors;
+
+      if (processed === 0) {
+        break;
+      }
+    }
+  };
+
+  await processUntilEmpty();
+
+  if (RUN_ONCE) {
+    console.log(`\n✅ Completed one-shot run. Processed: ${totalProcessed}, Errors: ${totalErrors}`);
+    return;
+  }
+
+  while (true) {
+    console.log(`\nSleeping for ${POLL_INTERVAL_MS / 1000}s before next poll...`);
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+    await processUntilEmpty();
+  }
+}
+
+runEmbeddingWorker().catch(error => {
+  console.error('Embedding worker failed:', error);
+  process.exit(1);
+});
 
