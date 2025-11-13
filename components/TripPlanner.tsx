@@ -12,7 +12,11 @@ import {
   SaveIcon,
   Loader2,
   X,
+  Camera,
+  Image as ImageIcon,
 } from 'lucide-react';
+import Image from 'next/image';
+import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -69,6 +73,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const toast = useToast();
 
   // Load existing trip if tripId is provided
   useEffect(() => {
@@ -92,6 +101,9 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setHotelLocation('');
     setStep('create');
     setCurrentTripId(null);
+    setCoverImage(null);
+    setCoverImageFile(null);
+    setCoverImagePreview(null);
   };
 
   const loadTrip = async (id: string) => {
@@ -122,6 +134,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       setEndDate(tripData.end_date || '');
       setHotelLocation(tripData.description || ''); // Using description for hotel location
       setCurrentTripId(tripData.id);
+      setCoverImage(tripData.cover_image || null);
 
       // Load itinerary items
       // First verify trip ownership to avoid RLS recursion
@@ -304,6 +317,47 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
+      // Upload cover image if file selected
+      let coverImageUrl = coverImage;
+      if (coverImageFile) {
+        setUploadingCover(true);
+        try {
+          const formDataToSend = new FormData();
+          formDataToSend.append('file', coverImageFile);
+          formDataToSend.append('tripId', currentTripId);
+
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          const token = session?.access_token;
+          if (!token) {
+            throw new Error('Not authenticated');
+          }
+
+          const res = await fetch('/api/upload-trip-cover', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            body: formDataToSend,
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Upload failed');
+          }
+
+          const data = await res.json();
+          coverImageUrl = data.url;
+          setCoverImage(coverImageUrl);
+        } catch (error: any) {
+          console.error('Cover image upload error:', error);
+          toast.error(`Cover image upload failed: ${error.message}`);
+          setUploadingCover(false);
+          return;
+        } finally {
+          setUploadingCover(false);
+        }
+      }
+
       // Update trip (note: budget is not in schema, storing in description or notes)
       const { error: tripError } = await supabaseClient
         .from('trips')
@@ -313,6 +367,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           destination: destination || null,
           start_date: startDate || null,
           end_date: endDate || null,
+          cover_image: coverImageUrl || null,
         })
         .eq('id', currentTripId)
         .eq('user_id', user.id);
@@ -777,6 +832,77 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
           {activeTab === 'itinerary' && (
             <div className="space-y-8">
+              {/* Cover Image Upload */}
+              <div className="mb-6">
+                <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Cover Image
+                </label>
+                <div className="space-y-3">
+                  {(coverImage || coverImagePreview) && (
+                    <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      <Image
+                        src={coverImagePreview || coverImage || ''}
+                        alt="Cover preview"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 600px"
+                      />
+                      <button
+                        onClick={() => {
+                          setCoverImage(null);
+                          setCoverImageFile(null);
+                          setCoverImagePreview(null);
+                          const input = document.getElementById('cover-image-input') as HTMLInputElement;
+                          if (input) input.value = '';
+                        }}
+                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        aria-label="Remove cover image"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      id="cover-image-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCoverImageFile(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setCoverImagePreview(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="cover-image-input"
+                      className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer text-sm font-medium"
+                    >
+                      {uploadingCover ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4" />
+                          {coverImage || coverImagePreview ? 'Change Cover Image' : 'Upload Cover Image'}
+                        </>
+                      )}
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Upload a custom cover image, or we'll use the first location's image
+                  </p>
+                </div>
+              </div>
+
               {/* Trip Overview */}
               <div className="mb-8 pb-8 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 mb-6">

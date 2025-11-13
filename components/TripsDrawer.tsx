@@ -40,7 +40,55 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTrips(data || []);
+      
+      // Fetch first location image for each trip
+      const tripsWithImages = await Promise.all(
+        (data || []).map(async (trip) => {
+          // If trip has cover_image, use it
+          if (trip.cover_image) {
+            return { ...trip, firstLocationImage: null };
+          }
+
+          // Otherwise, fetch first itinerary item's image
+          const { data: items } = await supabaseClient
+            .from('itinerary_items')
+            .select('destination_slug, notes')
+            .eq('trip_id', trip.id)
+            .order('day', { ascending: true })
+            .order('order_index', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          let firstLocationImage: string | null = null;
+
+          if (items?.destination_slug) {
+            // Try to get image from destination
+            const { data: dest } = await supabaseClient
+              .from('destinations')
+              .select('image')
+              .eq('slug', items.destination_slug)
+              .maybeSingle();
+            
+            if (dest?.image) {
+              firstLocationImage = dest.image;
+            }
+          } else if (items?.notes) {
+            // Try to parse image from notes JSON
+            try {
+              const notesData = JSON.parse(items.notes);
+              if (notesData.image) {
+                firstLocationImage = notesData.image;
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+
+          return { ...trip, firstLocationImage };
+        })
+      );
+
+      setTrips(tripsWithImages);
     } catch (error) {
       console.error('Error fetching trips:', error);
       setTrips([]);
@@ -124,12 +172,16 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
                   key={trip.id}
                   className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
                 >
-                  <div className="relative h-24 bg-gradient-to-r from-blue-500 to-purple-600">
-                    {trip.cover_image && (
-                      <img src={trip.cover_image} alt={trip.title} className="h-full w-full object-cover" />
-                    )}
+                  <div className="relative h-24 bg-gray-200 dark:bg-gray-800">
+                    {(trip.cover_image || (trip as any).firstLocationImage) ? (
+                      <img 
+                        src={trip.cover_image || (trip as any).firstLocationImage} 
+                        alt={trip.title} 
+                        className="h-full w-full object-cover" 
+                      />
+                    ) : null}
                     <div className="absolute top-2 right-2">
-                      <span className="bg-blue-200 dark:bg-blue-900/30 text-white text-xs px-2 py-0.5 rounded-full font-medium capitalize">
+                      <span className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm text-gray-900 dark:text-white text-xs px-2 py-0.5 rounded-full font-medium capitalize">
                         {trip.status || 'planning'}
                       </span>
                     </div>
