@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { MapPin } from 'lucide-react';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
+import { MapPin, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
 import Image from 'next/image';
@@ -33,8 +32,8 @@ export default function CitiesPage() {
   const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState('');
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
+  const itemsPerPage = useItemsPerPage(4); // Items to add per "Show More" click
+  const [displayCount, setDisplayCount] = useState(itemsPerPage); // Initial display count
   const [advancedFilters, setAdvancedFilters] = useState<{
     city?: string;
     category?: string;
@@ -45,6 +44,7 @@ export default function CitiesPage() {
     minRating?: number;
     openNow?: boolean;
   }>({});
+  const [countryCarouselIndex, setCountryCarouselIndex] = useState(0);
 
   useEffect(() => {
     fetchCityStats();
@@ -63,8 +63,8 @@ export default function CitiesPage() {
     }
     
     setFilteredCities(filtered);
-    // Reset to page 1 when filters change
-    setCurrentPage(1);
+    // Reset display count when filters change
+    setDisplayCount(itemsPerPage);
   };
 
   const fetchCityStats = async () => {
@@ -126,71 +126,163 @@ export default function CitiesPage() {
     );
   }
 
+  // Calculate featured cities (top 3 by count from all cities)
+  const featuredCities = cityStats.slice(0, 3);
+
+  // Country carousel logic
+  const countriesPerView = 6;
+  const maxCarouselIndex = Math.max(0, Math.ceil(countries.length / countriesPerView) - 1);
+  const visibleCountries = countries.slice(
+    countryCarouselIndex * countriesPerView,
+    (countryCarouselIndex + 1) * countriesPerView
+  );
+
   return (
     <main className="relative min-h-screen">
-      {/* Hero Section - Matching homepage design */}
-      <section className="min-h-[70vh] flex flex-col px-6 md:px-10 py-20">
-        <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-              {/* Greeting - Always vertically centered */}
-              <div className="flex-1 flex items-center">
-                <div className="w-full">
-                  <div className="text-left mb-8">
-                    <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-                      All Cities
-                    </h1>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      <span>{cityStats.length} cities around the world</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Country List - Uses space below greeting, aligned to bottom */}
-              {countries.length > 0 && (
-                <div className="flex-1 flex items-end">
-                  <div className="w-full pt-8">
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                      <button
-                        onClick={() => {
-                          setSelectedCountry("");
-                          setAdvancedFilters(prev => ({ ...prev, city: undefined }));
-                        }}
-                        className={`transition-all ${
-                          !selectedCountry
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                        }`}
-                      >
-                        All Countries
-                      </button>
-                      {countries.map((country) => (
-                        <button
-                          key={country}
-                          onClick={() => {
-                            const newCountry = country === selectedCountry ? "" : country;
-                            setSelectedCountry(newCountry);
-                            setAdvancedFilters(prev => ({ ...prev, city: undefined }));
-                          }}
-                          className={`transition-all ${
-                            selectedCountry === country
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          {country}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+      {/* Manifesto Hero Section */}
+      <section className="px-6 md:px-10 lg:px-12 py-20 md:py-32">
+        <div className="max-w-4xl mx-auto">
+          {/* Orange Navigate Button */}
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors mb-12"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            <span>Back to Discovery</span>
+          </button>
+
+          {/* Manifesto Content */}
+          <div className="space-y-6 mb-16">
+            <h1 className="text-4xl md:text-5xl font-light leading-tight">
+              Cities Around the World
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+              Explore destinations curated by locals and travelers. Each city tells a story through its places—from hidden cafes to celebrated landmarks.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              {cityStats.length} cities • {countries.length} countries
+            </p>
           </div>
 
+          {/* Guided Country Filter Panel */}
+          {countries.length > 0 && (
+            <div className="mb-16">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                    Explore by Country
+                  </h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    Select a country to discover its cities
+                  </p>
+                </div>
+                {countries.length > countriesPerView && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCountryCarouselIndex(prev => Math.max(0, prev - 1))}
+                      disabled={countryCarouselIndex === 0}
+                      className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Previous countries"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setCountryCarouselIndex(prev => Math.min(maxCarouselIndex, prev + 1))}
+                      disabled={countryCarouselIndex >= maxCarouselIndex}
+                      className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Next countries"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedCountry("");
+                    setAdvancedFilters(prev => ({ ...prev, city: undefined }));
+                    setCountryCarouselIndex(0);
+                  }}
+                  className={`px-4 py-2 text-sm rounded-lg border transition-all ${
+                    !selectedCountry
+                      ? "font-medium text-black dark:text-white border-black dark:border-white bg-black dark:bg-white"
+                      : "font-normal text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                  }`}
+                >
+                  All Countries
+                </button>
+                {visibleCountries.map((country) => (
+                  <button
+                    key={country}
+                    onClick={() => {
+                      const newCountry = country === selectedCountry ? "" : country;
+                      setSelectedCountry(newCountry);
+                      setAdvancedFilters(prev => ({ ...prev, city: undefined }));
+                    }}
+                    className={`px-4 py-2 text-sm rounded-lg border transition-all ${
+                      selectedCountry === country
+                        ? "font-medium text-black dark:text-white border-black dark:border-white bg-black dark:bg-white"
+                        : "font-normal text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                    }`}
+                  >
+                    {country}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Featured Cities Storytelling Band */}
+          {featuredCities.length > 0 && !selectedCountry && (
+            <div className="mb-16 pt-12 border-t border-gray-100 dark:border-gray-800">
+              <div className="mb-6">
+                <h2 className="text-2xl md:text-3xl font-light mb-2">Featured Cities</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Most explored destinations this month
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredCities.map((cityData, idx) => {
+                  const { city, country, count, featuredImage } = cityData;
+                  return (
+                    <button
+                      key={city}
+                      onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
+                      className="text-left group"
+                    >
+                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
+                        {featuredImage ? (
+                          <Image
+                            src={featuredImage}
+                            alt={capitalizeCity(city)}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            quality={85}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                            <MapPin className="h-12 w-12 opacity-20" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <h3 className="text-base font-medium mb-1">{capitalizeCity(city)}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-500">{country} • {count} places</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
         {/* Grid - Right below filter lists */}
-        <div className="mt-8 pb-8 px-6 md:px-10">
-            <div className="container mx-auto px-4 md:px-8 lg:px-12">
+        <div className="pb-8 px-6 md:px-10 lg:px-12">
+            <div className="max-w-7xl mx-auto">
               {filteredCities.length === 0 ? (
                 <div className="text-center py-16">
                   <span className="text-gray-500">No cities found</span>
@@ -199,20 +291,18 @@ export default function CitiesPage() {
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                 {(() => {
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
-                  const paginatedCities = filteredCities.slice(startIndex, endIndex);
+                  const displayedCities = filteredCities.slice(0, displayCount);
 
-                  return paginatedCities.map((cityData) => {
+                  return displayedCities.map((cityData) => {
                     const { city, country, count, featuredImage } = cityData;
                     return (
                     <button
                       key={city}
                       onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
-                      className={`${CARD_WRAPPER} cursor-pointer text-left`}
+                      className="text-left group"
                     >
-                      {/* Image Container */}
-                      <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
+                      {/* Square Image Container */}
+                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-100 dark:border-gray-700 shadow-sm group-hover:shadow-md transition-shadow">
                         {featuredImage ? (
                           <Image
                             src={featuredImage}
@@ -228,8 +318,11 @@ export default function CitiesPage() {
                           </div>
                         )}
                         
-                        {/* City count badge */}
-                        <div className="absolute bottom-2 right-2 bg-black/70 dark:bg-white/70 backdrop-blur-sm text-white dark:text-black px-2 py-1 rounded text-xs font-medium">
+                        {/* Softer overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        
+                        {/* Subdued count badge */}
+                        <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 px-2 py-1 rounded-lg text-xs font-normal border border-gray-200/50 dark:border-gray-700/50">
                           {count}
                         </div>
                         
@@ -245,17 +338,14 @@ export default function CitiesPage() {
                       </div>
 
                       {/* Info */}
-                      <div className="space-y-0.5">
-                        <h3 className={`${CARD_TITLE}`}>
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-medium text-black dark:text-white line-clamp-1">
                           {capitalizeCity(city)}
                         </h3>
-
-                        <div className={`${CARD_META}`}>
-                          <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {country}
-                          </span>
-                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 line-clamp-1 flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {country}
+                        </p>
                       </div>
                     </button>
                     );
@@ -263,70 +353,17 @@ export default function CitiesPage() {
                 })()}
                   </div>
 
-                  {/* Pagination */}
-                  {(() => {
-                    const totalPages = Math.ceil(filteredCities.length / itemsPerPage);
-                    if (totalPages <= 1) return null;
-                    
-                    return (
-                      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-                        <button
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                          disabled={currentPage === 1}
-                          className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          aria-label="Previous page"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                          </svg>
-                        </button>
-
-                        <div className="flex items-center gap-2">
-                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-
-                            const isActive = currentPage === pageNum;
-
-                            return (
-                              <button
-                                key={pageNum}
-                                onClick={() => setCurrentPage(pageNum)}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
-                                  isActive
-                                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                                }`}
-                                aria-label={`Page ${pageNum}`}
-                                aria-current={isActive ? 'page' : undefined}
-                              >
-                                {pageNum}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <button
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                          disabled={currentPage === totalPages}
-                          className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          aria-label="Next page"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                      </div>
-                    );
-                  })()}
+                  {/* Show More Button */}
+                  {displayCount < filteredCities.length && (
+                    <div className="mt-8 flex justify-center">
+                      <button
+                        onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
+                        className="px-6 py-3 text-sm font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+                      >
+                        Show More ({filteredCities.length - displayCount} remaining)
+                      </button>
+                    </div>
+                  )}
 
                   {/* Horizontal Ad below pagination */}
                   {filteredCities.length > 0 && (
@@ -347,8 +384,7 @@ export default function CitiesPage() {
                 </>
               )}
             </div>
-          </div>
-      </section>
+        </div>
     </main>
   );
 }
