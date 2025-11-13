@@ -71,6 +71,40 @@
     
     /* Ensure container uses 1280px max-width */
     --tw-container-max-width: 1280px;
+
+    /* Design system tokens */
+    --um-color-bg: 255 255 255;
+    --um-color-surface: 249 250 251;
+    --um-color-surface-muted: 241 245 249;
+    --um-color-foreground: 15 23 42;
+    --um-color-muted: 75 85 99;
+    --um-color-border: 229 231 235;
+    --um-color-pill: 243 244 246;
+    --um-color-pill-foreground: 23 23 23;
+    --um-color-inverse: 255 255 255;
+
+    --um-radius-sm: 0.5rem;
+    --um-radius-md: 1rem;
+    --um-radius-lg: 1.5rem;
+    --um-radius-full: 9999px;
+
+    --um-space-xs: 0.25rem;
+    --um-space-sm: 0.5rem;
+    --um-space-md: 1rem;
+    --um-space-lg: 1.5rem;
+    --um-space-xl: 2rem;
+    --um-space-2xl: 3rem;
+    --um-section-space-y: clamp(3rem, 6vw, 4.5rem);
+    --um-section-gap: 1.5rem;
+
+    --um-text-xs: 0.75rem;
+    --um-text-sm: 0.875rem;
+    --um-text-base: 1rem;
+    --um-text-lg: 1.125rem;
+    --um-text-xl: 1.25rem;
+    --um-text-2xl: 1.5rem;
+    --um-text-3xl: 1.875rem;
+    --um-text-4xl: 2.25rem;
   }
 
   .dark {
@@ -93,6 +127,17 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Design system tokens - dark mode */
+    --um-color-bg: 10 10 10;
+    --um-color-surface: 17 17 17;
+    --um-color-surface-muted: 31 41 55;
+    --um-color-foreground: 248 250 252;
+    --um-color-muted: 156 163 175;
+    --um-color-border: 31 41 55;
+    --um-color-pill: 38 38 38;
+    --um-color-pill-foreground: 248 250 252;
+    --um-color-inverse: 15 23 42;
   }
 
   * {
