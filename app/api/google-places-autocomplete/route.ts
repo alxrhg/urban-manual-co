@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
           place_id: pred.placeId,
           description: pred.text?.text || '',
           structured_formatting: pred.structuredFormat || {},
-          main_text: pred.structuredFormat?.mainText?.text || pred.text?.text?.split(',')[0] || '',
+          main_text: pred.structuredFormat?.mainText?.text || pred.text?.text?.split(',')?.[0] || '',
           secondary_text: pred.structuredFormat?.secondaryText?.text || pred.text?.text?.split(',').slice(1).join(',') || '',
           types: pred.types || [],
           matched_substrings: pred.matchedSubstrings || [],

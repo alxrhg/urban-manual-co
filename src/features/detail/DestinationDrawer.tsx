@@ -126,7 +126,7 @@ function getOpenStatus(openingHours: any, city: string, timezoneId?: string | nu
     const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
     const todayText = openingHours.weekday_text[googleDayIndex];
-    const dayName = todayText?.split(':')[0];
+    const dayName = todayText?.split(':')?.[0];
     const hoursText = todayText?.substring(todayText.indexOf(':') + 1).trim();
 
     if (!hoursText) {
