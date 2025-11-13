@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { X, Plus, Loader2 } from 'lucide-react';
 import type { Trip, ItineraryItemNotes } from '@/types/trip';
+import { ModalBase } from './ModalBase';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 
 interface AddToTripModalProps {
   destinationSlug: string;
@@ -36,6 +39,15 @@ export function AddToTripModal({
     budget: '',
   });
   const [creating, setCreating] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+
+  useBodyScrollLock(isOpen);
+  useFocusTrap(dialogRef, isOpen, {
+    initialFocusRef: closeButtonRef,
+    onEscape: onClose,
+  });
 
   useEffect(() => {
     if (isOpen && user) {
@@ -236,8 +248,6 @@ export function AddToTripModal({
     }
   }
 
-  if (!isOpen) return null;
-
   const formatDateForInput = (dateString: string | null) => {
     if (!dateString) return '';
     try {
@@ -259,209 +269,209 @@ export function AddToTripModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-950 text-white overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 bg-gray-950 border-b border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-        <h2 className="text-[11px] text-gray-400 tracking-[0.2em] uppercase">NEW TRIP</h2>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-900 rounded-lg transition-colors"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5 text-gray-300" />
-        </button>
-      </div>
+    <ModalBase
+      ref={dialogRef}
+      isOpen={isOpen}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onBackdropClick={onClose}
+      className="w-full max-w-2xl"
+    >
+      <div className="bg-gray-950 text-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        <div className="flex items-center gap-3 flex-row-reverse px-6 py-4 border-b border-gray-800">
+          <button
+            ref={closeButtonRef}
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-900 transition-colors ml-auto"
+            aria-label="Close add to trip modal"
+          >
+            <X className="h-5 w-5 text-gray-300" />
+          </button>
+          <h2 id={titleId} className="text-[11px] text-gray-400 tracking-[0.2em] uppercase flex-1">
+            New Trip
+          </h2>
+        </div>
 
-      {/* Content */}
-      <div className="px-6 py-8 max-w-2xl mx-auto">
-        {/* Pending Destination Banner */}
-        {destinationName && (
-          <div className="mb-8 px-4 py-3 bg-gray-900 rounded-xl border border-gray-800">
-            <p className="text-sm text-gray-300">
-              We'll add <span className="font-medium text-white">{destinationName}</span> once you choose a trip.
-            </p>
-          </div>
-        )}
+        <div className="flex-1 overflow-y-auto px-6 py-8 space-y-8">
+          {destinationName && (
+            <div className="px-4 py-3 bg-gray-900 rounded-xl border border-gray-800">
+              <p className="text-sm text-gray-300">
+                We'll add <span className="font-medium text-white">{destinationName}</span> once you choose a trip.
+              </p>
+            </div>
+          )}
 
-        {/* Continue Planning Existing Trip Section */}
-        {!showCreateForm && (
-          <div className="mb-12">
-            <h3 className="text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-4">
-              CONTINUE PLANNING AN EXISTING TRIP
-            </h3>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              </div>
-            ) : trips.length === 0 ? (
-              <p className="text-sm text-gray-500">No existing trips. Create a new trip below.</p>
-            ) : (
-              <div className="space-y-3">
-                {trips.map((trip) => (
-                  <div
-                    key={trip.id}
-                    className="flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h4 className="text-white font-medium mb-1">{trip.title}</h4>
-                      <p className="text-xs text-gray-400">
-                        {trip.start_date && trip.end_date
-                          ? `${formatDateForDisplay(trip.start_date)} - ${formatDateForDisplay(trip.end_date)}`
-                          : trip.start_date
-                          ? formatDateForDisplay(trip.start_date)
-                          : trip.end_date
-                          ? formatDateForDisplay(trip.end_date)
-                          : 'Dates not set'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleAddToTrip(trip.id)}
-                      disabled={adding === trip.id}
-                      className="px-4 py-2 text-sm font-medium text-white hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          {!showCreateForm && (
+            <div>
+              <h3 className="text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-4">
+                CONTINUE PLANNING AN EXISTING TRIP
+              </h3>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : trips.length === 0 ? (
+                <p className="text-sm text-gray-500">No existing trips. Create a new trip below.</p>
+              ) : (
+                <div className="space-y-3">
+                  {trips.map((trip) => (
+                    <div
+                      key={trip.id}
+                      className="flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
                     >
-                      {adding === trip.id ? (
+                      <div className="flex-1">
+                        <h4 className="text-white font-medium mb-1">{trip.title}</h4>
+                        <p className="text-xs text-gray-400">
+                          {trip.start_date && trip.end_date
+                            ? `${formatDateForDisplay(trip.start_date)} - ${formatDateForDisplay(trip.end_date)}`
+                            : trip.start_date
+                            ? formatDateForDisplay(trip.start_date)
+                            : trip.end_date
+                            ? formatDateForDisplay(trip.end_date)
+                            : 'Dates not set'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleAddToTrip(trip.id)}
+                        disabled={adding === trip.id}
+                        className="px-4 py-2 text-sm font-medium text-white hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {adding === trip.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'OPEN'
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <h3 className="text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-6">
+              {showCreateForm ? 'NEW TRIP' : 'CREATE NEW TRIP'}
+            </h3>
+
+            {!showCreateForm ? (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="w-full py-4 border-2 border-dashed border-gray-800 rounded-xl text-gray-400 hover:border-gray-700 hover:text-gray-300 transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create New Trip</span>
+              </button>
+            ) : (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
+                    TRIP NAME
+                  </label>
+                  <input
+                    type="text"
+                    value={newTrip.title}
+                    onChange={(e) => setNewTrip({ ...newTrip, title: e.target.value })}
+                    placeholder="Summer in Paris"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
+                    DESTINATION
+                  </label>
+                  <input
+                    type="text"
+                    value={newTrip.destination}
+                    onChange={(e) => setNewTrip({ ...newTrip, destination: e.target.value })}
+                    placeholder="milan"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
+                    HOTEL / BASE LOCATION (OPTIONAL)
+                  </label>
+                  <input
+                    type="text"
+                    value={newTrip.hotel}
+                    onChange={(e) => setNewTrip({ ...newTrip, hotel: e.target.value })}
+                    placeholder="Hotel Le Marais"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
+                    START DATE
+                  </label>
+                  <input
+                    type="date"
+                    value={newTrip.start_date}
+                    onChange={(e) => setNewTrip({ ...newTrip, start_date: e.target.value })}
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white focus:outline-none focus:border-gray-600 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
+                    END DATE
+                  </label>
+                  <input
+                    type="date"
+                    value={newTrip.end_date}
+                    onChange={(e) => setNewTrip({ ...newTrip, end_date: e.target.value })}
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white focus:outline-none focus:border-gray-600 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
+                    TOTAL BUDGET (OPTIONAL)
+                  </label>
+                  <input
+                    type="text"
+                    value={newTrip.budget}
+                    onChange={(e) => setNewTrip({ ...newTrip, budget: e.target.value })}
+                    placeholder="$0"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setShowCreateForm(false);
+                      setNewTrip({ title: '', description: '', destination: '', hotel: '', start_date: '', end_date: '', budget: '' });
+                    }}
+                    className="flex-1 px-4 py-3 border border-gray-800 rounded-xl text-gray-300 hover:bg-gray-900 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateTrip}
+                    disabled={creating || !newTrip.title.trim()}
+                    className="flex-1 px-4 py-3 bg-white text-gray-950 rounded-xl font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                  >
+                    {creating ? (
+                      <span className="flex items-center justify-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        'OPEN'
-                      )}
-                    </button>
-                  </div>
-                ))}
+                        Creating...
+                      </span>
+                    ) : (
+                      'Create Trip'
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>
-        )}
-
-        {/* New Trip Form */}
-        <div>
-          <h3 className="text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-6">
-            {showCreateForm ? 'NEW TRIP' : 'CREATE NEW TRIP'}
-          </h3>
-
-          {!showCreateForm ? (
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="w-full py-4 border-2 border-dashed border-gray-800 rounded-xl text-gray-400 hover:border-gray-700 hover:text-gray-300 transition-colors flex items-center justify-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create New Trip</span>
-            </button>
-          ) : (
-            <div className="space-y-6">
-              {/* Trip Name */}
-              <div>
-                <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
-                  TRIP NAME
-                </label>
-                <input
-                  type="text"
-                  value={newTrip.title}
-                  onChange={(e) => setNewTrip({ ...newTrip, title: e.target.value })}
-                  placeholder="Summer in Paris"
-                  className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
-                  autoFocus
-                />
-              </div>
-
-              {/* Destination */}
-              <div>
-                <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
-                  DESTINATION
-                </label>
-                <input
-                  type="text"
-                  value={newTrip.destination}
-                  onChange={(e) => setNewTrip({ ...newTrip, destination: e.target.value })}
-                  placeholder="milan"
-                  className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
-                />
-              </div>
-
-              {/* Hotel / Base Location */}
-              <div>
-                <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
-                  HOTEL / BASE LOCATION (OPTIONAL)
-                </label>
-                <input
-                  type="text"
-                  value={newTrip.hotel}
-                  onChange={(e) => setNewTrip({ ...newTrip, hotel: e.target.value })}
-                  placeholder="Hotel Le Marais"
-                  className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
-                />
-              </div>
-
-              {/* Start Date */}
-              <div>
-                <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
-                  START DATE
-                </label>
-                <input
-                  type="date"
-                  value={newTrip.start_date}
-                  onChange={(e) => setNewTrip({ ...newTrip, start_date: e.target.value })}
-                  className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white focus:outline-none focus:border-gray-600 transition-colors"
-                />
-              </div>
-
-              {/* End Date */}
-              <div>
-                <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
-                  END DATE
-                </label>
-                <input
-                  type="date"
-                  value={newTrip.end_date}
-                  onChange={(e) => setNewTrip({ ...newTrip, end_date: e.target.value })}
-                  className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white focus:outline-none focus:border-gray-600 transition-colors"
-                />
-              </div>
-
-              {/* Total Budget */}
-              <div>
-                <label className="block text-[11px] text-gray-400 tracking-[0.2em] uppercase mb-2">
-                  TOTAL BUDGET (OPTIONAL)
-                </label>
-                <input
-                  type="text"
-                  value={newTrip.budget}
-                  onChange={(e) => setNewTrip({ ...newTrip, budget: e.target.value })}
-                  placeholder="$0"
-                  className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setNewTrip({ title: '', description: '', destination: '', hotel: '', start_date: '', end_date: '', budget: '' });
-                  }}
-                  className="flex-1 px-4 py-3 border border-gray-800 rounded-xl text-gray-300 hover:bg-gray-900 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateTrip}
-                  disabled={creating || !newTrip.title.trim()}
-                  className="flex-1 px-4 py-3 bg-white text-gray-950 rounded-xl font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                >
-                  {creating ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Creating...
-                    </span>
-                  ) : (
-                    'Create Trip'
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
-    </div>
+    </ModalBase>
   );
 }
 

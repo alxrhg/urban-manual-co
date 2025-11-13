@@ -5,6 +5,7 @@
   "scripts": {
     "test:intelligence": "tsx scripts/test-intelligence-endpoints.ts",
     "test:unit": "tsx --test tests/**/*.test.ts",
+    "test:accessibility": "tsx tests/accessibility/modals.test.tsx",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useId, type RefObject } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
@@ -40,6 +40,8 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { 
@@ -70,6 +72,7 @@ interface DestinationDrawerProps {
   onClose: () => void;
   onSaveToggle?: (slug: string, saved: boolean) => void;
   onVisitToggle?: (slug: string, visited: boolean) => void;
+  focusReturnRef?: RefObject<HTMLElement | null>;
 }
 
 function capitalizeCity(city: string): string {
@@ -180,7 +183,7 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
+export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, focusReturnRef }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
@@ -200,6 +203,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingNested, setLoadingNested] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -233,29 +238,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     }
   };
 
-  // Prevent body scroll when drawer is open
-  useEffect(() => {
-    if (isOpen) {
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      document.documentElement.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  // Close on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  useBodyScrollLock(isOpen && !!destination);
+  useFocusTrap(dialogRef, Boolean(isOpen && destination), {
+    onEscape: onClose,
+    returnFocusRef: focusReturnRef,
+  });
 
   // Load enriched data and saved/visited status
   useEffect(() => {
@@ -790,24 +777,42 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+        aria-hidden="true"
         onClick={onClose}
       />
 
-      {/* Mobile Drawer (mimics desktop design) */}
       <div
-        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-hidden flex flex-col`}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-hidden={!isOpen}
+        className="fixed inset-0 z-50 flex justify-end pointer-events-none"
       >
-        {/* Header with Close Button */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-          <div className="flex items-center gap-2">
+        <h1 id={titleId} className="sr-only">
+          {destination.name}
+        </h1>
+
+        {/* Mobile Drawer (mimics desktop design) */}
+        <div
+          className={`md:hidden pointer-events-auto fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+            isOpen ? 'translate-x-0' : 'translate-x-full'
+          } overflow-hidden flex flex-col`}
+        >
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-3 flex-row-reverse">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ml-auto"
+            aria-label="Close destination details"
+          >
+            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+          </button>
+          <div className="flex items-center gap-2 justify-between w-full">
+            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
             {destination?.slug && destination.slug.trim() && (
               <Link
                 href={`/destination/${destination.slug}`}
@@ -823,14 +828,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </Link>
             )}
           </div>
-          {/* Close Button - Top Right */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-          </button>
         </div>
 
         {/* Content */}
@@ -1032,14 +1029,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Desktop Slideover Card (existing design) */}
       <div
-        className={`hidden md:flex fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`hidden md:flex pointer-events-auto fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
         } overflow-hidden flex-col`}
       >
-        {/* Header with Close Button */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-          <div className="flex items-center gap-2">
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-3 flex-row-reverse">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ml-auto"
+            aria-label="Close destination details"
+          >
+            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+          </button>
+          <div className="flex items-center gap-2 justify-between w-full">
+            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
             {destination?.slug && destination.slug.trim() && (
               <Link
                 href={`/destination/${destination.slug}`}
@@ -1055,14 +1058,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </Link>
             )}
           </div>
-          {/* Close Button - Top Right */}
-            <button
-              onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close"
-            >
-            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-            </button>
         </div>
 
         {/* Content */}
@@ -1843,6 +1838,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           }}
         />
       )}
+    </div>
     </>
   );
 }

@@ -55,8 +55,15 @@ export default function CityPageClient() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const drawerTriggerRef = useRef<HTMLElement | null>(null);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
+
+  const openDrawer = (destinationToOpen: Destination, trigger?: HTMLElement | null) => {
+    drawerTriggerRef.current = trigger || (document.activeElement as HTMLElement | null);
+    setSelectedDestination(destinationToOpen);
+    setIsDrawerOpen(true);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -322,9 +329,8 @@ export default function CityPageClient() {
                     <DestinationCard
                       key={destination.slug}
                       destination={destination}
-                      onClick={() => {
-                        setSelectedDestination(destination);
-                        setIsDrawerOpen(true);
+                      onClick={(event) => {
+                        openDrawer(destination, event.currentTarget);
                       }}
                       index={index}
                       isVisited={isVisited}
@@ -404,6 +410,7 @@ export default function CityPageClient() {
       <DestinationDrawer
         destination={selectedDestination}
         isOpen={isDrawerOpen}
+        focusReturnRef={drawerTriggerRef}
         onClose={() => {
           setIsDrawerOpen(false);
           setSelectedDestination(null);

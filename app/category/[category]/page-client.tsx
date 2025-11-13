@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -29,6 +29,13 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
   const [filters, setFilters] = useState<SearchFilters>({});
   const [cities, setCities] = useState<string[]>([]);
   const [categories] = useState<string[]>(['Hotels', 'Restaurants', 'Cafes', 'Bars', 'Shops', 'Museums']);
+  const drawerTriggerRef = useRef<HTMLElement | null>(null);
+
+  const openDrawer = (destinationToOpen: Destination, trigger?: HTMLElement | null) => {
+    drawerTriggerRef.current = trigger || (document.activeElement as HTMLElement | null);
+    setSelectedDestination(destinationToOpen);
+    setIsDrawerOpen(true);
+  };
 
   const categoryName = category.split('-').map(w => 
     w.charAt(0).toUpperCase() + w.slice(1)
@@ -138,9 +145,8 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
             {filteredDestinations.map((destination, index) => (
               <button
                 key={destination.slug}
-                onClick={() => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
+                onClick={(event) => {
+                  openDrawer(destination, event.currentTarget);
                 }}
                 className={`${CARD_WRAPPER} group text-left`}
               >
@@ -182,6 +188,7 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
         <DestinationDrawer
           destination={selectedDestination}
           isOpen={isDrawerOpen}
+          focusReturnRef={drawerTriggerRef}
           onClose={() => {
             setIsDrawerOpen(false);
             setSelectedDestination(null);

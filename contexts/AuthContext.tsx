@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -14,6 +14,12 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+let authTestOverride: AuthContextType | null = null;
+
+export function __setAuthContextOverrideForTests(value: AuthContextType | null) {
+  authTestOverride = value;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -82,6 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+  if (process.env.NODE_ENV === 'test' && authTestOverride) {
+    return authTestOverride;
+  }
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

@@ -512,7 +512,14 @@ export default function Home() {
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
-  
+  const drawerTriggerRef = useRef<HTMLElement | null>(null);
+
+  const openDrawer = (destinationToOpen: Destination, trigger?: HTMLElement | null) => {
+    drawerTriggerRef.current = trigger || (document.activeElement as HTMLElement | null);
+    setSelectedDestination(destinationToOpen);
+    setIsDrawerOpen(true);
+  };
+
   // Loading text variants
   const loadingTextVariants = [
     'Finding the perfect spots...',
@@ -2307,8 +2314,7 @@ export default function Home() {
               <div className="mb-12 md:mb-16">
                 <SmartRecommendations
                 onCardClick={(destination) => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
+                  openDrawer(destination);
 
                   // Track destination click
                   trackDestinationClick({
@@ -2408,8 +2414,7 @@ export default function Home() {
                       <MapView
                         destinations={displayDestinations}
                         onMarkerClick={(dest) => {
-                          setSelectedDestination(dest);
-                          setIsDrawerOpen(true);
+                          openDrawer(dest);
                         }}
                       />
                     </div>
@@ -2429,9 +2434,8 @@ export default function Home() {
                         <DestinationCard
                     key={destination.slug}
                           destination={destination}
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setIsDrawerOpen(true);
+                    onClick={(event) => {
+                      openDrawer(destination, event.currentTarget);
 
                       // Track destination click
                       trackDestinationClick({
@@ -2564,6 +2568,7 @@ export default function Home() {
           <DestinationDrawer
             destination={selectedDestination}
             isOpen={isDrawerOpen}
+            focusReturnRef={drawerTriggerRef}
             onClose={() => {
               // Sort visited items to the back when closing
               setFilteredDestinations(prev => {

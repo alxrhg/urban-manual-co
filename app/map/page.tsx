@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
@@ -36,6 +36,13 @@ export default function MapPage() {
   const [showListPanel, setShowListPanel] = useState(true);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
+  const drawerTriggerRef = useRef<HTMLElement | null>(null);
+
+  const openDrawer = useCallback((destinationToOpen: Destination, trigger?: HTMLElement | null) => {
+    drawerTriggerRef.current = trigger || (document.activeElement as HTMLElement | null);
+    setSelectedDestination(destinationToOpen);
+    setIsDrawerOpen(true);
+  }, []);
 
   // Fetch destinations and categories
   useEffect(() => {
@@ -133,15 +140,13 @@ export default function MapPage() {
   };
 
   const handleMarkerClick = useCallback((dest: Destination) => {
-    setSelectedDestination(dest);
-    setIsDrawerOpen(true);
-  }, []);
+    openDrawer(dest);
+  }, [openDrawer]);
 
-  const handleListItemClick = useCallback((dest: Destination) => {
-    setSelectedDestination(dest);
-    setIsDrawerOpen(true);
+  const handleListItemClick = useCallback((dest: Destination, trigger?: HTMLElement | null) => {
+    openDrawer(dest, trigger);
     // Focus marker on map (would need map ref for this)
-  }, []);
+  }, [openDrawer]);
 
   // Calculate distance from map center (simplified)
   const getDistanceFromCenter = (dest: Destination): number => {
@@ -244,7 +249,7 @@ export default function MapPage() {
             {sortedDestinations.map((dest) => (
               <button
                 key={dest.slug}
-                onClick={() => handleListItemClick(dest)}
+                onClick={(event) => handleListItemClick(dest, event.currentTarget)}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
                   selectedDestination?.slug === dest.slug
                     ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
@@ -324,12 +329,12 @@ export default function MapPage() {
               {sortedDestinations.map((dest) => (
                 <button
                   key={dest.slug}
-                  onClick={() => {
-                    handleListItemClick(dest);
+                  onClick={(event) => {
+                    handleListItemClick(dest, event.currentTarget);
                     setShowListPanel(false);
                   }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left min-h-[72px] touch-manipulation"
-                  >
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left min-h-[72px] touch-manipulation"
+                >
                     {dest.image && (
                       <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
                         <Image
@@ -377,6 +382,7 @@ export default function MapPage() {
       <DestinationDrawer
         destination={selectedDestination}
         isOpen={isDrawerOpen}
+        focusReturnRef={drawerTriggerRef}
         onClose={() => {
           setIsDrawerOpen(false);
           setTimeout(() => setSelectedDestination(null), 300);

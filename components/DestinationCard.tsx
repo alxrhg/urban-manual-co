@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type MouseEvent } from 'react';
 import Image from 'next/image';
 import { MapPin, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
@@ -9,7 +9,7 @@ import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 
 interface DestinationCardProps {
   destination: Destination;
-  onClick: () => void;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
   index?: number;
   isVisited?: boolean;
   showBadges?: boolean;
