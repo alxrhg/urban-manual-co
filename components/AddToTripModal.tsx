@@ -77,7 +77,9 @@ export function AddToTripModal({
     setAdding(tripId);
     try {
       const supabaseClient = createClient();
-      if (!supabaseClient || !user) return;
+      if (!supabaseClient || !user) {
+        throw new Error('Not authenticated');
+      }
 
       // First verify the trip exists and belongs to the user
       const { data: trip, error: tripError } = await supabaseClient
@@ -92,31 +94,46 @@ export function AddToTripModal({
       }
 
       // Get the next day and order_index for this trip
-      // Use a simpler query that avoids RLS recursion
-      const { data: existingItems, error: queryError } = await supabaseClient
-        .from('itinerary_items')
-        .select('day, order_index')
-        .eq('trip_id', tripId)
-        .order('day', { ascending: false })
-        .order('order_index', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Try using the database function first (bypasses RLS recursion), fallback to direct query
+      let nextDay = 1;
+      let nextOrder = 0;
 
-      // If query error and it's not a "not found" error, throw it
-      if (queryError && queryError.code !== 'PGRST116') {
-        console.error('Error querying itinerary items:', queryError);
-        // If it's a recursion error, use default values
-        if (queryError.message && queryError.message.includes('infinite recursion')) {
-          console.warn('RLS recursion detected, using default day/order');
+      try {
+        // Try using the helper function first (if it exists)
+        const { data: orderData, error: functionError } = await supabaseClient
+          .rpc('get_next_itinerary_order', { p_trip_id: tripId });
+
+        if (!functionError && orderData && orderData.length > 0) {
+          nextDay = orderData[0].next_day;
+          nextOrder = orderData[0].next_order;
         } else {
-          throw queryError;
+          // Fallback to direct query if function doesn't exist or fails
+          const { data: existingItems, error: queryError } = await supabaseClient
+            .from('itinerary_items')
+            .select('day, order_index')
+            .eq('trip_id', tripId)
+            .order('day', { ascending: false })
+            .order('order_index', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          // Only use the query result if it succeeded and returned data
+          if (!queryError && existingItems) {
+            nextDay = existingItems.day || 1;
+            nextOrder = (existingItems.order_index || 0) + 1;
+          } else if (queryError && queryError.code !== 'PGRST116') {
+            // If it's not a "not found" error, log it but continue with defaults
+            console.warn('Error querying itinerary items, using defaults:', queryError);
+          }
         }
+      } catch (queryErr: any) {
+        // Catch any recursion or other errors and use defaults
+        console.warn('Error getting next order, using defaults:', queryErr);
+        nextDay = 1;
+        nextOrder = 0;
       }
 
-      const nextDay = existingItems ? (existingItems.day || 1) : 1;
-      const nextOrder = existingItems ? (existingItems.order_index || 0) + 1 : 0;
-
-      // Prepare notes data
+      // Prepare notes data with destination information
       const notesData = {
         raw: '',
         cost: undefined,
@@ -128,7 +145,7 @@ export function AddToTripModal({
       };
 
       // Add destination to itinerary
-      const { error } = await supabaseClient
+      const { data: insertedItem, error: insertError } = await supabaseClient
         .from('itinerary_items')
         .insert({
           trip_id: tripId,
@@ -138,9 +155,27 @@ export function AddToTripModal({
           title: destinationName,
           description: '', // Required field
           notes: JSON.stringify(notesData), // Store as JSON
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (insertError) {
+        console.error('Insert error details:', insertError);
+        // Provide more specific error messages
+        if (insertError.code === '23503') {
+          throw new Error('Invalid trip. Please refresh and try again.');
+        } else if (insertError.code === '42501') {
+          throw new Error('Permission denied. You may not have access to add items to this trip.');
+        } else if (insertError.message?.includes('infinite recursion') || insertError.message?.includes('recursion')) {
+          throw new Error('Database error. Please try again or contact support if the issue persists.');
+        } else {
+          throw new Error(insertError.message || 'Failed to add destination to trip. Please try again.');
+        }
+      }
+
+      if (!insertedItem) {
+        throw new Error('Failed to add destination to trip. No data returned.');
+      }
 
       if (onAdd) onAdd(tripId);
       onClose();
