@@ -1,11 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
-import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
+import { findLocationByName } from '@/lib/search/expandLocations';
+import {
+  cachedEmbedText,
+  cachedExpandNearbyLocations,
+  cachedGetLocationContext,
+} from '@/lib/search/cachedSearchHelpers';
+
+const EXPANSION_CONCURRENCY = 3;
+const EXPANSION_TIMEOUT_MS = 2500;
+
+type SearchWarning = {
+  code: string;
+  message: string;
+  details?: string;
+};
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timeoutId: NodeJS.Timeout;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+  });
+
+  return Promise.race([
+    promise.finally(() => clearTimeout(timeoutId)),
+    timeout,
+  ]) as Promise<T>;
+}
+
+async function runWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  if (!items.length) return [];
+  const results: R[] = new Array(items.length);
+  let pointer = 0;
+
+  async function run(): Promise<void> {
+    while (true) {
+      const currentIndex = pointer++;
+      if (currentIndex >= items.length) {
+        break;
+      }
+      results[currentIndex] = await worker(items[currentIndex]);
+    }
+  }
+
+  const runners = Array(Math.min(concurrency, items.length))
+    .fill(null)
+    .map(() => run());
+
+  await Promise.all(runners);
+  return results;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -32,7 +84,7 @@ export async function GET(request: NextRequest) {
       locationName = await findLocationByName(lowerQuery);
       if (locationName) {
         // Extract parent city from location if available
-        const locationContext = await getLocationContext(locationName);
+        const locationContext = await cachedGetLocationContext(locationName);
         // For now, use the location name itself as city filter
         // (destinations.city might match neighborhood names)
         searchCity = locationName;
@@ -43,61 +95,120 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate embedding for search query
-    const embedding = await embedText(query);
+    const embedding = await cachedEmbedText(query);
 
     if (!embedding) {
       return NextResponse.json({ error: 'Failed to generate embedding' }, { status: 500 });
     }
 
     // Intelligent search
-    const { data: results, error } = await supabase.rpc(
-      'search_destinations_intelligent',
-      {
-        query_embedding: `[${embedding.join(',')}]`,
-        user_id_param: session?.user?.id || null,
-        city_filter: searchCity,
-        category_filter: category,
-        open_now_filter: openNow,
-        limit_count: 1000,
-      }
-    );
+    const warnings: SearchWarning[] = [];
+    const searchStart = Date.now();
+    let fallbackUsed = false;
+    let baseResults: any[] = [];
 
-    if (error) {
-      console.error('Search error:', error);
-      throw error;
+    try {
+      const { data: results, error } = await supabase.rpc(
+        'search_destinations_intelligent',
+        {
+          query_embedding: `[${embedding.join(',')}]`,
+          user_id_param: session?.user?.id || null,
+          city_filter: searchCity,
+          category_filter: category,
+          open_now_filter: openNow,
+          limit_count: 1000,
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      baseResults = results || [];
+    } catch (primaryError: any) {
+      fallbackUsed = true;
+      const fallbackMessage = 'Primary semantic search unavailable. Showing limited fallback results.';
+      const warning: SearchWarning = {
+        code: 'semantic_fallback',
+        message: fallbackMessage,
+        details: primaryError?.message,
+      };
+      warnings.push(warning);
+      console.error('[search_intelligent] primary search failed, invoking fallback:', primaryError);
+
+      const { data: fallbackResults, error: fallbackError } = await supabase.rpc('match_destinations', {
+        query_embedding: `[${embedding.join(',')}]`,
+        match_threshold: 0.7,
+        match_count: 1000,
+        filter_city: searchCity,
+        filter_category: category,
+        filter_michelin_stars: null,
+        filter_min_rating: null,
+        filter_max_price_level: null,
+        search_query: query,
+      });
+
+      if (fallbackError) {
+        console.error('[search_intelligent] fallback search failed:', fallbackError);
+        throw fallbackError;
+      }
+
+      baseResults = fallbackResults || [];
     }
 
+    const baseSearchDuration = Date.now() - searchStart;
+
     // If few results and we have a location, expand to nearby neighborhoods
-    let expandedResults = results || [];
+    let expandedResults = baseResults;
     let expandedLocations: string[] = [];
-    
-    if ((expandedResults.length < 5) && locationName) {
-      const nearbyLocations = await expandNearbyLocations(locationName, 15);
+
+    if ((expandedResults.length < 5) && locationName && !fallbackUsed) {
+      const nearbyLocations = await cachedExpandNearbyLocations(locationName, 15);
       expandedLocations = nearbyLocations.slice(1); // Exclude original
-      
+
       if (expandedLocations.length > 0) {
         // Re-search with expanded locations
         // We'll search each location and combine results
-        const allExpandedResults: any[] = [];
-        
-        for (const nearbyLoc of expandedLocations) {
-          const { data: nearbyResults } = await supabase.rpc(
-            'search_destinations_intelligent',
-            {
-              query_embedding: `[${embedding.join(',')}]`,
-              user_id_param: session?.user?.id || null,
-              city_filter: nearbyLoc,
-              category_filter: category,
-              open_now_filter: openNow,
-              limit_count: 1000,
+        const expansionStart = Date.now();
+        const batchedResults = await runWithConcurrency(expandedLocations, EXPANSION_CONCURRENCY, async nearbyLoc => {
+          try {
+            const { data: nearbyResults, error: nearbyError } = await withTimeout(
+              supabase.rpc('search_destinations_intelligent', {
+                query_embedding: `[${embedding.join(',')}]`,
+                user_id_param: session?.user?.id || null,
+                city_filter: nearbyLoc,
+                category_filter: category,
+                open_now_filter: openNow,
+                limit_count: 1000,
+              }),
+              EXPANSION_TIMEOUT_MS,
+              `expansion:${nearbyLoc}`
+            );
+
+            if (nearbyError) {
+              console.warn('[search_intelligent] expansion RPC error', { nearbyLoc, error: nearbyError.message });
+              return [];
             }
-          );
-          
-          if (nearbyResults) {
-            allExpandedResults.push(...nearbyResults);
+
+            return nearbyResults || [];
+          } catch (expansionError: any) {
+            console.warn('[search_intelligent] expansion RPC timeout/failure', {
+              nearbyLoc,
+              error: expansionError?.message,
+            });
+            return [];
           }
-        }
-        
+        });
+
+        const allExpandedResults = batchedResults.flat();
+        const expansionDuration = Date.now() - expansionStart;
+        console.log('[search_intelligent] expansions complete', {
+          query,
+          attempted: expandedLocations.length,
+          added: allExpandedResults.length,
+          durationMs: expansionDuration,
+        });
+
         // Combine original + expanded, deduplicate by slug
         const seen = new Set((expandedResults || []).map((r: any) => r.slug));
         for (const result of allExpandedResults) {
@@ -135,7 +246,7 @@ export async function GET(request: NextRequest) {
       
       // Add nearby locations context if applicable
       if (expandedLocations.length > 0 && limited.length > 0) {
-        const locationContext = locationName ? await getLocationContext(locationName) : null;
+        const locationContext = locationName ? await cachedGetLocationContext(locationName) : null;
         if (locationContext) {
           const walkingTimes = expandedLocations
             .map(loc => {
@@ -145,7 +256,7 @@ export async function GET(request: NextRequest) {
             .slice(0, 3); // Limit to 3 nearby mentions
           
           if (walkingTimes.length > 0) {
-            const originalCount = (results || []).length;
+            const originalCount = baseResults.length;
             const additionalCount = limited.length - originalCount;
             if (additionalCount > 0) {
               contextResponse += ` Found ${additionalCount} more in nearby ${walkingTimes.join(', ')}.`;
@@ -189,6 +300,16 @@ export async function GET(request: NextRequest) {
       });
     } catch {}
 
+    const totalDuration = Date.now() - searchStart;
+    console.log('[search_intelligent] search complete', {
+      query,
+      durationMs: totalDuration,
+      baseResults: baseResults.length,
+      expandedResults: expandedResults.length,
+      expansionsAttempted: expandedLocations.length,
+      fallbackUsed,
+    });
+
     return NextResponse.json({
       results: limited,
       contextResponse,
@@ -198,6 +319,8 @@ export async function GET(request: NextRequest) {
         filters: { city, category, openNow },
         count: limited.length,
         reranked: true,
+        baseSearchDurationMs: baseSearchDuration,
+        warnings,
       },
       userLocation: userLocation
         ? {
@@ -205,6 +328,7 @@ export async function GET(request: NextRequest) {
             timezone: userLocation.timezone,
           }
         : undefined,
+      warnings,
     });
   } catch (error: any) {
     console.error('Search error:', error);
