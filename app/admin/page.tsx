@@ -740,21 +740,43 @@ export default function AdminPage() {
   // Check authentication
   useEffect(() => {
     async function checkAuth() {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        const supabase = createClient();
+        
+        // Check if we're using a placeholder client (invalid config)
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+        if (supabaseUrl.includes('placeholder') || !supabaseUrl) {
+          console.error('[Admin] Invalid Supabase configuration detected');
+          setAuthChecked(true);
+          setIsAdmin(false);
+          return;
+        }
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (!session) {
-        router.push('/account');
-        return;
-      }
+        if (error) {
+          console.error('[Admin] Auth error:', error);
+          setAuthChecked(true);
+          return;
+        }
 
-      setUser(session.user);
-      const role = (session.user.app_metadata as Record<string, any> | null)?.role;
-      const admin = role === 'admin';
-      setIsAdmin(admin);
-      setAuthChecked(true);
-      if (!admin) {
-        router.push('/account');
+        if (!session) {
+          router.push('/account');
+          return;
+        }
+
+        setUser(session.user);
+        const role = (session.user.app_metadata as Record<string, any> | null)?.role;
+        const admin = role === 'admin';
+        setIsAdmin(admin);
+        setAuthChecked(true);
+        if (!admin) {
+          router.push('/account');
+        }
+      } catch (error) {
+        console.error('[Admin] Error checking auth:', error);
+        setAuthChecked(true);
+        // Don't redirect on error, let user see the error state
       }
     }
 
@@ -915,7 +937,24 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) {
-    return null;
+    return (
+      <main className="px-6 md:px-10 py-20">
+        <div className="container mx-auto">
+          <div className="text-center">
+            <h1 className="text-2xl font-light mb-4">Access Denied</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              You need admin privileges to access this page.
+            </p>
+            <button
+              onClick={() => router.push('/account')}
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
+            >
+              Back to Account
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
