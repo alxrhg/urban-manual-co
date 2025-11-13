@@ -3,10 +3,10 @@
  * Generate itineraries through natural conversation
  */
 
+import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { routePrompt } from '@/services/ai-gateway';
 import { itineraryIntelligenceService, Itinerary } from '@/services/intelligence/itinerary';
-import { extendedConversationMemoryService } from './conversation-memory';
 import { richQueryContextService } from './rich-query-context';
 
 export interface ConversationItineraryRequest {
@@ -16,20 +16,27 @@ export interface ConversationItineraryRequest {
   currentQuery: string;
 }
 
+const conversationRequirementsSchema = z.object({
+  city: z.string().min(2).max(120).nullable().optional(),
+  durationDays: z.number().min(1).max(30).nullable().optional(),
+  categories: z.array(z.string().min(2).max(50)).max(8).nullable().optional(),
+  budget: z.number().min(0).max(100000).nullable().optional(),
+  style: z.string().min(2).max(50).nullable().optional(),
+  mustVisit: z.array(z.string().min(2).max(120)).max(10).nullable().optional(),
+  needsClarification: z.boolean(),
+  clarificationQuestions: z.array(z.string().min(5).max(180)).max(5).nullable().optional(),
+  confidence: z.number().min(0).max(1),
+});
+
 export class ConversationItineraryService {
   private supabase;
-  private genAI: GoogleGenerativeAI | null = null;
 
   constructor() {
     try {
       this.supabase = createServiceRoleClient();
     } catch (error) {
       this.supabase = null;
-    }
-
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-    if (apiKey) {
-      this.genAI = new GoogleGenerativeAI(apiKey);
+      console.debug('ConversationItineraryService supabase init failed (optional)', error);
     }
   }
 
@@ -58,7 +65,7 @@ export class ConversationItineraryService {
       }
 
       // Build rich context
-      const context = await richQueryContextService.buildContext(
+      await richQueryContextService.buildContext(
         request.userId,
         requirements.city
       );
@@ -118,22 +125,12 @@ export class ConversationItineraryService {
     clarificationQuestions?: string[];
     confidence: number;
   }> {
-    if (!this.genAI) {
-      return {
-        needsClarification: true,
-        clarificationQuestions: ['Please specify your travel destination and dates.'],
-        confidence: 0.0,
-      };
-    }
-
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
-
       const conversationText = request.conversationHistory
         .map(m => `${m.role}: ${m.content}`)
         .join('\n');
 
-      const prompt = `Extract travel itinerary requirements from this conversation. Return JSON:
+      const prompt = `Extract travel itinerary requirements from this conversation. Return minified JSON:
 {
   "city": "city name or null",
   "durationDays": number or null,
@@ -151,14 +148,28 @@ ${conversationText}
 
 Current Query: "${request.currentQuery}"
 
-Return only JSON:`;
+Return only JSON that matches the schema above exactly.`;
 
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const aiResponse = await routePrompt<z.infer<typeof conversationRequirementsSchema>>({
+        prompt,
+        responseSchema: conversationRequirementsSchema,
+        metadata: {
+          useCase: 'conversation-itinerary.requirements',
+          sessionId: request.sessionId,
+          userId: request.userId,
+        },
+        preferredProviders: ['openai', 'gemini', 'local'],
+        capabilities: ['json', 'long-context'],
+        safetyBudget: {
+          maxOutputTokens: 320,
+          maxLatencyMs: 5000,
+        },
+        temperature: 0.2,
+      });
 
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+      const parsed = normalizeRequirements(aiResponse.parsed);
+      if (parsed) {
+        return parsed;
       }
     } catch (error) {
       console.error('Error extracting requirements:', error);
@@ -205,6 +216,7 @@ Return only JSON:`;
 
           if (response.ok) {
             const optimized = await response.json();
+            void optimized;
             // Map optimized sequence back to itinerary items
             // This is simplified - full implementation would preserve timing, notes, etc.
             return itinerary; // For now, return original
@@ -230,4 +242,34 @@ Return only JSON:`;
 }
 
 export const conversationItineraryService = new ConversationItineraryService();
+
+function normalizeRequirements(
+  response?: z.infer<typeof conversationRequirementsSchema>
+): {
+  city?: string;
+  durationDays?: number;
+  categories?: string[];
+  budget?: number;
+  style?: string;
+  mustVisit?: string[];
+  needsClarification: boolean;
+  clarificationQuestions?: string[];
+  confidence: number;
+} | null {
+  if (!response) {
+    return null;
+  }
+
+  return {
+    city: response.city ?? undefined,
+    durationDays: response.durationDays ?? undefined,
+    categories: response.categories ?? undefined,
+    budget: response.budget ?? undefined,
+    style: response.style ?? undefined,
+    mustVisit: response.mustVisit ?? undefined,
+    needsClarification: response.needsClarification,
+    clarificationQuestions: response.clarificationQuestions ?? undefined,
+    confidence: response.confidence,
+  };
+}
 
