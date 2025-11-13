@@ -547,98 +547,88 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   };
 
   // Build custom header with tabs and actions
-  const headerContent = (
+  const headerContent = step === 'plan' ? (
     <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-6">
-        <h2 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
-          {step === 'create' ? 'New Trip' : tripName}
-        </h2>
-        {step === 'plan' && (
-          <div className="flex items-center gap-4 pl-6 border-l border-neutral-200 dark:border-neutral-800">
-            <button
-              onClick={() => setActiveTab('itinerary')}
-              className={`text-[11px] tracking-wide transition-colors ${
-                activeTab === 'itinerary'
-                  ? 'text-neutral-900 dark:text-neutral-100'
-                  : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-              }`}
-            >
-              Itinerary
-            </button>
-            <button
-              onClick={() => setActiveTab('weather')}
-              className={`text-[11px] tracking-wide transition-colors ${
-                activeTab === 'weather'
-                  ? 'text-neutral-900 dark:text-neutral-100'
-                  : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-              }`}
-            >
-              Weather
-            </button>
-            <button
-              onClick={() => setActiveTab('packing')}
-              className={`text-[11px] tracking-wide transition-colors ${
-                activeTab === 'packing'
-                  ? 'text-neutral-900 dark:text-neutral-100'
-                  : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-              }`}
-            >
-              Packing
-            </button>
-          </div>
-        )}
+      <div className="flex items-center gap-4">
+        <h2 className="text-sm font-medium text-gray-900 dark:text-white">{tripName}</h2>
+        <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => setActiveTab('itinerary')}
+            className={`text-xs font-medium transition-colors ${
+              activeTab === 'itinerary'
+                ? 'text-black dark:text-white'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            Itinerary
+          </button>
+          <button
+            onClick={() => setActiveTab('weather')}
+            className={`text-xs font-medium transition-colors ${
+              activeTab === 'weather'
+                ? 'text-black dark:text-white'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            Weather
+          </button>
+          <button
+            onClick={() => setActiveTab('packing')}
+            className={`text-xs font-medium transition-colors ${
+              activeTab === 'packing'
+                ? 'text-black dark:text-white'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            Packing
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        {step === 'plan' && (
-          <>
-            {currentTripId && (
-              <button
-                onClick={handleSaveTrip}
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 text-xs border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Save trip"
-              >
-                {saving ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <SaveIcon className="w-3 h-3" />
-                )}
-                {saving ? 'Saving...' : 'Save'}
-              </button>
+      <div className="flex items-center gap-2">
+        {currentTripId && (
+          <button
+            onClick={handleSaveTrip}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Save trip"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <SaveIcon className="w-3 h-3" />
+                Save
+              </>
             )}
-            <button
-              onClick={() => setShowShare(true)}
-              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-              title="Share trip"
-            >
-              <ShareIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-            </button>
-            <button
-              onClick={handleExportToCalendar}
-              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-              title="Export to calendar"
-            >
-              <DownloadIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-            </button>
-            <button
-              onClick={handlePrint}
-              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-              title="Print itinerary"
-            >
-              <PrinterIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-            </button>
-          </>
+          </button>
         )}
         <button
-          onClick={onClose}
-          className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-          aria-label="Close"
+          onClick={() => setShowShare(true)}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          title="Share trip"
         >
-          <X className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
+          <ShareIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        </button>
+        <button
+          onClick={handleExportToCalendar}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          title="Export to calendar"
+        >
+          <DownloadIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        </button>
+        <button
+          onClick={handlePrint}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          title="Print itinerary"
+        >
+          <PrinterIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
         </button>
       </div>
     </div>
-  );
+  ) : undefined;
 
   // Build content based on step and tab
   const content = (
@@ -649,89 +639,95 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
         </div>
       ) : step === 'create' ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div>
-            <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-              Trip Name
+            <label htmlFor="trip-name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Trip Name *
             </label>
             <input
+              id="trip-name"
               type="text"
               value={tripName}
               onChange={(e) => setTripName(e.target.value)}
               placeholder="Summer in Paris"
-              className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-              Destination
+            <label htmlFor="destination" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Destination *
             </label>
             <input
+              id="destination"
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               placeholder="Paris, France"
-              className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-              Hotel / Base Location (Optional)
+            <label htmlFor="hotel" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Hotel / Base Location
             </label>
             <input
+              id="hotel"
               type="text"
               value={hotelLocation}
               onChange={(e) => setHotelLocation(e.target.value)}
               placeholder="Hotel Le Marais"
-              className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                Start Date
+              <label htmlFor="start-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Start Date *
               </label>
               <input
+                id="start-date"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                End Date
+              <label htmlFor="end-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                End Date *
               </label>
               <input
+                id="end-date"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-              Total Budget (Optional)
+            <label htmlFor="budget" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Total Budget
             </label>
             <input
+              id="budget"
               type="number"
               value={totalBudget || ''}
               onChange={(e) => setTotalBudget(Number(e.target.value))}
               placeholder="2000"
-              className="w-full px-0 py-3 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
           <button
             onClick={handleCreateTrip}
             disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-            className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
           >
             {saving ? (
               <>
@@ -746,33 +742,33 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       ) : (
         <>
           {/* Mobile tabs */}
-          <div className="md:hidden flex items-center gap-4 pb-4 mb-6 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="md:hidden flex items-center gap-4 pb-4 mb-6 border-b border-gray-200 dark:border-gray-800">
             <button
               onClick={() => setActiveTab('itinerary')}
-              className={`text-xs transition-colors ${
+              className={`text-xs font-medium transition-colors ${
                 activeTab === 'itinerary'
-                  ? 'text-neutral-900 dark:text-neutral-100'
-                  : 'text-neutral-400 dark:text-neutral-500'
+                  ? 'text-black dark:text-white'
+                  : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               Itinerary
             </button>
             <button
               onClick={() => setActiveTab('weather')}
-              className={`text-xs transition-colors ${
+              className={`text-xs font-medium transition-colors ${
                 activeTab === 'weather'
-                  ? 'text-neutral-900 dark:text-neutral-100'
-                  : 'text-neutral-400 dark:text-neutral-500'
+                  ? 'text-black dark:text-white'
+                  : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               Weather
             </button>
             <button
               onClick={() => setActiveTab('packing')}
-              className={`text-xs transition-colors ${
+              className={`text-xs font-medium transition-colors ${
                 activeTab === 'packing'
-                  ? 'text-neutral-900 dark:text-neutral-100'
-                  : 'text-neutral-400 dark:text-neutral-500'
+                  ? 'text-black dark:text-white'
+                  : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               Packing
@@ -782,13 +778,13 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           {activeTab === 'itinerary' && (
             <div className="space-y-8">
               {/* Trip Overview */}
-              <div className="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-3 text-[11px] text-neutral-500 dark:text-neutral-400 tracking-wide">
-                    <MapPinIcon className="w-3.5 h-3.5" />
-                    {destination}
-                    <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                    <CalendarIcon className="w-3.5 h-3.5" />
+              <div className="mb-8 pb-8 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 mb-6">
+                  <MapPinIcon className="w-4 h-4" />
+                  <span>{destination}</span>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <CalendarIcon className="w-4 h-4" />
+                  <span>
                     {new Date(startDate).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -799,27 +795,25 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                       day: 'numeric',
                       year: 'numeric',
                     })}
-                    {totalBudget > 0 && (
-                      <>
-                        <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                        <WalletIcon className="w-3.5 h-3.5" />$
-                        {getTotalSpent()} / ${totalBudget}
-                      </>
-                    )}
-                  </div>
+                  </span>
+                  {totalBudget > 0 && (
+                    <>
+                      <span className="text-gray-300 dark:text-gray-600">•</span>
+                      <WalletIcon className="w-4 h-4" />
+                      <span>${getTotalSpent()} / ${totalBudget}</span>
+                    </>
+                  )}
                 </div>
                 {/* AI Suggestions */}
-                <div className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <h4 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
-                      Smart Suggestions
-                    </h4>
-                  </div>
+                <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                  <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-4">
+                    Smart Suggestions
+                  </h4>
                   <ul className="space-y-2">
                     {getAISuggestions().map((suggestion, index) => (
                       <li
                         key={index}
-                        className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed"
+                        className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed"
                       >
                         • {suggestion}
                       </li>
@@ -878,8 +872,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       <Drawer
         isOpen={isOpen}
         onClose={onClose}
-        title={step === 'create' ? 'New Trip' : tripName}
-        headerContent={step === 'plan' ? headerContent : undefined}
+        title={step === 'create' ? 'Create Trip' : undefined}
+        headerContent={headerContent}
         desktopWidth="600px"
       >
         {content}
