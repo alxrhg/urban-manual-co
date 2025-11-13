@@ -47,6 +47,9 @@ import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { TripPlanner } from '@/components/TripPlanner';
 
+const SEARCH_CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes
+const SEARCH_CACHE_LIMIT = 20;
+
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
@@ -436,6 +439,45 @@ function getContextAwareLoadingMessage(
   return fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
 }
 
+type InferredTagPayload = {
+  neighborhoods?: string[];
+  styleTags?: string[];
+  priceLevel?: string;
+  modifiers?: string[];
+} | null;
+
+type AIChatResponsePayload = {
+  content?: string;
+  destinations?: Destination[];
+  searchTier?: string;
+  intent?: (ExtractedIntent & { resultCount?: number; hasResults?: boolean }) | null;
+  inferredTags?: InferredTagPayload;
+};
+
+type SeasonalityResponse = {
+  city: string;
+  hasActiveEvent: boolean;
+  context?: {
+    text: string;
+    event: string;
+    start: string;
+    end: string;
+  } | null;
+  events?: Array<{
+    event: string;
+    description: string;
+    start: string;
+    end: string;
+    priority: number;
+  }>;
+} | null;
+
+type CachedAISearchEntry = {
+  data: AIChatResponsePayload;
+  seasonData: SeasonalityResponse;
+  timestamp: number;
+};
+
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
@@ -511,6 +553,9 @@ export default function Home() {
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
+  const activeSearchControllerRef = useRef<AbortController | null>(null);
+  const lastQueryKeyRef = useRef<string>('');
+  const searchCacheRef = useRef<Map<string, CachedAISearchEntry>>(new Map());
   
   // Loading text variants
   const loadingTextVariants = [
@@ -1408,14 +1453,86 @@ export default function Home() {
     }
   };
 
+  const applyAISearchResult = useCallback(({ query, data, seasonData = null }: {
+    query: string;
+    data: AIChatResponsePayload;
+    seasonData?: SeasonalityResponse;
+  }) => {
+    const intent = data.intent || null;
+    const destinations = Array.isArray(data.destinations) ? (data.destinations as Destination[]) : [];
+    const contextAwareText = getContextAwareLoadingMessage(query, intent, seasonData, userContext);
+
+    setSearchTier(data.searchTier || 'ai-chat');
+    setSearchIntent(intent);
+    setInferredTags(data.inferredTags ?? null);
+    setSeasonalContext(seasonData);
+    setCurrentLoadingText(contextAwareText);
+    setChatResponse(data.content || '');
+    setFilteredDestinations(destinations);
+
+    setConversationHistory(prev => {
+      const userMessage = { role: 'user' as const, content: query };
+      const assistantMessage = { role: 'assistant' as const, content: data.content || '', destinations };
+      const updated = [...prev, userMessage, assistantMessage];
+      return updated.slice(-10);
+    });
+
+    setChatMessages(prev => {
+      const contextPrompt = getContextAwareLoadingMessage(query);
+      return [
+        ...prev,
+        { type: 'user' as const, content: query },
+        {
+          type: 'assistant' as const,
+          content: data.content || '',
+          contextPrompt: destinations.length > 0 ? contextPrompt : undefined
+        }
+      ];
+    });
+  }, [userContext]);
+
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
-  const performAISearch = useCallback(async (query: string) => {
-    setSubmittedQuery(query); // Store the submitted query
-    // Match chat component: only check if empty or loading
-    if (!query.trim() || searching) {
+  const performAISearch = useCallback(async (rawQuery: string) => {
+    setSubmittedQuery(rawQuery); // Store the submitted query
+    const trimmedQuery = rawQuery.trim();
+    if (!trimmedQuery) {
       return;
     }
+
+    const historySignature = conversationHistory
+      .slice(-4)
+      .map(msg => `${msg.role}:${msg.content}`)
+      .join('|');
+    const cacheKey = `${trimmedQuery.toLowerCase()}::${historySignature}`;
+
+    if (searching && cacheKey === lastQueryKeyRef.current) {
+      return;
+    }
+
+    const cachedEntry = searchCacheRef.current.get(cacheKey);
+    if (cachedEntry) {
+      if (Date.now() - cachedEntry.timestamp < SEARCH_CACHE_TTL_MS) {
+        if (activeSearchControllerRef.current) {
+          activeSearchControllerRef.current.abort();
+          activeSearchControllerRef.current = null;
+        }
+        lastQueryKeyRef.current = cacheKey;
+        applyAISearchResult({ query: rawQuery, data: cachedEntry.data, seasonData: cachedEntry.seasonData });
+        setSearching(false);
+        return;
+      }
+      searchCacheRef.current.delete(cacheKey);
+    }
+
+    lastQueryKeyRef.current = cacheKey;
+
+    if (activeSearchControllerRef.current) {
+      activeSearchControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    activeSearchControllerRef.current = controller;
 
     // Set initial loading text (will be updated with context-aware message after intent is parsed)
     setCurrentLoadingText('Finding the perfect spots...');
@@ -1423,6 +1540,8 @@ export default function Home() {
     setSearching(true);
     setSearchTier('ai-enhanced');
     setSearchIntent(null);
+    setInferredTags(null);
+    setSeasonalContext(null);
 
     try {
       // Match chat component exactly - build history from existing conversation
@@ -1438,8 +1557,9 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
-          query: query.trim(),
+          query: trimmedQuery,
           userId: user?.id,
           conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
         }),
@@ -1449,94 +1569,64 @@ export default function Home() {
         throw new Error('AI chat failed');
       }
 
-      const data = await response.json();
+      const data = await response.json() as AIChatResponsePayload;
 
-      // Update search tier
-      setSearchTier(data.searchTier || 'ai-chat');
-
-      // Update conversation history for API context (not displayed)
-      const userMessage = { role: 'user' as const, content: query };
-      const assistantMessage = { role: 'assistant' as const, content: data.content || '', destinations: data.destinations };
-      
-      const newHistory = [
-        ...conversationHistory,
-        userMessage,
-        assistantMessage
-      ];
-      setConversationHistory(newHistory.slice(-10)); // Keep last 10 messages for context
-
-      // Store enhanced intent data for intelligent feedback
-      if (data.intent) {
-        setSearchIntent(data.intent);
-        
-        // Store inferred tags for refinement chips
-        if (data.inferredTags) {
-          setInferredTags(data.inferredTags);
-        } else {
-          setInferredTags(null);
-        }
-        
-        // Fetch seasonal context if city is detected
-        let seasonData = null;
-        if (data.intent.city) {
-          try {
-            const seasonResponse = await fetch(`/api/seasonality?city=${encodeURIComponent(data.intent.city)}`);
-            if (seasonResponse.ok) {
-              seasonData = await seasonResponse.json();
-              setSeasonalContext(seasonData);
-            }
-          } catch (error) {
-            // Silently fail - seasonal context is optional
+      let seasonData: SeasonalityResponse = null;
+      if (data.intent?.city) {
+        try {
+          const seasonResponse = await fetch(`/api/seasonality?city=${encodeURIComponent(data.intent.city)}`, {
+            signal: controller.signal,
+          });
+          if (seasonResponse.ok) {
+            seasonData = await seasonResponse.json();
           }
-        } else {
-          setSeasonalContext(null);
+        } catch (seasonError) {
+          if ((seasonError as DOMException)?.name !== 'AbortError') {
+            console.warn('Error fetching seasonal context:', seasonError);
+          }
         }
-
-        // Update loading text with context-aware message based on intent
-        const contextAwareText = getContextAwareLoadingMessage(
-          query,
-          data.intent,
-          seasonData,
-          userContext
-        );
-        setCurrentLoadingText(contextAwareText);
-      } else {
-        // Fallback to context-aware message even without intent
-        const contextAwareText = getContextAwareLoadingMessage(query, null, seasonalContext, userContext);
-        setCurrentLoadingText(contextAwareText);
       }
 
-      // ONLY show the latest AI response (simple text)
-      setChatResponse(data.content || '');
-      
-      // ALWAYS set destinations array
-      const destinations = data.destinations || [];
-      setFilteredDestinations(destinations);
-
-      // Add messages to visual chat history
-      const contextPrompt = getContextAwareLoadingMessage(query);
-      setChatMessages(prev => [
-        ...prev,
-        { type: 'user', content: query },
-        { type: 'assistant', content: data.content || '', contextPrompt: destinations.length > 0 ? contextPrompt : undefined }
-      ]);
+      applyAISearchResult({ query: rawQuery, data, seasonData });
+      searchCacheRef.current.set(cacheKey, { data, seasonData, timestamp: Date.now() });
+      if (searchCacheRef.current.size > SEARCH_CACHE_LIMIT) {
+        const oldestKey = searchCacheRef.current.keys().next().value;
+        if (oldestKey) {
+          searchCacheRef.current.delete(oldestKey);
+        }
+      }
     } catch (error) {
+      if ((error as DOMException)?.name === 'AbortError') {
+        return;
+      }
       console.error('AI chat error:', error);
       setChatResponse('Sorry, I encountered an error. Please try again.');
       setFilteredDestinations([]);
       setSearchIntent(null);
       setSeasonalContext(null);
+      setInferredTags(null);
 
       // Add error message to chat
       setChatMessages(prev => [
         ...prev,
-        { type: 'user', content: query },
+        { type: 'user', content: rawQuery },
         { type: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
       ]);
     } finally {
-      setSearching(false);
+      if (activeSearchControllerRef.current === controller) {
+        activeSearchControllerRef.current = null;
+        setSearching(false);
+      }
     }
-  }, [user, searching, conversationHistory]);
+  }, [
+    applyAISearchResult,
+    conversationHistory,
+    searching,
+    user,
+    activeSearchControllerRef,
+    lastQueryKeyRef,
+    searchCacheRef
+  ]);
 
   // Convert inferredTags to RefinementTag array
   const convertInferredTagsToRefinementTags = useCallback((
