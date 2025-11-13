@@ -20,6 +20,10 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [googlePlaceQuery, setGooglePlaceQuery] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [formData, setFormData] = useState({
     slug: '',
     name: '',
@@ -46,6 +50,8 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
         michelin_stars: null,
         crown: false,
       });
+      setImageFile(null);
+      setImagePreview(null);
     }
   }, [isOpen]);
 
@@ -60,6 +66,87 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
     }
   }, [formData.name]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+
+    setUploadingImage(true);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', imageFile);
+      formDataToSend.append('slug', formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      return data.url;
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(`Image upload failed: ${error.message}`);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -70,6 +157,19 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
 
     setIsSaving(true);
     try {
+      // Upload image if file selected
+      let imageUrl = formData.image;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          // Don't submit if upload failed
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -84,7 +184,7 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
         category: formData.category,
         description: formData.description || null,
         content: formData.content || null,
-        image: formData.image || null,
+        image: imageUrl || null,
         michelin_stars: formData.michelin_stars || null,
         crown: formData.crown || false,
       };
@@ -268,19 +368,120 @@ export function POIDrawer({ isOpen, onClose, onSave }: POIDrawerProps) {
           />
         </div>
 
-        {/* Image URL */}
+        {/* Image Section */}
         <div>
-          <label htmlFor="image" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-            Image URL
+          <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+            Image
           </label>
+          
+          {/* Drag and Drop Zone */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`relative border-2 border-dashed rounded-2xl p-6 transition-colors mb-3 ${
+              isDragging
+                ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800'
+                : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50'
+            }`}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+              id="image-upload-input"
+            />
+            <label
+              htmlFor="image-upload-input"
+              className="flex flex-col items-center justify-center cursor-pointer"
+            >
+              {imagePreview ? (
+                <div className="relative w-full">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-xl mb-3"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setImageFile(null);
+                      setImagePreview(null);
+                      const input = document.getElementById('image-upload-input') as HTMLInputElement;
+                      if (input) input.value = '';
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="text-4xl mb-2">📷</div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Drag & drop an image here
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    or click to browse
+                  </span>
+                </>
+              )}
+            </label>
+          </div>
+
+          {/* Alternative: File Input Button */}
+          {!imagePreview && (
+            <div className="flex items-center gap-2 mb-3">
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="image-upload-button"
+                />
+                <span className="inline-flex items-center justify-center w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
+                  📁 Choose File
+                </span>
+              </label>
+            </div>
+          )}
+
+          {/* Or URL Input */}
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">or</div>
           <input
             id="image"
             type="url"
             value={formData.image}
-            onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+            onChange={(e) => {
+              setFormData(prev => ({ ...prev, image: e.target.value }));
+              if (!imageFile && e.target.value) {
+                setImagePreview(e.target.value);
+              }
+            }}
             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-            placeholder="https://..."
+            placeholder="Enter image URL"
           />
+          {imagePreview && formData.image && !imageFile && (
+            <div className="mt-3">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-800"
+                onError={() => setImagePreview(null)}
+              />
+            </div>
+          )}
+          {uploadingImage && (
+            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Uploading image...
+            </div>
+          )}
         </div>
 
         {/* Michelin Stars */}
