@@ -2118,8 +2118,8 @@ export default function Home() {
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-6">
-                    {/* City List - Limited to 2 rows */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs max-h-[4.5rem] overflow-hidden mb-[50px]">
+                    {/* City List - Limited to 2 rows when collapsed */}
+                    <div className={`flex flex-wrap gap-x-5 gap-y-3 text-xs transition-all duration-300 ${showAllCities ? '' : 'max-h-[4.5rem] overflow-hidden'} mb-[50px]`}>
                       <button
                         onClick={() => {
                           setSelectedCity("");
