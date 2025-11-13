@@ -345,7 +345,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       // Check if user is admin
       if (user) {
         const role = (user.app_metadata as Record<string, any> | null)?.role;
-        setIsAdmin(role === 'admin');
+        const isUserAdmin = role === 'admin';
+        setIsAdmin(isUserAdmin);
+        // Debug log (remove in production)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[DestinationDrawer] Admin check:', { 
+            role, 
+            isUserAdmin, 
+            userId: user.id,
+            hasDestination: !!destination 
+          });
+        }
       } else {
         setIsAdmin(false);
       }
@@ -724,7 +734,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {isAdmin && destination && (
               <button
                 onClick={() => setIsEditDrawerOpen(true)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
                 title="Edit destination"
                 aria-label="Edit destination"
               >
