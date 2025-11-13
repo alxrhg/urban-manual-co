@@ -105,6 +105,7 @@ The existing API routes can be enhanced to use vector search:
 1. **`/api/ai-chat/route.ts`** - Already uses vector search via `match_destinations` RPC
 2. **`/api/search/route.ts`** - Can be enhanced with hybrid search
 3. **`/api/conversation/[user_id]/route.ts`** - Can use hybrid search for context-aware results
+4. **`lib/search/semanticSearch.ts` & dependent API routes** - Now call the `search_destinations_intelligent` (aligned with `search_destinations_hybrid`) RPC so semantic search results flow through Supabase. The helper maps `city`, `category`, and `open_now` filters directly to the RPC arguments, trusts the RPC’s editorial boosts for ranking, and only falls back to Asimov keyword search if the RPC fails (logging `vector_failure`/`vector_fallback` metrics when it does).
 
 ### Hybrid Search Function Features
 
