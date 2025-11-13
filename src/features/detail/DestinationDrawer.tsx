@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -40,6 +40,11 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
+
+// Dynamically import POIDrawer to avoid SSR issues
+const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
+  ssr: false,
+});
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { 
@@ -200,6 +205,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingNested, setLoadingNested] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -431,6 +438,48 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setIsSaved(false);
         setIsVisited(false);
         setIsAddedToTrip(false);
+      }
+
+      // Check if user is admin - fetch fresh session to get latest metadata
+      if (user) {
+        try {
+          const supabaseClient = createClient();
+          const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+          
+          if (!sessionError && session) {
+            const role = (session.user.app_metadata as Record<string, any> | null)?.role;
+            const isUserAdmin = role === 'admin';
+            setIsAdmin(isUserAdmin);
+            // Debug log (remove in production)
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[DestinationDrawer] Admin check:', { 
+                role, 
+                isUserAdmin, 
+                userId: session.user.id,
+                hasDestination: !!destination,
+                hasSession: !!session
+              });
+            }
+          } else {
+            // Fallback to user from context if session fetch fails
+            const role = (user.app_metadata as Record<string, any> | null)?.role;
+            const isUserAdmin = role === 'admin';
+            setIsAdmin(isUserAdmin);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[DestinationDrawer] Admin check (fallback):', { 
+                role, 
+                isUserAdmin, 
+                userId: user.id,
+                sessionError: sessionError?.message
+              });
+            }
+          }
+        } catch (error) {
+          console.error('[DestinationDrawer] Error checking admin status:', error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
       }
     }
 
@@ -1152,14 +1201,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </span>
               )}
 
-              {(destination.michelin_stars ?? 0) > 0 && (
+              {destination.michelin_stars && destination.michelin_stars > 0 && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
                     className="h-3 w-3"
                   />
-                  {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
                   </span>
             )}
 
@@ -1505,6 +1554,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <Navigation className="h-3 w-3" />
                 Directions
               </a>
+              {isAdmin && destination && (
+                <button
+                  onClick={() => setIsEditDrawerOpen(true)}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-2xl text-xs font-medium flex items-center gap-1.5"
+                  title="Edit destination"
+                  aria-label="Edit destination"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </button>
+              )}
               <button
                 onClick={handleShare}
                 className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
@@ -1870,6 +1930,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           }}
         />
       )}
+      <POIDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        destination={destination}
+        onSave={() => {
+          setIsEditDrawerOpen(false);
+          // Optionally refresh destination data here if needed
+        }}
+      />
     </>
   );
 }
