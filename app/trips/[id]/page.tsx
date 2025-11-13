@@ -494,7 +494,6 @@ export default function TripDetailPage() {
         )}
         </div>
       </div>
-    </main>
 
       {/* Destination Drawer */}
       {selectedDestination && (
@@ -539,7 +538,7 @@ export default function TripDetailPage() {
           }}
         />
       )}
-    </div>
+    </main>
   );
 }
 
