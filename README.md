@@ -2,11 +2,11 @@
 
 A modern, curated travel guide featuring 897 destinations across the world.
 
-> **⚠️ IMPORTANT**: This project is being migrated to Next.js 16. Please use the **`urban-manual-next/`** directory for active development.
+> **⚠️ IMPORTANT**: The production Next.js 16 app now lives at the **repository root**. All commands in this README assume you are already in `/workspace/urban-manual` (or wherever you cloned the repo).
 
 ## Active Development (Next.js 16)
 
-**Location**: `/urban-manual-next/`
+**Location**: Repository root (`/`)
 
 ### Features
 
@@ -27,18 +27,48 @@ A modern, curated travel guide featuring 897 destinations across the world.
 
 ## Environment Variables
 
-Create a `.env.local` file in the `urban-manual-next/` directory with:
+Create a `.env.local` file in the repository root:
 
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://avdnefdfwvpjkuanhdwk.supabase.co
+# Required for Supabase auth + client access
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# Google Maps (optional - for map embeds)
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+# Required for enrichment scripts / admin tasks
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Gemini / Google features (AI chat, contextual search, maps)
+GEMINI_API_KEY=your_gemini_or_google_api_key
+GOOGLE_API_KEY=your_google_api_key # falls back to NEXT_PUBLIC_GOOGLE_API_KEY
+NEXT_PUBLIC_GOOGLE_API_KEY=your_browser_safe_google_key
+
+# Optional client features
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token
+NEXT_PUBLIC_MAPKIT_JS_KEY=your_apple_mapkit_key
+NEXT_PUBLIC_MAPKIT_TEAM_ID=your_apple_team_id
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_BUILD_VERSION=dev
 ```
 
-**Note**: Next.js requires the `NEXT_PUBLIC_` prefix for environment variables that need to be accessible in the browser.
+Next.js requires the `NEXT_PUBLIC_` prefix for any variable that must be available in the browser. The Supabase/Google scripts also read the unprefixed counterparts (`SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_API_KEY`, etc.), so the safest path is to define both when possible.
+
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server (http://localhost:3000)
+npm run dev
+
+# Run linting / unit tests
+npm run lint
+npm run test:unit
+
+# Build and start production server
+npm run build
+npm start
+```
 
 ## Deployment to Vercel
 
@@ -74,26 +104,9 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
    - Site URL: `https://your-project.vercel.app`
    - Redirect URLs: `https://your-project.vercel.app/**`
 
-## Local Development (Next.js)
+## Legacy Note
 
-```bash
-# Navigate to Next.js app
-cd urban-manual-next
-
-# Install dependencies
-npm install
-
-# Run development server (http://localhost:3000)
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-```
-
-**Note**: The old Vite app in `/client/` is deprecated and should not be used.
+Earlier iterations of Urban Manual used a Vite client that lived in `/client`. That codebase is fully deprecated—the folder no longer exists, and all current work should target the root-level Next.js 16 project described above. The history is useful if you are spelunking older migrations, but ignore any residual references to `/client` or `urban-manual-next/` in older documents.
 
 ## Database Setup
 
