@@ -2042,39 +2042,57 @@ export default function Home() {
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-6">
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs mb-[50px]">
-                      <button
-                        onClick={() => {
-                          setSelectedCity("");
-                          setCurrentPage(1);
-                          trackFilterChange({ filterType: 'city', value: 'all' });
-                        }}
-                        className={`transition-all duration-200 ease-out ${
-                          !selectedCity
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                        }`}
-                      >
-                        All Cities
-                      </button>
-                      {displayedCities.map((city) => (
+                    <div className="mb-[50px]">
+                      {/* CITIES Heading */}
+                      <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+                        CITIES
+                      </div>
+                      
+                      {/* City Buttons */}
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
-                          key={city}
                           onClick={() => {
-                            const newCity = city === selectedCity ? "" : city;
-                            setSelectedCity(newCity);
+                            setSelectedCity("");
                             setCurrentPage(1);
-                            trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                            trackFilterChange({ filterType: 'city', value: 'all' });
                           }}
                           className={`transition-all duration-200 ease-out ${
-                            selectedCity === city
+                            !selectedCity
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          {capitalizeCity(city)}
+                          All Cities
                         </button>
-                      ))}
+                        {displayedCities.map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => {
+                              const newCity = city === selectedCity ? "" : city;
+                              setSelectedCity(newCity);
+                              setCurrentPage(1);
+                              trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                            }}
+                            className={`transition-all duration-200 ease-out ${
+                              selectedCity === city
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            {capitalizeCity(city)}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* More Cities Button */}
+                      {cities.length > displayedCities.length && (
+                        <button
+                          onClick={() => router.push('/cities')}
+                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
+                        >
+                          + More cities ({cities.length - displayedCities.length})
+                        </button>
+                      )}
                     </div>
                     
                     {/* Category List (including Michelin) */}
