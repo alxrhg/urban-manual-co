@@ -808,6 +808,21 @@ export default function AdminPage() {
     }
   }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
 
+  const triggerDestinationRevalidation = useCallback(async (slug?: string | null) => {
+    if (!slug) return;
+    try {
+      await fetch('/api/revalidate/destination', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slug }),
+      });
+    } catch (error) {
+      console.warn('[Admin] Failed to trigger revalidation', error);
+    }
+  }, []);
+
   const loadAnalytics = useCallback(async () => {
     setLoadingAnalytics(true);
     try {
@@ -1249,6 +1264,7 @@ export default function AdminPage() {
                       setShowCreateModal(false);
                       setEditingDestination(null);
                       await loadDestinationList();
+                      await triggerDestinationRevalidation(data.slug || editingDestination?.slug);
                       toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
                     } catch (e: any) {
                       toast.error(`Error: ${e.message}`);

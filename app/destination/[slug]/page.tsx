@@ -2,13 +2,14 @@ import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import DetailSkeleton from '@/src/features/detail/DetailSkeleton';
+import DetailErrorState from '@/src/features/detail/DetailErrorState';
+import { getDestinationDetail } from '@/src/features/detail/data';
 import {
   generateDestinationMetadata,
   generateDestinationSchema,
   generateDestinationBreadcrumb,
   generateDestinationFAQ
 } from '@/lib/metadata';
-import { createServerClient } from '@/lib/supabase-server';
 import { Destination } from '@/types/destination';
 import DestinationPageClient from './page-client';
 
@@ -47,66 +48,20 @@ export default async function DestinationPage({
     notFound();
   }
 
-  // Fetch destination data on server using server-side client
-  const supabase = await createServerClient();
-  const { data: destination, error } = await supabase
-    .from('destinations')
-    .select(`
-      *,
-      formatted_address,
-      international_phone_number,
-      website,
-      rating,
-      user_ratings_total,
-      price_level,
-      opening_hours_json,
-      editorial_summary,
-      google_name,
-      place_types_json,
-      utc_offset,
-      vicinity,
-      reviews_json,
-      timezone_id,
-      latitude,
-      longitude,
-      photos_json,
-      primary_photo_url,
-      photo_count,
-      parent_destination_id
-    `)
-    .eq('slug', slug)
-    .single();
+  const detailPayload = await getDestinationDetail(slug);
 
-  // Load parent destination if this is a nested destination
-  let parentDestination: Destination | null = null;
-  if (destination?.parent_destination_id) {
-    const { data: parent } = await supabase
-      .from('destinations')
-      .select('id, slug, name, city, category, image')
-      .eq('id', destination.parent_destination_id)
-      .single();
-    if (parent) parentDestination = parent as Destination;
-  }
-
-  // Load nested destinations if this is a parent
-  let nestedDestinations: Destination[] = [];
-  if (destination?.id) {
-    const { data: nested } = await supabase.rpc('get_nested_destinations', {
-      parent_id: destination.id,
-    });
-    if (nested) nestedDestinations = nested as Destination[];
-  }
-
-  // If destination not found, show 404
-  if (error || !destination) {
-    console.error('[Destination Page] Error fetching destination:', error);
+  if (detailPayload.status === 'not-found') {
     notFound();
   }
 
+  if (detailPayload.status === 'error' || !detailPayload.destination) {
+    return <DetailErrorState slug={slug} issues={detailPayload.issues} />;
+  }
+
   // Generate structured data schemas
-  const schema = generateDestinationSchema(destination as Destination);
-  const breadcrumb = generateDestinationBreadcrumb(destination as Destination);
-  const faq = generateDestinationFAQ(destination as Destination);
+  const schema = generateDestinationSchema(detailPayload.destination as Destination);
+  const breadcrumb = generateDestinationBreadcrumb(detailPayload.destination as Destination);
+  const faq = generateDestinationFAQ(detailPayload.destination as Destination);
 
   return (
     <>
@@ -137,12 +92,12 @@ export default async function DestinationPage({
 
       {/* Render client component with server-fetched data */}
       <Suspense fallback={<DetailSkeleton />}>
-        <DestinationPageClient 
+        <DestinationPageClient
           initialDestination={{
-            ...(destination as Destination),
-            nested_destinations: nestedDestinations,
+            ...(detailPayload.destination as Destination),
+            nested_destinations: detailPayload.nestedDestinations,
           }}
-          parentDestination={parentDestination}
+          parentDestination={detailPayload.parentDestination}
         />
       </Suspense>
     </>
