@@ -54,18 +54,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In a production system, you would store this in a database
-    // For now, we'll just log it
-    console.log('A/B test event:', {
-      testName,
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const eventRecord = {
+      user_id: user.id,
+      test_name: testName,
       variant,
-      eventType,
-      metadata,
+      event_type: eventType,
+      metadata: metadata && typeof metadata === 'object' ? metadata : null,
+    };
+
+    console.log('A/B test event:', {
+      ...eventRecord,
       timestamp: new Date().toISOString(),
     });
 
-    // TODO: Store in analytics database
-    // await storeABTestEvent({ testName, variant, eventType, metadata });
+    const { error: insertError } = await supabase
+      .from('ab_test_events')
+      .insert(eventRecord);
+
+    if (insertError) {
+      throw insertError;
+    }
 
     return NextResponse.json({
       success: true,
