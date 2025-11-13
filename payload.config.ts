@@ -11,7 +11,10 @@ import type { PayloadRequest } from 'payload'
 async function checkSupabaseAdmin(req: PayloadRequest): Promise<boolean> {
   try {
     // Get authorization header from request
-    const authHeader = req.headers?.get?.('authorization') || req.headers?.authorization
+    // Headers is a Headers object, use get() method
+    const authHeader = req.headers?.get('authorization') || 
+                      (req.headers as any)?.authorization ||
+                      (typeof req.headers?.get === 'function' ? req.headers.get('authorization') : null)
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       // If no auth header, try to get from cookies (for admin UI)
