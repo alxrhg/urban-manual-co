@@ -4,8 +4,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { richQueryContextService } from '@/services/intelligence/rich-query-context';
-import { realtimeIntelligenceService } from '@/services/realtime/realtime-intelligence';
+import { extendedConversationMemoryService, ReusableConversationContext } from './conversation-memory';
 
 export interface ContextualRecommendationContext {
   location?: {
@@ -37,7 +36,7 @@ export interface ContextualRecommendationContext {
 }
 
 export interface ContextualRecommendation {
-  destination: any;
+  destination: DestinationRecord;
   reason: string;
   contextMatch: {
     location: boolean;
@@ -49,16 +48,35 @@ export interface ContextualRecommendation {
   score: number;
 }
 
+type DestinationRecord = {
+  id?: string | number;
+  city?: string | null;
+  neighborhood?: string | null;
+  category?: string | null;
+  tags?: Array<string | null> | null;
+  price_level?: number | null;
+  average_price_level?: number | null;
+  trending_score?: number | null;
+  michelin_stars?: number | null;
+  nearby_events_json?: string | null;
+};
+
+type NearbyEventRecord = {
+  start_date?: string;
+  date?: string;
+};
+
 export class ContextualRecommendationsService {
   private supabase;
 
-  constructor() {
-    try {
-      this.supabase = createServiceRoleClient();
+    constructor() {
+      try {
+        this.supabase = createServiceRoleClient();
     } catch (error) {
-      this.supabase = null;
+      console.warn('ContextualRecommendationsService: Supabase client unavailable', error);
+        this.supabase = null;
+      }
     }
-  }
 
   /**
    * Get contextual recommendations based on current context
@@ -71,6 +89,10 @@ export class ContextualRecommendationsService {
     if (!this.supabase) return [];
 
     try {
+      const preferenceContext = userId
+        ? await extendedConversationMemoryService.getReusableContext(userId)
+        : null;
+
       // Build base query
       let query = this.supabase
         .from('destinations')
@@ -94,11 +116,13 @@ export class ContextualRecommendationsService {
       }
 
       // Score and rank by context
+      const typedCandidates = (candidates as DestinationRecord[]) || [];
       const scored = await Promise.all(
-        candidates.map(async (dest) => {
+        typedCandidates.map(async (dest) => {
           const contextMatch = await this.evaluateContextMatch(dest, context);
-          const score = this.calculateContextScore(contextMatch, dest);
-          const reason = this.generateReason(dest, contextMatch, context);
+          const preferenceBoost = this.applyPreferenceBoost(dest, preferenceContext);
+          const score = this.calculateContextScore(contextMatch, dest, preferenceBoost);
+          const reason = this.generateReason(dest, contextMatch, context, preferenceContext);
 
           return {
             destination: dest,
@@ -123,7 +147,7 @@ export class ContextualRecommendationsService {
    * Evaluate how well a destination matches the context
    */
   private async evaluateContextMatch(
-    dest: any,
+    dest: DestinationRecord,
     context: ContextualRecommendationContext
   ): Promise<ContextualRecommendation['contextMatch']> {
     const match: ContextualRecommendation['contextMatch'] = {
@@ -168,7 +192,7 @@ export class ContextualRecommendationsService {
   }
 
   private evaluateTemporalMatch(
-    dest: any,
+    dest: DestinationRecord,
     temporal: ContextualRecommendationContext['temporal']
   ): boolean {
     if (!temporal) return false;
@@ -176,7 +200,9 @@ export class ContextualRecommendationsService {
     // Time of day matching
     if (temporal.timeOfDay) {
       const category = dest.category?.toLowerCase();
-      const tags = (dest.tags || []).map((t: any) => String(t).toLowerCase());
+      const tags = ((dest.tags as Array<string | null>) || []).map(tag =>
+        String(tag ?? '').toLowerCase()
+      );
 
       // Morning: cafes, breakfast spots
       if (temporal.timeOfDay === 'morning') {
@@ -211,13 +237,15 @@ export class ContextualRecommendationsService {
   }
 
   private evaluateWeatherMatch(
-    dest: any,
+    dest: DestinationRecord,
     weather: ContextualRecommendationContext['weather']
   ): boolean {
     if (!weather) return false;
 
     const category = dest.category?.toLowerCase();
-    const tags = (dest.tags || []).map((t: any) => String(t).toLowerCase());
+    const tags = ((dest.tags as Array<string | null>) || []).map(tag =>
+      String(tag ?? '').toLowerCase()
+    );
 
     // Good weather: outdoor activities, rooftop bars, parks
     if (weather.isGoodWeather) {
@@ -244,7 +272,7 @@ export class ContextualRecommendationsService {
   }
 
   private evaluateEventsMatch(
-    dest: any,
+    dest: DestinationRecord,
     events: ContextualRecommendationContext['events']
   ): boolean {
     if (!events || events.length === 0) return false;
@@ -256,8 +284,8 @@ export class ContextualRecommendationsService {
 
       // Check if any event is near this destination
       for (const event of events) {
-        const matchingEvent = nearbyEvents.find((e: any) => {
-          const eventDate = new Date(e.start_date || e.date);
+        const matchingEvent = (nearbyEvents as NearbyEventRecord[]).find((eventRecord) => {
+          const eventDate = new Date(eventRecord.start_date || eventRecord.date || '');
           const daysDiff = Math.abs(
             (eventDate.getTime() - event.date.getTime()) / (1000 * 60 * 60 * 24)
           );
@@ -269,20 +297,22 @@ export class ContextualRecommendationsService {
         }
       }
     } catch (error) {
-      // Invalid JSON, skip
+      console.warn('ContextualRecommendationsService: failed to parse nearby events JSON', error);
     }
 
     return false;
   }
 
   private evaluateUserStateMatch(
-    dest: any,
+    dest: DestinationRecord,
     userState: ContextualRecommendationContext['userState']
   ): boolean {
     if (!userState) return false;
 
     const category = dest.category?.toLowerCase();
-    const tags = (dest.tags || []).map((t: any) => String(t).toLowerCase());
+    const tags = ((dest.tags as Array<string | null>) || []).map(tag =>
+      String(tag ?? '').toLowerCase()
+    );
     const priceLevel = dest.price_level || 0;
 
     // Business trip: professional, convenient locations
@@ -323,7 +353,8 @@ export class ContextualRecommendationsService {
    */
   private calculateContextScore(
     contextMatch: ContextualRecommendation['contextMatch'],
-    dest: any
+    dest: DestinationRecord,
+    preferenceBoost: number = 0
   ): number {
     let score = 0;
 
@@ -343,6 +374,8 @@ export class ContextualRecommendationsService {
       score += dest.trending_score * 0.1;
     }
 
+    score += preferenceBoost;
+
     return Math.min(1, score);
   }
 
@@ -350,9 +383,10 @@ export class ContextualRecommendationsService {
    * Generate human-readable reason
    */
   private generateReason(
-    dest: any,
+    dest: DestinationRecord,
     contextMatch: ContextualRecommendation['contextMatch'],
-    context: ContextualRecommendationContext
+    context: ContextualRecommendationContext,
+    preferenceContext: ReusableConversationContext | null
   ): string {
     const reasons: string[] = [];
 
@@ -380,9 +414,82 @@ export class ContextualRecommendationsService {
       reasons.push(`${dest.michelin_stars} Michelin star${dest.michelin_stars > 1 ? 's' : ''}`);
     }
 
+    if (preferenceContext?.preferences.favoredCategories?.length) {
+      const category = dest.category?.toLowerCase();
+      const match = preferenceContext.preferences.favoredCategories.find(cat =>
+        category?.includes(cat.toLowerCase())
+      );
+      if (match) {
+        reasons.push(`Matches your interest in ${match}`);
+      }
+    }
+
+    if (preferenceContext?.preferences.favoredCuisines?.length && dest.tags) {
+      const tags = ((dest.tags as Array<string | null>) || []).map(tag =>
+        String(tag ?? '').toLowerCase()
+      );
+      const cuisineMatch = preferenceContext.preferences.favoredCuisines.find(cuisine =>
+        tags.includes(cuisine.toLowerCase())
+      );
+      if (cuisineMatch) {
+        reasons.push(`Includes the ${cuisineMatch} flavours you like`);
+      }
+    }
+
     return reasons.length > 0
       ? reasons.join(' • ')
       : 'Recommended based on your context';
+  }
+
+  private applyPreferenceBoost(
+    dest: DestinationRecord,
+    preferenceContext: ReusableConversationContext | null
+  ): number {
+    if (!preferenceContext) return 0;
+
+    let boost = 0;
+    const category = dest.category?.toLowerCase();
+    const tags = ((dest.tags as Array<string | null>) || []).map(tag =>
+      String(tag ?? '').toLowerCase()
+    );
+
+    if (category && preferenceContext.preferences.favoredCategories?.length) {
+      const matchesCategory = preferenceContext.preferences.favoredCategories.some(cat =>
+        category.includes(cat.toLowerCase())
+      );
+      if (matchesCategory) {
+        boost += 0.08;
+      }
+    }
+
+    if (tags.length && preferenceContext.preferences.favoredCuisines?.length) {
+      const matchesCuisine = preferenceContext.preferences.favoredCuisines.some(cuisine =>
+        tags.includes(cuisine.toLowerCase())
+      );
+      if (matchesCuisine) {
+        boost += 0.05;
+      }
+    }
+
+    const priceLevel = Number(dest.price_level || dest.average_price_level || 0);
+    const budgetTier = this.estimatePriceTierFromBudget(preferenceContext.preferences.budget);
+    if (budgetTier && priceLevel && priceLevel <= budgetTier) {
+      boost += 0.04;
+    }
+
+    return boost;
+  }
+
+  private estimatePriceTierFromBudget(
+    budget?: { min?: number | null; max?: number | null; currency?: string | null }
+  ): number | null {
+    if (!budget) return null;
+    const value = budget.max || budget.min;
+    if (!value) return null;
+    if (value < 50) return 1;
+    if (value < 150) return 2;
+    if (value < 300) return 3;
+    return 4;
   }
 }
 

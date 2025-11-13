@@ -6,7 +6,7 @@
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { itineraryIntelligenceService, Itinerary } from '@/services/intelligence/itinerary';
-import { extendedConversationMemoryService } from './conversation-memory';
+import { extendedConversationMemoryService, ReusableConversationContext } from './conversation-memory';
 import { richQueryContextService } from './rich-query-context';
 
 export interface ConversationItineraryRequest {
@@ -24,6 +24,7 @@ export class ConversationItineraryService {
     try {
       this.supabase = createServiceRoleClient();
     } catch (error) {
+      console.warn('ConversationItineraryService: Supabase client unavailable', error);
       this.supabase = null;
     }
 
@@ -57,19 +58,27 @@ export class ConversationItineraryService {
         };
       }
 
-      // Build rich context
-      const context = await richQueryContextService.buildContext(
+      const reusableContext = request.userId
+        ? await extendedConversationMemoryService.getReusableContext(request.userId)
+        : null;
+
+      const resolvedCity = requirements.city || reusableContext?.recentCities?.[0];
+
+      // Build rich context asynchronously to keep caches warm
+      await richQueryContextService.buildContext(
         request.userId,
-        requirements.city
+        resolvedCity
       );
+
+      const mergedPreferences = this.mergePreferences(requirements, reusableContext);
 
       // Generate itinerary
       const itinerary = await itineraryIntelligenceService.generateItinerary(
-        requirements.city || 'Unknown',
+        resolvedCity || 'Unknown',
         requirements.durationDays || 3,
         {
-          categories: requirements.categories,
-          budget: requirements.budget,
+          categories: mergedPreferences.categories,
+          budget: mergedPreferences.budget,
           style: requirements.style,
           mustVisit: requirements.mustVisit,
         },
@@ -171,6 +180,36 @@ Return only JSON:`;
     };
   }
 
+  private mergePreferences(
+    requirements: {
+      categories?: string[];
+      budget?: number;
+    },
+    reusableContext: ReusableConversationContext | null
+  ): { categories?: string[]; budget?: number } {
+    const categories = requirements.categories?.length
+      ? requirements.categories
+      : reusableContext?.preferences.favoredCategories;
+
+    const budget = requirements.budget ?? this.resolveBudgetFromContext(reusableContext);
+
+    return {
+      categories: categories && categories.length > 0 ? categories : undefined,
+      budget: budget || undefined,
+    };
+  }
+
+  private resolveBudgetFromContext(
+    reusableContext: ReusableConversationContext | null
+  ): number | null {
+    if (!reusableContext?.preferences.budget) return null;
+    const { min, max } = reusableContext.preferences.budget;
+    if (min && max) {
+      return Math.round((min + max) / 2);
+    }
+    return max || min || null;
+  }
+
   /**
    * Optimize route for multi-day itinerary
    */
@@ -204,7 +243,7 @@ Return only JSON:`;
           });
 
           if (response.ok) {
-            const optimized = await response.json();
+            await response.json();
             // Map optimized sequence back to itinerary items
             // This is simplified - full implementation would preserve timing, notes, etc.
             return itinerary; // For now, return original

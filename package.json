@@ -24,7 +24,9 @@
     "discovery:export": "tsx scripts/discovery-engine-export.ts",
     "discovery:import": "tsx scripts/discovery-engine-import.ts",
     "fetch:categories": "tsx scripts/fetch-categories-from-google.ts",
-    "generate:micro-descriptions": "tsx scripts/generate_micro_descriptions.ts"
+    "generate:micro-descriptions": "tsx scripts/generate_micro_descriptions.ts",
+    "workers:conversation-summary": "tsx scripts/workers/conversation-summary-worker.ts",
+    "workers:conversation-maintenance": "tsx scripts/workers/conversation-session-maintenance.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.4",
