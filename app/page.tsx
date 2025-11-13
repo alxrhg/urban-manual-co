@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Destination } from '@/types/destination';
 import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus, Sparkles
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -257,6 +257,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState<'default' | 'recent'>('default');
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
@@ -792,7 +793,7 @@ export default function Home() {
       }
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations, sortBy]); // Filters only apply when no search
 
   // Note: Removed circular sync effect - SearchFiltersComponent now manages advancedFilters directly
   // and updates selectedCity/selectedCategory when needed, avoiding duplicate filter initialization
@@ -940,7 +941,8 @@ export default function Home() {
     currentSelectedCity: string = selectedCity,
     currentSelectedCategory: string = selectedCategory,
     currentUser: typeof user = user,
-    currentVisitedSlugs: Set<string> = visitedSlugs
+    currentVisitedSlugs: Set<string> = visitedSlugs,
+    currentSortBy: 'default' | 'recent' = sortBy
   ) => {
     let filtered = dataToFilter;
 
@@ -1050,26 +1052,37 @@ export default function Home() {
     }
     // When searchTerm exists, AI chat handles all filtering - don't apply text search here
 
-    // Pinterest-style recommendation sorting
-    // Only apply smart sorting when no search term (natural discovery)
-    if (!currentSearchTerm) {
-      filtered = filtered
-        .map((dest, index) => ({
-          ...dest,
-          _score: getRecommendationScore(dest, index)
-        }))
-        .sort((a, b) => b._score - a._score);
+    // Apply sorting
+    if (currentSortBy === 'recent') {
+      // Sort by created_at descending (newest first)
+      filtered = filtered.sort((a, b) => {
+        const aDate = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+        const bDate = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+        return bDate - aDate; // Descending (newest first)
+      });
+    } else {
+      // Pinterest-style recommendation sorting
+      // Only apply smart sorting when no search term (natural discovery)
+      if (!currentSearchTerm) {
+        filtered = filtered
+          .map((dest, index) => ({
+            ...dest,
+            _score: getRecommendationScore(dest, index)
+          }))
+          .sort((a, b) => b._score - a._score);
+      }
     }
 
     // When user is signed in: separate visited & unvisited, move visited to bottom
-    if (currentUser && currentVisitedSlugs.size > 0) {
+    // Only apply this when not sorting by recent (recent sort takes priority)
+    if (currentSortBy !== 'recent' && currentUser && currentVisitedSlugs.size > 0) {
       const unvisited = filtered.filter(d => !currentVisitedSlugs.has(d.slug));
       const visited = filtered.filter(d => currentVisitedSlugs.has(d.slug));
       filtered = [...unvisited, ...visited];
     }
 
     return filtered;
-  }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs]);
+  }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs, sortBy]);
   const fetchDestinations = useCallback(async () => {
     try {
       let destinationsData: Destination[] | null = null;
@@ -1980,6 +1993,32 @@ export default function Home() {
                           </button>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Recent Added Sort Button (Admin Only) */}
+                    {isAdmin && (
+                      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
+                        <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+                          SORT
+                        </div>
+                        <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                          <button
+                            onClick={() => {
+                              const newSort = sortBy === 'recent' ? 'default' : 'recent';
+                              setSortBy(newSort);
+                              setCurrentPage(1);
+                            }}
+                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                              sortBy === 'recent'
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            Recent Added
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
