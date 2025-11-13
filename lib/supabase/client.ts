@@ -64,26 +64,26 @@ export function createClient() {
   if (!validation.valid) {
     const errorMessage = formatValidationErrors(validation.errors);
     
-    // Only throw in production runtime (not during build)
     // Check if we're in a browser context (runtime) vs build time
     const isRuntime = typeof window !== 'undefined';
     const isProduction = process.env.NODE_ENV === 'production';
     
-    if (isProduction && isRuntime) {
-      throw new Error(
-        `Invalid Supabase configuration detected in production:\n\n${errorMessage}\n` +
-        `This is a critical error. Please check your environment variables.`
-      );
+    // Log error in all environments, but don't throw
+    // This allows the app to continue running with a placeholder client
+    // The placeholder client will fail gracefully when actually used
+    if (isRuntime) {
+      if (isProduction) {
+        console.error('[Supabase Client] Configuration Validation Failed (production):');
+        console.error(errorMessage);
+        console.warn('[Supabase Client] Using placeholder client. Supabase features will not work until configuration is fixed.');
+      } else {
+        console.error('[Supabase Client] Configuration Validation Failed:');
+        console.error(errorMessage);
+        console.warn('[Supabase Client] Using placeholder client. Fix configuration to enable Supabase features.');
+      }
     }
 
-    // In development or build time, log detailed error but allow placeholder client
-    if (process.env.NODE_ENV === 'development' && isRuntime) {
-      console.error('[Supabase Client] Configuration Validation Failed:');
-      console.error(errorMessage);
-      console.warn('[Supabase Client] Using placeholder client. Fix configuration to enable Supabase features.');
-    }
-
-    // Return placeholder client (allows build to proceed, but will fail at runtime in production)
+    // Return placeholder client (allows app to continue, but Supabase calls will fail)
     return createBrowserClient(
       'https://placeholder.supabase.co',
       'placeholder-key',

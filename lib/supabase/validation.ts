@@ -55,7 +55,7 @@ export function validateSupabaseUrl(url: string): ValidationResult {
 
 /**
  * Validate Supabase anon/publishable key
- * Must be a valid JWT-like key (typically starts with eyJ...)
+ * Checks for placeholder values and basic validity
  */
 export function validateSupabaseAnonKey(key: string): ValidationResult {
   const errors: string[] = [];
@@ -71,15 +71,14 @@ export function validateSupabaseAnonKey(key: string): ValidationResult {
     return { valid: false, errors };
   }
 
-  // Anon keys are typically JWT tokens (start with eyJ) and are long
-  if (key.length < 100) {
-    errors.push('Supabase anon key appears too short (expected ~100+ characters)');
+  // Basic length check - keys should be at least 20 characters
+  // (some valid keys might be shorter than 100, so we're more lenient)
+  if (key.length < 20) {
+    errors.push('Supabase anon key appears too short (expected at least 20 characters)');
   }
 
-  // JWT tokens typically start with 'eyJ' (base64 encoded JSON header)
-  if (!key.startsWith('eyJ')) {
-    errors.push('Supabase anon key should be a JWT token (starts with eyJ)');
-  }
+  // Note: We don't enforce JWT format (eyJ prefix) as some valid Supabase setups
+  // might use different key formats. The key just needs to be non-empty and not a placeholder.
 
   return {
     valid: errors.length === 0,
@@ -89,7 +88,7 @@ export function validateSupabaseAnonKey(key: string): ValidationResult {
 
 /**
  * Validate Supabase service role/secret key
- * Must be a valid JWT-like key and longer than anon key
+ * Checks for placeholder values and basic validity
  */
 export function validateSupabaseServiceRoleKey(key: string): ValidationResult {
   const errors: string[] = [];
@@ -105,15 +104,14 @@ export function validateSupabaseServiceRoleKey(key: string): ValidationResult {
     return { valid: false, errors };
   }
 
-  // Service role keys are typically longer than anon keys
-  if (key.length < 100) {
-    errors.push('Supabase service role key appears too short (expected ~100+ characters)');
+  // Basic length check - service role keys should be at least 50 characters
+  // (more lenient than before to accommodate different key formats)
+  if (key.length < 50) {
+    errors.push('Supabase service role key appears too short (expected at least 50 characters)');
   }
 
-  // JWT tokens typically start with 'eyJ'
-  if (!key.startsWith('eyJ')) {
-    errors.push('Supabase service role key should be a JWT token (starts with eyJ)');
-  }
+  // Note: We don't enforce JWT format (eyJ prefix) as some valid Supabase setups
+  // might use different key formats. The key just needs to be non-empty and not a placeholder.
 
   return {
     valid: errors.length === 0,
