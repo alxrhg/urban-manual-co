@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { AccountDrawer } from "@/components/AccountDrawer";
 import { ChatDrawer } from "@/components/ChatDrawer";
+import { LoginDrawer } from "@/components/LoginDrawer";
 
 export function Header() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
+  const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -138,7 +140,7 @@ export function Header() {
               </button>
             ) : (
               <button
-                onClick={() => navigate('/auth/login')}
+                onClick={() => setIsLoginDrawerOpen(true)}
                 className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
                 aria-label="Sign in"
               >
@@ -274,6 +276,12 @@ export function Header() {
       <ChatDrawer
         isOpen={isChatDrawerOpen}
         onClose={() => setIsChatDrawerOpen(false)}
+      />
+      
+      {/* Login Drawer */}
+      <LoginDrawer
+        isOpen={isLoginDrawerOpen}
+        onClose={() => setIsLoginDrawerOpen(false)}
       />
     </header>
   );

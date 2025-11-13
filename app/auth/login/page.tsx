@@ -21,13 +21,18 @@ function LoginPageContent() {
     }, 300);
   };
 
-  return <LoginDrawer isOpen={isOpen} onClose={handleClose} />;
+  // Render drawer over transparent background (drawer has its own backdrop)
+  return (
+    <div className="min-h-screen bg-transparent">
+      <LoginDrawer isOpen={isOpen} onClose={handleClose} />
+    </div>
+  );
 }
 
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-gray-500 text-sm">Loading...</div>
       </div>
     }>
