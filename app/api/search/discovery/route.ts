@@ -38,16 +38,16 @@ export async function POST(request: NextRequest) {
     
     // Check if Discovery Engine is available
     const isAvailable = discoveryEngine.isAvailable();
-    console.log('[Discovery Engine API] Status check:', {
-      isAvailable,
-      useDiscoveryEngine: flags.useDiscoveryEngine,
-      projectId: process.env.DISCOVERY_ENGINE_PROJECT_ID ? 'set' : 'missing',
-      location: process.env.DISCOVERY_ENGINE_LOCATION ? 'set' : 'missing',
-      dataStoreId: process.env.DISCOVERY_ENGINE_DATA_STORE_ID ? 'set' : 'missing',
-    });
-
+    
     if (!isAvailable) {
       // Discovery Engine not configured is expected - use debug log
+      console.debug('[Discovery Engine API] Status check:', {
+        isAvailable,
+        useDiscoveryEngine: flags.useDiscoveryEngine,
+        projectId: process.env.DISCOVERY_ENGINE_PROJECT_ID ? 'set' : 'missing',
+        location: process.env.DISCOVERY_ENGINE_LOCATION ? 'set' : 'missing',
+        dataStoreId: process.env.DISCOVERY_ENGINE_DATA_STORE_ID ? 'set' : 'missing',
+      });
       console.debug('[Discovery Engine API] Discovery Engine is not available - returning 503 (expected fallback)');
       return NextResponse.json(
         { 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       useDiscoveryEngine = variant === 'discovery_engine';
     }
     
-    console.log('[Discovery Engine API] Request:', {
+    console.debug('[Discovery Engine API] Request:', {
       query,
       userId: finalUserId || 'anonymous',
       useDiscoveryEngine,
