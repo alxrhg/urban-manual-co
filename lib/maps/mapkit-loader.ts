@@ -60,18 +60,26 @@ declare global {
 }
 
 function fetchAuthorizationToken(done: (token: string) => void) {
-  fetch('/api/mapkit-token', { credentials: 'same-origin' })
+  fetch('/api/mapkit-token', { 
+    credentials: 'same-origin',
+    // Add timeout to prevent hanging
+    signal: AbortSignal.timeout(10000) // 10 second timeout
+  })
     .then(res => {
       if (!res.ok) {
-        throw new Error(`Token request failed: ${res.status}`);
+        throw new Error(`Token request failed: ${res.status} ${res.statusText}`);
       }
       return res.json();
     })
     .then(data => {
-      done(data.token || '');
+      if (!data.token) {
+        throw new Error('No token received from server');
+      }
+      done(data.token);
     })
     .catch(error => {
       console.error('MapKit authorization error:', error);
+      // Pass empty token but log the error - MapKit will handle the failure
       done('');
     });
 }
@@ -83,20 +91,39 @@ function waitForMapkitReady(): Promise<void> {
       return;
     }
 
+    // Increased timeout to 15 seconds to account for slow networks and authorization
     const timeout = window.setTimeout(() => {
-      reject(new Error('MapKit initialization timeout'));
-    }, 6000);
+      reject(new Error('MapKit initialization timeout - the authorization token may be invalid or the network is slow'));
+    }, 15000);
+
+    let attempts = 0;
+    const maxAttempts = 300; // 15 seconds at ~50ms per check
 
     const checkLoaded = () => {
+      attempts++;
+      
+      // Check if MapKit is loaded and initialized
       if (window.mapkit?.loaded) {
         window.clearTimeout(timeout);
         resolve();
         return;
       }
+
+      // If we've exceeded max attempts, reject
+      if (attempts >= maxAttempts) {
+        window.clearTimeout(timeout);
+        reject(new Error('MapKit initialization timeout - exceeded maximum attempts'));
+        return;
+      }
+
+      // Continue checking
       window.requestAnimationFrame(checkLoaded);
     };
 
-    checkLoaded();
+    // Start checking after a small delay to allow init to complete
+    window.setTimeout(() => {
+      checkLoaded();
+    }, 100);
   });
 }
 
@@ -128,12 +155,26 @@ export function ensureMapkitLoaded(): Promise<void> {
           window.mapkit.language = navigator.language || 'en-US';
           initialized = true;
         } catch (error) {
+          console.error('MapKit init error:', error);
           reject(error as Error);
           return;
         }
       }
 
-      waitForMapkitReady().then(resolve).catch(reject);
+      // Wait for MapKit to be ready, with better error handling
+      waitForMapkitReady()
+        .then(() => {
+          // Double-check that MapKit is actually ready
+          if (!window.mapkit?.loaded) {
+            reject(new Error('MapKit loaded property is false after initialization'));
+            return;
+          }
+          resolve();
+        })
+        .catch((error) => {
+          console.error('MapKit ready check failed:', error);
+          reject(error);
+        });
     };
 
     const handleError = () => {
