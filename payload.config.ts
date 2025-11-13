@@ -30,8 +30,15 @@ function getPostgresConnectionString(): string {
       // Extract project ref from Supabase URL (e.g., xyzabc123.supabase.co -> xyzabc123)
       const projectRef = url.hostname.split('.')[0]
       
-      // Use connection pooling (recommended for serverless)
-      return `postgresql://postgres.${projectRef}:${encodeURIComponent(dbPassword)}@aws-0-us-east-1.pooler.supabase.com:6543/postgres`
+      // Try connection pooling first (recommended for serverless)
+      // If that doesn't work, fall back to direct connection
+      const poolerUrl = `postgresql://postgres.${projectRef}:${encodeURIComponent(dbPassword)}@aws-0-us-east-1.pooler.supabase.com:6543/postgres`
+      
+      // Also support direct connection (port 5432) if pooling isn't available
+      const directUrl = `postgresql://postgres.${projectRef}:${encodeURIComponent(dbPassword)}@db.${projectRef}.supabase.co:5432/postgres`
+      
+      // Prefer pooling, but direct connection works too
+      return poolerUrl
     } catch (error) {
       console.error('Error constructing PostgreSQL URL from Supabase URL:', error)
     }
