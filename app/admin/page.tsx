@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
+import { Loader2, Plus, Edit, Search, X, Trash2, RefreshCcw, Sparkles, Layers, Users, Bookmark } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
@@ -11,9 +11,13 @@ import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
 import { createColumns, type Destination } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
+import { AdminGrid, GridSection, GridCard, GridCardHeader, GridCardBody, GridCardFooter } from "@/src/components/admin/layout";
+import { AdminStatCard } from "@/src/components/admin/stat-card";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+type AdminTab = 'destinations' | 'analytics' | 'searches' | 'discover';
 
 // Destination Form Component
 function DestinationForm({
@@ -730,7 +734,7 @@ export default function AdminPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover'>('destinations');
+  const [activeTab, setActiveTab] = useState<AdminTab>('destinations');
 
   // Analytics state
   const [analyticsStats, setAnalyticsStats] = useState({
@@ -965,6 +969,84 @@ export default function AdminPage() {
     }
   };
 
+  const tabDetails: Record<AdminTab, { title: string; description: string }> = {
+    destinations: {
+      title: 'Destinations grid',
+      description: 'Review, enrich, and publish curated venues.',
+    },
+    analytics: {
+      title: 'Signals & analytics',
+      description: 'Monitor engagement events flowing into Supabase.',
+    },
+    searches: {
+      title: 'Search telemetry',
+      description: 'Audit real user queries with contextual metadata.',
+    },
+    discover: {
+      title: 'Discover experiments',
+      description: 'Prototype AI surfaced destinations in real time.',
+    },
+  };
+
+  const heroStats = [
+    {
+      label: 'Destinations loaded',
+      value: isLoadingList ? '…' : destinationList.length.toLocaleString(),
+      hint: listSearchQuery ? 'Filtered snapshot' : 'Current batch (20 rows)',
+      icon: <Layers className="h-8 w-8 text-slate-400" />,
+    },
+    {
+      label: 'Search logs cached',
+      value: searchLogs.length.toLocaleString(),
+      hint: 'Last 100 interactions',
+      icon: <Search className="h-8 w-8 text-slate-400" />,
+    },
+    {
+      label: 'Unique users tracked',
+      value: analyticsStats.totalUsers ? analyticsStats.totalUsers.toLocaleString() : '—',
+      hint: 'From user_interactions',
+      icon: <Users className="h-8 w-8 text-slate-400" />,
+    },
+    {
+      label: 'Saves recorded',
+      value: analyticsStats.totalSaves ? analyticsStats.totalSaves.toLocaleString() : '—',
+      hint: 'All time saves',
+      icon: <Bookmark className="h-8 w-8 text-slate-400" />,
+    },
+  ];
+
+  const quickActions = [
+    {
+      label: 'Add destination',
+      description: 'Open the editor drawer with a blank form.',
+      icon: <Plus className="h-4 w-4" />,
+      action: () => {
+        setEditingDestination(null);
+        setShowCreateModal(true);
+      },
+    },
+    {
+      label: 'Refresh grid',
+      description: 'Pull the latest snapshot from Supabase.',
+      icon: <RefreshCcw className="h-4 w-4" />,
+      action: () => {
+        void loadDestinationList();
+      },
+    },
+    {
+      label: activeTab === 'discover' ? 'Back to destinations' : 'Open discover',
+      description: activeTab === 'discover'
+        ? 'Return to the operational grid.'
+        : 'Jump into the AI-driven Discover lab.',
+      icon: <Sparkles className="h-4 w-4" />,
+      action: () => {
+        setActiveTab(activeTab === 'discover' ? 'destinations' : 'discover');
+      },
+    },
+  ];
+
+  const tabOptions: AdminTab[] = ['destinations', 'analytics', 'searches', 'discover'];
+
   // Show loading state
   if (!authChecked) {
     return (
@@ -981,295 +1063,363 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="container mx-auto">
-        {/* Header - Matches account page spacing and style */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Admin</h1>
-            <button
-              onClick={() => router.push('/account')}
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-            >
-              Back to Account
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
-            <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">Admin</span>
-          </div>
-        </div>
-
-        {/* Tab Navigation - Matches account page style */}
-        <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-3">
-            {['destinations', 'analytics', 'searches', 'discover'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={`transition-all pb-1 ${
-                  activeTab === tab
-                    ? "font-medium text-black dark:text-white border-b-2 border-black dark:border-white"
-                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Destinations Tab */}
-        {activeTab === 'destinations' && (
-          <div className="fade-in space-y-12">
-
-        {/* Destination List */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Destinations</h2>
-            <button
-              onClick={() => {
-                setEditingDestination(null);
-                setShowCreateModal(true);
-              }}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Place
-            </button>
-          </div>
-          {isLoadingList ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
-            </div>
-          ) : (
-            <DataTable
-              columns={createColumns(
-                (dest) => {
-                  setEditingDestination(dest);
-                  setShowCreateModal(true);
-                },
-                handleDeleteDestination
-              )}
-              data={destinationList}
-              searchQuery={listSearchQuery}
-              onSearchChange={(query) => {
-                setListSearchQuery(query);
-              }}
-              isLoading={isLoadingList}
-            />
-          )}
-        </div>
-        </div>
-        )}
-
-
-        {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
-          <div className="fade-in space-y-12">
-            {loadingAnalytics ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : (
-              <>
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Views</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Searches</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Saves</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Users</div>
-                  </div>
+    <main className="min-h-screen bg-slate-100/70 pb-16 pt-12 dark:bg-slate-950">
+      <AdminGrid>
+        <GridSection className="mb-10">
+          <GridCard tone="transparent" className="border-none shadow-none">
+            <GridCardBody className="px-0">
+              <div className="flex flex-wrap items-start justify-between gap-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-500">Control room</p>
+                  <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 dark:text-white">Admin grid</h1>
+                  <p className="mt-2 max-w-2xl text-sm text-slate-500">
+                    Operate destinations, analytics, and discovery tooling from a single staggered grid layout.
+                  </p>
                 </div>
-
-                {/* Top Searches */}
-                {analyticsStats.topSearches.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
-                    <div className="space-y-2">
-                      {analyticsStats.topSearches.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                          <span className="text-sm font-medium">{item.query}</span>
-                          <span className="text-xs text-gray-500">{item.count} searches</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Searches Tab */}
-        {activeTab === 'searches' && (
-          <div className="fade-in">
-            {loadingSearches ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                <div className="flex flex-col items-start gap-3 text-xs text-slate-500">
+                  <span className="rounded-full bg-black px-4 py-1 text-white dark:bg-white dark:text-black">Admin</span>
+                  <span>{user?.email}</span>
+                  <button
+                    onClick={() => router.push('/account')}
+                    className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-600 underline decoration-dotted"
+                  >
+                    Back to account
+                  </button>
+                </div>
               </div>
-            ) : searchLogs.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">No search logs available</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-left border-b border-gray-200 dark:border-gray-800">
-                      <th className="py-2 pr-4 font-medium text-gray-500">Time</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">User</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Query</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">City</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Category</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Count</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchLogs.map((log) => {
-                      const q = log.metadata?.query || '';
-                      const intent = log.metadata?.intent || {};
-                      const filters = log.metadata?.filters || {};
-                      const count = log.metadata?.count ?? '';
-                      const source = log.metadata?.source || '';
-                      return (
-                        <tr key={log.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
-                          <td className="py-2 pr-4">{log.user_id ? log.user_id.substring(0, 8) : 'anon'}</td>
-                          <td className="py-2 pr-4 max-w-[360px] truncate" title={q}>{q}</td>
-                          <td className="py-2 pr-4">{intent.city || filters.city || ''}</td>
-                          <td className="py-2 pr-4">{intent.category || filters.category || ''}</td>
-                          <td className="py-2 pr-4">{count}</td>
-                          <td className="py-2 pr-4">{source}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+            </GridCardBody>
+          </GridCard>
+        </GridSection>
 
-        {/* Discover Tab */}
-        {activeTab === 'discover' && (
-          <div className="fade-in">
-            <DiscoverTab />
-          </div>
-        )}
-
-        {/* Create/Edit Drawer - Outside tabs, always available */}
-        {showCreateModal && (
-          <>
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black/50 z-40 transition-opacity"
-              onClick={() => {
-                setShowCreateModal(false);
-                setEditingDestination(null);
-              }}
+        <GridSection className="mb-10">
+          {heroStats.map((stat) => (
+            <AdminStatCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              hint={stat.hint}
+              icon={stat.icon}
+              span={{ base: 12, md: 6, lg: 3 }}
             />
+          ))}
+        </GridSection>
 
-            {/* Drawer */}
-            <div
-              className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-                showCreateModal ? 'translate-x-0' : 'translate-x-full'
-              } overflow-y-auto`}
-            >
-              {/* Header */}
-              <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-bold">
-                  {editingDestination ? 'Edit Destination' : 'Create New Destination'}
-                </h2>
+        <GridSection className="mb-10">
+          <GridCard span={{ base: 12, md: 5 }}>
+            <GridCardHeader>
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Quick actions</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">Keep the grid flowing</p>
+            </GridCardHeader>
+            <GridCardBody className="space-y-3">
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={action.action}
+                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200/80 px-4 py-3 text-left transition hover:border-black dark:border-slate-800/80"
+                >
+                  <div>
+                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-600 dark:text-slate-200">
+                      {action.label}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{action.description}</p>
+                  </div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-white">
+                    {action.icon}
+                  </div>
+                </button>
+              ))}
+            </GridCardBody>
+          </GridCard>
+          <GridCard span={{ base: 12, md: 7 }}>
+            <GridCardHeader>
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Modules</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">Choose a lane</p>
+            </GridCardHeader>
+            <GridCardBody>
+              <div className="flex flex-wrap gap-3">
+                {tabOptions.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`rounded-full px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] transition ${
+                      activeTab === tab
+                        ? 'bg-black text-white dark:bg-white dark:text-black'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300'
+                    }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{tabDetails[activeTab].description}</p>
+            </GridCardBody>
+          </GridCard>
+        </GridSection>
+
+        <GridSection>
+          <GridCard span={{ base: 12 }}>
+            <GridCardHeader className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">Active module</p>
+                <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{tabDetails[activeTab].title}</h2>
+              </div>
+              {activeTab === 'destinations' && (
                 <button
                   onClick={() => {
-                    setShowCreateModal(false);
                     setEditingDestination(null);
+                    setShowCreateModal(true);
                   }}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:opacity-80 dark:bg-white dark:text-black"
                 >
-                  <X className="h-5 w-5" />
+                  <Plus className="h-4 w-4" /> New place
                 </button>
+              )}
+              {activeTab === 'analytics' && (
+                <button
+                  onClick={() => void loadAnalytics()}
+                  className="rounded-full border border-slate-300 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 transition hover:border-black dark:border-slate-700 dark:text-slate-200"
+                >
+                  Refresh stats
+                </button>
+              )}
+            </GridCardHeader>
+            <GridCardBody>
+              {activeTab === 'destinations' && (
+                <div className="space-y-6">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Use the grid below to search, filter, and edit destinations. Column actions stay inline for speed.
+                  </p>
+                  {isLoadingList ? (
+                    <div className="flex items-center justify-center py-10 text-slate-500">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                  ) : (
+                    <DataTable
+                      columns={createColumns(
+                        (dest) => {
+                          setEditingDestination(dest);
+                          setShowCreateModal(true);
+                        },
+                        handleDeleteDestination
+                      )}
+                      data={destinationList}
+                      searchQuery={listSearchQuery}
+                      onSearchChange={(query) => {
+                        setListSearchQuery(query);
+                      }}
+                      isLoading={isLoadingList}
+                    />
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'analytics' && (
+                <div className="space-y-8">
+                  {loadingAnalytics ? (
+                    <div className="flex items-center justify-center py-12 text-slate-500">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid gap-4 md:grid-cols-4">
+                        <div className="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800">
+                          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Views</p>
+                          <p className="text-2xl font-semibold">{analyticsStats.totalViews.toLocaleString()}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800">
+                          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Searches</p>
+                          <p className="text-2xl font-semibold">{analyticsStats.totalSearches.toLocaleString()}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800">
+                          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Saves</p>
+                          <p className="text-2xl font-semibold">{analyticsStats.totalSaves.toLocaleString()}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800">
+                          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Users</p>
+                          <p className="text-2xl font-semibold">{analyticsStats.totalUsers.toLocaleString()}</p>
+                        </div>
+                      </div>
+                      {analyticsStats.topSearches.length > 0 && (
+                        <div className="space-y-3">
+                          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Top search queries</p>
+                          <div className="grid gap-2">
+                            {analyticsStats.topSearches.map((item, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between rounded-2xl border border-slate-200/70 px-4 py-3 text-sm dark:border-slate-800"
+                              >
+                                <span className="font-medium text-slate-900 dark:text-white">{item.query}</span>
+                                <span className="text-xs text-slate-500">{item.count} searches</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'searches' && (
+                <div className="space-y-4">
+                  {loadingSearches ? (
+                    <div className="flex items-center justify-center py-12 text-slate-500">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : searchLogs.length === 0 ? (
+                    <div className="rounded-2xl border border-slate-200/70 px-4 py-6 text-center text-slate-500 dark:border-slate-800">
+                      No search logs available
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200/70 dark:border-slate-800">
+                      <table className="w-full min-w-[720px] text-xs">
+                        <thead className="bg-slate-50/80 text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">
+                          <tr>
+                            <th className="py-3 pr-4 text-left">Time</th>
+                            <th className="py-3 pr-4 text-left">User</th>
+                            <th className="py-3 pr-4 text-left">Query</th>
+                            <th className="py-3 pr-4 text-left">City</th>
+                            <th className="py-3 pr-4 text-left">Category</th>
+                            <th className="py-3 pr-4 text-left">Count</th>
+                            <th className="py-3 pr-4 text-left">Source</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {searchLogs.map((log) => {
+                            const q = log.metadata?.query || '';
+                            const intent = log.metadata?.intent || {};
+                            const filters = log.metadata?.filters || {};
+                            const count = log.metadata?.count ?? '';
+                            const source = log.metadata?.source || '';
+                            return (
+                              <tr
+                                key={log.id}
+                                className="border-b border-slate-100 text-slate-700 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-900/40"
+                              >
+                                <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                                <td className="py-2 pr-4">{log.user_id ? log.user_id.substring(0, 8) : 'anon'}</td>
+                                <td className="py-2 pr-4 max-w-[360px] truncate" title={q}>{q}</td>
+                                <td className="py-2 pr-4">{intent.city || filters.city || ''}</td>
+                                <td className="py-2 pr-4">{intent.category || filters.category || ''}</td>
+                                <td className="py-2 pr-4">{count}</td>
+                                <td className="py-2 pr-4">{source}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'discover' && (
+                <div className="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800">
+                  <DiscoverTab />
+                </div>
+              )}
+            </GridCardBody>
+            <GridCardFooter>
+              <div className="text-xs uppercase tracking-[0.35em] text-slate-500">
+                {destinationList.length} rows in current window
               </div>
+              <div className="text-xs text-slate-500">
+                Authenticated as {user?.email}
+              </div>
+            </GridCardFooter>
+          </GridCard>
+        </GridSection>
+      </AdminGrid>
 
-              {/* Content */}
-              <div className="p-6">
-                <DestinationForm
-                  destination={editingDestination}
-                  toast={toast}
-                  onSave={async (data) => {
-                    setIsSaving(true);
-                    try {
-                      // Special rules: Places starting with "apple" or "aesop"/"aēsop" should be Shopping (retail stores)
-                      if (data.name) {
-                        const nameLower = data.name.toLowerCase();
-                        if (nameLower.startsWith('apple') || nameLower.startsWith('aesop') || nameLower.startsWith('aēsop')) {
-                          data.category = 'Shopping';
-                        }
+      {showCreateModal && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => {
+              setShowCreateModal(false);
+              setEditingDestination(null);
+            }}
+          />
+          <div
+            className={`fixed right-0 top-0 z-50 h-full w-full transform overflow-y-auto bg-white shadow-2xl transition-transform duration-300 dark:bg-gray-950 sm:w-[600px] lg:w-[700px] ${
+              showCreateModal ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          >
+            <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-950">
+              <h2 className="text-xl font-bold">
+                {editingDestination ? 'Edit Destination' : 'Create New Destination'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditingDestination(null);
+                }}
+                className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <DestinationForm
+                destination={editingDestination}
+                toast={toast}
+                onSave={async (data) => {
+                  setIsSaving(true);
+                  try {
+                    if (data.name) {
+                      const nameLower = data.name.toLowerCase();
+                      if (nameLower.startsWith('apple') || nameLower.startsWith('aesop') || nameLower.startsWith('aēsop')) {
+                        data.category = 'Shopping';
                       }
-                      // Ensure Michelin-starred destinations are categorized as Restaurant
-                      if (data.michelin_stars && data.michelin_stars > 0) {
-                        data.category = 'Restaurant';
-                      }
-
-                      const supabase = createClient();
-                      if (editingDestination) {
-                        // Update existing
-                        const { error } = await supabase
-                          .from('destinations')
-                          .update(data)
-                          .eq('slug', editingDestination.slug);
-
-                        if (error) throw error;
-                      } else {
-                        // Create new - generate slug if not provided
-                        if (!data.slug && data.name) {
-                          data.slug = data.name.toLowerCase()
-                            .replace(/[^a-z0-9]+/g, '-')
-                            .replace(/(^-|-$)/g, '');
-                        }
-
-                        const { error } = await supabase
-                          .from('destinations')
-                          .insert([data] as any);
-
-                        if (error) throw error;
-                      }
-
-                      setShowCreateModal(false);
-                      setEditingDestination(null);
-                      await loadDestinationList();
-                      toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
-                    } catch (e: any) {
-                      toast.error(`Error: ${e.message}`);
-                    } finally {
-                      setIsSaving(false);
                     }
-                  }}
-                  onCancel={() => {
+                    if (data.michelin_stars && data.michelin_stars > 0) {
+                      data.category = 'Restaurant';
+                    }
+
+                    const supabase = createClient();
+                    if (editingDestination) {
+                      const { error } = await supabase
+                        .from('destinations')
+                        .update(data)
+                        .eq('slug', editingDestination.slug);
+
+                      if (error) throw error;
+                    } else {
+                      if (!data.slug && data.name) {
+                        data.slug = data.name.toLowerCase()
+                          .replace(/[^a-z0-9]+/g, '-')
+                          .replace(/(^-|-$)/g, '');
+                      }
+
+                      const { error } = await supabase
+                        .from('destinations')
+                        .insert([data] as any);
+
+                      if (error) throw error;
+                    }
+
                     setShowCreateModal(false);
                     setEditingDestination(null);
-                  }}
-                  isSaving={isSaving}
-                />
-              </div>
+                    await loadDestinationList();
+                    toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
+                  } catch (e: any) {
+                    toast.error(`Error: ${e.message}`);
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+                onCancel={() => {
+                  setShowCreateModal(false);
+                  setEditingDestination(null);
+                }}
+                isSaving={isSaving}
+              />
             </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
 
-        {/* Confirm Dialog */}
-        <ConfirmDialogComponent />
-      </div>
+      <ConfirmDialogComponent />
     </main>
   );
 }

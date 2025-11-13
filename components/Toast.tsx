@@ -39,42 +39,35 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
     info: <Info className="h-5 w-5" />,
   };
 
-  const colors = {
-    success: 'bg-green-600 dark:bg-green-500',
-    error: 'bg-red-600 dark:bg-red-500',
-    warning: 'bg-yellow-600 dark:bg-yellow-500',
-    info: 'bg-black dark:bg-white',
-  };
-
-  const textColors = {
-    success: 'text-white',
-    error: 'text-white',
-    warning: 'text-white',
-    info: 'text-white dark:text-black',
-  };
-
   return (
     <div
-      className={`fixed top-4 right-4 z-[100] transform transition-all duration-300 ease-out ${
-        isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+      className={`fixed top-6 right-6 z-[100] max-w-sm transform transition-all duration-300 ease-out ${
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       }`}
       role="alert"
       aria-live="polite"
     >
       <div
-        className={`${colors[type]} ${textColors[type]} rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 min-w-[280px] max-w-md`}
+        className={`flex items-center gap-3 rounded-[1.25rem] border px-5 py-4 shadow-[0_20px_50px_rgba(15,23,42,0.18)] backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg ${
+          {
+            success: 'border-emerald-200/70 bg-white/90 text-slate-900 dark:border-emerald-400/40 dark:bg-slate-900/80 dark:text-white',
+            error: 'border-rose-200/80 bg-white/90 text-slate-900 dark:border-rose-400/50 dark:bg-slate-900/80 dark:text-white',
+            warning: 'border-amber-200/80 bg-white/90 text-slate-900 dark:border-amber-300/50 dark:bg-slate-900/80 dark:text-white',
+            info: 'border-slate-200/80 bg-white/90 text-slate-900 dark:border-slate-700/60 dark:bg-slate-900/80 dark:text-white',
+          }[type]
+        }`}
       >
         {icons[type]}
-        <span className="flex-1 text-sm font-medium">{message}</span>
+        <span className="flex-1 text-sm font-medium leading-tight tracking-tight">{message}</span>
         <button
           onClick={() => {
             setIsVisible(false);
             setTimeout(onClose, 300);
           }}
-          className="hover:opacity-70 transition-opacity"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-current/30 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:text-black dark:text-slate-300 dark:hover:text-white"
           aria-label="Close notification"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -109,22 +102,15 @@ export function ToastContainer() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-[100] space-y-2">
-      {toasts.map((toast, index) => (
-        <div
+    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3">
+      {toasts.map((toast) => (
+        <Toast
           key={toast.id}
-          style={{
-            transform: `translateY(${index * 72}px)`,
-            transition: 'transform 0.3s ease-out',
-          }}
-        >
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            duration={toast.duration}
-            onClose={() => removeToast(toast.id)}
-          />
-        </div>
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
       ))}
     </div>
   );

@@ -1,17 +1,32 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
+
+const Pill = ({
+  children,
+  tone = 'neutral',
+}: {
+  children: ReactNode;
+  tone?: 'neutral' | 'accent' | 'success' | 'warning';
+}) => (
+  <span
+    className={cn(
+      'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.2em]',
+      {
+        neutral: 'border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-300',
+        accent: 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black',
+        success: 'border-emerald-200 text-emerald-700 dark:border-emerald-500 dark:text-emerald-200',
+        warning: 'border-amber-200 text-amber-700 dark:border-amber-500 dark:text-amber-200',
+      }[tone]
+    )}
+  >
+    {children}
+  </span>
+);
 
 export type Destination = {
   slug: string;
@@ -50,16 +65,16 @@ export const createColumns = (
     cell: ({ row }) => {
       const destination = row.original;
       return (
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm">{destination.name}</span>
-          {destination.crown && (
-            <Badge variant="default" className="text-xs">Crown</Badge>
-          )}
-          {destination.michelin_stars && destination.michelin_stars > 0 && (
-            <Badge variant="outline" className="text-xs">
-              ⭐ {destination.michelin_stars}
-            </Badge>
-          )}
+        <div className="flex flex-col gap-2">
+          <span className="text-base font-semibold tracking-tight text-slate-900 dark:text-white">
+            {destination.name}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {destination.crown && <Pill tone="accent">Crown</Pill>}
+            {destination.michelin_stars && destination.michelin_stars > 0 && (
+              <Pill tone="success">⭐ {destination.michelin_stars}</Pill>
+            )}
+          </div>
         </div>
       );
     },
@@ -86,7 +101,9 @@ export const createColumns = (
     accessorKey: 'category',
     header: 'Category',
     cell: ({ row }) => (
-      <div className="text-xs capitalize">{row.getValue('category')}</div>
+      <div className="text-xs uppercase tracking-[0.25em] text-slate-500">
+        {String(row.getValue('category') || '').replace(/_/g, ' ')}
+      </div>
     ),
   },
   {
@@ -95,9 +112,9 @@ export const createColumns = (
     cell: ({ row }) => {
       const isEnriched = !!row.original.google_place_id;
       return (
-        <Badge variant={isEnriched ? 'default' : 'secondary'} className="text-xs">
-          {isEnriched ? 'Enriched' : 'Not Enriched'}
-        </Badge>
+        <Pill tone={isEnriched ? 'success' : 'warning'}>
+          {isEnriched ? 'Enriched' : 'Draft'}
+        </Pill>
       );
     },
   },
@@ -131,7 +148,7 @@ export const createColumns = (
     accessorKey: 'slug',
     header: 'Slug',
     cell: ({ row }) => (
-      <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+      <code className="rounded-full bg-slate-100 px-3 py-1 text-[0.7rem] tracking-[0.2em] text-slate-600 dark:bg-slate-900 dark:text-slate-300">
         {row.getValue('slug')}
       </code>
     ),
@@ -142,31 +159,20 @@ export const createColumns = (
       const destination = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => onEdit(destination)}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(destination.slug, destination.name)}
-              className="text-red-600 dark:text-red-400"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => onEdit(destination)}
+            className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-200"
+          >
+            <Edit className="h-3.5 w-3.5" /> Edit
+          </button>
+          <button
+            onClick={() => onDelete(destination.slug, destination.name)}
+            className="inline-flex items-center gap-1 rounded-full border border-rose-300 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-rose-600 transition hover:border-rose-400 dark:border-rose-500/80 dark:text-rose-200"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
+        </div>
       );
     },
   },
