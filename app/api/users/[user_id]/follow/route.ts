@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import {
+  apiRatelimit,
+  memoryApiRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 export async function POST(
-  _req: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ user_id: string }> }
 ) {
   try {
+    const rateLimitResponse = await enforceRateLimit({
+      request,
+      message: 'Too many follow actions. Please wait a moment.',
+      limiter: apiRatelimit,
+      memoryLimiter: memoryApiRatelimit,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const { user_id: targetUserId } = await context.params;
     const supabase = await createServerClient();
 
@@ -45,10 +61,21 @@ export async function POST(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ user_id: string }> }
 ) {
   try {
+    const rateLimitResponse = await enforceRateLimit({
+      request,
+      message: 'Too many follow actions. Please wait a moment.',
+      limiter: apiRatelimit,
+      memoryLimiter: memoryApiRatelimit,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const { user_id: targetUserId } = await context.params;
     const supabase = await createServerClient();
 

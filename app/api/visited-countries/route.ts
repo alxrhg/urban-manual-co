@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import {
+  apiRatelimit,
+  memoryApiRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 /**
  * GET /api/visited-countries
@@ -15,6 +20,18 @@ export async function GET(request: NextRequest) {
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    }
+
+    const rateLimitResponse = await enforceRateLimit({
+      request,
+      userId: user.id,
+      message: 'Too many visited country requests. Please wait a moment.',
+      limiter: apiRatelimit,
+      memoryLimiter: memoryApiRatelimit,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const { data: visitedCountries, error } = await supabase
@@ -58,6 +75,18 @@ export async function POST(request: NextRequest) {
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    }
+
+    const rateLimitResponse = await enforceRateLimit({
+      request,
+      userId: user.id,
+      message: 'Too many visited country updates. Please wait a moment.',
+      limiter: apiRatelimit,
+      memoryLimiter: memoryApiRatelimit,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const body = await request.json();

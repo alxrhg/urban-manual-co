@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import {
+  searchRatelimit,
+  memorySearchRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,6 +13,17 @@ export async function GET(req: NextRequest) {
 
     if (!query.trim()) {
       return NextResponse.json({ users: [] });
+    }
+
+    const rateLimitResponse = await enforceRateLimit({
+      request: req,
+      message: 'Too many user search requests. Please wait a moment.',
+      limiter: searchRatelimit,
+      memoryLimiter: memorySearchRatelimit,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const supabase = await createServerClient();
