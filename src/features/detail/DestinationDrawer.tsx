@@ -185,6 +185,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
+  const [isAddedToTrip, setIsAddedToTrip] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [showAddToTripModal, setShowAddToTripModal] = useState(false);
@@ -979,12 +980,29 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   router.push('/auth/login');
                   return;
                 }
+                if (isAddedToTrip) return;
                 setShowAddToTripModal(true);
                 }}
-              className="flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-              >
-              <Plus className="h-4 w-4" />
-              <span>Add to Trip</span>
+              className={`flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 rounded-xl font-medium text-sm transition-colors ${
+                isAddedToTrip
+                  ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 cursor-default'
+                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+              disabled={isAddedToTrip}
+            >
+              {isAddedToTrip ? (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Added</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  <span>Add to Trip</span>
+                </>
+              )}
               </button>
           </div>
         </div>
@@ -1628,12 +1646,29 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   router.push('/auth/login');
                   return;
                 }
+                if (isAddedToTrip) return;
                 setShowAddToTripModal(true);
                   }}
-              className="flex items-center justify-center gap-1.5 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl font-medium text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+              className={`flex items-center justify-center gap-1.5 px-4 py-3 border-2 rounded-xl font-medium text-sm transition-colors ${
+                isAddedToTrip
+                  ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 cursor-default'
+                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+              disabled={isAddedToTrip}
                 >
-              <Plus className="h-4 w-4" />
-              <span>Add to Trip</span>
+              {isAddedToTrip ? (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Added</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  <span>Add to Trip</span>
+                </>
+              )}
                 </button>
           </div>
         </div>
@@ -1729,7 +1764,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           isOpen={showAddToTripModal}
           onClose={() => setShowAddToTripModal(false)}
           onAdd={(tripId) => {
-            // Optionally show a success message or refresh data
+            setIsAddedToTrip(true);
+            setShowAddToTripModal(false);
             console.log(`Added ${destination.name} to trip ${tripId}`);
           }}
         />

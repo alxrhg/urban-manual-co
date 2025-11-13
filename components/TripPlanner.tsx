@@ -18,7 +18,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
-import { TripBudgetTracker } from './TripBudgetTracker';
 import { TripWeatherForecast } from './TripWeatherForecast';
 import { TripPackingList } from './TripPackingList';
 import { TripShareModal } from './TripShareModal';
@@ -64,7 +63,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
   const [activeTab, setActiveTab] = useState<
-    'itinerary' | 'budget' | 'weather' | 'packing'
+    'itinerary' | 'weather' | 'packing'
   >('itinerary');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
@@ -568,10 +567,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         onClick={onClose}
       />
 
-      {/* Mobile-Optimized Drawer (bottom sheet) */}
+      {/* Mobile Drawer (right side) */}
       <div
-        className={`md:hidden fixed inset-x-0 bottom-0 top-[10vh] bg-white dark:bg-gray-950 z-50 rounded-t-3xl shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
+        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex flex-col`}
       >
         {/* Close Button - Top Right */}
@@ -696,16 +695,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                     Itinerary
                   </button>
                   <button
-                    onClick={() => setActiveTab('budget')}
-                    className={`text-xs transition-colors ${
-                      activeTab === 'budget'
-                        ? 'text-neutral-900 dark:text-neutral-100'
-                        : 'text-neutral-400 dark:text-neutral-500'
-                    }`}
-                  >
-                    Budget
-                  </button>
-                  <button
                     onClick={() => setActiveTab('weather')}
                     className={`text-xs transition-colors ${
                       activeTab === 'weather'
@@ -751,13 +740,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                   ))}
                 </div>
               )}
-              {activeTab === 'budget' && (
-                <TripBudgetTracker
-                  days={days}
-                  totalBudget={totalBudget}
-                  onUpdateBudget={setTotalBudget}
-                />
-              )}
               {activeTab === 'weather' && (
                 <TripWeatherForecast
                   destination={destination}
@@ -780,8 +762,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       {/* Desktop Drawer (right side) */}
       <div
-        className={`hidden md:flex fixed right-4 top-4 bottom-4 w-[600px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 dark:ring-white/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
+        className={`hidden md:flex fixed right-0 top-0 bottom-0 w-[600px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl border-l border-neutral-200 dark:border-neutral-800 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex-col`}
       >
         {/* Header */}
@@ -801,16 +783,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                   }`}
                 >
                   Itinerary
-                </button>
-                <button
-                  onClick={() => setActiveTab('budget')}
-                  className={`text-[11px] tracking-wide transition-colors ${
-                    activeTab === 'budget'
-                      ? 'text-neutral-900 dark:text-neutral-100'
-                      : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                  }`}
-                >
-                  Budget
                 </button>
                 <button
                   onClick={() => setActiveTab('weather')}
@@ -1057,14 +1029,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                     ))}
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'budget' && (
-                <TripBudgetTracker
-                  days={days}
-                  totalBudget={totalBudget}
-                  onUpdateBudget={setTotalBudget}
-                />
               )}
 
               {activeTab === 'weather' && (
