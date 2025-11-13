@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
 import { createColumns, type Destination } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -732,16 +733,6 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover'>('destinations');
 
-  // Analytics state
-  const [analyticsStats, setAnalyticsStats] = useState({
-    totalViews: 0,
-    totalSearches: 0,
-    totalSaves: 0,
-    totalUsers: 0,
-    topSearches: [] as { query: string; count: number }[],
-  });
-  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
-
   // Searches state
   const [searchLogs, setSearchLogs] = useState<any[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(false);
@@ -808,57 +799,6 @@ export default function AdminPage() {
     }
   }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
 
-  const loadAnalytics = useCallback(async () => {
-    setLoadingAnalytics(true);
-    try {
-      const supabase = createClient();
-      // Get user interactions stats
-      const { data: interactions } = await supabase
-        .from('user_interactions')
-        .select('interaction_type, created_at');
-
-      if (interactions) {
-        const views = interactions.filter(i => i.interaction_type === 'view').length;
-        const searches = interactions.filter(i => i.interaction_type === 'search').length;
-        const saves = interactions.filter(i => i.interaction_type === 'save').length;
-
-        // Get unique users
-        const { data: users } = await supabase
-          .from('user_interactions')
-          .select('user_id')
-          .not('user_id', 'is', null);
-
-        const uniqueUsers = new Set((users || []).map((u: any) => u.user_id));
-        
-        // Get top searches
-        const searchInteractions = interactions.filter(i => i.interaction_type === 'search');
-        const searchCounts = new Map<string, number>();
-        searchInteractions.forEach((i: any) => {
-          const query = i.metadata?.query || 'Unknown';
-          searchCounts.set(query, (searchCounts.get(query) || 0) + 1);
-        });
-
-        const topSearches = Array.from(searchCounts.entries())
-          .map(([query, count]) => ({ query, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
-
-        setAnalyticsStats({
-          totalViews: views,
-          totalSearches: searches,
-          totalSaves: saves,
-          totalUsers: uniqueUsers.size,
-          topSearches,
-        });
-      }
-    } catch (error) {
-      console.error('[Admin] Error loading analytics:', error);
-      toast.error('Failed to load analytics');
-    } finally {
-      setLoadingAnalytics(false);
-    }
-  }, [toast]);
-
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
     try {
@@ -897,12 +837,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAdmin || !authChecked) return;
 
-    if (activeTab === 'analytics' && analyticsStats.totalUsers === 0) {
-      loadAnalytics();
-    } else if (activeTab === 'searches' && searchLogs.length === 0) {
+    if (activeTab === 'searches' && searchLogs.length === 0) {
       loadSearchLogs();
     }
-  }, [activeTab, isAdmin, authChecked, analyticsStats.totalUsers, searchLogs.length, loadAnalytics, loadSearchLogs]);
+  }, [activeTab, isAdmin, authChecked, searchLogs.length, loadSearchLogs]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -1066,49 +1004,8 @@ export default function AdminPage() {
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
-          <div className="fade-in space-y-12">
-            {loadingAnalytics ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : (
-              <>
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Views</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Searches</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Saves</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Users</div>
-                  </div>
-                </div>
-
-                {/* Top Searches */}
-                {analyticsStats.topSearches.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
-                    <div className="space-y-2">
-                      {analyticsStats.topSearches.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                          <span className="text-sm font-medium">{item.query}</span>
-                          <span className="text-xs text-gray-500">{item.count} searches</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+          <div className="fade-in">
+            <AnalyticsDashboard variant="embedded" />
           </div>
         )}
 
