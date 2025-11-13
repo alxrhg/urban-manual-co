@@ -1,4 +1,4 @@
-import { getOpenAI, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
+import { getOpenAI, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL, OPENAI_EMBEDDING_DIMENSION } from '@/lib/openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
@@ -84,12 +84,10 @@ export async function embedText(input: string): Promise<number[] | null> {
   const openai = getOpenAI();
   if (openai) {
     try {
-      // text-embedding-3-large default is 3072 dimensions, but we need 1536
-      // Explicitly specify dimensions to match our database schema
-      const emb = await openai.embeddings.create({ 
-        model: OPENAI_EMBEDDING_MODEL, 
+      const emb = await openai.embeddings.create({
+        model: OPENAI_EMBEDDING_MODEL,
         input,
-        dimensions: 1536  // Explicitly set to 1536 to match database schema
+        dimensions: OPENAI_EMBEDDING_DIMENSION
       });
       return emb.data?.[0]?.embedding || null;
     } catch (error: any) {

@@ -31,8 +31,11 @@ class TopicModelingModel:
     def _load_embedding_model(self):
         """Load sentence transformer for embeddings."""
         try:
-            logger.info("Loading embedding model for topic modeling...")
-            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            logger.info(
+                "Loading embedding model for topic modeling using %s...",
+                settings.topic_model_embedding_model,
+            )
+            self.embedding_model = SentenceTransformer(settings.topic_model_embedding_model)
             logger.info("Embedding model loaded")
         except Exception as e:
             logger.error(f"Error loading embedding model: {e}")

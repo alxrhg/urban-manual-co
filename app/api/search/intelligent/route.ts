@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { embedText } from '@/lib/llm';
+import { formatEmbeddingForRpc } from '@/lib/embeddings/utils';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
@@ -49,11 +50,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate embedding' }, { status: 500 });
     }
 
+    const embeddingPayload = formatEmbeddingForRpc(embedding);
+
     // Intelligent search
     const { data: results, error } = await supabase.rpc(
       'search_destinations_intelligent',
       {
-        query_embedding: `[${embedding.join(',')}]`,
+        query_embedding: embeddingPayload,
         user_id_param: session?.user?.id || null,
         city_filter: searchCity,
         category_filter: category,
@@ -84,7 +87,7 @@ export async function GET(request: NextRequest) {
           const { data: nearbyResults } = await supabase.rpc(
             'search_destinations_intelligent',
             {
-              query_embedding: `[${embedding.join(',')}]`,
+              query_embedding: embeddingPayload,
               user_id_param: session?.user?.id || null,
               city_filter: nearbyLoc,
               category_filter: category,

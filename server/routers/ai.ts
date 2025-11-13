@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
 import { generateDestinationEmbedding } from '@/lib/embeddings/generate';
+import { formatEmbeddingForRpc } from '@/lib/embeddings/utils';
 import { findSimilarPlace, inferPriceFromBudgetPhrase, inferGroupSize } from '@/lib/ai/fuzzy-matching';
 import { analyzeIntent, type UserContext } from '@/lib/ai/intent-analysis';
 
@@ -92,6 +93,7 @@ export const aiRouter = router({
         content: searchQuery,
         tags: intent.interpretations?.[0]?.filters?.tags || [],
       });
+      const rpcEmbeddingPayload = formatEmbeddingForRpc(embedding);
 
       // Apply filters from intent interpretation
       const filters = intent.interpretations?.[0]?.filters || {};
@@ -102,7 +104,7 @@ export const aiRouter = router({
       try {
         const { data, error: searchError } = await supabase
           .rpc('search_destinations_hybrid', {
-            query_embedding: `[${embedding.join(',')}]`,
+            query_embedding: rpcEmbeddingPayload,
             user_id_param: userId,
             city_filter: filters.city || null,
             category_filter: filters.category || null,
@@ -122,7 +124,7 @@ export const aiRouter = router({
           // Fallback: Use existing match_destinations if hybrid search not available
           try {
             const fallbackResult = await supabase.rpc('match_destinations', {
-              query_embedding: embedding,
+              query_embedding: rpcEmbeddingPayload,
               match_threshold: 0.6,
               match_count: 10,
               filter_city: filters.city || null,

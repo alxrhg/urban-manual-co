@@ -65,6 +65,8 @@ export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 export const OPENAI_MODEL_COMPLEX = process.env.OPENAI_MODEL_COMPLEX || 'gpt-4.1'; // For complex queries
 export const OPENAI_MODEL_VISION = process.env.OPENAI_MODEL_VISION || 'gpt-4o'; // For image analysis
 export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';
+const DEFAULT_EMBEDDING_DIMENSION = 3072;
+export const OPENAI_EMBEDDING_DIMENSION = Number(process.env.OPENAI_EMBEDDING_DIMENSION || DEFAULT_EMBEDDING_DIMENSION);
 
 /**
  * Determine if a query is complex and should use GPT-4.1

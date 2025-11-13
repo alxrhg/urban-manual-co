@@ -1,6 +1,7 @@
 """Configuration management for ML service."""
 
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from functools import lru_cache
 
 
@@ -25,6 +26,9 @@ class Settings(BaseSettings):
     lightfm_threads: int = 4
     prophet_seasonality_mode: str = "multiplicative"
     cache_ttl_hours: int = 24
+    openai_embedding_model: str = Field("text-embedding-3-large", env="OPENAI_EMBEDDING_MODEL")
+    openai_embedding_dimension: int = Field(3072, env="OPENAI_EMBEDDING_DIMENSION")
+    topic_model_embedding_model: str = Field("all-MiniLM-L6-v2", env="TOPIC_MODEL_EMBEDDING_MODEL")
 
     # Performance
     max_requests_per_minute: int = 60

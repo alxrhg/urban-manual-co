@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { embedText } from '@/lib/llm';
+import { formatEmbeddingForRpc } from '@/lib/embeddings/utils';
 import {
   searchRatelimit,
   memorySearchRatelimit,
@@ -203,15 +204,16 @@ export async function POST(request: NextRequest) {
 
     // Generate embedding for vector search
     const queryEmbedding = await generateEmbedding(query);
+    const queryEmbeddingPayload = queryEmbedding ? formatEmbeddingForRpc(queryEmbedding) : null;
 
     let results: any[] = [];
     let searchTier = 'basic';
 
     // Strategy 1: Vector similarity search (if embeddings available)
-    if (queryEmbedding) {
+    if (queryEmbeddingPayload) {
       try {
         const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
-          query_embedding: queryEmbedding,
+          query_embedding: queryEmbeddingPayload,
           match_threshold: 0.7, // Cosine similarity threshold
           match_count: PAGE_SIZE,
           filter_city: intent.city || filters.city || null,

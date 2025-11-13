@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { openai, OPENAI_EMBEDDING_MODEL, getModelForQuery } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
+import { formatEmbeddingForRpc } from '@/lib/embeddings/utils';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
@@ -729,6 +730,7 @@ async function processAIChatRequest(
       understandQuery(query, conversationHistory, userId),
       generateEmbedding(query)
     ]);
+    const queryEmbeddingPayload = queryEmbedding ? formatEmbeddingForRpc(queryEmbedding) : null;
 
     // Normalize category using synonyms
     if (intent.category) {
@@ -880,10 +882,10 @@ async function processAIChatRequest(
     }
 
     // Strategy 2: Fallback to Supabase vector search (if Discovery Engine didn't return results)
-    if (results.length === 0 && queryEmbedding) {
+    if (results.length === 0 && queryEmbeddingPayload) {
       try {
         const { data, error } = await supabase.rpc('match_destinations', {
-          query_embedding: queryEmbedding,
+          query_embedding: queryEmbeddingPayload,
           match_threshold: 0.6,
           match_count: 100,
           filter_city: intent.city || null,
