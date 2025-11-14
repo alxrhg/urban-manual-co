@@ -5,6 +5,7 @@
 
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { batchProcess, trackedQuery } from '@/lib/ai/db-utils';
 
 interface RecommendationResult {
   destination_id: string;
@@ -101,11 +102,18 @@ export class AdvancedRecommendationEngine {
     if (!this.supabase) return new Map();
     
     try {
-      // Get user's interaction history
-      const { data: userInteractions } = await this.supabase
-        .from('user_interactions')
-        .select('destination_id')
-        .eq('user_id', userId);
+      // Get user's interaction history with performance tracking
+      const { data: userInteractions } = await trackedQuery(
+        'get_user_interactions',
+        async () => {
+          if (!this.supabase) throw new Error('Supabase client not available');
+          return this.supabase
+            .from('user_interactions')
+            .select('destination_id')
+            .eq('user_id', userId);
+        },
+        { userId }
+      );
 
       if (!userInteractions || userInteractions.length === 0) {
         return new Map();

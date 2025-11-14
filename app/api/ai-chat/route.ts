@@ -7,11 +7,14 @@ import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase/server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { AI_CACHE_CONFIG, AI_TIMEOUT_CONFIG, MODEL_CONFIG } from '@/lib/ai/config';
+import { performanceMonitor } from '@/lib/ai/performance-monitor';
+import { rateLimiter, getRateLimitIdentifier } from '@/lib/ai/rate-limiter';
 
 // Initialize Gemini as fallback
 const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
+const GEMINI_MODEL = MODEL_CONFIG.GEMINI_MODEL;
 
 // Simple in-memory cache for search results
 interface CacheEntry {
@@ -22,8 +25,6 @@ interface CacheEntry {
 const searchCache = new Map<string, CacheEntry>();
 const embeddingCache = new Map<string, { embedding: number[], timestamp: number }>();
 const intentCache = new Map<string, { intent: any, timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
-const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
 
 // Request deduplication map
 const pendingRequests = new Map<string, Promise<any>>();
@@ -45,7 +46,7 @@ function getFromCache(key: string): any | null {
   if (!entry) return null;
 
   // Check if cache entry is still valid
-  if (Date.now() - entry.timestamp > CACHE_TTL) {
+  if (Date.now() - entry.timestamp > AI_CACHE_CONFIG.SEARCH_TTL) {
     searchCache.delete(key);
     return null;
   }
@@ -55,7 +56,7 @@ function getFromCache(key: string): any | null {
 
 function setInCache(key: string, data: any): void {
   // Implement simple LRU by removing oldest entry if cache is full
-  if (searchCache.size >= MAX_CACHE_SIZE) {
+  if (searchCache.size >= AI_CACHE_CONFIG.MAX_SEARCH_CACHE_SIZE) {
     const firstKey = searchCache.keys().next().value;
     if (firstKey) searchCache.delete(firstKey);
   }
@@ -99,21 +100,27 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   // Check cache first
   const cacheKey = text.toLowerCase().trim();
   const cached = embeddingCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  if (cached && Date.now() - cached.timestamp < AI_CACHE_CONFIG.EMBEDDING_TTL) {
     console.log('[AI Chat] Using cached embedding');
     return cached.embedding;
   }
 
   try {
-    const embedding = await withTimeout(
-      embedText(text),
-      5000, // 5 second timeout
-      null
+    const embedding = await performanceMonitor.trackAsync(
+      'embedding_generation',
+      async () => {
+        return await withTimeout(
+          embedText(text),
+          AI_TIMEOUT_CONFIG.EMBEDDING_GENERATION,
+          null
+        );
+      },
+      { textLength: text.length }
     );
 
     if (embedding) {
       // Cache the embedding
-      if (embeddingCache.size >= MAX_CACHE_SIZE) {
+      if (embeddingCache.size >= AI_CACHE_CONFIG.MAX_EMBEDDING_CACHE_SIZE) {
         const firstKey = embeddingCache.keys().next().value;
         if (firstKey) embeddingCache.delete(firstKey);
       }
@@ -160,7 +167,7 @@ async function understandQuery(
   if (conversationHistory.length === 0) {
     const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
     const cached = intentCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    if (cached && Date.now() - cached.timestamp < AI_CACHE_CONFIG.INTENT_TTL) {
       console.log('[AI Chat] Using cached intent');
       return cached.intent;
     }
@@ -259,10 +266,10 @@ Return only the JSON, no other text.`;
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            temperature: 0.2,
+            temperature: MODEL_CONFIG.INTENT_TEMPERATURE,
             response_format: { type: 'json_object' },
           }),
-          4000, // 4 second timeout for intent parsing
+          AI_TIMEOUT_CONFIG.INTENT_PARSING,
           null
         ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
@@ -281,13 +288,13 @@ Return only the JSON, no other text.`;
         const geminiModel = genAI.getGenerativeModel({ 
           model: GEMINI_MODEL,
           generationConfig: {
-            temperature: 0.2,
+            temperature: MODEL_CONFIG.INTENT_TEMPERATURE,
             responseMimeType: 'application/json',
           }
         });
         const result = await withTimeout(
           geminiModel.generateContent(fullPrompt),
-          4000,
+          AI_TIMEOUT_CONFIG.INTENT_PARSING,
           null
         );
         if (result) {
@@ -331,7 +338,7 @@ Return only the JSON, no other text.`;
         // Cache the parsed intent (only for non-conversational queries)
         if (conversationHistory.length === 0) {
           const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
-          if (intentCache.size >= MAX_CACHE_SIZE) {
+          if (intentCache.size >= AI_CACHE_CONFIG.MAX_INTENT_CACHE_SIZE) {
             const firstKey = intentCache.keys().next().value;
             if (firstKey) intentCache.delete(firstKey);
           }
@@ -603,10 +610,10 @@ Generate a natural, helpful response that incorporates relevant context (weather
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          temperature: 0.7,
+          temperature: MODEL_CONFIG.RESPONSE_TEMPERATURE,
           max_tokens: 150,
         }),
-        5000, // 5 second timeout for response generation
+        AI_TIMEOUT_CONFIG.RESPONSE_GENERATION,
         null
       ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
@@ -626,13 +633,13 @@ Generate a natural, helpful response that incorporates relevant context (weather
       const geminiModel = genAI.getGenerativeModel({ 
         model: GEMINI_MODEL,
         generationConfig: {
-          temperature: 0.7,
+          temperature: MODEL_CONFIG.RESPONSE_TEMPERATURE,
           maxOutputTokens: 150,
         }
       });
       const result = await withTimeout(
         geminiModel.generateContent(fullPrompt),
-        5000,
+        AI_TIMEOUT_CONFIG.RESPONSE_GENERATION,
         null
       );
       if (result) {
@@ -671,6 +678,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { query, userId, conversationHistory = [] } = body;
 
+    // Rate limiting
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const rateLimitIdentifier = getRateLimitIdentifier(userId, ip);
+    const rateLimitResult = await rateLimiter.checkLimit(rateLimitIdentifier);
+
+    if (!rateLimitResult.allowed) {
+      const resetDate = new Date(rateLimitResult.resetTime);
+      return NextResponse.json({
+        content: `Rate limit exceeded. Please try again after ${resetDate.toLocaleTimeString()}.`,
+        destinations: [],
+        error: 'RATE_LIMIT_EXCEEDED',
+        resetTime: rateLimitResult.resetTime,
+      }, { status: 429 });
+    }
+
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
         content: 'What are you looking for? Try searching for a place, city, or experience.',
@@ -695,7 +717,11 @@ export async function POST(request: NextRequest) {
     // Create a new request promise
     const requestPromise = (async () => {
       try {
-        return await processAIChatRequest(query, userId, conversationHistory);
+        return await performanceMonitor.trackAsync(
+          'ai_chat_request',
+          async () => processAIChatRequest(query, userId, conversationHistory),
+          { query, userId: userId || 'anonymous', historyLength: conversationHistory.length }
+        );
       } finally {
         // Clean up after request completes
         pendingRequests.delete(requestKey);
