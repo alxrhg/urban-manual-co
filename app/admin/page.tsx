@@ -12,6 +12,7 @@ import { DataTable } from "./data-table";
 import { createColumns, type Destination } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
+import ReindexTab from '@/components/admin/ReindexTab';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -763,13 +764,13 @@ export default function AdminPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover'>('destinations');
+  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover' | 'reindex'>('destinations');
 
   // Check for tab query parameter on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab && ['destinations', 'analytics', 'searches', 'discover'].includes(tab)) {
+    if (tab && ['destinations', 'analytics', 'searches', 'discover', 'reindex'].includes(tab)) {
       setActiveTab(tab as any);
     }
   }, []);
@@ -1112,7 +1113,7 @@ export default function AdminPage() {
         {/* Tab Navigation - Matches account page style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-3">
-            {['destinations', 'analytics', 'searches', 'discover'].map((tab) => (
+            {['destinations', 'analytics', 'searches', 'discover', 'reindex'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -1233,6 +1234,13 @@ export default function AdminPage() {
         {activeTab === 'discover' && (
           <div className="fade-in">
             <DiscoverTab />
+          </div>
+        )}
+
+        {/* Reindex Tab */}
+        {activeTab === 'reindex' && (
+          <div className="fade-in">
+            <ReindexTab />
           </div>
         )}
 
