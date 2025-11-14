@@ -770,8 +770,22 @@ async function processAIChatRequest(
         if (isConversational && conversationHistory.length > 0) {
           try {
             // Build enhanced query with conversation context
-            const recentQueries = conversationHistory.slice(-3).map(m => m.content).join(' ');
-            const enhancedQuery = `${query} (context: ${recentQueries})`;
+            // Extract key information from conversation history
+            const recentMessages = conversationHistory.slice(-4); // Last 4 messages for better context
+            const conversationSummary = recentMessages
+              .map((msg, idx) => {
+                if (msg.role === 'user') {
+                  return `Q${Math.floor(idx/2) + 1}: ${msg.content}`;
+                } else {
+                  return `A${Math.floor(idx/2) + 1}: ${msg.content.substring(0, 100)}...`;
+                }
+              })
+              .join(' | ');
+            
+            // Enhanced query that includes conversation context
+            const enhancedQuery = conversationHistory.length > 2 
+              ? `${query} (previous conversation: ${conversationSummary})`
+              : `${query} (context: ${recentMessages.map(m => m.content).join(' ')})`;
             
             const convResults = await discoveryEngine.search(enhancedQuery, {
               userId: userId,
