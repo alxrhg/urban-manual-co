@@ -759,13 +759,21 @@ export default function Home() {
   // Works like chat but with convenience of auto-trigger
   useEffect(() => {
     if (searchTerm.trim().length > 0) {
+      const trimmedSearchTerm = searchTerm.trim();
+      
+      // Prevent duplicate searches - check if this query was already searched
+      if (trimmedSearchTerm === lastSearchedQueryRef.current) {
+        return;
+      }
+      
       // Prevent duplicate searches - only trigger if not already searching
       if (searching) {
         return;
       }
+      
       const timer = setTimeout(() => {
-        // Double-check we're not already searching to prevent race conditions
-        if (!searching) {
+        // Double-check we're not already searching and query hasn't changed
+        if (!searching && searchTerm.trim() === trimmedSearchTerm && searchTerm.trim() !== lastSearchedQueryRef.current) {
           performAISearch(searchTerm);
         }
       }, 500); // 500ms debounce for auto-trigger
@@ -784,7 +792,7 @@ export default function Home() {
       filterDestinations();
       setCurrentPage(1);
     }
-  }, [searchTerm, searching]); // Include searching to prevent duplicate triggers
+  }, [searchTerm]); // Only depend on searchTerm - checking searching inside effect
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
