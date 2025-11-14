@@ -1741,10 +1741,10 @@ export default function Home() {
                   setAdvancedFilters(newFilters);
                   // Sync with legacy state for backward compatibility
                   if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
+                    setSelectedCity(newFilters.city ?? '');
                   }
                   if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
+                    setSelectedCategory(newFilters.category ?? '');
                   }
                   // Track filter changes
                   Object.entries(newFilters).forEach(([key, value]) => {

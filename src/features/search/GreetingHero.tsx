@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
 

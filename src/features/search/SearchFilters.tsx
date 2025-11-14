@@ -32,8 +32,8 @@ interface SearchFiltersProps {
 export function SearchFiltersComponent({
   filters,
   onFiltersChange,
-  availableCities,
-  availableCategories,
+  availableCities: _availableCities,
+  availableCategories: _availableCategories,
   onLocationChange,
   sortBy = 'default',
   onSortChange,
