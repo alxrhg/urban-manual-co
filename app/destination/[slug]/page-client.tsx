@@ -381,7 +381,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
             {/* Title and Action Buttons */}
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl sm:text-4xl font-light leading-tight flex-1">
+              <h1 className="text-2xl font-bold leading-tight flex-1">
                 {destination.name}
               </h1>
               {user && (

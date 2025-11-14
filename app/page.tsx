@@ -1634,7 +1634,7 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 lg:px-12 py-16 md:py-24 pb-8 md:pb-12">
+        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -2042,7 +2042,7 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 mt-8">
+              <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">
@@ -2191,7 +2191,7 @@ export default function Home() {
             {advancedFilters.nearMe && userLocation && nearbyDestinations.length === 0 && (
               <div className="text-center py-12 px-4">
                 <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
                   No destinations found nearby
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">

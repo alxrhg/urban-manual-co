@@ -729,7 +729,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       >
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold">Destination</h2>
+          <h2 className="text-sm font-bold uppercase">Destination</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && (
               <button
@@ -737,7 +737,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   onClose();
                   router.push(`/destination/${destination.slug}`);
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
                 title="Open in new page"
                 aria-label="Open destination in new page"
               >
@@ -746,7 +746,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
               aria-label="Close drawer"
             >
               <X className="h-5 w-5" />
@@ -774,7 +774,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Title */}
           <div className="mb-6">
             <div className="flex items-start gap-3 mb-4">
-              <h1 className="text-3xl font-bold flex-1">
+              <h1 className="text-2xl font-bold flex-1">
                 {destination.name}
               </h1>
               {/* Crown hidden for now */}
@@ -976,7 +976,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Action Buttons */}
           {user && (
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-2 mb-6">
               <div className="flex-1 flex gap-2">
                 <button
                   onClick={handleSave}
@@ -1010,8 +1010,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <button
                   onClick={openListsModal}
                   disabled={loading}
-                  className="px-3 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="px-3 py-3 min-h-11 min-w-11 flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
                   title="Add to list"
+                  aria-label="Add to list"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </button>
@@ -1059,8 +1060,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Description */}
           {destination.content && (
-            <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">About</h3>
+            <div className="mb-6">
+              <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">About</h3>
               <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {stripHtmlTags(destination.content)}
               </div>
@@ -1069,41 +1070,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Contact & Links Section */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
-            <div className="mb-8">
-              <style jsx>{`
-                .pill-button {
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  padding: 8px 16px;
-                  background: rgba(0, 0, 0, 0.6);
-                  backdrop-filter: blur(10px);
-                  color: white;
-                  font-size: 14px;
-                  font-weight: 500;
-                  border-radius: 9999px;
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                  cursor: pointer;
-                  transition: all 0.2s ease;
-                  text-decoration: none;
-                }
-                .pill-button:hover {
-                  background: rgba(0, 0, 0, 0.7);
-                }
-                .pill-separator {
-                  color: rgba(255, 255, 255, 0.6);
-                }
-              `}</style>
-              <div className="flex flex-wrap gap-3">
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
                 {destination.google_maps_url && (
                   <a
                     href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pill-button"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span>📍</span>
-                    <span className="pill-separator">•</span>
                     <span>Apple Maps</span>
                   </a>
                 )}
@@ -1116,7 +1092,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       href={fullUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     >
                       <span>{domain}</span>
                       <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
@@ -1126,10 +1102,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {(enrichedData?.international_phone_number || destination.phone_number) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="pill-button"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span>📞</span>
-                    <span className="pill-separator">•</span>
                     <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
                   </a>
                 )}
@@ -1138,10 +1113,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.instagram_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pill-button"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span>📷</span>
-                    <span className="pill-separator">•</span>
                     <span>Instagram</span>
                   </a>
                 )}
@@ -1151,7 +1125,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="mb-8">
+            <div className="mb-6">
               <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
               <div className="space-y-4">
                 {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
@@ -1178,10 +1152,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
           {/* Map Section */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Location</h3>
             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <GoogleMap
@@ -1206,11 +1180,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
@@ -1302,7 +1276,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {isAdmin && destination && (
               <button
                 onClick={() => setIsEditDrawerOpen(true)}
-                className="flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg font-medium"
+                className="flex items-center gap-2 px-6 py-3 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg font-medium"
                 title="Edit destination"
                 aria-label="Edit destination"
               >

@@ -81,8 +81,7 @@ export function DestinationCard({
           relative aspect-video overflow-hidden rounded-2xl
           bg-gray-100 dark:bg-gray-800
           border border-gray-200 dark:border-gray-800
-          transition-shadow duration-300
-          group-hover:shadow-lg
+          transition-all duration-300 ease-out
           mb-3
           ${isLoaded ? 'opacity-100' : 'opacity-0'}
         `}
@@ -145,7 +144,7 @@ export function DestinationCard({
               e.stopPropagation();
               onEdit(destination);
             }}
-            className="absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-900 transition-all opacity-0 group-hover:opacity-100 shadow-lg"
+            className="absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 transition-all opacity-0 group-hover:opacity-100 shadow-lg"
             title="Edit destination"
             aria-label="Edit destination"
           >
@@ -206,7 +205,7 @@ export function DestinationCard({
         </h3>
 
         {/* Micro Description - Always show with fallback, stuck to title */}
-        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1">
+        <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
           {destination.micro_description || 
            (destination.category && destination.city 
              ? `${destination.category} in ${capitalizeCity(destination.city)}`
@@ -221,7 +220,7 @@ export function DestinationCard({
       <div
         className={`
           absolute inset-0 rounded-2xl
-          ring-2 ring-offset-2 ring-blue-500
+          ring-2 ring-offset-2 ring-black dark:ring-white
           opacity-0 focus-within:opacity-100
           transition-opacity duration-200
           pointer-events-none
