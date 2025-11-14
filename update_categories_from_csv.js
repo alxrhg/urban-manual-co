@@ -61,7 +61,7 @@ async function updateCategories() {
   
   for (const { name, category } of updates) {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('destinations')
         .update({ category })
         .eq('name', name);

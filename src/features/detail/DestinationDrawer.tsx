@@ -892,13 +892,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {destination?.slug && destination.slug.trim() && (
               <Link
                 href={`/destination/${destination.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClose();
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
+                title="Open destination page in new tab"
+                aria-label="Open destination page in new tab"
               >
                 <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Link>
@@ -1134,13 +1135,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {destination?.slug && destination.slug.trim() && (
               <Link
                 href={`/destination/${destination.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClose();
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
+                title="Open destination page in new tab"
+                aria-label="Open destination page in new tab"
               >
                 <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Link>
@@ -1386,18 +1388,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               )}
 
               {destination.slug && destination.slug.trim() ? (
-                <button
+                <Link
+                  href={`/destination/${destination.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                  onClick={() => {
-                    onClose();
-                    setTimeout(() => {
-                      router.push(`/destination/${destination.slug}`);
-                    }, 100);
+                  onClick={(e) => {
+                    e.stopPropagation();
                   }}
                 >
                   <ExternalLink className="h-3 w-3" />
                   View Full Page
-                </button>
+                </Link>
               ) : null}
                   </div>
                 </div>
