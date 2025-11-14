@@ -1124,17 +1124,21 @@ export default function Home() {
         const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
         if (discoveryBaseline.length) {
           setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(
-            discoveryBaseline,
-            searchTerm,
-            advancedFilters,
-            selectedCity,
-            selectedCategory,
-            user,
-            visitedSlugs,
-            sortBy
-          );
-          setFilteredDestinations(filtered);
+          // Don't filter destinations if there's an active AI chat search (submittedQuery)
+          // AI chat handles its own filtering via performAISearch
+          if (!submittedQuery) {
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              searchTerm,
+              advancedFilters,
+              selectedCity,
+              selectedCategory,
+              user,
+              visitedSlugs,
+              sortBy
+            );
+            setFilteredDestinations(filtered);
+          }
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
           React.startTransition(() => {
             if (discoveryCities.length) setCities(discoveryCities);
@@ -1156,17 +1160,21 @@ export default function Home() {
         setCategories(uniqueCategories);
       }
 
-      const filtered = filterDestinationsWithData(
-        destinationsData as Destination[],
-        searchTerm,
-        advancedFilters,
-        selectedCity,
-        selectedCategory,
-        user,
-        visitedSlugs,
-        sortBy
-      );
-      setFilteredDestinations(filtered);
+      // Don't filter destinations if there's an active AI chat search (submittedQuery)
+      // AI chat handles its own filtering via performAISearch
+      if (!submittedQuery) {
+        const filtered = filterDestinationsWithData(
+          destinationsData as Destination[],
+          searchTerm,
+          advancedFilters,
+          selectedCity,
+          selectedCategory,
+          user,
+          visitedSlugs,
+          sortBy
+        );
+        setFilteredDestinations(filtered);
+      }
 
       setDiscoveryEngineLoading(true);
       fetchDiscoveryBootstrap()
@@ -1179,17 +1187,21 @@ export default function Home() {
 
             if (uniqueMerged.length > destinationsData!.length) {
               setDestinations(uniqueMerged);
-              const filteredMerged = filterDestinationsWithData(
-                uniqueMerged,
-                searchTerm,
-                advancedFilters,
-                selectedCity,
-                selectedCategory,
-                user,
-                visitedSlugs,
-                sortBy
-              );
-              setFilteredDestinations(filteredMerged);
+              // Don't filter destinations if there's an active AI chat search (submittedQuery)
+              // AI chat handles its own filtering via performAISearch
+              if (!submittedQuery) {
+                const filteredMerged = filterDestinationsWithData(
+                  uniqueMerged,
+                  searchTerm,
+                  advancedFilters,
+                  selectedCity,
+                  selectedCategory,
+                  user,
+                  visitedSlugs,
+                  sortBy
+                );
+                setFilteredDestinations(filteredMerged);
+              }
 
               const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
               const updates: { cities?: string[]; categories?: string[] } = {};
@@ -1224,7 +1236,7 @@ export default function Home() {
         await applyFallbackData({ updateDestinations: true });
       }
     }
-  }, [user, visitedSlugs, filterDestinationsWithData, searchTerm, advancedFilters, selectedCity, selectedCategory, sortBy]);
+  }, [user, visitedSlugs, filterDestinationsWithData, searchTerm, advancedFilters, selectedCity, selectedCategory, sortBy, submittedQuery]);
 
   const fetchVisitedPlaces = async (): Promise<void> => {
     if (!user) return;
