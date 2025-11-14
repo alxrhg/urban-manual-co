@@ -215,13 +215,6 @@ export function Header() {
               {user ? (
                 <>
                   <button
-                    onClick={() => { navigate('/itinerary'); setIsMenuOpen(false); }}
-                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
-                    role="menuitem"
-                  >
-                    Itinerary
-                  </button>
-                  <button
                     onClick={() => { setIsMenuOpen(false); setTimeout(() => setIsChatDrawerOpen(true), 300); }}
                     className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
