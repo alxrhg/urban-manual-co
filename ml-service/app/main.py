@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import recommendations, forecast, health, graph_sequencing, insights, optimization
+from app.api import recommendations, forecast, health, graph_sequencing, insights, optimization, embeddings
 from app.semantic_tags import router as semantic_tags_router
 from app.config import get_settings
 
@@ -32,6 +32,7 @@ app.include_router(graph_sequencing.router, prefix="/api/graph", tags=["Graph Se
 app.include_router(insights.router, prefix="/api", tags=["Phase 3: Advanced Features"])
 app.include_router(optimization.router, prefix="/api", tags=["Phase 4: Optimization & Polish"])
 app.include_router(semantic_tags_router, prefix="/api", tags=["Semantic Tags"])
+app.include_router(embeddings.router, prefix="/api", tags=["Embeddings"])
 
 @app.get("/")
 async def root():
@@ -54,6 +55,9 @@ async def root():
             "sequence": "/api/sequence/predict-next",
             "performance": "/api/performance/statistics",
             "semantic_tags": "/api/semantic-tags/apply",
+            "embed_text": "/api/embed/text",
+            "embed_destination": "/api/embed/destination",
+            "embed_status": "/api/embed/status",
         }
     }
 

@@ -21,6 +21,7 @@ export interface DestinationMetadata {
   popularity_score?: number;
   michelin_stars?: number;
   slug?: string;
+  [key: string]: string | number | undefined; // Index signature for Dict compatibility
 }
 
 // Vector search result
@@ -108,7 +109,7 @@ export async function queryVectorIndex(
   });
 
   return result.map(item => ({
-    id: item.id,
+    id: String(item.id),
     score: item.score,
     metadata: item.metadata as DestinationMetadata,
   }));

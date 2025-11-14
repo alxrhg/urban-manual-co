@@ -10,10 +10,19 @@ import OpenAI from 'openai';
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 const ML_SERVICE_API_KEY = process.env.ML_SERVICE_API_KEY;
 
-// OpenAI client as fallback
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialize OpenAI client
+let openaiInstance: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiInstance) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is required for fallback embeddings');
+    }
+    openaiInstance = new OpenAI({ apiKey });
+  }
+  return openaiInstance;
+}
 
 export interface EmbeddingResult {
   embedding: number[];
@@ -102,6 +111,7 @@ export async function generateDestinationEmbedding(destination: {
  * Fallback: Generate embedding using OpenAI directly
  */
 async function generateTextEmbeddingOpenAI(text: string): Promise<EmbeddingResult> {
+  const openai = getOpenAIClient();
   const response = await openai.embeddings.create({
     model: 'text-embedding-3-small',
     input: text,
