@@ -41,13 +41,25 @@ export function generateFollowUpSuggestions({
   const suggestions: FollowUpSuggestion[] = [];
   const queryLower = query.toLowerCase();
 
-  // Extract context from conversation
-  const hasCity = intent?.city || queryLower.match(/\b(tokyo|taipei|new york|london|paris|barcelona|rome|milan|berlin|amsterdam|seoul|singapore|hong kong|bangkok|bali|sydney|melbourne)\b/i);
-  const hasCategory = intent?.category || queryLower.match(/\b(restaurant|hotel|cafe|bar|shop|museum|gallery|park|beach|temple|shrine)\b/i);
+  // Extract context from conversation history for better suggestions
+  const conversationText = conversationHistory
+    .slice(-6) // Last 6 messages (3 turns)
+    .map(msg => msg.content.toLowerCase())
+    .join(' ');
+  
+  const fullContext = `${queryLower} ${conversationText}`;
+  
+  const hasCity = intent?.city || fullContext.match(/\b(tokyo|taipei|new york|london|paris|barcelona|rome|milan|berlin|amsterdam|seoul|singapore|hong kong|bangkok|bali|sydney|melbourne)\b/i);
+  const hasCategory = intent?.category || fullContext.match(/\b(restaurant|hotel|cafe|bar|shop|museum|gallery|park|beach|temple|shrine)\b/i);
   const hasPrice = intent?.filters?.priceLevel;
-  const hasRating = queryLower.match(/\b(rating|rated|stars|michelin)\b/i);
-  const hasTime = queryLower.match(/\b(breakfast|lunch|dinner|brunch|late night|open|closing)\b/i);
-  const hasLocation = queryLower.match(/\b(near|close|walking|distance|area|neighborhood|district)\b/i);
+  const hasRating = fullContext.match(/\b(rating|rated|stars|michelin)\b/i);
+  const hasTime = fullContext.match(/\b(breakfast|lunch|dinner|brunch|late night|open|closing)\b/i);
+  const hasLocation = fullContext.match(/\b(near|close|walking|distance|area|neighborhood|district)\b/i);
+  
+  // Detect conversational patterns
+  const isFollowUp = queryLower.match(/\b(more|another|different|also|and|plus|show me|what about|how about)\b/i);
+  const isRefinement = queryLower.match(/\b(with|without|that|this|these|those|like|similar)\b/i);
+  const isComparison = queryLower.match(/\b(compare|versus|vs|better|best|difference)\b/i);
 
   // Get unique cities and categories from results
   const resultCities = [...new Set(destinations.map(d => d.city).filter(Boolean))];
