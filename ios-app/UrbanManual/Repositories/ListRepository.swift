@@ -61,11 +61,17 @@ class ListRepository {
     
     // Update list
     func updateList(_ listId: UUID, name: String, description: String?) async throws -> List {
-        let update: [String: Any] = [
-            "name": name,
-            "description": description as Any,
-            "updated_at": Date()
-        ]
+        struct UpdatePayload: Encodable {
+            let name: String
+            let description: String?
+            let updated_at: Date
+        }
+        
+        let update = UpdatePayload(
+            name: name,
+            description: description,
+            updated_at: Date()
+        )
         
         let response: [List] = try await client
             .from("lists")
