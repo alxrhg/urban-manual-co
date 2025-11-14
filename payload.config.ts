@@ -10,23 +10,43 @@ import type { PayloadRequest } from 'payload'
  */
 async function checkSupabaseAdmin(req: PayloadRequest): Promise<boolean> {
   try {
-    // Get authorization header from request
-    // Headers is a Headers object, use get() method
+    // Try to get token from authorization header first (for API calls)
     const authHeader = req.headers?.get('authorization') || 
                       (req.headers as any)?.authorization ||
                       (typeof req.headers?.get === 'function' ? req.headers.get('authorization') : null)
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // If no auth header, try to get from cookies (for admin UI)
-      // Payload admin UI will handle its own auth, but we verify Supabase on API calls
-      return true // Allow for admin UI, but API calls will be protected
+    // Check if this is an API request
+    const isAPIRequest = req.url?.includes('/api/') || req.path?.includes('/api/')
+    
+    // For non-API requests (admin UI), allow through - middleware handles auth
+    if (!isAPIRequest && !authHeader) {
+      return true
     }
 
-    const token = authHeader.replace('Bearer ', '')
+    // For API requests, we need proper authentication
+    let token: string | null = null
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.replace('Bearer ', '')
+    }
+
+    // If no token and it's an API request, deny access
+    if (!token && isAPIRequest) {
+      console.warn('[Payload] No auth token found for API request')
+      return false
+    }
+
+    // If no token and not API request, allow (middleware handles auth)
+    if (!token) {
+      return true
+    }
+
+    // Verify token with Supabase
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error('[Payload] Supabase credentials not configured')
       return false
     }
 
@@ -42,12 +62,19 @@ async function checkSupabaseAdmin(req: PayloadRequest): Promise<boolean> {
     const { data: { user }, error } = await supabase.auth.getUser()
 
     if (error || !user) {
+      console.error('[Payload] Auth error:', error?.message || 'No user found')
       return false
     }
 
     // Check if user has admin role
     const role = (user.app_metadata as Record<string, any> | null)?.role
-    return role === 'admin'
+    const isAdmin = role === 'admin'
+    
+    if (!isAdmin) {
+      console.warn('[Payload] User does not have admin role:', user.email)
+    }
+    
+    return isAdmin
   } catch (error) {
     console.error('[Payload] Error checking Supabase auth:', error)
     return false
