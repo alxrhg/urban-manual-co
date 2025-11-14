@@ -758,8 +758,15 @@ export default function Home() {
   // Works like chat but with convenience of auto-trigger
   useEffect(() => {
     if (searchTerm.trim().length > 0) {
+      // Prevent duplicate searches - only trigger if not already searching
+      if (searching) {
+        return;
+      }
       const timer = setTimeout(() => {
-        performAISearch(searchTerm);
+        // Double-check we're not already searching to prevent race conditions
+        if (!searching) {
+          performAISearch(searchTerm);
+        }
       }, 500); // 500ms debounce for auto-trigger
       return () => clearTimeout(timer);
     } else {
@@ -770,11 +777,12 @@ export default function Home() {
       setSearching(false);
       setSubmittedQuery('');
       setChatMessages([]);
+      setFollowUpSuggestions([]);
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
     }
-  }, [searchTerm]); // ONLY depend on searchTerm
+  }, [searchTerm, searching]); // Include searching to prevent duplicate triggers
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -1848,9 +1856,10 @@ export default function Home() {
                                     <FollowUpSuggestions
                                       suggestions={followUpSuggestions}
                                       onSuggestionClick={(suggestion) => {
+                                        // Only set searchTerm - the useEffect will handle the search
+                                        // This prevents duplicate searches
                                         setSearchTerm(suggestion);
                                         setFollowUpInput('');
-                                        performAISearch(suggestion);
                                       }}
                                       isLoading={searching}
                                     />
