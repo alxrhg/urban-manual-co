@@ -15,6 +15,11 @@ struct MainTabView: View {
                     Label("Discover", systemImage: "compass")
                 }
             
+            MapView()
+                .tabItem {
+                    Label("Map", systemImage: "map")
+                }
+            
             SavedView()
                 .tabItem {
                     Label("Saved", systemImage: "heart")
