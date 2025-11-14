@@ -16,7 +16,7 @@ async function checkSupabaseAdmin(req: PayloadRequest): Promise<boolean> {
                       (typeof req.headers?.get === 'function' ? req.headers.get('authorization') : null)
     
     // Check if this is an API request
-    const isAPIRequest = req.url?.includes('/api/') || req.path?.includes('/api/')
+    const isAPIRequest = req.url?.includes('/api/') || false
     
     // For non-API requests (admin UI), allow through - middleware handles auth
     if (!isAPIRequest && !authHeader) {
