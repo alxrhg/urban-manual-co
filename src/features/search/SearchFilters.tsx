@@ -252,7 +252,13 @@ export function SearchFiltersComponent({
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                       <button
                         type="button"
-                        onClick={() => updateFilter('michelin', filters.michelin ? undefined : true)}
+                        onClick={() => {
+                          if (filters.michelin) {
+                            clearFilter('michelin');
+                          } else {
+                            updateFilter('michelin', true);
+                          }
+                        }}
                         className={`transition-all ${
                           filters.michelin
                             ? "font-medium text-black dark:text-white"
@@ -264,7 +270,13 @@ export function SearchFiltersComponent({
                       </button>
                       <button
                         type="button"
-                        onClick={() => updateFilter('openNow', filters.openNow ? undefined : true)}
+                        onClick={() => {
+                          if (filters.openNow) {
+                            clearFilter('openNow');
+                          } else {
+                            updateFilter('openNow', true);
+                          }
+                        }}
                         className={`transition-all ${
                           filters.openNow
                             ? "font-medium text-black dark:text-white"
@@ -283,7 +295,7 @@ export function SearchFiltersComponent({
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                       <button
                         type="button"
-                        onClick={() => updateFilter('minRating', undefined)}
+                        onClick={() => clearFilter('minRating')}
                         className={`transition-all ${
                           !filters.minRating
                             ? "font-medium text-black dark:text-white"
@@ -297,7 +309,13 @@ export function SearchFiltersComponent({
                         <button
                           type="button"
                           key={rating}
-                          onClick={() => updateFilter('minRating', filters.minRating === rating ? undefined : rating)}
+                          onClick={() => {
+                            if (filters.minRating === rating) {
+                              clearFilter('minRating');
+                            } else {
+                              updateFilter('minRating', rating);
+                            }
+                          }}
                           className={`transition-all ${
                             filters.minRating === rating
                               ? "font-medium text-black dark:text-white"
@@ -318,8 +336,8 @@ export function SearchFiltersComponent({
                       <button
                         type="button"
                         onClick={() => {
-                          updateFilter('minPrice', undefined);
-                          updateFilter('maxPrice', undefined);
+                          clearFilter('minPrice');
+                          clearFilter('maxPrice');
                         }}
                         className={`transition-all ${
                           !filters.minPrice && !filters.maxPrice
@@ -336,8 +354,8 @@ export function SearchFiltersComponent({
                           key={level}
                           onClick={() => {
                             if (filters.minPrice === level && filters.maxPrice === level) {
-                              updateFilter('minPrice', undefined);
-                              updateFilter('maxPrice', undefined);
+                              clearFilter('minPrice');
+                              clearFilter('maxPrice');
                             } else {
                               updateFilter('minPrice', level);
                               updateFilter('maxPrice', level);

@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
+import { JourneyInsights } from '@/lib/greetings/journey-tracker';
+import { RecentAchievement } from '@/lib/greetings/achievement-helper';
+import { GreetingWeatherData } from '@/lib/greetings/weather-helper';
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -26,10 +29,10 @@ interface GreetingHeroProps {
   } | null;
   // Phase 2 & 3: Enriched context
   enrichedContext?: {
-    journey?: Record<string, unknown>;
-    recentAchievements?: Record<string, unknown>[];
-    nextAchievement?: Record<string, unknown>;
-    weather?: Record<string, unknown>;
+    journey?: JourneyInsights | null;
+    recentAchievements?: RecentAchievement[];
+    nextAchievement?: { name: string; progress: number; target: number; emoji: string } | null;
+    weather?: GreetingWeatherData | null;
     trendingCity?: string;
     aiGreeting?: string;
   };
