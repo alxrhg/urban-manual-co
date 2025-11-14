@@ -326,6 +326,7 @@ export default function Home() {
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
+  const lastSearchedQueryRef = useRef<string>(''); // Track last searched query to prevent duplicates
   
   // Loading text variants
   const loadingTextVariants = [
@@ -778,6 +779,7 @@ export default function Home() {
       setSubmittedQuery('');
       setChatMessages([]);
       setFollowUpSuggestions([]);
+      lastSearchedQueryRef.current = ''; // Reset on clear
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
@@ -1282,7 +1284,7 @@ export default function Home() {
     const trimmedQuery = query.trim();
     
     // Prevent duplicate searches with the same query
-    if (trimmedQuery === submittedQuery && searching) {
+    if (trimmedQuery === lastSearchedQueryRef.current && searching) {
       return;
     }
     
@@ -1293,6 +1295,9 @@ export default function Home() {
         query: trimmedQuery,
       });
     }
+    
+    // Update ref immediately to prevent duplicate calls
+    lastSearchedQueryRef.current = trimmedQuery;
     setSubmittedQuery(trimmedQuery); // Store the submitted query
     // Clear previous suggestions when starting new search
     setFollowUpSuggestions([]);
@@ -1418,6 +1423,8 @@ export default function Home() {
       setSearchIntent(null);
       setSeasonalContext(null);
       setFollowUpSuggestions([]);
+      // Reset last searched query on error so user can retry
+      lastSearchedQueryRef.current = '';
 
       // Add error message to chat
       setChatMessages(prev => [
