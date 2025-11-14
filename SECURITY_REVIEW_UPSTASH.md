@@ -29,7 +29,7 @@ This security summary covers the implementation of Upstash Vector (semantic sear
 - `UPSTASH_QSTASH_NEXT_SIGNING_KEY` - Server-side only ✓
 - `SUPABASE_SERVICE_ROLE_KEY` - Server-side only ✓
 - `OPENAI_API_KEY` - Server-side only ✓
-- `GOOGLE_PLACES_API_KEY` - Server-side only ✓
+- `NEXT_PUBLIC_GOOGLE_API_KEY` - Client-accessible (for maps/geocoding) ✓
 - `GEMINI_API_KEY` - Server-side only ✓
 - `ML_SERVICE_API_KEY` - Server-side only ✓
 

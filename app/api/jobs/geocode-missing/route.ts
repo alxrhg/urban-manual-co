@@ -12,7 +12,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 async function geocodeWithGoogle(name: string, city: string) {
   const query = `${name}, ${city}`;
@@ -50,7 +50,7 @@ async function handleGeocodeJob(request: NextRequest, body: any) {
 
     if (!GOOGLE_API_KEY) {
       return NextResponse.json(
-        { error: 'GOOGLE_PLACES_API_KEY not configured' },
+        { error: 'NEXT_PUBLIC_GOOGLE_API_KEY not configured' },
         { status: 500 }
       );
     }

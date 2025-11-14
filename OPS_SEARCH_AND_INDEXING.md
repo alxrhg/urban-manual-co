@@ -56,7 +56,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJxxx
 
 # Google APIs (for jobs)
-GOOGLE_PLACES_API_KEY=AIzaxxx
+NEXT_PUBLIC_GOOGLE_API_KEY=AIzaxxx
 GEMINI_API_KEY=AIzaxxx
 ```
 
@@ -307,7 +307,7 @@ vercel rollback <previous-deployment-url>
 - `UPSTASH_QSTASH_CURRENT_SIGNING_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENAI_API_KEY`
-- `GOOGLE_PLACES_API_KEY`
+- `NEXT_PUBLIC_GOOGLE_API_KEY`
 
 **Best practices**:
 - Use environment variables in Vercel/hosting platform

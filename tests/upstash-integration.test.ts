@@ -57,9 +57,8 @@ test('reindex route validates mode parameter', async () => {
 
 test('geocode job validates Google API key', async () => {
   // Temporarily remove API key
-  const originalKey = process.env.GOOGLE_PLACES_API_KEY;
-  delete process.env.GOOGLE_PLACES_API_KEY;
-  delete process.env.GOOGLE_API_KEY;
+  const originalKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  delete process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
   const mockRequest = {
     json: async () => ({ batchSize: 10 }),
@@ -71,10 +70,10 @@ test('geocode job validates Google API key', async () => {
   const data = await response.json();
 
   assert.equal(response.status, 500);
-  assert.equal(data.error, 'GOOGLE_PLACES_API_KEY not configured');
+  assert.equal(data.error, 'NEXT_PUBLIC_GOOGLE_API_KEY not configured');
 
   // Restore
-  if (originalKey) process.env.GOOGLE_PLACES_API_KEY = originalKey;
+  if (originalKey) process.env.NEXT_PUBLIC_GOOGLE_API_KEY = originalKey;
 });
 
 test('generate descriptions job validates Gemini API key', async () => {
