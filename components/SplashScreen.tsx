@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 export function SplashScreen() {
   const [isVisible, setIsVisible] = useState(true);
