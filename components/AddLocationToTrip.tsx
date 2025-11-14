@@ -190,7 +190,7 @@ export function AddLocationToTrip({
         city: customLocationData?.formatted_address?.split(',')[1]?.trim() || '',
         category: 'Custom Location',
         image: customLocationData?.photos?.[0]?.name 
-          ? `https://places.googleapis.com/v1/${customLocationData.photos[0].name}/media?maxWidthPx=1200&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
+          ? `https://places.googleapis.com/v1/${customLocationData.photos[0].name}/media?maxWidthPx=1200&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
           : '/placeholder-image.jpg',
         time: selectedTime,
         cost: estimatedCost,
