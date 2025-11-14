@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 
 export function SplashScreen() {
   const [isVisible, setIsVisible] = useState(true);
@@ -46,11 +45,10 @@ export function SplashScreen() {
       style={{ willChange: 'opacity' }}
     >
           <div className="h-full flex items-center justify-center">
-            <div className="text-center flex flex-col items-center">
-              <span className="text-2xl font-bold uppercase tracking-tight text-black dark:text-white">
-                THE URBAN MANUAL
+            <div className="text-center">
+              <span className="font-medium text-2xl text-black dark:text-white">
+                Urban Manual®
               </span>
-              <span className="h-1 w-full max-w-[200px] bg-[#6BFFB8] mt-2" />
             </div>
           </div>
     </div>
