@@ -34,6 +34,10 @@
 		A10000181 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000180 /* Preview Assets.xcassets */; };
 		A10000191 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10000190 /* Supabase */; };
 		A100001A1 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = A100001A0 /* Kingfisher */; };
+		A100001B1 /* SavedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001B0 /* SavedViewModel.swift */; };
+		A100001C1 /* ListsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001C0 /* ListsViewModel.swift */; };
+		A100001D1 /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001D0 /* MapViewModel.swift */; };
+		A100001E1 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001E0 /* MapView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +67,10 @@
 		A10000160 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		A10000170 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000180 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		A100001B0 /* SavedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedViewModel.swift; sourceTree = "<group>"; };
+		A100001C0 /* ListsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListsViewModel.swift; sourceTree = "<group>"; };
+		A100001D0 /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
+		A100001E0 /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -170,6 +178,8 @@
 			children = (
 				A1VMAUTH /* Auth */,
 				A1VMDEST /* Destinations */,
+				A1VMCOLL /* Collections */,
+				A1VMMAP /* Map */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -191,6 +201,23 @@
 			path = Destinations;
 			sourceTree = "<group>";
 		};
+		A1VMCOLL /* Collections */ = {
+			isa = PBXGroup;
+			children = (
+				A100001B0 /* SavedViewModel.swift */,
+				A100001C0 /* ListsViewModel.swift */,
+			);
+			path = Collections;
+			sourceTree = "<group>";
+		};
+		A1VMMAP /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				A100001D0 /* MapViewModel.swift */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
 		A1VIEWS /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -198,6 +225,7 @@
 				A1VDEST /* Destinations */,
 				A1VCOLL /* Collections */,
 				A1VCOMP /* Components */,
+				A1VMAP /* Map */,
 				A10000160 /* MainTabView.swift */,
 			);
 			path = Views;
@@ -236,6 +264,14 @@
 				A10000150 /* DestinationCard.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		A1VMAP /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				A100001E0 /* MapView.swift */,
+			);
+			path = Map;
 			sourceTree = "<group>";
 		};
 		A1PREVIEW /* Preview Content */ = {
@@ -347,6 +383,10 @@
 				A10000141 /* ListsView.swift in Sources */,
 				A10000151 /* DestinationCard.swift in Sources */,
 				A10000161 /* MainTabView.swift in Sources */,
+				A100001B1 /* SavedViewModel.swift in Sources */,
+				A100001C1 /* ListsViewModel.swift in Sources */,
+				A100001D1 /* MapViewModel.swift in Sources */,
+				A100001E1 /* MapView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
