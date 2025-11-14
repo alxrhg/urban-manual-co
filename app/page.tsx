@@ -1122,7 +1122,13 @@ export default function Home() {
           setDestinations(discoveryBaseline);
           const filtered = filterDestinationsWithData(
             discoveryBaseline,
-            '', {}, '', '', user, visitedSlugs
+            searchTerm,
+            advancedFilters,
+            selectedCity,
+            selectedCategory,
+            user,
+            visitedSlugs,
+            sortBy
           );
           setFilteredDestinations(filtered);
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
@@ -1148,12 +1154,13 @@ export default function Home() {
 
       const filtered = filterDestinationsWithData(
         destinationsData as Destination[],
-        '',
-        {},
-        '',
-        '',
+        searchTerm,
+        advancedFilters,
+        selectedCity,
+        selectedCategory,
         user,
-        visitedSlugs
+        visitedSlugs,
+        sortBy
       );
       setFilteredDestinations(filtered);
 
@@ -1170,7 +1177,13 @@ export default function Home() {
               setDestinations(uniqueMerged);
               const filteredMerged = filterDestinationsWithData(
                 uniqueMerged,
-                '', {}, '', '', user, visitedSlugs
+                searchTerm,
+                advancedFilters,
+                selectedCity,
+                selectedCategory,
+                user,
+                visitedSlugs,
+                sortBy
               );
               setFilteredDestinations(filteredMerged);
 
@@ -1207,7 +1220,7 @@ export default function Home() {
         await applyFallbackData({ updateDestinations: true });
       }
     }
-  }, [user, visitedSlugs, filterDestinationsWithData]);
+  }, [user, visitedSlugs, filterDestinationsWithData, searchTerm, advancedFilters, selectedCity, selectedCategory, sortBy]);
 
   const fetchVisitedPlaces = async (): Promise<void> => {
     if (!user) return;
@@ -2441,12 +2454,16 @@ export default function Home() {
               }}
               destination={editingDestination}
               onSave={async () => {
-                // Refresh destinations after creating/updating POI
-                // Add a small delay to ensure the database has updated
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Refresh destinations immediately after creating/updating/deleting POI
+                // Small delay to ensure database transaction is committed
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Fetch fresh destinations (this will automatically apply current filters)
                 await fetchDestinations();
+                
                 // Reset to first page to show the newly created POI at the top
                 setCurrentPage(1);
+                
                 setEditingDestination(null);
               }}
             />
