@@ -153,6 +153,33 @@ export function generateFollowUpSuggestions({
     }
   }
 
+  // Conversation-aware suggestions based on history
+  if (isFollowUp && conversationHistory.length > 0) {
+    // If user is asking for more, suggest related but different options
+    suggestions.push({
+      text: 'Show me something different',
+      icon: 'default',
+      type: 'expand',
+    });
+  }
+  
+  if (isRefinement && conversationHistory.length > 0) {
+    // If refining, suggest removing filters
+    suggestions.push({
+      text: 'Show me all options',
+      icon: 'default',
+      type: 'expand',
+    });
+  }
+  
+  if (isComparison) {
+    suggestions.push({
+      text: 'Show me the best rated',
+      icon: 'rating',
+      type: 'refine',
+    });
+  }
+
   // Generic fallback suggestions
   if (suggestions.length < 3) {
     if (!hasTime) {
