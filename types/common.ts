@@ -39,6 +39,7 @@ export interface Trip {
   user_id: string;
   name: string;
   title?: string; // Alternative field name
+  destination?: string; // Trip destination/location
   description?: string;
   start_date?: string;
   end_date?: string;
