@@ -21,9 +21,6 @@ class DestinationRepository {
         var query = client
             .from("destinations")
             .select()
-            .order("name")
-            .limit(limit)
-            .range(from: offset, to: offset + limit - 1)
         
         if let city = city {
             query = query.eq("city", value: city)
@@ -33,7 +30,12 @@ class DestinationRepository {
             query = query.eq("category", value: category)
         }
         
-        let response: [Destination] = try await query.execute().value
+        let response: [Destination] = try await query
+            .order("name")
+            .limit(limit)
+            .range(from: offset, to: offset + limit - 1)
+            .execute()
+            .value
         return response
     }
     

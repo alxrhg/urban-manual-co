@@ -35,7 +35,8 @@ class AuthRepository {
     // Get current user
     func getCurrentUser() async throws -> User? {
         do {
-            let authUser = try await client.auth.user
+            let session = try await client.auth.session
+            let authUser = session.user
             
             guard let userId = UUID(uuidString: authUser.id.uuidString) else {
                 return nil

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 import MapKit
 import CoreLocation
 
@@ -33,7 +34,7 @@ class MapViewModel: ObservableObject {
         error = nil
         
         do {
-            destinations = try await repository.fetchAll(city: city, limit: 1000)
+            destinations = try await repository.fetchDestinations(city: city, limit: 1000)
             
             // If we have destinations, center on the first one
             if let first = destinations.first, let coordinate = first.coordinate {

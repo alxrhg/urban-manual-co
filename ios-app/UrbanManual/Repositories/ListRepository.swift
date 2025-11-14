@@ -61,20 +61,19 @@ class ListRepository {
     
     // Fetch destinations in a list
     func fetchListDestinations(listId: UUID) async throws -> [Destination] {
-        let response: [[String: Any]] = try await client
+        let response: [ListItem] = try await client
             .from("list_items")
-            .select("*, destinations(*)")
+            .select()
             .eq("list_id", value: listId)
             .execute()
             .value
         
-        let destinations = response.compactMap { dict -> Destination? in
-            guard let destData = dict["destinations"] as? [String: Any],
-                  let jsonData = try? JSONSerialization.data(withJSONObject: destData),
-                  let destination = try? JSONDecoder().decode(Destination.self, from: jsonData) else {
-                return nil
+        // Fetch full destination data for each list item
+        var destinations: [Destination] = []
+        for item in response {
+            if let dest = try? await DestinationRepository().fetchDestination(id: item.destinationId) {
+                destinations.append(dest)
             }
-            return destination
         }
         
         return destinations

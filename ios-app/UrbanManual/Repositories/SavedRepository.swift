@@ -13,22 +13,20 @@ class SavedRepository {
     
     // Fetch saved destinations for user
     func fetchSavedDestinations(userId: UUID) async throws -> [Destination] {
-        let response: [[String: Any]] = try await client
+        let response: [SavedDestination] = try await client
             .from("saved_destinations")
-            .select("*, destinations(*)")
+            .select()
             .eq("user_id", value: userId)
             .order("created_at", ascending: false)
             .execute()
             .value
         
-        // Parse nested destinations
-        let destinations = response.compactMap { dict -> Destination? in
-            guard let destData = dict["destinations"] as? [String: Any],
-                  let jsonData = try? JSONSerialization.data(withJSONObject: destData),
-                  let destination = try? JSONDecoder().decode(Destination.self, from: jsonData) else {
-                return nil
+        // Fetch full destination data for each saved item
+        var destinations: [Destination] = []
+        for saved in response {
+            if let dest = try? await DestinationRepository().fetchDestination(id: saved.destinationId) {
+                destinations.append(dest)
             }
-            return destination
         }
         
         return destinations
