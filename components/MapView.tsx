@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Destination } from '@/types/destination';
 import AppleMapView from '@/components/maps/AppleMapView';
 import MapboxMultiMap from '@/components/maps/MapboxMultiMap';
-import GoogleStaticMap from '@/components/maps/GoogleStaticMap';
+import GoogleInteractiveMap from '@/components/maps/GoogleInteractiveMap';
 import { getAvailableProviders } from '@/lib/maps/provider';
 
 interface MapViewProps {
@@ -74,12 +74,12 @@ export default function MapView({
 
   if (provider === 'google') {
     return (
-      <GoogleStaticMap
+      <GoogleInteractiveMap
         destinations={destinations}
+        onMarkerClick={onMarkerClick}
         center={center}
         zoom={zoom}
-        height="100%"
-        className="h-full"
+        isDark={isDark}
       />
     );
   }
