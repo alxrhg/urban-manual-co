@@ -1101,6 +1101,44 @@ async function processAIChatRequest(
                   totalEvents: limitedResults.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
                 };
 
+                // Generate follow-up suggestions
+                let followUpSuggestions: Array<{ text: string; icon?: string; type?: string }> = [];
+                try {
+                  const { generateFollowUpSuggestions } = await import('@/lib/chat/generateFollowUpSuggestions');
+                  
+                  // Get user context if available
+                  let userContextData: any = undefined;
+                  if (userId) {
+                    try {
+                      const { data: profile } = await supabase
+                        .from('user_profiles')
+                        .select('favorite_cities, favorite_categories')
+                        .eq('user_id', userId)
+                        .single();
+                      
+                      if (profile) {
+                        userContextData = {
+                          favoriteCities: profile.favorite_cities || [],
+                          favoriteCategories: profile.favorite_categories || [],
+                        };
+                      }
+                    } catch (error) {
+                      // Silently fail - user context is optional
+                    }
+                  }
+                  
+                  followUpSuggestions = generateFollowUpSuggestions({
+                    query,
+                    intent,
+                    destinations: limitedResults,
+                    conversationHistory,
+                    userContext: userContextData,
+                  });
+                } catch (error) {
+                  // Silently fail - suggestions are optional
+                  console.debug('[AI Chat] Failed to generate suggestions:', error);
+                }
+
                 const responseData = {
                   content: enhancedContent,
                   destinations: limitedResults,
@@ -1113,6 +1151,7 @@ async function processAIChatRequest(
                   inferredTags: intent.inferredTags || undefined, // Include inferred tags for refinement chips
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
+                  suggestions: followUpSuggestions, // Include follow-up suggestions
                 };
 
                 // Cache non-personalized results

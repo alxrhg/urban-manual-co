@@ -42,6 +42,7 @@ import { ContextCards } from '@/components/ContextCards';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
 import { DestinationBadges } from '@/components/DestinationBadges';
+import { FollowUpSuggestions } from '@/components/FollowUpSuggestions';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
@@ -300,6 +301,7 @@ export default function Home() {
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
   const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<Array<{ text: string; icon?: string; type?: string }>>([]);
 
   // Session and context state
   const [lastSession, setLastSession] = useState<any>(null);
@@ -1277,6 +1279,8 @@ export default function Home() {
       });
     }
     setSubmittedQuery(query); // Store the submitted query
+    // Clear previous suggestions when starting new search
+    setFollowUpSuggestions([]);
     // Match chat component: only check if empty or loading
     if (!query.trim() || searching) {
       return;
@@ -1378,6 +1382,13 @@ export default function Home() {
       const destinations = data.destinations || [];
       setFilteredDestinations(destinations);
 
+      // Store follow-up suggestions from API response
+      if (data.suggestions && Array.isArray(data.suggestions)) {
+        setFollowUpSuggestions(data.suggestions);
+      } else {
+        setFollowUpSuggestions([]);
+      }
+
       // Add messages to visual chat history
       const contextPrompt = getContextAwareLoadingMessage(query);
       setChatMessages(prev => [
@@ -1391,6 +1402,7 @@ export default function Home() {
       setFilteredDestinations([]);
       setSearchIntent(null);
       setSeasonalContext(null);
+      setFollowUpSuggestions([]);
 
       // Add error message to chat
       setChatMessages(prev => [
@@ -1830,6 +1842,18 @@ export default function Home() {
                                     <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
                                       {message.contextPrompt}
                                     </div>
+                                  )}
+                                  {/* Show follow-up suggestions after the last assistant message */}
+                                  {index === chatMessages.length - 1 && followUpSuggestions.length > 0 && (
+                                    <FollowUpSuggestions
+                                      suggestions={followUpSuggestions}
+                                      onSuggestionClick={(suggestion) => {
+                                        setSearchTerm(suggestion);
+                                        setFollowUpInput('');
+                                        performAISearch(suggestion);
+                                      }}
+                                      isLoading={searching}
+                                    />
                                   )}
                                 </div>
                               )}
