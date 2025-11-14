@@ -22,6 +22,10 @@ import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { ForecastInfo } from '@/components/ForecastInfo';
+import { SentimentDisplay } from '@/components/SentimentDisplay';
+import { TopicsDisplay } from '@/components/TopicsDisplay';
+import { AnomalyAlert } from '@/components/AnomalyAlert';
+import { ExplanationPanel } from '@/components/ExplanationPanel';
 
 interface Recommendation {
   slug: string;
@@ -528,10 +532,20 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           </div>
         </div>
 
-        {/* Forecast Info */}
+        {/* ML Intelligence Section */}
         {destination.id && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
+            {/* Anomaly Alert */}
+            <AnomalyAlert destinationId={destination.id} type="traffic" />
+            
+            {/* Forecast Info */}
             <ForecastInfo destinationId={destination.id} />
+            
+            {/* Sentiment Analysis */}
+            <SentimentDisplay destinationId={destination.id} days={30} />
+            
+            {/* Topics */}
+            <TopicsDisplay destinationId={destination.id} minTopicSize={3} />
           </div>
         )}
 
