@@ -347,8 +347,8 @@ export function AchievementsDisplay({
         const emptyState = getEmptyStateMessage(theme);
 
         const themeConfig = {
-          'first-steps': { title: 'First Steps', icon: Sparkles, color: 'from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10' },
-          'city-explorer': { title: 'City Explorer', icon: MapPin, color: 'from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10' },
+          'first-steps': { title: 'First Steps', icon: Sparkles, color: 'from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-800/10' },
+          'city-explorer': { title: 'City Explorer', icon: MapPin, color: 'from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-800/10' },
           'michelin': { title: 'Michelin', icon: Award, color: 'from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10' },
           'specialists': { title: 'Specialists', icon: Heart, color: 'from-gray-50 to-gray-100 dark:from-gray-900/10 dark:to-gray-800/10' }
         }[theme] || { title: theme, icon: Award, color: '' };

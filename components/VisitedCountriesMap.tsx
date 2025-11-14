@@ -130,7 +130,7 @@ export default function VisitedCountriesMap({ visitedPlaces, savedPlaces = [] }:
       </div>
 
       {/* Visual map representation */}
-      <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 relative overflow-hidden">
+      <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 relative overflow-hidden">
         {/* Grid pattern background */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{

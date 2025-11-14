@@ -54,7 +54,7 @@ export function ContextCards({ context }: ContextCardsProps) {
       icon: <Heart className="h-4 w-4" />,
       label: 'You love',
       value: context.favoriteCategories.slice(0, 2).join(', '),
-      color: 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800',
+      color: 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800',
     });
   }
 
