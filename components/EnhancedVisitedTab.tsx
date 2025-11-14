@@ -48,17 +48,17 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
     let filtered = [...visitedPlaces];
 
     if (filterCity) {
-      filtered = filtered.filter(p => p.destination.city === filterCity);
+      filtered = filtered.filter(p => p.destination?.city === filterCity);
     }
     if (filterCategory) {
-      filtered = filtered.filter(p => p.destination.category === filterCategory);
+      filtered = filtered.filter(p => p.destination?.category === filterCategory);
     }
 
     filtered.sort((a, b) => {
       if (sortBy === 'name') {
-        return a.destination.name.localeCompare(b.destination.name);
+        return (a.destination?.name || '').localeCompare(b.destination?.name || '');
       }
-      return new Date(b.visited_at).getTime() - new Date(a.visited_at).getTime();
+      return new Date(b.visited_at || 0).getTime() - new Date(a.visited_at || 0).getTime();
     });
 
     return filtered;

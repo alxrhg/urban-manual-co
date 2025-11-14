@@ -44,6 +44,7 @@ export interface Trip {
   start_date?: string;
   end_date?: string;
   cover_image_url?: string;
+  status?: string; // Trip status (planning, ongoing, completed, etc.)
   public: boolean;
   created_at: string;
   updated_at?: string;

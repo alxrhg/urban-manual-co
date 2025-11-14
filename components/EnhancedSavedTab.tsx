@@ -46,15 +46,15 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
     let filtered = [...savedPlaces];
 
     if (filterCity) {
-      filtered = filtered.filter(p => p.destination.city === filterCity);
+      filtered = filtered.filter(p => p.destination?.city === filterCity);
     }
     if (filterCategory) {
-      filtered = filtered.filter(p => p.destination.category === filterCategory);
+      filtered = filtered.filter(p => p.destination?.category === filterCategory);
     }
 
     filtered.sort((a, b) => {
       if (sortBy === 'name') {
-        return a.destination.name.localeCompare(b.destination.name);
+        return (a.destination?.name || '').localeCompare(b.destination?.name || '');
       }
       return 0; // Keep original order for 'recent'
     });
@@ -207,7 +207,7 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
                 {place.destination?.name}
               </h3>
               <p className="text-xs text-gray-500 mt-1">
-                {capitalizeCity(place.destination?.city)}
+                {place.destination?.city && capitalizeCity(place.destination.city)}
               </p>
             </button>
           ))}
@@ -237,7 +237,7 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{place.destination?.name}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {capitalizeCity(place.destination?.city)} • {place.destination?.category}
+                  {place.destination?.city && capitalizeCity(place.destination.city)} • {place.destination?.category}
                 </div>
               </div>
               <div className="flex-shrink-0">

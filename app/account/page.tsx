@@ -65,7 +65,7 @@ export default function Account() {
 
   // Trip management state
   const [showTripDialog, setShowTripDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<string | null>(null);
+  const [editingTripId, setEditingTripId] = useState<number | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -867,7 +867,7 @@ export default function Account() {
       {/* Trip Planner Modal */}
       <TripPlanner
         isOpen={showTripDialog}
-        tripId={editingTripId || undefined}
+        tripId={editingTripId !== null ? String(editingTripId) : undefined}
         onClose={() => {
           setShowTripDialog(false);
           setEditingTripId(null);
