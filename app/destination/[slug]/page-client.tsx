@@ -21,6 +21,13 @@ import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { ForecastInfo } from '@/components/ForecastInfo';
+import { SentimentDisplay } from '@/components/SentimentDisplay';
+import { TopicsDisplay } from '@/components/TopicsDisplay';
+import { AnomalyAlert } from '@/components/AnomalyAlert';
+import { ExplanationPanel } from '@/components/ExplanationPanel';
+import { useSequenceTracker } from '@/hooks/useSequenceTracker';
+import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 
 interface Recommendation {
   slug: string;
@@ -55,6 +62,7 @@ interface DestinationPageClientProps {
 export default function DestinationPageClient({ initialDestination, parentDestination }: DestinationPageClientProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { trackAction, predictions } = useSequenceTracker();
 
   const [destination] = useState<Destination>(initialDestination);
   const [loading] = useState(false);
@@ -131,8 +139,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         },
       });
 
+      // Track for sequence prediction
+      trackAction({
+        type: 'view',
+        destination_id: destination.id,
+        destination_slug: destination.slug,
+      });
     }
-  }, [destination]);
+  }, [destination, trackAction]);
 
   useEffect(() => {
     if (destination) {
@@ -238,6 +252,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         }
 
         setIsVisited(true);
+        
+        // Track visit action for sequence prediction
+        trackAction({
+          type: 'visit',
+          destination_id: destination.id,
+          destination_slug: destination.slug,
+        });
       }
     } catch (error: any) {
       console.error('Error toggling visit:', error);
@@ -381,7 +402,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
             {/* Title and Action Buttons */}
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl sm:text-4xl font-light leading-tight flex-1">
+              <h1 className="text-2xl font-bold leading-tight flex-1">
                 {destination.name}
               </h1>
               {user && (
@@ -526,6 +547,33 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             )}
           </div>
         </div>
+
+        {/* Sequence Predictions - Show next suggested actions */}
+        {user && predictions && predictions.predictions && predictions.predictions.length > 0 && (
+          <div className="mt-4">
+            <SequencePredictionsInline 
+              predictions={predictions.predictions} 
+              compact={false}
+            />
+          </div>
+        )}
+
+        {/* ML Intelligence Section */}
+        {destination.id && (
+          <div className="mt-4 space-y-4">
+            {/* Anomaly Alert */}
+            <AnomalyAlert destinationId={destination.id} type="traffic" />
+            
+            {/* Forecast Info */}
+            <ForecastInfo destinationId={destination.id} />
+            
+            {/* Sentiment Analysis */}
+            <SentimentDisplay destinationId={destination.id} days={30} />
+            
+            {/* Topics */}
+            <TopicsDisplay destinationId={destination.id} minTopicSize={3} />
+          </div>
+        )}
 
         {/* Image */}
         {destination.image && (
@@ -754,6 +802,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   });
                 if (!error) {
                   setIsSaved(true);
+                  
+                  // Track save action for sequence prediction
+                  trackAction({
+                    type: 'save',
+                    destination_id: destination.id,
+                    destination_slug: destination.slug,
+                  });
                 }
               } catch (error) {
                 console.error('Error saving to saved_places:', error);

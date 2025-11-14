@@ -94,20 +94,20 @@ export function Drawer({
       >
         {/* Header */}
         {(title || headerContent) && (
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
             {headerContent || (
               <>
                 {title && (
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">
                     {title}
                   </h2>
                 )}
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                  className="p-2.5 min-h-11 min-w-11 flex items-center justify-center rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 touch-manipulation"
                   aria-label="Close"
                 >
-                  <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+                  <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
                 </button>
               </>
             )}
@@ -136,20 +136,20 @@ export function Drawer({
       >
         {/* Header */}
         {(title || headerContent) && (
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
             {headerContent || (
               <>
                 {title && (
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">
                     {title}
                   </h2>
                 )}
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+                  className="p-2.5 min-h-11 min-w-11 flex items-center justify-center rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 touch-manipulation"
                   aria-label="Close"
                 >
-                  <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+                  <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
                 </button>
               </>
             )}

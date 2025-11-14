@@ -64,6 +64,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // /discover now redirects to /admin?tab=discover - no protection needed here
+  // The redirect happens client-side and /admin route handles auth
+
   // Protect /admin routes (custom admin page)
   if (request.nextUrl.pathname.startsWith('/admin')) {
     // Skip API routes

@@ -106,7 +106,7 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav: Brand + Menu */}
-      <div className="w-full px-6 md:px-10 lg:px-12">
+      <div className="w-full px-6 md:px-10">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo - Left */}
           <button
@@ -170,7 +170,7 @@ export function Header() {
                 }
                 setIsMenuOpen(!isMenuOpen);
               }}
-              className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-2 px-2 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg shrink-0"
+              className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-normal py-2 px-2 min-h-11 touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg shrink-0"
               aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isMenuOpen}
               aria-haspopup="true"

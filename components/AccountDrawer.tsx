@@ -178,7 +178,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   </div>
                 </button>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-black dark:text-white">
+                  <h3 className="text-sm font-bold text-black dark:text-white">
                     {user.email?.split('@')[0] || 'User'}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>

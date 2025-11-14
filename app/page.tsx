@@ -17,6 +17,8 @@ const DestinationDrawer = dynamic(
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useSequenceTracker } from '@/hooks/useSequenceTracker';
+import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
@@ -30,6 +32,7 @@ import {
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
+import { TrendingSectionML } from '@/components/TrendingSectionML';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
@@ -242,6 +245,7 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
+  const { trackAction, predictions } = useSequenceTracker();
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPOIDrawer, setShowPOIDrawer] = useState(false);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
@@ -1253,6 +1257,13 @@ export default function Home() {
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = useCallback(async (query: string) => {
+    // Track search action for sequence prediction
+    if (query.trim()) {
+      trackAction({
+        type: 'search',
+        query: query.trim(),
+      });
+    }
     setSubmittedQuery(query); // Store the submitted query
     // Match chat component: only check if empty or loading
     if (!query.trim() || searching) {
@@ -1378,7 +1389,7 @@ export default function Home() {
     } finally {
       setSearching(false);
     }
-  }, [user, searching, conversationHistory]);
+  }, [user, searching, conversationHistory, trackAction]);
 
   // Convert inferredTags to RefinementTag array
   const convertInferredTagsToRefinementTags = useCallback((
@@ -1454,6 +1465,11 @@ export default function Home() {
       newActiveFilters.delete(key);
             } else {
       newActiveFilters.add(key);
+      
+      // Track filter action for sequence prediction
+      trackAction({
+        type: 'filter',
+      });
     }
     
     setActiveFilters(newActiveFilters);
@@ -1472,7 +1488,7 @@ export default function Home() {
       
       performAISearch(enhancedQuery);
     }
-  }, [activeFilters, submittedQuery, performAISearch]);
+  }, [activeFilters, submittedQuery, performAISearch, trackAction]);
 
   // Handle chip remove - remove filter and rebuild search
   const handleChipRemove = useCallback((tag: RefinementTag) => {
@@ -1634,7 +1650,7 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 lg:px-12 py-16 md:py-24 pb-8 md:pb-12">
+        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -2042,7 +2058,7 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 mt-8">
+              <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">
@@ -2144,6 +2160,13 @@ export default function Home() {
                     source: 'smart_recommendations',
                   });
 
+                  // Track for sequence prediction
+                  trackAction({
+                    type: 'click',
+                    destination_id: destination.id,
+                    destination_slug: destination.slug,
+                  });
+
                   // Also track with new analytics system
                   if (destination.id) {
                     import('@/lib/analytics/track').then(({ trackEvent }) => {
@@ -2180,10 +2203,20 @@ export default function Home() {
               </div>
             )}
             
-            {/* Trending Section - Show when no active search */}
+            {/* Sequence Predictions - Show after user has performed some actions */}
+            {user && predictions && predictions.predictions && predictions.predictions.length > 0 && !submittedQuery && (
+              <div className="mb-8">
+                <SequencePredictionsInline 
+                  predictions={predictions.predictions} 
+                  compact={false}
+                />
+              </div>
+            )}
+
+            {/* Trending Section - ML-powered Prophet forecasting */}
             {!submittedQuery && (
               <div className="mb-12 md:mb-16">
-              <TrendingSection />
+                <TrendingSectionML limit={12} forecastDays={7} />
               </div>
             )}
 
@@ -2191,7 +2224,7 @@ export default function Home() {
             {advancedFilters.nearMe && userLocation && nearbyDestinations.length === 0 && (
               <div className="text-center py-12 px-4">
                 <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
                   No destinations found nearby
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">

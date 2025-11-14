@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { MapPin, Sparkles } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics/track';
 import { useRouter } from 'next/navigation';
+import { ExplanationPanel } from './ExplanationPanel';
 
 export function ForYouSectionML() {
   const router = useRouter();
@@ -116,8 +117,11 @@ export function ForYouSectionML() {
                 )}
               </div>
               {isMLPowered && (
-                <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
-                  {rec.reason}
+                <div className="flex items-center justify-between mt-1">
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                    {rec.reason}
+                  </div>
+                  <ExplanationPanel destinationId={rec.destination_id} trigger="hover" />
                 </div>
               )}
             </div>

@@ -47,6 +47,7 @@ class TrendingDestination(BaseModel):
     growth_rate: float
     current_demand: float
     forecast_demand: float
+    image: Optional[str] = None
 
 
 class TrendingResponse(BaseModel):
@@ -377,9 +378,9 @@ def _enrich_trending(trending: List[dict]) -> List[TrendingDestination]:
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                # Fetch destination details
+                # Fetch destination details including image
                 cur.execute("""
-                    SELECT id, slug, name, city, category
+                    SELECT id, slug, name, city, category, image
                     FROM destinations
                     WHERE id = ANY(%s)
                 """, (destination_ids,))
@@ -399,7 +400,8 @@ def _enrich_trending(trending: List[dict]) -> List[TrendingDestination]:
                     category=dest[4],
                     growth_rate=trend['growth_rate'],
                     current_demand=trend['current_demand'],
-                    forecast_demand=trend['forecast_demand']
+                    forecast_demand=trend['forecast_demand'],
+                    image=dest[5] if len(dest) > 5 else None
                 ))
 
         return enriched

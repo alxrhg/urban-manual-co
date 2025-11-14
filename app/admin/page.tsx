@@ -733,6 +733,15 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover'>('destinations');
 
+  // Check for tab query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab && ['destinations', 'analytics', 'searches', 'discover'].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, []);
+
   // Searches state
   const [searchLogs, setSearchLogs] = useState<any[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(false);
