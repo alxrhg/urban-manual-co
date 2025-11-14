@@ -2096,7 +2096,7 @@ export default function Home() {
                           setEditingDestination(null);
                           setShowPOIDrawer(true);
                         }}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-colors hover:bg-gray-900 dark:hover:bg-gray-100 flex-shrink-0"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
                         aria-label="Add New POI"
                       >
                         <Plus className="h-5 w-5" />
@@ -2105,7 +2105,7 @@ export default function Home() {
                     ) : (
                       <button
                         onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-colors hover:bg-gray-900 dark:hover:bg-gray-100 flex-shrink-0"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
                         aria-label="Create Trip"
                       >
                         <Plus className="h-5 w-5" />
