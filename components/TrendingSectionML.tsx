@@ -72,9 +72,19 @@ export function TrendingSectionML({
             title={`${Math.round(dest.growth_rate * 100)}% growth predicted`}
           >
             <div className={CARD_MEDIA}>
-              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20">
-                <MapPin className="h-8 w-8 opacity-20" />
-              </div>
+              {dest.image ? (
+                <Image
+                  src={dest.image}
+                  alt={dest.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20">
+                  <MapPin className="h-8 w-8 opacity-20" />
+                </div>
+              )}
 
               {/* Trending Badge */}
               <div className="absolute top-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">

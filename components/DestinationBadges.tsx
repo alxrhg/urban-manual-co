@@ -40,34 +40,32 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
 
           if (peakRes.ok) {
             const data = await peakRes.json();
-            if (data.peak_times && data.peak_times.length > 0) {
-              // Process peak times
-              const allTimes = data.peak_times.sort((a: any, b: any) =>
-                a.predicted_visits - b.predicted_visits
-              );
-
-              const formatTimeRange = (hour: number): string => {
-                const startHour = hour;
-                const formatHour = (h: number) => {
-                  if (h === 0) return '12 AM';
-                  if (h === 12) return '12 PM';
-                  if (h < 12) return `${h} AM`;
-                  return `${h - 12} PM`;
-                };
-                return formatHour(startHour);
+            // Handle the actual API response format (peak_date, low_date, recommendation)
+            if (data.low_date && data.peak_date) {
+              const lowDate = new Date(data.low_date);
+              const peakDate = new Date(data.peak_date);
+              
+              const formatDate = (date: Date) => {
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const day = days[date.getDay()];
+                const month = date.toLocaleDateString('en-US', { month: 'short' });
+                const dayNum = date.getDate();
+                return { day, dateStr: `${month} ${dayNum}` };
               };
 
-              const bestTimes = allTimes.slice(0, 3).map((pt: any) => ({
-                day: pt.day_of_week,
-                timeRange: formatTimeRange(pt.hour),
-              }));
+              const low = formatDate(lowDate);
+              const peak = formatDate(peakDate);
 
-              const worstTimes = allTimes.slice(-3).map((pt: any) => ({
-                day: pt.day_of_week,
-                timeRange: formatTimeRange(pt.hour),
-              }));
-
-              setPeakTimes({ best_times: bestTimes, worst_times: worstTimes });
+              setPeakTimes({
+                best_times: [{
+                  day: low.day,
+                  timeRange: low.dateStr,
+                }],
+                worst_times: [{
+                  day: peak.day,
+                  timeRange: peak.dateStr,
+                }],
+              });
             }
           }
         }

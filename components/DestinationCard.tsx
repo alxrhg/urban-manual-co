@@ -6,6 +6,7 @@ import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
+import { DestinationBadges } from './DestinationBadges';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -213,6 +214,13 @@ export function DestinationCard({
                ? `Located in ${capitalizeCity(destination.city)}`
                : destination.category || '')}
         </div>
+        
+        {/* ML Forecasting Badges */}
+        {showBadges && destination.id && (
+          <div className="mt-2">
+            <DestinationBadges destinationId={destination.id} compact={true} showTiming={false} />
+          </div>
+        )}
         </div>
       </div>
 

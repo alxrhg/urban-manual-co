@@ -21,6 +21,7 @@ import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { ForecastInfo } from '@/components/ForecastInfo';
 
 interface Recommendation {
   slug: string;
@@ -526,6 +527,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             )}
           </div>
         </div>
+
+        {/* Forecast Info */}
+        {destination.id && (
+          <div className="mt-4">
+            <ForecastInfo destinationId={destination.id} />
+          </div>
+        )}
 
         {/* Image */}
         {destination.image && (

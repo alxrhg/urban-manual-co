@@ -30,6 +30,7 @@ import {
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { TrendingSection } from '@/components/TrendingSection';
+import { TrendingSectionML } from '@/components/TrendingSectionML';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
@@ -2180,10 +2181,10 @@ export default function Home() {
               </div>
             )}
             
-            {/* Trending Section - Show when no active search */}
+            {/* Trending Section - ML-powered Prophet forecasting */}
             {!submittedQuery && (
               <div className="mb-12 md:mb-16">
-              <TrendingSection />
+                <TrendingSectionML limit={12} forecastDays={7} />
               </div>
             )}
 
