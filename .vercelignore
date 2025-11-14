@@ -1,6 +1,5 @@
 # Exclude iOS app from Vercel builds
 ios-app/
-ios/
 
 # Other build artifacts and temporary files
 *.swift
