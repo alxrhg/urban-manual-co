@@ -66,7 +66,7 @@ export function ExplanationPanel({ destinationId, method = 'shap', trigger = 'cl
     <div>
       <button
         onClick={handleTrigger}
-        className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs hover:bg-purple-200 dark:hover:bg-purple-900/50"
+        className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs hover:bg-gray-200 dark:hover:bg-gray-700"
       >
         <Sparkles className="h-3 w-3" />
         Why recommended?

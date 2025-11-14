@@ -111,7 +111,7 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-          <Sparkles className="h-5 w-5 text-purple-500" />
+          <Sparkles className="h-5 w-5 text-gray-600 dark:text-gray-400" />
           <h2 className="text-lg font-semibold">AI Search</h2>
           <button
             onClick={onClose}
@@ -133,12 +133,12 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask me anything about destinations..."
-              className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
               disabled={isSearching}
             />
             {isSearching && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+                <Loader2 className="h-5 w-5 animate-spin text-gray-600 dark:text-gray-400" />
               </div>
             )}
           </div>
@@ -159,7 +159,7 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
 
           {/* Streaming AI Response */}
           {streamingResponse && (
-            <div className="mb-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
               <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {streamingResponse}
               </span>
@@ -184,7 +184,7 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
                       {destination.city} • {destination.category}
                     </span>
                     {relevance && (
-                      <span className="text-xs text-purple-600 dark:text-purple-400 mt-2 line-clamp-2">
+                      <span className="text-xs text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
                         {relevance}
                       </span>
                     )}

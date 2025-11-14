@@ -444,7 +444,7 @@ export default function RouteOptimizerPage() {
               <button
                 onClick={optimizeRoute}
                 disabled={selectedPlaces.length === 0 || optimizing}
-                className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+                className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
                 {optimizing ? (
                   <>
@@ -490,12 +490,12 @@ export default function RouteOptimizerPage() {
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                             stop.type === 'meal'
                               ? 'bg-orange-100 dark:bg-orange-900/30'
-                              : 'bg-purple-100 dark:bg-purple-900/30'
+                              : 'bg-gray-100 dark:bg-gray-800'
                           }`}>
                             {stop.type === 'meal' ? (
                               <Utensils className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                             ) : (
-                              <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-500" />
+                              <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                             )}
                           </div>
                           {index < optimizedRoute.length - 1 && (
