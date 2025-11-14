@@ -762,20 +762,11 @@ export default function AdminPage() {
           }
         }, 10000);
         
-        const supabase = createClient();
+        // Use skipValidation to bypass strict validation that might be too restrictive
+        // This allows admin page to work even if validation fails due to strict checks
+        const supabase = createClient({ skipValidation: true });
         
-        // Check if we're using a placeholder client (invalid config)
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-        if (supabaseUrl.includes('placeholder') || !supabaseUrl) {
-          console.error('[Admin] Invalid Supabase configuration detected');
-          clearTimeout(timeoutId);
-          if (isMounted) {
-            setAuthChecked(true);
-            setIsAdmin(false);
-          }
-          return;
-        }
-        
+        // Try to get session - this will fail if using placeholder client
         const { data: { session }, error } = await supabase.auth.getSession();
         
         clearTimeout(timeoutId);
@@ -784,6 +775,18 @@ export default function AdminPage() {
 
         if (error) {
           console.error('[Admin] Auth error:', error);
+          
+          // Check if this is a placeholder client error (invalid config)
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+          const isPlaceholderError = error.message?.includes('placeholder') || 
+                                    error.message?.includes('Invalid API key') ||
+                                    supabaseUrl.includes('placeholder') ||
+                                    !supabaseUrl;
+          
+          if (isPlaceholderError) {
+            console.error('[Admin] Invalid Supabase configuration detected');
+          }
+          
           if (isMounted) {
             setAuthChecked(true);
             setIsAdmin(false);

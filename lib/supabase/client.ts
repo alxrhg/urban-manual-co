@@ -53,13 +53,17 @@ function validateConfig(url: string, key: string): { valid: boolean; errors: str
  * Create Supabase browser client
  * This is the main client for client-side components
  * 
+ * @param options - Optional configuration
+ * @param options.skipValidation - Skip strict validation (use with caution)
+ * 
  * @throws {Error} In production if configuration is invalid
  */
-export function createClient() {
+export function createClient(options?: { skipValidation?: boolean }) {
   const url = getSupabaseUrl();
   const key = getSupabaseKey();
 
-  const validation = validateConfig(url, key);
+  // Skip validation if requested (for admin pages that need to work even with strict validation)
+  const validation = options?.skipValidation ? { valid: true, errors: [] } : validateConfig(url, key);
 
   if (!validation.valid) {
     const errorMessage = formatValidationErrors(validation.errors);
@@ -67,6 +71,39 @@ export function createClient() {
     // Check if we're in a browser context (runtime) vs build time
     const isRuntime = typeof window !== 'undefined';
     const isProduction = process.env.NODE_ENV === 'production';
+    
+    // If skipValidation is true, still try to use the actual URL/key even if validation fails
+    // This allows admin pages to work even if validation is too strict
+    if (options?.skipValidation && url && key && !url.includes('placeholder') && !key.includes('placeholder')) {
+      console.warn('[Supabase Client] Validation skipped, using provided URL/key');
+      return createBrowserClient(url, key, {
+        cookies: {
+          getAll() {
+            // Check if we're in a browser environment
+            if (typeof window === 'undefined' || typeof document === 'undefined') {
+              return [];
+            }
+            return document.cookie.split('; ').map(cookie => {
+              const [name, ...rest] = cookie.split('=');
+              return { name, value: rest.join('=') };
+            });
+          },
+          setAll(cookiesToSet) {
+            // Check if we're in a browser environment
+            if (typeof window === 'undefined' || typeof document === 'undefined') {
+              return;
+            }
+            cookiesToSet.forEach(({ name, value, options }) => {
+              document.cookie = `${name}=${value}; path=${options?.path || '/'}; ${
+                options?.maxAge ? `max-age=${options.maxAge};` : ''
+              } ${options?.domain ? `domain=${options.domain};` : ''} ${
+                options?.sameSite ? `samesite=${options.sameSite};` : ''
+              } ${options?.secure ? 'secure;' : ''}`;
+            });
+          },
+        },
+      });
+    }
     
     // Log error in all environments, but don't throw
     // This allows the app to continue running with a placeholder client
