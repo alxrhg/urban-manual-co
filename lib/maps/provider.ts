@@ -5,7 +5,7 @@ const MAP_PROVIDER_ORDER: MapProvider[] = ['apple', 'mapbox', 'google'];
 const appleAvailable = process.env.NEXT_PUBLIC_MAPKIT_AVAILABLE === 'true';
 const mapboxAvailable = Boolean(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN);
 const googleAvailable = Boolean(
-  process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY
+  process.env.NEXT_PUBLIC_GOOGLE_API_KEY
 );
 
 const availabilityMap: Record<MapProvider, boolean> = {

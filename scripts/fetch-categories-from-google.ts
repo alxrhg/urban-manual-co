@@ -10,9 +10,8 @@ import { resolve } from 'path';
 config({ path: resolve(process.cwd(), '.env.local') });
 
 // Now set Google API key before importing enrichment module
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 if (GOOGLE_API_KEY) {
-  process.env.GOOGLE_API_KEY = GOOGLE_API_KEY;
   process.env.NEXT_PUBLIC_GOOGLE_API_KEY = GOOGLE_API_KEY;
 }
 
@@ -28,7 +27,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 if (!GOOGLE_API_KEY) {
-  console.error('Missing Google API key. Please set GOOGLE_API_KEY or NEXT_PUBLIC_GOOGLE_API_KEY in .env.local');
+  console.error('Missing Google API key. Please set NEXT_PUBLIC_GOOGLE_API_KEY in .env.local');
   process.exit(1);
 }
 

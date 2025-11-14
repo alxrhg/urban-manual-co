@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 export async function POST(request: NextRequest) {
   try {

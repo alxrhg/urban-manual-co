@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 function stripHtmlTags(text: string | null | undefined): string {
   if (!text) return '';

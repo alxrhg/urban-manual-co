@@ -36,7 +36,7 @@ export default function GoogleInteractiveMap({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     
     if (!apiKey) {
       setError('Google Maps API key not found');
