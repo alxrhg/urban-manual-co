@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, SlidersHorizontal, MapPin, Loader2, Search } from 'lucide-react';
+import { X, SlidersHorizontal, MapPin, Loader2, Search, Sparkles } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 export interface SearchFilters {
@@ -24,6 +24,9 @@ interface SearchFiltersProps {
   availableCities: string[];
   availableCategories: string[];
   onLocationChange?: (lat: number | null, lng: number | null, radius: number) => void;
+  sortBy?: 'default' | 'recent';
+  onSortChange?: (sortBy: 'default' | 'recent') => void;
+  isAdmin?: boolean;
 }
 
 export function SearchFiltersComponent({
@@ -32,6 +35,9 @@ export function SearchFiltersComponent({
   availableCities,
   availableCategories,
   onLocationChange,
+  sortBy = 'default',
+  onSortChange,
+  isAdmin = false,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
@@ -361,6 +367,40 @@ export function SearchFiltersComponent({
                       ))}
                     </div>
                   </fieldset>
+
+                  {/* Sort Filter (Admin Only) */}
+                  {isAdmin && onSortChange && (
+                    <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                      <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Sort</legend>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => onSortChange('default')}
+                          className={`flex items-center gap-1.5 transition-all ${
+                            sortBy === 'default'
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                          }`}
+                          aria-pressed={sortBy === 'default'}
+                        >
+                          Default
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onSortChange('recent')}
+                          className={`flex items-center gap-1.5 transition-all ${
+                            sortBy === 'recent'
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                          }`}
+                          aria-pressed={sortBy === 'recent'}
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          Recent Added
+                        </button>
+                      </div>
+                    </fieldset>
+                  )}
 
                   {/* Near Me Filter */}
                   <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">

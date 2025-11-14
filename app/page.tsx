@@ -2030,31 +2030,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Recent Added Sort Button (Admin Only) */}
-                    {isAdmin && (
-                      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
-                        <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                          SORT
-                        </div>
-                        <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                          <button
-                            onClick={() => {
-                              const newSort = sortBy === 'recent' ? 'default' : 'recent';
-                              setSortBy(newSort);
-                              setCurrentPage(1);
-                            }}
-                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                              sortBy === 'recent'
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
-                          >
-                            <Sparkles className="h-3 w-3" />
-                            Recent Added
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -2091,6 +2066,12 @@ export default function Home() {
                           availableCities={cities}
                           availableCategories={categories}
                           onLocationChange={handleLocationChange}
+                          sortBy={sortBy}
+                          onSortChange={(newSort) => {
+                            setSortBy(newSort);
+                            setCurrentPage(1);
+                          }}
+                          isAdmin={isAdmin}
                         />
                       </div>
 
