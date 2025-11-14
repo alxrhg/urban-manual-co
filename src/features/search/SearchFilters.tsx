@@ -67,7 +67,7 @@ export function SearchFiltersComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
-  function updateFilter(key: keyof SearchFilters, value: any) {
+  function updateFilter(key: keyof SearchFilters, value: string | number | boolean) {
     onFiltersChange({ ...filters, [key]: value });
   }
 
@@ -115,7 +115,7 @@ export function SearchFiltersComponent({
     if (filters.nearMe && hasLocation && latitude && longitude) {
       onLocationChange?.(latitude, longitude, nearMeRadius);
     }
-  }, [hasLocation, latitude, longitude, filters.nearMe, nearMeRadius]);
+  }, [hasLocation, latitude, longitude, filters.nearMe, nearMeRadius, onLocationChange]);
 
   const activeFilterCount = Object.keys(filters).length;
   const hasActiveFilters = activeFilterCount > 0;
@@ -126,18 +126,6 @@ export function SearchFiltersComponent({
   const formatDistance = (km: number) => {
     if (km < 1) return `${Math.round(km * 1000)}m`;
     return `${km}km`;
-  };
-
-  const capitalizeCity = (city: string) => {
-    return city.split('-').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  const capitalizeCategory = (category: string) => {
-    return category.split(' ').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    ).join(' ');
   };
 
   // Calculate dropdown position when opening

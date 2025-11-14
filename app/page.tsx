@@ -2024,17 +2024,12 @@ export default function Home() {
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                          <Image
+                            src="/michelin-star.svg"
                             alt="Michelin star"
+                            width={12}
+                            height={12}
                             className="h-3 w-3"
-                            onError={(e) => {
-                              // Fallback to local file if external URL fails
-                              const target = e.currentTarget;
-                              if (target.src !== '/michelin-star.svg') {
-                                target.src = '/michelin-star.svg';
-                              }
-                            }}
                           />
                           Michelin
                         </button>
@@ -2377,7 +2372,7 @@ export default function Home() {
             if (totalPages <= 1) return null;
             
             return (
-                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2">
+                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2 mx-auto">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
