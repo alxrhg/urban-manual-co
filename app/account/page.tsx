@@ -4,7 +4,7 @@ import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MapPin, Check, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
+import { MapPin, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
@@ -16,6 +16,8 @@ import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
+import type { Collection, Trip, SavedPlace, VisitedPlace } from "@/types/common";
+import type { User } from "@supabase/supabase-js";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -30,11 +32,11 @@ function capitalizeCity(city: string): string {
 
 export default function Account() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
-  const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
-  const [collections, setCollections] = useState<any[]>([]);
-  const [trips, setTrips] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
+  const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   
@@ -46,8 +48,9 @@ export default function Account() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab && ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips'].includes(tab)) {
-        setActiveTab(tab as any);
+      const validTabs = ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips'] as const;
+      if (tab && validTabs.includes(tab as typeof validTabs[number])) {
+        setActiveTab(tab as typeof activeTab);
       }
     }
   }, []);
@@ -76,8 +79,6 @@ export default function Account() {
       }
 
       setUser(session.user);
-      const role = (session.user.app_metadata as Record<string, any> | undefined)?.role;
-      setIsAdmin(role === 'admin');
       setAuthChecked(true);
     }
 
@@ -134,47 +135,82 @@ export default function Account() {
 
       // Collect all unique slugs
       const allSlugs = new Set<string>();
+      interface SavedPlaceRow {
+        destination_slug: string;
+      }
+      interface VisitedPlaceRow {
+        destination_slug: string;
+        visited_at?: string;
+        rating?: number;
+        notes?: string;
+      }
+      
       if (savedResult.data) {
-        (savedResult.data as any[]).forEach((item: any) => allSlugs.add(item.destination_slug));
+        (savedResult.data as SavedPlaceRow[]).forEach((item) => allSlugs.add(item.destination_slug));
       }
       if (visitedResult.data) {
-        (visitedResult.data as any[]).forEach((item: any) => allSlugs.add(item.destination_slug));
+        (visitedResult.data as VisitedPlaceRow[]).forEach((item) => allSlugs.add(item.destination_slug));
       }
 
       // Fetch destinations with location data for map
       if (allSlugs.size > 0) {
+        interface DestRow {
+          slug: string;
+          name: string;
+          city: string;
+          category: string;
+          image?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          country?: string;
+        }
+        
         const { data: destData } = await supabase
           .from('destinations')
           .select('slug, name, city, category, image, latitude, longitude, country')
           .in('slug', Array.from(allSlugs));
 
         if (destData) {
+          const typedDestData = destData as DestRow[];
+          
           // Map saved places
           if (savedResult.data) {
-            setSavedPlaces((savedResult.data as any[]).map((item: any) => {
-              const dest = (destData as any[]).find((d: any) => d.slug === item.destination_slug);
+            const typedSavedData = savedResult.data as SavedPlaceRow[];
+            setSavedPlaces(typedSavedData.map((item) => {
+              const dest = typedDestData.find((d) => d.slug === item.destination_slug);
               return dest ? {
+                id: 0, // placeholder
+                user_id: user.id,
+                destination_id: 0, // placeholder
                 destination_slug: dest.slug,
+                created_at: '',
                 destination: {
+                  slug: dest.slug,
                   name: dest.name,
                   city: dest.city,
                   category: dest.category,
                   image: dest.image
                 }
-              } : null;
-            }).filter((item: any) => item !== null));
+              } as SavedPlace : null;
+            }).filter((item): item is SavedPlace => item !== null));
           }
 
           // Map visited places
           if (visitedResult.data) {
-            setVisitedPlaces((visitedResult.data as any[]).map((item: any) => {
-              const dest = (destData as any[]).find((d: any) => d.slug === item.destination_slug);
+            const typedVisitedData = visitedResult.data as VisitedPlaceRow[];
+            setVisitedPlaces(typedVisitedData.map((item) => {
+              const dest = typedDestData.find((d) => d.slug === item.destination_slug);
               return dest ? {
-                destination_slug: item.destination_slug,
+                id: 0, // placeholder
+                user_id: user.id,
+                destination_id: 0, // placeholder
+                destination_slug: dest.slug,
                 visited_at: item.visited_at,
                 rating: item.rating,
                 notes: item.notes,
+                created_at: '',
                 destination: {
+                  slug: dest.slug,
                   name: dest.name,
                   city: dest.city,
                   category: dest.category,
@@ -183,8 +219,8 @@ export default function Account() {
                   longitude: dest.longitude,
                   country: dest.country
                 }
-              } : null;
-            }).filter((item: any) => item !== null));
+              } as VisitedPlace : null;
+            }).filter((item): item is VisitedPlace => item !== null));
           }
         }
       }
@@ -258,25 +294,38 @@ export default function Account() {
       
       // Reload collections to ensure we have the latest data
       await loadUserData();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating collection:', error);
-      alert(error.message || 'Failed to create collection. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create collection. Please try again.';
+      alert(errorMessage);
     } finally {
       setCreatingCollection(false);
     }
   };
 
   // Calculate stats
-  const stats = useMemo(() => {
+  const stats = useMemo((): {
+    uniqueCities: Set<string>;
+    uniqueCountries: Set<string>;
+    visitedCount: number;
+    savedCount: number;
+    collectionsCount: number;
+    curationCompletionPercentage: number;
+    visitedDestinationsWithCoords: Array<{
+      city: string;
+      latitude?: number | null;
+      longitude?: number | null;
+    }>;
+  } => {
     const uniqueCities = new Set([
-      ...savedPlaces.map(p => p.destination?.city).filter(Boolean),
+      ...savedPlaces.map(p => p.destination?.city).filter((city): city is string => typeof city === 'string'),
       ...visitedPlaces.filter(p => p.destination).map(p => p.destination!.city)
     ]);
 
     // Get countries from destination.country field first, fallback to cityCountryMap
     const countriesFromDestinations = new Set([
-      ...savedPlaces.map(p => p.destination?.country).filter(Boolean),
-      ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country)
+      ...savedPlaces.map(p => p.destination?.country).filter((country): country is string => typeof country === 'string'),
+      ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country!)
     ]);
     
     // Also get countries from city mapping for destinations without country field
@@ -304,7 +353,7 @@ export default function Account() {
         
         return country || null;
       })
-      .filter(Boolean);
+      .filter((country): country is string => country !== null && country !== undefined);
     
     const uniqueCountries = new Set([
       ...Array.from(countriesFromDestinations),
@@ -395,10 +444,10 @@ export default function Account() {
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'settings'].map((tab) => (
+            {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'settings'] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => setActiveTab(tab)}
                 className={`transition-all ${
                   activeTab === tab
                     ? "font-medium text-black dark:text-white"
@@ -501,7 +550,7 @@ export default function Account() {
                       onClick={() => router.push(`/destination/${place.destination_slug}`)}
                       className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
                     >
-                      {place.destination.image && (
+                      {place.destination?.image && (
                         <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                           <Image
                             src={place.destination.image}
@@ -513,12 +562,12 @@ export default function Account() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{place.destination.name}</div>
+                        <div className="text-sm font-medium truncate">{place.destination?.name}</div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                          {capitalizeCity(place.destination.city)} • {place.destination.category}
+                          {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
                         </div>
                         <div className="text-xs text-gray-400 mt-0.5">
-                          {new Date(place.visited_at).toLocaleDateString()}
+                          {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
                         </div>
                       </div>
                     </button>

@@ -6,19 +6,7 @@ import Image from 'next/image';
 import { Check, Grid3x3, List, Star } from 'lucide-react';
 import { NoVisitedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
 import { AddPlaceDropdown } from './AddPlaceDropdown';
-
-interface VisitedPlace {
-  destination_slug: string;
-  visited_at: string;
-  rating?: number;
-  notes?: string;
-  destination: {
-    name: string;
-    city: string;
-    category: string;
-    image: string;
-  };
-}
+import type { VisitedPlace } from '@/types/common';
 
 interface EnhancedVisitedTabProps {
   visitedPlaces: VisitedPlace[];
@@ -45,8 +33,8 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
     const categoriesSet = new Set<string>();
 
     visitedPlaces.forEach(place => {
-      if (place.destination.city) citiesSet.add(place.destination.city);
-      if (place.destination.category) categoriesSet.add(place.destination.category);
+      if (place.destination?.city) citiesSet.add(place.destination.city);
+      if (place.destination?.category) categoriesSet.add(place.destination.category);
     });
 
     return {
@@ -209,10 +197,10 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
               className="group relative text-left"
             >
               <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
-                {place.destination.image && (
+                {place.destination?.image && (
                   <Image
                     src={place.destination.image}
-                    alt={place.destination.name}
+                    alt={place.destination.name || ''}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 768px) 50vw, 25vw"
@@ -228,10 +216,10 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
                 )}
               </div>
               <h3 className="font-medium text-sm leading-tight line-clamp-2">
-                {place.destination.name}
+                {place.destination?.name}
               </h3>
               <p className="text-xs text-gray-500 mt-1">
-                {capitalizeCity(place.destination.city)}
+                {place.destination?.city && capitalizeCity(place.destination.city)}
               </p>
             </button>
           ))}
@@ -247,11 +235,11 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
               className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
             >
-              {place.destination.image && (
+              {place.destination?.image && (
                 <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                   <Image
                     src={place.destination.image}
-                    alt={place.destination.name}
+                    alt={place.destination.name || ''}
                     fill
                     className="object-cover"
                     sizes="64px"
@@ -259,12 +247,12 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{place.destination.name}</div>
+                <div className="text-sm font-medium truncate">{place.destination?.name}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {capitalizeCity(place.destination.city)} • {place.destination.category}
+                  {place.destination?.city && capitalizeCity(place.destination.city)} • {place.destination?.category}
                 </div>
                 <div className="text-xs text-gray-400 mt-0.5">
-                  {new Date(place.visited_at).toLocaleDateString()}
+                  {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
                   {place.rating && ` • ⭐ ${place.rating}`}
                 </div>
               </div>
