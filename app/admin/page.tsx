@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
+import { Loader2, Plus, X, Trash2 } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import { useConfirmDialog } from "@/components/ConfirmDialog";

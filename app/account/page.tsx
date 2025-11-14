@@ -1,10 +1,10 @@
 'use client';
 
 import React from "react";
-import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MapPin, Heart, Check, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
+import { MapPin, Check, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
@@ -14,7 +14,6 @@ import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
-import ProfileAvatar from "@/components/ProfileAvatar";
 import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 
@@ -38,7 +37,6 @@ export default function Account() {
   const [trips, setTrips] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   
   // Get initial tab from URL query param - use useEffect to avoid SSR issues
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips'>('profile');
