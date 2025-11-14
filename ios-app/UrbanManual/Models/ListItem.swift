@@ -12,12 +12,14 @@ struct ListItem: Codable, Identifiable {
     let listId: UUID
     let destinationId: UUID
     let createdAt: Date
+    var destination: Destination? // Populated from join query or separately
     
     enum CodingKeys: String, CodingKey {
         case id
         case listId = "list_id"
         case destinationId = "destination_id"
         case createdAt = "created_at"
+        case destination
     }
 }
 

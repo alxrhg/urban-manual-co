@@ -15,6 +15,7 @@ struct List: Codable, Identifiable {
     let isPublic: Bool
     let createdAt: Date
     let updatedAt: Date
+    var items: [ListItem]? // Populated from join query or separately
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -23,6 +24,7 @@ struct List: Codable, Identifiable {
         case isPublic = "is_public"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case items
     }
 }
 

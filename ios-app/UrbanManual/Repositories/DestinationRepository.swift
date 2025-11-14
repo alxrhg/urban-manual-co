@@ -55,6 +55,11 @@ class DestinationRepository {
         return destination
     }
     
+    // Alias for fetchDestination(id:)
+    func fetchById(_ id: UUID) async throws -> Destination {
+        return try await fetchDestination(id: id)
+    }
+    
     // Fetch destination by slug
     func fetchDestination(slug: String) async throws -> Destination {
         let response: [Destination] = try await client

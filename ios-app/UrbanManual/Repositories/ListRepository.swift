@@ -12,11 +12,15 @@ class ListRepository {
     private let client = SupabaseConfig.client
     
     // Fetch user's lists
-    func fetchLists(userId: UUID) async throws -> [List] {
+    func fetchLists() async throws -> [List] {
+        guard let user = try? await client.auth.session.user else {
+            throw NetworkError.unauthorized
+        }
+        
         let response: [List] = try await client
             .from("lists")
             .select()
-            .eq("user_id", value: userId)
+            .eq("user_id", value: user.id)
             .order("updated_at", ascending: false)
             .execute()
             .value
@@ -25,15 +29,20 @@ class ListRepository {
     }
     
     // Create new list
-    func createList(userId: UUID, name: String, description: String?, isPublic: Bool) async throws -> List {
+    func createList(name: String, description: String?) async throws -> List {
+        guard let user = try? await client.auth.session.user else {
+            throw NetworkError.unauthorized
+        }
+        
         let newList = List(
             id: UUID(),
-            userId: userId,
+            userId: user.id,
             name: name,
             description: description,
-            isPublic: isPublic,
+            isPublic: false,
             createdAt: Date(),
-            updatedAt: Date()
+            updatedAt: Date(),
+            items: nil
         )
         
         let response: [List] = try await client
@@ -50,8 +59,31 @@ class ListRepository {
         return list
     }
     
+    // Update list
+    func updateList(_ listId: UUID, name: String, description: String?) async throws -> List {
+        let update: [String: Any] = [
+            "name": name,
+            "description": description as Any,
+            "updated_at": Date()
+        ]
+        
+        let response: [List] = try await client
+            .from("lists")
+            .update(update)
+            .eq("id", value: listId)
+            .select()
+            .execute()
+            .value
+        
+        guard let list = response.first else {
+            throw NetworkError.noData
+        }
+        
+        return list
+    }
+    
     // Delete list
-    func deleteList(listId: UUID) async throws {
+    func deleteList(_ listId: UUID) async throws {
         try await client
             .from("lists")
             .delete()
@@ -59,8 +91,8 @@ class ListRepository {
             .execute()
     }
     
-    // Fetch destinations in a list
-    func fetchListDestinations(listId: UUID) async throws -> [Destination] {
+    // Fetch items in a list with destinations
+    func fetchListItems(listId: UUID) async throws -> [ListItem] {
         let response: [ListItem] = try await client
             .from("list_items")
             .select()
@@ -69,23 +101,25 @@ class ListRepository {
             .value
         
         // Fetch full destination data for each list item
-        var destinations: [Destination] = []
-        for item in response {
-            if let dest = try? await DestinationRepository().fetchDestination(id: item.destinationId) {
-                destinations.append(dest)
+        var itemsWithDestinations: [ListItem] = []
+        for var item in response {
+            if let dest = try? await DestinationRepository().fetchById(item.destinationId) {
+                item.destination = dest
+                itemsWithDestinations.append(item)
             }
         }
         
-        return destinations
+        return itemsWithDestinations
     }
     
     // Add destination to list
-    func addDestinationToList(listId: UUID, destinationId: UUID) async throws {
+    func addToList(listId: UUID, destinationId: UUID) async throws {
         let item = ListItem(
             id: UUID(),
             listId: listId,
             destinationId: destinationId,
-            createdAt: Date()
+            createdAt: Date(),
+            destination: nil
         )
         
         try await client
@@ -95,7 +129,7 @@ class ListRepository {
     }
     
     // Remove destination from list
-    func removeDestinationFromList(listId: UUID, destinationId: UUID) async throws {
+    func removeFromList(listId: UUID, destinationId: UUID) async throws {
         try await client
             .from("list_items")
             .delete()
