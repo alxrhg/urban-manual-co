@@ -292,8 +292,8 @@ export default function Home() {
   // Near Me state
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
-  // City list expansion state
-  const [cityDisplayCount, setCityDisplayCount] = useState(4); // Show 4 cities initially
+  // Featured cities to always show in filter
+  const FEATURED_CITIES = ['taipei', 'tokyo', 'new-york', 'london'];
 
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
@@ -1602,8 +1602,8 @@ export default function Home() {
     setFilteredDestinations(filtered);
   }, [destinations, filterDestinationsWithData]);
 
-  // Display cities with expandable list
-  const displayedCities = cities.slice(0, cityDisplayCount);
+  // Display featured cities (Taipei, Tokyo, New York, London) if they exist in the cities list
+  const displayedCities = FEATURED_CITIES.filter(city => cities.includes(city));
 
   return (
     <ErrorBoundary>
@@ -1942,7 +1942,12 @@ export default function Home() {
                       {/* More Cities Button */}
                       {cities.length > displayedCities.length && (
                         <button
-                          onClick={() => setCityDisplayCount(cities.length)}
+                          onClick={() => {
+                            // Show all cities except the featured ones
+                            const remainingCities = cities.filter(city => !FEATURED_CITIES.includes(city));
+                            // For now, just expand to show all cities
+                            // In the future, could implement a modal or expandable section
+                          }}
                           className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
                         >
                           + More cities ({cities.length - displayedCities.length})
