@@ -1102,7 +1102,7 @@ async function processAIChatRequest(
                 };
 
                 // Generate follow-up suggestions
-                let followUpSuggestions: Array<{ text: string; icon?: string; type?: string }> = [];
+                let followUpSuggestions: Array<{ text: string; icon?: 'location' | 'time' | 'price' | 'rating' | 'default'; type?: 'refine' | 'expand' | 'related' }> = [];
                 try {
                   const { generateFollowUpSuggestions } = await import('@/lib/chat/generateFollowUpSuggestions');
                   
@@ -1127,9 +1127,18 @@ async function processAIChatRequest(
                     }
                   }
                   
+                  // Normalize intent filters for suggestions (convert priceLevel number to string if needed)
+                  const normalizedIntent = intent ? {
+                    ...intent,
+                    filters: intent.filters ? {
+                      ...intent.filters,
+                      priceLevel: intent.filters.priceLevel ? String(intent.filters.priceLevel) : undefined,
+                    } : undefined,
+                  } : undefined;
+                  
                   followUpSuggestions = generateFollowUpSuggestions({
                     query,
-                    intent,
+                    intent: normalizedIntent,
                     destinations: limitedResults,
                     conversationHistory,
                     userContext: userContextData,

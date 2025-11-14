@@ -14,7 +14,7 @@ interface GenerateSuggestionsParams {
     city?: string;
     category?: string;
     filters?: {
-      priceLevel?: string;
+      priceLevel?: string | number;
       openNow?: boolean;
     };
   };

@@ -301,7 +301,7 @@ export default function Home() {
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
   const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
-  const [followUpSuggestions, setFollowUpSuggestions] = useState<Array<{ text: string; icon?: string; type?: string }>>([]);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<Array<{ text: string; icon?: 'location' | 'time' | 'price' | 'rating' | 'default'; type?: 'refine' | 'expand' | 'related' }>>([]);
 
   // Session and context state
   const [lastSession, setLastSession] = useState<any>(null);
