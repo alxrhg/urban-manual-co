@@ -8,7 +8,7 @@ import { resolve } from 'path';
 
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 export interface PlacePhoto {
   name: string; // photoReference
@@ -35,7 +35,7 @@ export interface PhotoMetadata {
  */
 export async function fetchPlacePhotos(placeId: string): Promise<PlacePhoto[]> {
   if (!GOOGLE_API_KEY) {
-    throw new Error('GOOGLE_API_KEY not configured');
+    throw new Error('NEXT_PUBLIC_GOOGLE_API_KEY not configured');
   }
 
   try {
@@ -76,7 +76,7 @@ export function getPhotoUrl(
   maxHeight?: number
 ): string {
   if (!GOOGLE_API_KEY) {
-    throw new Error('GOOGLE_API_KEY not configured');
+    throw new Error('NEXT_PUBLIC_GOOGLE_API_KEY not configured');
   }
 
   const params = new URLSearchParams({

@@ -5,10 +5,10 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 if (!GOOGLE_API_KEY) {
-  console.error('Missing GOOGLE_API_KEY in environment');
+  console.error('Missing NEXT_PUBLIC_GOOGLE_API_KEY in environment');
   process.exit(1);
 }
 

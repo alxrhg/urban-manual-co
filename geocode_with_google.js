@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 // Configuration
 const DESTINATIONS_FILE = path.join(__dirname, 'public', 'destinations.json');
 const CACHE_FILE = path.join(__dirname, 'geocoding_cache_google.json');
-const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE';
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || 'YOUR_API_KEY_HERE';
 
 // Rate limiting
 const DELAY_MS = 100; // Google allows more requests per second
@@ -108,9 +108,9 @@ async function main() {
   
   // Check API key
   if (GOOGLE_API_KEY === 'YOUR_API_KEY_HERE') {
-    console.error('❌ Error: Please set GOOGLE_MAPS_API_KEY environment variable');
+    console.error('❌ Error: Please set NEXT_PUBLIC_GOOGLE_API_KEY environment variable');
     console.log('\nUsage:');
-    console.log('  export GOOGLE_MAPS_API_KEY="your-api-key"');
+    console.log('  export NEXT_PUBLIC_GOOGLE_API_KEY="your-api-key"');
     console.log('  node geocode_with_google.js');
     console.log('\nOr get an API key at: https://console.cloud.google.com/apis/credentials');
     process.exit(1);

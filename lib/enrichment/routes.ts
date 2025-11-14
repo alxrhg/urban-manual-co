@@ -8,7 +8,7 @@ import { resolve } from 'path';
 
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 export interface RouteLeg {
   distanceMeters: number;
@@ -42,7 +42,7 @@ export async function calculateRoute(
   waypoints?: Array<{ lat: number; lng: number } | string>
 ): Promise<Route | null> {
   if (!GOOGLE_API_KEY) {
-    throw new Error('GOOGLE_API_KEY not configured');
+    throw new Error('NEXT_PUBLIC_GOOGLE_API_KEY not configured');
   }
 
   try {

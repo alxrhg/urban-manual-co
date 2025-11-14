@@ -14,7 +14,7 @@ import { resolve } from 'path';
 // Load environment variables FIRST
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 if (!GOOGLE_API_KEY) {
   console.error('❌ GOOGLE_API_KEY or NEXT_PUBLIC_GOOGLE_API_KEY not found in .env.local');
