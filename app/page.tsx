@@ -1279,18 +1279,25 @@ export default function Home() {
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = useCallback(async (query: string) => {
+    const trimmedQuery = query.trim();
+    
+    // Prevent duplicate searches with the same query
+    if (trimmedQuery === submittedQuery && searching) {
+      return;
+    }
+    
     // Track search action for sequence prediction
-    if (query.trim()) {
+    if (trimmedQuery) {
       trackAction({
         type: 'search',
-        query: query.trim(),
+        query: trimmedQuery,
       });
     }
-    setSubmittedQuery(query); // Store the submitted query
+    setSubmittedQuery(trimmedQuery); // Store the submitted query
     // Clear previous suggestions when starting new search
     setFollowUpSuggestions([]);
     // Match chat component: only check if empty or loading
-    if (!query.trim() || searching) {
+    if (!trimmedQuery || searching) {
       return;
     }
 
@@ -1421,7 +1428,7 @@ export default function Home() {
     } finally {
       setSearching(false);
     }
-  }, [user, searching, conversationHistory, trackAction]);
+  }, [user, searching, conversationHistory, trackAction, submittedQuery]);
 
   // Convert inferredTags to RefinementTag array
   const convertInferredTagsToRefinementTags = useCallback((
