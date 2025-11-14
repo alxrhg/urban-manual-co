@@ -794,7 +794,7 @@ export default function Home() {
         // If destinations are already loaded, just re-filter (don't re-fetch)
         // This prevents unnecessary re-fetching when visitedSlugs changes after login
         // Note: filterDestinationsWithData is defined later, but it's a useCallback so it's stable
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
       filterDestinations();
       }
     }

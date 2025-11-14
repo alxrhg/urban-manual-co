@@ -293,7 +293,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
     setLoadingRecommendations(true);
     try {
-      let response = await fetch(`/api/recommendations?limit=6`);
+      const response = await fetch(`/api/recommendations?limit=6`);
 
       // Handle 401/403 gracefully - user not authenticated
       if (response.status === 401 || response.status === 403) {

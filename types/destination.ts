@@ -23,7 +23,7 @@ export interface Destination {
   place_id?: string | null;
   rating?: number | null;
   price_level?: number | null;
-  opening_hours?: any | null;
+  opening_hours?: Record<string, unknown> | null;
   phone_number?: string | null;
   website?: string | null;
   google_maps_url?: string | null;
@@ -36,12 +36,12 @@ export interface Destination {
   formatted_address?: string | null;
   international_phone_number?: string | null;
   user_ratings_total?: number | null;
-  opening_hours_json?: any | null;
-  reviews_json?: any | null;
-  photos_json?: any | null;
+  opening_hours_json?: Record<string, unknown> | null;
+  reviews_json?: Array<Record<string, unknown>> | null;
+  photos_json?: Array<Record<string, unknown>> | null;
   editorial_summary?: string | null;
   google_name?: string | null;
-  place_types_json?: any | null;
+  place_types_json?: Array<string> | null;
   utc_offset?: number | null;
   vicinity?: string | null;
   timezone_id?: string | null;

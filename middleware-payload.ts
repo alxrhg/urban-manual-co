@@ -25,7 +25,7 @@ export async function payloadAuthMiddleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/login?error=config', request.url))
     }
 
-    let response = NextResponse.next({
+    const response = NextResponse.next({
       request: {
         headers: request.headers,
       },

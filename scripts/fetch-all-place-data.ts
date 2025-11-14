@@ -440,7 +440,7 @@ function displayPlaceData(place: any) {
 
 async function main() {
   const args = process.argv.slice(2);
-  let query = args[0] || 'Le Meurice, Paris';
+  const query = args[0] || 'Le Meurice, Paris';
   
   console.log('🔍 Google Places API (New) - Complete Data Fetcher\n');
   console.log(`Searching for: "${query}"\n`);

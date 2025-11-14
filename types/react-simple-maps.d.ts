@@ -14,12 +14,12 @@ declare module 'react-simple-maps' {
   export interface GeographiesProps {
     geography: string | object;
     children?: (args: {
-      geographies: any[];
+      geographies: Array<Record<string, unknown>>;
     }) => ReactNode;
   }
 
   export interface GeographyProps {
-    geography?: any;
+    geography?: Record<string, unknown>;
     fill?: string;
     stroke?: string;
     strokeWidth?: number;
