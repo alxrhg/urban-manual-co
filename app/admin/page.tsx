@@ -748,48 +748,105 @@ export default function AdminPage() {
 
   // Check authentication
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+    
     async function checkAuth() {
       try {
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            console.warn('[Admin] Auth check timed out after 10 seconds');
+            setAuthChecked(true);
+            setIsAdmin(false);
+          }
+        }, 10000);
+        
         const supabase = createClient();
         
         // Check if we're using a placeholder client (invalid config)
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
         if (supabaseUrl.includes('placeholder') || !supabaseUrl) {
           console.error('[Admin] Invalid Supabase configuration detected');
-          setAuthChecked(true);
-          setIsAdmin(false);
+          clearTimeout(timeoutId);
+          if (isMounted) {
+            setAuthChecked(true);
+            setIsAdmin(false);
+          }
           return;
         }
         
         const { data: { session }, error } = await supabase.auth.getSession();
+        
+        clearTimeout(timeoutId);
+
+        if (!isMounted) return;
 
         if (error) {
           console.error('[Admin] Auth error:', error);
-          setAuthChecked(true);
+          if (isMounted) {
+            setAuthChecked(true);
+            setIsAdmin(false);
+            // Redirect to account page on auth error
+            setTimeout(() => {
+              if (isMounted) {
+                router.push('/account');
+              }
+            }, 1000);
+          }
           return;
         }
 
         if (!session) {
-          router.push('/account');
+          if (isMounted) {
+            setAuthChecked(true);
+            setIsAdmin(false);
+            router.push('/account');
+          }
           return;
         }
 
-        setUser(session.user);
         const role = (session.user.app_metadata as Record<string, any> | null)?.role;
         const admin = role === 'admin';
-        setIsAdmin(admin);
-        setAuthChecked(true);
-        if (!admin) {
-          router.push('/account');
+        
+        if (isMounted) {
+          setUser(session.user);
+          setIsAdmin(admin);
+          setAuthChecked(true);
+          
+          if (!admin) {
+            // Small delay before redirect to show access denied message
+            setTimeout(() => {
+              if (isMounted) {
+                router.push('/account');
+              }
+            }, 1500);
+          }
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         console.error('[Admin] Error checking auth:', error);
-        setAuthChecked(true);
-        // Don't redirect on error, let user see the error state
+        if (isMounted) {
+          setAuthChecked(true);
+          setIsAdmin(false);
+          // Redirect on error after showing message
+          setTimeout(() => {
+            if (isMounted) {
+              router.push('/account');
+            }
+          }, 2000);
+        }
       }
     }
 
     checkAuth();
+    
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [router]);
 
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
@@ -937,9 +994,10 @@ export default function AdminPage() {
   // Show loading state
   if (!authChecked) {
     return (
-      <main className="px-6 md:px-10 py-20">
-        <div className="container mx-auto flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      <main className="px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
+        <div className="container mx-auto flex flex-col items-center justify-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-600" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Checking authentication...</p>
         </div>
       </main>
     );
@@ -947,10 +1005,10 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <main className="px-6 md:px-10 py-20">
+      <main className="px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
         <div className="container mx-auto">
-          <div className="text-center">
-            <h1 className="text-2xl font-light mb-4">Access Denied</h1>
+          <div className="text-center max-w-md mx-auto">
+            <h1 className="text-2xl font-light mb-4 dark:text-white">Access Denied</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
               You need admin privileges to access this page.
             </p>
