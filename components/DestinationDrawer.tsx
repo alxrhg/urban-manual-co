@@ -819,7 +819,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full border border-purple-200 dark:border-purple-800"
+                    className="inline-flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-700"
                   >
                     ✨ {tag}
                   </span>
@@ -1186,7 +1186,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {(loadingRecommendations || recommendations.length > 0) && (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
