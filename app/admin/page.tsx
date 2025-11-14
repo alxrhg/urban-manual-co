@@ -207,11 +207,23 @@ function DestinationForm({
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        let error;
+        try {
+          error = await res.json();
+        } catch (parseError) {
+          const text = await res.text();
+          throw new Error(`Upload failed: ${text || res.statusText}`);
+        }
         throw new Error(error.error || 'Upload failed');
       }
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        const text = await res.text();
+        throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
+      }
       return data.url;
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -250,11 +262,23 @@ function DestinationForm({
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        let error;
+        try {
+          error = await res.json();
+        } catch (parseError) {
+          const text = await res.text();
+          throw new Error(`Failed to fetch from Google: ${text || res.statusText}`);
+        }
         throw new Error(error.error || 'Failed to fetch from Google');
       }
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        const text = await res.text();
+        throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
+      }
 
       // Auto-fill form with fetched data
       setFormData(prev => ({
@@ -338,7 +362,15 @@ function DestinationForm({
                         },
                         body: JSON.stringify({ placeId: placeDetails.placeId }),
                       });
-                      const data = await response.json();
+                      let data;
+                      try {
+                        data = await response.json();
+                      } catch (parseError) {
+                        const text = await response.text();
+                        console.error('Error parsing response:', text);
+                        toast.error('Invalid response format from Google Places API');
+                        return;
+                      }
                       if (data.error) {
                         console.error('Error fetching place:', data.error);
                         return;
@@ -873,17 +905,47 @@ export default function AdminPage() {
 
       if (error) {
         console.error('[Admin] Supabase error loading destinations:', error);
-        console.error('[Admin] Error details:', JSON.stringify(error, null, 2));
-        toast.error(`Failed to load destinations: ${error.message}`);
+        // Safely stringify error to avoid JSON parse issues
+        try {
+          console.error('[Admin] Error details:', JSON.stringify(error, null, 2));
+        } catch (stringifyError) {
+          console.error('[Admin] Error details (raw):', error);
+        }
+        toast.error(`Failed to load destinations: ${error.message || 'Unknown error'}`);
         setDestinationList([]);
         return;
       }
       
-      console.log('[Admin] Loaded destinations:', data?.length || 0);
-      setDestinationList(data || []);
+      // Sanitize data to prevent JSON parse errors from malformed content
+      const sanitizedData = (data || []).map((item: any) => {
+        try {
+          // Ensure description and content are strings and handle any encoding issues
+          const sanitized = { ...item };
+          if (sanitized.description && typeof sanitized.description === 'string') {
+            // Remove any problematic characters that might break JSON
+            sanitized.description = sanitized.description.replace(/\u0000/g, ''); // Remove null bytes
+          }
+          if (sanitized.content && typeof sanitized.content === 'string') {
+            sanitized.content = sanitized.content.replace(/\u0000/g, ''); // Remove null bytes
+          }
+          return sanitized;
+        } catch (sanitizeError) {
+          console.warn('[Admin] Error sanitizing destination item:', item?.slug, sanitizeError);
+          // Return item as-is if sanitization fails
+          return item;
+        }
+      });
+      
+      console.log('[Admin] Loaded destinations:', sanitizedData.length);
+      setDestinationList(sanitizedData);
     } catch (e: any) {
       console.error('[Admin] Error loading destinations:', e);
-      toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
+      // Check if it's a JSON parse error
+      if (e.message?.includes('JSON') || e.message?.includes('parse') || e instanceof SyntaxError) {
+        toast.error('Failed to load destinations: Invalid data format. Some destinations may have corrupted content.');
+      } else {
+        toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
+      }
       setDestinationList([]);
     } finally {
       setIsLoadingList(false);
