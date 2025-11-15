@@ -584,18 +584,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-4">
         <h2 className="text-sm font-medium text-gray-900 dark:text-white">{tripName}</h2>
-        <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => setActiveTab('itinerary')}
-            className={`text-xs font-medium transition-colors ${
-              activeTab === 'itinerary'
-                ? 'text-black dark:text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Itinerary
-          </button>
-        </div>
       </div>
       <div className="flex items-center gap-2">
         {currentTripId && (
@@ -754,20 +742,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         </div>
       ) : (
         <>
-          {/* Mobile tabs */}
-          <div className="md:hidden flex items-center gap-4 pb-4 mb-6 border-b border-gray-200 dark:border-gray-800">
-            <button
-              onClick={() => setActiveTab('itinerary')}
-              className={`text-xs font-medium transition-colors ${
-                activeTab === 'itinerary'
-                  ? 'text-black dark:text-white'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              Itinerary
-            </button>
-          </div>
-
           <div className="space-y-8">
             {/* Cover Image Upload */}
               <div className="mb-6">
