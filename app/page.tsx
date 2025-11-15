@@ -264,6 +264,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showAllCities, setShowAllCities] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'recent'>('default');
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
@@ -1659,7 +1660,15 @@ export default function Home() {
   }, [destinations, filterDestinationsWithData]);
 
   // Display featured cities (Taipei, Tokyo, New York, London) if they exist in the cities list
-  const displayedCities = FEATURED_CITIES.filter(city => cities.includes(city));
+  const featuredCities = useMemo(
+    () => FEATURED_CITIES.filter(city => cities.includes(city)),
+    [cities]
+  );
+  const remainingCities = useMemo(
+    () => cities.filter(city => !FEATURED_CITIES.includes(city)),
+    [cities]
+  );
+  const displayedCities = showAllCities ? [...featuredCities, ...remainingCities] : featuredCities;
 
   return (
     <ErrorBoundary>
@@ -2012,10 +2021,7 @@ export default function Home() {
                       {cities.length > displayedCities.length && (
                         <button
                           onClick={() => {
-                            // Show all cities except the featured ones
-                            const remainingCities = cities.filter(city => !FEATURED_CITIES.includes(city));
-                            // For now, just expand to show all cities
-                            // In the future, could implement a modal or expandable section
+                            setShowAllCities(true);
                           }}
                           className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
                         >
