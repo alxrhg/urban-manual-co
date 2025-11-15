@@ -15,6 +15,7 @@ interface POIDrawerProps {
   onClose: () => void;
   onSave?: () => void; // Callback after successful save
   destination?: Destination | null; // Optional destination for editing mode
+  initialCity?: string; // Optional initial city value for new POIs
 }
 
 interface Destination {
@@ -29,7 +30,7 @@ interface Destination {
   crown?: boolean;
 }
 
-export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerProps) {
+export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }: POIDrawerProps) {
   const { user } = useAuth();
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -85,8 +86,21 @@ export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerPro
       if (destination.image) {
         setImagePreview(destination.image);
       }
+    } else if (initialCity) {
+      // Pre-fill city for new POI from city page
+      setFormData({
+        slug: '',
+        name: '',
+        city: initialCity,
+        category: '',
+        description: '',
+        content: '',
+        image: '',
+        michelin_stars: null,
+        crown: false,
+      });
     }
-  }, [isOpen, destination]);
+  }, [isOpen, destination, initialCity]);
 
   // Auto-generate slug from name
   useEffect(() => {
