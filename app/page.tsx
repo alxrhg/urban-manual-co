@@ -3,9 +3,10 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Destination } from '@/types/destination';
 import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus, Sparkles
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus, Sparkles, RefreshCw
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 // Lazy load drawer (only when opened)
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -350,6 +351,23 @@ export default function Home() {
     modifiers?: string[];
   } | null>(null);
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+
+  // Pull-to-refresh functionality (mobile)
+  const handleRefresh = async () => {
+    // Clear cache and reload data
+    fallbackDestinationsRef.current = null;
+    discoveryBootstrapRef.current = null;
+    discoveryBootstrapPromiseRef.current = null;
+    
+    // Reload destinations
+    await applyFallbackData({ updateDestinations: true, ensureFilters: true });
+  };
+
+  const { isPulling, isRefreshing, pullDistance, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    resistance: 0.5,
+  });
 
   const extractFilterOptions = (rows: Array<{ city?: string | null; category?: string | null }>) => {
     const citySet = new Set<string>();
@@ -1712,6 +1730,30 @@ export default function Home() {
         }}
       />
       <main id="main-content" className="relative min-h-screen dark:text-white" role="main">
+        {/* Pull to Refresh Indicator */}
+        {(isPulling || isRefreshing) && (
+          <div 
+            className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 pointer-events-none"
+            style={{
+              opacity: isPulling ? progress : isRefreshing ? 1 : 0,
+              transform: `translateY(${isPulling ? pullDistance * 0.3 : isRefreshing ? 0 : -20}px)`,
+              transition: isPulling ? 'none' : 'all 0.3s ease-out',
+            }}
+          >
+            <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg px-4 py-2 flex items-center gap-2">
+              <RefreshCw 
+                className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} 
+                style={{
+                  transform: isPulling ? `rotate(${progress * 360}deg)` : undefined,
+                }}
+              />
+              <span className="text-sm font-medium">
+                {isRefreshing ? 'Refreshing...' : 'Pull to refresh'}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}

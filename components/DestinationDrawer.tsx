@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram } from 'lucide-react';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -197,6 +198,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [newListDescription, setNewListDescription] = useState('');
   const [newListPublic, setNewListPublic] = useState(true);
   const [creatingList, setCreatingList] = useState(false);
+
+  // Swipe gesture for closing drawer (mobile)
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const { handleTouchStart, handleTouchMove, handleTouchEnd, isDragging, dragOffset } = useSwipeGesture({
+    onSwipeDown: () => {
+      // Close drawer on swipe down
+      onClose();
+    },
+    threshold: 100, // Require 100px swipe to trigger close
+    velocity: 0.3,
+  });
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -731,12 +743,34 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        ref={drawerRef}
+        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] md:w-[600px] lg:w-[720px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-y-auto`}
+        style={{
+          // Apply drag offset for visual feedback during swipe
+          transform: isOpen
+            ? `translateX(${isDragging ? Math.max(0, dragOffset * 0.5) : 0}px)`
+            : 'translateX(100%)',
+        }}
+        onTouchStart={(e) => {
+          // Only enable swipe on the header area (top part of drawer)
+          const target = e.target as HTMLElement;
+          const header = target.closest('.drawer-header');
+          if (header) {
+            handleTouchStart(e.nativeEvent);
+          }
+        }}
+        onTouchMove={(e) => handleTouchMove(e.nativeEvent)}
+        onTouchEnd={(e) => handleTouchEnd(e.nativeEvent)}
       >
+        {/* Swipe Handle (mobile only) */}
+        <div className="sm:hidden flex justify-center pt-3 pb-2 drawer-header">
+          <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+        <div className="drawer-header sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-sm font-bold uppercase tracking-wide">Destination</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && (
