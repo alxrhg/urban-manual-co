@@ -60,7 +60,8 @@ declare global {
 }
 
 function fetchAuthorizationToken(done: (token: string) => void) {
-  // Create abort controller for timeout (with fallback for older browsers)
+  console.log('[MapKit] Authorization callback invoked');
+  
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
@@ -70,6 +71,7 @@ function fetchAuthorizationToken(done: (token: string) => void) {
   })
     .then(res => {
       clearTimeout(timeoutId);
+      console.log('[MapKit] Token response status:', res.status);
       if (!res.ok) {
         throw new Error(`Token request failed: ${res.status} ${res.statusText}`);
       }
@@ -79,14 +81,15 @@ function fetchAuthorizationToken(done: (token: string) => void) {
       if (!data.token) {
         throw new Error('No token received from server');
       }
+      console.log('[MapKit] Token received successfully');
       done(data.token);
     })
     .catch(error => {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        console.error('MapKit authorization error: Request timeout');
+        console.error('[MapKit] Authorization timeout');
       } else {
-        console.error('MapKit authorization error:', error);
+        console.error('[MapKit] Authorization error:', error);
       }
       // Pass empty token but log the error - MapKit will handle the failure
       done('');
@@ -100,8 +103,11 @@ function waitForMapkitReady(): Promise<void> {
       return;
     }
 
+    console.log('[MapKit] Waiting for MapKit to be ready...');
+    
     // Increased timeout to 15 seconds to account for slow networks and authorization
     const timeout = window.setTimeout(() => {
+      console.error('[MapKit] Initialization timeout after 15 seconds');
       reject(new Error('MapKit initialization timeout - the authorization token may be invalid or the network is slow'));
     }, 15000);
 
@@ -113,13 +119,20 @@ function waitForMapkitReady(): Promise<void> {
       
       // Check if MapKit is loaded and initialized
       if (window.mapkit?.loaded) {
+        console.log('[MapKit] MapKit is now loaded and ready');
         window.clearTimeout(timeout);
         resolve();
         return;
       }
 
+      // Log progress every 2 seconds
+      if (attempts % 40 === 0) {
+        console.log(`[MapKit] Still waiting... (attempt ${attempts}/${maxAttempts}, mapkit exists: ${!!window.mapkit}, loaded: ${window.mapkit?.loaded})`);
+      }
+
       // If we've exceeded max attempts, reject
       if (attempts >= maxAttempts) {
+        console.error('[MapKit] Exceeded maximum attempts');
         window.clearTimeout(timeout);
         reject(new Error('MapKit initialization timeout - exceeded maximum attempts'));
         return;
@@ -151,6 +164,8 @@ export function ensureMapkitLoaded(): Promise<void> {
 
   loaderPromise = new Promise<void>((resolve, reject) => {
     const handleReady = () => {
+      console.log('[MapKit] Script loaded, initializing...');
+      
       if (!window.mapkit) {
         reject(new Error('MapKit did not load correctly'));
         return;
@@ -158,13 +173,15 @@ export function ensureMapkitLoaded(): Promise<void> {
 
       if (!initialized) {
         try {
+          console.log('[MapKit] Calling mapkit.init()...');
           window.mapkit.init({
             authorizationCallback: fetchAuthorizationToken,
           });
           window.mapkit.language = navigator.language || 'en-US';
           initialized = true;
+          console.log('[MapKit] mapkit.init() completed');
         } catch (error) {
-          console.error('MapKit init error:', error);
+          console.error('[MapKit] Init error:', error);
           reject(error as Error);
           return;
         }
@@ -178,25 +195,29 @@ export function ensureMapkitLoaded(): Promise<void> {
             reject(new Error('MapKit loaded property is false after initialization'));
             return;
           }
+          console.log('[MapKit] Initialization complete');
           resolve();
         })
         .catch((error) => {
-          console.error('MapKit ready check failed:', error);
+          console.error('[MapKit] Ready check failed:', error);
           reject(error);
         });
     };
 
     const handleError = () => {
+      console.error('[MapKit] Script failed to load');
       reject(new Error('Failed to load MapKit JS'));
     };
 
     if (document.querySelector('script[data-mapkit-loader="true"]')) {
+      console.log('[MapKit] Script already exists, attaching listeners');
       const existing = document.querySelector('script[data-mapkit-loader="true"]')!;
       existing.addEventListener('load', handleReady, { once: true });
       existing.addEventListener('error', handleError, { once: true });
       return;
     }
 
+    console.log('[MapKit] Creating script element');
     const script = document.createElement('script');
     script.src = 'https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js';
     script.async = true;
