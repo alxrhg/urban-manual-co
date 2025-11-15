@@ -33,11 +33,11 @@ interface TripDayProps {
   date: string;
   locations: TripLocation[];
   hotelLocation?: string;
-  onAddLocation: () => void;
-  onRemoveLocation: (locationId: number) => void;
-  onReorderLocations: (locations: TripLocation[]) => void;
-  onDuplicateDay: () => void;
-  onOptimizeRoute: () => void;
+  onAddLocation?: () => void;
+  onRemoveLocation?: (locationId: number) => void;
+  onReorderLocations?: (locations: TripLocation[]) => void;
+  onDuplicateDay?: () => void;
+  onOptimizeRoute?: () => void;
 }
 
 export function TripDay({
@@ -99,7 +99,7 @@ export function TripDay({
     const draggedItem = newLocations[draggedIndex];
     newLocations.splice(draggedIndex, 1);
     newLocations.splice(index, 0, draggedItem);
-    onReorderLocations(newLocations);
+    onReorderLocations?.(newLocations);
     setDraggedIndex(index);
   };
 
@@ -133,7 +133,7 @@ export function TripDay({
             </div>
           )}
         </div>
-        {locations.length > 0 && (
+        {locations.length > 0 && onOptimizeRoute && onDuplicateDay && (
           <div className="flex items-center gap-2">
             <button
               onClick={onOptimizeRoute}
@@ -161,15 +161,17 @@ export function TripDay({
 
       <div className="space-y-4">
         {locations.length === 0 ? (
-          <button
-            onClick={onAddLocation}
-            className="w-full p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors flex flex-col items-center justify-center gap-3 bg-white dark:bg-gray-900"
-          >
-            <PlusIcon className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
-            <span className="text-xs text-neutral-500 dark:text-neutral-400 tracking-wide">
-              Add Location
-            </span>
-          </button>
+          onAddLocation && (
+            <button
+              onClick={onAddLocation}
+              className="w-full p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors flex flex-col items-center justify-center gap-3 bg-white dark:bg-gray-900"
+            >
+              <PlusIcon className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
+              <span className="text-xs text-neutral-500 dark:text-neutral-400 tracking-wide">
+                Add Location
+              </span>
+            </button>
+          )
         ) : (
           <>
             {locations.map((location, index) => {
@@ -219,12 +221,14 @@ export function TripDay({
                             {location.category}
                           </p>
                         </div>
-                        <button
-                          onClick={() => onRemoveLocation(location.id)}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
-                        >
-                          <XIcon className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
-                        </button>
+                        {onRemoveLocation && (
+                          <button
+                            onClick={() => onRemoveLocation(location.id)}
+                            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
+                          >
+                            <XIcon className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
+                          </button>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-[10px] text-neutral-400 dark:text-neutral-500 tracking-wide">
                         {location.time && (
@@ -262,15 +266,17 @@ export function TripDay({
                 </Fragment>
               );
             })}
-            <button
-              onClick={onAddLocation}
-              className="w-full p-4 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors flex items-center justify-center gap-2 bg-white dark:bg-gray-900"
-            >
-              <PlusIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-              <span className="text-xs text-neutral-500 dark:text-neutral-400 tracking-wide">
-                Add Another Location
-              </span>
-            </button>
+            {onAddLocation && (
+              <button
+                onClick={onAddLocation}
+                className="w-full p-4 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors flex items-center justify-center gap-2 bg-white dark:bg-gray-900"
+              >
+                <PlusIcon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+                <span className="text-xs text-neutral-500 dark:text-neutral-400 tracking-wide">
+                  Add Another Location
+                </span>
+              </button>
+            )}
           </>
         )}
       </div>

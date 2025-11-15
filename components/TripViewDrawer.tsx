@@ -14,7 +14,6 @@ import {
 import { Drawer } from '@/components/ui/Drawer';
 import { TripDay } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';
-import { TripPlanner } from '@/components/TripPlanner';
 import type { Trip, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 
 interface TripViewDrawerProps {
@@ -33,18 +32,29 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
   const [loading, setLoading] = useState(true);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isEditingDates, setIsEditingDates] = useState(false);
+  
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
+  const [editedDestination, setEditedDestination] = useState('');
   const [editedStartDate, setEditedStartDate] = useState('');
   const [editedEndDate, setEditedEndDate] = useState('');
-  const [savingDates, setSavingDates] = useState(false);
+  const [savingChanges, setSavingChanges] = useState(false);
 
   useEffect(() => {
     if (isOpen && tripId) {
       fetchTripDetails();
     }
   }, [isOpen, tripId]);
+
+  useEffect(() => {
+    // Reset edit mode when drawer closes
+    if (!isOpen) {
+      setIsEditMode(false);
+    }
+  }, [isOpen]);
 
   const fetchTripDetails = async () => {
     if (!tripId) return;
@@ -68,6 +78,9 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
 
       const trip = tripData as Trip;
       setTrip(trip);
+      setEditedTitle(trip.title || '');
+      setEditedDescription(trip.description || '');
+      setEditedDestination(trip.destination || '');
       setEditedStartDate(trip.start_date || '');
       setEditedEndDate(trip.end_date || '');
 
@@ -155,6 +168,58 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     }
   };
 
+  const handleSaveChanges = async () => {
+    if (!trip || !user) return;
+
+    try {
+      setSavingChanges(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .update({
+          title: editedTitle,
+          description: editedDescription || null,
+          destination: editedDestination || null,
+          start_date: editedStartDate || null,
+          end_date: editedEndDate || null,
+        })
+        .eq('id', trip.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setTrip({
+        ...trip,
+        title: editedTitle,
+        description: editedDescription || null,
+        destination: editedDestination || null,
+        start_date: editedStartDate || null,
+        end_date: editedEndDate || null,
+      });
+
+      setIsEditMode(false);
+      onEdit?.();
+    } catch (error) {
+      console.error('Error updating trip:', error);
+      alert('Failed to update trip. Please try again.');
+    } finally {
+      setSavingChanges(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (!trip) return;
+    setEditedTitle(trip.title || '');
+    setEditedDescription(trip.description || '');
+    setEditedDestination(trip.destination || '');
+    setEditedStartDate(trip.start_date || '');
+    setEditedEndDate(trip.end_date || '');
+    setIsEditMode(false);
+  };
+
   // Group items by day
   const itemsByDay = itineraryItems.reduce((acc, item) => {
     if (!acc[item.day]) {
@@ -205,9 +270,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
         image: destination?.image || notesData.image || '/placeholder-image.jpg',
         time: item.time || undefined,
         notes: notesData.raw || undefined,
-        cost: notesData.cost || undefined,
         duration: notesData.duration || undefined,
-        mealType: notesData.mealType || undefined,
       };
     });
   };
@@ -225,9 +288,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     image: string;
     time?: string;
     notes?: string;
-    cost?: number;
     duration?: number;
-    mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   }) => {
     if (!trip || selectedDay === null) return;
 
@@ -250,9 +311,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
       // Store additional data in notes as JSON
       const notesData = {
         raw: location.notes || '',
-        cost: location.cost,
         duration: location.duration,
-        mealType: location.mealType,
         image: location.image,
         city: location.city,
         category: location.category,
@@ -321,47 +380,6 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     }
   };
 
-  const handleSaveDates = async () => {
-    if (!trip || !user) return;
-
-    try {
-      setSavingDates(true);
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-
-      const { error } = await supabaseClient
-        .from('trips')
-        .update({
-          start_date: editedStartDate || null,
-          end_date: editedEndDate || null,
-        })
-        .eq('id', trip.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setTrip({
-        ...trip,
-        start_date: editedStartDate || null,
-        end_date: editedEndDate || null,
-      });
-
-      setIsEditingDates(false);
-    } catch (error) {
-      console.error('Error updating dates:', error);
-      alert('Failed to update dates. Please try again.');
-    } finally {
-      setSavingDates(false);
-    }
-  };
-
-  const handleCancelEditDates = () => {
-    setEditedStartDate(trip?.start_date || '');
-    setEditedEndDate(trip?.end_date || '');
-    setIsEditingDates(false);
-  };
-
   // Build header with actions
   const headerContent = trip ? (
     <div className="flex items-center justify-between w-full">
@@ -373,23 +391,41 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
       </div>
       {trip.user_id === user?.id && (
         <div className="flex items-center gap-2 ml-4">
-          <button
-            onClick={() => {
-              setShowEditDialog(true);
-              onClose();
-            }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Edit trip"
-          >
-            <Edit2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          </button>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-            aria-label="Delete trip"
-          >
-            <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-          </button>
+          {isEditMode ? (
+            <>
+              <button
+                onClick={handleSaveChanges}
+                disabled={savingChanges || !editedTitle.trim()}
+                className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+              >
+                {savingChanges ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                disabled={savingChanges}
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setIsEditMode(true)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                aria-label="Edit trip"
+              >
+                <Edit2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                aria-label="Delete trip"
+              >
+                <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -408,69 +444,89 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Trip Metadata */}
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-            {trip.destination && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5" />
-                <span>{trip.destination}</span>
+          {/* Edit Mode Banner */}
+          {isEditMode && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                <strong>Edit Mode:</strong> You can now edit trip details, add/remove locations, and reorder items.
+              </p>
+            </div>
+          )}
+
+          {/* Trip Details - Edit Mode */}
+          {isEditMode ? (
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Trip Title
+                </label>
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  placeholder="Enter trip title"
+                />
               </div>
-            )}
-            {trip.user_id === user?.id ? (
-              isEditingDates ? (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={formatDateForInput(editedStartDate)}
-                      onChange={(e) => setEditedStartDate(e.target.value)}
-                      className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-xs"
-                    />
-                    <span>–</span>
-                    <input
-                      type="date"
-                      value={formatDateForInput(editedEndDate)}
-                      onChange={(e) => setEditedEndDate(e.target.value)}
-                      className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-xs"
-                    />
-                    <button
-                      onClick={handleSaveDates}
-                      disabled={savingDates}
-                      className="px-2 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
-                    >
-                      {savingDates ? 'Saving...' : 'Save'}
-                    </button>
-                    <button
-                      onClick={handleCancelEditDates}
-                      disabled={savingDates}
-                      className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm resize-none"
+                  placeholder="Describe your trip"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Cities Visiting (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={editedDestination}
+                  onChange={(e) => setEditedDestination(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  placeholder="e.g., Paris, London, Rome"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Start Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedStartDate)}
+                    onChange={(e) => setEditedStartDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  />
                 </div>
-              ) : (
-                (trip.start_date || trip.end_date) && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>
-                      {formatDate(trip.start_date)}
-                      {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                    </span>
-                    <button
-                      onClick={() => setIsEditingDates(true)}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                      title="Edit dates"
-                      aria-label="Edit dates"
-                    >
-                      <Edit2 className="h-3 w-3 text-gray-600 dark:text-gray-400" />
-                    </button>
-                  </div>
-                )
-              )
-            ) : (
-              (trip.start_date || trip.end_date) && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    End Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedEndDate)}
+                    onChange={(e) => setEditedEndDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Trip Metadata - View Mode */
+            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+              {trip.destination && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>{trip.destination}</span>
+                </div>
+              )}
+              {(trip.start_date || trip.end_date) && (
                 <div className="flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5" />
                   <span>
@@ -478,19 +534,19 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                     {trip.end_date && ` – ${formatDate(trip.end_date)}`}
                   </span>
                 </div>
-              )
-            )}
-            <div className="flex items-center gap-2">
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                trip.status === 'planning' ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' :
-                trip.status === 'upcoming' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                trip.status === 'ongoing' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-              }`}>
-                {trip.status}
-              </span>
+              )}
+              <div className="flex items-center gap-2">
+                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                  trip.status === 'planning' ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' :
+                  trip.status === 'upcoming' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                  trip.status === 'ongoing' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                  'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}>
+                  {trip.status}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Itinerary by Day */}
           {Object.keys(itemsByDay).length === 0 ? (
@@ -498,7 +554,9 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
               <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700" />
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">No items yet</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Add destinations to this trip to start building your itinerary.
+                {isEditMode 
+                  ? 'Click "Add Location" to start building your itinerary.'
+                  : 'No locations added to this trip yet.'}
               </p>
             </div>
           ) : (
@@ -516,9 +574,9 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                       dayNumber={dayNumber}
                       date={dayDate}
                       locations={locations}
-                      onAddLocation={() => handleAddLocation(dayNumber)}
-                      onRemoveLocation={handleRemoveLocation}
-                      onReorderLocations={async (reorderedLocations) => {
+                      onAddLocation={isEditMode ? () => handleAddLocation(dayNumber) : undefined}
+                      onRemoveLocation={isEditMode ? handleRemoveLocation : undefined}
+                      onReorderLocations={isEditMode ? async (reorderedLocations) => {
                         try {
                           const supabaseClient = createClient();
                           if (!supabaseClient || !user) return;
@@ -545,9 +603,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
 
                             const updatedNotes = JSON.stringify({
                               raw: loc.notes || notesData.raw || '',
-                              cost: loc.cost || notesData.cost,
                               duration: loc.duration || notesData.duration,
-                              mealType: loc.mealType || notesData.mealType,
                               image: loc.image || notesData.image,
                               city: loc.city || notesData.city,
                               category: loc.category || notesData.category,
@@ -576,13 +632,13 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                           console.error('Error reordering locations:', error);
                           alert('Failed to reorder locations. Please try again.');
                         }
-                      }}
-                      onDuplicateDay={async () => {
+                      } : undefined}
+                      onDuplicateDay={isEditMode ? async () => {
                         alert('Duplicate day feature coming soon');
-                      }}
-                      onOptimizeRoute={async () => {
+                      } : undefined}
+                      onOptimizeRoute={isEditMode ? async () => {
                         alert('Route optimization feature coming soon');
-                      }}
+                      } : undefined}
                     />
                   );
                 })}
@@ -611,19 +667,6 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
           onClose={() => {
             setShowAddLocationModal(false);
             setSelectedDay(null);
-          }}
-        />
-      )}
-
-      {/* Edit Dialog */}
-      {showEditDialog && (
-        <TripPlanner
-          isOpen={showEditDialog}
-          tripId={tripId}
-          onClose={() => {
-            setShowEditDialog(false);
-            fetchTripDetails();
-            onEdit?.();
           }}
         />
       )}

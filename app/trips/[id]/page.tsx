@@ -197,7 +197,7 @@ export default function TripDetailPage() {
             ? destinations.get(item.destination_slug)
             : null;
 
-          // Parse notes for additional data (cost, duration, mealType)
+          // Parse notes for additional data (duration, etc.)
           let notesData: ItineraryItemNotes = {};
           if (item.notes) {
             try {
@@ -215,9 +215,7 @@ export default function TripDetailPage() {
             image: destination?.image || notesData.image || '/placeholder-image.jpg',
             time: item.time || undefined,
             notes: notesData.raw || undefined,
-            cost: notesData.cost || undefined,
             duration: notesData.duration || undefined,
-            mealType: notesData.mealType || undefined,
           };
         });
       };
@@ -235,9 +233,7 @@ export default function TripDetailPage() {
     image: string;
     time?: string;
     notes?: string;
-    cost?: number;
     duration?: number;
-    mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   }) => {
     if (!trip || selectedDay === null) return;
 
@@ -260,9 +256,7 @@ export default function TripDetailPage() {
       // Store additional data in notes as JSON
       const notesData = {
         raw: location.notes || '',
-        cost: location.cost,
         duration: location.duration,
-        mealType: location.mealType,
         image: location.image,
         city: location.city,
         category: location.category,
@@ -555,9 +549,7 @@ export default function TripDetailPage() {
                           // Update notes with location data
                           const updatedNotes = JSON.stringify({
                             raw: loc.notes || notesData.raw || '',
-                            cost: loc.cost || notesData.cost,
                             duration: loc.duration || notesData.duration,
-                            mealType: loc.mealType || notesData.mealType,
                             image: loc.image || notesData.image,
                             city: loc.city || notesData.city,
                             category: loc.category || notesData.category,

@@ -22,7 +22,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
-import { TripWeatherForecast } from './TripWeatherForecast';
 import { TripShareModal } from './TripShareModal';
 import { Drawer } from './ui/Drawer';
 import type { Trip as TripSchema, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
@@ -41,9 +40,7 @@ interface TripLocation {
   image: string;
   time?: string;
   notes?: string;
-  cost?: number;
   duration?: number;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
 }
 
 interface DayItinerary {
@@ -66,9 +63,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [totalBudget, setTotalBudget] = useState<number>(0);
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
-  const [activeTab, setActiveTab] = useState<
-    'itinerary' | 'weather'
-  >('itinerary');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -174,7 +168,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             daysMap.set(day, []);
           }
 
-          // Parse notes for additional data (cost, duration, mealType)
+          // Parse notes for additional data (duration, etc.)
           let notesData: ItineraryItemNotes = {};
           if (item.notes) {
             try {
@@ -192,9 +186,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             image: notesData.image || '/placeholder-image.jpg',
             time: item.time || undefined,
             notes: notesData.raw || undefined,
-            cost: notesData.cost || undefined,
             duration: notesData.duration || undefined,
-            mealType: notesData.mealType || undefined,
           };
 
           daysMap.get(day)!.push(location);
@@ -397,9 +389,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           // Store additional data in notes as JSON
           const notesData: ItineraryItemNotes = {
             raw: location.notes || '',
-            cost: location.cost,
             duration: location.duration,
-            mealType: location.mealType,
             image: location.image,
             city: location.city,
             category: location.category,
@@ -529,16 +519,14 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       prev.map((day, idx) => {
         if (idx !== dayIndex) return day;
         const optimized = [...day.locations].sort((a, b) => {
-          // Sort by meal type and time
-          const mealOrder = {
-            breakfast: 0,
-            snack: 1,
-            lunch: 2,
-            dinner: 3,
-          };
-          const aOrder = a.mealType ? mealOrder[a.mealType] : 999;
-          const bOrder = b.mealType ? mealOrder[b.mealType] : 999;
-          return aOrder - bOrder;
+          // Sort by time if available
+          if (a.time && b.time) {
+            return a.time.localeCompare(b.time);
+          }
+          // Put items with time first
+          if (a.time && !b.time) return -1;
+          if (!a.time && b.time) return 1;
+          return 0;
         });
         return {
           ...day,
@@ -582,15 +570,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     window.print();
   };
 
-  const getTotalSpent = () => {
-    return days.reduce((total, day) => {
-      return (
-        total +
-        day.locations.reduce((dayTotal, loc) => dayTotal + (loc.cost || 0), 0)
-      );
-    }, 0);
-  };
-
   const getAISuggestions = () => {
     // Mock AI suggestions - in real app would call AI API
     return [
@@ -605,28 +584,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-4">
         <h2 className="text-sm font-medium text-gray-900 dark:text-white">{tripName}</h2>
-        <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => setActiveTab('itinerary')}
-            className={`text-xs font-medium transition-colors ${
-              activeTab === 'itinerary'
-                ? 'text-black dark:text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Itinerary
-          </button>
-          <button
-            onClick={() => setActiveTab('weather')}
-            className={`text-xs font-medium transition-colors ${
-              activeTab === 'weather'
-                ? 'text-black dark:text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Weather
-          </button>
-        </div>
       </div>
       <div className="flex items-center gap-2">
         {currentTripId && (
@@ -785,33 +742,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         </div>
       ) : (
         <>
-          {/* Mobile tabs */}
-          <div className="md:hidden flex items-center gap-4 pb-4 mb-6 border-b border-gray-200 dark:border-gray-800">
-            <button
-              onClick={() => setActiveTab('itinerary')}
-              className={`text-xs font-medium transition-colors ${
-                activeTab === 'itinerary'
-                  ? 'text-black dark:text-white'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              Itinerary
-            </button>
-            <button
-              onClick={() => setActiveTab('weather')}
-              className={`text-xs font-medium transition-colors ${
-                activeTab === 'weather'
-                  ? 'text-black dark:text-white'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              Weather
-            </button>
-          </div>
-
-          {activeTab === 'itinerary' && (
-            <div className="space-y-8">
-              {/* Cover Image Upload */}
+          <div className="space-y-8">
+            {/* Cover Image Upload */}
               <div className="mb-6">
                 <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Cover Image
@@ -901,13 +833,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                       year: 'numeric',
                     })}
                   </span>
-                  {totalBudget > 0 && (
-                    <>
-                      <span className="text-gray-300 dark:text-gray-600">•</span>
-                      <WalletIcon className="w-4 h-4" />
-                      <span>${getTotalSpent()} / ${totalBudget}</span>
-                    </>
-                  )}
                 </div>
                 {/* AI Suggestions */}
                 <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
@@ -949,15 +874,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 ))}
               </div>
             </div>
-          )}
-
-          {activeTab === 'weather' && (
-            <TripWeatherForecast
-              destination={destination}
-              startDate={startDate}
-              endDate={endDate}
-            />
-          )}
 
         </>
       )}
