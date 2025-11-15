@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Get destination IDs from vector results
     const destinationIds = vectorResults
-      .filter((r) => r.score && r.score > 0.7) // Filter by similarity threshold
-      .map((r) => parseInt(String(r.id)))
+      .filter((r: any) => r.score && r.score > 0.7) // Filter by similarity threshold
+      .map((r: any) => parseInt(String(r.id)))
       .slice(0, limit);
 
     if (destinationIds.length === 0) {
@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
     );
 
     // Step 7: Map destinations with similarity scores and reasons
-    const rankedDestinations = destinations.map((dest, index) => {
-      const vectorResult = vectorResults.find((r) => parseInt(String(r.id)) === dest.id);
+    const rankedDestinations = destinations.map((dest: any, index: number) => {
+      const vectorResult = vectorResults.find((r: any) => parseInt(String(r.id)) === dest.id);
       return {
         id: dest.id,
         name: dest.name,

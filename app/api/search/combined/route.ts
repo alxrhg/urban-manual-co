@@ -87,12 +87,12 @@ export async function POST(request: NextRequest) {
 
       // Combine keyword results with vector scores
       const combinedResults = candidates
-        .map(dest => ({
+        .map((dest: any) => ({
           ...dest,
           semantic_score: scoresMap.get(dest.id) || 0,
           keyword_match: true,
         }))
-        .sort((a, b) => {
+        .sort((a: any, b: any) => {
           // Rank by semantic score if available, otherwise by popularity
           if (a.semantic_score && b.semantic_score) {
             return b.semantic_score - a.semantic_score;

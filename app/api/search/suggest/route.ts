@@ -50,13 +50,13 @@ export async function GET(request: NextRequest) {
       destinations: destinations || [],
       cities: Array.from(new Set(
         (destinations || [])
-          .filter(d => d.city?.toLowerCase().includes(query.toLowerCase()))
-          .map(d => ({ city: d.city, country: d.country }))
+          .filter((d: any) => d.city?.toLowerCase().includes(query.toLowerCase()))
+          .map((d: any) => ({ city: d.city, country: d.country }))
       )).slice(0, 5),
       categories: Array.from(new Set(
         (destinations || [])
-          .filter(d => d.category?.toLowerCase().includes(query.toLowerCase()))
-          .map(d => d.category)
+          .filter((d: any) => d.category?.toLowerCase().includes(query.toLowerCase()))
+          .map((d: any) => d.category)
       )).slice(0, 5),
     };
 

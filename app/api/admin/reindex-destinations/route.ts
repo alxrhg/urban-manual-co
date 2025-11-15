@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       
       try {
         // Generate embeddings for the batch
-        const embeddingPromises = batch.map(async (dest) => {
+        const embeddingPromises = batch.map(async (dest: any) => {
           try {
             const { embedding } = await generateDestinationEmbedding({
               name: dest.name,
@@ -103,14 +103,14 @@ export async function POST(request: NextRequest) {
         });
 
         const embeddingResults = await Promise.all(embeddingPromises);
-        const validEmbeddings = embeddingResults.filter((r): r is NonNullable<typeof r> => r !== null);
+        const validEmbeddings = embeddingResults.filter((r: any): r is NonNullable<typeof r> => r !== null);
 
         if (validEmbeddings.length > 0) {
           // Upsert to Upstash Vector
           await batchUpsertDestinationEmbeddings(validEmbeddings);
 
           // Update last_indexed_at in Supabase
-          const idsToUpdate = validEmbeddings.map(e => e.destinationId);
+          const idsToUpdate = validEmbeddings.map((e: any) => e.destinationId);
           await supabase
             .from('destinations')
             .update({ last_indexed_at: new Date().toISOString() })
