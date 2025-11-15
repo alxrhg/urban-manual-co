@@ -26,7 +26,11 @@
     "discovery:import": "tsx scripts/discovery-engine-import.ts",
     "fetch:categories": "tsx scripts/fetch-categories-from-google.ts",
     "generate:micro-descriptions": "tsx scripts/generate_micro_descriptions.ts",
-    "test:route-contracts": "tsx tests/routes-calculate-contract.test.ts"
+    "test:route-contracts": "tsx tests/routes-calculate-contract.test.ts",
+    "enrich:exa": "tsx scripts/enrich-with-exa.ts",
+    "list:columns": "tsx scripts/list-destination-columns.ts",
+    "list:all-columns": "tsx scripts/list-all-columns.ts",
+    "check:exa-progress": "tsx scripts/check-exa-enrichment-progress.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.4",

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -40,6 +40,7 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
+import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 
 // Dynamically import POIDrawer to avoid SSR issues
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
@@ -320,7 +321,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             icon_url,
             icon_background_color,
             icon_mask_base_uri,
-            google_place_id
+            google_place_id,
+            architect,
+            design_firm,
+            architectural_style,
+            design_period,
+            designer_name,
+            architect_info_json,
+            web_content_json
           `)
           .eq('slug', destination.slug)
           .single();
@@ -1292,6 +1300,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
                     </span>
               )}
+
+              {/* Instagram Handle */}
+              {(destination.instagram_handle || destination.instagram_url) && (() => {
+                const instagramHandle = destination.instagram_handle || 
+                  (destination.instagram_url 
+                    ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
+                    : null);
+                const instagramUrl = destination.instagram_url || 
+                  (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
+                
+                if (!instagramHandle || !instagramUrl) return null;
+                
+                return (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Instagram className="h-3 w-3" />
+                    @{instagramHandle.replace('@', '')}
+                  </a>
+                );
+              })()}
                   </div>
 
               {destination.micro_description && (
@@ -1529,7 +1562,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Opening Hours */}
             {(() => {
-              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
+              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
               if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
                 return null;
               }
@@ -1680,6 +1713,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </p>
             </div>
           )}
+
+          {/* Architecture & Design */}
+          {destination && <ArchitectDesignInfo destination={destination} />}
 
           {/* Contact & Links */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (

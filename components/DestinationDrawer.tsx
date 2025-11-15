@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit } from 'lucide-react';
+import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -25,6 +25,7 @@ import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import { POIDrawer } from './POIDrawer';
+import { ArchitectDesignInfo } from './ArchitectDesignInfo';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -260,7 +261,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             icon_url,
             icon_background_color,
             icon_mask_base_uri,
-            google_place_id
+            google_place_id,
+            architect,
+            design_firm,
+            architectural_style,
+            design_period,
+            designer_name,
+            architect_info_json,
+            web_content_json
           `)
           .eq('slug', destination.slug)
           .single();
@@ -794,7 +802,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               )}
 
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
+              {typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 && (
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
@@ -811,6 +819,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
                 </div>
               )}
+
+              {/* Instagram Handle */}
+              {(destination.instagram_handle || destination.instagram_url) && (() => {
+                const instagramHandle = destination.instagram_handle || 
+                  (destination.instagram_url 
+                    ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
+                    : null);
+                const instagramUrl = destination.instagram_url || 
+                  (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
+                
+                if (!instagramHandle || !instagramUrl) return null;
+                
+                return (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Instagram className="h-3.5 w-3.5" />
+                    <span>@{instagramHandle.replace('@', '')}</span>
+                  </a>
+                );
+              })()}
             </div>
 
             {/* AI-Generated Tags */}
@@ -860,6 +893,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
+            {/* Architecture & Design */}
+            {destination && <ArchitectDesignInfo destination={destination} />}
+
             {/* Formatted Address */}
             {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
               <div className="mt-4">
@@ -897,7 +933,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Opening Hours */}
             {(() => {
-              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
+              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
               // Only render if we have opening hours with weekday_text
               if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
                 // Debug: log why opening hours aren't showing
@@ -1237,7 +1273,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           </div>
                         )}
                         {/* Crown hidden for now */}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
+                        {typeof rec.michelin_stars === 'number' && rec.michelin_stars > 0 && (
                           <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
                             <img
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"

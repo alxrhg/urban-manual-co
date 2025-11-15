@@ -28,6 +28,7 @@ import { AnomalyAlert } from '@/components/AnomalyAlert';
 import { ExplanationPanel } from '@/components/ExplanationPanel';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
+import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 
 interface Recommendation {
   slug: string;
@@ -599,6 +600,9 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             </div>
           </div>
         )}
+
+        {/* Architecture & Design */}
+        <ArchitectDesignInfo destination={destination} />
 
         {/* Opening Hours */}
         {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (

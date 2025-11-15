@@ -1052,8 +1052,8 @@ export default function Home() {
       // Open Now filter - uses timezone_id, utc_offset, or city mapping
       if (currentAdvancedFilters.openNow) {
         filtered = filtered.filter(d => {
-          // Try opening_hours_json first (from database), then opening_hours (normalized)
-          const hours = (d as any).opening_hours_json || d.opening_hours;
+          // Use opening_hours_json from database
+          const hours = (d as any).opening_hours_json;
           if (!hours) return false;
           
           return isOpenNow(
