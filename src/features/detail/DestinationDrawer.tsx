@@ -1832,20 +1832,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     >
                       <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (
-                          <img
+                          <Image
                             src={rec.image}
                             alt={rec.name}
-                            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const parent = e.currentTarget.parentElement;
-                              if (parent && !parent.querySelector('.fallback-placeholder')) {
-                                const fallback = document.createElement('div');
-                                fallback.className = 'fallback-placeholder w-full h-full flex items-center justify-center';
-                                fallback.innerHTML = '<svg class="h-8 w-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>';
-                                parent.appendChild(fallback);
-                              }
-                            }}
+                            fill
+                            sizes="(max-width: 640px) 50vw, 200px"
+                            className="object-cover group-hover:opacity-90 transition-opacity"
+                            quality={85}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
