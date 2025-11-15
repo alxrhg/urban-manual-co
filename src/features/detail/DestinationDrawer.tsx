@@ -876,14 +876,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   // Get rating for display
   const rating = enrichedData?.rating || destination.rating;
-  const highlightTags = (
+  const highlightTags: string[] = (
     Array.isArray(destination.tags) && destination.tags.length > 0
       ? destination.tags
       : Array.isArray(enrichedData?.place_types)
         ? enrichedData.place_types
         : []
   )
-    .map(tag => (typeof tag === 'string' ? formatHighlightTag(tag) : ''))
+    .map((tag: unknown) => (typeof tag === 'string' ? formatHighlightTag(tag) : ''))
     .filter((tag): tag is string => Boolean(tag))
     .slice(0, 8);
 
