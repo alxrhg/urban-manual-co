@@ -86,9 +86,7 @@ export interface TripLocation {
   image: string;
   time?: string;
   notes?: string;
-  cost?: number;
   duration?: number;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
 }
 
 /**
@@ -96,11 +94,18 @@ export interface TripLocation {
  */
 export interface ItineraryItemNotes {
   raw?: string;
-  cost?: number;
   duration?: number;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   image?: string;
   city?: string;
   category?: string;
+  // Flight-specific fields
+  from?: any;
+  to?: any;
+  airline?: string;
+  flightNumber?: string;
+  departureTime?: string;
+  arrivalTime?: string;
+  // Train-specific fields
+  trainNumber?: string;
 }
 
