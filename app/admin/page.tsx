@@ -13,6 +13,32 @@ import { createColumns, type Destination } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 
+type AdminSearchIntent = {
+  city?: string;
+  category?: string;
+};
+
+type AdminSearchFilters = {
+  city?: string;
+  category?: string;
+};
+
+type AdminSearchMetadata = {
+  query?: string;
+  intent?: AdminSearchIntent;
+  filters?: AdminSearchFilters;
+  count?: number;
+  source?: string;
+};
+
+type AdminSearchLog = {
+  id: number;
+  created_at: string;
+  interaction_type: string;
+  user_id: string | null;
+  metadata: AdminSearchMetadata | null;
+};
+
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
@@ -775,7 +801,7 @@ export default function AdminPage() {
   }, []);
 
   // Searches state
-  const [searchLogs, setSearchLogs] = useState<any[]>([]);
+  const [searchLogs, setSearchLogs] = useState<AdminSearchLog[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(false);
 
   // Check authentication
@@ -955,16 +981,35 @@ export default function AdminPage() {
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('user_interactions')
-        .select('id, created_at, interaction_type, user_id, metadata')
-        .eq('interaction_type', 'search')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      const supabase = createClient({ skipValidation: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-      if (error) throw error;
-      setSearchLogs(data || []);
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('/api/admin/searches?limit=100', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const text = await response.text();
+      let payload: { logs?: AdminSearchLog[]; error?: string } = {};
+      if (text) {
+        try {
+          payload = JSON.parse(text);
+        } catch (parseError) {
+          console.error('[Admin] Failed to parse search logs response:', parseError);
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to load search logs');
+      }
+
+      setSearchLogs(Array.isArray(payload.logs) ? payload.logs : []);
     } catch (error) {
       console.error('[Admin] Error loading search logs:', error);
       toast.error('Failed to load search logs');
@@ -1205,11 +1250,12 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {searchLogs.map((log) => {
-                      const q = log.metadata?.query || '';
-                      const intent = log.metadata?.intent || {};
-                      const filters = log.metadata?.filters || {};
-                      const count = log.metadata?.count ?? '';
-                      const source = log.metadata?.source || '';
+                      const metadata = log.metadata ?? ({} as AdminSearchMetadata);
+                      const q = metadata.query || '';
+                      const intent = metadata.intent || {};
+                      const filters = metadata.filters || {};
+                      const count = metadata.count ?? '';
+                      const source = metadata.source || '';
                       return (
                         <tr key={log.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                           <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>

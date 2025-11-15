@@ -1,54 +1,82 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useCallback, useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+
+type SearchMetadata = {
+  query?: string;
+  intent?: {
+    city?: string;
+    category?: string;
+  };
+  filters?: {
+    city?: string;
+    category?: string;
+  };
+  count?: number;
+  source?: string;
+};
 
 type SearchLog = {
   id: number;
   created_at: string;
   interaction_type: string;
   user_id: string | null;
-  metadata: any;
+  metadata: SearchMetadata | null;
 };
-
-const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '') as string;
-const SUPABASE_ANON = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '') as string;
 
 export default function AdminSearchesPage() {
   const [logs, setLogs] = useState<SearchLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
-          auth: { persistSession: true, autoRefreshToken: true },
-        });
-        const { data: { user } } = await supabase.auth.getUser();
-        const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(s => s.trim()).filter(Boolean);
-        if (!user || (adminEmails.length > 0 && !adminEmails.includes(user.email || ''))) {
-          setError('Unauthorized');
-          setLoading(false);
-          return;
-        }
+  const loadSearchLogs = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const supabase = createClient({ skipValidation: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-        const { data, error } = await supabase
-          .from('user_interactions')
-          .select('id, created_at, interaction_type, user_id, metadata')
-          .eq('interaction_type', 'search')
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (error) throw error;
-        setLogs(data as any);
-      } catch (e: any) {
-        setError(e.message || 'Failed to load');
-      } finally {
-        setLoading(false);
+      if (!token) {
+        setError('Unauthorized');
+        setLogs([]);
+        return;
       }
-    };
-    run();
+
+      const response = await fetch('/api/admin/searches?limit=200', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const text = await response.text();
+      let payload: { logs?: SearchLog[]; error?: string } = {};
+      if (text) {
+        try {
+          payload = JSON.parse(text);
+        } catch (parseError) {
+          console.error('[Admin] Failed to parse search logs response:', parseError);
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to load');
+      }
+
+      setLogs(Array.isArray(payload.logs) ? payload.logs : []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load';
+      setError(message);
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadSearchLogs();
+  }, [loadSearchLogs]);
 
   if (loading) return <div className="p-6">Loading…</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
@@ -71,11 +99,12 @@ export default function AdminSearchesPage() {
           </thead>
           <tbody>
             {logs.map((log) => {
-              const q = log.metadata?.query || '';
-              const intent = log.metadata?.intent || {};
-              const filters = log.metadata?.filters || {};
-              const count = log.metadata?.count ?? '';
-              const source = log.metadata?.source || '';
+              const metadata = log.metadata ?? ({} as SearchMetadata);
+              const q = metadata.query || '';
+              const intent = metadata.intent || {};
+              const filters = metadata.filters || {};
+              const count = metadata.count ?? '';
+              const source = metadata.source || '';
               return (
                 <tr key={log.id} className="border-b hover:bg-gray-50">
                   <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
