@@ -31,6 +31,7 @@ import { SequencePredictionsInline } from '@/components/SequencePredictionsInlin
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { RelatedDestinations } from '@/src/features/detail/RelatedDestinations';
 import { WeatherWidget } from '@/components/WeatherWidget';
+import { NearbyEvents } from '@/components/NearbyEvents';
 
 interface Recommendation {
   slug: string;
@@ -631,6 +632,19 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               lat={destination.latitude} 
               lng={destination.longitude}
               locationName={destination.name}
+            />
+          </div>
+        )}
+
+        {/* Nearby Events */}
+        {destination.latitude && destination.longitude && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <NearbyEvents 
+              lat={destination.latitude} 
+              lng={destination.longitude}
+              locationName={destination.name}
+              radius={3}
+              limit={5}
             />
           </div>
         )}

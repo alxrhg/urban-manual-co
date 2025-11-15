@@ -7,6 +7,7 @@ import { UserProfile } from '@/types/personalization';
 import { JourneyInsights } from '@/lib/greetings/journey-tracker';
 import { RecentAchievement } from '@/lib/greetings/achievement-helper';
 import { GreetingWeatherData } from '@/lib/greetings/weather-helper';
+import { SearchSuggestions } from '@/components/SearchSuggestions';
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -57,6 +58,7 @@ export default function GreetingHero({
 }: GreetingHeroProps) {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -141,6 +143,9 @@ export default function GreetingHero({
     // Show typing indicator when user is typing
     setIsTyping(true);
     
+    // Show suggestions when user types at least 2 characters
+    setShowSuggestions(value.length >= 2);
+    
     // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -150,6 +155,14 @@ export default function GreetingHero({
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
     }, 1000);
+  };
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    onSearchChange(suggestion);
+    setShowSuggestions(false);
+    if (onSubmit) {
+      onSubmit(suggestion);
+    }
   };
 
   // Cleanup timeout on unmount
@@ -193,7 +206,17 @@ export default function GreetingHero({
                   e.preventDefault();
                   if (onSubmit && searchQuery.trim()) {
                     onSubmit(searchQuery.trim());
+                    setShowSuggestions(false);
                   }
+                }
+                // Hide suggestions on Escape
+                if (e.key === 'Escape') {
+                  setShowSuggestions(false);
+                }
+              }}
+              onFocus={() => {
+                if (searchQuery.length >= 2) {
+                  setShowSuggestions(true);
                 }
               }}
               className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
@@ -201,6 +224,13 @@ export default function GreetingHero({
                 paddingLeft: isSearching ? '32px' : '0'
               }}
             />
+            {/* Search Suggestions */}
+            {showSuggestions && !isSearching && (
+              <SearchSuggestions
+                query={searchQuery}
+                onSelect={handleSuggestionSelect}
+              />
+            )}
             {/* Typing Indicator - Minimal, editorial style */}
             {isTyping && searchQuery.length > 0 && !isSearching && (
               <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
