@@ -158,8 +158,7 @@ export const DestinationCard = memo(function DestinationCard({
         {showBadges && (
           <>
             {/* Michelin Stars - Bottom Left */}
-            {destination.michelin_stars &&
-              typeof destination.michelin_stars === 'number' &&
+            {typeof destination.michelin_stars === 'number' &&
               destination.michelin_stars > 0 && (
                 <div
                   className={`
