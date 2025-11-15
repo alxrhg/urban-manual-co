@@ -1,211 +1,170 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
-import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { DestinationCard } from '@/components/DestinationCard';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
-import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
-
-interface Destination {
-  id: number;
-  name: string;
-  city?: string;
-  category?: string;
-  description?: string;
-  image?: string;
-  michelin_stars?: number;
-  is_open_now?: boolean;
-  price_level?: number;
-}
-
-interface SearchState {
-  originalQuery: string;
-  refinements: string[];
-  allResults: Destination[];
-  filteredResults: Destination[];
-  conversationHistory: Message[];
-  suggestions: Array<{ label: string; refinement: string }>;
-  intent?: ExtractedIntent;
-  isLoading?: boolean;
-}
+import { useIntelligentSearch } from '@/hooks/useIntelligentSearch';
+import { useToast } from '@/hooks/useToast';
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
-
+  const itemsPerPage = useItemsPerPage(4);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
+  const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
+  const lastContextRef = useRef<string | null>(null);
+  const lastQueryRef = useRef<string>('');
+  const lastErrorRef = useRef<string | null>(null);
+  const lastWarningRef = useRef<string | null>(null);
 
-  const [searchState, setSearchState] = useState<SearchState>({
-    originalQuery: query,
-    refinements: [],
-    allResults: [],
-    filteredResults: [],
-    conversationHistory: [],
-    suggestions: [],
-  });
+  const {
+    data: searchData,
+    refinements,
+    isLoading,
+    isFetching,
+    isError,
+    errorMessage,
+    warningMessage,
+    hasCachedResults,
+    applyRefinement,
+    clearRefinements,
+    followUp,
+  } = useIntelligentSearch(query);
 
-  const performInitialSearch = useCallback(async (searchQuery: string) => {
-    setSearchState(prev => ({ ...prev, isLoading: true }));
-
-    try {
-      const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
-      const data = await res.json();
-      const results: Destination[] = data.results || [];
-
-      setSearchState({
-        originalQuery: searchQuery,
-        refinements: [],
-        allResults: results,
-        filteredResults: results,
-        conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
-        suggestions: data.suggestions || [],
-        intent: data.intent,
-        isLoading: false,
-      });
-      setCurrentPage(1); // Reset to first page on new search
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchState(prev => ({ ...prev, isLoading: false }));
-    }
-  }, []);
+  const { error: showErrorToast, warning: showWarningToast } = useToast();
+  const currentQuery = searchData.originalQuery || query;
+  const shouldShowLoading = Boolean(currentQuery) && (isLoading || (isFetching && !searchData.filteredResults.length));
+  const fallbackBannerMessage = warningMessage || (isError && hasCachedResults
+    ? 'Showing last known results while we reconnect.'
+    : null);
+  const lastUpdatedText = searchData.receivedAt
+    ? new Date(searchData.receivedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   useEffect(() => {
-    if (query) performInitialSearch(query);
-  }, [query, performInitialSearch]);
+    setCurrentPage(1);
+  }, [query, refinements]);
 
-  // Recompute suggestions whenever filtered results or refinements change
   useEffect(() => {
-    async function updateSuggestions() {
-      const newSuggestions = await generateSuggestions({
-        query: searchState.originalQuery,
-        results: searchState.filteredResults,
-        refinements: searchState.refinements,
-        filters: { /* could pass openNow/price if present */ },
-      });
-      setSearchState((prev) => ({
+    if (!currentQuery) {
+      setConversationHistory([]);
+      lastContextRef.current = null;
+      lastQueryRef.current = '';
+      return;
+    }
+
+    if (lastQueryRef.current !== currentQuery) {
+      const baseHistory = searchData.contextResponse
+        ? [{ role: 'assistant' as const, content: searchData.contextResponse }]
+        : [];
+      setConversationHistory(baseHistory);
+      lastContextRef.current = searchData.contextResponse || null;
+      lastQueryRef.current = currentQuery;
+      return;
+    }
+
+    if (searchData.contextResponse && searchData.contextResponse !== lastContextRef.current) {
+      setConversationHistory((prev) => [
         ...prev,
-        suggestions: newSuggestions,
-      }));
+        { role: 'assistant' as const, content: searchData.contextResponse! },
+      ]);
+      lastContextRef.current = searchData.contextResponse;
     }
-    if (searchState.filteredResults.length > 0) {
-      updateSuggestions();
+  }, [currentQuery, searchData.contextResponse]);
+
+  useEffect(() => {
+    if (isError && errorMessage && lastErrorRef.current !== errorMessage) {
+      showErrorToast(errorMessage);
+      lastErrorRef.current = errorMessage;
     }
-  }, [searchState.filteredResults, searchState.refinements, searchState.originalQuery]);
+    if (!isError) {
+      lastErrorRef.current = null;
+    }
+  }, [isError, errorMessage, showErrorToast]);
 
-  async function handleRefinement(refinement: string) {
-    const newRefinements = [...searchState.refinements, refinement];
-    const res = await fetch('/api/search/refine', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        originalQuery: searchState.originalQuery,
-        refinements: newRefinements,
-        allResults: searchState.allResults.map((r) => r.id),
-      }),
-    });
-    const data = await res.json();
+  useEffect(() => {
+    if (warningMessage && lastWarningRef.current !== warningMessage) {
+      showWarningToast(warningMessage, 4000);
+      lastWarningRef.current = warningMessage;
+    }
+    if (!warningMessage) {
+      lastWarningRef.current = null;
+    }
+  }, [warningMessage, showWarningToast]);
 
-    setSearchState((prev) => ({
-      ...prev,
-      refinements: newRefinements,
-      filteredResults: data.filteredResults || [],
-      conversationHistory: ([
-        ...prev.conversationHistory,
-        { role: 'user' as const, content: refinement },
-        ...(data.contextResponse ? [{ role: 'assistant' as const, content: data.contextResponse }] : []),
-      ]) as Message[],
-      // Keep initial suggestions for now; can evolve to state-driven
-    }));
-    setCurrentPage(1); // Reset to first page on filter change
-  }
+  const updateSearchQuery = (nextQuery: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextQuery) {
+      params.set('q', nextQuery);
+    } else {
+      params.delete('q');
+    }
+    const serialized = params.toString();
+    const nextUrl = serialized ? `/search?${serialized}` : '/search';
+    router.push(nextUrl);
+  };
 
-  async function handleFollowUp(message: string): Promise<string> {
+  const handleRefinement = (refinement: string) => {
+    setConversationHistory((prev) => [...prev, { role: 'user', content: refinement }]);
+    applyRefinement(refinement);
+    setCurrentPage(1);
+  };
+
+  const handleFollowUp = async (message: string): Promise<string> => {
+    const nextHistory = [...conversationHistory, { role: 'user' as const, content: message }];
+    setConversationHistory(nextHistory);
     try {
-      const res = await fetch('/api/search/follow-up', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          originalQuery: searchState.originalQuery,
-          followUpMessage: message,
-          conversationHistory: searchState.conversationHistory,
-          currentResults: searchState.filteredResults.map((r) => ({ id: r.id })),
-          refinements: searchState.refinements,
-          intent: searchState.intent, // Pass the original intent to preserve context
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Follow-up search failed');
-      }
-
-      const data = await res.json();
-      const results: Destination[] = data.results || [];
-
-      setSearchState((prev) => ({
+      const response = await followUp(message, nextHistory);
+      setCurrentPage(1);
+      return response;
+    } catch {
+      const fallback = 'Sorry, I encountered an error processing your request. Please try again.';
+      showErrorToast('We hit a snag while refining your search. Please try again.');
+      setConversationHistory((prev) => ([
         ...prev,
-        refinements: [...prev.refinements, message],
-        filteredResults: results,
-        allResults: results.length > prev.allResults.length ? results : prev.allResults,
-        conversationHistory: [
-          ...prev.conversationHistory,
-          { role: 'user' as const, content: message },
-          ...(data.contextResponse ? [{ role: 'assistant' as const, content: data.contextResponse }] : []),
-        ] as Message[],
-        suggestions: data.suggestions || prev.suggestions,
-      }));
-      setCurrentPage(1); // Reset to first page on follow-up
-
-      return data.contextResponse || '';
-    } catch (error) {
-      console.error('Follow-up error:', error);
-      return 'Sorry, I encountered an error processing your request. Please try again.';
+        { role: 'assistant', content: fallback },
+      ]));
+      return fallback;
     }
-  }
+  };
 
-  function handleChipClick(chipRefinement: string) {
-    handleRefinement(chipRefinement);
-  }
-
-  function clearFilters() {
-    setSearchState((prev) => ({
-      ...prev,
-      refinements: [],
-      filteredResults: prev.allResults,
-      conversationHistory: ([
-        ...prev.conversationHistory,
-        { role: 'assistant' as const, content: `Filters cleared. Showing all ${prev.allResults.length} results.` },
-      ]) as Message[],
-    }));
-    setCurrentPage(1); // Reset to first page when clearing filters
-  }
-
-  function handleIntentChipRemove(chipType: string, value: string) {
-    // When user removes an intent chip, perform a new search without that constraint
-    let newQuery = searchState.originalQuery;
+  const handleIntentChipRemove = (chipType: string, value: string) => {
+    let nextQuery = currentQuery;
 
     if (chipType === 'city') {
-      newQuery = newQuery.replace(new RegExp(value, 'gi'), '').trim();
+      nextQuery = nextQuery.replace(new RegExp(value, 'gi'), '').trim();
     } else if (chipType === 'category') {
-      newQuery = newQuery.replace(new RegExp(value, 'gi'), '').trim();
+      nextQuery = nextQuery.replace(new RegExp(value, 'gi'), '').trim();
     }
 
-    if (newQuery && newQuery !== searchState.originalQuery) {
-      performInitialSearch(newQuery);
+    if (nextQuery !== currentQuery) {
+      updateSearchQuery(nextQuery);
     }
-  }
+  };
 
-  function handleAlternativeClick(alternative: string) {
-    performInitialSearch(alternative);
-  }
+  const handleAlternativeClick = (alternative: string) => {
+    updateSearchQuery(alternative);
+  };
+
+  const clearFilters = () => {
+    clearRefinements();
+    setConversationHistory((prev) => ([
+      ...prev,
+      { role: 'assistant', content: `Filters cleared. Showing all ${searchData.allResults.length} results.` },
+    ]));
+    setCurrentPage(1);
+  };
+
+  const visibleResults = searchData.filteredResults;
+  const totalResults = searchData.allResults.length;
 
   return (
     <div className="w-full px-6 md:px-10 lg:px-12 py-10">
@@ -213,73 +172,77 @@ function SearchPageContent() {
         {new Date().getHours() < 12 ? 'GOOD MORNING' : new Date().getHours() < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING'}
       </p>
 
+      {fallbackBannerMessage && (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p>{fallbackBannerMessage}</p>
+          {lastUpdatedText && (
+            <p className="mt-1 text-xs text-amber-800">Last updated {lastUpdatedText}</p>
+          )}
+        </div>
+      )}
+
       <CompactResponseSection
-        query={searchState.originalQuery}
-        messages={searchState.conversationHistory}
-        suggestions={searchState.suggestions}
-        onChipClick={handleChipClick}
+        query={currentQuery}
+        messages={conversationHistory}
+        suggestions={searchData.suggestions}
+        onChipClick={handleRefinement}
         onFollowUp={handleFollowUp}
       />
 
-      {/* Intent Confirmation Chips */}
-      {searchState.intent && !searchState.isLoading && (
+      {searchData.intent && !shouldShowLoading && (
         <div className="mb-6">
           <IntentConfirmationChips
-            intent={searchState.intent}
+            intent={searchData.intent}
             onChipRemove={handleIntentChipRemove}
             editable={true}
           />
         </div>
       )}
 
-      {/* Loading State */}
-      {searchState.isLoading && (
-        <ContextualLoadingState intent={searchState.intent} query={searchState.originalQuery} />
+      {shouldShowLoading && (
+        <ContextualLoadingState intent={searchData.intent} query={currentQuery} />
       )}
 
-      {/* Empty State */}
-      {!searchState.isLoading && searchState.filteredResults.length === 0 && searchState.originalQuery && (
+      {!shouldShowLoading && !isError && visibleResults.length === 0 && currentQuery && (
         <SmartEmptyState
-          query={searchState.originalQuery}
-          intent={searchState.intent}
+          query={currentQuery}
+          intent={searchData.intent}
           onAlternativeClick={handleAlternativeClick}
         />
       )}
 
-      {/* Results */}
-      {!searchState.isLoading && searchState.filteredResults.length > 0 && (
+      {!shouldShowLoading && visibleResults.length > 0 && (
         <>
-      <div className="mb-4 text-sm text-neutral-500">
-        Showing {searchState.filteredResults.length}
-        {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
-          <span> of {searchState.allResults.length}</span>
-        )}
-        {searchState.refinements.length > 0 && (
-          <span> (filtered by: {searchState.refinements.join(', ')})</span>
-        )}
-      </div>
+          <div className="mb-4 text-sm text-neutral-500">
+            Showing {visibleResults.length}
+            {totalResults > 0 && visibleResults.length !== totalResults && (
+              <span> of {totalResults}</span>
+            )}
+            {refinements.length > 0 && (
+              <span> (filtered by: {refinements.join(', ')})</span>
+            )}
+          </div>
 
           {(() => {
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const paginatedResults = searchState.filteredResults.slice(startIndex, endIndex);
-            const totalPages = Math.ceil(searchState.filteredResults.length / itemsPerPage);
+            const paginatedResults = visibleResults.slice(startIndex, endIndex);
+            const totalPages = Math.ceil(visibleResults.length / itemsPerPage);
 
             return (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                   {paginatedResults.map((d, idx) => (
                     <DestinationCard
-            key={d.id}
-            destination={d as any}
-            onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+                      key={d.id ?? `${d.slug}-${idx}`}
+                      destination={d as any}
+                      onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
                       index={startIndex + idx}
                       showBadges={true}
-          />
-        ))}
-      </div>
+                    />
+                  ))}
+                </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2">
                     <button
@@ -339,16 +302,15 @@ function SearchPageContent() {
                   </div>
                 )}
 
-      {searchState.refinements.length > 0 && (
-        <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
-          Clear all filters
-        </button>
+                {refinements.length > 0 && (
+                  <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
+                    Clear all filters
+                  </button>
                 )}
               </>
             );
           })()}
 
-          {/* Ad after grid */}
           <div className="mt-8">
             <MultiplexAd slot="3271683710" />
           </div>
@@ -366,9 +328,9 @@ export default function SearchPage() {
         <Skeleton className="h-4 w-48 rounded mb-6" />
         <Skeleton className="h-5 w-80 rounded mb-8" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-      {Array.from({ length: 10 }).map((_, i) => (
+          {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton key={i} className="aspect-square rounded-2xl" />
-      ))}
+          ))}
         </div>
       </div>
     }>
@@ -376,5 +338,3 @@ export default function SearchPage() {
     </Suspense>
   );
 }
-
-
