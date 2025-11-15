@@ -120,6 +120,16 @@ export default function GooglePlacesAutocompleteNative({
       const placeName = place.name || place.formatted_address || '';
       onChange(placeName);
 
+      // Track Google Autocomplete usage for trip planning
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'trip_place_autocomplete', {
+          place_id: place.place_id,
+          place_name: placeName,
+          place_types: place.types?.join(',') || '',
+          has_geometry: !!place.geometry,
+        });
+      }
+
       // Call onPlaceSelect callback with place details
       if (onPlaceSelect) {
         onPlaceSelect({

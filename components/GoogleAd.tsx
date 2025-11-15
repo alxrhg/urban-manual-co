@@ -189,7 +189,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
 
   return (
     <div ref={containerRef} className={`col-span-full ${className}`}>
-      <div className="w-full border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
+      <div className="w-full max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
         <div className="text-xs text-gray-400 mb-3 text-center">Sponsored</div>
         <ins
           ref={adRef}
