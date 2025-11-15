@@ -1,7 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Cookie } from 'lucide-react';
+import {
+  X,
+  Cookie,
+  CheckCircle2,
+  ShieldCheck,
+  SlidersHorizontal,
+  FileText,
+} from 'lucide-react';
 
 const CONSENT_STORAGE_KEY = 'cookie_consent';
 const CONSENT_COOKIE_NAME = 'cookie_consent';
@@ -135,19 +142,27 @@ export function CookieConsent() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6">
+    <div className="fixed top-0 left-0 right-0 z-50 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl p-6">
-          <div className="flex items-start gap-4">
-            {/* Icon */}
-            <div className="flex-shrink-0">
-              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
+        <div className="relative bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl p-6">
+          {/* Close button (mobile) */}
+          <button
+            onClick={acceptNecessary}
+            className="absolute top-4 right-4 flex-shrink-0 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors sm:hidden"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <div className="flex flex-col gap-4 text-center sm:text-left">
+            <div className="flex justify-center sm:justify-start">
+              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full inline-flex">
                 <Cookie className="h-5 w-5 text-gray-900 dark:text-white" />
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 space-y-4">
+            <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium mb-2">We value your privacy</h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -235,62 +250,59 @@ export function CookieConsent() {
               )}
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="space-y-3">
                 {!showDetails ? (
-                  <>
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={acceptAll}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+                      className="flex flex-col items-center justify-center gap-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-90 transition"
                     >
+                      <CheckCircle2 className="h-4 w-4" />
                       Accept All
                     </button>
                     <button
                       onClick={acceptNecessary}
-                      className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      className="flex flex-col items-center justify-center gap-1 px-4 py-3 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition"
                     >
+                      <ShieldCheck className="h-4 w-4" />
                       Necessary Only
                     </button>
                     <button
                       onClick={() => setShowDetails(true)}
-                      className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                      className="flex flex-col items-center justify-center gap-1 px-4 py-3 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl transition"
                     >
+                      <SlidersHorizontal className="h-4 w-4" />
                       Customize
                     </button>
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <button
                       onClick={saveCustom}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+                      className="flex flex-col items-center justify-center gap-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-90 transition"
                     >
+                      <CheckCircle2 className="h-4 w-4" />
                       Save Preferences
                     </button>
                     <button
                       onClick={() => setShowDetails(false)}
-                      className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      className="flex flex-col items-center justify-center gap-1 px-4 py-3 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition"
                     >
+                      <X className="h-4 w-4" />
                       Back
                     </button>
-                  </>
+                  </div>
                 )}
 
                 <a
                   href="/privacy"
-                  className="px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-center"
+                  className="flex flex-col items-center justify-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
+                  <FileText className="h-4 w-4" />
                   Privacy Policy
                 </a>
               </div>
             </div>
-
-            {/* Close button (mobile) */}
-            <button
-              onClick={acceptNecessary}
-              className="flex-shrink-0 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors sm:hidden"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
         </div>
       </div>
