@@ -802,7 +802,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               )}
 
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
+              {typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 && (
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
@@ -1273,7 +1273,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           </div>
                         )}
                         {/* Crown hidden for now */}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
+                        {typeof rec.michelin_stars === 'number' && rec.michelin_stars > 0 && (
                           <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
                             <img
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
