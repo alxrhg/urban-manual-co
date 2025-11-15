@@ -786,7 +786,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           </div>
 
           <div className="space-y-8">
-              {/* Cover Image Upload */}
+            {/* Cover Image Upload */}
               <div className="mb-6">
                 <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Cover Image
@@ -924,7 +924,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 ))}
               </div>
             </div>
-          </div>
 
         </>
       )}

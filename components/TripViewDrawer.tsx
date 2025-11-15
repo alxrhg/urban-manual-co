@@ -430,12 +430,6 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
       )}
     </div>
   ) : undefined;
-            <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-          </button>
-        </div>
-      )}
-    </div>
-  ) : undefined;
 
   const content = (
     <div className="px-6 py-6">
