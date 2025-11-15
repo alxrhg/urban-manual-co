@@ -66,12 +66,21 @@ export default function CityPageClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   const [showPOIDrawer, setShowPOIDrawer] = useState(false);
+  const [isCreatingNewPOI, setIsCreatingNewPOI] = useState(false);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
   const handleAdminEdit = (destination: Destination) => {
     if (!isAdmin) return;
     setEditingDestination(destination);
+    setIsCreatingNewPOI(false);
+    setShowPOIDrawer(true);
+  };
+
+  const handleAddNewPOI = () => {
+    if (!isAdmin) return;
+    setEditingDestination(null);
+    setIsCreatingNewPOI(true);
     setShowPOIDrawer(true);
   };
 
@@ -257,7 +266,21 @@ export default function CityPageClient() {
                     {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
                   </p>
                 </div>
-                <CityClock citySlug={citySlug} />
+                <div className="flex items-center gap-3">
+                  {isAdmin && (
+                    <button
+                      onClick={handleAddNewPOI}
+                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out text-xs font-medium flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                      title="Add new POI to this city"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add POI
+                    </button>
+                  )}
+                  <CityClock citySlug={citySlug} />
+                </div>
               </div>
             </div>
 
@@ -486,12 +509,15 @@ export default function CityPageClient() {
           onClose={() => {
             setShowPOIDrawer(false);
             setEditingDestination(null);
+            setIsCreatingNewPOI(false);
           }}
           destination={editingDestination || undefined}
+          initialCity={isCreatingNewPOI ? citySlug : undefined}
           onSave={async () => {
             await new Promise(resolve => setTimeout(resolve, 200));
             await fetchDestinations();
             setEditingDestination(null);
+            setIsCreatingNewPOI(false);
             setShowPOIDrawer(false);
           }}
         />
