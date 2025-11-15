@@ -33,7 +33,24 @@ ON destinations FOR DELETE
 TO service_role
 USING (true);
 
--- Allow authenticated admin users to delete destinations
+-- Allow authenticated admin users to insert/update/delete destinations
+CREATE POLICY "Authenticated admin users can insert destinations"
+ON destinations FOR INSERT
+TO authenticated
+WITH CHECK (
+  (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+);
+
+CREATE POLICY "Authenticated admin users can update destinations"
+ON destinations FOR UPDATE
+TO authenticated
+USING (
+  (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+)
+WITH CHECK (
+  (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+);
+
 CREATE POLICY "Authenticated admin users can delete destinations"
 ON destinations FOR DELETE
 TO authenticated
@@ -48,6 +65,6 @@ BEGIN
   RAISE NOTICE '';
   RAISE NOTICE 'Anyone can read destinations (public data)';
   RAISE NOTICE 'Service role can insert/update/delete (backend)';
-  RAISE NOTICE 'Authenticated admin users can delete (admin UI)';
+  RAISE NOTICE 'Authenticated admin users can insert/update/delete (admin UI)';
 END $$;
 
