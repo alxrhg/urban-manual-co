@@ -40,9 +40,7 @@ interface TripLocation {
   image: string;
   time?: string;
   notes?: string;
-  cost?: number;
   duration?: number;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
 }
 
 interface DayItinerary {
@@ -170,7 +168,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             daysMap.set(day, []);
           }
 
-          // Parse notes for additional data (cost, duration, mealType)
+          // Parse notes for additional data (duration, etc.)
           let notesData: ItineraryItemNotes = {};
           if (item.notes) {
             try {
@@ -188,9 +186,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             image: notesData.image || '/placeholder-image.jpg',
             time: item.time || undefined,
             notes: notesData.raw || undefined,
-            cost: notesData.cost || undefined,
             duration: notesData.duration || undefined,
-            mealType: notesData.mealType || undefined,
           };
 
           daysMap.get(day)!.push(location);
@@ -393,9 +389,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           // Store additional data in notes as JSON
           const notesData: ItineraryItemNotes = {
             raw: location.notes || '',
-            cost: location.cost,
             duration: location.duration,
-            mealType: location.mealType,
             image: location.image,
             city: location.city,
             category: location.category,
@@ -525,16 +519,14 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       prev.map((day, idx) => {
         if (idx !== dayIndex) return day;
         const optimized = [...day.locations].sort((a, b) => {
-          // Sort by meal type and time
-          const mealOrder = {
-            breakfast: 0,
-            snack: 1,
-            lunch: 2,
-            dinner: 3,
-          };
-          const aOrder = a.mealType ? mealOrder[a.mealType] : 999;
-          const bOrder = b.mealType ? mealOrder[b.mealType] : 999;
-          return aOrder - bOrder;
+          // Sort by time if available
+          if (a.time && b.time) {
+            return a.time.localeCompare(b.time);
+          }
+          // Put items with time first
+          if (a.time && !b.time) return -1;
+          if (!a.time && b.time) return 1;
+          return 0;
         });
         return {
           ...day,
@@ -576,15 +568,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const getTotalSpent = () => {
-    return days.reduce((total, day) => {
-      return (
-        total +
-        day.locations.reduce((dayTotal, loc) => dayTotal + (loc.cost || 0), 0)
-      );
-    }, 0);
   };
 
   const getAISuggestions = () => {
@@ -876,13 +859,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                       year: 'numeric',
                     })}
                   </span>
-                  {totalBudget > 0 && (
-                    <>
-                      <span className="text-gray-300 dark:text-gray-600">•</span>
-                      <WalletIcon className="w-4 h-4" />
-                      <span>${getTotalSpent()} / ${totalBudget}</span>
-                    </>
-                  )}
                 </div>
                 {/* AI Suggestions */}
                 <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
