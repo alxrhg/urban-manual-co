@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Step 1: Fetch destinations to reindex
     let query = supabase
       .from('destinations')
-      .select('id, name, city, country, category, price_band, popularity_score, michelin_stars, slug, description, ai_description, tags, updated_at');
+      .select('id, name, city, country, category, price_range, popularity_score, michelin_stars, slug, description, ai_description, tags, updated_at');
 
     if (mode === 'changed') {
       // Only destinations that have been updated since last indexing
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
                 city: dest.city,
                 country: dest.country || undefined,
                 category: dest.category || undefined,
-                price_band: dest.price_band || undefined,
+                price_range: dest.price_range || undefined,
                 popularity_score: dest.popularity_score || undefined,
                 michelin_stars: dest.michelin_stars || undefined,
                 slug: dest.slug || undefined,

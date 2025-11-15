@@ -17,7 +17,7 @@ export interface DestinationMetadata {
   city: string;
   country?: string;
   category?: string;
-  price_band?: string;
+  price_range?: string;
   popularity_score?: number;
   michelin_stars?: number;
   slug?: string;

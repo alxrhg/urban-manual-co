@@ -76,7 +76,7 @@ This security summary covers the implementation of Upstash Vector (semantic sear
 
 **Vector Index**:
 - Metadata stored in Upstash Vector does not include sensitive data ✓
-- Only storing: destination_id, name, city, country, category, price_band, popularity_score, michelin_stars, slug ✓
+- Only storing: destination_id, name, city, country, category, price_range, popularity_score, michelin_stars, slug ✓
 - No PII (personally identifiable information) in vector metadata ✓
 
 **External API Calls**:
