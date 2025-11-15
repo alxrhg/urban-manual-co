@@ -30,22 +30,15 @@ import {
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
-import { MultiplexAd } from '@/components/GoogleAd';
-import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
-import { SessionResume } from '@/components/SessionResume';
-import { ContextCards } from '@/components/ContextCards';
-import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
-import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
-import { FollowUpSuggestions } from '@/components/FollowUpSuggestions';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
+import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
-import type { RefinementTag } from '@/components/RefinementChips';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
