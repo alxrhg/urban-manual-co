@@ -761,41 +761,42 @@ export default function Home() {
   // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
   // Works like chat but with convenience of auto-trigger
   useEffect(() => {
-    if (searchTerm.trim().length > 0) {
-      const trimmedSearchTerm = searchTerm.trim();
-      
+    const trimmedSearchTerm = searchTerm.trim();
+
+    if (trimmedSearchTerm.length > 0) {
       // Prevent duplicate searches - check if this query was already searched
       if (trimmedSearchTerm === lastSearchedQueryRef.current) {
         return;
       }
-      
-      // Prevent duplicate searches - only trigger if not already searching
+
+      // If a search is already running, wait until it finishes before scheduling the new one
       if (searching) {
         return;
       }
-      
+
       const timer = setTimeout(() => {
         // Double-check we're not already searching and query hasn't changed
-        if (!searching && searchTerm.trim() === trimmedSearchTerm && searchTerm.trim() !== lastSearchedQueryRef.current) {
+        if (!searching && searchTerm.trim() === trimmedSearchTerm && trimmedSearchTerm !== lastSearchedQueryRef.current) {
           performAISearch(searchTerm);
         }
       }, 500); // 500ms debounce for auto-trigger
+
       return () => clearTimeout(timer);
-    } else {
-      // Clear everything when search is empty
-      setFilteredDestinations([]);
-      setChatResponse('');
-      setConversationHistory([]);
-      setSearching(false);
-      setSubmittedQuery('');
-      setChatMessages([]);
-      setFollowUpSuggestions([]);
-      lastSearchedQueryRef.current = ''; // Reset on clear
-      // Show all destinations when no search (with filters if set)
-      filterDestinations();
-      setCurrentPage(1);
     }
-  }, [searchTerm]); // Only depend on searchTerm - checking searching inside effect
+
+    // Clear everything when search is empty
+    setFilteredDestinations([]);
+    setChatResponse('');
+    setConversationHistory([]);
+    setSearching(false);
+    setSubmittedQuery('');
+    setChatMessages([]);
+    setFollowUpSuggestions([]);
+    lastSearchedQueryRef.current = ''; // Reset on clear
+    // Show all destinations when no search (with filters if set)
+    filterDestinations();
+    setCurrentPage(1);
+  }, [searchTerm, searching, performAISearch]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
