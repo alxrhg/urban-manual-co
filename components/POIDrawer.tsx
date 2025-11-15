@@ -8,6 +8,7 @@ import { Loader2, X, Trash2 } from 'lucide-react';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 
 interface POIDrawerProps {
   isOpen: boolean;
@@ -417,14 +418,11 @@ export function POIDrawer({ isOpen, onClose, onSave, destination }: POIDrawerPro
             <label htmlFor="city" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
               City *
             </label>
-            <input
-              id="city"
-              type="text"
+            <CityAutocompleteInput
               value={formData.city}
-              onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-              required
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              onChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
               placeholder="Tokyo"
+              required
             />
           </div>
 
