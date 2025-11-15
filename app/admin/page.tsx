@@ -892,11 +892,28 @@ export default function AdminPage() {
 
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
   const loadDestinationList = useCallback(async () => {
-    if (!isAdmin || !authChecked) return;
+    if (!isAdmin || !authChecked) {
+      console.log('[Admin] Skipping load - not admin or auth not checked', { isAdmin, authChecked });
+      return;
+    }
     
+    console.log('[Admin] Starting loadDestinationList...', { listSearchQuery, listOffset });
     setIsLoadingList(true);
     try {
       const supabase = createClient();
+      
+      // Test connection first
+      const { data: testData, error: testError } = await supabase
+        .from('destinations')
+        .select('count', { count: 'exact', head: true });
+      
+      if (testError) {
+        console.error('[Admin] Connection test failed:', testError);
+        throw new Error(`Database connection failed: ${testError.message}`);
+      }
+      
+      console.log('[Admin] Connection test successful');
+      
       let query = supabase
         .from('destinations')
         .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating, michelin_stars, crown')
@@ -922,6 +939,8 @@ export default function AdminPage() {
         return;
       }
       
+      console.log('[Admin] Raw data received:', data?.length || 0, 'items');
+      
       // Sanitize data to prevent JSON parse errors from malformed content
       const sanitizedData = (data || []).map((item: any) => {
         try {
@@ -944,6 +963,10 @@ export default function AdminPage() {
       
       console.log('[Admin] Loaded destinations:', sanitizedData.length);
       setDestinationList(sanitizedData);
+      
+      if (sanitizedData.length === 0 && !listSearchQuery.trim()) {
+        toast.warning('No destinations found in database. Add some destinations to get started.');
+      }
     } catch (e: any) {
       console.error('[Admin] Error loading destinations:', e);
       // Check if it's a JSON parse error
