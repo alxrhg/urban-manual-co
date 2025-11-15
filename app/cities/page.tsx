@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { MapPin, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, ArrowLeft } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
 import { UniversalGrid } from '@/components/UniversalGrid';
@@ -45,7 +45,6 @@ export default function CitiesPage() {
     minRating?: number;
     openNow?: boolean;
   }>({});
-  const [countryCarouselIndex, setCountryCarouselIndex] = useState(0);
 
   useEffect(() => {
     fetchCityStats();
@@ -129,16 +128,8 @@ export default function CitiesPage() {
     );
   }
 
-  // Calculate featured cities (top 3 by count from all cities)
-  const featuredCities = cityStats.slice(0, 3);
-
-  // Country carousel logic
-  const countriesPerView = 6;
-  const maxCarouselIndex = Math.max(0, Math.ceil(countries.length / countriesPerView) - 1);
-  const visibleCountries = countries.slice(
-    countryCarouselIndex * countriesPerView,
-    (countryCarouselIndex + 1) * countriesPerView
-  );
+  // Featured cities (top 4 by count from all cities)
+  const featuredCities = cityStats.slice(0, 4);
 
   return (
     <main className="relative min-h-screen bg-white dark:bg-gray-900">
@@ -170,43 +161,20 @@ export default function CitiesPage() {
           {/* Country Filter Panel */}
           {countries.length > 0 && (
             <div className="mb-12">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
-                    Explore by Country
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Select a country to discover its cities
-                  </p>
+              <div className="mb-4">
+                <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+                  Explore by Country
                 </div>
-                {countries.length > countriesPerView && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCountryCarouselIndex(prev => Math.max(0, prev - 1))}
-                      disabled={countryCarouselIndex === 0}
-                      className="p-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-                      aria-label="Previous countries"
-                    >
-                      <ChevronLeft className="h-4 w-4 text-gray-900 dark:text-white" />
-                    </button>
-                    <button
-                      onClick={() => setCountryCarouselIndex(prev => Math.min(maxCarouselIndex, prev + 1))}
-                      disabled={countryCarouselIndex >= maxCarouselIndex}
-                      className="p-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-                      aria-label="Next countries"
-                    >
-                      <ChevronRight className="h-4 w-4 text-gray-900 dark:text-white" />
-                    </button>
-                  </div>
-                )}
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Select a country to discover its cities
+                </p>
               </div>
-              
+
               <div className="flex flex-wrap gap-x-5 gap-y-3">
                 <button
                   onClick={() => {
                     setSelectedCountry("");
                     setAdvancedFilters(prev => ({ ...prev, city: undefined }));
-                    setCountryCarouselIndex(0);
                   }}
                   className={`text-xs font-medium transition-all duration-200 ease-out ${
                     !selectedCountry
@@ -216,7 +184,7 @@ export default function CitiesPage() {
                 >
                   All Countries
                 </button>
-                {visibleCountries.map((country) => (
+                {countries.map((country) => (
                   <button
                     key={country}
                     onClick={() => {
@@ -247,7 +215,7 @@ export default function CitiesPage() {
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {featuredCities.map((cityData, idx) => {
+                {featuredCities.map((cityData) => {
                   const { city, country, count, featuredImage } = cityData;
                   return (
                     <button
@@ -255,7 +223,7 @@ export default function CitiesPage() {
                       onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
                       className="text-left group"
                     >
-                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800">
+                      <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800">
                         {featuredImage ? (
                           <Image
                             src={featuredImage}
@@ -303,8 +271,8 @@ export default function CitiesPage() {
                       onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
                       className="text-left group"
                     >
-                      {/* Square Image Container */}
-                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800 group-hover:opacity-80 transition-opacity">
+                      {/* Image Container */}
+                      <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800 group-hover:opacity-80 transition-opacity">
                         {featuredImage ? (
                           <Image
                             src={featuredImage}
