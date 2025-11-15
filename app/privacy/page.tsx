@@ -95,13 +95,22 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Cookies & Tracking</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          <section>
+            <h2 className="text-2xl font-bold mb-4">Cookies & Tracking</h2>
+            <div className="space-y-3 text-gray-600 dark:text-gray-400">
+              <p>
                 We use first-party cookies and local storage to keep you signed in, remember preferences, and understand how the product performs.
                 You can control cookies through your browser settings, though disabling them may limit core functionality.
               </p>
+              <p>
+                <strong>Google Places Autocomplete:</strong> When you use our trip planning feature to search for and add locations,
+                we use Google Places Autocomplete to provide location suggestions. We track anonymized analytics about which places
+                are selected through this feature (including place ID, place name, place types) to improve our service and understand
+                user preferences. This data is sent to Google Analytics and helps us enhance the trip planning experience.
+                No personally identifiable information is included in this tracking.
+              </p>
             </div>
+          </section>
 
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Location Data</h2>

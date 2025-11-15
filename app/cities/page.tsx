@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { MapPin, ArrowLeft, PencilLine, Loader2, X } from 'lucide-react';
+import { MapPin, ArrowLeft, Loader2, X } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
-import { FollowCityButton } from '@/components/FollowCityButton';
 import { UniversalGrid } from '@/components/UniversalGrid';
+import { DestinationCard } from '@/components/DestinationCard';
 import Image from 'next/image';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { toast } from 'sonner';
@@ -39,6 +39,19 @@ function normalizeCityKey(city: string): string {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '-');
+}
+
+// Convert CityStats to Destination format for DestinationCard
+function cityStatsToDestination(cityData: CityStats): Destination {
+  return {
+    slug: cityData.city,
+    name: capitalizeCity(cityData.city),
+    city: cityData.city,
+    category: `${cityData.count} places`,
+    micro_description: `${cityData.country}`,
+    image: cityData.featuredImage,
+    image_thumbnail: cityData.featuredImage,
+  };
 }
 
 export default function CitiesPage() {
@@ -182,13 +195,6 @@ export default function CitiesPage() {
     }
   };
 
-  const handleCityEditClick = (event: MouseEvent<HTMLButtonElement>, cityData: CityStats) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setCityToEdit(cityData);
-    setIsEditDrawerOpen(true);
-  };
-
   const handleSaveCity = async (countryName: string) => {
     if (!cityToEdit) return;
 
@@ -238,8 +244,8 @@ export default function CitiesPage() {
     <>
       <main className="relative min-h-screen bg-white dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="px-6 md:px-10 lg:px-12 py-12 md:py-16">
-        <div className="max-w-4xl mx-auto">
+      <section className="px-6 md:px-10 py-12 md:py-16">
+        <div className="max-w-[1800px] mx-auto">
           {/* Back Button */}
           <button
             onClick={() => router.push('/')}
@@ -261,6 +267,39 @@ export default function CitiesPage() {
               {cityStats.length} cities • {countries.length} countries
             </p>
           </div>
+
+          {/* Featured Cities Carousel - At the top */}
+          {featuredCities.length > 0 && (
+            <div className="mb-12">
+              <div className="mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold mb-2 text-black dark:text-white">Featured Cities</h2>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Most explored destinations this month
+                </p>
+              </div>
+              {/* Horizontal scrolling carousel */}
+              <div className="relative -mx-6 md:-mx-10">
+                <div className="overflow-x-auto scrollbar-hide px-6 md:px-10">
+                  <div className="flex gap-5 md:gap-7 lg:gap-8 pb-4">
+                    {featuredCities.map((cityData) => (
+                      <div key={cityData.city} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px]">
+                        <DestinationCard
+                          destination={cityStatsToDestination(cityData)}
+                          onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
+                          isAdmin={isAdmin}
+                          onEdit={isAdmin ? () => {
+                            setCityToEdit(cityData);
+                            setIsEditDrawerOpen(true);
+                          } : undefined}
+                          showBadges={false}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Country Filter Panel */}
           {countries.length > 0 && (
@@ -308,66 +347,12 @@ export default function CitiesPage() {
               </div>
             </div>
           )}
-
-          {/* Featured Cities */}
-          {featuredCities.length > 0 && !selectedCountry && (
-            <div className="mb-12 pt-12 border-t border-gray-200 dark:border-gray-800">
-              <div className="mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold mb-2 text-black dark:text-white">Featured Cities</h2>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Most explored destinations this month
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {featuredCities.map((cityData) => {
-                  const { city, country, count, featuredImage } = cityData;
-                  return (
-                    <button
-                      key={city}
-                      onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
-                      className="text-left group"
-                    >
-                      <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800">
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            onClick={(event) => handleCityEditClick(event, cityData)}
-                            className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-white/90 dark:bg-black/80 text-gray-900 dark:text-white border border-gray-200/70 dark:border-gray-700/60 shadow-sm hover:bg-white dark:hover:bg-gray-900 transition-colors"
-                          >
-                            <PencilLine className="h-3 w-3" />
-                            Edit
-                          </button>
-                        )}
-                        {featuredImage ? (
-                          <Image
-                            src={featuredImage}
-                            alt={capitalizeCity(city)}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 33vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                            <MapPin className="h-12 w-12 opacity-20" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <h3 className="text-sm font-medium mb-1 text-black dark:text-white">{capitalizeCity(city)}</h3>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">{country} • {count} places</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
       {/* Grid Section */}
-      <div className="pb-12 px-6 md:px-10 lg:px-12">
-        <div className="max-w-7xl mx-auto">
+      <div className="pb-12 px-6 md:px-10">
+        <div className="max-w-[1800px] mx-auto">
           {filteredCities.length === 0 ? (
             <div className="text-center py-16">
               <span className="text-sm text-gray-600 dark:text-gray-400">No cities found</span>
@@ -376,74 +361,20 @@ export default function CitiesPage() {
             <>
               <UniversalGrid
                 items={filteredCities.slice(0, displayCount)}
-                gap="sm"
-                renderItem={(cityData) => {
-                  const { city, country, count, featuredImage } = cityData;
-                  return (
-                    <button
-                      key={city}
-                      onClick={() => router.push(`/city/${encodeURIComponent(city)}`)}
-                      className="text-left group"
-                    >
-                      {/* Image Container */}
-                      <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800 group-hover:opacity-80 transition-opacity">
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            onClick={(event) => handleCityEditClick(event, cityData)}
-                            className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-white/90 dark:bg-black/80 text-gray-900 dark:text-white border border-gray-200/70 dark:border-gray-700/60 shadow-sm hover:bg-white dark:hover:bg-gray-900 transition-colors"
-                          >
-                            <PencilLine className="h-3 w-3" />
-                            Edit
-                          </button>
-                        )}
-                        {featuredImage ? (
-                          <Image
-                            src={featuredImage}
-                            alt={capitalizeCity(city)}
-                            fill
-                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                            quality={80}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                            <MapPin className="h-12 w-12 opacity-20" />
-                          </div>
-                        )}
-                        
-                        {/* Overlay gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        
-                        {/* Count badge */}
-                        <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 px-2 py-1 rounded-2xl text-xs font-medium border border-gray-200/50 dark:border-gray-700/50">
-                          {count}
-                        </div>
-                        
-                        {/* Follow button */}
-                        <div className="absolute top-2 right-2">
-                          <FollowCityButton 
-                            citySlug={city}
-                            cityName={capitalizeCity(city)}
-                            variant="compact"
-                            showLabel={false}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Info */}
-                      <div className="space-y-1">
-                        <h3 className="text-sm font-medium text-black dark:text-white line-clamp-1">
-                          {capitalizeCity(city)}
-                        </h3>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-1 flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {country}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                }}
+                gap="md"
+                renderItem={(cityData) => (
+                  <DestinationCard
+                    key={cityData.city}
+                    destination={cityStatsToDestination(cityData)}
+                    onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
+                    isAdmin={isAdmin}
+                    onEdit={isAdmin ? () => {
+                      setCityToEdit(cityData);
+                      setIsEditDrawerOpen(true);
+                    } : undefined}
+                    showBadges={false}
+                  />
+                )}
               />
 
               {/* Show More Button */}

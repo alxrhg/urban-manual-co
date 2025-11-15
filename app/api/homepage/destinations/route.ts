@@ -36,5 +36,6 @@ export const GET = createHomepageDestinationsHandler({
   loadDestinations: () => getHomepageDestinations(),
 });
 
-// Reduced revalidate time to allow faster updates after POI creation
-export const revalidate = 10;
+// Disable caching completely to ensure new POIs show up immediately
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
