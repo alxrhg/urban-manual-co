@@ -152,3 +152,6 @@ dmypy.json
 # Environment variables
 .env
 .env.local
+
+# Sanity
+.sanity

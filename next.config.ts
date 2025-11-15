@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { withPayload } from '@payloadcms/next/withPayload'
 
 const cspDirectives = [
   "default-src 'self'",
@@ -8,7 +7,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.sanity.io",
   "worker-src 'self' blob:",
   "child-src 'none'",
   "frame-ancestors 'none'",
@@ -125,6 +124,8 @@ const nextConfig: NextConfig = {
       // Add common image CDN domains
       patterns.push(
         { protocol: 'https', hostname: 'guide.michelin.com' },
+        // Sanity CDN
+        { protocol: 'https', hostname: 'cdn.sanity.io' },
         // Legacy: Framer/Webflow patterns kept for backwards compatibility
         // All images have been migrated to Supabase Storage
         { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
@@ -140,4 +141,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPayload(nextConfig);
+export default nextConfig;

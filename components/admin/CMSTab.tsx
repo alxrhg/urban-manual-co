@@ -13,7 +13,7 @@ export default function CMSTab() {
   useEffect(() => {
     const checkCMSHealth = async () => {
       try {
-        const response = await fetch('/api/cms-health');
+        const response = await fetch('/api/sanity-health');
         if (!response.ok) {
           throw new Error('Failed to fetch CMS health status');
         }
@@ -29,8 +29,8 @@ export default function CMSTab() {
     checkCMSHealth();
   }, []);
 
-  const handleOpenPayloadCMS = () => {
-    router.push('/payload');
+  const handleOpenSanityCMS = () => {
+    router.push('/studio');
   };
 
   if (loading) {
@@ -50,9 +50,8 @@ export default function CMSTab() {
     );
   }
 
-  const isHealthy = healthStatus?.environment?.postgres_url && 
-                    healthStatus?.environment?.payload_secret && 
-                    healthStatus?.environment?.payload_secret_length >= 32;
+  const isHealthy = healthStatus?.environment?.sanity_project_id && 
+                    healthStatus?.environment?.sanity_dataset;
 
   return (
     <div className="space-y-6">
@@ -62,7 +61,7 @@ export default function CMSTab() {
           <div className="flex items-center gap-3">
             <Database className="h-6 w-6 text-gray-600 dark:text-gray-400" />
             <div>
-              <h2 className="text-lg font-semibold">Payload CMS</h2>
+              <h2 className="text-lg font-semibold">Sanity CMS</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Content Management System
               </p>
@@ -89,15 +88,15 @@ export default function CMSTab() {
 
         <div className="space-y-3">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Payload CMS provides a powerful admin interface for managing destinations,
-            media, and other content. It syncs automatically with the Supabase database.
+            Sanity CMS provides a powerful, real-time admin interface for managing destinations,
+            media, and other content with a flexible content platform.
           </p>
 
           <button
-            onClick={handleOpenPayloadCMS}
+            onClick={handleOpenSanityCMS}
             className="w-full flex items-center justify-between px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity"
           >
-            <span className="text-sm font-medium">Open Payload CMS Admin</span>
+            <span className="text-sm font-medium">Open Sanity Studio</span>
             <ExternalLink className="h-4 w-4" />
           </button>
         </div>
@@ -109,16 +108,16 @@ export default function CMSTab() {
           <h3 className="text-sm font-semibold mb-4">Configuration Status</h3>
           <div className="space-y-3">
             <ConfigItem
-              label="PostgreSQL Connection"
-              status={healthStatus.environment.postgres_url}
-              detail={healthStatus.environment.postgres_url ? 'Connected' : 'Not configured'}
+              label="Sanity Project ID"
+              status={healthStatus.environment.sanity_project_id}
+              detail={healthStatus.environment.sanity_project_id ? 'Configured' : 'Not configured'}
             />
             <ConfigItem
-              label="Payload Secret"
-              status={healthStatus.environment.payload_secret && healthStatus.environment.payload_secret_length >= 32}
+              label="Sanity Dataset"
+              status={healthStatus.environment.sanity_dataset}
               detail={
-                healthStatus.environment.payload_secret
-                  ? `Configured (${healthStatus.environment.payload_secret_length} characters)`
+                healthStatus.environment.sanity_dataset
+                  ? healthStatus.environment.sanity_dataset
                   : 'Not configured'
               }
             />
@@ -133,30 +132,30 @@ export default function CMSTab() {
 
       {/* Help Section */}
       <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-        <h3 className="text-sm font-semibold mb-3">About Payload CMS</h3>
+        <h3 className="text-sm font-semibold mb-3">About Sanity CMS</h3>
         <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <li className="flex items-start gap-2">
             <span className="text-gray-400 dark:text-gray-600 mt-0.5">•</span>
             <span>
-              <strong>Destinations Management:</strong> Edit destination content with a rich text editor
+              <strong>Real-time Collaboration:</strong> Edit content with live updates and collaboration
             </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-gray-400 dark:text-gray-600 mt-0.5">•</span>
             <span>
-              <strong>Media Library:</strong> Upload and manage images and media files
+              <strong>Flexible Content:</strong> Manage destinations with customizable schemas
             </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-gray-400 dark:text-gray-600 mt-0.5">•</span>
             <span>
-              <strong>Auto-Sync:</strong> All changes automatically sync to Supabase database
+              <strong>Media Management:</strong> Upload and manage images with built-in CDN
             </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-gray-400 dark:text-gray-600 mt-0.5">•</span>
             <span>
-              <strong>User Management:</strong> Manage user roles and permissions
+              <strong>API-first:</strong> Access content via powerful GROQ queries
             </span>
           </li>
         </ul>
@@ -167,7 +166,7 @@ export default function CMSTab() {
         <h3 className="text-sm font-semibold mb-3">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={() => router.push('/payload/collections/destinations')}
+            onClick={() => router.push('/studio/structure/destination')}
             className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
           >
             <div className="text-sm font-medium">Edit Destinations</div>
@@ -176,7 +175,7 @@ export default function CMSTab() {
             </div>
           </button>
           <button
-            onClick={() => router.push('/payload/collections/media')}
+            onClick={() => router.push('/studio/structure/media.image')}
             className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
           >
             <div className="text-sm font-medium">Media Library</div>
