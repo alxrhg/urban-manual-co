@@ -16,6 +16,8 @@ import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+const DESTINATIONS_PAGE_SIZE = 20;
+
 // Destination Form Component
 function DestinationForm({
   destination,
@@ -744,6 +746,7 @@ export default function AdminPage() {
   const toast = useToast();
   const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
   const [user, setUser] = useState<any>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -836,6 +839,7 @@ export default function AdminPage() {
           if (isMounted) {
             setAuthChecked(true);
             setIsAdmin(false);
+            setAccessToken(null);
             router.push('/account');
           }
           return;
@@ -843,10 +847,11 @@ export default function AdminPage() {
 
         const role = (session.user.app_metadata as Record<string, any> | null)?.role;
         const admin = role === 'admin';
-        
+
         if (isMounted) {
           setUser(session.user);
           setIsAdmin(admin);
+          setAccessToken(session.access_token ?? null);
           setAuthChecked(true);
           
           if (!admin) {
@@ -864,6 +869,7 @@ export default function AdminPage() {
         if (isMounted) {
           setAuthChecked(true);
           setIsAdmin(false);
+          setAccessToken(null);
           // Redirect on error after showing message
           setTimeout(() => {
             if (isMounted) {
@@ -886,61 +892,58 @@ export default function AdminPage() {
 
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
   const loadDestinationList = useCallback(async () => {
-    if (!isAdmin || !authChecked) return;
-    
+    if (!isAdmin || !authChecked || !accessToken) return;
+
     setIsLoadingList(true);
     try {
-      const supabase = createClient();
-      let query = supabase
-        .from('destinations')
-        .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating, michelin_stars, crown')
-        .order('slug', { ascending: true });
-
-      // Apply search filter if present
+      const params = new URLSearchParams({
+        offset: String(listOffset),
+        limit: String(DESTINATIONS_PAGE_SIZE),
+      });
       if (listSearchQuery.trim()) {
-        query = query.or(`name.ilike.%${listSearchQuery}%,city.ilike.%${listSearchQuery}%,slug.ilike.%${listSearchQuery}%,category.ilike.%${listSearchQuery}%`);
+        params.set('search', listSearchQuery.trim());
       }
 
-      const { data, error } = await query.range(listOffset, listOffset + 19);
+      const response = await fetch(`/api/admin/destinations?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: 'no-store',
+      });
 
-      if (error) {
-        console.error('[Admin] Supabase error loading destinations:', error);
-        // Safely stringify error to avoid JSON parse issues
-        try {
-          console.error('[Admin] Error details:', JSON.stringify(error, null, 2));
-        } catch (stringifyError) {
-          console.error('[Admin] Error details (raw):', error);
-        }
-        toast.error(`Failed to load destinations: ${error.message || 'Unknown error'}`);
-        setDestinationList([]);
-        return;
+      let payload: any = null;
+      try {
+        payload = await response.json();
+      } catch (parseError) {
+        console.error('[Admin] Failed to parse destinations response:', parseError);
       }
-      
-      // Sanitize data to prevent JSON parse errors from malformed content
-      const sanitizedData = (data || []).map((item: any) => {
+
+      if (!response.ok) {
+        const errorMessage = payload?.error || `Failed to load destinations (${response.status})`;
+        throw new Error(errorMessage);
+      }
+
+      const rawData = payload?.data || [];
+      const sanitizedData = rawData.map((item: any) => {
         try {
-          // Ensure description and content are strings and handle any encoding issues
           const sanitized = { ...item };
           if (sanitized.description && typeof sanitized.description === 'string') {
-            // Remove any problematic characters that might break JSON
-            sanitized.description = sanitized.description.replace(/\u0000/g, ''); // Remove null bytes
+            sanitized.description = sanitized.description.replace(/\u0000/g, '');
           }
           if (sanitized.content && typeof sanitized.content === 'string') {
-            sanitized.content = sanitized.content.replace(/\u0000/g, ''); // Remove null bytes
+            sanitized.content = sanitized.content.replace(/\u0000/g, '');
           }
           return sanitized;
         } catch (sanitizeError) {
           console.warn('[Admin] Error sanitizing destination item:', item?.slug, sanitizeError);
-          // Return item as-is if sanitization fails
           return item;
         }
       });
-      
-      console.log('[Admin] Loaded destinations:', sanitizedData.length);
+
+      console.log('[Admin] Loaded destinations via API:', sanitizedData.length);
       setDestinationList(sanitizedData);
     } catch (e: any) {
       console.error('[Admin] Error loading destinations:', e);
-      // Check if it's a JSON parse error
       if (e.message?.includes('JSON') || e.message?.includes('parse') || e instanceof SyntaxError) {
         toast.error('Failed to load destinations: Invalid data format. Some destinations may have corrupted content.');
       } else {
@@ -950,7 +953,7 @@ export default function AdminPage() {
     } finally {
       setIsLoadingList(false);
     }
-  }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
+  }, [isAdmin, authChecked, accessToken, listSearchQuery, listOffset, toast]);
 
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
@@ -976,7 +979,7 @@ export default function AdminPage() {
 
   // Load destinations when admin/auth is ready, or when search/offset changes
   useEffect(() => {
-    if (isAdmin && authChecked) {
+    if (isAdmin && authChecked && accessToken) {
       // Reset offset when search query changes
       if (listSearchQuery !== '' && listOffset !== 0) {
         setListOffset(0);
@@ -984,7 +987,7 @@ export default function AdminPage() {
       }
       loadDestinationList();
     }
-  }, [isAdmin, authChecked, listSearchQuery, listOffset, loadDestinationList]);
+  }, [isAdmin, authChecked, accessToken, listSearchQuery, listOffset, loadDestinationList]);
 
   // Load data when tab changes
   useEffect(() => {
@@ -1095,7 +1098,7 @@ export default function AdminPage() {
         {/* Header - Matches account page spacing and style */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Admin</h1>
+            <h1 className="text-2xl font-light">CMS</h1>
             <button
               onClick={() => router.push('/account')}
               className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
@@ -1105,7 +1108,7 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-2">
             <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
-            <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">Admin</span>
+            <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">CMS</span>
           </div>
         </div>
 
