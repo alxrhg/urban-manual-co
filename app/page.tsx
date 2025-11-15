@@ -2106,11 +2106,11 @@ export default function Home() {
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">
-                  <div className="flex justify-end items-center gap-3 relative flex-wrap">
+                  <div className="flex justify-end items-center gap-3 relative flex-nowrap">
                     {/* Wrapper for Filter and Map Toggle to ensure alignment */}
-                    <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
+                    <div className="flex items-center gap-3 flex-nowrap">
                       {/* Filter Button - Expands inline below */}
-                      <div className="w-full md:w-auto">
+                      <div>
                         <SearchFiltersComponent
                           filters={advancedFilters}
                           onFiltersChange={(newFilters) => {
