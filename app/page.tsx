@@ -2112,91 +2112,95 @@ export default function Home() {
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">
-                  <div className="flex justify-end items-center gap-3 relative flex-wrap">
-                    {/* Wrapper for Filter and Map Toggle to ensure alignment */}
-                    <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
-                      {/* Filter Button - Expands inline below */}
-                      <div className="w-full md:w-auto">
-                        <SearchFiltersComponent
-                          filters={advancedFilters}
-                          onFiltersChange={(newFilters) => {
-                            setAdvancedFilters(newFilters);
-                            if (newFilters.city !== undefined) {
-                              setSelectedCity(newFilters.city || '');
-                            }
-                            if (newFilters.category !== undefined) {
-                              setSelectedCategory(newFilters.category || '');
-                            }
-                            Object.entries(newFilters).forEach(([key, value]) => {
-                              if (value !== undefined && value !== null && value !== '') {
-                                trackFilterChange({ filterType: key, value });
-                              }
-                            });
-                          }}
-                          availableCities={cities}
-                          availableCategories={categories}
-                          onLocationChange={handleLocationChange}
-                          sortBy={sortBy}
-                          onSortChange={(newSort) => {
-                            setSortBy(newSort);
-                            setCurrentPage(1);
-                          }}
-                          isAdmin={isAdmin}
-                        />
-                      </div>
-
-                      {/* Grid/Map Toggle */}
-                      <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                  <div className="flex flex-col items-end gap-3">
+                    {/* Create Trip / Add New POI Button */}
+                    <div className="flex justify-end w-full">
+                      {isAdmin ? (
                         <button
-                          onClick={() => setViewMode('grid')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'grid'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Grid view"
+                          onClick={() => {
+                            setEditingDestination(null);
+                            setShowPOIDrawer(true);
+                          }}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                          aria-label="Add New POI"
                         >
-                          <LayoutGrid className="h-4 w-4" />
-                          <span>Grid</span>
+                          <Plus className="h-5 w-5" />
+                          <span className="text-sm font-medium">Add New POI</span>
                         </button>
+                      ) : (
                         <button
-                          onClick={() => setViewMode('map')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'map'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Map view"
+                          onClick={() => setShowTripPlanner(true)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                          aria-label="Create Trip"
                         >
-                          <Map className="h-4 w-4" />
-                          <span>Map</span>
+                          <Plus className="h-5 w-5" />
+                          <span className="text-sm font-medium">Create Trip</span>
                         </button>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Create Trip / Add New POI Button */}
-                    {isAdmin ? (
-                      <button
-                        onClick={() => {
-                          setEditingDestination(null);
-                          setShowPOIDrawer(true);
-                        }}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Add New POI"
-                      >
-                        <Plus className="h-5 w-5" />
-                        <span className="text-sm font-medium">Add New POI</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Create Trip"
-                      >
-                        <Plus className="h-5 w-5" />
-                        <span className="text-sm font-medium">Create Trip</span>
-                      </button>
-                    )}
+                    <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">
+                      {/* Wrapper for Filter and Map Toggle to ensure alignment */}
+                      <div className="flex items-center gap-3 flex-nowrap">
+                        {/* Filter Button - Expands inline below */}
+                        <div>
+                          <SearchFiltersComponent
+                            filters={advancedFilters}
+                            onFiltersChange={(newFilters) => {
+                              setAdvancedFilters(newFilters);
+                              if (newFilters.city !== undefined) {
+                                setSelectedCity(newFilters.city || '');
+                              }
+                              if (newFilters.category !== undefined) {
+                                setSelectedCategory(newFilters.category || '');
+                              }
+                              Object.entries(newFilters).forEach(([key, value]) => {
+                                if (value !== undefined && value !== null && value !== '') {
+                                  trackFilterChange({ filterType: key, value });
+                                }
+                              });
+                            }}
+                            availableCities={cities}
+                            availableCategories={categories}
+                            onLocationChange={handleLocationChange}
+                            sortBy={sortBy}
+                            onSortChange={(newSort) => {
+                              setSortBy(newSort);
+                              setCurrentPage(1);
+                            }}
+                            isAdmin={isAdmin}
+                          />
+                        </div>
+
+                        {/* Grid/Map Toggle */}
+                        <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                          <button
+                            onClick={() => setViewMode('grid')}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === 'grid'
+                                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                            aria-label="Grid view"
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            <span>Grid</span>
+                          </button>
+                          <button
+                            onClick={() => setViewMode('map')}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === 'map'
+                                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                            aria-label="Map view"
+                          >
+                            <Map className="h-4 w-4" />
+                            <span>Map</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
             
