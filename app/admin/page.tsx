@@ -1177,7 +1177,7 @@ export default function AdminPage() {
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="fade-in">
-            <AnalyticsDashboard variant="embedded" />
+            <AnalyticsDashboard variant="embedded" user={user} />
           </div>
         )}
 

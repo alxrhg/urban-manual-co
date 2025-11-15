@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { BarChart3, Search, Eye, MousePointerClick } from "lucide-react";
 
 interface AnalyticsData {
@@ -26,10 +25,10 @@ interface AnalyticsData {
 
 interface AnalyticsDashboardProps {
   variant?: "page" | "embedded";
+  user?: any; // User object when in embedded mode
 }
 
-export default function AnalyticsDashboard({ variant = "page" }: AnalyticsDashboardProps) {
-  const { user } = useAuth();
+export default function AnalyticsDashboard({ variant = "page", user }: AnalyticsDashboardProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
