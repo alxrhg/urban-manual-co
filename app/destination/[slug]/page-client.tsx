@@ -29,6 +29,8 @@ import { ExplanationPanel } from '@/components/ExplanationPanel';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
+import { RelatedDestinations } from '@/src/features/detail/RelatedDestinations';
+import { WeatherWidget } from '@/components/WeatherWidget';
 
 interface Recommendation {
   slug: string;
@@ -622,6 +624,17 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           </div>
         )}
 
+        {/* Weather */}
+        {destination.latitude && destination.longitude && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <WeatherWidget 
+              lat={destination.latitude} 
+              lng={destination.longitude}
+              locationName={destination.name}
+            />
+          </div>
+        )}
+
         {/* Reviews */}
         {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
@@ -663,94 +676,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           </div>
         )}
 
-        {/* Similar Destinations */}
-        {(loadingRecommendations || recommendations.length > 0) && (
+        {/* Similar & Complementary Destinations */}
+        {destination.id && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-6">Similar Destinations</h2>
-
-            {loadingRecommendations ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
-                {[1, 2, 3, 4, 5, 6].slice(0, 6).map(i => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="aspect-square rounded-2xl" />
-                    <Skeleton className="h-3 rounded-full w-3/4" />
-                    <Skeleton className="h-2 rounded-full w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : recommendations.length === 0 ? (
-              <div className="text-center py-12 text-xs text-gray-400">
-                No similar destinations found
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
-                {recommendations.slice(0, 6).map(rec => (
-                  <button
-                    key={rec.slug}
-                    onClick={() => {
-                      trackEvent({
-                        event_type: 'click',
-                        destination_slug: rec.slug,
-                        metadata: {
-                          source: 'destination_detail_recommendations',
-                          category: rec.category,
-                          city: rec.city,
-                        },
-                      });
-                      router.push(`/destination/${rec.slug}`);
-                    }}
-                    className={`${CARD_WRAPPER} text-left group`}
-                  >
-                    <div className={`${CARD_MEDIA} mb-2`}>
-                      {(rec.image) ? (
-                        <Image
-                          src={rec.image}
-                          alt={`${rec.name} - ${rec.category} in ${rec.city}`}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          quality={75}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                          <MapPin className="h-10 w-10 opacity-20" />
-                        </div>
-                      )}
-
-                      {rec.michelin_stars && rec.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                            alt="Michelin star"
-                            width={12}
-                            height={12}
-                            className="h-3 w-3"
-                            onError={(e) => {
-                              // Fallback to local file if external URL fails
-                              const target = e.currentTarget;
-                              if (target.src !== '/michelin-star.svg') {
-                                target.src = '/michelin-star.svg';
-                              }
-                            }}
-                          />
-                          {rec.michelin_stars}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <h3 className={CARD_TITLE}>
-                        {rec.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        {capitalizeCity(rec.city)}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <RelatedDestinations destinationId={destination.id.toString()} />
           </div>
         )}
 
