@@ -129,16 +129,6 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
       {/* City Filter */}
       {cities.length > 1 && (
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-          <button
-            onClick={() => setFilterCity('')}
-            className={`transition-all ${
-              !filterCity
-                ? 'font-medium text-black dark:text-white'
-                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-            }`}
-          >
-            All Cities
-          </button>
           {cities.map(city => (
             <button
               key={city}

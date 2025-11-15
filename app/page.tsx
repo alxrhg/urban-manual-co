@@ -1974,20 +1974,6 @@ export default function Home() {
                       
                       {/* City Buttons */}
                       <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => {
-                            setSelectedCity("");
-                            setCurrentPage(1);
-                            trackFilterChange({ filterType: 'city', value: 'all' });
-                          }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          All Cities
-                        </button>
                         {displayedCities.map((city) => (
                           <button
                             key={city}
