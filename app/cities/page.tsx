@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { MapPin, ArrowLeft } from 'lucide-react';
+import { MapPin, ArrowLeft, PencilLine, Loader2, X } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { FollowCityButton } from '@/components/FollowCityButton';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import Image from 'next/image';
-import { MultiplexAd } from '@/components/GoogleAd';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { toast } from 'sonner';
 
 interface CityStats {
   city: string;
@@ -19,11 +19,26 @@ interface CityStats {
   featuredImage?: string;
 }
 
+interface CityEditDrawerProps {
+  city: CityStats | null;
+  isOpen: boolean;
+  isSaving: boolean;
+  onClose: () => void;
+  onSave: (country: string) => Promise<void>;
+}
+
 function capitalizeCity(city: string): string {
   return city
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+function normalizeCityKey(city: string): string {
+  return city
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-');
 }
 
 export default function CitiesPage() {
@@ -45,6 +60,10 @@ export default function CitiesPage() {
     minRating?: number;
     openNow?: boolean;
   }>({});
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [cityToEdit, setCityToEdit] = useState<CityStats | null>(null);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [isSavingCity, setIsSavingCity] = useState(false);
 
   useEffect(() => {
     fetchCityStats();
@@ -53,6 +72,33 @@ export default function CitiesPage() {
   useEffect(() => {
     applyFilters(cityStats, selectedCountry, advancedFilters);
   }, [selectedCountry, advancedFilters, cityStats]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/is-admin');
+        if (!response.ok) {
+          if (isMounted) setIsAdmin(false);
+          return;
+        }
+        const data = await response.json();
+        if (isMounted) {
+          setIsAdmin(Boolean(data.isAdmin));
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        if (isMounted) setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const applyFilters = (cities: CityStats[], country: string, filters: typeof advancedFilters) => {
     let filtered = [...cities];
@@ -72,32 +118,50 @@ export default function CitiesPage() {
       // Fetch all destinations with images
       const { data, error } = await supabase
         .from('destinations')
-        .select('city, image');
+        .select('city, image, country');
 
       if (error) throw error;
 
       const destinations = data as Destination[];
-      
+
       // Count cities and get featured image (first destination with image)
       const cityData = destinations.reduce((acc, dest) => {
-        if (!acc[dest.city]) {
-          acc[dest.city] = {
+        const citySlug = dest.city?.trim();
+        if (!citySlug) return acc;
+
+        if (!acc[citySlug]) {
+          const normalizedKey = normalizeCityKey(citySlug);
+          const inferredCountry =
+            dest.country ||
+            cityCountryMap[normalizedKey] ||
+            cityCountryMap[citySlug] ||
+            'Unknown';
+
+          acc[citySlug] = {
             count: 0,
             featuredImage: dest.image || undefined,
+            country: inferredCountry,
           };
         }
-        acc[dest.city].count += 1;
+
+        acc[citySlug].count += 1;
+
         // Update featured image if current one doesn't have image but this one does
-        if (!acc[dest.city].featuredImage && dest.image) {
-          acc[dest.city].featuredImage = dest.image;
+        if (!acc[citySlug].featuredImage && dest.image) {
+          acc[citySlug].featuredImage = dest.image;
         }
+
+        if ((!acc[citySlug].country || acc[citySlug].country === 'Unknown') && dest.country) {
+          acc[citySlug].country = dest.country;
+        }
+
         return acc;
-      }, {} as Record<string, { count: number; featuredImage?: string }>);
+      }, {} as Record<string, { count: number; featuredImage?: string; country: string }>);
 
       const stats = Object.entries(cityData)
         .map(([city, data]) => ({
           city,
-          country: cityCountryMap[city] || 'Unknown',
+          country: data.country || cityCountryMap[normalizeCityKey(city)] || cityCountryMap[city] || 'Unknown',
           count: data.count,
           featuredImage: data.featuredImage,
         }))
@@ -118,6 +182,45 @@ export default function CitiesPage() {
     }
   };
 
+  const handleCityEditClick = (event: MouseEvent<HTMLButtonElement>, cityData: CityStats) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setCityToEdit(cityData);
+    setIsEditDrawerOpen(true);
+  };
+
+  const handleSaveCity = async (countryName: string) => {
+    if (!cityToEdit) return;
+
+    const trimmedCountry = countryName.trim();
+    if (!trimmedCountry) {
+      toast.error('Country is required');
+      return;
+    }
+
+    try {
+      setIsSavingCity(true);
+      const { error } = await supabase
+        .from('destinations')
+        .update({ country: trimmedCountry })
+        .eq('city', cityToEdit.city);
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('City details updated');
+      await fetchCityStats();
+      setIsEditDrawerOpen(false);
+      setCityToEdit(null);
+    } catch (error) {
+      console.error('Error updating city country:', error);
+      toast.error('Failed to update city');
+    } finally {
+      setIsSavingCity(false);
+    }
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-white dark:bg-gray-900">
@@ -132,7 +235,8 @@ export default function CitiesPage() {
   const featuredCities = cityStats.slice(0, 4);
 
   return (
-    <main className="relative min-h-screen bg-white dark:bg-gray-900">
+    <>
+      <main className="relative min-h-screen bg-white dark:bg-gray-900">
       {/* Hero Section */}
       <section className="px-6 md:px-10 lg:px-12 py-12 md:py-16">
         <div className="max-w-4xl mx-auto">
@@ -224,6 +328,16 @@ export default function CitiesPage() {
                       className="text-left group"
                     >
                       <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800">
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={(event) => handleCityEditClick(event, cityData)}
+                            className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-white/90 dark:bg-black/80 text-gray-900 dark:text-white border border-gray-200/70 dark:border-gray-700/60 shadow-sm hover:bg-white dark:hover:bg-gray-900 transition-colors"
+                          >
+                            <PencilLine className="h-3 w-3" />
+                            Edit
+                          </button>
+                        )}
                         {featuredImage ? (
                           <Image
                             src={featuredImage}
@@ -273,6 +387,16 @@ export default function CitiesPage() {
                     >
                       {/* Image Container */}
                       <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800 group-hover:opacity-80 transition-opacity">
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={(event) => handleCityEditClick(event, cityData)}
+                            className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-white/90 dark:bg-black/80 text-gray-900 dark:text-white border border-gray-200/70 dark:border-gray-700/60 shadow-sm hover:bg-white dark:hover:bg-gray-900 transition-colors"
+                          >
+                            <PencilLine className="h-3 w-3" />
+                            Edit
+                          </button>
+                        )}
                         {featuredImage ? (
                           <Image
                             src={featuredImage}
@@ -354,6 +478,108 @@ export default function CitiesPage() {
           )}
         </div>
       </div>
-    </main>
+      </main>
+
+      {isAdmin && (
+        <CityEditDrawer
+          city={cityToEdit}
+          isOpen={isEditDrawerOpen}
+          isSaving={isSavingCity}
+          onClose={() => {
+            setIsEditDrawerOpen(false);
+            setCityToEdit(null);
+          }}
+          onSave={handleSaveCity}
+        />
+      )}
+    </>
+  );
+}
+
+function CityEditDrawer({ city, isOpen, isSaving, onClose, onSave }: CityEditDrawerProps) {
+  const [countryInput, setCountryInput] = useState('');
+
+  useEffect(() => {
+    setCountryInput(city?.country || '');
+  }, [city]);
+
+  if (!isOpen || !city) return null;
+
+  const handleSave = () => {
+    onSave(countryInput);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={() => {
+          if (!isSaving) onClose();
+        }}
+      />
+      <div className="relative ml-auto h-full w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-800">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-1">Editing City</p>
+            <h2 className="text-2xl font-bold text-black dark:text-white">{capitalizeCity(city.city)}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Slug: {city.city}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (!isSaving) onClose();
+            }}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Close city edit drawer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <div>
+            <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-500 dark:text-gray-400">
+              Country
+            </label>
+            <input
+              type="text"
+              value={countryInput}
+              onChange={(event) => setCountryInput(event.target.value)}
+              placeholder="e.g., Japan"
+              className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+            />
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              This updates the country for all destinations within this city.
+            </p>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            disabled={isSaving}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving || !countryInput.trim()}
+            className="flex-1 px-4 py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
