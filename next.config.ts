@@ -8,7 +8,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.jsdelivr.net/npm/world-atlas@*",
   "worker-src 'self' blob:",
   "child-src 'none'",
   "frame-ancestors 'none'",
