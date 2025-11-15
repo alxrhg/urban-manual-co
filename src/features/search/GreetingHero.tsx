@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, SlidersHorizontal, Sparkles, Loader2, X, Clock } from 'lucide-react';
-import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
+import { Loader2 } from 'lucide-react';
 import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
+import { JourneyInsights } from '@/lib/greetings/journey-tracker';
+import { RecentAchievement } from '@/lib/greetings/achievement-helper';
+import { GreetingWeatherData } from '@/lib/greetings/weather-helper';
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -27,17 +29,17 @@ interface GreetingHeroProps {
   } | null;
   // Phase 2 & 3: Enriched context
   enrichedContext?: {
-    journey?: any;
-    recentAchievements?: any[];
-    nextAchievement?: any;
-    weather?: any;
+    journey?: JourneyInsights | null;
+    recentAchievements?: RecentAchievement[];
+    nextAchievement?: { name: string; progress: number; target: number; emoji: string } | null;
+    weather?: GreetingWeatherData | null;
     trendingCity?: string;
     aiGreeting?: string;
   };
   isAIEnabled?: boolean;
   isSearching?: boolean;
-  filters?: any;
-  onFiltersChange?: (filters: any) => void;
+  filters?: Record<string, unknown>;
+  onFiltersChange?: (filters: Record<string, unknown>) => void;
   availableCities?: string[];
   availableCategories?: string[];
 }
@@ -45,7 +47,6 @@ interface GreetingHeroProps {
 export default function GreetingHero({
   searchQuery,
   onSearchChange,
-  onOpenFilters,
   onSubmit,
   userName,
   userProfile,
@@ -53,10 +54,6 @@ export default function GreetingHero({
   enrichedContext,
   isAIEnabled = false,
   isSearching = false,
-  filters,
-  onFiltersChange,
-  availableCities = [],
-  availableCategories = [],
 }: GreetingHeroProps) {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
@@ -84,7 +81,7 @@ export default function GreetingHero({
     aiGreeting: enrichedContext?.aiGreeting,
   };
 
-  const { greeting, subtext } = generateContextualGreeting(greetingContext);
+  const { greeting } = generateContextualGreeting(greetingContext);
 
   // Rotating AI-powered travel intelligence cues
   const contextualPlaceholder = generateContextualPlaceholder(greetingContext);
@@ -116,7 +113,7 @@ export default function GreetingHero({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [searchQuery, isAIEnabled]);
+  }, [searchQuery, isAIEnabled, aiPlaceholders.length]);
 
   // Keyboard shortcut: Press '/' to focus search
   useEffect(() => {

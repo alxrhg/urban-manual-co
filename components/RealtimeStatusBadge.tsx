@@ -4,11 +4,6 @@ import { useState, useEffect } from 'react';
 import { Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface RealtimeStatus {
-  crowding?: {
-    level: 'quiet' | 'moderate' | 'busy' | 'very_busy';
-    score: number;
-    lastUpdated: string;
-  };
   waitTime?: {
     current: number;
     historical: number;
@@ -28,7 +23,6 @@ interface RealtimeStatus {
 interface RealtimeStatusBadgeProps {
   destinationId: number;
   compact?: boolean;
-  showCrowding?: boolean;
   showWaitTime?: boolean;
   showAvailability?: boolean;
 }
@@ -36,7 +30,6 @@ interface RealtimeStatusBadgeProps {
 export function RealtimeStatusBadge({
   destinationId,
   compact = false,
-  showCrowding = true,
   showWaitTime = true,
   showAvailability = true,
 }: RealtimeStatusBadgeProps) {
@@ -67,34 +60,13 @@ export function RealtimeStatusBadge({
   }
 
   // Don't show if no relevant data
-  const hasData = 
-    (showCrowding && status.crowding) ||
+  const hasData =
     (showWaitTime && status.waitTime) ||
     (showAvailability && status.availability && status.availability.status !== 'available');
 
   if (!hasData) {
     return null;
   }
-
-  const getCrowdingColor = (level?: string) => {
-    switch (level) {
-      case 'quiet': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      case 'moderate': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
-      case 'busy': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
-      case 'very_busy': return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      default: return 'text-gray-600 bg-gray-50 dark:bg-gray-900/20';
-    }
-  };
-
-  const getCrowdingLabel = (level?: string) => {
-    switch (level) {
-      case 'quiet': return 'Quiet';
-      case 'moderate': return 'Moderate';
-      case 'busy': return 'Busy';
-      case 'very_busy': return 'Very Busy';
-      default: return '';
-    }
-  };
 
   const getTrendIcon = (trend?: string) => {
     switch (trend) {
@@ -110,11 +82,6 @@ export function RealtimeStatusBadge({
   if (compact) {
     return (
       <div className="flex flex-wrap gap-1.5">
-        {showCrowding && status.crowding && (
-          <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCrowdingColor(status.crowding.level)}`}>
-            {getCrowdingLabel(status.crowding.level)}
-          </div>
-        )}
         {showAvailability && status.availability && status.availability.status === 'closed' && (
           <div className="px-2 py-0.5 rounded-full text-xs font-medium text-gray-600 bg-gray-100 dark:bg-gray-800">
             Closed
@@ -135,29 +102,6 @@ export function RealtimeStatusBadge({
         <Clock className="h-4 w-4" />
         Right Now
       </h3>
-
-      {/* Crowding Level */}
-      {showCrowding && status.crowding && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-600 dark:text-gray-400">Crowding</span>
-            <div className={`px-3 py-1 rounded-full text-xs font-medium ${getCrowdingColor(status.crowding.level)}`}>
-              {getCrowdingLabel(status.crowding.level)}
-            </div>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full transition-all ${
-                status.crowding.level === 'quiet' ? 'bg-green-500' :
-                status.crowding.level === 'moderate' ? 'bg-yellow-500' :
-                status.crowding.level === 'busy' ? 'bg-orange-500' :
-                'bg-red-500'
-              }`}
-              style={{ width: `${status.crowding.score}%` }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Wait Time */}
       {showWaitTime && status.waitTime && (

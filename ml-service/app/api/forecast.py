@@ -6,6 +6,7 @@ from typing import List, Optional, Dict
 from datetime import datetime
 
 from app.models.demand_forecast import get_forecast_model
+from app.services.forecast_training import get_forecast_training_pipeline
 from app.utils.database import get_db_connection
 from app.utils.logger import get_logger
 from app.config import get_settings
@@ -46,6 +47,7 @@ class TrendingDestination(BaseModel):
     growth_rate: float
     current_demand: float
     forecast_demand: float
+    image: Optional[str] = None
 
 
 class TrendingResponse(BaseModel):
@@ -96,6 +98,8 @@ async def get_demand_forecast(request: ForecastRequest):
     logger.info(f"Getting demand forecast for destination {request.destination_id}")
 
     try:
+        pipeline = get_forecast_training_pipeline()
+        pipeline.ensure_fresh_models()
         model = get_forecast_model()
 
         # Check if model is trained for this destination
@@ -187,6 +191,8 @@ async def get_trending_destinations(
     logger.info(f"Getting top {top_n} trending destinations")
 
     try:
+        pipeline = get_forecast_training_pipeline()
+        pipeline.ensure_fresh_models()
         model = get_forecast_model()
 
         if not model.models:
@@ -237,6 +243,8 @@ async def get_peak_times(
     logger.info(f"Getting peak times for destination {destination_id}")
 
     try:
+        pipeline = get_forecast_training_pipeline()
+        pipeline.ensure_fresh_models()
         model = get_forecast_model()
 
         if destination_id not in model.models:
@@ -321,6 +329,8 @@ async def get_forecast_status():
         Model status and metadata
     """
     model = get_forecast_model()
+    pipeline = get_forecast_training_pipeline()
+    pipeline_status = pipeline.status()
 
     num_models = len(model.models)
     is_trained = num_models > 0
@@ -330,7 +340,10 @@ async def get_forecast_status():
         "trained_at": model.trained_at.isoformat() if model.trained_at else None,
         "num_destinations": num_models,
         "model_type": "Prophet",
-        "status": "ready" if is_trained else "not_trained"
+        "status": "ready" if is_trained else "not_trained",
+        "pipeline_last_refresh": pipeline_status["last_refresh"],
+        "pipeline_refreshing": pipeline_status["refresh_in_progress"],
+        "cached_summaries": pipeline_status["cached_summaries"],
     }
 
 
@@ -338,11 +351,8 @@ def _train_forecast_task(top_n: int, historical_days: int):
     """Background task for forecast model training."""
     try:
         logger.info(f"Starting forecast training for top {top_n} destinations")
-        model = get_forecast_model()
-        stats = model.train_top_destinations(
-            top_n=top_n,
-            historical_days=historical_days
-        )
+        pipeline = get_forecast_training_pipeline()
+        stats = pipeline.run_training(top_n=top_n, historical_days=historical_days)
 
         logger.info(f"Forecast training completed: {stats}")
 
@@ -368,9 +378,9 @@ def _enrich_trending(trending: List[dict]) -> List[TrendingDestination]:
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                # Fetch destination details
+                # Fetch destination details including image
                 cur.execute("""
-                    SELECT id, slug, name, city, category
+                    SELECT id, slug, name, city, category, image
                     FROM destinations
                     WHERE id = ANY(%s)
                 """, (destination_ids,))
@@ -390,7 +400,8 @@ def _enrich_trending(trending: List[dict]) -> List[TrendingDestination]:
                     category=dest[4],
                     growth_rate=trend['growth_rate'],
                     current_demand=trend['current_demand'],
-                    forecast_demand=trend['forecast_demand']
+                    forecast_demand=trend['forecast_demand'],
+                    image=dest[5] if len(dest) > 5 else None
                 ))
 
         return enriched

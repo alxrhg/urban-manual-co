@@ -139,7 +139,7 @@ export default function ProfilePage() {
                   onClick={() => setProfile({ ...profile, travel_style: style as any })}
                   className={`px-4 py-2 rounded-lg border-2 transition-all ${
                     profile.travel_style === style
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-medium'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
@@ -162,7 +162,7 @@ export default function ProfilePage() {
                   })}
                   className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
                     profile.favorite_cities?.includes(city)
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-medium'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
@@ -185,7 +185,7 @@ export default function ProfilePage() {
                   })}
                   className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
                     profile.favorite_categories?.includes(category)
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-medium'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
@@ -205,7 +205,7 @@ export default function ProfilePage() {
                   onClick={() => setProfile({ ...profile, price_preference: level })}
                   className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-all ${
                     profile.price_preference === level
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 text-black dark:text-white'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
@@ -228,7 +228,7 @@ export default function ProfilePage() {
                   })}
                   className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
                     profile.dietary_preferences?.includes(pref)
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-medium'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                   })}
                   className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
                     profile.interests?.includes(interest)
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-medium'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
@@ -315,7 +315,7 @@ export default function ProfilePage() {
             <button
               onClick={saveProfile}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {saving ? (
                 <>

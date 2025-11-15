@@ -18,8 +18,6 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PageIntro } from '@/components/PageIntro';
-import { PageContainer } from '@/components/PageContainer';
 import { DestinationCard } from '@/components/DestinationCard';
 import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
@@ -40,6 +38,10 @@ export default function TripDetailPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [isEditingDates, setIsEditingDates] = useState(false);
+  const [editedStartDate, setEditedStartDate] = useState('');
+  const [editedEndDate, setEditedEndDate] = useState('');
+  const [savingDates, setSavingDates] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -81,6 +83,8 @@ export default function TripDetailPage() {
       }
 
       setTrip(trip);
+      setEditedStartDate(trip.start_date || '');
+      setEditedEndDate(trip.end_date || '');
 
       // Fetch itinerary items
       const { data: itemsData, error: itemsError } = await supabaseClient
@@ -310,6 +314,56 @@ export default function TripDetailPage() {
     }
   };
 
+  const formatDateForInput = (dateStr: string | null) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  const handleSaveDates = async () => {
+    if (!trip || !user) return;
+
+    try {
+      setSavingDates(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .update({
+          start_date: editedStartDate || null,
+          end_date: editedEndDate || null,
+        })
+        .eq('id', trip.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setTrip({
+        ...trip,
+        start_date: editedStartDate || null,
+        end_date: editedEndDate || null,
+      });
+
+      setIsEditingDates(false);
+    } catch (error) {
+      console.error('Error updating dates:', error);
+      alert('Failed to update dates. Please try again.');
+    } finally {
+      setSavingDates(false);
+    }
+  };
+
+  const handleCancelEditDates = () => {
+    setEditedStartDate(trip?.start_date || '');
+    setEditedEndDate(trip?.end_date || '');
+    setIsEditingDates(false);
+  };
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -323,35 +377,44 @@ export default function TripDetailPage() {
   }
 
   return (
-    <div className="pb-16">
-      <PageIntro
-        eyebrow="Trip Details"
-        title={trip.title}
-        description={trip.description || undefined}
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push('/trips')}
-              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Back to Trips"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+      <div className="w-full max-w-[1800px] mx-auto">
+        {/* Header - Matches trips page style */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex-1">
+              <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+                ITINERARY STUDIO
+              </div>
+              <div className="flex items-center gap-3 mb-1">
+                <button
+                  onClick={() => router.push('/trips')}
+                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Back to Trips"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <h1 className="text-2xl font-light text-black dark:text-white">{trip.title}</h1>
+              </div>
+              {trip.description && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-11">
+                  {trip.description}
+                </p>
+              )}
+            </div>
             {trip.user_id === user?.id && (
               <button
                 onClick={deleteTrip}
-                className="px-4 py-2 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                className="p-2 text-red-600 dark:text-red-400 hover:opacity-80 transition-opacity"
+                aria-label="Delete trip"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
             )}
           </div>
-        }
-      />
+        </div>
 
-      <PageContainer className="space-y-8">
+        <div className="space-y-8">
         {/* Trip Metadata */}
         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           {trip.destination && (
@@ -360,14 +423,67 @@ export default function TripDetailPage() {
               <span>{trip.destination}</span>
             </div>
           )}
-          {(trip.start_date || trip.end_date) && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>
-                {formatDate(trip.start_date)}
-                {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-              </span>
-            </div>
+          {trip.user_id === user?.id ? (
+            isEditingDates ? (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedStartDate)}
+                    onChange={(e) => setEditedStartDate(e.target.value)}
+                    className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  />
+                  <span>–</span>
+                  <input
+                    type="date"
+                    value={formatDateForInput(editedEndDate)}
+                    onChange={(e) => setEditedEndDate(e.target.value)}
+                    className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  />
+                  <button
+                    onClick={handleSaveDates}
+                    disabled={savingDates}
+                    className="px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                  >
+                    {savingDates ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleCancelEditDates}
+                    disabled={savingDates}
+                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {formatDate(trip.start_date)}
+                  {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                </span>
+                <button
+                  onClick={() => setIsEditingDates(true)}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  title="Edit dates"
+                  aria-label="Edit dates"
+                >
+                  <Edit2 className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+            )
+          ) : (
+            (trip.start_date || trip.end_date) && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {formatDate(trip.start_date)}
+                  {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                </span>
+              </div>
+            )
           )}
           <div className="flex items-center gap-2">
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -485,7 +601,8 @@ export default function TripDetailPage() {
               })}
           </div>
         )}
-      </PageContainer>
+        </div>
+      </div>
 
       {/* Destination Drawer */}
       {selectedDestination && (
@@ -530,7 +647,7 @@ export default function TripDetailPage() {
           }}
         />
       )}
-    </div>
+    </main>
   );
 }
 

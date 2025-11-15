@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { ConversationBubble } from '@/app/components/chat/ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
+import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
 // Analytics tracking via API
 async function trackPageView(page: string, userId?: string) {
   fetch('/api/analytics/feature-usage', {
@@ -47,6 +48,7 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [guestSessionToken, setGuestSessionToken] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -69,19 +71,38 @@ export default function ChatPage() {
 
   // Load conversation history
   useEffect(() => {
-    if (user?.id) {
+    if (!user) {
+      const token = ensureConversationSessionToken();
+      if (token) {
+        setGuestSessionToken(token);
+      }
+    } else {
+      setGuestSessionToken(null);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.id || guestSessionToken) {
       loadConversationHistory();
     }
-  }, [user?.id]);
+  }, [user?.id, guestSessionToken]);
 
   async function loadConversationHistory() {
     try {
-      const userId = user?.id || 'anonymous';
-      const response = await fetch(`/api/conversation/${userId}`);
+      const isGuest = !user?.id;
+      const resolvedToken = isGuest ? guestSessionToken : undefined;
+      if (isGuest && !resolvedToken) return;
+      const userId = user?.id || 'guest';
+      const tokenQuery = resolvedToken ? `?session_token=${resolvedToken}` : '';
+      const response = await fetch(`/api/conversation/${userId}${tokenQuery}`);
       if (response.ok) {
         const data = await response.json();
         setMessages(data.messages || []);
         setSessionId(data.session_id || null);
+        if (isGuest && data.session_token) {
+          persistConversationSessionToken(data.session_token);
+          setGuestSessionToken(data.session_token);
+        }
       }
     } catch (error) {
       console.error('Error loading conversation:', error);
@@ -95,12 +116,21 @@ export default function ChatPage() {
     trackChatMessage(user?.id, { messageLength: userMessage.length });
 
     try {
-      const userId = user?.id || 'anonymous';
+      const isGuest = !user?.id;
+      let resolvedToken = isGuest ? guestSessionToken : undefined;
+      if (isGuest && !resolvedToken) {
+        resolvedToken = ensureConversationSessionToken();
+        if (resolvedToken) {
+          setGuestSessionToken(resolvedToken);
+        }
+      }
+      const userId = user?.id || 'guest';
       const response = await fetch(`/api/conversation-stream/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
+          session_token: resolvedToken,
         }),
       });
 
@@ -163,6 +193,9 @@ export default function ChatPage() {
           suggestions: lastSuggestions,
         },
       ]);
+      if (isGuest && resolvedToken) {
+        persistConversationSessionToken(resolvedToken);
+      }
     } catch (error) {
       console.error('Streaming conversation error:', error);
       setMessages((prev) => [

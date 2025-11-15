@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
@@ -12,8 +13,14 @@ import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { useAuth } from '@/contexts/AuthContext';
+import type { Destination as DestinationType } from '@/types/destination';
 
-interface Destination {
+const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
+  ssr: false,
+});
+
+interface SearchDestination {
   id: number;
   name: string;
   city?: string;
@@ -23,13 +30,16 @@ interface Destination {
   michelin_stars?: number;
   is_open_now?: boolean;
   price_level?: number;
+  slug?: string;
+  image_thumbnail?: string;
+  micro_description?: string;
 }
 
 interface SearchState {
   originalQuery: string;
   refinements: string[];
-  allResults: Destination[];
-  filteredResults: Destination[];
+  allResults: SearchDestination[];
+  filteredResults: SearchDestination[];
   conversationHistory: Message[];
   suggestions: Array<{ label: string; refinement: string }>;
   intent?: ExtractedIntent;
@@ -40,9 +50,13 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
+  const { user } = useAuth();
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
+  const [editingDestination, setEditingDestination] = useState<DestinationType | null>(null);
+  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
+  const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';
 
   const [searchState, setSearchState] = useState<SearchState>({
     originalQuery: query,
@@ -59,7 +73,7 @@ function SearchPageContent() {
     try {
       const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
-      const results: Destination[] = data.results || [];
+      const results: SearchDestination[] = data.results || [];
 
       setSearchState({
         originalQuery: searchQuery,
@@ -81,6 +95,12 @@ function SearchPageContent() {
   useEffect(() => {
     if (query) performInitialSearch(query);
   }, [query, performInitialSearch]);
+
+  const handleEditDestination = (destination: DestinationType) => {
+    if (!isAdmin) return;
+    setEditingDestination(destination);
+    setShowPOIDrawer(true);
+  };
 
   // Recompute suggestions whenever filtered results or refinements change
   useEffect(() => {
@@ -148,7 +168,7 @@ function SearchPageContent() {
       }
 
       const data = await res.json();
-      const results: Destination[] = data.results || [];
+      const results: SearchDestination[] = data.results || [];
 
       setSearchState((prev) => ({
         ...prev,
@@ -208,7 +228,8 @@ function SearchPageContent() {
   }
 
   return (
-    <div className="w-full px-6 md:px-10 lg:px-12 py-10">
+    <>
+      <div className="w-full px-6 md:px-10 lg:px-12 py-10">
       <p className="text-xs tracking-widest text-neutral-400 mb-8">
         {new Date().getHours() < 12 ? 'GOOD MORNING' : new Date().getHours() < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING'}
       </p>
@@ -270,14 +291,16 @@ function SearchPageContent() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
                   {paginatedResults.map((d, idx) => (
                     <DestinationCard
-            key={d.id}
-            destination={d as any}
-            onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+                      key={d.id}
+                      destination={d as any}
+                      onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
                       index={startIndex + idx}
                       showBadges={true}
-          />
-        ))}
-      </div>
+                      isAdmin={isAdmin}
+                      onEdit={handleEditDestination}
+                    />
+                  ))}
+                </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
@@ -354,7 +377,24 @@ function SearchPageContent() {
           </div>
         </>
       )}
-    </div>
+      </div>
+      {isAdmin && (
+        <POIDrawer
+          isOpen={showPOIDrawer}
+          onClose={() => {
+            setShowPOIDrawer(false);
+            setEditingDestination(null);
+          }}
+          destination={editingDestination || undefined}
+          onSave={async () => {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await performInitialSearch(searchState.originalQuery || query);
+            setEditingDestination(null);
+            setShowPOIDrawer(false);
+          }}
+        />
+      )}
+    </>
   );
 }
 

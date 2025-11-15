@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink } from 'lucide-react';
+import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -24,6 +24,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
+import { POIDrawer } from './POIDrawer';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -116,7 +117,7 @@ function getOpenStatus(openingHours: any, city: string, timezoneId?: string | nu
     const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
     const todayText = openingHours.weekday_text[googleDayIndex];
-    const dayName = todayText?.split(':')[0];
+    const dayName = todayText?.split(':')?.[0];
     const hoursText = todayText?.substring(todayText.indexOf(':') + 1).trim();
 
     if (!hoursText) {
@@ -182,6 +183,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [heartAnimating, setHeartAnimating] = useState(false);
   const [checkAnimating, setCheckAnimating] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   // List management state
   const [showListsModal, setShowListsModal] = useState(false);
@@ -338,6 +341,24 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         .single();
 
       setIsVisited(!!visitedData);
+
+      // Check if user is admin
+      if (user) {
+        const role = (user.app_metadata as Record<string, any> | null)?.role;
+        const isUserAdmin = role === 'admin';
+        setIsAdmin(isUserAdmin);
+        // Debug log (remove in production)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[DestinationDrawer] Admin check:', { 
+            role, 
+            isUserAdmin, 
+            userId: user.id,
+            hasDestination: !!destination 
+          });
+        }
+      } else {
+        setIsAdmin(false);
+      }
     }
 
     loadDestinationData();
@@ -707,8 +728,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         } overflow-y-auto`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold">Destination</h2>
+        <div className="sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-sm font-bold uppercase tracking-wide">Destination</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && (
               <button
@@ -716,7 +737,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   onClose();
                   router.push(`/destination/${destination.slug}`);
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
                 title="Open in new page"
                 aria-label="Open destination in new page"
               >
@@ -725,7 +746,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
               aria-label="Close drawer"
             >
               <X className="h-5 w-5" />
@@ -737,7 +758,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="p-6">
           {/* Image */}
           {destination.image && (
-            <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800">
+            <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800">
               <img
                 src={destination.image}
                 alt={destination.name}
@@ -753,32 +774,39 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Title */}
           <div className="mb-6">
             <div className="flex items-start gap-3 mb-4">
-              <h1 className="text-3xl font-bold flex-1">
+              <h1 className="text-2xl font-bold flex-1">
                 {destination.name}
               </h1>
               {/* Crown hidden for now */}
             </div>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                <MapPin className="h-3.5 w-3.5" />
                 <span>{capitalizeCity(destination.city)}</span>
               </div>
 
               {destination.category && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                  <Tag className="h-3.5 w-3.5" />
                   <span className="capitalize">{destination.category}</span>
                 </div>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
-                    className="h-4 w-4"
+                    className="h-3.5 w-3.5"
+                    onError={(e) => {
+                      // Fallback to local file if external URL fails
+                      const target = e.currentTarget;
+                      if (target.src !== '/michelin-star.svg') {
+                        target.src = '/michelin-star.svg';
+                      }
+                    }}
                   />
                   <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
                 </div>
@@ -791,7 +819,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2.5 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full border border-purple-200 dark:border-purple-800"
+                    className="inline-flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-700"
                   >
                     ✨ {tag}
                   </span>
@@ -801,7 +829,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Rating & Price Level */}
             {((enrichedData?.rating || enrichedData?.price_level) || (destination.rating || destination.price_level)) && (
-              <div className="mt-4 flex items-center gap-4 text-sm">
+              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
                 {(enrichedData?.rating || destination.rating) && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-yellow-500">⭐</span>
@@ -948,15 +976,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Action Buttons */}
           {user && (
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-2 mb-6">
               <div className="flex-1 flex gap-2">
                 <button
                   onClick={handleSave}
                   disabled={loading}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
                     isSaved
                       ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
                   } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
                 >
                   <Heart className={`h-5 w-5 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
@@ -982,8 +1010,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <button
                   onClick={openListsModal}
                   disabled={loading}
-                  className="px-3 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="px-3 py-3 min-h-11 min-w-11 flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-800 transition-colors touch-manipulation"
                   title="Add to list"
+                  aria-label="Add to list"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </button>
@@ -992,10 +1021,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <button
                 onClick={handleVisitClick}
                 disabled={loading}
-                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
                   isVisited
                     ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
                 } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
               >
                 <Check className={`h-5 w-5 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
@@ -1031,8 +1060,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Description */}
           {destination.content && (
-            <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">About</h3>
+            <div className="mb-6">
+              <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">About</h3>
               <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {stripHtmlTags(destination.content)}
               </div>
@@ -1041,41 +1070,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Contact & Links Section */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
-            <div className="mb-8">
-              <style jsx>{`
-                .pill-button {
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  padding: 8px 16px;
-                  background: rgba(0, 0, 0, 0.6);
-                  backdrop-filter: blur(10px);
-                  color: white;
-                  font-size: 14px;
-                  font-weight: 500;
-                  border-radius: 9999px;
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                  cursor: pointer;
-                  transition: all 0.2s ease;
-                  text-decoration: none;
-                }
-                .pill-button:hover {
-                  background: rgba(0, 0, 0, 0.7);
-                }
-                .pill-separator {
-                  color: rgba(255, 255, 255, 0.6);
-                }
-              `}</style>
-              <div className="flex flex-wrap gap-3">
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
                 {destination.google_maps_url && (
                   <a
                     href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pill-button"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span>📍</span>
-                    <span className="pill-separator">•</span>
                     <span>Apple Maps</span>
                   </a>
                 )}
@@ -1088,7 +1092,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       href={fullUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     >
                       <span>{domain}</span>
                       <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
@@ -1098,10 +1102,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {(enrichedData?.international_phone_number || destination.phone_number) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="pill-button"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span>📞</span>
-                    <span className="pill-separator">•</span>
                     <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
                   </a>
                 )}
@@ -1110,10 +1113,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.instagram_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pill-button"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span>📷</span>
-                    <span className="pill-separator">•</span>
                     <span>Instagram</span>
                   </a>
                 )}
@@ -1123,11 +1125,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
-              <div className="space-y-4">
+            <div className="mb-6">
+              <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
+              <div className="space-y-3">
                 {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                  <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                  <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <span className="font-medium text-sm">{review.author_name}</span>
@@ -1150,16 +1152,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
           {/* Map Section */}
-          <div className="mb-8">
-            <h3 className="text-sm font-bold uppercase mb-4 text-gray-500 dark:text-gray-400">Location</h3>
-            <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+          <div className="mb-6">
+            <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">Location</h3>
+            <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <GoogleMap
                 query={`${destination.name}, ${destination.city}`}
                 height="256px"
-                className="rounded-lg"
+                className="rounded-2xl"
               />
             </div>
           </div>
@@ -1170,7 +1172,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-lg"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-full border border-gray-200 dark:border-gray-800"
             >
               <Navigation className="h-4 w-4" />
               <span>Get Directions</span>
@@ -1178,14 +1180,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
           {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">
+                <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   You might also like
                 </h3>
               </div>
@@ -1241,6 +1243,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"
                               className="h-3 w-3"
+                              onError={(e) => {
+                                // Fallback to local file if external URL fails
+                                const target = e.currentTarget;
+                                if (target.src !== '/michelin-star.svg') {
+                                  target.src = '/michelin-star.svg';
+                                }
+                              }}
                             />
                             <span>{rec.michelin_stars}</span>
                           </div>
@@ -1262,11 +1271,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
 
-          {/* Share Button */}
-          <div className="flex justify-center">
+          {/* Share and Edit Buttons */}
+          <div className="flex justify-center gap-3">
+            {isAdmin && destination && (
+              <button
+                onClick={() => setIsEditDrawerOpen(true)}
+                className="flex items-center gap-2 px-6 py-3 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg font-medium"
+                title="Edit destination"
+                aria-label="Edit destination"
+              >
+                <Edit className="h-4 w-4" />
+                <span>Edit</span>
+              </button>
+            )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-lg font-medium"
+              className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-full font-medium"
             >
               <Share2 className="h-4 w-4" />
               <span>{copied ? 'Link Copied!' : 'Share'}</span>
@@ -1422,6 +1442,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
         </div>
       )}
+
+      {/* Edit Drawer */}
+      <POIDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        destination={destination}
+        onSave={() => {
+          setIsEditDrawerOpen(false);
+          // Reload destination data after save
+          if (destination) {
+            window.location.reload();
+          }
+        }}
+      />
 
       {/* Visit Modal */}
       <VisitModal

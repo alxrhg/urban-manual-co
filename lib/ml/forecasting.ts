@@ -14,12 +14,10 @@ export interface PeakTimeRecommendation {
   best_times: Array<{
     day: string;
     timeRange: string;
-    crowd_level: 'low' | 'medium' | 'high';
   }>;
   worst_times: Array<{
     day: string;
     timeRange: string;
-    crowd_level: 'low' | 'medium' | 'high';
   }>;
 }
 
@@ -73,17 +71,15 @@ export async function getPeakTimesForDestination(
       a.predicted_visits - b.predicted_visits
     );
 
-    const bestTimes = allTimes.slice(0, 3).map((pt: PeakTime) => ({
-      day: pt.day_of_week,
-      timeRange: formatTimeRange(pt.hour),
-      crowd_level: 'low' as const,
-    }));
+  const bestTimes = allTimes.slice(0, 3).map((pt: PeakTime) => ({
+    day: pt.day_of_week,
+    timeRange: formatTimeRange(pt.hour),
+  }));
 
-    const worstTimes = allTimes.slice(-3).map((pt: PeakTime) => ({
-      day: pt.day_of_week,
-      timeRange: formatTimeRange(pt.hour),
-      crowd_level: 'high' as const,
-    }));
+  const worstTimes = allTimes.slice(-3).map((pt: PeakTime) => ({
+    day: pt.day_of_week,
+    timeRange: formatTimeRange(pt.hour),
+  }));
 
     return { best_times: bestTimes, worst_times: worstTimes };
   } catch (error) {
@@ -129,24 +125,6 @@ export async function getTrendingStatus(
   } catch (error) {
     console.error('Error fetching trending data:', error);
     return trendingMap;
-  }
-}
-
-/**
- * Get crowd level badge text and emoji
- */
-export function getCrowdLevelBadge(crowdLevel: 'low' | 'medium' | 'high'): {
-  text: string;
-  emoji: string;
-  color: string;
-} {
-  switch (crowdLevel) {
-    case 'low':
-      return { text: 'Usually quiet', emoji: '🔽', color: 'text-green-600 dark:text-green-400' };
-    case 'medium':
-      return { text: 'Moderate crowds', emoji: '→', color: 'text-yellow-600 dark:text-yellow-400' };
-    case 'high':
-      return { text: 'Usually busy', emoji: '🔼', color: 'text-red-600 dark:text-red-400' };
   }
 }
 

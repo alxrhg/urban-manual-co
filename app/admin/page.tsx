@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
 import { createColumns, type Destination } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -206,11 +207,23 @@ function DestinationForm({
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        let error;
+        try {
+          error = await res.json();
+        } catch (parseError) {
+          const text = await res.text();
+          throw new Error(`Upload failed: ${text || res.statusText}`);
+        }
         throw new Error(error.error || 'Upload failed');
       }
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        const text = await res.text();
+        throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
+      }
       return data.url;
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -249,11 +262,23 @@ function DestinationForm({
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        let error;
+        try {
+          error = await res.json();
+        } catch (parseError) {
+          const text = await res.text();
+          throw new Error(`Failed to fetch from Google: ${text || res.statusText}`);
+        }
         throw new Error(error.error || 'Failed to fetch from Google');
       }
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        const text = await res.text();
+        throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
+      }
 
       // Auto-fill form with fetched data
       setFormData(prev => ({
@@ -337,7 +362,15 @@ function DestinationForm({
                         },
                         body: JSON.stringify({ placeId: placeDetails.placeId }),
                       });
-                      const data = await response.json();
+                      let data;
+                      try {
+                        data = await response.json();
+                      } catch (parseError) {
+                        const text = await response.text();
+                        console.error('Error parsing response:', text);
+                        toast.error('Invalid response format from Google Places API');
+                        return;
+                      }
                       if (data.error) {
                         console.error('Error fetching place:', data.error);
                         return;
@@ -732,15 +765,14 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover'>('destinations');
 
-  // Analytics state
-  const [analyticsStats, setAnalyticsStats] = useState({
-    totalViews: 0,
-    totalSearches: 0,
-    totalSaves: 0,
-    totalUsers: 0,
-    topSearches: [] as { query: string; count: number }[],
-  });
-  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  // Check for tab query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab && ['destinations', 'analytics', 'searches', 'discover'].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, []);
 
   // Searches state
   const [searchLogs, setSearchLogs] = useState<any[]>([]);
@@ -748,26 +780,108 @@ export default function AdminPage() {
 
   // Check authentication
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+    
     async function checkAuth() {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            console.warn('[Admin] Auth check timed out after 10 seconds');
+            setAuthChecked(true);
+            setIsAdmin(false);
+          }
+        }, 10000);
+        
+        // Use skipValidation to bypass strict validation that might be too restrictive
+        // This allows admin page to work even if validation fails due to strict checks
+        const supabase = createClient({ skipValidation: true });
+        
+        // Try to get session - this will fail if using placeholder client
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        clearTimeout(timeoutId);
 
-      if (!session) {
-        router.push('/account');
-        return;
-      }
+        if (!isMounted) return;
 
-      setUser(session.user);
-      const role = (session.user.app_metadata as Record<string, any> | null)?.role;
-      const admin = role === 'admin';
-      setIsAdmin(admin);
-      setAuthChecked(true);
-      if (!admin) {
-        router.push('/account');
+        if (error) {
+          console.error('[Admin] Auth error:', error);
+          
+          // Check if this is a placeholder client error (invalid config)
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+          const isPlaceholderError = error.message?.includes('placeholder') || 
+                                    error.message?.includes('Invalid API key') ||
+                                    supabaseUrl.includes('placeholder') ||
+                                    !supabaseUrl;
+          
+          if (isPlaceholderError) {
+            console.error('[Admin] Invalid Supabase configuration detected');
+          }
+          
+          if (isMounted) {
+            setAuthChecked(true);
+            setIsAdmin(false);
+            // Redirect to account page on auth error
+            setTimeout(() => {
+              if (isMounted) {
+                router.push('/account');
+              }
+            }, 1000);
+          }
+          return;
+        }
+
+        if (!session) {
+          if (isMounted) {
+            setAuthChecked(true);
+            setIsAdmin(false);
+            router.push('/account');
+          }
+          return;
+        }
+
+        const role = (session.user.app_metadata as Record<string, any> | null)?.role;
+        const admin = role === 'admin';
+        
+        if (isMounted) {
+          setUser(session.user);
+          setIsAdmin(admin);
+          setAuthChecked(true);
+          
+          if (!admin) {
+            // Small delay before redirect to show access denied message
+            setTimeout(() => {
+              if (isMounted) {
+                router.push('/account');
+              }
+            }, 1500);
+          }
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error('[Admin] Error checking auth:', error);
+        if (isMounted) {
+          setAuthChecked(true);
+          setIsAdmin(false);
+          // Redirect on error after showing message
+          setTimeout(() => {
+            if (isMounted) {
+              router.push('/account');
+            }
+          }, 2000);
+        }
       }
     }
 
     checkAuth();
+    
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [router]);
 
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
@@ -791,73 +905,52 @@ export default function AdminPage() {
 
       if (error) {
         console.error('[Admin] Supabase error loading destinations:', error);
-        console.error('[Admin] Error details:', JSON.stringify(error, null, 2));
-        toast.error(`Failed to load destinations: ${error.message}`);
+        // Safely stringify error to avoid JSON parse issues
+        try {
+          console.error('[Admin] Error details:', JSON.stringify(error, null, 2));
+        } catch (stringifyError) {
+          console.error('[Admin] Error details (raw):', error);
+        }
+        toast.error(`Failed to load destinations: ${error.message || 'Unknown error'}`);
         setDestinationList([]);
         return;
       }
       
-      console.log('[Admin] Loaded destinations:', data?.length || 0);
-      setDestinationList(data || []);
+      // Sanitize data to prevent JSON parse errors from malformed content
+      const sanitizedData = (data || []).map((item: any) => {
+        try {
+          // Ensure description and content are strings and handle any encoding issues
+          const sanitized = { ...item };
+          if (sanitized.description && typeof sanitized.description === 'string') {
+            // Remove any problematic characters that might break JSON
+            sanitized.description = sanitized.description.replace(/\u0000/g, ''); // Remove null bytes
+          }
+          if (sanitized.content && typeof sanitized.content === 'string') {
+            sanitized.content = sanitized.content.replace(/\u0000/g, ''); // Remove null bytes
+          }
+          return sanitized;
+        } catch (sanitizeError) {
+          console.warn('[Admin] Error sanitizing destination item:', item?.slug, sanitizeError);
+          // Return item as-is if sanitization fails
+          return item;
+        }
+      });
+      
+      console.log('[Admin] Loaded destinations:', sanitizedData.length);
+      setDestinationList(sanitizedData);
     } catch (e: any) {
       console.error('[Admin] Error loading destinations:', e);
-      toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
+      // Check if it's a JSON parse error
+      if (e.message?.includes('JSON') || e.message?.includes('parse') || e instanceof SyntaxError) {
+        toast.error('Failed to load destinations: Invalid data format. Some destinations may have corrupted content.');
+      } else {
+        toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
+      }
       setDestinationList([]);
     } finally {
       setIsLoadingList(false);
     }
   }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
-
-  const loadAnalytics = useCallback(async () => {
-    setLoadingAnalytics(true);
-    try {
-      const supabase = createClient();
-      // Get user interactions stats
-      const { data: interactions } = await supabase
-        .from('user_interactions')
-        .select('interaction_type, created_at');
-
-      if (interactions) {
-        const views = interactions.filter(i => i.interaction_type === 'view').length;
-        const searches = interactions.filter(i => i.interaction_type === 'search').length;
-        const saves = interactions.filter(i => i.interaction_type === 'save').length;
-
-        // Get unique users
-        const { data: users } = await supabase
-          .from('user_interactions')
-          .select('user_id')
-          .not('user_id', 'is', null);
-
-        const uniqueUsers = new Set((users || []).map((u: any) => u.user_id));
-        
-        // Get top searches
-        const searchInteractions = interactions.filter(i => i.interaction_type === 'search');
-        const searchCounts = new Map<string, number>();
-        searchInteractions.forEach((i: any) => {
-          const query = i.metadata?.query || 'Unknown';
-          searchCounts.set(query, (searchCounts.get(query) || 0) + 1);
-        });
-
-        const topSearches = Array.from(searchCounts.entries())
-          .map(([query, count]) => ({ query, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
-
-        setAnalyticsStats({
-          totalViews: views,
-          totalSearches: searches,
-          totalSaves: saves,
-          totalUsers: uniqueUsers.size,
-          topSearches,
-        });
-      }
-    } catch (error) {
-      console.error('[Admin] Error loading analytics:', error);
-      toast.error('Failed to load analytics');
-    } finally {
-      setLoadingAnalytics(false);
-    }
-  }, [toast]);
 
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
@@ -897,12 +990,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAdmin || !authChecked) return;
 
-    if (activeTab === 'analytics' && analyticsStats.totalUsers === 0) {
-      loadAnalytics();
-    } else if (activeTab === 'searches' && searchLogs.length === 0) {
+    if (activeTab === 'searches' && searchLogs.length === 0) {
       loadSearchLogs();
     }
-  }, [activeTab, isAdmin, authChecked, analyticsStats.totalUsers, searchLogs.length, loadAnalytics, loadSearchLogs]);
+  }, [activeTab, isAdmin, authChecked, searchLogs.length, loadSearchLogs]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -968,16 +1059,34 @@ export default function AdminPage() {
   // Show loading state
   if (!authChecked) {
     return (
-      <main className="px-6 md:px-10 py-20">
-        <div className="container mx-auto flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      <main className="px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
+        <div className="container mx-auto flex flex-col items-center justify-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-600" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Checking authentication...</p>
         </div>
       </main>
     );
   }
 
   if (!isAdmin) {
-    return null;
+    return (
+      <main className="px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
+        <div className="container mx-auto">
+          <div className="text-center max-w-md mx-auto">
+            <h1 className="text-2xl font-light mb-4 dark:text-white">Access Denied</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              You need admin privileges to access this page.
+            </p>
+            <button
+              onClick={() => router.push('/account')}
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
+            >
+              Back to Account
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -1066,49 +1175,8 @@ export default function AdminPage() {
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
-          <div className="fade-in space-y-12">
-            {loadingAnalytics ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : (
-              <>
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalViews.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Views</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSearches.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Searches</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalSaves.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Saves</div>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <div className="text-2xl font-light mb-1">{analyticsStats.totalUsers.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Total Users</div>
-                  </div>
-                </div>
-
-                {/* Top Searches */}
-                {analyticsStats.topSearches.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Top Search Queries</h2>
-                    <div className="space-y-2">
-                      {analyticsStats.topSearches.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                          <span className="text-sm font-medium">{item.query}</span>
-                          <span className="text-xs text-gray-500">{item.count} searches</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+          <div className="fade-in">
+            <AnalyticsDashboard variant="embedded" />
           </div>
         )}
 

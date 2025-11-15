@@ -4,16 +4,8 @@
  * All prompts are carefully crafted to ensure outputs only reference provided listings
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { SeasonalityInfo, getSeasonalContext } from './seasonality';
-
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-
-if (!GOOGLE_API_KEY) {
-  console.warn('GOOGLE_API_KEY not set - AI features will be disabled');
-}
-
-const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
+import { routePrompt, TextResponseSchema } from '@/services/ai-gateway';
+import { getSeasonalContext } from './seasonality';
 
 export interface Listing {
   slug: string;
@@ -27,6 +19,14 @@ export interface Listing {
 /**
  * Generate contextual search result text
  */
+const contextResponseSchema = TextResponseSchema.extend({
+  text: TextResponseSchema.shape.text.min(12).max(400),
+});
+
+const discoveryResponseSchema = TextResponseSchema.extend({
+  text: TextResponseSchema.shape.text.min(12).max(280),
+});
+
 export async function generateContext(
   query: string,
   city: string | undefined,
@@ -34,22 +34,10 @@ export async function generateContext(
   listings: Listing[],
   seasonality?: ReturnType<typeof getSeasonalContext>
 ): Promise<string> {
-  if (!genAI) {
-    return generateFallbackContext(city, modifiers, listings.length);
-  }
-
   try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash-latest',
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 200,
-      },
-    });
-
     const listingNames = listings.map(l => l.name).slice(0, 20);
     const modifierText = modifiers.length > 0 ? ` matching "${modifiers.join(', ')}"` : '';
-    
+
     const prompt = `You are a travel guide assistant. Generate a brief, friendly context sentence for search results.
 
 CRITICAL CONSTRAINTS:
@@ -70,13 +58,32 @@ ${seasonality
   : ''
 }
 
-Generate a sentence introducing the ${modifierText} results${city ? ` in ${city}` : ''}. 
+Generate a sentence introducing the ${modifierText} results${city ? ` in ${city}` : ''}.
 ${seasonality ? `You may mention the seasonal context if relevant.` : ''}
 
-Return ONLY the sentence, no quotes or markdown formatting:`;
+Return ONLY valid minified JSON following this shape:
+{
+  "text": "Final sentence"
+}`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response.text().trim();
+    const aiResponse = await routePrompt<{ text: string }>({
+      prompt,
+      responseSchema: contextResponseSchema,
+      metadata: {
+        useCase: 'contextual-search.context-line',
+        city,
+        query,
+      },
+      preferredProviders: ['gemini', 'openai', 'local'],
+      capabilities: ['json', 'low-latency'],
+      safetyBudget: {
+        maxOutputTokens: 200,
+        maxLatencyMs: 4500,
+      },
+      temperature: 0.3,
+    });
+
+    const response = aiResponse.parsed?.text?.trim() || '';
 
     // Safety validation: check that response doesn't mention unknown places
     const mentionedNames = listingNames.filter(name =>
@@ -94,7 +101,7 @@ Return ONLY the sentence, no quotes or markdown formatting:`;
 
     return response;
   } catch (error) {
-    console.error('Error generating context with Gemini:', error);
+    console.error('Error generating context with AI gateway:', error);
     return generateFallbackContext(city, modifiers, listings.length);
   }
 }
@@ -107,19 +114,7 @@ export async function generateDiscoveryPrompt(
   category?: string,
   seasonality?: ReturnType<typeof getSeasonalContext>
 ): Promise<string> {
-  if (!genAI) {
-    return generateFallbackDiscoveryPrompt(city, category, seasonality);
-  }
-
   try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash-latest',
-      generationConfig: {
-        temperature: 0.5, // Slightly more creative for discovery prompts
-        maxOutputTokens: 150,
-      },
-    });
-
     const prompt = `You are a travel curator. Generate a one-sentence discovery prompt for ${city}${category ? ` focusing on ${category}` : ''}.
 
 Style: Editorial, inspiring, concise. Like a travel magazine headline.
@@ -137,12 +132,31 @@ Example formats:
 Generate a similar prompt for ${city}${category ? ` and ${category}` : ''}:
 ${seasonality ? `Mention the seasonal context: ${seasonality.event} (${seasonality.text}).` : ''}
 
-Return ONLY the sentence, no quotes or markdown:`;
+Return ONLY valid minified JSON following this shape:
+{
+  "text": "Final discovery sentence"
+}`;
 
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
+    const aiResponse = await routePrompt<{ text: string }>({
+      prompt,
+      responseSchema: discoveryResponseSchema,
+      metadata: {
+        useCase: 'discovery.prompt',
+        city,
+        category,
+      },
+      preferredProviders: ['gemini', 'openai', 'local'],
+      capabilities: ['json'],
+      safetyBudget: {
+        maxOutputTokens: 150,
+        maxLatencyMs: 3500,
+      },
+      temperature: 0.5,
+    });
+
+    return aiResponse.parsed?.text?.trim() || generateFallbackDiscoveryPrompt(city, category, seasonality);
   } catch (error) {
-    console.error('Error generating discovery prompt:', error);
+    console.error('Error generating discovery prompt with AI gateway:', error);
     return generateFallbackDiscoveryPrompt(city, category, seasonality);
   }
 }

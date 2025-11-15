@@ -48,6 +48,7 @@ interface Destination {
   slug: string;
   name: string;
   image: string | null;
+  main_image?: string | null;
 }
 
 interface MigrationResult {
@@ -109,20 +110,42 @@ async function ensureBucketExists(): Promise<void> {
   }
 }
 
+// Check if URL is from Framer or Webflow
+function isExternalImageUrl(url: string): boolean {
+  if (!url) return false;
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.includes('framerusercontent.com') ||
+    lowerUrl.includes('webflow.com') ||
+    lowerUrl.includes('cdn.prod.website-files.com')
+  );
+}
+
+// Check if URL is already on Supabase Storage
+function isSupabaseUrl(url: string): boolean {
+  if (!url) return false;
+  const lowerUrl = url.toLowerCase();
+  return lowerUrl.includes('supabase') && lowerUrl.includes('storage');
+}
+
 // Create backup file
 async function createBackup(destinations: Destination[]): Promise<void> {
   const backup = destinations
-    .filter(d => d.image)
+    .filter(d => {
+      const url = d.image || d.main_image;
+      return url && isExternalImageUrl(url);
+    })
     .map(d => ({
       slug: d.slug,
       name: d.name,
-      original_url: d.image,
+      original_url: d.image || d.main_image,
+      field_used: d.image ? 'image' : 'main_image',
       timestamp: new Date().toISOString()
     }));
 
   const backupPath = path.join(process.cwd(), 'backup-image-urls.json');
   await fs.writeFile(backupPath, JSON.stringify(backup, null, 2));
-  console.log(`✓ Backup created: ${backupPath} (${backup.length} destinations)\n`);
+  console.log(`✓ Backup created: ${backupPath} (${backup.length} destinations with Framer/Webflow URLs)\n`);
 }
 
 // Download image from URL
@@ -198,15 +221,26 @@ async function updateDatabase(
   slug: string,
   imageUrl: string,
   thumbnailUrl: string,
-  originalUrl: string
+  originalUrl: string,
+  sourceField: 'image' | 'main_image' = 'image'
 ): Promise<void> {
+  // Update the field that had the original URL, and also set image if main_image was the source
+  const updateData: any = {
+    image_thumbnail: thumbnailUrl,
+    image_original: originalUrl
+  };
+  
+  if (sourceField === 'image') {
+    updateData.image = imageUrl;
+  } else {
+    // If main_image was the source, update both to consolidate
+    updateData.image = imageUrl;
+    updateData.main_image = imageUrl;
+  }
+
   const { error } = await supabase
     .from('destinations')
-    .update({
-      image: imageUrl,
-      image_thumbnail: thumbnailUrl,
-      image_original: originalUrl
-    })
+    .update(updateData)
     .eq('slug', slug);
 
   if (error) {
@@ -221,21 +255,30 @@ function sanitizeFilename(slug: string): string {
 
 // Process a single destination
 async function processDestination(dest: Destination): Promise<void> {
-  if (!dest.image) {
-    throw new Error('No image URL');
+  // Use image or main_image field
+  const imageUrl = dest.image || dest.main_image;
+  
+  if (!imageUrl) {
+    throw new Error('No image URL found');
   }
 
   // Skip if already migrated to Supabase Storage
-  if (dest.image.includes('supabase') && dest.image.includes('storage')) {
+  if (isSupabaseUrl(imageUrl)) {
     throw new Error('Already migrated (Supabase URL detected)');
+  }
+
+  // Only migrate Framer/Webflow URLs
+  if (!isExternalImageUrl(imageUrl)) {
+    throw new Error(`Skipping non-Framer/Webflow URL: ${imageUrl.substring(0, 50)}...`);
   }
 
   const startTime = Date.now();
   const sanitizedSlug = sanitizeFilename(dest.slug);
 
   // Download image
+  const imageUrl = dest.image || dest.main_image!;
   const imageBuffer = await retryWithBackoff(
-    () => downloadImage(dest.image!),
+    () => downloadImage(imageUrl),
     3,
     `Download ${dest.name}`
   );
@@ -274,8 +317,10 @@ async function processDestination(dest: Destination): Promise<void> {
     console.log(`  ✓ Uploaded thumbnail`);
 
     // Update database
+    const originalUrl = dest.image || dest.main_image!;
+    const sourceField = dest.image ? 'image' : 'main_image';
     await retryWithBackoff(
-      () => updateDatabase(dest.slug, fullUrl, thumbUrl, dest.image!),
+      () => updateDatabase(dest.slug, fullUrl, thumbUrl, originalUrl, sourceField),
       3,
       `Update database ${dest.name}`
     );
@@ -311,8 +356,8 @@ async function migrateImages(): Promise<void> {
     console.log('📥 Fetching destinations from database...');
     const { data: destinations, error } = await supabase
       .from('destinations')
-      .select('id, slug, name, image')
-      .not('image', 'is', null)
+      .select('id, slug, name, image, main_image')
+      .or('image.not.is.null,main_image.not.is.null')
       .order('name');
 
     if (error) {
@@ -324,12 +369,24 @@ async function migrateImages(): Promise<void> {
       return;
     }
 
-    const toProcess = isTestMode ? destinations.slice(0, 10) : destinations;
-    console.log(`Found ${destinations.length} destinations with images`);
+    // Filter to only destinations with Framer/Webflow URLs
+    const externalImageDests = destinations.filter(d => {
+      const url = d.image || d.main_image;
+      return url && isExternalImageUrl(url) && !isSupabaseUrl(url);
+    });
+
+    if (externalImageDests.length === 0) {
+      console.log('✅ No destinations with Framer/Webflow URLs found. All images may already be migrated!');
+      return;
+    }
+
+    const toProcess = isTestMode ? externalImageDests.slice(0, 10) : externalImageDests;
+    console.log(`Found ${destinations.length} total destinations with images`);
+    console.log(`Found ${externalImageDests.length} destinations with Framer/Webflow URLs`);
     console.log(`Processing ${toProcess.length} destinations...\n`);
 
     // 3. Create backup
-    await createBackup(destinations as Destination[]);
+    await createBackup(externalImageDests as Destination[]);
 
     // 4. Process each destination
     const results: MigrationResult = {
@@ -347,12 +404,18 @@ async function migrateImages(): Promise<void> {
         await processDestination(dest);
         results.success++;
       } catch (error: any) {
-        console.error(`  ❌ Error: ${error.message}`);
-        results.failed++;
-        results.errors.push({
-          slug: dest.slug,
-          error: error.message
-        });
+        // Skip errors for already migrated or non-external URLs
+        if (error.message.includes('Already migrated') || error.message.includes('Skipping non-Framer')) {
+          results.skipped++;
+          console.log(`  ⏭️  ${error.message}`);
+        } else {
+          console.error(`  ❌ Error: ${error.message}`);
+          results.failed++;
+          results.errors.push({
+            slug: dest.slug,
+            error: error.message
+          });
+        }
       }
     }
 

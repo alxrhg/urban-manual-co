@@ -49,5 +49,7 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ## Models
 
 - **Prophet** - Time-series forecasting for demand prediction
+- Multi-seasonality tuning (bi-weekly, monthly, quarterly, semiannual) captures different crowding cycles
+- Travel/holiday-aware regressors ensure wait-time spikes are shaped by peak travel periods like New Year's, summer travel, and late-year holidays
 - **LightFM** - Collaborative filtering for recommendations
 - **Scikit-learn** - Additional ML utilities

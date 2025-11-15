@@ -21,3 +21,4 @@ hdbscan>=0.8.33
 shap>=0.43.0
 lime>=0.2.0
 tensorflow>=2.13.0
+pytest>=7.4.0

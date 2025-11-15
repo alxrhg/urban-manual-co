@@ -3,6 +3,8 @@
  * Manages session memory, context summarization, and refinement
  */
 
+import { randomUUID } from 'crypto';
+
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { generateJSON } from '@/lib/llm';
 import { SUMMARISER_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
@@ -33,18 +35,29 @@ export interface ConversationMessage {
 export async function getOrCreateSession(
   userId?: string,
   sessionToken?: string
-): Promise<{ sessionId: string; context: ConversationContext } | null> {
+): Promise<{
+  sessionId: string;
+  sessionToken: string | null;
+  context: ConversationContext;
+  lastActivity?: string | null;
+  contextSummary?: any;
+} | null> {
   const supabase = createServiceRoleClient();
   if (!supabase) return null;
 
   try {
+    const normalizedUserId = userId && !['anonymous', 'guest', ''].includes(userId) ? userId : undefined;
+    const normalizedSessionToken = sessionToken?.trim() || undefined;
+
     // Try to get existing session
-    let query = supabase.from('conversation_sessions').select('id, context, context_summary');
-    
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else if (sessionToken) {
-      query = query.eq('session_token', sessionToken);
+    let query = supabase
+      .from('conversation_sessions')
+      .select('id, context, context_summary, session_token, last_activity');
+
+    if (normalizedUserId) {
+      query = query.eq('user_id', normalizedUserId);
+    } else if (normalizedSessionToken) {
+      query = query.eq('session_token', normalizedSessionToken);
     } else {
       return null;
     }
@@ -63,19 +76,24 @@ export async function getOrCreateSession(
 
       return {
         sessionId: existing.id,
+        sessionToken: (existing.session_token as string) || normalizedSessionToken || null,
         context: (existing.context as ConversationContext) || {},
+        lastActivity: existing.last_activity as string | null,
+        contextSummary: existing.context_summary,
       };
     }
 
     // Create new session
+    const generatedToken = normalizedSessionToken || randomUUID();
     const { data: newSession, error } = await supabase
       .from('conversation_sessions')
       .insert({
-        user_id: userId || null,
-        session_token: sessionToken || null,
+        user_id: normalizedUserId || null,
+        session_token: generatedToken,
         context: {},
+        last_activity: new Date().toISOString(),
       })
-      .select('id, context')
+      .select('id, context, context_summary, session_token, last_activity')
       .single();
 
     if (error || !newSession) {
@@ -85,7 +103,10 @@ export async function getOrCreateSession(
 
     return {
       sessionId: newSession.id,
+      sessionToken: (newSession.session_token as string) || generatedToken,
       context: (newSession.context as ConversationContext) || {},
+      lastActivity: newSession.last_activity as string | null,
+      contextSummary: newSession.context_summary,
     };
   } catch (error) {
     console.error('Error in getOrCreateSession:', error);

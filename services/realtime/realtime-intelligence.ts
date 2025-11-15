@@ -8,12 +8,6 @@ import { createServerClient } from '@/lib/supabase-server';
 const getSupabase = async () => await createServerClient();
 
 export interface RealtimeStatus {
-  crowding?: {
-    level: 'quiet' | 'moderate' | 'busy' | 'very_busy';
-    score: number; // 0-100
-    lastUpdated: string;
-    predictedNext?: { time: string; level: string }[];
-  };
   waitTime?: {
     current: number; // minutes
     historical: number; // average for this time
@@ -28,10 +22,6 @@ export interface RealtimeStatus {
     closingSoon?: boolean;
     nextOpen?: string;
     reason?: string;
-  };
-  bestTimeToVisit?: {
-    today: string[];
-    thisWeek: Array<{ day: string; hours: string[] }>;
   };
   alerts?: Array<{
     type: string;
@@ -49,23 +39,15 @@ export class RealtimeIntelligenceService {
     userId?: string
   ): Promise<RealtimeStatus> {
     const now = new Date();
-    const dayOfWeek = now.getDay();
-    const hourOfDay = now.getHours();
 
     // Fetch data in parallel
-    const [crowding, openingHours, userReports] = await Promise.all([
-      this.getCrowdingLevel(destinationId, dayOfWeek, hourOfDay),
+    const [openingHours, userReports] = await Promise.all([
       this.getOpeningStatus(destinationId, now),
       this.getRecentUserReports(destinationId),
     ]);
 
     // Aggregate status
     const status: RealtimeStatus = {};
-
-    if (crowding) {
-      status.crowding = crowding;
-      status.bestTimeToVisit = await this.predictBestTimes(destinationId, dayOfWeek);
-    }
 
     // Add wait time from user reports
     if (userReports.waitTime) {
@@ -74,7 +56,7 @@ export class RealtimeIntelligenceService {
 
     if (openingHours) {
       status.specialHours = openingHours;
-      status.availability = this.determineAvailability(openingHours, crowding);
+      status.availability = this.determineAvailability(openingHours);
     }
 
     return status;
@@ -129,59 +111,6 @@ export class RealtimeIntelligenceService {
     } catch (error) {
       console.error('Error getting user reports:', error);
       return {};
-    }
-  }
-
-  /**
-   * Get current crowding level
-   */
-  private async getCrowdingLevel(
-    destinationId: number,
-    dayOfWeek: number,
-    hourOfDay: number
-  ): Promise<RealtimeStatus['crowding'] | null> {
-    try {
-      const supabase = await getSupabase();
-      // Try real-time data first
-      const { data: recentStatus } = await supabase
-        .from('destination_status')
-        .select('*')
-        .eq('destination_id', destinationId)
-        .eq('status_type', 'crowding')
-        .gte('recorded_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
-        .order('recorded_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (recentStatus) {
-        return {
-          level: recentStatus.status_value.level,
-          score: recentStatus.status_value.score,
-          lastUpdated: recentStatus.recorded_at,
-        };
-      }
-
-      // Fall back to historical patterns
-      const { data: historical } = await supabase
-        .from('crowding_data')
-        .select('*')
-        .eq('destination_id', destinationId)
-        .eq('day_of_week', dayOfWeek)
-        .eq('hour_of_day', hourOfDay)
-        .single();
-
-      if (historical) {
-        return {
-          level: historical.crowding_level as any,
-          score: historical.crowding_score,
-          lastUpdated: historical.last_updated,
-        };
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Error getting crowding level:', error);
-      return null;
     }
   }
 
@@ -286,8 +215,7 @@ export class RealtimeIntelligenceService {
    * Determine availability
    */
   private determineAvailability(
-    hours: RealtimeStatus['specialHours'],
-    crowding: RealtimeStatus['crowding'] | null
+    hours: RealtimeStatus['specialHours']
   ): RealtimeStatus['availability'] {
     if (!hours?.isOpen) {
       return { status: 'closed' };
@@ -297,100 +225,7 @@ export class RealtimeIntelligenceService {
       return { status: 'limited', details: 'Closing soon' };
     }
 
-    if (!crowding) {
-      return { status: 'available' };
-    }
-
-    switch (crowding.level) {
-      case 'very_busy':
-        return { status: 'limited', details: 'Very busy right now' };
-      case 'busy':
-        return { status: 'limited', details: 'Busy' };
-      default:
-        return { status: 'available' };
-    }
-  }
-
-  /**
-   * Predict best times to visit - Enhanced version with week predictions
-   */
-  private async predictBestTimes(
-    destinationId: number,
-    currentDayOfWeek: number
-  ): Promise<RealtimeStatus['bestTimeToVisit']> {
-    try {
-      const supabase = await getSupabase();
-      const now = new Date();
-      const currentHour = now.getHours();
-      
-      // Get crowding data for today
-      const { data: todayData } = await supabase
-        .from('crowding_data')
-        .select('hour_of_day, crowding_level, crowding_score')
-        .eq('destination_id', destinationId)
-        .eq('day_of_week', currentDayOfWeek)
-        .order('hour_of_day', { ascending: true });
-
-      const today: string[] = [];
-      
-      if (todayData && todayData.length > 0) {
-        // Find quietest times today (remaining hours)
-        const remainingHours = todayData.filter((d: any) => d.hour_of_day >= currentHour);
-        
-        // Prioritize quiet times, then moderate
-        const quietTimes = remainingHours
-          .filter((d: any) => d.crowding_level === 'quiet' || d.crowding_level === 'moderate')
-          .sort((a: any, b: any) => a.crowding_score - b.crowding_score)
-          .slice(0, 3)
-          .map((d: any) => {
-            const startHour = d.hour_of_day.toString().padStart(2, '0');
-            const endHour = Math.min(23, d.hour_of_day + 2).toString().padStart(2, '0');
-            return `${startHour}:00-${endHour}:00`;
-          });
-        
-        today.push(...quietTimes);
-      }
-
-      // Get best times for rest of week
-      const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const thisWeek: Array<{ day: string; hours: string[] }> = [];
-
-      for (let i = 1; i <= 6; i++) {
-        const dayIndex = (currentDayOfWeek + i) % 7;
-        const { data: dayData } = await supabase
-          .from('crowding_data')
-          .select('hour_of_day, crowding_level, crowding_score')
-          .eq('destination_id', destinationId)
-          .eq('day_of_week', dayIndex)
-          .order('crowding_score', { ascending: true })
-          .limit(3);
-
-        if (dayData && dayData.length > 0) {
-          const bestHours = dayData
-            .filter((d: any) => d.crowding_level === 'quiet' || d.crowding_level === 'moderate')
-            .slice(0, 2)
-            .map((d: any) => {
-              const hour = d.hour_of_day.toString().padStart(2, '0');
-              return `${hour}:00`;
-            });
-          
-          if (bestHours.length > 0) {
-            thisWeek.push({
-              day: weekDays[dayIndex],
-              hours: bestHours,
-            });
-          }
-        }
-      }
-
-      return {
-        today,
-        thisWeek,
-      };
-    } catch (error) {
-      console.error('Error predicting best times:', error);
-      return { today: [], thisWeek: [] };
-    }
+    return { status: 'available' };
   }
 }
 

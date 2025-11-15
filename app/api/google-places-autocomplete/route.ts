@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
           place_id: pred.placeId,
           description: pred.text?.text || '',
           structured_formatting: pred.structuredFormat || {},
-          main_text: pred.structuredFormat?.mainText?.text || pred.text?.text?.split(',')[0] || '',
+          main_text: pred.structuredFormat?.mainText?.text || pred.text?.text?.split(',')?.[0] || '',
           secondary_text: pred.structuredFormat?.secondaryText?.text || pred.text?.text?.split(',').slice(1).join(',') || '',
           types: pred.types || [],
           matched_substrings: pred.matchedSubstrings || [],

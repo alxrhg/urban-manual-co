@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check } from 'lucide-react';
+import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
+import { DestinationBadges } from './DestinationBadges';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -14,18 +15,23 @@ interface DestinationCardProps {
   isVisited?: boolean;
   showBadges?: boolean;
   className?: string;
+  isAdmin?: boolean;
+  onEdit?: (destination: Destination) => void;
 }
 
 /**
  * Enhanced Destination Card with hover interactions and progressive loading
+ * Memoized to prevent unnecessary re-renders
  */
-export function DestinationCard({
+export const DestinationCard = memo(function DestinationCard({
   destination,
   onClick,
   index = 0,
   isVisited = false,
   showBadges = true,
   className = '',
+  isAdmin = false,
+  onEdit,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -77,8 +83,7 @@ export function DestinationCard({
           relative aspect-video overflow-hidden rounded-2xl
           bg-gray-100 dark:bg-gray-800
           border border-gray-200 dark:border-gray-800
-          transition-shadow duration-300
-          group-hover:shadow-lg
+          transition-all duration-300 ease-out
           mb-3
           ${isLoaded ? 'opacity-100' : 'opacity-0'}
         `}
@@ -88,10 +93,10 @@ export function DestinationCard({
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
         )}
 
-        {/* Actual Image */}
-        {isInView && destination.image && !imageError ? (
+        {/* Actual Image - Use thumbnail for cards, fallback to full image */}
+        {isInView && (destination.image_thumbnail || destination.image) && !imageError ? (
           <Image
-            src={destination.image}
+            src={destination.image_thumbnail || destination.image!}
             alt={`${destination.name} in ${capitalizeCity(destination.city)}${destination.category ? ` - ${destination.category}` : ''}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -134,6 +139,21 @@ export function DestinationCard({
           </div>
         )}
 
+        {/* Admin Edit Button - Top Right */}
+        {isAdmin && onEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(destination);
+            }}
+            className="absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 transition-all opacity-0 group-hover:opacity-100 shadow-lg"
+            title="Edit destination"
+            aria-label="Edit destination"
+          >
+            <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+          </button>
+        )}
+
         {/* Badges - Animated on hover */}
         {showBadges && (
           <>
@@ -157,6 +177,13 @@ export function DestinationCard({
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
                     className="h-3 w-3"
+                    onError={(e) => {
+                      // Fallback to local file if external URL fails
+                      const target = e.currentTarget;
+                      if (target.src !== '/michelin-star.svg') {
+                        target.src = '/michelin-star.svg';
+                      }
+                    }}
                   />
                   <span>{destination.michelin_stars}</span>
                 </div>
@@ -180,7 +207,7 @@ export function DestinationCard({
         </h3>
 
         {/* Micro Description - Always show with fallback, stuck to title */}
-        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1">
+        <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
           {destination.micro_description || 
            (destination.category && destination.city 
              ? `${destination.category} in ${capitalizeCity(destination.city)}`
@@ -188,6 +215,13 @@ export function DestinationCard({
                ? `Located in ${capitalizeCity(destination.city)}`
                : destination.category || '')}
         </div>
+        
+        {/* ML Forecasting Badges */}
+        {showBadges && destination.id && (
+          <div className="mt-2">
+            <DestinationBadges destinationId={destination.id} compact={true} showTiming={false} />
+          </div>
+        )}
         </div>
       </div>
 
@@ -195,7 +229,7 @@ export function DestinationCard({
       <div
         className={`
           absolute inset-0 rounded-2xl
-          ring-2 ring-offset-2 ring-blue-500
+          ring-2 ring-offset-2 ring-black dark:ring-white
           opacity-0 focus-within:opacity-100
           transition-opacity duration-200
           pointer-events-none
@@ -203,7 +237,7 @@ export function DestinationCard({
       />
     </button>
   );
-}
+});
 
 /**
  * Lazy-loaded version that shows skeleton until in viewport

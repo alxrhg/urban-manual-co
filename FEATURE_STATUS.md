@@ -20,7 +20,9 @@ This document tracks the implementation status of all major features and improve
 - [x] Priority loading for LCP images (`priority`, `fetchPriority="high"`)
 - [x] Optimized image quality (80% for cards, 85% for hero)
 - [x] Blur placeholder support
-- [x] Remote patterns configured for Supabase Storage, Framer, Webflow
+- [x] Remote patterns configured for Supabase Storage, Framer, Webflow (legacy)
+- [x] **Image Migration Complete**: All Framer/Webflow images migrated to Supabase Storage
+- [x] Thumbnail support for optimized card rendering
 
 **Files Modified:**
 - `app/page.tsx`
@@ -303,15 +305,20 @@ This document tracks the implementation status of all major features and improve
 ---
 
 ### 13. Content Enhancement
-**Status:** ❌ **Not Implemented**
+**Status:** ⚠️ **Partially Implemented**
 
-- [ ] `scripts/generate-destination-content.ts` script
-- [ ] AI-generated destination descriptions (150-200 words)
+- [x] AI-generated destination descriptions (150-300 words) - ✅ **Implemented**
+  - `scripts/rewrite-about.ts` - Generates descriptions and content using OpenAI
+  - `app/api/regenerate-content/route.ts` - API endpoint for regenerating content using Gemini
+  - Content displayed in destination pages and drawer
+- [ ] `scripts/generate-destination-content.ts` script (comprehensive version)
 - [ ] "Why Visit" section (3-5 bullet points)
 - [ ] "Insider Tips" (2-3 practical tips)
 - [ ] "Similar Destinations" (AI-powered)
 
 **Reference:** Mentioned in Prompt 9 from conversation history
+
+**Note:** Basic AI content generation exists, but structured sections (Why Visit, Insider Tips, Similar Destinations) are not yet implemented.
 
 ---
 

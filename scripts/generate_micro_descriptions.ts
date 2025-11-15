@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Load from environment variables
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const geminiApiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Missing Supabase credentials. Please set SUPABASE_URL and SUPABASE_KEY environment variables.');
@@ -12,7 +12,7 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 if (!geminiApiKey) {
-  console.error('❌ Missing Gemini API key. Please set GEMINI_API_KEY or GOOGLE_API_KEY environment variable.');
+  console.error('❌ Missing Gemini API key. Please set NEXT_PUBLIC_GOOGLE_API_KEY environment variable.');
   process.exit(1);
 }
 

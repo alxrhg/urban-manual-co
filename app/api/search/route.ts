@@ -104,10 +104,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { query, filters = {}, userId, session_token } = body;
+    const {
+      data: { user: supabaseUser },
+    } = await supabase.auth.getUser();
     const PAGE_SIZE = 10;
 
     // Try to get userId from cookies/auth if not provided
-    let authenticatedUserId = userId;
+    let authenticatedUserId = userId || supabaseUser?.id;
 
     // Rate limiting: 20 requests per 10 seconds for search
     const identifier = getIdentifier(request, authenticatedUserId);
@@ -123,17 +126,6 @@ export async function POST(request: NextRequest) {
       );
     }
     let conversationContext: any = null;
-
-    if (!authenticatedUserId) {
-      try {
-        const { createServerClient } = await import('@/lib/supabase-server');
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        authenticatedUserId = user?.id;
-      } catch {
-        // Silently fail - userId is optional
-      }
-    }
 
     // Get conversation context if available
     try {
@@ -408,20 +400,13 @@ export async function POST(request: NextRequest) {
     let personalizedScores: Map<number, number> = new Map();
     if (authenticatedUserId) {
       try {
-        // Use internal API call with user context
-        const { createServerClient } = await import('@/lib/supabase-server');
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          const { AIRecommendationEngine } = await import('@/lib/ai-recommendations/engine');
-          const engine = new AIRecommendationEngine(user.id);
-          const recommendations = await engine.getCachedRecommendations(50);
-          
-          recommendations.forEach(rec => {
-            personalizedScores.set(rec.destinationId, rec.score);
-          });
-        }
+        const { AIRecommendationEngine } = await import('@/lib/ai-recommendations/engine');
+        const engine = new AIRecommendationEngine(authenticatedUserId);
+        const recommendations = await engine.getCachedRecommendations(50);
+
+        recommendations.forEach(rec => {
+          personalizedScores.set(rec.destinationId, rec.score);
+        });
       } catch (error) {
         // Silently fail - personalization is optional
         console.log('[Search] Could not fetch personalized scores:', error);
@@ -491,22 +476,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Log search interaction (best-effort)
-    try {
-      const { createServerClient } = await import('@/lib/supabase-server');
-      const sb = await createServerClient();
-      const { data: { user } } = await sb.auth.getUser();
-      await sb.from('user_interactions').insert({
-        interaction_type: 'search',
-        user_id: user?.id || null,
-        destination_id: null,
-        metadata: {
-          query,
-          intent,
-          count: rankedResults.length,
-          source: 'api/search',
-        }
-      });
-    } catch {}
+    if (authenticatedUserId) {
+      try {
+        await supabase.from('user_interactions').insert({
+          interaction_type: 'search',
+          user_id: authenticatedUserId,
+          destination_id: null,
+          metadata: {
+            query,
+            intent,
+            count: rankedResults.length,
+            source: 'api/search',
+          }
+        });
+      } catch {}
+    }
 
     return NextResponse.json({
       results: rankedResults,

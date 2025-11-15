@@ -151,7 +151,7 @@ export default function EnrichmentAdminPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            <Sparkles className="h-8 w-8 text-gray-600 dark:text-gray-400" />
             <h1 className="text-4xl font-bold">Destination Enrichment</h1>
           </div>
           <span className="text-gray-600 dark:text-gray-400">
@@ -185,8 +185,8 @@ export default function EnrichmentAdminPage() {
 
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-1">
-                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.withTags}</div>
-                <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.withTags}</div>
+                <Sparkles className="h-5 w-5 text-gray-600 dark:text-gray-400" />
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">With AI Tags</div>
             </div>
@@ -219,7 +219,7 @@ export default function EnrichmentAdminPage() {
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
               <div
-                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                className="bg-black dark:bg-white h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
               />
             </div>
@@ -241,7 +241,7 @@ export default function EnrichmentAdminPage() {
               <button
                 onClick={() => handleEnrich(false)}
                 disabled={enriching || (stats?.unenriched || 0) === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {enriching ? (
                   <>

@@ -160,11 +160,18 @@ async def train_sequence_model(
     """Train sequence model on historical browsing data."""
     try:
         analyzer = get_browsing_analyzer()
-        analyzer.train_on_historical_data(days)
+        metadata = await analyzer.train_on_historical_data(days)
+        status = metadata.get('status', 'success')
+        message = (
+            'Sequence model trained successfully'
+            if status == 'trained'
+            else 'No browsing sequences available for training'
+        )
         return {
-            'status': 'success',
-            'message': f'Sequence model trained on {days} days of data',
-            'trained_at': datetime.utcnow().isoformat(),
+            'status': status,
+            'message': message,
+            'metadata': metadata,
+            'generated_at': datetime.utcnow().isoformat(),
         }
     except Exception as e:
         logger.error(f"Error training sequence model: {e}")

@@ -181,6 +181,7 @@ interface TrendingDestination {
   growth_rate: number;
   current_demand: number;
   forecast_demand: number;
+  image?: string;
 }
 
 interface UseTrendingOptions {

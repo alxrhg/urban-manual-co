@@ -1,8 +1,8 @@
 'use client';
 
 import React from "react";
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { MapPin, Heart, Check, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
@@ -40,17 +40,19 @@ export default function Account() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   
-  // Get initial tab from URL query param
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips'>(() => {
+  // Get initial tab from URL query param - use useEffect to avoid SSR issues
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips'>('profile');
+  
+  // Update tab from URL params after mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab && ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips'].includes(tab)) {
-        return tab as any;
+        setActiveTab(tab as any);
       }
     }
-    return 'profile';
-  });
+  }, []);
   const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state

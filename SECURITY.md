@@ -2,7 +2,10 @@
 
 ## Overview
 
-This document outlines the security measures implemented in Urban Manual and provides recommendations for maintaining a secure production environment.
+This document outlines the security measures implemented in Urban Manual and provides recommendations for maintaining a secure production environment. Operational runbooks live alongside the codebase:
+
+- `vercel/monitoring.md` — how to review Vercel Pro analytics/logs, rotate secrets, and escalate incidents.
+- `docs/security/vercel-pro-validation.md` — evidence capture process proving the Pro plan + WAF/log drains are active.
 
 ---
 

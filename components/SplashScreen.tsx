@@ -46,9 +46,9 @@ export function SplashScreen() {
     >
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <h1 className="text-sm font-light text-gray-400 dark:text-gray-500 tracking-wide">
-                Urban Manual
-              </h1>
+              <span className="font-medium text-2xl text-black dark:text-white">
+                Urban Manual®
+              </span>
             </div>
           </div>
     </div>

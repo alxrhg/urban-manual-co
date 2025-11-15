@@ -8,6 +8,12 @@
 import { createServerClient as createSSRServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { 
+  validateSupabaseUrl, 
+  validateSupabaseAnonKey, 
+  validateSupabaseServiceRoleKey,
+  formatValidationErrors 
+} from './validation';
 
 /**
  * Get Supabase URL from environment variables
@@ -47,15 +53,33 @@ function getSupabaseServiceRoleKey(): string {
 }
 
 /**
- * Validate Supabase configuration
+ * Validate Supabase configuration with strict checks
  */
-function isValidConfig(url: string, key: string): boolean {
-  if (!url || !key) return false;
-  if (url.includes('placeholder') || url.includes('invalid')) return false;
-  if (key.includes('placeholder') || key.includes('invalid')) return false;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
-  if (key.length < 20) return false;
-  return true;
+function validateConfig(url: string, key: string): { valid: boolean; errors: string[] } {
+  const urlValidation = validateSupabaseUrl(url);
+  const keyValidation = validateSupabaseAnonKey(key);
+  
+  const allErrors = [...urlValidation.errors, ...keyValidation.errors];
+  
+  return {
+    valid: allErrors.length === 0,
+    errors: allErrors,
+  };
+}
+
+/**
+ * Validate service role key configuration
+ */
+function validateServiceRoleConfig(url: string, key: string): { valid: boolean; errors: string[] } {
+  const urlValidation = validateSupabaseUrl(url);
+  const keyValidation = validateSupabaseServiceRoleKey(key);
+  
+  const allErrors = [...urlValidation.errors, ...keyValidation.errors];
+  
+  return {
+    valid: allErrors.length === 0,
+    errors: allErrors,
+  };
 }
 
 /**
@@ -63,17 +87,32 @@ function isValidConfig(url: string, key: string): boolean {
  * 
  * This client respects RLS and uses the user's session from cookies.
  * Use this for most server-side operations.
+ * 
+ * @throws {Error} In production if configuration is invalid
  */
 export async function createServerClient() {
   const url = getSupabaseUrl();
   const key = getSupabaseAnonKey();
 
-  if (!isValidConfig(url, key)) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[Supabase Server] Missing or invalid configuration');
-    }
+  const validation = validateConfig(url, key);
+
+  if (!validation.valid) {
+    const errorMessage = formatValidationErrors(validation.errors);
     
-    // Return a dummy client
+    // Log error in all environments
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Supabase Server] Configuration Validation Failed:');
+      console.error(errorMessage);
+      console.warn('[Supabase Server] Using placeholder client. Fix configuration to enable Supabase features.');
+    } else {
+      // In production, log error but don't throw during build
+      // Runtime errors will occur when the client is actually used
+      console.error('[Supabase Server] Configuration Validation Failed (production):');
+      console.error(errorMessage);
+    }
+
+    // Return placeholder client (allows build to proceed)
+    // Actual runtime errors will occur when client methods are called
     const cookieStore = await cookies();
     return createSSRServerClient(
       'https://placeholder.supabase.co',
@@ -121,17 +160,32 @@ export async function createServerClient() {
  * - Admin operations
  * 
  * NEVER expose this to the client!
+ * 
+ * @throws {Error} In production if configuration is invalid
  */
 export function createServiceRoleClient() {
   const url = getSupabaseUrl();
   const key = getSupabaseServiceRoleKey();
 
-  if (!isValidConfig(url, key)) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[Supabase] Service role client not configured');
-    }
+  const validation = validateServiceRoleConfig(url, key);
+
+  if (!validation.valid) {
+    const errorMessage = formatValidationErrors(validation.errors);
     
-    // Return a dummy client using supabase-js (service role doesn't need SSR cookie handling)
+    // Log error in all environments
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Supabase Service Role] Configuration Validation Failed:');
+      console.error(errorMessage);
+      console.warn('[Supabase Service Role] Using placeholder client. Fix configuration to enable admin operations.');
+    } else {
+      // In production, log error but don't throw during build
+      // Runtime errors will occur when the client is actually used
+      console.error('[Supabase Service Role] Configuration Validation Failed (production):');
+      console.error(errorMessage);
+    }
+
+    // Return placeholder client (allows build to proceed)
+    // Actual runtime errors will occur when client methods are called
     return createClient(
       'https://placeholder.supabase.co',
       'placeholder-key',

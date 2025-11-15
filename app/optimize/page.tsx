@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -36,6 +36,7 @@ export default function RouteOptimizerPage() {
   const [optimizing, setOptimizing] = useState(false);
   const [startTime, setStartTime] = useState('09:00');
   const [selectedCity, setSelectedCity] = useState('');
+  const travelTimeCacheRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -108,35 +109,98 @@ export default function RouteOptimizerPage() {
     return durations[category] || 60;
   };
 
-  const estimateTravelTime = async (from: Destination, to: Destination, mode: string = 'walking'): Promise<number> => {
-    // If either location lacks coordinates, use fallback estimate
-    if (!from.latitude || !from.longitude || !to.latitude || !to.longitude) {
-      return Math.floor(Math.random() * 15) + 15;
+  const getFallbackTravelTime = () => Math.floor(Math.random() * 15) + 15;
+
+  const getLegKey = (fromSlug: string, toSlug: string) => `${fromSlug}->${toSlug}`;
+
+  const estimateTravelTimes = async (
+    legs: Array<{ from: Destination; to: Destination; mode?: string }>
+  ): Promise<Map<string, number>> => {
+    const cache = travelTimeCacheRef.current;
+    const results = new Map<string, number>();
+
+    if (legs.length === 0) {
+      return results;
     }
+
+    const pendingLegs: Array<{ from: Destination; to: Destination; mode?: string }> = [];
+
+    legs.forEach((leg) => {
+      const key = getLegKey(leg.from.slug, leg.to.slug);
+      if (
+        !leg.from.latitude ||
+        !leg.from.longitude ||
+        !leg.to.latitude ||
+        !leg.to.longitude
+      ) {
+        const fallback = getFallbackTravelTime();
+        cache.set(key, fallback);
+        results.set(key, fallback);
+        return;
+      }
+
+      if (cache.has(key)) {
+        results.set(key, cache.get(key)!);
+      } else {
+        pendingLegs.push(leg);
+      }
+    });
+
+    if (pendingLegs.length === 0) {
+      return results;
+    }
+
+    const requestedMode = pendingLegs[0]?.mode || 'walking';
+    const uniqueOrigins = Array.from(
+      new Map(pendingLegs.map((leg) => [leg.from.slug, leg.from])).values()
+    );
+    const uniqueDestinations = Array.from(
+      new Map(pendingLegs.map((leg) => [leg.to.slug, leg.to])).values()
+    );
 
     try {
       const response = await fetch('/api/distance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          origins: [{ lat: from.latitude, lng: from.longitude, name: from.name }],
-          destinations: [{ lat: to.latitude, lng: to.longitude, name: to.name }],
-          mode,
+          origins: uniqueOrigins.map((origin) => ({
+            lat: origin.latitude!,
+            lng: origin.longitude!,
+            name: origin.slug,
+          })),
+          destinations: uniqueDestinations.map((destination) => ({
+            lat: destination.latitude!,
+            lng: destination.longitude!,
+            name: destination.slug,
+          })),
+          mode: requestedMode,
         }),
       });
 
       const data = await response.json();
 
-      if (data.results && data.results.length > 0) {
-        const durationInMinutes = Math.ceil(data.results[0].duration / 60);
-        return durationInMinutes;
+      if (data.results && Array.isArray(data.results)) {
+        data.results.forEach((result: { from: string; to: string; duration: number }) => {
+          const key = getLegKey(result.from, result.to);
+          const durationInMinutes = Math.ceil(result.duration / 60);
+          cache.set(key, durationInMinutes);
+          results.set(key, durationInMinutes);
+        });
       }
     } catch (error) {
-      console.error('Error fetching travel time:', error);
+      console.error('Error fetching travel times:', error);
     }
 
-    // Fallback to estimate
-    return Math.floor(Math.random() * 15) + 15;
+    pendingLegs.forEach((leg) => {
+      const key = getLegKey(leg.from.slug, leg.to.slug);
+      if (!results.has(key)) {
+        const fallback = getFallbackTravelTime();
+        cache.set(key, fallback);
+        results.set(key, fallback);
+      }
+    });
+
+    return results;
   };
 
   const shouldInsertMeal = (currentTime: Date, lastMealTime: Date | null, type: 'lunch' | 'dinner'): boolean => {
@@ -176,6 +240,14 @@ export default function RouteOptimizerPage() {
         return (priority[a.category] || 3) - (priority[b.category] || 3);
       });
 
+      const legs = sortedPlaces.slice(0, -1).map((place, index) => ({
+        from: place,
+        to: sortedPlaces[index + 1],
+        mode: 'walking',
+      }));
+
+      const travelTimeMap = await estimateTravelTimes(legs);
+
       for (let index = 0; index < sortedPlaces.length; index++) {
         const place = sortedPlaces[index];
 
@@ -209,7 +281,7 @@ export default function RouteOptimizerPage() {
         const endTime = new Date(currentTime.getTime() + duration * 60000);
 
         const travelTime = index < sortedPlaces.length - 1
-          ? await estimateTravelTime(place, sortedPlaces[index + 1], 'walking')
+          ? travelTimeMap.get(getLegKey(place.slug, sortedPlaces[index + 1].slug))
           : undefined;
 
         route.push({
@@ -372,7 +444,7 @@ export default function RouteOptimizerPage() {
               <button
                 onClick={optimizeRoute}
                 disabled={selectedPlaces.length === 0 || optimizing}
-                className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+                className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
                 {optimizing ? (
                   <>
@@ -418,12 +490,12 @@ export default function RouteOptimizerPage() {
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                             stop.type === 'meal'
                               ? 'bg-orange-100 dark:bg-orange-900/30'
-                              : 'bg-purple-100 dark:bg-purple-900/30'
+                              : 'bg-gray-100 dark:bg-gray-800'
                           }`}>
                             {stop.type === 'meal' ? (
                               <Utensils className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                             ) : (
-                              <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-500" />
+                              <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                             )}
                           </div>
                           {index < optimizedRoute.length - 1 && (

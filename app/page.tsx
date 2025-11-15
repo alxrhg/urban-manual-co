@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus
+  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus, Sparkles
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -18,6 +17,7 @@ const DestinationDrawer = dynamic(
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
@@ -29,27 +29,35 @@ import {
   getSessionId,
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
-import { SmartRecommendations } from '@/components/SmartRecommendations';
-import { TrendingSection } from '@/components/TrendingSection';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
-import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
-import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
-import { SessionResume } from '@/components/SessionResume';
-import { ContextCards } from '@/components/ContextCards';
-import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
-import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
-import { DestinationBadges } from '@/components/DestinationBadges';
-import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
+import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
-import { TripPlanner } from '@/components/TripPlanner';
+import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
+import type { RefinementTag } from '@/components/RefinementChips';
 
-// Dynamically import MapView to avoid SSR issues
+// Lazy load components that are conditionally rendered or not immediately visible
+// This reduces the initial bundle size and improves initial page load time
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+const SequencePredictionsInline = dynamic(() => import('@/components/SequencePredictionsInline').then(mod => ({ default: mod.SequencePredictionsInline })), { ssr: false });
+const SmartRecommendations = dynamic(() => import('@/components/SmartRecommendations').then(mod => ({ default: mod.SmartRecommendations })), { ssr: false });
+const TrendingSection = dynamic(() => import('@/components/TrendingSection').then(mod => ({ default: mod.TrendingSection })), { ssr: false });
+const TrendingSectionML = dynamic(() => import('@/components/TrendingSectionML').then(mod => ({ default: mod.TrendingSectionML })), { ssr: false });
+const MultiplexAd = dynamic(() => import('@/components/GoogleAd').then(mod => ({ default: mod.MultiplexAd })), { ssr: false });
+const MarkdownRenderer = dynamic(() => import('@/src/components/MarkdownRenderer').then(mod => ({ default: mod.MarkdownRenderer })), { ssr: false });
+const SessionResume = dynamic(() => import('@/components/SessionResume').then(mod => ({ default: mod.SessionResume })), { ssr: false });
+const ContextCards = dynamic(() => import('@/components/ContextCards').then(mod => ({ default: mod.ContextCards })), { ssr: false });
+const IntentConfirmationChips = dynamic(() => import('@/components/IntentConfirmationChips').then(mod => ({ default: mod.IntentConfirmationChips })), { ssr: false });
+const RefinementChips = dynamic(() => import('@/components/RefinementChips').then(mod => ({ default: mod.RefinementChips })), { ssr: false });
+const DestinationBadges = dynamic(() => import('@/components/DestinationBadges').then(mod => ({ default: mod.DestinationBadges })), { ssr: false });
+const FollowUpSuggestions = dynamic(() => import('@/components/FollowUpSuggestions').then(mod => ({ default: mod.FollowUpSuggestions })), { ssr: false });
+const RealtimeStatusBadge = dynamic(() => import('@/components/RealtimeStatusBadge').then(mod => ({ default: mod.RealtimeStatusBadge })), { ssr: false });
+const TripPlanner = dynamic(() => import('@/components/TripPlanner').then(mod => ({ default: mod.TripPlanner })), { ssr: false });
+const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), { ssr: false });
 
 // Category icons using Untitled UI icons
 function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {
@@ -237,209 +245,13 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
   };
 }
 
-// Generate context-aware loading message based on query, intent, and user context
-function getContextAwareLoadingMessage(
-  query: string,
-  intent?: {
-    city?: string;
-    category?: string;
-    modifiers?: string[];
-    temporalContext?: { timeframe?: string; timeOfDay?: string };
-    primaryIntent?: string;
-  } | null,
-  seasonalContext?: { season?: string; weather?: string } | null,
-  userContext?: { preferences?: any; visitedCities?: string[] } | null
-): string {
-  const queryLower = query.toLowerCase();
-  const now = new Date();
-  const hour = now.getHours();
-  const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-
-  // Time-specific messages
-  if (intent?.temporalContext?.timeframe === 'now') {
-    const cityPart = intent.city ? ` in ${intent.city}` : '';
-    return `Finding places open right now${cityPart}...`;
-  }
-
-  // Intent-specific messages
-  if (intent?.primaryIntent === 'compare') {
-    return 'Comparing options for you...';
-  }
-  if (intent?.primaryIntent === 'plan') {
-    return 'Planning your perfect itinerary...';
-  }
-
-  // Category + City combinations
-  if (intent?.category && intent?.city) {
-    const category = intent.category.toLowerCase();
-    const city = intent.city;
-    
-    const categoryCityMessages: Record<string, string[]> = {
-      restaurant: [
-        `Discovering ${city}'s finest dining...`,
-        `Curating the best restaurants in ${city}...`,
-        `Finding ${city}'s culinary gems...`,
-        `Exploring ${city}'s food scene...`,
-      ],
-      cafe: [
-        `Locating ${city}'s best cafes...`,
-        `Finding cozy spots in ${city}...`,
-        `Discovering ${city}'s coffee culture...`,
-      ],
-      bar: [
-        `Exploring ${city}'s nightlife...`,
-        `Finding the best bars in ${city}...`,
-        `Discovering ${city}'s cocktail scene...`,
-      ],
-      hotel: [
-        `Curating ${city}'s best stays...`,
-        `Finding perfect accommodations in ${city}...`,
-        `Discovering ${city}'s top hotels...`,
-      ],
-      shopping: [
-        `Exploring ${city}'s shopping scene...`,
-        `Finding the best stores in ${city}...`,
-        `Discovering ${city}'s retail gems...`,
-      ],
-    };
-
-    const messages = categoryCityMessages[category];
-    if (messages) {
-      return messages[Math.floor(Math.random() * messages.length)];
-    }
-  }
-
-  // Modifier-specific messages
-  if (intent?.modifiers && intent.modifiers.length > 0) {
-    const modifier = intent.modifiers[0].toLowerCase();
-    if (modifier.includes('romantic')) {
-      return 'Finding intimate spots perfect for two...';
-    }
-    if (modifier.includes('cozy') || modifier.includes('comfortable')) {
-      return 'Seeking warm, welcoming spaces...';
-    }
-    if (modifier.includes('luxury') || modifier.includes('upscale')) {
-      return 'Curating premium experiences...';
-    }
-    if (modifier.includes('budget') || modifier.includes('cheap')) {
-      return 'Finding great value options...';
-    }
-    if (modifier.includes('hidden') || modifier.includes('secret')) {
-      return 'Uncovering hidden gems...';
-    }
-    if (modifier.includes('trendy') || modifier.includes('popular')) {
-      return "Spotting what's hot right now...";
-    }
-  }
-
-  // Seasonal context
-  if (seasonalContext?.season) {
-    const season = seasonalContext.season.toLowerCase();
-    if (season === 'spring') {
-      return 'Finding perfect spring destinations...';
-    }
-    if (season === 'summer') {
-      return 'Discovering summer hotspots...';
-    }
-    if (season === 'fall' || season === 'autumn') {
-      return 'Curating autumn experiences...';
-    }
-    if (season === 'winter') {
-      return 'Finding cozy winter spots...';
-    }
-  }
-
-  // Category-specific messages
-  if (intent?.category) {
-    const category = intent.category.toLowerCase();
-    const categoryMessages: Record<string, string[]> = {
-      restaurant: [
-        'Exploring culinary destinations...',
-        'Finding the perfect dining spots...',
-        'Curating restaurant recommendations...',
-        'Discovering amazing food experiences...',
-      ],
-      cafe: [
-        'Locating cozy cafes...',
-        'Finding the best coffee spots...',
-        'Discovering perfect study/work spaces...',
-      ],
-      bar: [
-        'Exploring nightlife options...',
-        'Finding great cocktail bars...',
-        'Discovering vibrant social scenes...',
-      ],
-      hotel: [
-        'Curating accommodation options...',
-        'Finding perfect stays...',
-        'Discovering unique lodgings...',
-      ],
-      shopping: [
-        'Exploring shopping destinations...',
-        'Finding the best retail spots...',
-        'Discovering unique boutiques...',
-      ],
-      attraction: [
-        'Discovering must-see attractions...',
-        'Finding cultural landmarks...',
-        'Exploring iconic destinations...',
-      ],
-    };
-
-    const messages = categoryMessages[category];
-    if (messages) {
-      return messages[Math.floor(Math.random() * messages.length)];
-    }
-  }
-
-  // City-specific messages
-  if (intent?.city) {
-    return `Exploring ${intent.city}'s best spots...`;
-  }
-
-  // Time-of-day specific messages
-  if (timeOfDay === 'morning') {
-    return 'Starting your day with perfect recommendations...';
-  }
-  if (timeOfDay === 'afternoon') {
-    return 'Finding your perfect afternoon escape...';
-  }
-  if (timeOfDay === 'evening') {
-    return 'Discovering evening destinations...';
-  }
-
-  // Query-based fallback (simple pattern matching)
-  if (queryLower.match(/restaurant|dining|food|eat/)) {
-    return 'Finding the perfect dining experience...';
-  }
-  if (queryLower.match(/coffee|cafe|caf[eé]/)) {
-    return 'Locating cozy coffee spots...';
-  }
-  if (queryLower.match(/bar|cocktail|drink|nightlife/)) {
-    return 'Exploring nightlife options...';
-  }
-  if (queryLower.match(/hotel|stay|accommodation/)) {
-    return 'Curating accommodation options...';
-  }
-
-  // Generic fallback with personality
-  const fallbackMessages = [
-    'Finding the perfect spots...',
-    'Searching for amazing places...',
-    'Discovering hidden gems...',
-    'Curating the best destinations...',
-    'Exploring top recommendations...',
-    'Finding your next adventure...',
-    'Locating must-visit places...',
-    'Selecting the finest spots...',
-  ];
-
-  return fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
-}
-
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
+  const { trackAction, predictions } = useSequenceTracker();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
+  const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
@@ -452,6 +264,8 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showAllCities, setShowAllCities] = useState(false);
+  const [sortBy, setSortBy] = useState<'default' | 'recent'>('default');
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
@@ -482,12 +296,15 @@ export default function Home() {
   // Near Me state
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>([]);
+  // Featured cities to always show in filter
+  const FEATURED_CITIES = ['taipei', 'tokyo', 'new-york', 'london'];
 
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>('');
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string, destinations?: Destination[]}>>([]);
   const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null); // Store enhanced intent data
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<Array<{ text: string; icon?: 'location' | 'time' | 'price' | 'rating' | 'default'; type?: 'refine' | 'expand' | 'related' }>>([]);
 
   // Session and context state
   const [lastSession, setLastSession] = useState<any>(null);
@@ -512,6 +329,7 @@ export default function Home() {
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
+  const lastSearchedQueryRef = useRef<string>(''); // Track last searched query to prevent duplicates
   
   // Loading text variants
   const loadingTextVariants = [
@@ -802,6 +620,10 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
+      // Check if user is admin
+      const role = (user.app_metadata as Record<string, any> | undefined)?.role;
+      setIsAdmin(role === 'admin');
+      
       // Priority: Fetch visited places FIRST (needed for filtering)
       // Then fetch profile and session in parallel
       fetchVisitedPlaces().then(() => {
@@ -812,6 +634,8 @@ export default function Home() {
       });
       fetchLastSession();
       fetchUserProfile();
+    } else {
+      setIsAdmin(false);
     }
   }, [user]);
 
@@ -858,20 +682,23 @@ export default function Home() {
     if (!user) return;
 
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        return;
-      }
-      const { data, error } = await supabaseClient
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const response = await fetch('/api/homepage/profile', {
+        credentials: 'include',
+      });
 
-      if (error) {
-        console.warn('Error fetching user profile:', error);
+      if (response.status === 401) {
+        setUserProfile(null);
+        setUserContext(null);
         return;
       }
+
+      if (!response.ok) {
+        console.warn('Error fetching user profile:', await response.text());
+        return;
+      }
+
+      const payload = await response.json();
+      const data = payload.profile;
 
       if (!data) {
         setUserProfile(null);
@@ -935,8 +762,23 @@ export default function Home() {
   // Works like chat but with convenience of auto-trigger
   useEffect(() => {
     if (searchTerm.trim().length > 0) {
+      const trimmedSearchTerm = searchTerm.trim();
+      
+      // Prevent duplicate searches - check if this query was already searched
+      if (trimmedSearchTerm === lastSearchedQueryRef.current) {
+        return;
+      }
+      
+      // Prevent duplicate searches - only trigger if not already searching
+      if (searching) {
+        return;
+      }
+      
       const timer = setTimeout(() => {
-        performAISearch(searchTerm);
+        // Double-check we're not already searching and query hasn't changed
+        if (!searching && searchTerm.trim() === trimmedSearchTerm && searchTerm.trim() !== lastSearchedQueryRef.current) {
+          performAISearch(searchTerm);
+        }
       }, 500); // 500ms debounce for auto-trigger
       return () => clearTimeout(timer);
     } else {
@@ -947,11 +789,13 @@ export default function Home() {
       setSearching(false);
       setSubmittedQuery('');
       setChatMessages([]);
+      setFollowUpSuggestions([]);
+      lastSearchedQueryRef.current = ''; // Reset on clear
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
     }
-  }, [searchTerm]); // ONLY depend on searchTerm
+  }, [searchTerm]); // Only depend on searchTerm - checking searching inside effect
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -976,7 +820,7 @@ export default function Home() {
       }
     }
     // Don't reset displayed count here - let the search effect handle it
-  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations]); // Filters only apply when no search
+  }, [selectedCity, selectedCategory, advancedFilters, visitedSlugs, destinations, sortBy]); // Filters only apply when no search
 
   // Note: Removed circular sync effect - SearchFiltersComponent now manages advancedFilters directly
   // and updates selectedCity/selectedCategory when needed, avoiding duplicate filter initialization
@@ -990,70 +834,39 @@ export default function Home() {
     try {
       console.log('[Filter Data] Starting fetch...');
       
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        console.warn('[Filter Data] Supabase client not available');
-        // Use the already-started Discovery Engine call
-        const discoveryBaseline = await discoveryBaselinePromise;
-        if (discoveryBaseline.length) {
-          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
-          React.startTransition(() => {
-            setCities(discoveryCities);
-            setCategories(discoveryCategories);
-          });
-          if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
-            const filtered = filterDestinationsWithData(
-              discoveryBaseline,
-              '', {}, '', '', user, visitedSlugs
-            );
-            setFilteredDestinations(filtered);
-          }
-        } else {
-          await applyFallbackData({ updateDestinations: destinations.length === 0 });
-        }
-        return;
-      }
-      
-      // Optimize query: only get distinct city/category pairs, limit to speed up
-      let data, error;
+      let filterRows: any[] | null = null;
+      let fetchError: any = null;
+      const controller = typeof window !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 30000) : null;
       try {
-        const queryPromise = supabaseClient
-        .from('destinations')
-          .select('city, category')
-          .is('parent_destination_id', null) // Only top-level destinations for filters
-          .limit(1000) // Limit to speed up initial query
-          .order('city');
-        
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Network timeout')), 30000)
-        );
-        
-        const result = await Promise.race([queryPromise, timeoutPromise]);
-        data = result.data;
-        error = result.error;
+        const response = await fetch('/api/homepage/filters', {
+          signal: controller?.signal,
+        });
+        if (!response.ok) {
+          fetchError = new Error(await response.text());
+        } else {
+          const payload = await response.json();
+          filterRows = payload.rows || [];
+        }
       } catch (networkError: any) {
-        // Handle network errors (connection lost, timeout, etc.)
         console.warn('[Filter Data] Network error:', networkError?.message || networkError);
-        error = networkError;
-        data = null;
+        fetchError = networkError;
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
 
-      // OPTIMIZATION: Use helper function for error checking
-      if (error || !data) {
-        if (error && !isIgnorableSupabaseError(error)) {
-          // Don't log network errors as warnings - they're expected in poor connectivity
-          if (!error.message?.includes('Network') && !error.message?.includes('timeout')) {
-            console.warn('[Filter Data] Error:', error.message || error);
+      if (fetchError || !filterRows) {
+        if (fetchError && !isIgnorableSupabaseError(fetchError)) {
+          if (!fetchError.message?.includes('Network') && !fetchError.message?.includes('timeout')) {
+            console.warn('[Filter Data] Error:', fetchError.message || fetchError);
           }
         }
 
-        // OPTIMIZATION: Reuse the already-started Discovery Engine call
         const discoveryBaseline = await discoveryBaselinePromise;
         if (discoveryBaseline.length) {
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
             setCities(discoveryCities);
             setCategories(discoveryCategories);
@@ -1072,7 +885,7 @@ export default function Home() {
         return;
       }
 
-      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions((data || []) as any[]);
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(filterRows as any[]);
 
       // OPTIMIZATION: Batch state updates
       React.startTransition(() => {
@@ -1155,7 +968,8 @@ export default function Home() {
     currentSelectedCity: string = selectedCity,
     currentSelectedCategory: string = selectedCategory,
     currentUser: typeof user = user,
-    currentVisitedSlugs: Set<string> = visitedSlugs
+    currentVisitedSlugs: Set<string> = visitedSlugs,
+    currentSortBy: 'default' | 'recent' = sortBy
   ) => {
     let filtered = dataToFilter;
 
@@ -1265,99 +1079,90 @@ export default function Home() {
     }
     // When searchTerm exists, AI chat handles all filtering - don't apply text search here
 
-    // Pinterest-style recommendation sorting
-    // Only apply smart sorting when no search term (natural discovery)
-    if (!currentSearchTerm) {
-      filtered = filtered
-        .map((dest, index) => ({
-          ...dest,
-          _score: getRecommendationScore(dest, index)
-        }))
-        .sort((a, b) => b._score - a._score);
+    // Apply sorting
+    if (currentSortBy === 'recent') {
+      // Sort by created_at descending (newest first)
+      filtered = filtered.sort((a, b) => {
+        const aDate = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+        const bDate = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+        return bDate - aDate; // Descending (newest first)
+      });
+    } else {
+      // Pinterest-style recommendation sorting
+      // Only apply smart sorting when no search term (natural discovery)
+      if (!currentSearchTerm) {
+        filtered = filtered
+          .map((dest, index) => ({
+            ...dest,
+            _score: getRecommendationScore(dest, index)
+          }))
+          .sort((a, b) => b._score - a._score);
+      }
     }
 
     // When user is signed in: separate visited & unvisited, move visited to bottom
-    if (currentUser && currentVisitedSlugs.size > 0) {
+    // Only apply this when not sorting by recent (recent sort takes priority)
+    if (currentSortBy !== 'recent' && currentUser && currentVisitedSlugs.size > 0) {
       const unvisited = filtered.filter(d => !currentVisitedSlugs.has(d.slug));
       const visited = filtered.filter(d => currentVisitedSlugs.has(d.slug));
       filtered = [...unvisited, ...visited];
     }
 
     return filtered;
-  }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs]);
+  }, [searchTerm, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs, sortBy]);
   const fetchDestinations = useCallback(async () => {
-    // Step 1: Run Supabase query directly (no waiting)
     try {
-      // Select only essential columns to avoid issues with missing columns
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        console.warn('[Destinations] Supabase client not available');
-        // Fallback to Discovery Engine if Supabase not available
-        const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
-        if (discoveryBaseline.length) {
-          setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(
-            discoveryBaseline,
-            '', {}, '', '', user, visitedSlugs
-          );
-          setFilteredDestinations(filtered);
-          const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
-          React.startTransition(() => {
-            if (discoveryCities.length) setCities(discoveryCities);
-            if (discoveryCategories.length) setCategories(discoveryCategories);
-          });
-        } else {
-          await applyFallbackData({ updateDestinations: true });
-        }
-        return;
-      }
-      
-      // Optimize query: limit initial results for faster load
-      // Exclude nested destinations (only show top-level destinations)
-      let data, error;
+      let destinationsData: Destination[] | null = null;
+      let fetchError: any = null;
+      const controller = typeof window !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 30000) : null;
       try {
-        const queryPromise = supabaseClient
-          .from('destinations')
-          .select('slug, name, city, neighborhood, category, micro_description, description, content, image, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset')
-          .is('parent_destination_id', null) // Only top-level destinations
-          .limit(500) // Limit initial query for faster load
-          .order('name');
-        
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Network timeout')), 30000)
-        );
-        
-        const result = await Promise.race([queryPromise, timeoutPromise]);
-        data = result.data;
-        error = result.error;
+        // Add cache-busting query parameter to ensure fresh data after POI creation
+        const response = await fetch(`/api/homepage/destinations?t=${Date.now()}`, {
+          signal: controller?.signal,
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          fetchError = new Error(await response.text());
+        } else {
+          const payload = await response.json();
+          destinationsData = payload.destinations || [];
+        }
       } catch (networkError: any) {
-        // Handle network errors (connection lost, timeout, etc.)
         console.warn('[Destinations] Network error:', networkError?.message || networkError);
-        error = networkError;
-        data = null;
+        fetchError = networkError;
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
 
-      if (error || !data || !Array.isArray(data) || data.length === 0) {
-        // OPTIMIZATION: Use helper function for error checking
-        if (error && !isIgnorableSupabaseError(error)) {
-          // Don't log network errors as warnings - they're expected in poor connectivity
-          if (!error.message?.includes('Network') && !error.message?.includes('timeout')) {
-            console.warn('Error fetching destinations:', error.message || error);
+      if (fetchError || !destinationsData || !Array.isArray(destinationsData) || destinationsData.length === 0) {
+        if (fetchError && !isIgnorableSupabaseError(fetchError)) {
+          if (!fetchError.message?.includes('Network') && !fetchError.message?.includes('timeout')) {
+            console.warn('Error fetching destinations:', fetchError.message || fetchError);
           }
         }
 
-        // Fallback to Discovery Engine if Supabase fails
         const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
         if (discoveryBaseline.length) {
           setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(
-            discoveryBaseline,
-            '', {}, '', '', user, visitedSlugs
-          );
-          setFilteredDestinations(filtered);
+          // Don't filter destinations if there's an active AI chat search (submittedQuery)
+          // AI chat handles its own filtering via performAISearch
+          if (!submittedQuery) {
+            const filtered = filterDestinationsWithData(
+              discoveryBaseline,
+              searchTerm,
+              advancedFilters,
+              selectedCity,
+              selectedCategory,
+              user,
+              visitedSlugs,
+              sortBy
+            );
+            setFilteredDestinations(filtered);
+          }
           const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
-          // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
             if (discoveryCities.length) setCities(discoveryCities);
             if (discoveryCategories.length) setCategories(discoveryCategories);
@@ -1368,56 +1173,59 @@ export default function Home() {
         return;
       }
 
-      // Step 2: Show Supabase results immediately
-      setDestinations(data as Destination[]);
+      setDestinations(destinationsData as Destination[]);
 
-      // Extract unique cities and categories from full data
-      // IMPORTANT: Set cities/categories immediately (synchronously) to prevent empty filter flash
-      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(data as any[]);
-
-      // Set cities and categories immediately (no batching) to prevent empty filter flash
+      const { cities: uniqueCities, categories: uniqueCategories } = extractFilterOptions(destinationsData as any[]);
       if (uniqueCities.length) {
         setCities(uniqueCities);
       }
       if (uniqueCategories.length) {
         setCategories(uniqueCategories);
       }
-      
-      // Filter destinations immediately with the new data (no filters on initial load)
-      const filtered = filterDestinationsWithData(
-        data as Destination[],
-        '', // no search term
-        {}, // no advanced filters
-        '', // no selected city
-        '', // no selected category
-        user, // current user
-        visitedSlugs // current visited slugs
-      );
-      setFilteredDestinations(filtered);
 
-      // Step 3: Run Discovery Engine AFTER Supabase completes (as enhancement/filter)
-      // This runs in background and can enhance the results
+      // Don't filter destinations if there's an active AI chat search (submittedQuery)
+      // AI chat handles its own filtering via performAISearch
+      if (!submittedQuery) {
+        const filtered = filterDestinationsWithData(
+          destinationsData as Destination[],
+          searchTerm,
+          advancedFilters,
+          selectedCity,
+          selectedCategory,
+          user,
+          visitedSlugs,
+          sortBy
+        );
+        setFilteredDestinations(filtered);
+      }
+
       setDiscoveryEngineLoading(true);
       fetchDiscoveryBootstrap()
         .then((discoveryBaseline) => {
           if (discoveryBaseline.length > 0) {
-            // Merge Discovery Engine results with Supabase results
-            // Discovery Engine can provide better ranking/personalization
-            const merged = [...(data as Destination[]), ...discoveryBaseline];
-            const uniqueMerged = merged.filter((dest, index, self) => 
+            const merged = [...(destinationsData as Destination[]), ...discoveryBaseline];
+            const uniqueMerged = merged.filter((dest, index, self) =>
               index === self.findIndex(d => d.slug === dest.slug)
             );
-            
-            // Only update if Discovery Engine provides additional value
-            if (uniqueMerged.length > data.length) {
+
+            if (uniqueMerged.length > destinationsData!.length) {
               setDestinations(uniqueMerged);
-              const filtered = filterDestinationsWithData(
-                uniqueMerged,
-                '', {}, '', '', user, visitedSlugs
-              );
-              setFilteredDestinations(filtered);
-              
-              // OPTIMIZATION: Batch state updates - only update if Discovery Engine has more
+              // Don't filter destinations if there's an active AI chat search (submittedQuery)
+              // AI chat handles its own filtering via performAISearch
+              if (!submittedQuery) {
+                const filteredMerged = filterDestinationsWithData(
+                  uniqueMerged,
+                  searchTerm,
+                  advancedFilters,
+                  selectedCity,
+                  selectedCategory,
+                  user,
+                  visitedSlugs,
+                  sortBy
+                );
+                setFilteredDestinations(filteredMerged);
+              }
+
               const { cities: discoveryCities, categories: discoveryCategories } = extractFilterOptions(discoveryBaseline);
               const updates: { cities?: string[]; categories?: string[] } = {};
               if (discoveryCities.length > uniqueCities.length) {
@@ -1436,47 +1244,42 @@ export default function Home() {
           }
         })
         .catch(() => {
-          // Discovery Engine failed - that's fine, we already have Supabase data
+          // Discovery Engine failed - that's fine, we already have initial data
         })
         .finally(() => {
           setDiscoveryEngineLoading(false);
         });
     } catch (error: any) {
-      // OPTIMIZATION: Use helper function for error checking
       if (!isIgnorableSupabaseError(error)) {
         console.warn('Error fetching destinations:', error?.message || error);
       }
 
-      // Fallback to Discovery Engine if Supabase fails
       const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
       if (!discoveryBaseline.length) {
         await applyFallbackData({ updateDestinations: true });
       }
     }
-  }, [user, visitedSlugs, filterDestinationsWithData]);
+  }, [user, visitedSlugs, filterDestinationsWithData, searchTerm, advancedFilters, selectedCity, selectedCategory, sortBy, submittedQuery]);
 
   const fetchVisitedPlaces = async (): Promise<void> => {
     if (!user) return;
 
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) {
-        return;
-      }
-      const { data, error } = await supabaseClient
-        .from('visited_places')
-        .select('destination_slug')
-        .eq('user_id', user.id);
+      const response = await fetch('/api/homepage/visited', {
+        credentials: 'include',
+      });
 
-      // Handle missing table or RLS errors gracefully
-      if (error && (error.code === 'PGRST116' || error.code === 'PGRST301')) {
-        // Table doesn't exist or RLS blocking - that's fine, just continue
+      if (response.status === 401) {
         return;
       }
 
-      if (error) throw error;
+      if (!response.ok) {
+        console.warn('Error fetching visited places:', await response.text());
+        return;
+      }
 
-      const slugs = new Set((data as any[])?.map((v: any) => v.destination_slug) || []);
+      const payload = await response.json();
+      const slugs = new Set((payload.slugs as string[] | undefined) || []);
       setVisitedSlugs(slugs);
     } catch (error) {
       // Expected error if user is not logged in - suppress
@@ -1489,9 +1292,28 @@ export default function Home() {
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = useCallback(async (query: string) => {
-    setSubmittedQuery(query); // Store the submitted query
+    const trimmedQuery = query.trim();
+    
+    // Prevent duplicate searches with the same query
+    if (trimmedQuery === lastSearchedQueryRef.current && searching) {
+      return;
+    }
+    
+    // Track search action for sequence prediction
+    if (trimmedQuery) {
+      trackAction({
+        type: 'search',
+        query: trimmedQuery,
+      });
+    }
+    
+    // Update ref immediately to prevent duplicate calls
+    lastSearchedQueryRef.current = trimmedQuery;
+    setSubmittedQuery(trimmedQuery); // Store the submitted query
+    // Clear previous suggestions when starting new search
+    setFollowUpSuggestions([]);
     // Match chat component: only check if empty or loading
-    if (!query.trim() || searching) {
+    if (!trimmedQuery || searching) {
       return;
     }
 
@@ -1591,6 +1413,13 @@ export default function Home() {
       const destinations = data.destinations || [];
       setFilteredDestinations(destinations);
 
+      // Store follow-up suggestions from API response
+      if (data.suggestions && Array.isArray(data.suggestions)) {
+        setFollowUpSuggestions(data.suggestions);
+      } else {
+        setFollowUpSuggestions([]);
+      }
+
       // Add messages to visual chat history
       const contextPrompt = getContextAwareLoadingMessage(query);
       setChatMessages(prev => [
@@ -1604,6 +1433,9 @@ export default function Home() {
       setFilteredDestinations([]);
       setSearchIntent(null);
       setSeasonalContext(null);
+      setFollowUpSuggestions([]);
+      // Reset last searched query on error so user can retry
+      lastSearchedQueryRef.current = '';
 
       // Add error message to chat
       setChatMessages(prev => [
@@ -1614,7 +1446,7 @@ export default function Home() {
     } finally {
       setSearching(false);
     }
-  }, [user, searching, conversationHistory]);
+  }, [user, searching, conversationHistory, trackAction, submittedQuery]);
 
   // Convert inferredTags to RefinementTag array
   const convertInferredTagsToRefinementTags = useCallback((
@@ -1690,6 +1522,11 @@ export default function Home() {
       newActiveFilters.delete(key);
             } else {
       newActiveFilters.add(key);
+      
+      // Track filter action for sequence prediction
+      trackAction({
+        type: 'filter',
+      });
     }
     
     setActiveFilters(newActiveFilters);
@@ -1708,7 +1545,7 @@ export default function Home() {
       
       performAISearch(enhancedQuery);
     }
-  }, [activeFilters, submittedQuery, performAISearch]);
+  }, [activeFilters, submittedQuery, performAISearch, trackAction]);
 
   // Handle chip remove - remove filter and rebuild search
   const handleChipRemove = useCallback((tag: RefinementTag) => {
@@ -1822,11 +1659,16 @@ export default function Home() {
     setFilteredDestinations(filtered);
   }, [destinations, filterDestinationsWithData]);
 
-  // Filter cities to only show: Taipei, Tokyo, New York, and London
-  const allowedCities = ['taipei', 'tokyo', 'new-york', 'london'];
-  const displayedCities = cities.filter(city => 
-    allowedCities.includes(city.toLowerCase())
+  // Display featured cities (Taipei, Tokyo, New York, London) if they exist in the cities list
+  const featuredCities = useMemo(
+    () => FEATURED_CITIES.filter(city => cities.includes(city)),
+    [cities]
   );
+  const remainingCities = useMemo(
+    () => cities.filter(city => !FEATURED_CITIES.includes(city)),
+    [cities]
+  );
+  const displayedCities = showAllCities ? [...featuredCities, ...remainingCities] : featuredCities;
 
   return (
     <ErrorBoundary>
@@ -1873,7 +1715,7 @@ export default function Home() {
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 lg:px-12 py-16 md:py-24 pb-8 md:pb-12">
+        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -1940,10 +1782,10 @@ export default function Home() {
                   setAdvancedFilters(newFilters);
                   // Sync with legacy state for backward compatibility
                   if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
+                    setSelectedCity(typeof newFilters.city === 'string' ? newFilters.city : '');
                   }
                   if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
+                    setSelectedCategory(typeof newFilters.category === 'string' ? newFilters.category : '');
                   }
                   // Track filter changes
                   Object.entries(newFilters).forEach(([key, value]) => {
@@ -2042,6 +1884,19 @@ export default function Home() {
                                       {message.contextPrompt}
                                     </div>
                                   )}
+                                  {/* Show follow-up suggestions after the last assistant message */}
+                                  {index === chatMessages.length - 1 && followUpSuggestions.length > 0 && (
+                                    <FollowUpSuggestions
+                                      suggestions={followUpSuggestions}
+                                      onSuggestionClick={(suggestion) => {
+                                        // Only set searchTerm - the useEffect will handle the search
+                                        // This prevents duplicate searches
+                                        setSearchTerm(suggestion);
+                                        setFollowUpInput('');
+                                      }}
+                                      isLoading={searching}
+                                    />
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -2120,39 +1975,59 @@ export default function Home() {
                 <div className="flex-1 flex items-end">
                   <div className="w-full pt-6">
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
-                    <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs mb-[50px]">
-                      <button
-                        onClick={() => {
-                          setSelectedCity("");
-                          setCurrentPage(1);
-                          trackFilterChange({ filterType: 'city', value: 'all' });
-                        }}
-                        className={`transition-all duration-200 ease-out ${
-                          !selectedCity
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                        }`}
-                      >
-                        All Cities
-                      </button>
-                      {displayedCities.map((city) => (
+                    <div className="mb-[50px]">
+                      {/* CITIES Heading */}
+                      <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+                        CITIES
+                      </div>
+                      
+                      {/* City Buttons */}
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
-                          key={city}
                           onClick={() => {
-                            const newCity = city === selectedCity ? "" : city;
-                            setSelectedCity(newCity);
+                            setSelectedCity("");
                             setCurrentPage(1);
-                            trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                            trackFilterChange({ filterType: 'city', value: 'all' });
                           }}
                           className={`transition-all duration-200 ease-out ${
-                            selectedCity === city
+                            !selectedCity
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          {capitalizeCity(city)}
+                          All Cities
                         </button>
-                      ))}
+                        {displayedCities.map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => {
+                              const newCity = city === selectedCity ? "" : city;
+                              setSelectedCity(newCity);
+                              setCurrentPage(1);
+                              trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                            }}
+                            className={`transition-all duration-200 ease-out ${
+                              selectedCity === city
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            {capitalizeCity(city)}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* More Cities Button */}
+                      {cities.length > displayedCities.length && (
+                        <button
+                          onClick={() => {
+                            setShowAllCities(true);
+                          }}
+                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
+                        >
+                          + More cities ({cities.length - displayedCities.length})
+                        </button>
+                      )}
                     </div>
                     
                     {/* Category List (including Michelin) */}
@@ -2188,9 +2063,11 @@ export default function Home() {
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                          <Image
+                            src="/michelin-star.svg"
                             alt="Michelin star"
+                            width={12}
+                            height={12}
                             className="h-3 w-3"
                           />
                           Michelin
@@ -2222,6 +2099,7 @@ export default function Home() {
                         })}
                       </div>
                     )}
+
                   </div>
                 </div>
               )}
@@ -2230,74 +2108,99 @@ export default function Home() {
         </section>
 
               {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 lg:px-12 pb-24 md:pb-32 mt-8">
+              <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">
-                  <div className="flex justify-end items-center gap-3 relative flex-wrap">
-                    {/* Wrapper for Filter and Map Toggle to ensure alignment */}
-                    <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
-                      {/* Filter Button - Expands inline below */}
-                      <div className="w-full md:w-auto">
-                        <SearchFiltersComponent
-                          filters={advancedFilters}
-                          onFiltersChange={(newFilters) => {
-                            setAdvancedFilters(newFilters);
-                            if (newFilters.city !== undefined) {
-                              setSelectedCity(newFilters.city || '');
-                            }
-                            if (newFilters.category !== undefined) {
-                              setSelectedCategory(newFilters.category || '');
-                            }
-                            Object.entries(newFilters).forEach(([key, value]) => {
-                              if (value !== undefined && value !== null && value !== '') {
-                                trackFilterChange({ filterType: key, value });
-                              }
-                            });
+                  <div className="flex flex-col items-end gap-3">
+                    {/* Create Trip / Add New POI Button */}
+                    <div className="flex justify-end w-full">
+                      {isAdmin ? (
+                        <button
+                          onClick={() => {
+                            setEditingDestination(null);
+                            setShowPOIDrawer(true);
                           }}
-                          availableCities={cities}
-                          availableCategories={categories}
-                          onLocationChange={handleLocationChange}
-                        />
-                      </div>
-
-                      {/* Grid/Map Toggle */}
-                      <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
-                        <button
-                          onClick={() => setViewMode('grid')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'grid'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Grid view"
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                          aria-label="Add New POI"
                         >
-                          <LayoutGrid className="h-4 w-4" />
-                          <span>Grid</span>
+                          <Plus className="h-5 w-5" />
+                          <span className="text-sm font-medium">Add New POI</span>
                         </button>
+                      ) : (
                         <button
-                          onClick={() => setViewMode('map')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'map'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Map view"
+                          onClick={() => setShowTripPlanner(true)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                          aria-label="Create Trip"
                         >
-                          <Map className="h-4 w-4" />
-                          <span>Map</span>
+                          <Plus className="h-5 w-5" />
+                          <span className="text-sm font-medium">Create Trip</span>
                         </button>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Create Trip Button */}
-                    <button
-                      onClick={() => setShowTripPlanner(true)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black rounded-full transition-opacity hover:opacity-80 flex-shrink-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Create Trip</span>
-                    </button>
+                    <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">
+                      {/* Wrapper for Filter and Map Toggle to ensure alignment */}
+                      <div className="flex items-center gap-3 flex-nowrap">
+                        {/* Filter Button - Expands inline below */}
+                        <div>
+                          <SearchFiltersComponent
+                            filters={advancedFilters}
+                            onFiltersChange={(newFilters) => {
+                              setAdvancedFilters(newFilters);
+                              if (newFilters.city !== undefined) {
+                                setSelectedCity(newFilters.city || '');
+                              }
+                              if (newFilters.category !== undefined) {
+                                setSelectedCategory(newFilters.category || '');
+                              }
+                              Object.entries(newFilters).forEach(([key, value]) => {
+                                if (value !== undefined && value !== null && value !== '') {
+                                  trackFilterChange({ filterType: key, value });
+                                }
+                              });
+                            }}
+                            availableCities={cities}
+                            availableCategories={categories}
+                            onLocationChange={handleLocationChange}
+                            sortBy={sortBy}
+                            onSortChange={(newSort) => {
+                              setSortBy(newSort);
+                              setCurrentPage(1);
+                            }}
+                            isAdmin={isAdmin}
+                          />
+                        </div>
+
+                        {/* Grid/Map Toggle */}
+                        <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                          <button
+                            onClick={() => setViewMode('grid')}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === 'grid'
+                                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                            aria-label="Grid view"
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            <span>Grid</span>
+                          </button>
+                          <button
+                            onClick={() => setViewMode('map')}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === 'map'
+                                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                            aria-label="Map view"
+                          >
+                            <Map className="h-4 w-4" />
+                            <span>Map</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
             
@@ -2315,6 +2218,13 @@ export default function Home() {
                     destinationSlug: destination.slug,
                     position: 0,
                     source: 'smart_recommendations',
+                  });
+
+                  // Track for sequence prediction
+                  trackAction({
+                    type: 'click',
+                    destination_id: destination.id,
+                    destination_slug: destination.slug,
                   });
 
                   // Also track with new analytics system
@@ -2353,10 +2263,20 @@ export default function Home() {
               </div>
             )}
             
-            {/* Trending Section - Show when no active search */}
+            {/* Sequence Predictions - Show after user has performed some actions */}
+            {user && predictions && predictions.predictions && predictions.predictions.length > 0 && !submittedQuery && (
+              <div className="mb-8">
+                <SequencePredictionsInline 
+                  predictions={predictions.predictions} 
+                  compact={false}
+                />
+              </div>
+            )}
+
+            {/* Trending Section - ML-powered Prophet forecasting */}
             {!submittedQuery && (
               <div className="mb-12 md:mb-16">
-              <TrendingSection />
+                <TrendingSectionML limit={12} forecastDays={7} />
               </div>
             )}
 
@@ -2364,7 +2284,7 @@ export default function Home() {
             {advancedFilters.nearMe && userLocation && nearbyDestinations.length === 0 && (
               <div className="text-center py-12 px-4">
                 <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
                   No destinations found nearby
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">
@@ -2420,66 +2340,72 @@ export default function Home() {
                       const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
                   return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
-                    {paginatedDestinations.map((destination, index) => {
-                      const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                      const globalIndex = startIndex + index;
-                      
-                      return (
-                        <DestinationCard
-                    key={destination.slug}
-                          destination={destination}
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setIsDrawerOpen(true);
-
-                      // Track destination click
-                      trackDestinationClick({
-                        destinationSlug: destination.slug,
-                              position: globalIndex,
-                        source: 'grid',
-                      });
-                      
-                      // Also track with new analytics system
-                      if (destination.id) {
-                        import('@/lib/analytics/track').then(({ trackEvent }) => {
-                          trackEvent({
-                            event_type: 'click',
-                            destination_id: destination.id,
-                            destination_slug: destination.slug,
-                            metadata: {
-                              category: destination.category,
-                              city: destination.city,
-                              source: 'homepage_grid',
-                                    position: globalIndex,
-                            },
-                          });
-                        });
-                      }
+                    <UniversalGrid
+                      items={paginatedDestinations}
+                      renderItem={(destination, index) => {
+                        const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                        const globalIndex = startIndex + index;
                         
-                            // Track click event to Discovery Engine for personalization
-                            if (user?.id) {
-                              fetch('/api/discovery/track-event', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  userId: user.id,
-                                  eventType: 'click',
-                                  documentId: destination.slug,
-                                }),
-                              }).catch((error) => {
-                                console.warn('Failed to track click event:', error);
+                        return (
+                          <DestinationCard
+                            key={destination.slug}
+                            destination={destination}
+                            isAdmin={isAdmin}
+                            onEdit={(dest) => {
+                              setEditingDestination(dest);
+                              setShowPOIDrawer(true);
+                            }}
+                            onClick={() => {
+                              setSelectedDestination(destination);
+                              setIsDrawerOpen(true);
+
+                              // Track destination click
+                              trackDestinationClick({
+                                destinationSlug: destination.slug,
+                                position: globalIndex,
+                                source: 'grid',
                               });
-                            }
-                          }}
-                          index={globalIndex}
-                          isVisited={isVisited}
-                          showBadges={true}
-                        />
-                      );
-                      })}
-                        </div>
-                      );
+                              
+                              // Also track with new analytics system
+                              if (destination.id) {
+                                import('@/lib/analytics/track').then(({ trackEvent }) => {
+                                  trackEvent({
+                                    event_type: 'click',
+                                    destination_id: destination.id,
+                                    destination_slug: destination.slug,
+                                    metadata: {
+                                      category: destination.category,
+                                      city: destination.city,
+                                      source: 'homepage_grid',
+                                      position: globalIndex,
+                                    },
+                                  });
+                                });
+                              }
+                                
+                              // Track click event to Discovery Engine for personalization
+                              if (user?.id) {
+                                fetch('/api/discovery/track-event', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    userId: user.id,
+                                    eventType: 'click',
+                                    documentId: destination.slug,
+                                  }),
+                                }).catch((error) => {
+                                  console.warn('Failed to track click event:', error);
+                                });
+                              }
+                            }}
+                            index={globalIndex}
+                            isVisited={isVisited}
+                            showBadges={true}
+                          />
+                        );
+                      }}
+                    />
+                  );
                     })()
                   )}
 
@@ -2489,7 +2415,7 @@ export default function Home() {
             if (totalPages <= 1) return null;
             
             return (
-                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2">
+                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2 mx-auto">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
@@ -2610,6 +2536,31 @@ export default function Home() {
             isOpen={showTripPlanner}
             onClose={() => setShowTripPlanner(false)}
           />
+
+          {/* POI Drawer (Admin only) */}
+          {isAdmin && (
+            <POIDrawer
+              isOpen={showPOIDrawer}
+              onClose={() => {
+                setShowPOIDrawer(false);
+                setEditingDestination(null);
+              }}
+              destination={editingDestination}
+              onSave={async () => {
+                // Refresh destinations immediately after creating/updating/deleting POI
+                // Small delay to ensure database transaction is committed
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Fetch fresh destinations (this will automatically apply current filters)
+                await fetchDestinations();
+                
+                // Reset to first page to show the newly created POI at the top
+                setCurrentPage(1);
+                
+                setEditingDestination(null);
+              }}
+            />
+          )}
       </main>
     </ErrorBoundary>
   );

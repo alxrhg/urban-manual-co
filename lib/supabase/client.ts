@@ -6,6 +6,7 @@
  */
 
 import { createBrowserClient } from '@supabase/ssr';
+import { validateSupabaseUrl, validateSupabaseAnonKey, formatValidationErrors } from './validation';
 
 /**
  * Get Supabase URL from environment variables
@@ -34,38 +35,92 @@ function getSupabaseKey(): string {
 }
 
 /**
- * Validate Supabase configuration
+ * Validate Supabase configuration with strict checks
  */
-function isValidConfig(url: string, key: string): boolean {
-  if (!url || !key) return false;
-  if (url.includes('placeholder') || url.includes('invalid')) return false;
-  if (key.includes('placeholder') || key.includes('invalid')) return false;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
-  if (key.length < 20) return false; // Keys are typically much longer
-  return true;
+function validateConfig(url: string, key: string): { valid: boolean; errors: string[] } {
+  const urlValidation = validateSupabaseUrl(url);
+  const keyValidation = validateSupabaseAnonKey(key);
+  
+  const allErrors = [...urlValidation.errors, ...keyValidation.errors];
+  
+  return {
+    valid: allErrors.length === 0,
+    errors: allErrors,
+  };
 }
 
 /**
  * Create Supabase browser client
  * This is the main client for client-side components
+ * 
+ * @param options - Optional configuration
+ * @param options.skipValidation - Skip strict validation (use with caution)
+ * 
+ * @throws {Error} In production if configuration is invalid
  */
-export function createClient() {
+export function createClient(options?: { skipValidation?: boolean }) {
   const url = getSupabaseUrl();
   const key = getSupabaseKey();
 
-  if (!isValidConfig(url, key)) {
-    // In development, log helpful error
-    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      console.warn('[Supabase] Missing or invalid configuration:', {
-        hasUrl: !!url,
-        hasKey: !!key,
-        urlPreview: url ? url.substring(0, 30) + '...' : 'missing',
-        keyLength: key.length,
+  // Skip validation if requested (for admin pages that need to work even with strict validation)
+  const validation = options?.skipValidation ? { valid: true, errors: [] } : validateConfig(url, key);
+
+  if (!validation.valid) {
+    const errorMessage = formatValidationErrors(validation.errors);
+    
+    // Check if we're in a browser context (runtime) vs build time
+    const isRuntime = typeof window !== 'undefined';
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // If skipValidation is true, still try to use the actual URL/key even if validation fails
+    // This allows admin pages to work even if validation is too strict
+    if (options?.skipValidation && url && key && !url.includes('placeholder') && !key.includes('placeholder')) {
+      console.warn('[Supabase Client] Validation skipped, using provided URL/key');
+      return createBrowserClient(url, key, {
+        cookies: {
+          getAll() {
+            // Check if we're in a browser environment
+            if (typeof window === 'undefined' || typeof document === 'undefined') {
+              return [];
+            }
+            return document.cookie.split('; ').map(cookie => {
+              const [name, ...rest] = cookie.split('=');
+              return { name, value: rest.join('=') };
+            });
+          },
+          setAll(cookiesToSet) {
+            // Check if we're in a browser environment
+            if (typeof window === 'undefined' || typeof document === 'undefined') {
+              return;
+            }
+            cookiesToSet.forEach(({ name, value, options }) => {
+              document.cookie = `${name}=${value}; path=${options?.path || '/'}; ${
+                options?.maxAge ? `max-age=${options.maxAge};` : ''
+              } ${options?.domain ? `domain=${options.domain};` : ''} ${
+                options?.sameSite ? `samesite=${options.sameSite};` : ''
+              } ${options?.secure ? 'secure;' : ''}`;
+            });
+          },
+        },
       });
-      console.warn('[Supabase] Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or PUBLISHABLE_KEY)');
+    }
+    
+    // Log error in all environments, but don't throw
+    // This allows the app to continue running with a placeholder client
+    // The placeholder client will fail gracefully when actually used
+    if (isRuntime) {
+      if (isProduction) {
+        console.error('[Supabase Client] Configuration Validation Failed (production):');
+        console.error(errorMessage);
+        console.warn('[Supabase Client] Using placeholder client. Supabase features will not work until configuration is fixed.');
+      } else {
+        console.error('[Supabase Client] Configuration Validation Failed:');
+        console.error(errorMessage);
+        console.warn('[Supabase Client] Using placeholder client. Fix configuration to enable Supabase features.');
+      }
     }
 
-    // Return a dummy client that won't crash the app
+    // Return placeholder client (allows app to continue, but Supabase calls will fail)
     return createBrowserClient(
       'https://placeholder.supabase.co',
       'placeholder-key',

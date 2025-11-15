@@ -158,20 +158,20 @@ export function IntelligentSearchFeedback({
 
       {/* Seasonal Intelligence */}
       {seasonalContext && seasonalContext.event && (
-        <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg border border-purple-200 dark:border-purple-900">
+        <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
           <div className="flex items-start gap-2">
-            <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+            <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-purple-900 dark:text-purple-100">
+              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
                 {seasonalContext.event}
               </p>
               {seasonalContext.description && (
-                <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
+                <p className="text-xs text-gray-700 dark:text-gray-300 mt-0.5">
                   {seasonalContext.description}
                 </p>
               )}
               {seasonalContext.start && seasonalContext.end && (
-                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                   {new Date(seasonalContext.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(seasonalContext.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </p>
               )}

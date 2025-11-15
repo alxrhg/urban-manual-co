@@ -29,7 +29,7 @@ import {
   isUpstashConfigured,
 } from '@/lib/rate-limit';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 
@@ -44,6 +44,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
   ]);
 }
 
+function normalizeUserId(userId?: string | null) {
+  if (!userId) return undefined;
+  return ['anonymous', 'guest'].includes(userId) ? undefined : userId;
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ user_id: string }> }
@@ -54,7 +59,7 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser();
     const params = await context.params;
     const { user_id } = params || {};
-    const userId = user?.id || user_id || undefined;
+    const userId = normalizeUserId(user?.id || user_id || undefined);
 
     // Rate limiting: 5 requests per 10 seconds for conversation
     const identifier = getIdentifier(request, userId);
@@ -237,7 +242,7 @@ export async function POST(
 
     // Log metrics
     await logConversationMetrics({
-      userId: userId || session_token || 'anonymous',
+      userId: userId || session.sessionToken || session_token || 'anonymous',
       messageCount: messages.length + 2,
       intentType: intent.primaryIntent,
       modelUsed: usedModel,
@@ -253,6 +258,9 @@ export async function POST(
       intent,
       suggestions: suggestions.slice(0, 3),
       session_id: session.sessionId,
+      session_token: session.sessionToken,
+      last_activity: session.lastActivity,
+      context_summary: session.contextSummary,
       model: usedModel,
     });
   } catch (error: any) {
@@ -279,7 +287,7 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     const params = await context.params;
     const { user_id } = params || {};
-    const userId = user?.id || user_id || undefined;
+    const userId = normalizeUserId(user?.id || user_id || undefined);
 
     const session = await getOrCreateSession(userId, session_token);
     if (!session) {
@@ -291,7 +299,10 @@ export async function GET(
     return NextResponse.json({
       messages,
       context: session.context,
+      context_summary: session.contextSummary,
       session_id: session.sessionId,
+      session_token: session.sessionToken,
+      last_activity: session.lastActivity,
     });
   } catch (error: any) {
     console.error('Error fetching conversation:', error);

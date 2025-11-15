@@ -75,6 +75,44 @@ vercel --prod
    - Go to Project Settings > Domains
    - Add your custom domain
 
+## Harden the Vercel Pro Environment
+
+Urban Manual is standardized on the **Vercel Pro** subscription for every preview, staging, and production project. Use the following checklist immediately after the first deploy (and any time a new project/environment is created):
+
+| Capability | Where to Configure | Required Value |
+|------------|-------------------|----------------|
+| **Plan tier** | Settings → General → Plan | Set to **Pro** (owner-billed). Cost center: **SEC-OPS-4521 / $20 per project per month** |
+| **Web Application Firewall (WAF)** | Settings → Security → WAF | Enable managed rules. Block OWASP Top 10 (SQLi, XSS) and enable bot protection. |
+| **Firewall/IP rules** | Settings → Security → Firewall Rules | Block `0.0.0.0/0` except `allow` for `Cloudflare`, `Supabase`, and `Admin VPN` CIDR ranges listed in `docs/security/service-matrix.md`. |
+| **Log retention** | Settings → Logs → Retention | Set to **30 days (Pro default)** and archive daily to the configured log drain. |
+| **Edge/Traffic analytics** | Settings → Analytics | Enable Pro analytics, anomaly detection, and alert webhooks to `https://alerts.urbanmanual.com/vercel`. |
+| **Log drains** | Settings → Logs → Log Drains | Send to `https://logs.security.urbanmanual.com/v1/vercel` (signed payload) and tag with project/environment. |
+| **Alert webhooks** | Settings → Alerts | Add webhook `https://alerts.urbanmanual.com/vercel/anomalies`. Trigger on WAF blocks, latency spikes, and error rate >2%. |
+
+> **Subscription tracking**: Record each project switch to Pro in `docs/security/service-matrix.md` (include environment, owner email, billing reference, and monthly spend). The finance owner for cost center **SEC-OPS-4521** is `finance@urbanmanual.com`.
+
+### Firewall/IP Blocking Rules
+
+1. Navigate to **Settings → Security → Firewall Rules**.
+2. Add the following allow rules (priority order matters):
+   - `Allow` **Admin VPN** `203.0.113.0/24` (Reason: operations access)
+   - `Allow` **Supabase Edge Functions** `35.226.0.0/16`
+   - `Allow` **Cloudflare Workers** `198.51.100.0/24`
+3. Add a `Block` rule for `0.0.0.0/0` with action `Challenge` to force unknown IPs through WAF challenges.
+4. Save and redeploy to propagate rules.
+
+### Log Drains & Alerts
+
+1. **Log Drains**
+   - Destination: `https://logs.security.urbanmanual.com/v1/vercel`
+   - Format: `JSON` with metadata. Include secrets `LOG_DRAIN_TOKEN`, rotate quarterly (see `vercel/monitoring.md`).
+2. **Alert Webhooks**
+   - Endpoint: `https://alerts.urbanmanual.com/vercel/anomalies`
+   - Secret: `VERCEL_ALERT_SECRET`
+   - Events: Deployment failed, WAF block spike (>50 blocks/min), log drain failure, traffic anomaly >3σ.
+
+Document evidence of each configuration (screenshots or CLI outputs) in `docs/security/vercel-pro-validation.md`.
+
 ## Troubleshooting
 
 ### Build Fails

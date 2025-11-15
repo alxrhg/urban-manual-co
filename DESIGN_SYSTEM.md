@@ -48,6 +48,9 @@
 --warning: #f59e0b (orange-500)
 --error: #ef4444 (red-500)
 --info: #3b82f6 (blue-500)
+
+/* FORBIDDEN COLORS */
+--purple: NEVER USE PURPLE - Use gray/neutral instead
 ```
 
 ### Spacing
@@ -452,6 +455,7 @@ Before creating a new component, ensure:
 ## 🚫 Anti-Patterns (Avoid)
 
 ### Don't:
+- ❌ **NEVER use purple theme** - Purple is explicitly forbidden in the design system
 - ❌ Use colors outside the palette (no random blues, greens, etc.)
 - ❌ Use inconsistent border radius (stick to rounded-2xl, rounded-full)
 - ❌ Use inconsistent spacing (use Tailwind scale)
@@ -460,6 +464,11 @@ Before creating a new component, ensure:
 - ❌ Use custom fonts (default system font is fine)
 - ❌ Use emojis in UI (only in content)
 - ❌ Use shadows excessively (only for modals/drawers)
+
+### Color Restrictions:
+- **Purple is FORBIDDEN** - Use gray/neutral for AI/ML features instead
+- For AI/ML indicators: Use `gray` or `neutral` colors, not purple
+- For badges: Use existing status colors (green, yellow, red, blue) or gray
 
 ### Do:
 - ✅ Reuse existing components

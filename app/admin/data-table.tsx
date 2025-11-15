@@ -53,7 +53,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
   // Custom filter function for multi-column search
-  const globalFilterFn: FilterFn<any> = React.useCallback((row, columnId, filterValue) => {
+  const globalFilterFn: FilterFn<TData> = React.useCallback((row, columnId, filterValue) => {
     if (!filterValue) return true;
     const search = String(filterValue).toLowerCase();
     const name = String(row.getValue('name') || '').toLowerCase();
@@ -63,24 +63,37 @@ export function DataTable<TData, TValue>({
     return name.includes(search) || city.includes(search) || slug.includes(search) || category.includes(search);
   }, []);
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    globalFilterFn: globalFilterFn,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      globalFilter: searchQuery || undefined,
-    },
-  });
+  const table = useReactTable(
+    React.useMemo(
+      () => ({
+        data,
+        columns,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnVisibilityChange: setColumnVisibility,
+        globalFilterFn: globalFilterFn,
+        state: {
+          sorting,
+          columnFilters,
+          columnVisibility,
+          globalFilter: searchQuery || undefined,
+        },
+      }),
+      [
+        data,
+        columns,
+        sorting,
+        columnFilters,
+        columnVisibility,
+        searchQuery,
+        globalFilterFn,
+      ]
+    )
+  );
 
   return (
     <div className="space-y-4">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -40,6 +40,11 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
+
+// Dynamically import POIDrawer to avoid SSR issues
+const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
+  ssr: false,
+});
 
 // Dynamically import MapView to avoid SSR issues
 const MapView = dynamic(() => import('@/components/MapView'), { 
@@ -126,7 +131,7 @@ function getOpenStatus(openingHours: any, city: string, timezoneId?: string | nu
     const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
     const todayText = openingHours.weekday_text[googleDayIndex];
-    const dayName = todayText?.split(':')[0];
+    const dayName = todayText?.split(':')?.[0];
     const hoursText = todayText?.substring(todayText.indexOf(':') + 1).trim();
 
     if (!hoursText) {
@@ -200,6 +205,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingNested, setLoadingNested] = useState(false);
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -264,9 +271,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setEnrichedData(null);
         setIsSaved(false);
         setIsVisited(false);
+        setIsAddedToTrip(false); // Reset immediately
         setReviewSummary(null);
         return;
       }
+
+      // Reset isAddedToTrip immediately when destination changes to prevent showing "Added" for all places
+      setIsAddedToTrip(false);
 
       // Fetch enriched data from database
       try {
@@ -365,6 +376,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       if (!user) {
         setIsSaved(false);
         setIsVisited(false);
+        setIsAddedToTrip(false);
         return;
       }
 
@@ -396,9 +408,78 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       if (visitedData) {
         console.log('Visited status loaded:', visitedData);
       }
+
+      // Check if destination is in any of user's trips
+      if (destination.slug) {
+        // First get all user's trips
+        const { data: userTrips } = await supabaseClient
+          .from('trips')
+          .select('id')
+          .eq('user_id', user.id);
+
+        if (userTrips && userTrips.length > 0) {
+          const tripIds = userTrips.map(t => t.id);
+          // Check if destination is in any of these trips
+          const { data: tripItems } = await supabaseClient
+            .from('itinerary_items')
+            .select('id')
+            .eq('destination_slug', destination.slug)
+            .in('trip_id', tripIds)
+            .limit(1);
+
+          setIsAddedToTrip(!!tripItems && tripItems.length > 0);
+        } else {
+          setIsAddedToTrip(false);
+        }
+      } else {
+        setIsAddedToTrip(false);
+      }
       } else {
         setIsSaved(false);
         setIsVisited(false);
+        setIsAddedToTrip(false);
+      }
+
+      // Check if user is admin - fetch fresh session to get latest metadata
+      if (user) {
+        try {
+          const supabaseClient = createClient();
+          const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+          
+          if (!sessionError && session) {
+            const role = (session.user.app_metadata as Record<string, any> | null)?.role;
+            const isUserAdmin = role === 'admin';
+            setIsAdmin(isUserAdmin);
+            // Debug log (remove in production)
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[DestinationDrawer] Admin check:', { 
+                role, 
+                isUserAdmin, 
+                userId: session.user.id,
+                hasDestination: !!destination,
+                hasSession: !!session
+              });
+            }
+          } else {
+            // Fallback to user from context if session fetch fails
+            const role = (user.app_metadata as Record<string, any> | null)?.role;
+            const isUserAdmin = role === 'admin';
+            setIsAdmin(isUserAdmin);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[DestinationDrawer] Admin check (fallback):', { 
+                role, 
+                isUserAdmin, 
+                userId: user.id,
+                sessionError: sessionError?.message
+              });
+            }
+          }
+        } catch (error) {
+          console.error('[DestinationDrawer] Error checking admin status:', error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
       }
     }
 
@@ -811,13 +892,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {destination?.slug && destination.slug.trim() && (
               <Link
                 href={`/destination/${destination.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClose();
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
+                title="Open destination page in new tab"
+                aria-label="Open destination page in new tab"
               >
                 <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Link>
@@ -977,6 +1059,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             >
               <Share2 className="h-5 w-5 text-gray-900 dark:text-gray-100" />
             </button>
+
+            {/* Edit Button (Admin Only) */}
+            {isAdmin && destination && (
+              <button
+                onClick={() => setIsEditDrawerOpen(true)}
+                className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center justify-center transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                title="Edit destination"
+                aria-label="Edit destination"
+              >
+                <Edit className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+              </button>
+            )}
           </div>
 
           {/* Action Buttons - Side by Side */}
@@ -1005,18 +1099,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 if (isAddedToTrip) return;
                 setShowAddToTripModal(true);
                 }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-3.5 border-2 rounded-xl font-medium text-sm transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 isAddedToTrip
-                  ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 cursor-default'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               disabled={isAddedToTrip}
             >
               {isAddedToTrip ? (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-4 w-4" />
                   <span>Added</span>
                 </>
               ) : (
@@ -1043,13 +1135,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {destination?.slug && destination.slug.trim() && (
               <Link
                 href={`/destination/${destination.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClose();
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
+                title="Open destination page in new tab"
+                aria-label="Open destination page in new tab"
               >
                 <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Link>
@@ -1122,14 +1215,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </span>
               )}
 
-              {(destination.michelin_stars ?? 0) > 0 && (
+              {destination.michelin_stars && destination.michelin_stars > 0 && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
                     className="h-3 w-3"
+                    loading="lazy"
+                    onError={(e) => {
+                      // Fallback to local file if external URL fails
+                      const target = e.currentTarget;
+                      if (target.src !== '/michelin-star.svg') {
+                        target.src = '/michelin-star.svg';
+                      }
+                    }}
                   />
-                  {destination.michelin_stars} Michelin star{destination.michelin_stars! > 1 ? 's' : ''}
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
                   </span>
             )}
 
@@ -1287,18 +1388,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               )}
 
               {destination.slug && destination.slug.trim() ? (
-                <button
+                <Link
+                  href={`/destination/${destination.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                  onClick={() => {
-                    onClose();
-                    setTimeout(() => {
-                      router.push(`/destination/${destination.slug}`);
-                    }, 100);
+                  onClick={(e) => {
+                    e.stopPropagation();
                   }}
                 >
                   <ExternalLink className="h-3 w-3" />
                   View Full Page
-                </button>
+                </Link>
               ) : null}
                   </div>
                 </div>
@@ -1369,7 +1470,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <RealtimeStatusBadge
                   destinationId={destination.id}
                   compact={false}
-                  showCrowding={true}
                   showWaitTime={true}
                   showAvailability={true}
                 />
@@ -1675,6 +1775,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"
                               className="h-3 w-3"
+                              loading="lazy"
+                              onError={(e) => {
+                                // Fallback to local file if external URL fails
+                                const target = e.currentTarget;
+                                if (target.src !== '/michelin-star.svg') {
+                                  target.src = '/michelin-star.svg';
+                                }
+                              }}
                             />
                             <span>{rec.michelin_stars}</span>
                           </div>
@@ -1722,18 +1830,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 if (isAddedToTrip) return;
                 setShowAddToTripModal(true);
                   }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-3 border-2 rounded-xl font-medium text-sm transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 isAddedToTrip
-                  ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 cursor-default'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               disabled={isAddedToTrip}
-                >
+            >
               {isAddedToTrip ? (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-4 w-4" />
                   <span>Added</span>
                 </>
               ) : (
@@ -1843,6 +1949,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           }}
         />
       )}
+      <POIDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        destination={destination}
+        onSave={() => {
+          setIsEditDrawerOpen(false);
+          // Optionally refresh destination data here if needed
+        }}
+      />
     </>
   );
 }

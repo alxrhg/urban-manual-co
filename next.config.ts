@@ -1,9 +1,83 @@
 import type { NextConfig } from "next";
+import { withPayload } from '@payloadcms/next/withPayload'
+
+const cspDirectives = [
+  "default-src 'self'",
+  // Inline scripts are occasionally required for Next.js hydration/runtime.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https://*",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.jsdelivr.net/npm/world-atlas@*",
+  "worker-src 'self' blob:",
+  "child-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "manifest-src 'self'",
+  "media-src 'self' https:",
+  "object-src 'none'",
+  "prefetch-src 'self'",
+  "frame-src 'none'",
+  'upgrade-insecure-requests',
+]
+
+const securityHeaders: { key: string; value: string }[] = [
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-XSS-Protection', value: '1; mode=block' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+  },
+  {
+    key: 'Content-Security-Policy',
+    value: cspDirectives.join('; '),
+  },
+  {
+    key: 'Access-Control-Allow-Origin',
+    value: '*',
+  },
+  {
+    key: 'Access-Control-Allow-Methods',
+    value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  },
+  {
+    key: 'Access-Control-Allow-Headers',
+    value: 'Content-Type, Authorization, X-Requested-With, Accept',
+  },
+  {
+    key: 'Cross-Origin-Embedder-Policy',
+    value: 'require-corp',
+  },
+  {
+    key: 'Cross-Origin-Opener-Policy',
+    value: 'same-origin',
+  },
+  {
+    key: 'Cross-Origin-Resource-Policy',
+    value: 'same-origin',
+  },
+  {
+    key: 'Origin-Agent-Cluster',
+    value: '?1',
+  },
+]
 
 const nextConfig: NextConfig = {
   /* config options here */
   // Enable compression
   compress: true,
+
+  env: {
+    NEXT_PUBLIC_MAPKIT_AVAILABLE:
+      process.env.MAPKIT_TEAM_ID && process.env.MAPKIT_KEY_ID && process.env.MAPKIT_PRIVATE_KEY ? 'true' : '',
+  },
 
   // Optimize CSS
   experimental: {
@@ -12,6 +86,9 @@ const nextConfig: NextConfig = {
 
   // Optimize production builds (no source maps for smaller bundles)
   productionBrowserSourceMaps: false,
+
+  // Enable React compiler optimizations
+  reactStrictMode: true,
 
   // Note: Next.js 16 uses SWC (Speedy Web Compiler) by default for:
   // - TypeScript/JavaScript compilation (20x faster than Babel)
@@ -27,30 +104,25 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/:path*',
+        headers: securityHeaders,
+      },
+      {
+        // Cache static assets for 1 year
+        source: '/static/:path*',
         headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
+        ],
+      },
+      {
+        // Cache destinations.json for 5 minutes with stale-while-revalidate
+        source: '/destinations.json',
+        headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
+            key: 'Cache-Control',
+            value: 'public, max-age=300, stale-while-revalidate=600',
           },
         ],
       },
@@ -61,9 +133,10 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 60 * 60 * 24 * 7, // Cache for 7 days (604800 seconds)
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: false, // Ensure image optimization is enabled
     remotePatterns: (() => {
       const patterns: { protocol: 'https'; hostname: string }[] = []
       try {
@@ -76,10 +149,13 @@ const nextConfig: NextConfig = {
       // Add common image CDN domains
       patterns.push(
         { protocol: 'https', hostname: 'guide.michelin.com' },
+        // Legacy: Framer/Webflow patterns kept for backwards compatibility
+        // All images have been migrated to Supabase Storage
         { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
         { protocol: 'https', hostname: 'framerusercontent.com' },
         { protocol: 'https', hostname: '*.framerusercontent.com' },
         { protocol: 'https', hostname: '*.webflow.com' },
+        // Supabase Storage (primary image hosting)
         { protocol: 'https', hostname: '*.supabase.co' },
         { protocol: 'https', hostname: '*.supabase.in' }
       )
@@ -88,4 +164,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPayload(nextConfig);

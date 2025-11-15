@@ -12,7 +12,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 
@@ -76,7 +76,7 @@ export async function uploadFile(
   mimeType: string
 ): Promise<UploadedFile> {
   if (!fileManager) {
-    throw new Error('GoogleAIFileManager not initialized. Check GOOGLE_API_KEY.');
+    throw new Error('GoogleAIFileManager not initialized. Check NEXT_PUBLIC_GOOGLE_API_KEY.');
   }
 
   try {
@@ -127,7 +127,7 @@ export async function searchFiles(
   }
 ): Promise<FileSearchResult> {
   if (!genAI) {
-    throw new Error('GoogleGenerativeAI not initialized. Check GOOGLE_API_KEY.');
+    throw new Error('GoogleGenerativeAI not initialized. Check NEXT_PUBLIC_GOOGLE_API_KEY.');
   }
 
   try {
@@ -219,7 +219,7 @@ function buildStorePath(storeName: string): string {
 
 async function callGeminiRest<T>(path: string, body: unknown): Promise<T> {
   if (!GOOGLE_API_KEY) {
-    throw new Error('GOOGLE_API_KEY is required for Gemini File Search.');
+    throw new Error('NEXT_PUBLIC_GOOGLE_API_KEY is required for Gemini File Search.');
   }
 
   const response = await fetch(`${GEMINI_API_BASE}${path}?key=${GOOGLE_API_KEY}`, {

@@ -9,7 +9,7 @@ import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini as fallback
-const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 
@@ -770,8 +770,22 @@ async function processAIChatRequest(
         if (isConversational && conversationHistory.length > 0) {
           try {
             // Build enhanced query with conversation context
-            const recentQueries = conversationHistory.slice(-3).map(m => m.content).join(' ');
-            const enhancedQuery = `${query} (context: ${recentQueries})`;
+            // Extract key information from conversation history
+            const recentMessages = conversationHistory.slice(-4); // Last 4 messages for better context
+            const conversationSummary = recentMessages
+              .map((msg, idx) => {
+                if (msg.role === 'user') {
+                  return `Q${Math.floor(idx/2) + 1}: ${msg.content}`;
+                } else {
+                  return `A${Math.floor(idx/2) + 1}: ${msg.content.substring(0, 100)}...`;
+                }
+              })
+              .join(' | ');
+            
+            // Enhanced query that includes conversation context
+            const enhancedQuery = conversationHistory.length > 2 
+              ? `${query} (previous conversation: ${conversationSummary})`
+              : `${query} (context: ${recentMessages.map(m => m.content).join(' ')})`;
             
             const convResults = await discoveryEngine.search(enhancedQuery, {
               userId: userId,
@@ -1101,6 +1115,53 @@ async function processAIChatRequest(
                   totalEvents: limitedResults.reduce((sum: number, r: any) => sum + (r.nearbyEvents?.length || 0), 0),
                 };
 
+                // Generate follow-up suggestions
+                let followUpSuggestions: Array<{ text: string; icon?: 'location' | 'time' | 'price' | 'rating' | 'default'; type?: 'refine' | 'expand' | 'related' }> = [];
+                try {
+                  const { generateFollowUpSuggestions } = await import('@/lib/chat/generateFollowUpSuggestions');
+                  
+                  // Get user context if available
+                  let userContextData: any = undefined;
+                  if (userId) {
+                    try {
+                      const { data: profile } = await supabase
+                        .from('user_profiles')
+                        .select('favorite_cities, favorite_categories')
+                        .eq('user_id', userId)
+                        .single();
+                      
+                      if (profile) {
+                        userContextData = {
+                          favoriteCities: profile.favorite_cities || [],
+                          favoriteCategories: profile.favorite_categories || [],
+                        };
+                      }
+                    } catch (error) {
+                      // Silently fail - user context is optional
+                    }
+                  }
+                  
+                  // Normalize intent filters for suggestions (convert priceLevel number to string if needed)
+                  const normalizedIntent = intent ? {
+                    ...intent,
+                    filters: intent.filters ? {
+                      ...intent.filters,
+                      priceLevel: intent.filters.priceLevel ? String(intent.filters.priceLevel) : undefined,
+                    } : undefined,
+                  } : undefined;
+                  
+                  followUpSuggestions = generateFollowUpSuggestions({
+                    query,
+                    intent: normalizedIntent,
+                    destinations: limitedResults,
+                    conversationHistory,
+                    userContext: userContextData,
+                  });
+                } catch (error) {
+                  // Silently fail - suggestions are optional
+                  console.debug('[AI Chat] Failed to generate suggestions:', error);
+                }
+
                 const responseData = {
                   content: enhancedContent,
                   destinations: limitedResults,
@@ -1113,6 +1174,7 @@ async function processAIChatRequest(
                   inferredTags: intent.inferredTags || undefined, // Include inferred tags for refinement chips
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
+                  suggestions: followUpSuggestions, // Include follow-up suggestions
                 };
 
                 // Cache non-personalized results

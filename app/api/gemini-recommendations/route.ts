@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     await requireAdmin(request);
 
-    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (!GOOGLE_API_KEY) {
       return NextResponse.json({ error: 'Google API key not configured' }, { status: 500 });
     }

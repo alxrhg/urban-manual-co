@@ -12,8 +12,11 @@ interface CityClockProps {
 export function CityClock({ citySlug, className = '' }: CityClockProps) {
   const [time, setTime] = useState<string>('');
   const [date, setDate] = useState<string>('');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    
     // Get timezone for the city
     const timezone = CITY_TIMEZONES[citySlug.toLowerCase()] || 'UTC';
 
@@ -55,16 +58,26 @@ export function CityClock({ citySlug, className = '' }: CityClockProps) {
     return () => clearInterval(interval);
   }, [citySlug]);
 
-  if (!time) {
-    return null;
+  // Don't render until mounted to prevent hydration mismatch
+  // Return a consistent placeholder structure on both server and client
+  if (!mounted || !time) {
+    return (
+      <div className={`flex items-center gap-2 text-xs text-gray-500 ${className}`} aria-hidden="true">
+        <Clock className="h-3 w-3" />
+        <div className="flex flex-col">
+          <span className="font-mono font-medium opacity-0">00:00:00</span>
+          <span className="text-[10px] leading-tight opacity-0">Mon, Jan 1, 2024</span>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={`flex items-center gap-2 text-xs text-gray-500 ${className}`}>
       <Clock className="h-3 w-3" />
       <div className="flex flex-col">
-        <span className="font-mono font-medium">{time}</span>
-        <span className="text-[10px] leading-tight">{date}</span>
+        <span className="font-mono font-medium" suppressHydrationWarning>{time}</span>
+        <span className="text-[10px] leading-tight" suppressHydrationWarning>{date}</span>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Clock, Users, AlertCircle, Check } from 'lucide-react';
+import { Clock, AlertCircle, Check } from 'lucide-react';
 
 interface RealtimeReportFormProps {
   destinationId: number;
@@ -14,26 +14,14 @@ export function RealtimeReportForm({
   destinationName,
   onSuccess,
 }: RealtimeReportFormProps) {
-  const [reportType, setReportType] = useState<'wait_time' | 'crowding' | null>(null);
   const [waitTime, setWaitTime] = useState<number>(0);
-  const [crowdingLevel, setCrowdingLevel] = useState<'quiet' | 'moderate' | 'busy' | 'very_busy' | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!reportType) {
-      setError('Please select a report type');
-      return;
-    }
-
-    if (reportType === 'wait_time' && waitTime <= 0) {
+    if (waitTime <= 0) {
       setError('Please enter a valid wait time');
-      return;
-    }
-
-    if (reportType === 'crowding' && !crowdingLevel) {
-      setError('Please select a crowding level');
       return;
     }
 
@@ -41,13 +29,7 @@ export function RealtimeReportForm({
     setError(null);
 
     try {
-      const reportData: any = {};
-      
-      if (reportType === 'wait_time') {
-        reportData.wait_time = waitTime;
-      } else if (reportType === 'crowding') {
-        reportData.crowding_level = crowdingLevel;
-      }
+      const reportData = { wait_time: waitTime };
 
       const response = await fetch('/api/realtime/report', {
         method: 'POST',
@@ -56,7 +38,7 @@ export function RealtimeReportForm({
         },
         body: JSON.stringify({
           destination_id: destinationId,
-          report_type: reportType,
+          report_type: 'wait_time',
           report_data: reportData,
         }),
       });
@@ -69,9 +51,7 @@ export function RealtimeReportForm({
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
-        setReportType(null);
         setWaitTime(0);
-        setCrowdingLevel(null);
         onSuccess?.();
       }, 2000);
     } catch (err: any) {
@@ -104,84 +84,24 @@ export function RealtimeReportForm({
         </p>
       </div>
 
-      {/* Report Type Selection */}
+      {/* Wait Time Input */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-          What would you like to report?
+          Current Wait Time (minutes)
         </label>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setReportType('wait_time');
-              setCrowdingLevel(null);
-            }}
-            className={`flex-1 px-3 py-2 text-xs border rounded-xl transition-colors ${
-              reportType === 'wait_time'
-                ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
-            }`}
-          >
-            <Clock className="h-4 w-4 mx-auto mb-1" />
-            Wait Time
-          </button>
-          <button
-            onClick={() => {
-              setReportType('crowding');
-              setWaitTime(0);
-            }}
-            className={`flex-1 px-3 py-2 text-xs border rounded-xl transition-colors ${
-              reportType === 'crowding'
-                ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
-            }`}
-          >
-            <Users className="h-4 w-4 mx-auto mb-1" />
-            Crowding
-          </button>
-        </div>
-      </div>
-
-      {/* Wait Time Input */}
-      {reportType === 'wait_time' && (
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-            Current Wait Time (minutes)
-          </label>
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <input
             type="number"
             min="0"
             max="300"
             value={waitTime || ''}
             onChange={(e) => setWaitTime(parseInt(e.target.value) || 0)}
-            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black"
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black"
             placeholder="e.g., 15"
           />
         </div>
-      )}
-
-      {/* Crowding Level Selection */}
-      {reportType === 'crowding' && (
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-            Current Crowding Level
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {(['quiet', 'moderate', 'busy', 'very_busy'] as const).map((level) => (
-              <button
-                key={level}
-                onClick={() => setCrowdingLevel(level)}
-                className={`px-3 py-2 text-xs border rounded-xl transition-colors capitalize ${
-                  crowdingLevel === level
-                    ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                    : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-              >
-                {level.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Error Message */}
       {error && (
@@ -192,15 +112,13 @@ export function RealtimeReportForm({
       )}
 
       {/* Submit Button */}
-      {reportType && (
-        <button
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="w-full px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {submitting ? 'Submitting...' : 'Submit Report'}
-        </button>
-      )}
+      <button
+        onClick={handleSubmit}
+        disabled={submitting}
+        className="w-full px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {submitting ? 'Submitting...' : 'Submit Report'}
+      </button>
     </div>
   );
 }

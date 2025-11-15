@@ -28,14 +28,31 @@ import {
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 
+// Simple, conversational system prompt for Gemini
+const CHAT_SYSTEM_PROMPT = `You are a friendly and knowledgeable travel assistant for Urban Manual. You help users discover amazing restaurants, hotels, cafes, and destinations from our curated collection.
+
+Guidelines:
+- Be conversational, warm, and helpful - like talking to a knowledgeable friend
+- Only recommend places from our knowledge base (I'll provide search results)
+- If you don't have information about a place, say so honestly
+- Feel free to have natural conversations about travel, food, and destinations
+- Keep responses concise but engaging (2-4 sentences typically)
+- Ask follow-up questions when helpful
+- Be enthusiastic about great places but honest about limitations`;
+
 // Helper to create SSE-formatted message
 function createSSEMessage(data: any): string {
   return `data: ${JSON.stringify(data)}\n\n`;
+}
+
+function normalizeUserId(userId?: string | null) {
+  if (!userId) return undefined;
+  return ['anonymous', 'guest'].includes(userId) ? undefined : userId;
 }
 
 export async function POST(
@@ -52,7 +69,7 @@ export async function POST(
       ? await context.params
       : context?.params;
     const { user_id } = paramsValue || {};
-    const userId = user?.id || user_id || undefined;
+    const userId = normalizeUserId(user?.id || user_id || undefined);
 
     // Rate limiting: 5 requests per 10 seconds for conversation
     const identifier = getIdentifier(request, userId);
@@ -168,22 +185,16 @@ export async function POST(
             context: { ...session.context, ...contextUpdates }
           })));
 
-          // Build messages for LLM
-          const systemPrompt = `${URBAN_MANUAL_EDITOR_SYSTEM_PROMPT}\n\n${formatFewShots(3)}\n\nCurrent context: ${JSON.stringify({ ...session.context, ...contextUpdates })}`;
-
-          const llmMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-            { role: 'system', content: systemPrompt },
-          ];
+          // Build messages for Gemini (simpler format)
+          const contextInfo = Object.keys({ ...session.context, ...contextUpdates }).length > 0
+            ? `\n\nContext: ${JSON.stringify({ ...session.context, ...contextUpdates })}`
+            : '';
 
           const recentMessages = messages.slice(-10);
-          for (const msg of recentMessages) {
-            llmMessages.push({
-              role: msg.role === 'user' ? 'user' : 'assistant',
-              content: msg.content,
-            });
-          }
-
-          llmMessages.push({ role: 'user', content: message });
+          const conversationHistory = recentMessages.map((msg) => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }],
+          }));
 
           // Generate streaming response - PRIORITIZE DISCOVERY ENGINE
           let assistantResponse = '';
@@ -240,58 +251,40 @@ export async function POST(
                   }
                 }
 
-                // Format Discovery Engine results into a natural response using LLM
+                // Format Discovery Engine results for Gemini
                 const resultsText = discoveryResults.slice(0, 5).map((r: any, idx: number) => 
                   `${idx + 1}. ${r.name} (${r.city}) - ${r.description || r.category}`
                 ).join('\n');
 
-                const formatPrompt = `Based on these search results, provide a helpful, conversational response to the user's query: "${message}"
-
-Search Results:
-${resultsText}
-
-Respond naturally and conversationally, mentioning 2-3 specific places that match their request. Keep it concise (2-3 sentences).`;
-
-                // Use LLM to format the Discovery Engine results into a response
-                if (openai && openai.chat && CONVERSATION_MODEL.startsWith('gpt')) {
+                // Use Gemini to format the Discovery Engine results into a conversational response
+                if (genAI) {
                   try {
-                    const stream = await openai.chat.completions.create({
-                      model: CONVERSATION_MODEL,
-                      messages: [
-                        { role: 'system', content: 'You are a helpful travel assistant. Format search results into natural, conversational responses.' },
-                        { role: 'user', content: formatPrompt },
-                      ],
-                      temperature: 0.7,
-                      max_tokens: 300,
-                      stream: true,
+                    const model = genAI.getGenerativeModel({ 
+                      model: GEMINI_MODEL,
+                      generationConfig: {
+                        temperature: 0.8,
+                        maxOutputTokens: 500,
+                      },
+                      systemInstruction: CHAT_SYSTEM_PROMPT,
                     });
 
-                    for await (const chunk of stream) {
-                      const content = chunk.choices?.[0]?.delta?.content || '';
-                      if (content) {
-                        assistantResponse += content;
-                        controller.enqueue(encoder.encode(createSSEMessage({
-                          type: 'chunk',
-                          content
-                        })));
-                      }
-                    }
+                    // Build conversation history for chat
+                    const history = recentMessages.slice(-5).map((msg: any) => ({
+                      role: msg.role === 'user' ? 'user' : 'model',
+                      parts: [{ text: msg.content }],
+                    }));
 
-                    usedModel = `discovery-engine+${CONVERSATION_MODEL}`;
-                  } catch (error: any) {
-                    console.error('OpenAI formatting error:', error);
-                    // If formatting fails, use simple text response
-                    assistantResponse = `I found ${discoveryResults.length} places that match your search. Here are some top recommendations:\n\n${discoveryResults.slice(0, 3).map((r: any) => `• ${r.name} in ${r.city}`).join('\n')}`;
-                    controller.enqueue(encoder.encode(createSSEMessage({
-                      type: 'chunk',
-                      content: assistantResponse
-                    })));
-                    usedModel = 'discovery-engine';
-                  }
-                } else if (genAI) {
-                  try {
-                    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-                    const result = await model.generateContentStream(formatPrompt);
+                    // Build the current prompt with search results
+                    const currentPrompt = `${contextInfo ? `Context: ${JSON.stringify({ ...session.context, ...contextUpdates })}\n\n` : ''}Here are search results from our knowledge base:\n\n${resultsText}\n\nUser asked: "${message}"\n\nProvide a helpful, conversational response mentioning 2-3 specific places that match their request.`;
+
+                    // Start chat with history if available
+                    let result;
+                    if (history.length > 0) {
+                      const chat = model.startChat({ history });
+                      result = await chat.sendMessageStream(currentPrompt);
+                    } else {
+                      result = await model.generateContentStream(currentPrompt);
+                    }
 
                     for await (const chunk of result.stream) {
                       const content = chunk.text();
@@ -330,25 +323,68 @@ Respond naturally and conversationally, mentioning 2-3 specific places that matc
             console.error('Discovery Engine error:', discoveryError);
             // Only fallback if Discovery Engine breaks - don't use fallback if it just returns no results
             if (discoveryResults.length === 0) {
-              // Discovery Engine failed or returned no results - use LLM fallback
-              if (openai && openai.chat && CONVERSATION_MODEL.startsWith('gpt')) {
+              // Discovery Engine failed or returned no results - use Gemini for general conversation
+              if (genAI) {
                 try {
-                  const systemMsg = llmMessages.find(m => m.role === 'system');
-                  const conversationMsgs = llmMessages.filter(m => m.role !== 'system');
+                  const model = genAI.getGenerativeModel({ 
+                    model: GEMINI_MODEL,
+                    generationConfig: {
+                      temperature: 0.9,
+                      maxOutputTokens: 600,
+                    },
+                    systemInstruction: CHAT_SYSTEM_PROMPT,
+                  });
 
+                  // Build conversation history for chat
+                  const history = recentMessages.slice(-5).map((msg: any) => ({
+                    role: msg.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: msg.content }],
+                  }));
+
+                  // Build the current prompt
+                  const currentPrompt = `${contextInfo ? `Context: ${JSON.stringify({ ...session.context, ...contextUpdates })}\n\n` : ''}User: ${message}`;
+
+                  // Start chat with history if available
+                  let result;
+                  if (history.length > 0) {
+                    const chat = model.startChat({ history });
+                    result = await chat.sendMessageStream(currentPrompt);
+                  } else {
+                    result = await model.generateContentStream(currentPrompt);
+                  }
+
+                  for await (const chunk of result.stream) {
+                    const content = chunk.text();
+                    if (content) {
+                      assistantResponse += content;
+                      controller.enqueue(encoder.encode(createSSEMessage({
+                        type: 'chunk',
+                        content
+                      })));
+                    }
+                  }
+
+                  usedModel = GEMINI_MODEL;
+                } catch (error: any) {
+                  console.error('Gemini fallback error:', error);
+                }
+              } else if (openai && openai.chat && CONVERSATION_MODEL.startsWith('gpt')) {
+                // Fallback to OpenAI only if Gemini is not available
+                try {
                   const openaiMessages = [
-                    ...(systemMsg ? [{ role: 'system' as const, content: systemMsg.content }] : []),
-                    ...conversationMsgs.map((msg) => ({
+                    { role: 'system' as const, content: `${CHAT_SYSTEM_PROMPT}${contextInfo}` },
+                    ...recentMessages.map((msg: any) => ({
                       role: (msg.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
                       content: msg.content,
                     })),
+                    { role: 'user' as const, content: message },
                   ];
 
                   const stream = await openai.chat.completions.create({
                     model: CONVERSATION_MODEL,
                     messages: openaiMessages,
-                    temperature: 0.8,
-                    max_tokens: 500,
+                    temperature: 0.9,
+                    max_tokens: 600,
                     stream: true,
                   });
 
@@ -366,29 +402,6 @@ Respond naturally and conversationally, mentioning 2-3 specific places that matc
                   usedModel = CONVERSATION_MODEL;
                 } catch (error: any) {
                   console.error('OpenAI fallback error:', error);
-                }
-              }
-
-              if (!assistantResponse && genAI) {
-                try {
-                  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-                  const prompt = llmMessages.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
-                  const result = await model.generateContentStream(prompt);
-
-                  for await (const chunk of result.stream) {
-                    const content = chunk.text();
-                    if (content) {
-                      assistantResponse += content;
-                      controller.enqueue(encoder.encode(createSSEMessage({
-                        type: 'chunk',
-                        content
-                      })));
-                    }
-                  }
-
-                  usedModel = GEMINI_MODEL;
-                } catch (error: any) {
-                  console.error('Gemini fallback error:', error);
                 }
               }
             }
@@ -424,7 +437,7 @@ Respond naturally and conversationally, mentioning 2-3 specific places that matc
 
           // Log metrics
           await logConversationMetrics({
-            userId: userId || session_token || 'anonymous',
+            userId: userId || session.sessionToken || session_token || 'anonymous',
             messageCount: messages.length + 2,
             intentType: intent.primaryIntent,
             modelUsed: usedModel,
@@ -440,6 +453,7 @@ Respond naturally and conversationally, mentioning 2-3 specific places that matc
             intent,
             suggestions: suggestions.slice(0, 3),
             session_id: session.sessionId,
+            session_token: session.sessionToken,
             model: usedModel,
           })));
 

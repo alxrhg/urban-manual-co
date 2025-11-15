@@ -3,7 +3,7 @@
  * Uses Google Places API (New) + Gemini AI to enrich destination data
  */
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
 export interface PlacesEnrichmentData {
   place_id: string | null;
@@ -49,7 +49,7 @@ export async function findPlaceByText(
   city: string
 ): Promise<PlacesEnrichmentData> {
   // Check for API key at runtime, not just module load time
-  const apiKey = GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  const apiKey = GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
   if (!apiKey) {
     console.error('NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
     throw new Error('Google API key not configured');
@@ -194,7 +194,7 @@ export async function findPlaceByText(
  * Fetch detailed place information using Place Details API
  */
 async function getPlaceDetails(placeId: string): Promise<any | null> {
-  const apiKey = GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  const apiKey = GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
   if (!apiKey) {
     throw new Error('Google API key not configured');
   }
@@ -325,7 +325,7 @@ export async function generateGeminiTags(
   description?: string,
   googleTypes?: string[]
 ): Promise<GeminiTagsData> {
-  const apiKey = GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  const apiKey = GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
   if (!apiKey) {
     console.error('NEXT_PUBLIC_GOOGLE_API_KEY is not configured in environment variables');
     throw new Error('Google API key not configured');

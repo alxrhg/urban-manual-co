@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin, AuthError } from '@/lib/adminAuth'
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY
 
 async function findPlaceId(query: string, name?: string, city?: string): Promise<string | null> {
   // Use Places API (New) - Text Search
@@ -172,7 +172,7 @@ async function getTimeZone(lat: number, lng: number) {
 
 export async function POST(req: Request) {
   try {
-    if (!GOOGLE_API_KEY) return NextResponse.json({ error: 'Missing GOOGLE_API_KEY' }, { status: 500 })
+    if (!GOOGLE_API_KEY) return NextResponse.json({ error: 'Missing NEXT_PUBLIC_GOOGLE_API_KEY' }, { status: 500 })
 
     const { serviceClient: supabase } = await requireAdmin(req)
 

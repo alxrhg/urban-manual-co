@@ -28,7 +28,7 @@ export class DeepIntentAnalysisService {
   private supabase;
 
   constructor() {
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
     }
