@@ -32,13 +32,13 @@ import GreetingHero from '@/src/features/search/GreetingHero';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
+import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
-import type { RefinementTag } from '@/components/RefinementChips';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -815,7 +815,7 @@ export default function Home() {
         // If destinations are already loaded, just re-filter (don't re-fetch)
         // This prevents unnecessary re-fetching when visitedSlugs changes after login
         // Note: filterDestinationsWithData is defined later, but it's a useCallback so it's stable
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
       filterDestinations();
       }
     }

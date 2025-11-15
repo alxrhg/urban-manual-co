@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     }
 
     // If few results and we have a location, expand to nearby neighborhoods
-    let expandedResults = results || [];
+    const expandedResults = results || [];
     let expandedLocations: string[] = [];
     
     if ((expandedResults.length < 5) && locationName) {

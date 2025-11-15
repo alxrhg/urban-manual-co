@@ -1,6 +1,21 @@
 declare module 'react-simple-maps' {
   import { ReactNode } from 'react';
 
+  export interface GeographyData {
+    type: string;
+    properties: {
+      ISO_A2?: string;
+      ISO_A2_EH?: string;
+      NAME?: string;
+      NAME_LONG?: string;
+      NAME_EN?: string;
+      [key: string]: unknown;
+    };
+    geometry: unknown;
+    rsmKey?: string;
+    svgPath?: string;
+  }
+
   export interface ComposableMapProps {
     projection?: string;
     projectionConfig?: {
@@ -14,12 +29,12 @@ declare module 'react-simple-maps' {
   export interface GeographiesProps {
     geography: string | object;
     children?: (args: {
-      geographies: any[];
+      geographies: GeographyData[];
     }) => ReactNode;
   }
 
   export interface GeographyProps {
-    geography?: any;
+    geography?: GeographyData;
     fill?: string;
     stroke?: string;
     strokeWidth?: number;

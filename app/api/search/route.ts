@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     const PAGE_SIZE = 10;
 
     // Try to get userId from cookies/auth if not provided
-    let authenticatedUserId = userId || supabaseUser?.id;
+    const authenticatedUserId = userId || supabaseUser?.id;
 
     // Rate limiting: 20 requests per 10 seconds for search
     const identifier = getIdentifier(request, authenticatedUserId);
@@ -397,7 +397,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get personalized recommendations for user (if authenticated)
-    let personalizedScores: Map<number, number> = new Map();
+    const personalizedScores: Map<number, number> = new Map();
     if (authenticatedUserId) {
       try {
         const { AIRecommendationEngine } = await import('@/lib/ai-recommendations/engine');

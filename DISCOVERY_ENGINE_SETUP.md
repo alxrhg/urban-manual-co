@@ -1,50 +1,97 @@
 # Google Discovery Engine Setup Guide
 
-This guide will help you set up and configure Google Discovery Engine for Urban Manual.
+## ⚠️ Important: Discovery Engine is OPTIONAL
+
+**Discovery Engine is a premium feature that is NOT required for the application to work.**
+
+- ✅ **App works perfectly without it** - Uses standard Supabase search
+- ✅ **503 status is expected** - When not configured, `/api/search/discovery` returns `503` with `{fallback: true}`
+- ✅ **No errors** - This is intentional fallback behavior, not a bug
+- ✅ **Frontend should handle gracefully** - Check for `fallback: true` and use standard search
+
+## Why Use Discovery Engine?
+
+Discovery Engine provides advanced AI-powered search features:
+- **Semantic search** - Understands user intent, not just keywords
+- **Personalization** - Tailored results based on user behavior
+- **Smart ranking** - Uses ML to rank results by relevance
+- **Auto-complete** - Intelligent search suggestions
+- **Spell correction** - Handles typos automatically
+
+**Cost:** ~$0.50 per 1,000 queries (see [pricing](https://cloud.google.com/discovery-engine/pricing))
 
 ## Prerequisites
 
-1. **Google Cloud Account**: You need a Google Cloud account with billing enabled
-2. **Discovery Engine API Access**: The Discovery Engine API must be enabled in your Google Cloud project
-3. **Service Account**: A service account with Discovery Engine permissions
-4. **Data Store**: A Discovery Engine data store created in your Google Cloud project
+1. **Google Cloud Account** with billing enabled
+2. **Discovery Engine API** enabled in your project
+3. **Service Account** with Discovery Engine permissions
+4. **Data Store** created in Discovery Engine console
 
 ## Step 1: Google Cloud Setup
 
 ### 1.1 Create or Select a Google Cloud Project
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Note your **Project ID** (you'll need this later)
+```bash
+# Using gcloud CLI
+gcloud projects create urban-manual-prod --name="Urban Manual Production"
+gcloud config set project urban-manual-prod
+```
+
+Or use [Google Cloud Console](https://console.cloud.google.com/)
 
 ### 1.2 Enable Discovery Engine API
 
-1. Navigate to **APIs & Services** → **Library**
-2. Search for "Discovery Engine API"
-3. Click on it and click **Enable**
-4. Wait for the API to be enabled (may take a few minutes)
+```bash
+# Enable the API
+gcloud services enable discoveryengine.googleapis.com
+```
+
+Or enable via [API Library](https://console.cloud.google.com/apis/library/discoveryengine.googleapis.com)
 
 ### 1.3 Create a Service Account
 
-1. Go to **IAM & Admin** → **Service Accounts**
-2. Click **Create Service Account**
-3. Name it `discovery-engine-service` (or similar)
-4. Grant it the following roles:
-   - `Discovery Engine API Admin` (or `Discovery Engine API User`)
-   - `Storage Object Viewer` (if using Cloud Storage for imports)
-5. Click **Create Key** → **JSON**
-6. Download the JSON key file (keep it secure!)
+```bash
+# Create service account
+gcloud iam service-accounts create discovery-engine-sa \
+    --display-name="Discovery Engine Service Account"
+
+# Grant Discovery Engine Admin role
+gcloud projects add-iam-policy-binding urban-manual-prod \
+    --member="serviceAccount:discovery-engine-sa@urban-manual-prod.iam.gserviceaccount.com" \
+    --role="roles/discoveryengine.admin"
+
+# Create and download service account key
+gcloud iam service-accounts keys create discovery-engine-key.json \
+    --iam-account=discovery-engine-sa@urban-manual-prod.iam.gserviceaccount.com
+```
+
+**Security Note:** Keep `discovery-engine-key.json` secure. Never commit to version control.
 
 ### 1.4 Create a Data Store
 
-1. Go to **Discovery Engine** → **Data Stores**
-2. Click **Create Data Store**
+**Option A: Using Google Cloud Console (Recommended)**
+
+1. Go to [Discovery Engine Console](https://console.cloud.google.com/gen-app-builder)
+2. Click **"Create App"** or **"Create Data Store"**
 3. Configure:
-   - **Name**: `urban-manual-destinations` (or your preferred name)
-   - **Type**: **Generic** (for general search)
-   - **Location**: Choose your preferred region (e.g., `us-central1`, `global`)
-4. Click **Create**
-5. Note the **Data Store ID** (usually matches the name)
+   - **Name:** `urban-manual-destinations`
+   - **Type:** Structured data or Generic
+   - **Location:** Global (recommended)
+   - **Import Source:** Cloud Storage (you can skip actual import - we'll use API)
+4. Click **"Create"**
+5. Note the **Data Store ID** from the URL or details page
+
+**Option B: Using gcloud CLI**
+
+```bash
+# Create data store
+gcloud alpha discovery-engine data-stores create urban-manual-destinations \
+    --location=global \
+    --collection=default_collection \
+    --data-store-type=SOLUTION_TYPE_SEARCH
+```
+
+See [DATA_STORE_CREATION_GUIDE.md](./DATA_STORE_CREATION_GUIDE.md) for detailed instructions.
 
 ## Step 2: Configure Environment Variables
 

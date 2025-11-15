@@ -5,16 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Heart, Grid3x3, List } from 'lucide-react';
 import { NoSavedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
-
-interface SavedPlace {
-  destination_slug: string;
-  destination: {
-    name: string;
-    city: string;
-    category: string;
-    image: string;
-  };
-}
+import type { SavedPlace } from '@/types/common';
 
 interface EnhancedSavedTabProps {
   savedPlaces: SavedPlace[];
@@ -40,8 +31,8 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
     const categoriesSet = new Set<string>();
 
     savedPlaces.forEach(place => {
-      if (place.destination.city) citiesSet.add(place.destination.city);
-      if (place.destination.category) categoriesSet.add(place.destination.category);
+      if (place.destination?.city) citiesSet.add(place.destination?.city);
+      if (place.destination?.category) categoriesSet.add(place.destination?.category);
     });
 
     return {
@@ -55,15 +46,15 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
     let filtered = [...savedPlaces];
 
     if (filterCity) {
-      filtered = filtered.filter(p => p.destination.city === filterCity);
+      filtered = filtered.filter(p => p.destination?.city === filterCity);
     }
     if (filterCategory) {
-      filtered = filtered.filter(p => p.destination.category === filterCategory);
+      filtered = filtered.filter(p => p.destination?.category === filterCategory);
     }
 
     filtered.sort((a, b) => {
       if (sortBy === 'name') {
-        return a.destination.name.localeCompare(b.destination.name);
+        return (a.destination?.name || '').localeCompare(b.destination?.name || '');
       }
       return 0; // Keep original order for 'recent'
     });
@@ -199,10 +190,10 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
               className="group relative text-left"
             >
               <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
-                {place.destination.image && (
+                {place.destination?.image && (
                   <Image
-                    src={place.destination.image}
-                    alt={place.destination.name}
+                    src={place.destination?.image}
+                    alt={place.destination?.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 768px) 50vw, 25vw"
@@ -213,10 +204,10 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
                 </div>
               </div>
               <h3 className="font-medium text-sm leading-tight line-clamp-2">
-                {place.destination.name}
+                {place.destination?.name}
               </h3>
               <p className="text-xs text-gray-500 mt-1">
-                {capitalizeCity(place.destination.city)}
+                {place.destination?.city && capitalizeCity(place.destination.city)}
               </p>
             </button>
           ))}
@@ -232,11 +223,11 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
               className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
             >
-              {place.destination.image && (
+              {place.destination?.image && (
                 <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                   <Image
-                    src={place.destination.image}
-                    alt={place.destination.name}
+                    src={place.destination?.image}
+                    alt={place.destination?.name}
                     fill
                     className="object-cover"
                     sizes="64px"
@@ -244,9 +235,9 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{place.destination.name}</div>
+                <div className="text-sm font-medium truncate">{place.destination?.name}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {capitalizeCity(place.destination.city)} • {place.destination.category}
+                  {place.destination?.city && capitalizeCity(place.destination.city)} • {place.destination?.category}
                 </div>
               </div>
               <div className="flex-shrink-0">
