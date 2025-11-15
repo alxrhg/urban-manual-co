@@ -9,6 +9,7 @@
 DROP POLICY IF EXISTS "Enable read access for all users" ON destinations;
 DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON destinations;
 DROP POLICY IF EXISTS "Enable update for authenticated users only" ON destinations;
+DROP POLICY IF EXISTS "Enable delete for authenticated users only" ON destinations;
 
 -- Create policy to allow anyone to read destinations
 CREATE POLICY "Public destinations are viewable by everyone"
@@ -16,7 +17,7 @@ ON destinations FOR SELECT
 TO public
 USING (true);
 
--- Create policy to allow service role to insert/update
+-- Create policy to allow service role to insert/update/delete
 CREATE POLICY "Service role can insert destinations"
 ON destinations FOR INSERT
 TO service_role
@@ -27,12 +28,26 @@ ON destinations FOR UPDATE
 TO service_role
 USING (true);
 
+CREATE POLICY "Service role can delete destinations"
+ON destinations FOR DELETE
+TO service_role
+USING (true);
+
+-- Allow authenticated admin users to delete destinations
+CREATE POLICY "Authenticated admin users can delete destinations"
+ON destinations FOR DELETE
+TO authenticated
+USING (
+  (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+);
+
 -- Success message
 DO $$
 BEGIN
-  RAISE NOTICE '✅ Destinations table is now publicly readable!';
+  RAISE NOTICE '✅ Destinations table RLS policies configured!';
   RAISE NOTICE '';
   RAISE NOTICE 'Anyone can read destinations (public data)';
-  RAISE NOTICE 'Only service role can write (admin only)';
+  RAISE NOTICE 'Service role can insert/update/delete (backend)';
+  RAISE NOTICE 'Authenticated admin users can delete (admin UI)';
 END $$;
 
