@@ -1,5 +1,6 @@
 let loaderPromise: Promise<void> | null = null;
 let initialized = false;
+let pendingAuthorizationReject: ((error: Error) => void) | null = null;
 
 export interface MapkitCoordinate {
   latitude: number;
@@ -59,6 +60,15 @@ declare global {
   }
 }
 
+function handleAuthorizationError(error: unknown) {
+  const err = error instanceof Error ? error : new Error('MapKit authorization failed');
+  if (pendingAuthorizationReject) {
+    pendingAuthorizationReject(err);
+    pendingAuthorizationReject = null;
+  }
+  return err;
+}
+
 function fetchAuthorizationToken(done: (token: string) => void) {
   // Create abort controller for timeout (with fallback for older browsers)
   const controller = new AbortController();
@@ -83,11 +93,12 @@ function fetchAuthorizationToken(done: (token: string) => void) {
     })
     .catch(error => {
       clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        console.error('MapKit authorization error: Request timeout');
-      } else {
-        console.error('MapKit authorization error:', error);
-      }
+      const err = handleAuthorizationError(
+        error?.name === 'AbortError'
+          ? new Error('MapKit authorization error: Request timeout')
+          : error
+      );
+      console.error('MapKit authorization error:', err);
       // Pass empty token but log the error - MapKit will handle the failure
       done('');
     });
@@ -150,6 +161,7 @@ export function ensureMapkitLoaded(): Promise<void> {
   }
 
   loaderPromise = new Promise<void>((resolve, reject) => {
+    pendingAuthorizationReject = reject;
     const handleReady = () => {
       if (!window.mapkit) {
         reject(new Error('MapKit did not load correctly'));
@@ -178,6 +190,7 @@ export function ensureMapkitLoaded(): Promise<void> {
             reject(new Error('MapKit loaded property is false after initialization'));
             return;
           }
+          pendingAuthorizationReject = null;
           resolve();
         })
         .catch((error) => {
@@ -206,6 +219,7 @@ export function ensureMapkitLoaded(): Promise<void> {
     document.head.appendChild(script);
   })
     .catch(error => {
+      pendingAuthorizationReject = null;
       loaderPromise = null;
       throw error;
     });
