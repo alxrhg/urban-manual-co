@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
     try {
       const { data: trending, error } = await query
         .order('trending_score', { ascending: false })
-        .order('google_trends_direction', { ascending: false, nullsLast: true })
-        .order('google_trends_interest', { ascending: false, nullsLast: true })
+        .order('google_trends_direction', { ascending: false })
+        .order('google_trends_interest', { ascending: false })
         .limit(limit);
 
       if (error) {
