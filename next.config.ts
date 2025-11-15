@@ -4,7 +4,8 @@ import { withPayload } from '@payloadcms/next/withPayload'
 const cspDirectives = [
   "default-src 'self'",
   // Inline scripts are occasionally required for Next.js hydration/runtime.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in",
+  // Added external script sources: Google Ads, Vercel Live, Apple MapKit
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://vercel.live https://cdn.apple-mapkit.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*",
   "font-src 'self' data: https://fonts.gstatic.com",
@@ -53,7 +54,7 @@ const securityHeaders: { key: string; value: string }[] = [
   },
   {
     key: 'Cross-Origin-Embedder-Policy',
-    value: 'require-corp',
+    value: 'unsafe-none', // Changed from require-corp to allow external resources
   },
   {
     key: 'Cross-Origin-Opener-Policy',
@@ -61,7 +62,7 @@ const securityHeaders: { key: string; value: string }[] = [
   },
   {
     key: 'Cross-Origin-Resource-Policy',
-    value: 'same-origin',
+    value: 'cross-origin', // Changed from same-origin to allow external images (e.g., Michelin)
   },
   {
     key: 'Origin-Agent-Cluster',

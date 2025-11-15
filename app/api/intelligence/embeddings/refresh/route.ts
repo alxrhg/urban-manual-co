@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const onlyMissing = searchParams.get('onlyMissing') !== 'false';
 
     // Fetch a page of destinations
-    let query = supabase
+    const query = supabase
       .from('destinations')
       .select('id, slug, name, city, category, description, content, tags, style_tags, ambience_tags, experience_tags, vector_embedding', { count: 'exact' })
       .order('id', { ascending: true })

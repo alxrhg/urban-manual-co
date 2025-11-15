@@ -72,7 +72,7 @@ export async function generatePersonalizedPrompt(
 
   try {
     // Fetch user data if userId provided
-    let userData: GenerativePromptContext = { ...context };
+    const userData: GenerativePromptContext = { ...context };
     
     if (context.userId && supabase) {
       // Get saved destinations

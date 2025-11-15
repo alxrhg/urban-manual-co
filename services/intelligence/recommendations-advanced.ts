@@ -402,7 +402,7 @@ export class AdvancedRecommendationEngine {
 
       // Get destination IDs from slugs
       const savedSlugs = (savedData.data || []).map(s => s.destination_slug);
-      let sourceDestinationIds: Set<string> = new Set();
+      const sourceDestinationIds: Set<string> = new Set();
 
       if (savedSlugs.length > 0) {
         const { data: destinations } = await this.supabase

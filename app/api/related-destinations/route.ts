@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const dest = destination as any;
 
     // Build query for related destinations
-    let query = supabase
+    const query = supabase
       .from('destinations')
       .select('*')
       .neq('slug', slug)

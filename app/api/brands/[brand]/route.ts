@@ -31,7 +31,7 @@ export async function GET(
 
     // Get user's saved/visited status for these destinations if authenticated
     const { data: { user } } = await supabase.auth.getUser();
-    let userStatuses: Map<string, any> = new Map();
+    const userStatuses: Map<string, any> = new Map();
 
     if (user && destinations) {
       const slugs = (destinations as any[]).map((d: any) => d.slug);

@@ -88,7 +88,7 @@ export async function POST(
     }
 
     // Get conversation history
-    let messages = await getConversationMessages(session.sessionId, 20);
+    const messages = await getConversationMessages(session.sessionId, 20);
 
     // Extract intent from new message
     let userContext: any = {};

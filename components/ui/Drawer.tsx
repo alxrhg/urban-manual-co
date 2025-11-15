@@ -89,7 +89,7 @@ export function Drawer({
           mobileFullScreen ? 'bottom-0 top-0' : 'bottom-0'
         } transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex flex-col bg-white dark:bg-gray-950 shadow-2xl`}
+        } flex flex-col bg-white dark:bg-gray-950 shadow-2xl w-full max-w-full overflow-hidden overscroll-contain`}
         style={{ zIndex }}
       >
         {/* Header */}
@@ -115,7 +115,7 @@ export function Drawer({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">
           {children}
         </div>
 

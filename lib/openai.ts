@@ -1,7 +1,7 @@
 let OpenAILib: any = null;
 try {
   // Dynamically import to avoid build errors if package not present in some environments
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   if (typeof require !== 'undefined') {
     OpenAILib = require('openai');
   }
