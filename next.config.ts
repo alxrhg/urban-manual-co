@@ -87,6 +87,9 @@ const nextConfig: NextConfig = {
   // Optimize production builds (no source maps for smaller bundles)
   productionBrowserSourceMaps: false,
 
+  // Enable React compiler optimizations
+  reactStrictMode: true,
+
   // Note: Next.js 16 uses SWC (Speedy Web Compiler) by default for:
   // - TypeScript/JavaScript compilation (20x faster than Babel)
   // - Minification (faster than Terser)
@@ -103,6 +106,26 @@ const nextConfig: NextConfig = {
         source: '/:path*',
         headers: securityHeaders,
       },
+      {
+        // Cache static assets for 1 year
+        source: '/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Cache destinations.json for 5 minutes with stale-while-revalidate
+        source: '/destinations.json',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=300, stale-while-revalidate=600',
+          },
+        ],
+      },
     ];
   },
 
@@ -110,9 +133,10 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 60 * 60 * 24 * 7, // Cache for 7 days (604800 seconds)
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: false, // Ensure image optimization is enabled
     remotePatterns: (() => {
       const patterns: { protocol: 'https'; hostname: string }[] = []
       try {

@@ -18,7 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
-import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
@@ -30,32 +29,35 @@ import {
   getSessionId,
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
-import { SmartRecommendations } from '@/components/SmartRecommendations';
-import { TrendingSection } from '@/components/TrendingSection';
-import { TrendingSectionML } from '@/components/TrendingSectionML';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
-import { MultiplexAd } from '@/components/GoogleAd';
 import { DistanceBadge } from '@/components/DistanceBadge';
-import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
-import { SessionResume } from '@/components/SessionResume';
-import { ContextCards } from '@/components/ContextCards';
-import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
-import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
-import { DestinationBadges } from '@/components/DestinationBadges';
-import { FollowUpSuggestions } from '@/components/FollowUpSuggestions';
-import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
-import { TripPlanner } from '@/components/TripPlanner';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
-import { POIDrawer } from '@/components/POIDrawer';
+import type { RefinementTag } from '@/components/RefinementChips';
 
-// Dynamically import MapView to avoid SSR issues
+// Lazy load components that are conditionally rendered or not immediately visible
+// This reduces the initial bundle size and improves initial page load time
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+const SequencePredictionsInline = dynamic(() => import('@/components/SequencePredictionsInline').then(mod => ({ default: mod.SequencePredictionsInline })), { ssr: false });
+const SmartRecommendations = dynamic(() => import('@/components/SmartRecommendations').then(mod => ({ default: mod.SmartRecommendations })), { ssr: false });
+const TrendingSection = dynamic(() => import('@/components/TrendingSection').then(mod => ({ default: mod.TrendingSection })), { ssr: false });
+const TrendingSectionML = dynamic(() => import('@/components/TrendingSectionML').then(mod => ({ default: mod.TrendingSectionML })), { ssr: false });
+const MultiplexAd = dynamic(() => import('@/components/GoogleAd').then(mod => ({ default: mod.MultiplexAd })), { ssr: false });
+const MarkdownRenderer = dynamic(() => import('@/src/components/MarkdownRenderer').then(mod => ({ default: mod.MarkdownRenderer })), { ssr: false });
+const SessionResume = dynamic(() => import('@/components/SessionResume').then(mod => ({ default: mod.SessionResume })), { ssr: false });
+const ContextCards = dynamic(() => import('@/components/ContextCards').then(mod => ({ default: mod.ContextCards })), { ssr: false });
+const IntentConfirmationChips = dynamic(() => import('@/components/IntentConfirmationChips').then(mod => ({ default: mod.IntentConfirmationChips })), { ssr: false });
+const RefinementChips = dynamic(() => import('@/components/RefinementChips').then(mod => ({ default: mod.RefinementChips })), { ssr: false });
+const DestinationBadges = dynamic(() => import('@/components/DestinationBadges').then(mod => ({ default: mod.DestinationBadges })), { ssr: false });
+const FollowUpSuggestions = dynamic(() => import('@/components/FollowUpSuggestions').then(mod => ({ default: mod.FollowUpSuggestions })), { ssr: false });
+const RealtimeStatusBadge = dynamic(() => import('@/components/RealtimeStatusBadge').then(mod => ({ default: mod.RealtimeStatusBadge })), { ssr: false });
+const TripPlanner = dynamic(() => import('@/components/TripPlanner').then(mod => ({ default: mod.TripPlanner })), { ssr: false });
+const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), { ssr: false });
 
 // Category icons using Untitled UI icons
 function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {
