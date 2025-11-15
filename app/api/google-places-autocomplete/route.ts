@@ -38,9 +38,28 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add included types if specified
+    // Add included types if specified. The new Places API expects concrete primary
+    // types (e.g. "restaurant", "cafe"). Older Autocomplete implementations
+    // often pass placeholder values such as "establishment" or the special
+    // collections "(cities)"/"(regions)" which aren't valid here and would
+    // make the request fail. To keep the autocomplete usable we only forward
+    // the types that look like actual primary types and ignore the legacy
+    // placeholders.
     if (types && types !== 'all') {
-      requestBody.includedPrimaryTypes = [types];
+      const normalizedTypes = types
+        .split(',')
+        .map((type) => type.trim())
+        .filter((type) => type.length > 0);
+
+      const allowedTypes = normalizedTypes.filter((type) => {
+        if (type === 'establishment') return false;
+        if (type.startsWith('(') && type.endsWith(')')) return false;
+        return true;
+      });
+
+      if (allowedTypes.length > 0) {
+        requestBody.includedPrimaryTypes = allowedTypes;
+      }
     }
 
     // Add session token if provided (helps with billing)
