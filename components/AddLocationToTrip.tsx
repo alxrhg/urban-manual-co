@@ -68,6 +68,7 @@ export function AddLocationToTrip({
   // Flight fields
   const [flightNumber, setFlightNumber] = useState('');
   const [airline, setAirline] = useState('');
+  const [lounge, setLounge] = useState('');
   const [flightFrom, setFlightFrom] = useState<Airport | null>(null);
   const [flightTo, setFlightTo] = useState<Airport | null>(null);
   const [flightFromQuery, setFlightFromQuery] = useState('');
@@ -282,6 +283,7 @@ export function AddLocationToTrip({
           to: flightTo,
           airline,
           flightNumber,
+          lounge,
           departureTime: flightDepartureTime,
           arrivalTime: flightArrivalTime,
           raw: notes,
@@ -527,6 +529,18 @@ export function AddLocationToTrip({
                   value={flightNumber}
                   onChange={(e) => setFlightNumber(e.target.value)}
                   placeholder="e.g., AA123"
+                  className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                  Lounge (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={lounge}
+                  onChange={(e) => setLounge(e.target.value)}
+                  placeholder="e.g., American Express Centurion, Delta Sky Club"
                   className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
                 />
               </div>
