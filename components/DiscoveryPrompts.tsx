@@ -93,7 +93,7 @@ export default function DiscoveryPrompts({
     <div className={`space-y-3 ${className}`}>
       {/* Personalized Prompt (Highest Priority) */}
       {personalizedPrompt && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="bg-blue-50 dark:from-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-start gap-2">
             <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
             <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">

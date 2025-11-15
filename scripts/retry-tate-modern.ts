@@ -10,12 +10,12 @@ import { createClient } from '@supabase/supabase-js';
 // Load environment variables FIRST
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!GOOGLE_API_KEY) {
-  console.error('❌ GOOGLE_API_KEY not found in .env.local');
+  console.error('❌ NEXT_PUBLIC_GOOGLE_API_KEY not found in .env.local');
   process.exit(1);
 }
 if (!SUPABASE_URL || !SUPABASE_KEY) {

@@ -343,13 +343,13 @@ export default function DiscoverPage() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       To see explanations, visit a destination page and look for the "Why recommended?" button on ML-powered recommendations.
                     </p>
-                    <div className="flex items-center gap-2 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <Info className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <div className="flex items-center gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <Info className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                       <div className="text-sm">
-                        <p className="font-medium text-purple-900 dark:text-purple-100">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
                           How it works
                         </p>
-                        <p className="text-purple-700 dark:text-purple-300 mt-1">
+                        <p className="text-gray-700 dark:text-gray-300 mt-1">
                           When you see ML recommendations, hover over them to see explanations showing which features (your preferences, destination attributes) influenced the recommendation.
                         </p>
                       </div>

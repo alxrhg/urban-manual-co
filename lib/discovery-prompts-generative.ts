@@ -8,7 +8,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 import { DiscoveryPrompt } from '@/types/discovery';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 // Support both new (publishable/secret) and legacy (anon/service_role) key naming
 const SUPABASE_KEY = 
@@ -18,7 +18,7 @@ const SUPABASE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!GOOGLE_API_KEY) {
-  console.warn('Missing GOOGLE_API_KEY for generative personalization');
+  console.warn('Missing NEXT_PUBLIC_GOOGLE_API_KEY for generative personalization');
 }
 
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;

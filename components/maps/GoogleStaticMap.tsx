@@ -26,7 +26,7 @@ export default function GoogleStaticMap({
   query,
   infoWindowContent,
 }: GoogleStaticMapProps) {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
   const heightStyle = typeof height === 'number' ? `${height}px` : height;
 
   const fallbackCoordinate = { lat: 35.6762, lng: 139.6503 };

@@ -18,7 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
-import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
@@ -30,9 +29,6 @@ import {
   getSessionId,
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
-import { SmartRecommendations } from '@/components/SmartRecommendations';
-import { TrendingSection } from '@/components/TrendingSection';
-import { TrendingSectionML } from '@/components/TrendingSectionML';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { MarkdownRenderer } from '@/src/components/MarkdownRenderer';
@@ -41,18 +37,34 @@ import { ContextCards } from '@/components/ContextCards';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { RefinementChips, type RefinementTag } from '@/components/RefinementChips';
 import { FollowUpSuggestions } from '@/components/FollowUpSuggestions';
+import { DistanceBadge } from '@/components/DistanceBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
-import { TripPlanner } from '@/components/TripPlanner';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
-import { POIDrawer } from '@/components/POIDrawer';
+import type { RefinementTag } from '@/components/RefinementChips';
 
-// Dynamically import MapView to avoid SSR issues
+// Lazy load components that are conditionally rendered or not immediately visible
+// This reduces the initial bundle size and improves initial page load time
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+const SequencePredictionsInline = dynamic(() => import('@/components/SequencePredictionsInline').then(mod => ({ default: mod.SequencePredictionsInline })), { ssr: false });
+const SmartRecommendations = dynamic(() => import('@/components/SmartRecommendations').then(mod => ({ default: mod.SmartRecommendations })), { ssr: false });
+const TrendingSection = dynamic(() => import('@/components/TrendingSection').then(mod => ({ default: mod.TrendingSection })), { ssr: false });
+const TrendingSectionML = dynamic(() => import('@/components/TrendingSectionML').then(mod => ({ default: mod.TrendingSectionML })), { ssr: false });
+const MultiplexAd = dynamic(() => import('@/components/GoogleAd').then(mod => ({ default: mod.MultiplexAd })), { ssr: false });
+const MarkdownRenderer = dynamic(() => import('@/src/components/MarkdownRenderer').then(mod => ({ default: mod.MarkdownRenderer })), { ssr: false });
+const SessionResume = dynamic(() => import('@/components/SessionResume').then(mod => ({ default: mod.SessionResume })), { ssr: false });
+const ContextCards = dynamic(() => import('@/components/ContextCards').then(mod => ({ default: mod.ContextCards })), { ssr: false });
+const IntentConfirmationChips = dynamic(() => import('@/components/IntentConfirmationChips').then(mod => ({ default: mod.IntentConfirmationChips })), { ssr: false });
+const RefinementChips = dynamic(() => import('@/components/RefinementChips').then(mod => ({ default: mod.RefinementChips })), { ssr: false });
+const DestinationBadges = dynamic(() => import('@/components/DestinationBadges').then(mod => ({ default: mod.DestinationBadges })), { ssr: false });
+const FollowUpSuggestions = dynamic(() => import('@/components/FollowUpSuggestions').then(mod => ({ default: mod.FollowUpSuggestions })), { ssr: false });
+const RealtimeStatusBadge = dynamic(() => import('@/components/RealtimeStatusBadge').then(mod => ({ default: mod.RealtimeStatusBadge })), { ssr: false });
+const TripPlanner = dynamic(() => import('@/components/TripPlanner').then(mod => ({ default: mod.TripPlanner })), { ssr: false });
+const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), { ssr: false });
 
 // Category icons using Untitled UI icons
 function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {
@@ -259,6 +271,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showAllCities, setShowAllCities] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'recent'>('default');
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
@@ -323,6 +336,7 @@ export default function Home() {
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
+  const lastSearchedQueryRef = useRef<string>(''); // Track last searched query to prevent duplicates
   
   // Loading text variants
   const loadingTextVariants = [
@@ -755,8 +769,23 @@ export default function Home() {
   // Works like chat but with convenience of auto-trigger
   useEffect(() => {
     if (searchTerm.trim().length > 0) {
+      const trimmedSearchTerm = searchTerm.trim();
+      
+      // Prevent duplicate searches - check if this query was already searched
+      if (trimmedSearchTerm === lastSearchedQueryRef.current) {
+        return;
+      }
+      
+      // Prevent duplicate searches - only trigger if not already searching
+      if (searching) {
+        return;
+      }
+      
       const timer = setTimeout(() => {
-        performAISearch(searchTerm);
+        // Double-check we're not already searching and query hasn't changed
+        if (!searching && searchTerm.trim() === trimmedSearchTerm && searchTerm.trim() !== lastSearchedQueryRef.current) {
+          performAISearch(searchTerm);
+        }
       }, 500); // 500ms debounce for auto-trigger
       return () => clearTimeout(timer);
     } else {
@@ -767,11 +796,13 @@ export default function Home() {
       setSearching(false);
       setSubmittedQuery('');
       setChatMessages([]);
+      setFollowUpSuggestions([]);
+      lastSearchedQueryRef.current = ''; // Reset on clear
       // Show all destinations when no search (with filters if set)
       filterDestinations();
       setCurrentPage(1);
     }
-  }, [searchTerm]); // ONLY depend on searchTerm
+  }, [searchTerm]); // Only depend on searchTerm - checking searching inside effect
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -1268,18 +1299,28 @@ export default function Home() {
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
   const performAISearch = useCallback(async (query: string) => {
+    const trimmedQuery = query.trim();
+    
+    // Prevent duplicate searches with the same query
+    if (trimmedQuery === lastSearchedQueryRef.current && searching) {
+      return;
+    }
+    
     // Track search action for sequence prediction
-    if (query.trim()) {
+    if (trimmedQuery) {
       trackAction({
         type: 'search',
-        query: query.trim(),
+        query: trimmedQuery,
       });
     }
-    setSubmittedQuery(query); // Store the submitted query
+    
+    // Update ref immediately to prevent duplicate calls
+    lastSearchedQueryRef.current = trimmedQuery;
+    setSubmittedQuery(trimmedQuery); // Store the submitted query
     // Clear previous suggestions when starting new search
     setFollowUpSuggestions([]);
     // Match chat component: only check if empty or loading
-    if (!query.trim() || searching) {
+    if (!trimmedQuery || searching) {
       return;
     }
 
@@ -1400,6 +1441,8 @@ export default function Home() {
       setSearchIntent(null);
       setSeasonalContext(null);
       setFollowUpSuggestions([]);
+      // Reset last searched query on error so user can retry
+      lastSearchedQueryRef.current = '';
 
       // Add error message to chat
       setChatMessages(prev => [
@@ -1410,7 +1453,7 @@ export default function Home() {
     } finally {
       setSearching(false);
     }
-  }, [user, searching, conversationHistory, trackAction]);
+  }, [user, searching, conversationHistory, trackAction, submittedQuery]);
 
   // Convert inferredTags to RefinementTag array
   const convertInferredTagsToRefinementTags = useCallback((
@@ -1624,7 +1667,15 @@ export default function Home() {
   }, [destinations, filterDestinationsWithData]);
 
   // Display featured cities (Taipei, Tokyo, New York, London) if they exist in the cities list
-  const displayedCities = FEATURED_CITIES.filter(city => cities.includes(city));
+  const featuredCities = useMemo(
+    () => FEATURED_CITIES.filter(city => cities.includes(city)),
+    [cities]
+  );
+  const remainingCities = useMemo(
+    () => cities.filter(city => !FEATURED_CITIES.includes(city)),
+    [cities]
+  );
+  const displayedCities = showAllCities ? [...featuredCities, ...remainingCities] : featuredCities;
 
   return (
     <ErrorBoundary>
@@ -1738,10 +1789,10 @@ export default function Home() {
                   setAdvancedFilters(newFilters);
                   // Sync with legacy state for backward compatibility
                   if (newFilters.city !== undefined) {
-                    setSelectedCity(newFilters.city || '');
+                    setSelectedCity(typeof newFilters.city === 'string' ? newFilters.city : '');
                   }
                   if (newFilters.category !== undefined) {
-                    setSelectedCategory(newFilters.category || '');
+                    setSelectedCategory(typeof newFilters.category === 'string' ? newFilters.category : '');
                   }
                   // Track filter changes
                   Object.entries(newFilters).forEach(([key, value]) => {
@@ -1845,9 +1896,10 @@ export default function Home() {
                                     <FollowUpSuggestions
                                       suggestions={followUpSuggestions}
                                       onSuggestionClick={(suggestion) => {
+                                        // Only set searchTerm - the useEffect will handle the search
+                                        // This prevents duplicate searches
                                         setSearchTerm(suggestion);
                                         setFollowUpInput('');
-                                        performAISearch(suggestion);
                                       }}
                                       isLoading={searching}
                                     />
@@ -1976,10 +2028,7 @@ export default function Home() {
                       {cities.length > displayedCities.length && (
                         <button
                           onClick={() => {
-                            // Show all cities except the featured ones
-                            const remainingCities = cities.filter(city => !FEATURED_CITIES.includes(city));
-                            // For now, just expand to show all cities
-                            // In the future, could implement a modal or expandable section
+                            setShowAllCities(true);
                           }}
                           className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
                         >
@@ -2021,17 +2070,12 @@ export default function Home() {
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                           }`}
                         >
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                          <Image
+                            src="/michelin-star.svg"
                             alt="Michelin star"
+                            width={12}
+                            height={12}
                             className="h-3 w-3"
-                            onError={(e) => {
-                              // Fallback to local file if external URL fails
-                              const target = e.currentTarget;
-                              if (target.src !== '/michelin-star.svg') {
-                                target.src = '/michelin-star.svg';
-                              }
-                            }}
                           />
                           Michelin
                         </button>
@@ -2075,91 +2119,95 @@ export default function Home() {
                 <div className="max-w-[1800px] mx-auto">
                 {/* Filter and View Toggle - Top right of grid section */}
                 <div className="mb-8 md:mb-10">
-                  <div className="flex justify-end items-center gap-3 relative flex-wrap">
-                    {/* Wrapper for Filter and Map Toggle to ensure alignment */}
-                    <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
-                      {/* Filter Button - Expands inline below */}
-                      <div className="w-full md:w-auto">
-                        <SearchFiltersComponent
-                          filters={advancedFilters}
-                          onFiltersChange={(newFilters) => {
-                            setAdvancedFilters(newFilters);
-                            if (newFilters.city !== undefined) {
-                              setSelectedCity(newFilters.city || '');
-                            }
-                            if (newFilters.category !== undefined) {
-                              setSelectedCategory(newFilters.category || '');
-                            }
-                            Object.entries(newFilters).forEach(([key, value]) => {
-                              if (value !== undefined && value !== null && value !== '') {
-                                trackFilterChange({ filterType: key, value });
-                              }
-                            });
-                          }}
-                          availableCities={cities}
-                          availableCategories={categories}
-                          onLocationChange={handleLocationChange}
-                          sortBy={sortBy}
-                          onSortChange={(newSort) => {
-                            setSortBy(newSort);
-                            setCurrentPage(1);
-                          }}
-                          isAdmin={isAdmin}
-                        />
-                      </div>
-
-                      {/* Grid/Map Toggle */}
-                      <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                  <div className="flex flex-col items-end gap-3">
+                    {/* Create Trip / Add New POI Button */}
+                    <div className="flex justify-end w-full">
+                      {isAdmin ? (
                         <button
-                          onClick={() => setViewMode('grid')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'grid'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Grid view"
+                          onClick={() => {
+                            setEditingDestination(null);
+                            setShowPOIDrawer(true);
+                          }}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                          aria-label="Add New POI"
                         >
-                          <LayoutGrid className="h-4 w-4" />
-                          <span>Grid</span>
+                          <Plus className="h-5 w-5" />
+                          <span className="text-sm font-medium">Add New POI</span>
                         </button>
+                      ) : (
                         <button
-                          onClick={() => setViewMode('map')}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === 'map'
-                              ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                          aria-label="Map view"
+                          onClick={() => setShowTripPlanner(true)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                          aria-label="Create Trip"
                         >
-                          <Map className="h-4 w-4" />
-                          <span>Map</span>
+                          <Plus className="h-5 w-5" />
+                          <span className="text-sm font-medium">Create Trip</span>
                         </button>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Create Trip / Add New POI Button */}
-                    {isAdmin ? (
-                      <button
-                        onClick={() => {
-                          setEditingDestination(null);
-                          setShowPOIDrawer(true);
-                        }}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Add New POI"
-                      >
-                        <Plus className="h-5 w-5" />
-                        <span className="text-sm font-medium">Add New POI</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Create Trip"
-                      >
-                        <Plus className="h-5 w-5" />
-                        <span className="text-sm font-medium">Create Trip</span>
-                      </button>
-                    )}
+                    <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">
+                      {/* Wrapper for Filter and Map Toggle to ensure alignment */}
+                      <div className="flex items-center gap-3 flex-nowrap">
+                        {/* Filter Button - Expands inline below */}
+                        <div>
+                          <SearchFiltersComponent
+                            filters={advancedFilters}
+                            onFiltersChange={(newFilters) => {
+                              setAdvancedFilters(newFilters);
+                              if (newFilters.city !== undefined) {
+                                setSelectedCity(newFilters.city || '');
+                              }
+                              if (newFilters.category !== undefined) {
+                                setSelectedCategory(newFilters.category || '');
+                              }
+                              Object.entries(newFilters).forEach(([key, value]) => {
+                                if (value !== undefined && value !== null && value !== '') {
+                                  trackFilterChange({ filterType: key, value });
+                                }
+                              });
+                            }}
+                            availableCities={cities}
+                            availableCategories={categories}
+                            onLocationChange={handleLocationChange}
+                            sortBy={sortBy}
+                            onSortChange={(newSort) => {
+                              setSortBy(newSort);
+                              setCurrentPage(1);
+                            }}
+                            isAdmin={isAdmin}
+                          />
+                        </div>
+
+                        {/* Grid/Map Toggle */}
+                        <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                          <button
+                            onClick={() => setViewMode('grid')}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === 'grid'
+                                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                            aria-label="Grid view"
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            <span>Grid</span>
+                          </button>
+                          <button
+                            onClick={() => setViewMode('map')}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === 'map'
+                                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                            aria-label="Map view"
+                          >
+                            <Map className="h-4 w-4" />
+                            <span>Map</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
             
@@ -2374,7 +2422,7 @@ export default function Home() {
             if (totalPages <= 1) return null;
             
             return (
-                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2">
+                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2 mx-auto">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}

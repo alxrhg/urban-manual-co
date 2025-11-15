@@ -262,7 +262,7 @@ export function AccountPrivacyManager() {
             <a
               href={latestComplete.file_url || '#'}
               download="urban-manual-export.json"
-              className="text-purple-600 dark:text-purple-300 underline"
+              className="text-blue-600 dark:text-blue-400 underline"
             >
               Download JSON archive
             </a>
@@ -290,7 +290,7 @@ export function AccountPrivacyManager() {
                   <a
                     href={req.file_url}
                     download="urban-manual-export.json"
-                    className="text-xs text-purple-600 dark:text-purple-300 underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 underline"
                   >
                     Download
                   </a>

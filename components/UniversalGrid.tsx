@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, memo } from 'react';
 
 interface UniversalGridProps<T> {
   items: T[];
@@ -23,8 +23,10 @@ interface UniversalGridProps<T> {
  * - lg: 5 columns
  * - xl: 6 columns
  * - 2xl: 7 columns
+ * 
+ * Memoized to prevent unnecessary re-renders when items haven't changed
  */
-export function UniversalGrid<T>({
+export const UniversalGrid = memo(function UniversalGrid<T>({
   items,
   renderItem,
   className = '',
@@ -52,5 +54,5 @@ export function UniversalGrid<T>({
       {items.map((item, index) => renderItem(item, index))}
     </div>
   );
-}
+}) as <T>(props: UniversalGridProps<T>) => ReactNode;
 

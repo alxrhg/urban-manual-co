@@ -84,6 +84,9 @@ export default function RootLayout({
         {/* DNS Prefetch for additional domains */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://guide.michelin.com" />
+        <link rel="dns-prefetch" href="https://maps.googleapis.com" />
+        <link rel="dns-prefetch" href="https://api.mapbox.com" />
+        <link rel="dns-prefetch" href="https://cdn.amcharts.com" />
 
         {/* RSS Feed */}
         <link
@@ -110,6 +113,45 @@ export default function RootLayout({
             .dark{color-scheme:dark}
           `
         }} />
+        
+        {/* Handle chunk loading errors gracefully */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window === 'undefined') return;
+                
+                // Handle chunk loading errors
+                window.addEventListener('error', function(e) {
+                  if (e.target && e.target.tagName === 'SCRIPT' && e.target.src) {
+                    const src = e.target.src;
+                    // Check if it's a Next.js chunk
+                    if (src.includes('/_next/static/chunks/')) {
+                      console.warn('[Chunk Load Error] Failed to load chunk:', src);
+                      // Next.js will automatically retry, but we can help by clearing cache
+                      // Only do this if the error persists after retries
+                      if (e.target.dataset.retryCount && parseInt(e.target.dataset.retryCount) > 2) {
+                        console.warn('[Chunk Load Error] Multiple retries failed, consider clearing cache');
+                      }
+                    }
+                  }
+                }, true);
+                
+                // Handle unhandled promise rejections from chunk loading
+                window.addEventListener('unhandledrejection', function(e) {
+                  if (e.reason && typeof e.reason === 'object' && e.reason.message) {
+                    const message = e.reason.message;
+                    if (message.includes('Failed to load chunk') || message.includes('Loading chunk')) {
+                      console.warn('[Chunk Load Error]', message);
+                      // Next.js handles retries automatically
+                      e.preventDefault(); // Prevent default error logging
+                    }
+                  }
+                });
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
         <ThemeProvider

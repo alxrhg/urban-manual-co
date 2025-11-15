@@ -211,7 +211,6 @@ export function Header() {
               >
                 Map
               </button>
-              <div className="my-2 border-t border-gray-200 dark:border-gray-800" role="separator" />
               {user ? (
                 <>
                   <button
