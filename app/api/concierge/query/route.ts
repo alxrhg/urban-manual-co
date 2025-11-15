@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getVectorClient } from '@/lib/upstash-vector';
-import { generateEmbedding } from '@/lib/ml/embeddings';
+import { getVectorIndex } from '@/lib/upstash-vector';
+import { generateTextEmbedding } from '@/lib/ml/embeddings';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -65,12 +65,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1: Generate embedding for the query
-    const embedding = await generateEmbedding(query);
+    const embeddingResult = await generateTextEmbedding(query);
 
     // Step 2: Query vector database for semantic matches
-    const vectorClient = getVectorClient();
-    const vectorResults = await vectorClient.query({
-      vector: embedding,
+    const vectorIndex = getVectorIndex();
+    const vectorResults = await vectorIndex.query({
+      vector: embeddingResult.embedding,
       topK: limit * 2, // Get more results for filtering
       includeMetadata: true,
     });
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     // Step 3: Get destination IDs from vector results
     const destinationIds = vectorResults
       .filter((r) => r.score && r.score > 0.7) // Filter by similarity threshold
-      .map((r) => parseInt(r.id))
+      .map((r) => parseInt(String(r.id)))
       .slice(0, limit);
 
     if (destinationIds.length === 0) {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     // Step 7: Map destinations with similarity scores and reasons
     const rankedDestinations = destinations.map((dest, index) => {
-      const vectorResult = vectorResults.find((r) => parseInt(r.id) === dest.id);
+      const vectorResult = vectorResults.find((r) => parseInt(String(r.id)) === dest.id);
       return {
         id: dest.id,
         name: dest.name,
