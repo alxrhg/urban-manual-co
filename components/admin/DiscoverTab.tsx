@@ -16,25 +16,46 @@ export default function DiscoverTab() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    
-    fetch("/api/discovery/recommend")
-      .then(r => {
-        if (!r.ok) {
-          throw new Error(`Failed to fetch: ${r.statusText}`);
+    let isMounted = true;
+
+    async function loadRecommendations() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/discovery/recommend", { cache: 'no-store' });
+
+        if (!response.ok) {
+          let errorDetail = '';
+          try {
+            const body = await response.json();
+            errorDetail = body?.error || body?.message || '';
+          } catch {
+            // ignore JSON parse failure
+          }
+          const statusText = response.statusText || `HTTP ${response.status}`;
+          throw new Error(errorDetail || `Failed to fetch: ${statusText}`);
         }
-        return r.json();
-      })
-      .then(data => {
-        setItems(data || []);
-        setLoading(false);
-      })
-      .catch(err => {
+
+        const data = await response.json();
+        if (!isMounted) return;
+        setItems(Array.isArray(data) ? data : []);
+      } catch (err: any) {
         console.error('[DiscoverTab] Error fetching recommendations:', err);
+        if (!isMounted) return;
         setError(err.message || 'Failed to load recommendations');
-        setLoading(false);
-      });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadRecommendations();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {
