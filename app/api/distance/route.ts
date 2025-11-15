@@ -87,11 +87,13 @@ function calculateEstimates(
 
   origins.forEach((origin) => {
     destinations.forEach((dest) => {
+      const destLat = (dest as any).latitude ?? dest.lat;
+      const destLng = (dest as any).longitude ?? dest.lng;
       const distance = haversineDistance(
         origin.lat,
         origin.lng,
-        dest.lat,
-        dest.lng
+        destLat,
+        destLng
       );
 
       // Estimate duration based on mode

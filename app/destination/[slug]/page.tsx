@@ -72,7 +72,14 @@ export default async function DestinationPage({
       photos_json,
       primary_photo_url,
       photo_count,
-      parent_destination_id
+      parent_destination_id,
+      architect,
+      design_firm,
+      architectural_style,
+      design_period,
+      designer_name,
+      architect_info_json,
+      web_content_json
     `)
     .eq('slug', slug)
     .single();

@@ -25,6 +25,7 @@ import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import { POIDrawer } from './POIDrawer';
+import { ArchitectDesignInfo } from './ArchitectDesignInfo';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -260,7 +261,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             icon_url,
             icon_background_color,
             icon_mask_base_uri,
-            google_place_id
+            google_place_id,
+            architect,
+            design_firm,
+            architectural_style,
+            design_period,
+            designer_name,
+            architect_info_json,
+            web_content_json
           `)
           .eq('slug', destination.slug)
           .single();
@@ -860,6 +868,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
+            {/* Architecture & Design */}
+            {destination && <ArchitectDesignInfo destination={destination} />}
+
             {/* Formatted Address */}
             {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
               <div className="mt-4">
@@ -897,7 +908,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Opening Hours */}
             {(() => {
-              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
+              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
               // Only render if we have opening hours with weekday_text
               if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
                 // Debug: log why opening hours aren't showing

@@ -16,6 +16,14 @@ export interface Destination {
   crown?: boolean;
   brand?: string | null;
   architect?: string | null;
+  interior_designer?: string | null;
+  design_firm?: string | null;
+  architectural_style?: string | null;
+  design_period?: string | null;
+  architect_info_json?: Record<string, unknown> | null;
+  architect_info_updated_at?: string | null;
+  web_content_json?: Record<string, unknown> | null;
+  web_content_updated_at?: string | null;
   // Nested destinations support
   parent_destination_id?: number | null; // ID of parent destination (e.g., hotel containing this bar)
   nested_destinations?: Destination[]; // Array of nested destinations (populated by queries)
@@ -23,7 +31,6 @@ export interface Destination {
   place_id?: string | null;
   rating?: number | null;
   price_level?: number | null;
-  opening_hours?: Record<string, unknown> | null;
   phone_number?: string | null;
   website?: string | null;
   google_maps_url?: string | null;
@@ -31,7 +38,6 @@ export interface Destination {
   instagram_url?: string | null;
   tags?: string[] | null;
   last_enriched_at?: string | null;
-  save_count?: number;
   // Google Places API enriched data (JSON fields from database)
   formatted_address?: string | null;
   international_phone_number?: string | null;

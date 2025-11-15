@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const destinationIds = destinations.map((d: any) => d.id || d.destination_id);
     const { data: destinationData, error: destError } = await supabase
       .from('destinations')
-      .select('id, name, city, category, latitude, longitude, opening_hours')
+      .select('id, name, city, category, latitude, longitude, opening_hours_json')
       .in('id', destinationIds);
 
     if (destError) {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       category: dest.category,
       latitude: dest.latitude,
       longitude: dest.longitude,
-      opening_hours: dest.opening_hours,
+      opening_hours: dest.opening_hours_json,
     }));
 
     // Create agent and execute

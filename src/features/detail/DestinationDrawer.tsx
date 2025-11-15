@@ -40,6 +40,7 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
+import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 
 // Dynamically import POIDrawer to avoid SSR issues
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
@@ -320,7 +321,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             icon_url,
             icon_background_color,
             icon_mask_base_uri,
-            google_place_id
+            google_place_id,
+            architect,
+            design_firm,
+            architectural_style,
+            design_period,
+            designer_name,
+            architect_info_json,
+            web_content_json
           `)
           .eq('slug', destination.slug)
           .single();
@@ -1529,7 +1537,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             {/* Opening Hours */}
             {(() => {
-              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || destination.opening_hours;
+              const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
               if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
                 return null;
               }
@@ -1680,6 +1688,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </p>
             </div>
           )}
+
+          {/* Architecture & Design */}
+          {destination && <ArchitectDesignInfo destination={destination} />}
 
           {/* Contact & Links */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
