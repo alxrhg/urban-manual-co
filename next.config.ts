@@ -5,10 +5,10 @@ const cspDirectives = [
   "default-src 'self'",
   // Inline scripts are occasionally required for Next.js hydration/runtime.
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://cdn.apple-mapkit.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.apple-mapkit.com",
   "img-src 'self' data: blob: https://*",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.apple-mapkit.com https://*.apple-mapkit.com",
+  "font-src 'self' data: https://fonts.gstatic.com https://cdn.apple-mapkit.com",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.apple-mapkit.com https://*.apple-mapkit.com https://*.maptiles.cdn.apple-mapkit.com https://*.apple.com",
   "worker-src 'self' blob:",
   "child-src 'none'",
   "frame-ancestors 'none'",
