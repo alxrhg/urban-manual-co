@@ -1967,13 +1967,22 @@ export default function Home() {
                   <div className="w-full pt-6">
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="mb-[50px]">
-                      {/* CITIES Heading */}
-                      <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                        CITIES
-                      </div>
-                      
                       {/* City Buttons */}
                       <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                        <button
+                          onClick={() => {
+                            setSelectedCity("");
+                            setCurrentPage(1);
+                            trackFilterChange({ filterType: 'city', value: 'all' });
+                          }}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCity
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          All Cities
+                        </button>
                         {displayedCities.map((city) => (
                           <button
                             key={city}
