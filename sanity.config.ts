@@ -7,7 +7,7 @@ export default defineConfig({
   name: 'urban-manual',
   title: 'Urban Manual CMS',
 
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '',
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'ryd11bal',
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
 
   plugins: [

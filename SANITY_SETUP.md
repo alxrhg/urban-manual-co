@@ -2,7 +2,35 @@
 
 This project uses Sanity CMS for content management. The Sanity project ID is **ryd11bal**.
 
-## Quick Setup (Recommended)
+## For Deployed Environments (Vercel, Netlify, etc.) 🚀
+
+**This is the most common setup for production:**
+
+1. **Go to your hosting platform's dashboard**
+   - Vercel: Project Settings → Environment Variables
+   - Netlify: Site Settings → Build & Deploy → Environment
+   - Railway: Project → Variables tab
+   - Render: Dashboard → Environment tab
+
+2. **Add these environment variables:**
+   ```bash
+   NEXT_PUBLIC_SANITY_PROJECT_ID=ryd11bal
+   NEXT_PUBLIC_SANITY_DATASET=production
+   NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
+   ```
+
+3. **Redeploy your application**
+   - Vercel: Will auto-deploy after adding variables
+   - Netlify: Trigger new deploy from Deploys tab
+   - Railway/Render: Will auto-redeploy
+
+4. **Access Sanity Studio**
+   - Visit your-domain.com/studio - it will now show a link to the Sanity dashboard
+   - Or go directly to [sanity.io/manage/project/ryd11bal](https://sanity.io/manage/project/ryd11bal)
+
+**Important:** You don't need to run any local commands if you're just deploying to production!
+
+## For Local Development 💻
 
 If you already have a Sanity account and the project created, just add these to your `.env.local`:
 
@@ -20,12 +48,7 @@ If the project `ryd11bal` already exists in your Sanity account:
 
 1. Go to [sanity.io/manage](https://sanity.io/manage) and sign in
 2. Find the project `ryd11bal` 
-3. Add environment variables to `.env.local`:
-   ```bash
-   NEXT_PUBLIC_SANITY_PROJECT_ID=ryd11bal
-   NEXT_PUBLIC_SANITY_DATASET=production
-   NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
-   ```
+3. Add environment variables (see sections above for deployed vs local)
 
 ### Option 2: Create New Project with CLI
 
