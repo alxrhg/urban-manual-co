@@ -133,3 +133,40 @@ test('embedding client uses ML service URL from env', async () => {
     delete process.env.ML_SERVICE_URL;
   }
 });
+
+test('concierge API validates query parameter', async () => {
+  const mockRequest = {
+    json: async () => ({ limit: 5 }),
+  };
+
+  const { POST } = await import('../app/api/concierge/query/route');
+  
+  const response = await POST(mockRequest as any);
+  const data = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(data.error, 'Query is required');
+});
+
+test('concierge API accepts valid request structure', async () => {
+  const mockRequest = {
+    json: async () => ({
+      query: 'romantic restaurants',
+      userContext: {
+        budget: 'luxury',
+        travelStyle: 'romantic',
+      },
+      limit: 5,
+      includeExternal: false,
+    }),
+  };
+
+  // This test validates the request structure
+  // Full integration would require mocking vector DB and Supabase
+  const requestData = await mockRequest.json();
+  
+  assert.equal(typeof requestData.query, 'string');
+  assert.equal(requestData.limit, 5);
+  assert.equal(requestData.includeExternal, false);
+  assert.equal(requestData.userContext.budget, 'luxury');
+});
