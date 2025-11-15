@@ -884,7 +884,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         : []
   )
     .map((tag: unknown) => (typeof tag === 'string' ? formatHighlightTag(tag) : ''))
-    .filter((tag): tag is string => Boolean(tag))
+    .filter((tag: unknown): tag is string => Boolean(tag))
     .slice(0, 8);
 
   const defaultMapsQuery = `${destination.name}, ${capitalizeCity(destination.city)}`;
