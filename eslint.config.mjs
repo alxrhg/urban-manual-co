@@ -19,6 +19,17 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build artifacts and generated files:
+    "public/assets/**",
+    "dist/**",
+    "*.dist",
+    // Migration and script files:
+    "migrations/**",
+    "supabase/migrations/**",
+    // Legacy/deprecated code:
+    "ml-service/**",
+    // Node.js scripts (not TypeScript):
+    "**/*.js",
   ]),
 ]);
 

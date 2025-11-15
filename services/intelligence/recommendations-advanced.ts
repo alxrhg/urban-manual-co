@@ -31,7 +31,7 @@ export class AdvancedRecommendationEngine {
       console.warn('AdvancedRecommendationEngine: Supabase client not available');
     }
     
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
     }
@@ -402,7 +402,7 @@ export class AdvancedRecommendationEngine {
 
       // Get destination IDs from slugs
       const savedSlugs = (savedData.data || []).map(s => s.destination_slug);
-      let sourceDestinationIds: Set<string> = new Set();
+      const sourceDestinationIds: Set<string> = new Set();
 
       if (savedSlugs.length > 0) {
         const { data: destinations } = await this.supabase

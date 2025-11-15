@@ -53,7 +53,7 @@ export default function GooglePlacesAutocompleteNative({
     }
 
     setIsLoading(true);
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     
     if (!apiKey) {
       console.error('Google Maps API key not found');
@@ -119,6 +119,16 @@ export default function GooglePlacesAutocompleteNative({
       // Update input value
       const placeName = place.name || place.formatted_address || '';
       onChange(placeName);
+
+      // Track Google Autocomplete usage for trip planning
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'trip_place_autocomplete', {
+          place_id: place.place_id,
+          place_name: placeName,
+          place_types: place.types?.join(',') || '',
+          has_geometry: !!place.geometry,
+        });
+      }
 
       // Call onPlaceSelect callback with place details
       if (onPlaceSelect) {

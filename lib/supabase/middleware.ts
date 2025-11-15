@@ -65,7 +65,7 @@ export function createClient(request: NextRequest) {
 
     // Return placeholder client (allows build to proceed)
     // Actual runtime errors will occur when middleware tries to use the client
-    let dummyResponse = NextResponse.next({
+    const dummyResponse = NextResponse.next({
       request: {
         headers: request.headers,
       },
@@ -89,7 +89,7 @@ export function createClient(request: NextRequest) {
     };
   }
 
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },

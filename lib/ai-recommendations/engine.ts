@@ -6,7 +6,7 @@ import { buildScoringPrompt } from './prompt-builder';
 import { parseAIResponse, ParsedScore } from './response-parser';
 import { Destination } from '@/types/destination';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '');
 
 export class AIRecommendationEngine {
   private userId: string;

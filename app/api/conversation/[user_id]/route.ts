@@ -29,7 +29,7 @@ import {
   isUpstashConfigured,
 } from '@/lib/rate-limit';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 
@@ -88,7 +88,7 @@ export async function POST(
     }
 
     // Get conversation history
-    let messages = await getConversationMessages(session.sessionId, 20);
+    const messages = await getConversationMessages(session.sessionId, 20);
 
     // Extract intent from new message
     let userContext: any = {};

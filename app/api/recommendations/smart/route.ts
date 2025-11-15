@@ -11,7 +11,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
   const supabase = await createServerClient();
 
   let categoryFilter: string[] = [];
-  let timeBasedFilter: any = {};
+  const timeBasedFilter: any = {};
 
   // Context-based filtering
   switch (context) {

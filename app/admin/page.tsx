@@ -3,19 +3,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Plus, Edit, Search, X, Trash2 } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
 import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
-import { createColumns, type Destination } from "./columns";
+import { createColumns } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import ReindexTab from '@/components/admin/ReindexTab';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// Toast type
+interface Toast {
+  success: (message: string) => void;
+  error: (message: string) => void;
+  warning: (message: string) => void;
+}
 
 // Destination Form Component
 function DestinationForm({
@@ -25,11 +32,11 @@ function DestinationForm({
   isSaving,
   toast
 }: {
-  destination?: any;
-  onSave: (data: any) => Promise<void>;
+  destination?: Destination;
+  onSave: (data: Partial<Destination>) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
-  toast: any;
+  toast: Toast;
 }) {
   const [formData, setFormData] = useState({
     slug: destination?.slug || '',
@@ -44,16 +51,14 @@ function DestinationForm({
     parent_destination_id: destination?.parent_destination_id || null,
   });
   const [parentSearchQuery, setParentSearchQuery] = useState('');
-  const [parentSearchResults, setParentSearchResults] = useState<any[]>([]);
+  const [parentSearchResults, setParentSearchResults] = useState<Destination[]>([]);
   const [isSearchingParent, setIsSearchingParent] = useState(false);
-  const [selectedParent, setSelectedParent] = useState<any>(null);
+  const [selectedParent, setSelectedParent] = useState<Destination | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [fetchingGoogle, setFetchingGoogle] = useState(false);
-  const [placeRecommendations, setPlaceRecommendations] = useState<any[]>([]);
-  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Update form when destination changes
   useEffect(() => {
@@ -83,7 +88,7 @@ function DestinationForm({
               .select('id, slug, name, city')
               .eq('id', destination.parent_destination_id)
               .single();
-            if (data) setSelectedParent(data);
+            if (data) setSelectedParent(data as unknown as Destination);
           } catch {
             setSelectedParent(null);
           }
@@ -499,7 +504,7 @@ function DestinationForm({
                           type="button"
                           onClick={() => {
                             setSelectedParent(parent);
-                            setFormData({ ...formData, parent_destination_id: parent.id });
+                            setFormData({ ...formData, parent_destination_id: parent.id ?? null });
                             setParentSearchQuery('');
                             setParentSearchResults([]);
                           }}
@@ -887,11 +892,28 @@ export default function AdminPage() {
 
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
   const loadDestinationList = useCallback(async () => {
-    if (!isAdmin || !authChecked) return;
+    if (!isAdmin || !authChecked) {
+      console.log('[Admin] Skipping load - not admin or auth not checked', { isAdmin, authChecked });
+      return;
+    }
     
+    console.log('[Admin] Starting loadDestinationList...', { listSearchQuery, listOffset });
     setIsLoadingList(true);
     try {
       const supabase = createClient();
+      
+      // Test connection first
+      const { data: testData, error: testError } = await supabase
+        .from('destinations')
+        .select('count', { count: 'exact', head: true });
+      
+      if (testError) {
+        console.error('[Admin] Connection test failed:', testError);
+        throw new Error(`Database connection failed: ${testError.message}`);
+      }
+      
+      console.log('[Admin] Connection test successful');
+      
       let query = supabase
         .from('destinations')
         .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating, michelin_stars, crown')
@@ -917,6 +939,8 @@ export default function AdminPage() {
         return;
       }
       
+      console.log('[Admin] Raw data received:', data?.length || 0, 'items');
+      
       // Sanitize data to prevent JSON parse errors from malformed content
       const sanitizedData = (data || []).map((item: any) => {
         try {
@@ -939,6 +963,10 @@ export default function AdminPage() {
       
       console.log('[Admin] Loaded destinations:', sanitizedData.length);
       setDestinationList(sanitizedData);
+      
+      if (sanitizedData.length === 0 && !listSearchQuery.trim()) {
+        toast.warning('No destinations found in database. Add some destinations to get started.');
+      }
     } catch (e: any) {
       console.error('[Admin] Error loading destinations:', e);
       // Check if it's a JSON parse error

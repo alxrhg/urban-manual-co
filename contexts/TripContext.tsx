@@ -87,9 +87,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
               image: notesData.image || '/placeholder-image.jpg',
               time: item.time || undefined,
               notes: notesData.raw || undefined,
-              cost: notesData.cost || undefined,
               duration: notesData.duration || undefined,
-              mealType: notesData.mealType || undefined,
             };
           });
 

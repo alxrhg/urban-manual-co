@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
 import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
@@ -21,8 +21,9 @@ interface DestinationCardProps {
 
 /**
  * Enhanced Destination Card with hover interactions and progressive loading
+ * Memoized to prevent unnecessary re-renders
  */
-export function DestinationCard({
+export const DestinationCard = memo(function DestinationCard({
   destination,
   onClick,
   index = 0,
@@ -236,7 +237,7 @@ export function DestinationCard({
       />
     </button>
   );
-}
+});
 
 /**
  * Lazy-loaded version that shows skeleton until in viewport

@@ -16,6 +16,13 @@ import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
 
+interface Airport {
+  iata: string;
+  name: string;
+  city: string;
+  country: string;
+}
+
 interface TripLocation {
   id: number;
   name: string;
@@ -24,15 +31,14 @@ interface TripLocation {
   image: string;
   time?: string;
   notes?: string;
-  cost?: number;
   duration?: number;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   blockType?: 'destination' | 'flight' | 'train' | 'custom';
   customLocation?: {
     place_id?: string;
     formatted_address?: string;
     geometry?: any;
   };
+  airline?: string;
 }
 
 interface AddLocationToTripProps {
@@ -51,12 +57,8 @@ export function AddLocationToTrip({
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
-  const [estimatedCost, setEstimatedCost] = useState<number>(0);
   const [duration, setDuration] = useState<number>(60);
   const [notes, setNotes] = useState('');
-  const [mealType, setMealType] = useState<
-    'breakfast' | 'lunch' | 'dinner' | 'snack' | ''
-  >('');
   
   // Custom location fields
   const [customLocationName, setCustomLocationName] = useState('');
@@ -65,10 +67,17 @@ export function AddLocationToTrip({
   
   // Flight fields
   const [flightNumber, setFlightNumber] = useState('');
-  const [flightFrom, setFlightFrom] = useState('');
-  const [flightTo, setFlightTo] = useState('');
+  const [airline, setAirline] = useState('');
+  const [lounge, setLounge] = useState('');
+  const [flightFrom, setFlightFrom] = useState<Airport | null>(null);
+  const [flightTo, setFlightTo] = useState<Airport | null>(null);
   const [flightFromQuery, setFlightFromQuery] = useState('');
   const [flightToQuery, setFlightToQuery] = useState('');
+  const [flightDepartureTime, setFlightDepartureTime] = useState('');
+  const [flightArrivalTime, setFlightArrivalTime] = useState('');
+  const [airportSearchResults, setAirportSearchResults] = useState<Airport[]>([]);
+  const [searchingAirports, setSearchingAirports] = useState(false);
+  const [activeAirportField, setActiveAirportField] = useState<'from' | 'to' | null>(null);
   
   // Train fields
   const [trainNumber, setTrainNumber] = useState('');
@@ -76,14 +85,125 @@ export function AddLocationToTrip({
   const [trainTo, setTrainTo] = useState('');
   const [trainFromQuery, setTrainFromQuery] = useState('');
   const [trainToQuery, setTrainToQuery] = useState('');
+  const [trainDepartureTime, setTrainDepartureTime] = useState('');
+  const [trainArrivalTime, setTrainArrivalTime] = useState('');
 
   useEffect(() => {
-    if (searchQuery.trim().length >= 2) {
+    if (searchQuery.trim().length >= 2 && blockType === 'destination') {
       searchDestinations();
     } else {
       setDestinations([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, blockType]);
+
+  // Airport search effect
+  useEffect(() => {
+    if (activeAirportField === 'from' && flightFromQuery.trim().length >= 2) {
+      searchAirports(flightFromQuery);
+    } else if (activeAirportField === 'to' && flightToQuery.trim().length >= 2) {
+      searchAirports(flightToQuery);
+    } else {
+      setAirportSearchResults([]);
+    }
+  }, [flightFromQuery, flightToQuery, activeAirportField]);
+
+  const searchAirports = async (query: string) => {
+    setSearchingAirports(true);
+    try {
+      // Use Airport Data API (free tier available)
+      const response = await fetch(
+        `https://aviation-edge.com/v2/public/autocomplete?key=${process.env.NEXT_PUBLIC_AVIATION_EDGE_API_KEY}&city=${encodeURIComponent(query)}`
+      );
+      
+      if (!response.ok) {
+        // Fallback to a static list of major airports if API fails
+        const staticAirports = getMajorAirports().filter(
+          (airport) =>
+            airport.name.toLowerCase().includes(query.toLowerCase()) ||
+            airport.city.toLowerCase().includes(query.toLowerCase()) ||
+            airport.iata.toLowerCase().includes(query.toLowerCase())
+        );
+        setAirportSearchResults(staticAirports.slice(0, 10));
+        return;
+      }
+
+      const data = await response.json();
+      const airports: Airport[] = data.map((item: any) => ({
+        iata: item.codeIataAirport || item.iata || '',
+        name: item.nameAirport || item.name || '',
+        city: item.cityName || item.city || '',
+        country: item.countryName || item.country || '',
+      }));
+      
+      setAirportSearchResults(airports.slice(0, 10));
+    } catch (error) {
+      console.error('Error searching airports:', error);
+      // Fallback to static list
+      const staticAirports = getMajorAirports().filter(
+        (airport) =>
+          airport.name.toLowerCase().includes(query.toLowerCase()) ||
+          airport.city.toLowerCase().includes(query.toLowerCase()) ||
+          airport.iata.toLowerCase().includes(query.toLowerCase())
+      );
+      setAirportSearchResults(staticAirports.slice(0, 10));
+    } finally {
+      setSearchingAirports(false);
+    }
+  };
+
+  // Static list of major world airports as fallback
+  const getMajorAirports = (): Airport[] => {
+    return [
+      { iata: 'JFK', name: 'John F. Kennedy International Airport', city: 'New York', country: 'United States' },
+      { iata: 'LAX', name: 'Los Angeles International Airport', city: 'Los Angeles', country: 'United States' },
+      { iata: 'LHR', name: 'Heathrow Airport', city: 'London', country: 'United Kingdom' },
+      { iata: 'CDG', name: 'Charles de Gaulle Airport', city: 'Paris', country: 'France' },
+      { iata: 'DXB', name: 'Dubai International Airport', city: 'Dubai', country: 'United Arab Emirates' },
+      { iata: 'HND', name: 'Tokyo Haneda Airport', city: 'Tokyo', country: 'Japan' },
+      { iata: 'NRT', name: 'Narita International Airport', city: 'Tokyo', country: 'Japan' },
+      { iata: 'SIN', name: 'Singapore Changi Airport', city: 'Singapore', country: 'Singapore' },
+      { iata: 'ICN', name: 'Incheon International Airport', city: 'Seoul', country: 'South Korea' },
+      { iata: 'HKG', name: 'Hong Kong International Airport', city: 'Hong Kong', country: 'Hong Kong' },
+      { iata: 'AMS', name: 'Amsterdam Airport Schiphol', city: 'Amsterdam', country: 'Netherlands' },
+      { iata: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'Germany' },
+      { iata: 'SFO', name: 'San Francisco International Airport', city: 'San Francisco', country: 'United States' },
+      { iata: 'ORD', name: "O'Hare International Airport", city: 'Chicago', country: 'United States' },
+      { iata: 'ATL', name: 'Hartsfield-Jackson Atlanta International Airport', city: 'Atlanta', country: 'United States' },
+      { iata: 'DFW', name: 'Dallas/Fort Worth International Airport', city: 'Dallas', country: 'United States' },
+      { iata: 'DEN', name: 'Denver International Airport', city: 'Denver', country: 'United States' },
+      { iata: 'SEA', name: 'Seattle-Tacoma International Airport', city: 'Seattle', country: 'United States' },
+      { iata: 'MIA', name: 'Miami International Airport', city: 'Miami', country: 'United States' },
+      { iata: 'LAS', name: 'Harry Reid International Airport', city: 'Las Vegas', country: 'United States' },
+      { iata: 'BOS', name: 'Logan International Airport', city: 'Boston', country: 'United States' },
+      { iata: 'MCO', name: 'Orlando International Airport', city: 'Orlando', country: 'United States' },
+      { iata: 'EWR', name: 'Newark Liberty International Airport', city: 'Newark', country: 'United States' },
+      { iata: 'YYZ', name: 'Toronto Pearson International Airport', city: 'Toronto', country: 'Canada' },
+      { iata: 'YVR', name: 'Vancouver International Airport', city: 'Vancouver', country: 'Canada' },
+      { iata: 'MEX', name: 'Mexico City International Airport', city: 'Mexico City', country: 'Mexico' },
+      { iata: 'GRU', name: 'São Paulo/Guarulhos International Airport', city: 'São Paulo', country: 'Brazil' },
+      { iata: 'MAD', name: 'Adolfo Suárez Madrid-Barajas Airport', city: 'Madrid', country: 'Spain' },
+      { iata: 'BCN', name: 'Barcelona-El Prat Airport', city: 'Barcelona', country: 'Spain' },
+      { iata: 'FCO', name: 'Leonardo da Vinci-Fiumicino Airport', city: 'Rome', country: 'Italy' },
+      { iata: 'MXP', name: 'Milan Malpensa Airport', city: 'Milan', country: 'Italy' },
+      { iata: 'MUC', name: 'Munich Airport', city: 'Munich', country: 'Germany' },
+      { iata: 'ZRH', name: 'Zurich Airport', city: 'Zurich', country: 'Switzerland' },
+      { iata: 'VIE', name: 'Vienna International Airport', city: 'Vienna', country: 'Austria' },
+      { iata: 'CPH', name: 'Copenhagen Airport', city: 'Copenhagen', country: 'Denmark' },
+      { iata: 'OSL', name: 'Oslo Airport', city: 'Oslo', country: 'Norway' },
+      { iata: 'ARN', name: 'Stockholm Arlanda Airport', city: 'Stockholm', country: 'Sweden' },
+      { iata: 'IST', name: 'Istanbul Airport', city: 'Istanbul', country: 'Turkey' },
+      { iata: 'DOH', name: 'Hamad International Airport', city: 'Doha', country: 'Qatar' },
+      { iata: 'SYD', name: 'Sydney Kingsford Smith Airport', city: 'Sydney', country: 'Australia' },
+      { iata: 'MEL', name: 'Melbourne Airport', city: 'Melbourne', country: 'Australia' },
+      { iata: 'AKL', name: 'Auckland Airport', city: 'Auckland', country: 'New Zealand' },
+      { iata: 'PEK', name: 'Beijing Capital International Airport', city: 'Beijing', country: 'China' },
+      { iata: 'PVG', name: 'Shanghai Pudong International Airport', city: 'Shanghai', country: 'China' },
+      { iata: 'BKK', name: 'Suvarnabhumi Airport', city: 'Bangkok', country: 'Thailand' },
+      { iata: 'KUL', name: 'Kuala Lumpur International Airport', city: 'Kuala Lumpur', country: 'Malaysia' },
+      { iata: 'DEL', name: 'Indira Gandhi International Airport', city: 'Delhi', country: 'India' },
+      { iata: 'BOM', name: 'Chhatrapati Shivaji Maharaj International Airport', city: 'Mumbai', country: 'India' },
+    ];
+  };
 
   const searchDestinations = async () => {
     setLoading(true);
@@ -110,6 +230,8 @@ export function AddLocationToTrip({
 
   const handleSelectDestination = (destination: Destination) => {
     setSelectedDestination(destination);
+    setDestinations([]); // Collapse the list after selection
+    setSearchQuery(''); // Clear search to prevent re-population
   };
 
   const handleGooglePlaceSelect = async (placeDetails: any, field?: 'from' | 'to') => {
@@ -117,14 +239,6 @@ export function AddLocationToTrip({
       setCustomLocationName(placeDetails.name || placeDetails.formatted_address || '');
       setCustomLocationData(placeDetails);
       setCustomLocationQuery('');
-    } else if (blockType === 'flight') {
-      if (field === 'from' || (!flightFrom && flightFromQuery)) {
-        setFlightFrom(placeDetails.name || placeDetails.formatted_address || '');
-        setFlightFromQuery('');
-      } else if (field === 'to' || (!flightTo && flightToQuery)) {
-        setFlightTo(placeDetails.name || placeDetails.formatted_address || '');
-        setFlightToQuery('');
-      }
     } else if (blockType === 'train') {
       if (field === 'from' || (!trainFrom && trainFromQuery)) {
         setTrainFrom(placeDetails.name || placeDetails.formatted_address || '');
@@ -148,38 +262,52 @@ export function AddLocationToTrip({
         category: selectedDestination.category || '',
         image: selectedDestination.image || '/placeholder-image.jpg',
         time: selectedTime,
-        cost: estimatedCost,
         duration,
         notes,
-        mealType: mealType || undefined,
         blockType: 'destination',
       };
     } else if (blockType === 'flight') {
-      if (!flightNumber || !flightFrom || !flightTo) return;
+      if (!flightFrom || !flightTo) return;
+      const flightName = flightNumber 
+        ? `${airline ? `${airline} ` : ''}${flightNumber}`
+        : `${airline || 'Flight'}`;
       location = {
         id: Date.now(),
-        name: `Flight ${flightNumber}`,
-        city: `${flightFrom} → ${flightTo}`,
+        name: flightName,
+        city: `${flightFrom.iata} → ${flightTo.iata}`,
         category: 'Flight',
         image: '/placeholder-image.jpg',
-        time: selectedTime,
-        cost: estimatedCost,
-        duration,
-        notes: notes || `From ${flightFrom} to ${flightTo}`,
+        time: flightDepartureTime, // Store departure time in time field
+        notes: JSON.stringify({
+          from: flightFrom,
+          to: flightTo,
+          airline,
+          flightNumber,
+          lounge,
+          departureTime: flightDepartureTime,
+          arrivalTime: flightArrivalTime,
+          raw: notes,
+        }),
         blockType: 'flight',
+        airline,
       };
     } else if (blockType === 'train') {
-      if (!trainNumber || !trainFrom || !trainTo) return;
+      if (!trainFrom || !trainTo) return;
       location = {
         id: Date.now(),
-        name: `Train ${trainNumber}`,
+        name: trainNumber || 'Train',
         city: `${trainFrom} → ${trainTo}`,
         category: 'Train',
         image: '/placeholder-image.jpg',
-        time: selectedTime,
-        cost: estimatedCost,
-        duration,
-        notes: notes || `From ${trainFrom} to ${trainTo}`,
+        time: trainDepartureTime, // Store departure time in time field
+        notes: JSON.stringify({
+          from: trainFrom,
+          to: trainTo,
+          trainNumber,
+          departureTime: trainDepartureTime,
+          arrivalTime: trainArrivalTime,
+          raw: notes,
+        }),
         blockType: 'train',
       };
     } else if (blockType === 'custom') {
@@ -190,10 +318,9 @@ export function AddLocationToTrip({
         city: customLocationData?.formatted_address?.split(',')[1]?.trim() || '',
         category: 'Custom Location',
         image: customLocationData?.photos?.[0]?.name 
-          ? `https://places.googleapis.com/v1/${customLocationData.photos[0].name}/media?maxWidthPx=1200&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
+          ? `https://places.googleapis.com/v1/${customLocationData.photos[0].name}/media?maxWidthPx=1200&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
           : '/placeholder-image.jpg',
         time: selectedTime,
-        cost: estimatedCost,
         duration,
         notes,
         blockType: 'custom',
@@ -383,7 +510,19 @@ export function AddLocationToTrip({
             <div className="space-y-6">
               <div>
                 <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Flight Number
+                  Airline (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={airline}
+                  onChange={(e) => setAirline(e.target.value)}
+                  placeholder="e.g., American Airlines, Delta"
+                  className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                  Flight Number (Optional)
                 </label>
                 <input
                   type="text"
@@ -395,27 +534,91 @@ export function AddLocationToTrip({
               </div>
               <div>
                 <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                  Lounge (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={lounge}
+                  onChange={(e) => setLounge(e.target.value)}
+                  placeholder="e.g., American Express Centurion, Delta Sky Club"
+                  className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
                   From (Airport)
                 </label>
                 {!flightFrom ? (
-                  <GooglePlacesAutocompleteNative
-                    value={flightFromQuery}
-                    onChange={setFlightFromQuery}
-                    onPlaceSelect={(place) => handleGooglePlaceSelect(place, 'from')}
-                    placeholder="Search airport..."
-                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors text-sm"
-                    types={['airport']}
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="relative">
                     <input
                       type="text"
-                      value={flightFrom}
-                      readOnly
-                      className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100"
+                      value={flightFromQuery}
+                      onChange={(e) => {
+                        setFlightFromQuery(e.target.value);
+                        setActiveAirportField('from');
+                      }}
+                      onFocus={() => setActiveAirportField('from')}
+                      placeholder="Search airport (city, name, or code)..."
+                      className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
                     />
+                    {searchingAirports && activeAirportField === 'from' && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
+                      </div>
+                    )}
+                    {airportSearchResults.length > 0 && activeAirportField === 'from' && (
+                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {airportSearchResults.map((airport) => (
+                          <button
+                            key={airport.iata}
+                            onClick={() => {
+                              setFlightFrom(airport);
+                              setFlightFromQuery('');
+                              setAirportSearchResults([]);
+                              setActiveAirportField(null);
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                  {airport.name}
+                                </div>
+                                <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                                  {airport.city}, {airport.country}
+                                </div>
+                              </div>
+                              <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
+                                {airport.iata}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-neutral-900 dark:text-neutral-100">
+                            {flightFrom.name}
+                          </div>
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {flightFrom.city}, {flightFrom.country}
+                          </div>
+                        </div>
+                        <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
+                          {flightFrom.iata}
+                        </div>
+                      </div>
+                    </div>
                     <button
-                      onClick={() => setFlightFrom('')}
+                      onClick={() => {
+                        setFlightFrom(null);
+                        setFlightFromQuery('');
+                      }}
                       className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
                       <XIcon className="w-4 h-4" />
@@ -428,24 +631,76 @@ export function AddLocationToTrip({
                   To (Airport)
                 </label>
                 {!flightTo ? (
-                  <GooglePlacesAutocompleteNative
-                    value={flightToQuery}
-                    onChange={setFlightToQuery}
-                    onPlaceSelect={(place) => handleGooglePlaceSelect(place, 'to')}
-                    placeholder="Search airport..."
-                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors text-sm"
-                    types={['airport']}
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="relative">
                     <input
                       type="text"
-                      value={flightTo}
-                      readOnly
-                      className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100"
+                      value={flightToQuery}
+                      onChange={(e) => {
+                        setFlightToQuery(e.target.value);
+                        setActiveAirportField('to');
+                      }}
+                      onFocus={() => setActiveAirportField('to')}
+                      placeholder="Search airport (city, name, or code)..."
+                      className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
                     />
+                    {searchingAirports && activeAirportField === 'to' && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
+                      </div>
+                    )}
+                    {airportSearchResults.length > 0 && activeAirportField === 'to' && (
+                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {airportSearchResults.map((airport) => (
+                          <button
+                            key={airport.iata}
+                            onClick={() => {
+                              setFlightTo(airport);
+                              setFlightToQuery('');
+                              setAirportSearchResults([]);
+                              setActiveAirportField(null);
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                  {airport.name}
+                                </div>
+                                <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                                  {airport.city}, {airport.country}
+                                </div>
+                              </div>
+                              <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
+                                {airport.iata}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-neutral-900 dark:text-neutral-100">
+                            {flightTo.name}
+                          </div>
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {flightTo.city}, {flightTo.country}
+                          </div>
+                        </div>
+                        <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
+                          {flightTo.iata}
+                        </div>
+                      </div>
+                    </div>
                     <button
-                      onClick={() => setFlightTo('')}
+                      onClick={() => {
+                        setFlightTo(null);
+                        setFlightToQuery('');
+                      }}
                       className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
                       <XIcon className="w-4 h-4" />
@@ -453,12 +708,36 @@ export function AddLocationToTrip({
                   </div>
                 )}
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                    Departure Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    value={flightDepartureTime}
+                    onChange={(e) => setFlightDepartureTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                    Arrival Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    value={flightArrivalTime}
+                    onChange={(e) => setFlightArrivalTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                  />
+                </div>
+              </div>
             </div>
           ) : blockType === 'train' ? (
             <div className="space-y-6">
               <div>
                 <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Train Number / Line
+                  Train Number / Line (Optional)
                 </label>
                 <input
                   type="text"
@@ -528,6 +807,30 @@ export function AddLocationToTrip({
                   </div>
                 )}
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                    Departure Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    value={trainDepartureTime}
+                    onChange={(e) => setTrainDepartureTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                    Arrival Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    value={trainArrivalTime}
+                    onChange={(e) => setTrainArrivalTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                  />
+                </div>
+              </div>
             </div>
           ) : blockType === 'custom' ? (
             <div className="space-y-6">
@@ -570,65 +873,36 @@ export function AddLocationToTrip({
 
           {/* Details Section - Common for all block types */}
           <div className="border-t border-neutral-200 dark:border-neutral-800 pt-6 mt-6 space-y-6">
-            <div>
-              <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                Time
-              </label>
-              <input
-                type="time"
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-                className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                Duration (minutes)
-              </label>
-              <input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                Estimated Cost ($)
-              </label>
-              <input
-                type="number"
-                value={estimatedCost || ''}
-                onChange={(e) => setEstimatedCost(Number(e.target.value))}
-                placeholder="0"
-                className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-              />
-            </div>
-            {blockType === 'destination' && (
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Meal Type
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['breakfast', 'lunch', 'dinner', 'snack'].map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => setMealType(type as any)}
-                      className={`px-3 py-2 text-xs border transition-colors rounded-lg ${
-                        mealType === type
-                          ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
-                          : 'border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-600'
-                      }`}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </button>
-                  ))}
+            {/* Only show Time and Duration for destination and custom location types */}
+            {(blockType === 'destination' || blockType === 'custom') && (
+              <>
+                <div>
+                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                    Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                  />
                 </div>
-              </div>
+                <div>
+                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
+                    Duration (minutes, Optional)
+                  </label>
+                  <input
+                    type="number"
+                    value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value))}
+                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                  />
+                </div>
+              </>
             )}
             <div>
               <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                Notes
+                Notes (Optional)
               </label>
               <textarea
                 value={notes}
@@ -642,8 +916,8 @@ export function AddLocationToTrip({
               onClick={handleAddLocation}
               disabled={
                 (blockType === 'destination' && !selectedDestination) ||
-                (blockType === 'flight' && (!flightNumber || !flightFrom || !flightTo)) ||
-                (blockType === 'train' && (!trainNumber || !trainFrom || !trainTo)) ||
+                (blockType === 'flight' && (!flightFrom || !flightTo)) ||
+                (blockType === 'train' && (!trainFrom || !trainTo)) ||
                 (blockType === 'custom' && !customLocationName)
               }
               className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
