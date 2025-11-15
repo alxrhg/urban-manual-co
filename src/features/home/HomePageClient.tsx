@@ -634,13 +634,6 @@ export function HomePageClient({
   };
 
   useEffect(() => {
-    if (!initialDestinations.length) {
-      void fetchDestinations();
-    }
-    void fetchFilterData();
-  }, [fetchDestinations, fetchFilterData, initialDestinations.length]);
-
-  useEffect(() => {
     if (user) {
       // Priority: Fetch visited places FIRST (needed for filtering)
       // Then fetch profile and session in parallel
@@ -1295,6 +1288,13 @@ export function HomePageClient({
     }
   }, [user, visitedSlugs, filterDestinationsWithData]);
 
+  useEffect(() => {
+    if (!initialDestinations.length) {
+      void fetchDestinations();
+    }
+    void fetchFilterData();
+  }, [fetchDestinations, fetchFilterData, initialDestinations.length]);
+
   const fetchVisitedPlaces = async (): Promise<void> => {
     if (!user) return;
 
@@ -1664,9 +1664,179 @@ export function HomePageClient({
 
   // Filter cities to only show: Taipei, Tokyo, New York, and London
   const allowedCities = ['taipei', 'tokyo', 'new-york', 'london'];
-  const displayedCities = cities.filter(city => 
+  const displayedCities = cities.filter(city =>
     allowedCities.includes(city.toLowerCase())
   );
+
+  const displayDestinations = advancedFilters.nearMe && nearbyDestinations.length > 0
+    ? nearbyDestinations
+    : filteredDestinations;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedDestinations = viewMode === 'grid'
+    ? displayDestinations.slice(startIndex, startIndex + itemsPerPage)
+    : [];
+  const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
+
+  const renderDestinationGrid = () => {
+    if (displayDestinations.length === 0) {
+      if (advancedFilters.nearMe) {
+        return null; // Message already shown above
+      }
+
+      return (
+        <div className="text-center py-12 px-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Loading destinations...
+          </p>
+        </div>
+      );
+    }
+
+    if (viewMode === 'map') {
+      return (
+        <>
+          <div className="w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 relative">
+            <MapView
+              destinations={displayDestinations}
+              onMarkerClick={(dest) => {
+                setSelectedDestination(dest);
+                setIsDrawerOpen(true);
+              }}
+            />
+          </div>
+
+          <HomeAdsRail bottom={<MultiplexAd slot="3271683710" />} />
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
+          {paginatedDestinations.map((destination, index) => {
+            const isVisited = !!(user && visitedSlugs.has(destination.slug));
+            const globalIndex = startIndex + index;
+
+            return (
+              <DestinationCard
+                key={destination.slug}
+                destination={destination}
+                onClick={() => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+
+                  // Track destination click
+                  trackDestinationClick({
+                    destinationSlug: destination.slug,
+                    position: globalIndex,
+                    source: 'grid',
+                  });
+
+                  // Also track with new analytics system
+                  if (destination.id) {
+                    import('@/lib/analytics/track').then(({ trackEvent }) => {
+                      trackEvent({
+                        event_type: 'click',
+                        destination_id: destination.id,
+                        destination_slug: destination.slug,
+                        metadata: {
+                          category: destination.category,
+                          city: destination.city,
+                          source: 'homepage_grid',
+                          position: globalIndex,
+                        },
+                      });
+                    });
+                  }
+
+                  // Track click event to Discovery Engine for personalization
+                  if (user?.id) {
+                    fetch('/api/discovery/track-event', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userId: user.id,
+                        eventType: 'click',
+                        documentId: destination.slug,
+                      }),
+                    }).catch((error) => {
+                      console.warn('Failed to track click event:', error);
+                    });
+                  }
+                }}
+                index={globalIndex}
+                isVisited={isVisited}
+                showBadges={true}
+              />
+            );
+          })}
+        </div>
+
+        {/* Pagination - Only show in grid view */}
+        {totalPages > 1 && (
+          <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Previous page"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            <div className="flex items-center gap-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                const isActive = currentPage === pageNum;
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                    }`}
+                    aria-label={`Page ${pageNum}`}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Next page"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Ad below pagination */}
+        <HomeAdsRail bottom={<MultiplexAd slot="3271683710" />} />
+      </>
+    );
+  };
 
   return (
     <ErrorBoundary>
@@ -1758,14 +1928,12 @@ export function HomePageClient({
                           performAISearch(query);
                         }
                       }}
-                      searchIntent={searchIntent}
-                      searchTier={searchTier}
-                      searching={searching}
+                      isSearching={searching}
                       isAIEnabled={isAIEnabled}
-                      setIsAIEnabled={setIsAIEnabled}
-                      onSearchTierChange={(tier) => setSearchTier(tier)}
-                      showContext={Boolean(enrichedGreetingContext)}
-                      context={enrichedGreetingContext}
+                      enrichedContext={enrichedGreetingContext}
+                      userProfile={userProfile}
+                      lastSession={lastSession}
+                      userName={userProfile?.first_name || userProfile?.username || undefined}
                     />
 
                     {submittedQuery && (
@@ -1776,7 +1944,7 @@ export function HomePageClient({
 
                     {(() => {
                       if (!inferredTags || searching) return null;
-                      const tags = convertInferredTagsToRefinementTags(inferredTags, activeFilters);
+                      const tags = convertInferredTagsToRefinementTags(inferredTags, activeFilters, true);
                       if (tags.length === 0) return null;
                       return (
                         <div className="mt-6">
@@ -2150,185 +2318,8 @@ export function HomePageClient({
               </div>
             )}
 
-            {/* Destination Grid - Original design */}
-                {(() => {
-              // Determine which destinations to show
-              const displayDestinations = advancedFilters.nearMe && nearbyDestinations.length > 0
-                ? nearbyDestinations
-                : filteredDestinations;
-
-              // Always render the grid structure, even if empty (for instant page load)
-              // Show empty state if no destinations
-              if (displayDestinations.length === 0 && !advancedFilters.nearMe) {
-                return (
-                  <div className="text-center py-12 px-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Loading destinations...
-                    </p>
-                  </div>
-                );
-              }
-              
-              if (displayDestinations.length === 0 && advancedFilters.nearMe) {
-                return null; // Message shown above
-              }
-
-              return (
-                <>
-                  {viewMode === 'map' ? (
-                    <div className="w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 relative">
-                      <MapView
-                        destinations={displayDestinations}
-                        onMarkerClick={(dest) => {
-                          setSelectedDestination(dest);
-                          setIsDrawerOpen(true);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    (() => {
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
-                      const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
-
-                  return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-7 lg:gap-8 items-start">
-                    {paginatedDestinations.map((destination, index) => {
-                      const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                      const globalIndex = startIndex + index;
-                      
-                      return (
-                        <DestinationCard
-                    key={destination.slug}
-                          destination={destination}
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setIsDrawerOpen(true);
-
-                      // Track destination click
-                      trackDestinationClick({
-                        destinationSlug: destination.slug,
-                              position: globalIndex,
-                        source: 'grid',
-                      });
-                      
-                      // Also track with new analytics system
-                      if (destination.id) {
-                        import('@/lib/analytics/track').then(({ trackEvent }) => {
-                          trackEvent({
-                            event_type: 'click',
-                            destination_id: destination.id,
-                            destination_slug: destination.slug,
-                            metadata: {
-                              category: destination.category,
-                              city: destination.city,
-                              source: 'homepage_grid',
-                                    position: globalIndex,
-                            },
-                          });
-                        });
-                      }
-                        
-                            // Track click event to Discovery Engine for personalization
-                            if (user?.id) {
-                              fetch('/api/discovery/track-event', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  userId: user.id,
-                                  eventType: 'click',
-                                  documentId: destination.slug,
-                                }),
-                              }).catch((error) => {
-                                console.warn('Failed to track click event:', error);
-                              });
-                            }
-                          }}
-                          index={globalIndex}
-                          isVisited={isVisited}
-                          showBadges={true}
-                        />
-                      );
-                      })}
-                        </div>
-                      );
-                    })()
-                  )}
-
-                  {/* Pagination - Only show in grid view */}
-                  {viewMode === 'grid' && (() => {
-                    const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
-            if (totalPages <= 1) return null;
-            
-            return (
-                      <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="Previous page"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    
-                    const isActive = currentPage === pageNum;
-                    
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
-                          isActive
-                            ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                        }`}
-                        aria-label={`Page ${pageNum}`}
-                        aria-current={isActive ? 'page' : undefined}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
-                
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="Next page"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            );
-          })()}
-
-                  {/* Ad below pagination */}
-                  {displayDestinations.length > 0 && (
-                    <HomeAdsRail bottom={<MultiplexAd slot="3271683710" />} />
-                  )}
-                </>
-              );
-            })()}
-                </div>
-          </div>
+              {/* Destination Grid - Original design */}
+              {renderDestinationGrid()}
 
           <HomeDrawerPortal
             destination={selectedDestination}
