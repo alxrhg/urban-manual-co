@@ -173,7 +173,7 @@ export default function MapPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Filters Bar - Top (below header) */}
-      <div className="sticky top-[112px] left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 safe-area-top">
+      <div className="relative left-0 right-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top">
         <div className="w-full px-6 md:px-10 lg:px-12 py-4 md:py-6">
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
@@ -239,9 +239,11 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* List Panel - Left (Desktop) */}
-      {showListPanel && (
-        <div className="hidden md:block fixed left-0 top-[calc(112px+120px)] bottom-0 w-[380px] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-20 overflow-y-auto">
+      {/* Content Container - List Panel and Map */}
+      <div className="relative w-full" style={{ height: 'calc(100vh - 112px - 120px)', minHeight: '600px' }}>
+        {/* List Panel - Left (Desktop) */}
+        {showListPanel && (
+          <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[380px] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-10 overflow-y-auto">
           <div className="p-6 space-y-3">
             <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
@@ -283,14 +285,15 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Map - Full width with margin for list panel */}
-      <div className={`w-full ${showListPanel ? 'md:ml-[380px]' : ''} mt-[120px]`} style={{ height: 'calc(100vh - 112px - 120px)', minHeight: '600px' }}>
-        <MapView
-          destinations={filteredDestinations}
-          onMarkerClick={handleMarkerClick}
-          center={mapCenter}
-          zoom={mapZoom}
-        />
+        {/* Map - Full width with margin for list panel */}
+        <div className={`absolute top-0 bottom-0 right-0 ${showListPanel ? 'md:left-[380px]' : 'left-0'}`}>
+          <MapView
+            destinations={filteredDestinations}
+            onMarkerClick={handleMarkerClick}
+            center={mapCenter}
+            zoom={mapZoom}
+          />
+        </div>
       </div>
 
       {/* List Panel - Mobile (Bottom Sheet) */}
@@ -298,7 +301,7 @@ export default function MapPage() {
         <>
           {/* Backdrop */}
           <div 
-            className="md:hidden fixed inset-0 bg-black/20 z-20 top-[calc(112px+120px)]"
+            className="md:hidden fixed inset-0 bg-black/20 z-20"
             onClick={() => setShowListPanel(false)}
           />
           {/* Panel */}
