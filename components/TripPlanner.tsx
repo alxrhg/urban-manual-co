@@ -726,8 +726,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+          <div
+            className="grid gap-4"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}
+          >
+            <div className="min-w-0">
               <label htmlFor="start-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                 Start Date *
               </label>
@@ -740,7 +743,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label htmlFor="end-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                 End Date *
               </label>

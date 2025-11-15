@@ -35,46 +35,72 @@ export default function GooglePlacesAutocompleteNative({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Check if already loaded
-    if (window.google?.maps?.places) {
-      setIsScriptLoaded(true);
-      return;
-    }
-
-    // Check if script is already being loaded
-    if (document.querySelector('script[data-google-maps-autocomplete]')) {
-      const checkInterval = setInterval(() => {
-        if (window.google?.maps?.places) {
-          setIsScriptLoaded(true);
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
-
-    setIsLoading(true);
+    let isMounted = true;
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-    
-    if (!apiKey) {
-      console.error('Google Maps API key not found');
-      setIsLoading(false);
-      return;
-    }
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.setAttribute('data-google-maps-autocomplete', 'true');
-    
-    script.onload = () => {
+    const cleanupAutocomplete = () => {
+      if (autocompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        autocompleteRef.current = null;
+      }
+    };
+
+    const handleScriptReady = () => {
+      if (!isMounted) return;
       if (window.google?.maps?.places) {
         setIsScriptLoaded(true);
         setIsLoading(false);
       }
     };
 
+    if (window.google?.maps?.places) {
+      handleScriptReady();
+      return () => {
+        isMounted = false;
+        cleanupAutocomplete();
+      };
+    }
+
+    const existingScript = document.querySelector('script[data-google-maps-autocomplete]');
+
+    if (existingScript) {
+      const handleError = () => {
+        if (!isMounted) return;
+        console.error('Failed to load Google Maps API');
+        setIsLoading(false);
+      };
+
+      existingScript.addEventListener('load', handleScriptReady);
+      existingScript.addEventListener('error', handleError);
+
+      return () => {
+        isMounted = false;
+        existingScript.removeEventListener('load', handleScriptReady);
+        existingScript.removeEventListener('error', handleError);
+        cleanupAutocomplete();
+      };
+    }
+
+    if (!apiKey) {
+      console.error('Google Maps API key not found');
+      return () => {
+        isMounted = false;
+        cleanupAutocomplete();
+      };
+    }
+
+    setIsLoading(true);
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
+    script.async = true;
+    script.defer = true;
+    script.setAttribute('data-google-maps-autocomplete', 'true');
+
+    window.initGoogleMaps = handleScriptReady;
+
     script.onerror = () => {
+      if (!isMounted) return;
       console.error('Failed to load Google Maps API');
       setIsLoading(false);
     };
@@ -82,11 +108,10 @@ export default function GooglePlacesAutocompleteNative({
     document.head.appendChild(script);
 
     return () => {
-      // Cleanup autocomplete on unmount
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        autocompleteRef.current = null;
-      }
+      isMounted = false;
+      script.onerror = null;
+      window.initGoogleMaps = () => {};
+      cleanupAutocomplete();
     };
   }, []);
 
