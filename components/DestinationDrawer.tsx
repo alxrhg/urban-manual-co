@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit } from 'lucide-react';
+import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -819,6 +819,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
                 </div>
               )}
+
+              {/* Instagram Handle */}
+              {(destination.instagram_handle || destination.instagram_url) && (() => {
+                const instagramHandle = destination.instagram_handle || 
+                  (destination.instagram_url 
+                    ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
+                    : null);
+                const instagramUrl = destination.instagram_url || 
+                  (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
+                
+                if (!instagramHandle || !instagramUrl) return null;
+                
+                return (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Instagram className="h-3.5 w-3.5" />
+                    <span>@{instagramHandle.replace('@', '')}</span>
+                  </a>
+                );
+              })()}
             </div>
 
             {/* AI-Generated Tags */}

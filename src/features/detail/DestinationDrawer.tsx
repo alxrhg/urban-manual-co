@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -1300,6 +1300,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
                     </span>
               )}
+
+              {/* Instagram Handle */}
+              {(destination.instagram_handle || destination.instagram_url) && (() => {
+                const instagramHandle = destination.instagram_handle || 
+                  (destination.instagram_url 
+                    ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
+                    : null);
+                const instagramUrl = destination.instagram_url || 
+                  (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
+                
+                if (!instagramHandle || !instagramUrl) return null;
+                
+                return (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Instagram className="h-3 w-3" />
+                    @{instagramHandle.replace('@', '')}
+                  </a>
+                );
+              })()}
                   </div>
 
               {destination.micro_description && (

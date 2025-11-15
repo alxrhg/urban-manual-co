@@ -9,7 +9,7 @@ import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini as fallback
-const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 
@@ -989,7 +989,7 @@ async function processAIChatRequest(
                 const topResults = results.slice(0, 3); // Reduced from 10 to 3
                 const slugsToEnrich = topResults.map((dest: any) => dest.slug);
 
-                const enrichmentDataMap = new Map();
+                let enrichmentDataMap = new Map();
                 if (slugsToEnrich.length > 0) {
                   try {
                     const { data: enrichmentData } = await supabase
@@ -1072,7 +1072,7 @@ async function processAIChatRequest(
 
     // Get intelligence insights only if city detected and we have results (optional feature for performance)
     // Disabled for better performance - can be re-enabled if needed
-    const intelligenceInsights = null;
+    let intelligenceInsights = null;
     // if (intent.city && limitedResults.length > 0) {
     //   try {
     //     const [forecast, opportunities] = await Promise.all([
