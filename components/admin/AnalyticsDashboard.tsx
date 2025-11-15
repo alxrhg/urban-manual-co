@@ -60,7 +60,7 @@ export default function AnalyticsDashboard({ variant = "page" }: AnalyticsDashbo
 
   const wrapperClass =
     variant === "page"
-      ? "min-h-screen bg-white dark:bg-gray-900 px-6 md:px-12 lg:px-16 py-12"
+      ? "min-h-screen bg-white dark:bg-gray-900 px-4 sm:px-6 md:px-12 lg:px-16 py-12 overflow-x-hidden"
       : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6";
 
   const LoadingState = (
@@ -106,7 +106,13 @@ export default function AnalyticsDashboard({ variant = "page" }: AnalyticsDashbo
   }
 
   const content = (
-    <div className={variant === "page" ? "container mx-auto" : "space-y-8"}>
+    <div
+      className={
+        variant === "page"
+          ? "container mx-auto max-w-5xl w-full space-y-8"
+          : "space-y-8"
+      }
+    >
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Search Analytics</h1>
         <p className="text-gray-600 dark:text-gray-400">
@@ -114,7 +120,7 @@ export default function AnalyticsDashboard({ variant = "page" }: AnalyticsDashbo
         </p>
       </div>
 
-      <div className="mb-8 flex flex-col sm:flex-row gap-4 items-end">
+      <div className="mb-8 flex flex-col md:flex-row gap-4 items-end">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Start Date
@@ -139,7 +145,7 @@ export default function AnalyticsDashboard({ variant = "page" }: AnalyticsDashbo
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between mb-2">
             <Search className="h-5 w-5 text-gray-400" />
