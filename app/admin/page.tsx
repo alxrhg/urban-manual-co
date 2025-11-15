@@ -13,6 +13,7 @@ import { createColumns } from "./columns";
 import DiscoverTab from '@/components/admin/DiscoverTab';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import ReindexTab from '@/components/admin/ReindexTab';
+import type { Destination } from '@/types/destination';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
