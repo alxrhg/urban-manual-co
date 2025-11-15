@@ -23,6 +23,13 @@ const DestinationDrawer = dynamic(
   }
 );
 
+const POIDrawer = dynamic(
+  () => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })),
+  {
+    ssr: false,
+  }
+);
+
 function capitalizeCity(city: string): string {
   return city
     .split('-')
@@ -42,6 +49,7 @@ export default function CityPageClient() {
   const router = useRouter();
   const params = useParams();
   const citySlug = decodeURIComponent(params.city as string);
+  const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';
 
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
@@ -56,8 +64,16 @@ export default function CityPageClient() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
+  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
+
+  const handleAdminEdit = (destination: Destination) => {
+    if (!isAdmin) return;
+    setEditingDestination(destination);
+    setShowPOIDrawer(true);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -340,6 +356,8 @@ export default function CityPageClient() {
                       index={globalIndex}
                       isVisited={isVisited}
                       showBadges={true}
+                      isAdmin={isAdmin}
+                      onEdit={handleAdminEdit}
                     />
                   );
                 }}
@@ -461,6 +479,23 @@ export default function CityPageClient() {
           // so we just need to sync our local state
         }}
       />
+
+      {isAdmin && (
+        <POIDrawer
+          isOpen={showPOIDrawer}
+          onClose={() => {
+            setShowPOIDrawer(false);
+            setEditingDestination(null);
+          }}
+          destination={editingDestination || undefined}
+          onSave={async () => {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await fetchDestinations();
+            setEditingDestination(null);
+            setShowPOIDrawer(false);
+          }}
+        />
+      )}
     </>
   );
 }
