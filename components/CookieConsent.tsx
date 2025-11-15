@@ -142,7 +142,7 @@ export function CookieConsent() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 p-4 sm:p-6">
+    <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="relative bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl p-6">
           {/* Close button (mobile) */}
