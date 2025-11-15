@@ -1976,11 +1976,6 @@ export default function Home() {
                   <div className="w-full pt-6">
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="mb-[50px]">
-                      {/* CITIES Heading */}
-                      <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                        CITIES
-                      </div>
-                      
                       {/* City Buttons */}
                       <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
