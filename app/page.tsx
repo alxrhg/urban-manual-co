@@ -2976,50 +2976,33 @@ export default function Home() {
                                       position: globalIndex,
                                     },
                                   });
+                                });
+                              }
 
-                                  // Also track with new analytics system
-                                  if (destination.id) {
-                                    import("@/lib/analytics/track").then(
-                                      ({ trackEvent }) => {
-                                        trackEvent({
-                                          event_type: "click",
-                                          destination_id: destination.id,
-                                          destination_slug: destination.slug,
-                                          metadata: {
-                                            category: destination.category,
-                                            city: destination.city,
-                                            source: "homepage_grid",
-                                            position: globalIndex,
-                                          },
-                                        });
-                                      }
-                                    );
-                                  }
-
-                                  // Track click event to Discovery Engine for personalization
-                                  if (user?.id) {
-                                    fetch("/api/discovery/track-event", {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        userId: user.id,
-                                        eventType: "click",
-                                        documentId: destination.slug,
-                                      }),
-                                    }).catch(error => {
-                                      console.warn(
-                                        "Failed to track click event:",
-                                        error
-                                      );
-                                    });
-                                  }
-                                }}
-                                index={globalIndex}
-                                isVisited={isVisited}
-                                showBadges={true}
-                              />
+                              // Track click event to Discovery Engine for personalization
+                              if (user?.id) {
+                                fetch("/api/discovery/track-event", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    userId: user.id,
+                                    eventType: "click",
+                                    documentId: destination.slug,
+                                  }),
+                                }).catch(error => {
+                                  console.warn(
+                                    "Failed to track click event:",
+                                    error
+                                  );
+                                });
+                              }
+                            }}
+                            index={globalIndex}
+                            isVisited={isVisited}
+                            showBadges={true}
+                          />
                             );
                           }}
                         />
