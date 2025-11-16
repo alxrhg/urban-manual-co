@@ -16,7 +16,7 @@ const DestinationDrawer = dynamic(
 );
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -247,6 +247,7 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { trackAction, predictions } = useSequenceTracker();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -275,6 +276,16 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
+
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam === 'map' && viewMode !== 'map') {
+      setViewMode('map');
+    } else if (viewParam === 'grid' && viewMode !== 'grid') {
+      setViewMode('grid');
+    }
+  }, [searchParams, viewMode]);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   // Calculate items per page based on 4 full rows × current grid columns

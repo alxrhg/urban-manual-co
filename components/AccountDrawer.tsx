@@ -298,10 +298,10 @@ export function AccountDrawer({
       action: () => handleNavigate("/cities"),
     },
     {
-      label: "Interactive Map",
-      description: "See everything plotted in real time",
+      label: "Homepage Map View",
+      description: "Jump straight to the interactive map on home",
       icon: MapPinned,
-      action: () => handleNavigate("/map"),
+      action: () => handleNavigate("/?view=map"),
     },
   ];
 

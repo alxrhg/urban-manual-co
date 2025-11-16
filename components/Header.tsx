@@ -82,10 +82,9 @@ export function Header() {
     fetchBuildVersion();
   }, [isAdmin]);
 
-  const navLinks = [
-    { label: "Cities", href: "/cities", description: "Curated city guides" },
-    { label: "Map", href: "/map", description: "Explore everything on a map" },
-  ];
+    const navLinks = [
+      { label: "Discover by Cities", href: "/cities", description: "Browse every curated guide" },
+    ];
 
   const navigate = (path: string) => {
     router.push(path);
