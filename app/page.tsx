@@ -58,7 +58,6 @@ const DestinationBadges = dynamic(() => import('@/components/DestinationBadges')
 const FollowUpSuggestions = dynamic(() => import('@/components/FollowUpSuggestions').then(mod => ({ default: mod.FollowUpSuggestions })), { ssr: false });
 const RealtimeStatusBadge = dynamic(() => import('@/components/RealtimeStatusBadge').then(mod => ({ default: mod.RealtimeStatusBadge })), { ssr: false });
 const TripPlanner = dynamic(() => import('@/components/TripPlanner').then(mod => ({ default: mod.TripPlanner })), { ssr: false });
-const ChatDrawer = dynamic(() => import('@/components/ChatDrawer').then(mod => ({ default: mod.ChatDrawer })), { ssr: false });
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), { ssr: false });
 
 // Category icons using Untitled UI icons
@@ -276,8 +275,6 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showTripPlanner, setShowTripPlanner] = useState(false);
-  const [showChatDrawer, setShowChatDrawer] = useState(false);
-  const [chatAutoPrompt, setChatAutoPrompt] = useState<string | null>(null);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -333,16 +330,6 @@ export default function Home() {
   const [intentPrompt, setIntentPrompt] = useState<string | null>(null);
 
   const nextTripCity = nextTripSummary?.destination?.trim() || null;
-
-  const handleIntentPromptClick = useCallback(() => {
-    const prompt = nextTripCity
-      ? `I'm planning a trip to ${nextTripCity}. Suggest three standout hotels or base neighborhoods from the Urban Manual database so I can add one to Trip Studio. Include why each fits and mention any notable amenities.`
-      : intentPrompt
-        ? `${intentPrompt}. Please respond with three hotel options and quick reasons so I can drop them into Trip Studio.`
-        : 'Suggest a few design-forward hotels I can anchor my next trip around, with one-line reasons so I can add them to Trip Studio.';
-    setChatAutoPrompt(prompt);
-    setShowChatDrawer(true);
-  }, [nextTripCity, intentPrompt]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
@@ -1561,6 +1548,16 @@ export default function Home() {
     }
   }, [user, searching, conversationHistory, trackAction, submittedQuery]);
 
+  const handleIntentPromptClick = useCallback(() => {
+    const prompt = nextTripCity
+      ? `I'm planning a trip to ${nextTripCity}. Suggest three standout hotels or base neighborhoods from the Urban Manual database so I can add one to Trip Studio. Include why each fits and mention any notable amenities.`
+      : intentPrompt
+        ? `${intentPrompt}. Please respond with three hotel options and quick reasons so I can drop them into Trip Studio.`
+        : 'Suggest a few design-forward hotels I can anchor my next trip around, with one-line reasons so I can add them to Trip Studio.';
+    setSearchTerm(prompt);
+    performAISearch(prompt);
+  }, [nextTripCity, intentPrompt, performAISearch]);
+
   // Convert inferredTags to RefinementTag array
   const convertInferredTagsToRefinementTags = useCallback((
     tags: { neighborhoods?: string[]; styleTags?: string[]; priceLevel?: string; modifiers?: string[] },
@@ -2667,15 +2664,6 @@ export default function Home() {
             <TripPlanner
               isOpen={showTripPlanner}
               onClose={() => setShowTripPlanner(false)}
-            />
-            <ChatDrawer
-              isOpen={showChatDrawer}
-              onClose={() => {
-                setShowChatDrawer(false);
-                setChatAutoPrompt(null);
-              }}
-              initialPrompt={chatAutoPrompt}
-              onInitialPromptConsumed={() => setChatAutoPrompt(null)}
             />
 
           {/* POI Drawer (Admin only) */}
