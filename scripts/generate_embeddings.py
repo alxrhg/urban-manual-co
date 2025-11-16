@@ -16,6 +16,14 @@ import sys
 import time
 import json
 from typing import Dict, List, Optional
+
+try:
+    import requests
+except ImportError:  # pragma: no cover - defensive guard for CLI usage
+    print("❌ Error: Missing required dependency 'requests'.")
+    print("   Install it with: pip3 install -r scripts/requirements.txt")
+    sys.exit(1)
+
 from supabase import create_client
 
 # Configuration

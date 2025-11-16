@@ -21,8 +21,10 @@ In Supabase SQL Editor, run:
 
 ```bash
 cd /home/ubuntu/urban-manual
-pip3 install supabase google-generativeai
+pip3 install -r scripts/requirements.txt
 ```
+
+> This installs `supabase`, `google-generativeai`, `requests`, and the other helper libraries used by the automation scripts.
 
 ### 3. Set Environment Variables
 
