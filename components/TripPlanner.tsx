@@ -602,41 +602,51 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     ];
   };
 
+    const headerSubtitle =
+      step === 'create'
+        ? 'Start with the brief so pacing, neighborhoods, and tone feel intentional.'
+        : 'Fine tune days, sync exports, and keep the itinerary editorial-tight.';
+
     const headerContent = (
-      <div className="flex items-center justify-between w-full">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
-            Trip Studio
-          </p>
-          <h2 className="text-sm font-medium text-gray-900 dark:text-white">
-            {step === 'create' ? 'Create a trip' : tripName || 'Untitled trip'}
-          </h2>
+      <div className="w-full space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
+              Trip Studio
+            </p>
+            <h2 className="text-base font-medium text-gray-900 dark:text-white">
+              {step === 'create' ? 'Launch a new itinerary' : tripName || 'Untitled trip'}
+            </h2>
+          </div>
+          {step === 'plan' && currentTripId && (
+            <button
+              onClick={handleSaveTrip}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save trip"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Saving
+                </>
+              ) : justSaved ? (
+                <>
+                  <SaveIcon className="w-3 h-3" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <SaveIcon className="w-3 h-3" />
+                  Save
+                </>
+              )}
+            </button>
+          )}
         </div>
-        {step === 'plan' && currentTripId && (
-          <button
-            onClick={handleSaveTrip}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Save trip"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Saving
-              </>
-            ) : justSaved ? (
-              <>
-                <SaveIcon className="w-3 h-3" />
-                Saved
-              </>
-            ) : (
-              <>
-                <SaveIcon className="w-3 h-3" />
-                Save
-              </>
-            )}
-          </button>
-        )}
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          {headerSubtitle}
+        </p>
       </div>
     );
 
@@ -714,6 +724,27 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         ) : step === 'create' ? (
           <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-8">
             <div className="space-y-6">
+              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-black to-gray-900 text-white p-6 space-y-4">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.25em] text-white/60">
+                  Trip Studio • Brief
+                </div>
+                <h3 className="text-2xl font-light leading-tight">
+                  Name the trip, lock dates, and tell us the tone—everything downstream inherits it.
+                </h3>
+                <p className="text-sm text-white/80">
+                  The brief powers pacing suggestions, keeps neighborhoods intentional, and ensures exports look editorial—not spreadsheet.
+                </p>
+                <div className="flex flex-wrap gap-3 text-xs text-white/70">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-white/20">
+                    <SparklesIcon className="w-3.5 h-3.5" />
+                    Brief → Compose → Polish
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-white/20">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    Keep cadence calm
+                  </span>
+                </div>
+              </div>
               <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">

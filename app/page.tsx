@@ -2116,30 +2116,29 @@ export default function Home() {
                 <div className="mb-8 md:mb-10">
                   <div className="flex flex-col items-end gap-3">
                     {/* Create Trip / Add New POI Button */}
-                    <div className="flex justify-end w-full">
-                      {isAdmin ? (
-                        <button
-                          onClick={() => {
-                            setEditingDestination(null);
-                            setShowPOIDrawer(true);
-                          }}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                          aria-label="Add New POI"
-                        >
-                          <Plus className="h-5 w-5" />
-                          <span className="text-sm font-medium">Add New POI</span>
-                        </button>
-                      ) : (
+                      <div className="flex justify-end w-full flex-wrap gap-3">
+                        {isAdmin && (
+                          <button
+                            onClick={() => {
+                              setEditingDestination(null);
+                              setShowPOIDrawer(true);
+                            }}
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                            aria-label="Add New POI"
+                          >
+                            <Plus className="h-5 w-5 text-gray-900 dark:text-white" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">Add New POI</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => setShowTripPlanner(true)}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                          aria-label="Create Trip"
+                          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.18)] hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                          aria-label="Open Trip Studio"
                         >
-                          <Plus className="h-5 w-5" />
-                          <span className="text-sm font-medium">Create Trip</span>
+                          <Sparkles className="h-4 w-4" />
+                          <span className="text-sm font-medium tracking-wide">Trip Studio</span>
                         </button>
-                      )}
-                    </div>
+                      </div>
 
                     <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">
                       {/* Wrapper for Filter and Map Toggle to ensure alignment */}
