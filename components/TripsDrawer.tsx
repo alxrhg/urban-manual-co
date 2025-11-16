@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
-import { TripViewDrawer } from '@/components/TripViewDrawer';
 import { Plus, MapPin, Calendar, Edit2, Trash2 } from 'lucide-react';
 
 interface TripsDrawerProps {
@@ -21,7 +20,6 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   const [loading, setLoading] = useState(true);
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
-  const [viewingTripId, setViewingTripId] = useState<string | null>(null);
 
   const fetchTrips = useCallback(async () => {
     if (!user) {
@@ -211,14 +209,15 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-800">
-                      <button
-                        onClick={() => {
-                          setViewingTripId(trip.id);
-                        }}
-                        className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-black dark:text-white"
-                      >
-                        View
-                      </button>
+                        <button
+                          onClick={() => {
+                            setEditingTripId(trip.id);
+                            setShowTripDialog(true);
+                          }}
+                          className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-black dark:text-white"
+                        >
+                          Open
+                        </button>
                       <button
                         onClick={() => {
                           setEditingTripId(trip.id);
@@ -266,25 +265,6 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
         }}
       />
 
-      {/* Trip View Drawer */}
-      {viewingTripId && (
-        <TripViewDrawer
-          isOpen={!!viewingTripId}
-          onClose={() => {
-            setViewingTripId(null);
-            fetchTrips();
-          }}
-          tripId={viewingTripId}
-          onEdit={() => {
-            setEditingTripId(viewingTripId);
-            setViewingTripId(null);
-            setShowTripDialog(true);
-          }}
-          onDelete={() => {
-            fetchTrips();
-          }}
-        />
-      )}
     </>
   );
 }

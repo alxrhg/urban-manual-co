@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Trash2, Edit2, CalendarDays, MapPin, Clock3, ArrowUpRight } from 'lucide-react';
 import { TripPlanner } from '@/components/TripPlanner';
-import { TripViewDrawer } from '@/components/TripViewDrawer';
 import type { Trip } from '@/types/trip';
 
 const tripFlow = [
@@ -37,7 +36,6 @@ export default function TripsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
-  const [viewingTripId, setViewingTripId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -257,7 +255,10 @@ export default function TripsPage() {
                 </div>
                 {highlightTrip && (
                   <button
-                    onClick={() => setViewingTripId(highlightTrip.id)}
+                    onClick={() => {
+                      setEditingTripId(highlightTrip.id);
+                      setShowCreateDialog(true);
+                    }}
                     className="inline-flex items-center gap-2 text-xs font-medium text-gray-900 dark:text-gray-100 hover:opacity-70 transition-opacity"
                   >
                     Open
@@ -389,13 +390,16 @@ export default function TripsPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-between pt-2">
-                        <button
-                          onClick={() => setViewingTripId(trip.id)}
-                          className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:opacity-70 transition-opacity"
-                        >
-                          View trip
-                        </button>
+                        <div className="flex items-center justify-between pt-2">
+                          <button
+                            onClick={() => {
+                              setEditingTripId(trip.id);
+                              setShowCreateDialog(true);
+                            }}
+                            className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:opacity-70 transition-opacity"
+                          >
+                            Open trip
+                          </button>
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => {
@@ -481,24 +485,6 @@ export default function TripsPage() {
         }}
       />
 
-      {viewingTripId && (
-        <TripViewDrawer
-          isOpen={!!viewingTripId}
-          onClose={() => {
-            setViewingTripId(null);
-            fetchTrips();
-          }}
-          tripId={viewingTripId}
-          onEdit={() => {
-            setEditingTripId(viewingTripId);
-            setViewingTripId(null);
-            setShowCreateDialog(true);
-          }}
-          onDelete={() => {
-            fetchTrips();
-          }}
-        />
-      )}
     </main>
   );
 }
