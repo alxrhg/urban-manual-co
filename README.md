@@ -54,6 +54,23 @@ NEXT_PUBLIC_BUILD_VERSION=dev
 
 Next.js requires the `NEXT_PUBLIC_` prefix for any variable that must be available in the browser. The Supabase/Google scripts also read the unprefixed counterparts (`SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_API_KEY`, etc.), so the safest path is to define both when possible.
 
+### Running enrichment / AI scripts
+
+Scripts such as `scripts/generate_ai_fields.py` and `scripts/generate_embeddings.py` **never** include hard-coded Supabase credentials. You must supply your own Supabase project URL and service-role key via environment variables (recommended) or CLI flags:
+
+```bash
+export SUPABASE_URL=your_project_url
+export SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+export GOOGLE_API_KEY=your_google_api_key
+
+# or pass flags explicitly
+python scripts/generate_ai_fields.py \
+  --supabase-url "$SUPABASE_URL" \
+  --supabase-service-role-key "$SUPABASE_SERVICE_ROLE_KEY"
+```
+
+If any of these values are missing, the scripts exit immediately with a clear error to avoid accidentally running against the wrong project or leaking credentials. Rotate any leaked keys in the Supabase dashboard before re-running the scripts.
+
 ## Local Development
 
 ```bash

@@ -12,23 +12,36 @@ The script uses Google Gemini API and is rate limited to 15 requests/minute.
 Expected runtime: 15-20 minutes for 919 destinations.
 """
 
+import argparse
 import os
 import sys
 import time
 from typing import Dict, List, Optional
-from supabase import create_client
+
 import google.generativeai as genai
+from supabase import create_client
 from datetime import datetime
 
-# Configuration
-SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://avdnefdfwvpjkuanhdwk.supabase.co')
-SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2ZG5lZmRmd3Zwamt1YW5oZHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg4MzMsImV4cCI6MjA2OTI5NDgzM30.imGFTDynzDG5bK0w_j5pgwMPBeT9rkXm8ZQ18W6A-nw')
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
+def parse_args():
+    parser = argparse.ArgumentParser(description="Generate AI fields for destinations")
+    parser.add_argument('--supabase-url', default=os.getenv('SUPABASE_URL'), help='Supabase project URL or set SUPABASE_URL env var')
+    parser.add_argument('--supabase-service-role-key', default=os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_KEY'), help='Supabase service role key (never commit!)')
+    parser.add_argument('--google-api-key', default=os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY'), help='Google API key (GOOGLE_API_KEY or GEMINI_API_KEY env var)')
+    return parser.parse_args()
 
-if not GOOGLE_API_KEY:
-    print("❌ Error: GOOGLE_API_KEY or GEMINI_API_KEY environment variable is required")
-    print("   Set it with: export GOOGLE_API_KEY=your_api_key")
+
+def require(value: Optional[str], description: str, env_hint: str) -> str:
+    if value:
+        return value
+    print(f"❌ Error: {description} is required.")
+    print(f"   Set the {env_hint} environment variable or pass the CLI flag.")
     sys.exit(1)
+
+
+args = parse_args()
+SUPABASE_URL = require(args.supabase_url, 'Supabase URL', 'SUPABASE_URL')
+SUPABASE_KEY = require(args.supabase_service_role_key, 'Supabase service role key', 'SUPABASE_SERVICE_ROLE_KEY')
+GOOGLE_API_KEY = require(args.google_api_key, 'Google API key', 'GOOGLE_API_KEY or GEMINI_API_KEY')
 
 # Initialize clients
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
