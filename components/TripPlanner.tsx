@@ -224,7 +224,14 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     return insights;
   }, [destination, days.length, days, hotelLocation]);
 
-const travelSuggestions = useMemo(() => getAISuggestions(), []);
+  const travelSuggestions = useMemo(
+    () => [
+      'Consider adding a morning cafe visit before the museum',
+      'Your dinner reservation is 2km from your last location - allow 30 min travel time',
+      'Weather forecast shows rain on Day 3 - indoor activities recommended',
+    ],
+    []
+  );
 
   const handleHotelSelection = (value: string) => {
     if (value === '__custom') {
@@ -726,15 +733,6 @@ const travelSuggestions = useMemo(() => getAISuggestions(), []);
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const getAISuggestions = () => {
-    // Mock AI suggestions - in real app would call AI API
-    return [
-      'Consider adding a morning cafe visit before the museum',
-      'Your dinner reservation is 2km from your last location - allow 30 min travel time',
-      'Weather forecast shows rain on Day 3 - indoor activities recommended',
-    ];
   };
 
   const headerSubtitle = (() => {
