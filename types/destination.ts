@@ -15,6 +15,7 @@ export interface Destination {
   michelin_stars?: number;
   crown?: boolean;
   brand?: string | null;
+  // Legacy architecture fields (text) - kept for backward compatibility
   architect?: string | null;
   interior_designer?: string | null;
   design_firm?: string | null;
@@ -22,6 +23,17 @@ export interface Destination {
   design_period?: string | null;
   architect_info_json?: Record<string, unknown> | null;
   architect_info_updated_at?: string | null;
+  // NEW: Architecture-First fields (FKs and rich content)
+  architect_id?: string | null;
+  design_firm_id?: string | null;
+  interior_designer_id?: string | null;
+  movement_id?: string | null;
+  architectural_significance?: string | null; // Why this matters architecturally
+  design_story?: string | null; // Rich narrative about the design
+  construction_year?: number | null;
+  renovation_history?: Record<string, unknown> | null;
+  design_awards?: Record<string, unknown> | null;
+  intelligence_score?: number | null;
   web_content_json?: Record<string, unknown> | null;
   web_content_updated_at?: string | null;
   // Nested destinations support
