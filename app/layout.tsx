@@ -3,6 +3,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -161,16 +162,18 @@ export default function RootLayout({
           <SkipNavigation />
           <SplashScreen />
           <TRPCProvider>
-            <AuthProvider>
-              <ItineraryProvider>
-                <Header />
-                <main className="min-h-screen page-transition">
-                  {children}
-                </main>
-                <Footer />
-                <CookieConsent />
-              </ItineraryProvider>
-            </AuthProvider>
+              <AuthProvider>
+                <AdminEditModeProvider>
+                  <ItineraryProvider>
+                    <Header />
+                    <main className="min-h-screen page-transition">
+                      {children}
+                    </main>
+                    <Footer />
+                    <CookieConsent />
+                  </ItineraryProvider>
+                </AdminEditModeProvider>
+              </AuthProvider>
           </TRPCProvider>
           <ToastContainer />
           <Analytics />

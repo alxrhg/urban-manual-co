@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { DestinationCard } from '@/components/DestinationCard';
+import { EditModeToggle } from '@/components/EditModeToggle';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
 import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
@@ -14,6 +15,7 @@ import { MultiplexAd } from '@/components/GoogleAd';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import type { Destination as DestinationType } from '@/types/destination';
 
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
@@ -57,6 +59,17 @@ function SearchPageContent() {
   const [editingDestination, setEditingDestination] = useState<DestinationType | null>(null);
   const [showPOIDrawer, setShowPOIDrawer] = useState(false);
   const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';
+  const {
+    isEditMode: adminEditMode,
+    toggleEditMode,
+    disableEditMode,
+    canUseEditMode,
+  } = useAdminEditMode();
+  const editModeActive = isAdmin && adminEditMode;
+  const handleEditModeToggle = () => {
+    if (!isAdmin || !canUseEditMode) return;
+    toggleEditMode();
+  };
 
   const [searchState, setSearchState] = useState<SearchState>({
     originalQuery: query,
@@ -253,6 +266,31 @@ function SearchPageContent() {
         </div>
       )}
 
+        {isAdmin && (
+          <div className="flex justify-end mb-4">
+            <EditModeToggle active={editModeActive} onToggle={handleEditModeToggle} />
+          </div>
+        )}
+
+        {editModeActive && (
+          <div className="mb-6 rounded-2xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-50">
+                Edit mode is active in search
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
+                Click any card’s edit badge to adjust content without leaving this page.
+              </p>
+            </div>
+            <button
+              onClick={() => disableEditMode()}
+              className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-amber-900 text-white hover:bg-amber-800 transition-all"
+            >
+              Exit Edit Mode
+            </button>
+          </div>
+        )}
+
       {/* Loading State */}
       {searchState.isLoading && (
         <ContextualLoadingState intent={searchState.intent} query={searchState.originalQuery} />
@@ -298,6 +336,7 @@ function SearchPageContent() {
                       showBadges={true}
                       isAdmin={isAdmin}
                       onEdit={handleEditDestination}
+                      showEditAffordance={editModeActive}
                     />
                   ))}
                 </div>

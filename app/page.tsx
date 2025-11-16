@@ -36,9 +36,11 @@ import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
+import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
+import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -248,10 +250,25 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
+  const {
+    isEditMode: adminEditMode,
+    toggleEditMode,
+    enableEditMode,
+    disableEditMode,
+    canUseEditMode,
+  } = useAdminEditMode();
   const { trackAction, predictions } = useSequenceTracker();
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPOIDrawer, setShowPOIDrawer] = useState(false);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
+  const editModeActive = isAdmin && adminEditMode;
+
+  const handleToggleEditMode = useCallback(() => {
+    if (!isAdmin || !canUseEditMode) {
+      return;
+    }
+    toggleEditMode();
+  }, [canUseEditMode, isAdmin, toggleEditMode]);
   
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
@@ -2109,19 +2126,25 @@ export default function Home() {
                 <div className="mb-8 md:mb-10">
                   <div className="flex flex-col items-end gap-3">
                     {/* Create Trip / Add New POI Button */}
-                    <div className="flex justify-end w-full">
+                    <div className="flex justify-end w-full flex-wrap gap-3">
                       {isAdmin ? (
-                        <button
-                          onClick={() => {
-                            setEditingDestination(null);
-                            setShowPOIDrawer(true);
-                          }}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                          aria-label="Add New POI"
-                        >
-                          <Plus className="h-5 w-5" />
-                          <span className="text-sm font-medium">Add New POI</span>
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingDestination(null);
+                              setShowPOIDrawer(true);
+                            }}
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                            aria-label="Add New POI"
+                          >
+                            <Plus className="h-5 w-5" />
+                            <span className="text-sm font-medium">Add New POI</span>
+                          </button>
+                          <EditModeToggle
+                            active={editModeActive}
+                            onToggle={handleToggleEditMode}
+                          />
+                        </>
                       ) : (
                         <button
                           onClick={() => setShowTripPlanner(true)}
@@ -2133,6 +2156,37 @@ export default function Home() {
                         </button>
                       )}
                     </div>
+
+                      {editModeActive && (
+                        <div className="w-full rounded-3xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                              Edit mode is active
+                            </p>
+                            <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
+                              Click any card’s edit badge to update details or add a brand new place directly from this page.
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingDestination(null);
+                                setShowPOIDrawer(true);
+                              }}
+                              className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-white text-amber-900 border border-amber-200 shadow-sm hover:bg-amber-100 transition-all"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add Place
+                            </button>
+                            <button
+                              onClick={() => disableEditMode()}
+                              className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-amber-900 text-white border border-transparent hover:bg-amber-800 transition-all"
+                            >
+                              Exit Edit Mode
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                     <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">
                       {/* Wrapper for Filter and Map Toggle to ensure alignment */}
@@ -2350,6 +2404,7 @@ export default function Home() {
                               setEditingDestination(dest);
                               setShowPOIDrawer(true);
                             }}
+                              showEditAffordance={editModeActive}
                             onClick={() => {
                               setSelectedDestination(destination);
                               setIsDrawerOpen(true);

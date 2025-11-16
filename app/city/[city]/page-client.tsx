@@ -10,10 +10,12 @@ import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { DestinationCard } from '@/components/DestinationCard';
+import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -50,6 +52,17 @@ export default function CityPageClient() {
   const params = useParams();
   const citySlug = decodeURIComponent(params.city as string);
   const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';
+  const {
+    isEditMode: adminEditMode,
+    toggleEditMode,
+    disableEditMode,
+    canUseEditMode,
+  } = useAdminEditMode();
+  const editModeActive = isAdmin && adminEditMode;
+  const handleEditModeToggle = () => {
+    if (!isAdmin || !canUseEditMode) return;
+    toggleEditMode();
+  };
 
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
@@ -266,7 +279,7 @@ export default function CityPageClient() {
                     {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap justify-end">
                   {isAdmin && (
                     <button
                       onClick={handleAddNewPOI}
@@ -279,10 +292,40 @@ export default function CityPageClient() {
                       Add POI
                     </button>
                   )}
+                  {isAdmin && (
+                    <EditModeToggle active={editModeActive} onToggle={handleEditModeToggle} size="compact" />
+                  )}
                   <CityClock citySlug={citySlug} />
                 </div>
               </div>
             </div>
+
+            {editModeActive && (
+              <div className="mb-8 rounded-2xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-50">
+                    Editing {cityDisplayName}
+                  </p>
+                  <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
+                    Use the edit button on any card to update this city’s places instantly.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleAddNewPOI}
+                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-white text-amber-900 border border-amber-200 shadow-sm hover:bg-amber-100 transition-all"
+                  >
+                    Add Place
+                  </button>
+                  <button
+                    onClick={() => disableEditMode()}
+                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-amber-900 text-white hover:bg-amber-800 transition-all"
+                  >
+                    Exit Edit Mode
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Filters - Matching homepage style */}
             <div className="space-y-4">
@@ -368,21 +411,22 @@ export default function CityPageClient() {
                   const isVisited = !!(user && visitedSlugs.has(destination.slug));
                   const globalIndex = (currentPage - 1) * itemsPerPage + index;
 
-                  return (
-                    <DestinationCard
-                      key={destination.slug}
-                      destination={destination}
-                      onClick={() => {
-                        setSelectedDestination(destination);
-                        setIsDrawerOpen(true);
-                      }}
-                      index={globalIndex}
-                      isVisited={isVisited}
-                      showBadges={true}
-                      isAdmin={isAdmin}
-                      onEdit={handleAdminEdit}
-                    />
-                  );
+                    return (
+                      <DestinationCard
+                        key={destination.slug}
+                        destination={destination}
+                        onClick={() => {
+                          setSelectedDestination(destination);
+                          setIsDrawerOpen(true);
+                        }}
+                        index={globalIndex}
+                        isVisited={isVisited}
+                        showBadges={true}
+                        isAdmin={isAdmin}
+                        onEdit={handleAdminEdit}
+                        showEditAffordance={editModeActive}
+                      />
+                    );
                 }}
                 emptyState={
                   <div className="text-center py-20">

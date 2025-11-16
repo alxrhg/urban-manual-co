@@ -17,6 +17,7 @@ interface DestinationCardProps {
   className?: string;
   isAdmin?: boolean;
   onEdit?: (destination: Destination) => void;
+  showEditAffordance?: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ export const DestinationCard = memo(function DestinationCard({
   className = '',
   isAdmin = false,
   onEdit,
+  showEditAffordance = false,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -73,21 +75,23 @@ export const DestinationCard = memo(function DestinationCard({
         cursor-pointer text-left focus-ring
         hover:scale-[1.01]
         active:scale-[0.98]
+        ${showEditAffordance ? 'ring-1 ring-black/10 dark:ring-white/10' : ''}
         ${className}
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-      {/* Image Container with Progressive Loading */}
-      <div
-        className={`
-          relative aspect-video overflow-hidden rounded-2xl
-          bg-gray-100 dark:bg-gray-800
-          border border-gray-200 dark:border-gray-800
-          transition-all duration-300 ease-out
-          mb-3
-          ${isLoaded ? 'opacity-100' : 'opacity-0'}
-        `}
-      >
+        {/* Image Container with Progressive Loading */}
+        <div
+          className={`
+            relative aspect-video overflow-hidden rounded-2xl
+            bg-gray-100 dark:bg-gray-800
+            border border-gray-200 dark:border-gray-800
+            transition-all duration-300 ease-out
+            mb-3
+            ${isLoaded ? 'opacity-100' : 'opacity-0'}
+            ${showEditAffordance ? 'ring-1 ring-black/10 dark:ring-white/10' : ''}
+          `}
+        >
         {/* Skeleton while loading */}
         {!isLoaded && isInView && (
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
@@ -140,19 +144,25 @@ export const DestinationCard = memo(function DestinationCard({
         )}
 
         {/* Admin Edit Button - Top Right */}
-        {isAdmin && onEdit && (
+          {isAdmin && onEdit && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onEdit(destination);
             }}
-            className="absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 transition-all opacity-0 group-hover:opacity-100 shadow-lg"
+              className={`absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 transition-all shadow-lg
+                ${showEditAffordance ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100'}
+              `}
             title="Edit destination"
             aria-label="Edit destination"
           >
             <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
           </button>
         )}
+
+          {showEditAffordance && (
+            <div className="pointer-events-none absolute inset-1 rounded-2xl border border-dashed border-black/20 dark:border-white/30" />
+          )}
 
         {/* Badges - Animated on hover */}
         {showBadges && (

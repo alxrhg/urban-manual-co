@@ -14,6 +14,8 @@ import DiscoverTab from '@/components/admin/DiscoverTab';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import ReindexTab from '@/components/admin/ReindexTab';
 import type { Destination } from '@/types/destination';
+import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { capitalizeCity } from '@/lib/utils';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -742,13 +744,46 @@ function DestinationForm({
           )}
         </button>
       </div>
-    </form>
+      </form>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  helperText,
+  isLoading,
+}: {
+  label: string;
+  value?: number;
+  helperText?: string;
+  isLoading?: boolean;
+}) {
+  return (
+    <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 shadow-sm">
+      <p className="text-xs tracking-[0.25em] uppercase text-gray-400 dark:text-gray-500">{label}</p>
+      {isLoading ? (
+        <div className="mt-4 h-8 w-24 rounded-full bg-gray-100 dark:bg-gray-800 animate-pulse" />
+      ) : (
+        <p className="mt-4 text-2xl font-semibold text-gray-900 dark:text-white">
+          {value !== undefined ? value.toLocaleString() : '—'}
+        </p>
+      )}
+      {helperText && (
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{helperText}</p>
+      )}
+    </div>
   );
 }
 
 export default function AdminPage() {
   const router = useRouter();
   const toast = useToast();
+  const {
+    isEditMode: inlineEditModeEnabled,
+    enableEditMode: enableInlineEditMode,
+    disableEditMode: disableInlineEditMode,
+  } = useAdminEditMode();
   const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -759,6 +794,13 @@ export default function AdminPage() {
   const [destinationList, setDestinationList] = useState<any[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [listOffset, setListOffset] = useState(0);
+  const [stats, setStats] = useState({
+    total: 0,
+    enriched: 0,
+    michelin: 0,
+    crown: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
   
   // Regenerate content state
   const [regenerateRunning, setRegenerateRunning] = useState(false);
@@ -891,6 +933,66 @@ export default function AdminPage() {
     };
   }, [router]);
 
+  const loadAdminStats = useCallback(async () => {
+    if (!isAdmin || !authChecked) {
+      return;
+    }
+    setStatsLoading(true);
+    try {
+      const supabase = createClient();
+
+      const totalPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true });
+      const enrichedPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true })
+        .not('google_place_id', 'is', null);
+      const michelinPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true })
+        .gt('michelin_stars', 0);
+      const crownPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true })
+        .eq('crown', true);
+
+      const [totalRes, enrichedRes, michelinRes, crownRes] = await Promise.all([
+        totalPromise,
+        enrichedPromise,
+        michelinPromise,
+        crownPromise,
+      ]);
+
+      const responses = [totalRes, enrichedRes, michelinRes, crownRes];
+      for (const res of responses) {
+        if (res.error) {
+          throw res.error;
+        }
+      }
+
+      setStats({
+        total: totalRes.count ?? 0,
+        enriched: enrichedRes.count ?? 0,
+        michelin: michelinRes.count ?? 0,
+        crown: crownRes.count ?? 0,
+      });
+    } catch (error) {
+      console.error('[Admin] Error loading stats:', error);
+      toast.error('Failed to load admin stats');
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [authChecked, isAdmin, toast]);
+
+  const handleLaunchEditMode = useCallback((path: string) => {
+    if (typeof window === 'undefined') return;
+    const formattedPath = path.startsWith('/') ? path : `/${path}`;
+    enableInlineEditMode();
+    const url = formattedPath.includes('?') ? `${formattedPath}&edit=1` : `${formattedPath}?edit=1`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [enableInlineEditMode]);
+
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
   const loadDestinationList = useCallback(async () => {
     if (!isAdmin || !authChecked) {
@@ -1016,6 +1118,12 @@ export default function AdminPage() {
     }
   }, [isAdmin, authChecked, listSearchQuery, listOffset, loadDestinationList]);
 
+  useEffect(() => {
+    if (isAdmin && authChecked) {
+      loadAdminStats();
+    }
+  }, [isAdmin, authChecked, loadAdminStats]);
+
   // Load data when tab changes
   useEffect(() => {
     if (!isAdmin || !authChecked) return;
@@ -1045,17 +1153,18 @@ export default function AdminPage() {
       confirmText: 'Delete',
       cancelText: 'Cancel',
       onConfirm: async () => {
-        try {
-          const supabase = createClient();
-          const { error } = await supabase
-            .from('destinations')
-            .delete()
-            .eq('slug', slug);
+          try {
+            const supabase = createClient();
+            const { error } = await supabase
+              .from('destinations')
+              .delete()
+              .eq('slug', slug);
 
-          if (error) throw error;
+            if (error) throw error;
 
-          // Reload the list after deletion
-          await loadDestinationList();
+            // Reload the list after deletion
+            await loadDestinationList();
+            await loadAdminStats();
 
           toast.success(`Successfully deleted "${name}"`);
         } catch (e: any) {
@@ -1085,6 +1194,9 @@ export default function AdminPage() {
       setIsSearching(false);
     }
   };
+
+  const inlineCitySlug = destinationList[0]?.city || 'tokyo';
+  const inlineCityLabel = capitalizeCity(inlineCitySlug);
 
   // Show loading state
   if (!authChecked) {
@@ -1138,6 +1250,115 @@ export default function AdminPage() {
             <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">Admin</span>
           </div>
         </div>
+
+      <div className="mb-12 space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Destinations"
+            value={stats.total}
+            helperText="Published records"
+            isLoading={statsLoading}
+          />
+          <StatCard
+            label="Google Enriched"
+            value={stats.enriched}
+            helperText="Have Google data"
+            isLoading={statsLoading}
+          />
+          <StatCard
+            label="Michelin Spots"
+            value={stats.michelin}
+            helperText="Starred locations"
+            isLoading={statsLoading}
+          />
+          <StatCard
+            label="Crown Picks"
+            value={stats.crown}
+            helperText="Featured experiences"
+            isLoading={statsLoading}
+          />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 p-6 shadow-sm">
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">Inline Edit Mode</p>
+                <h3 className="text-xl font-semibold mt-2 text-gray-900 dark:text-white">Update content on the live site</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                  Open any frontend page with admin-only edit affordances. Changes sync instantly with Supabase.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full font-semibold ${
+                  inlineEditModeEnabled
+                    ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200'
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                }`}>
+                  {inlineEditModeEnabled ? 'Active' : 'Disabled'}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400">Persists across tabs</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleLaunchEditMode('/')}
+                  className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition"
+                >
+                  Open homepage
+                </button>
+                <button
+                  onClick={() => handleLaunchEditMode(`/city/${inlineCitySlug}`)}
+                  className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                >
+                  Edit {inlineCityLabel}
+                </button>
+                {inlineEditModeEnabled ? (
+                  <button
+                    onClick={disableInlineEditMode}
+                    className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+                  >
+                    Turn off
+                  </button>
+                ) : (
+                  <button
+                    onClick={enableInlineEditMode}
+                    className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+                  >
+                    Enable now
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">Workspace Shortcuts</p>
+            <h3 className="text-xl font-semibold mt-2 text-gray-900 dark:text-white">Keep content fresh</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+              Quickly jump to frequent tasks, refresh the dataset, or switch tabs.
+            </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => loadDestinationList()}
+                  className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+                >
+                  Reload table
+                </button>
+                <button
+                  onClick={() => loadAdminStats()}
+                  className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+                >
+                  Refresh stats
+                </button>
+                <button
+                  onClick={() => setActiveTab('discover')}
+                  className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+                >
+                  Open Discover tab
+                </button>
+              </div>
+          </div>
+        </div>
+      </div>
 
         {/* Tab Navigation - Matches account page style */}
         <div className="mb-12">
@@ -1351,10 +1572,11 @@ export default function AdminPage() {
                         if (error) throw error;
                       }
 
-                      setShowCreateModal(false);
-                      setEditingDestination(null);
-                      await loadDestinationList();
-                      toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
+                        setShowCreateModal(false);
+                        setEditingDestination(null);
+                        await loadDestinationList();
+                        await loadAdminStats();
+                        toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
                     } catch (e: any) {
                       toast.error(`Error: ${e.message}`);
                     } finally {
