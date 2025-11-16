@@ -2,10 +2,9 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import { AccountDrawer } from "@/components/AccountDrawer";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
 
@@ -14,7 +13,6 @@ export function Header() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -131,9 +129,9 @@ export function Header() {
             {/* Separate Account/Sign In button */}
             {user ? (
               <button
-                onClick={() => setIsAccountDrawerOpen(true)}
+                onClick={() => navigate('/account')}
                 className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-                aria-label="Open account drawer"
+                aria-label="Go to account"
               >
                 <User className="w-4 h-4" />
                 <span>Account</span>
@@ -214,6 +212,13 @@ export function Header() {
               {user ? (
                 <>
                   <button
+                    onClick={() => { navigate('/account'); setIsMenuOpen(false); }}
+                    className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
+                    role="menuitem"
+                  >
+                    Account
+                  </button>
+                  <button
                     onClick={() => { setIsMenuOpen(false); setTimeout(() => setIsChatDrawerOpen(true), 300); }}
                     className="block w-full text-left px-5 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ease-out touch-manipulation focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800"
                     role="menuitem"
@@ -244,12 +249,6 @@ export function Header() {
         </>
       )}
 
-      {/* Account Drawer */}
-      <AccountDrawer
-        isOpen={isAccountDrawerOpen}
-        onClose={() => setIsAccountDrawerOpen(false)}
-      />
-      
       {/* Chat Drawer */}
       <ChatDrawer
         isOpen={isChatDrawerOpen}
