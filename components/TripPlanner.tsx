@@ -214,8 +214,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     }
   }, [hotelLocation, hotelOptions]);
 
-  const totalStops = days.reduce((sum, day) => sum + day.locations.length, 0);
-
   const travelInsights = useMemo(() => {
     const insights: string[] = [];
     insights.push(destination ? `City: ${destination}` : 'Set a destination');
