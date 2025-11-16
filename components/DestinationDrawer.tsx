@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ComponentType, ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram } from 'lucide-react';
 
@@ -63,6 +63,34 @@ interface DestinationDrawerProps {
   onSaveToggle?: (slug: string, saved: boolean) => void;
   onVisitToggle?: (slug: string, visited: boolean) => void;
 }
+
+type IconComponent = ComponentType<{ className?: string }>;
+
+interface SectionCardProps {
+  title: string;
+  icon?: IconComponent;
+  action?: ReactNode;
+  children: ReactNode;
+}
+
+const SectionCard = ({ title, icon: Icon, action, children }: SectionCardProps) => (
+  <section className="rounded-3xl border border-gray-200/80 dark:border-gray-800/60 bg-white/90 dark:bg-gray-950/70 shadow-[0_25px_60px_-35px_rgba(15,23,42,0.75)] p-5 sm:p-6 space-y-4">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400 font-semibold">
+        {Icon && <Icon className="h-4 w-4" />}
+        <span>{title}</span>
+      </div>
+      {action}
+    </div>
+    <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">{children}</div>
+  </section>
+);
+
+const HeroPill = ({ children }: { children: ReactNode }) => (
+  <span className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-[13px] font-medium text-white/90 backdrop-blur">
+    {children}
+  </span>
+);
 
 function capitalizeCity(city: string): string {
   return city
@@ -719,6 +747,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   if (!destination) return null;
 
+  const heroSummary = destination.micro_description ||
+    (enrichedData?.editorial_summary
+      ? stripHtmlTags(enrichedData.editorial_summary).split('. ').slice(0, 2).join('. ').trim()
+      : null);
+
   return (
     <>
       {/* Backdrop */}
@@ -763,53 +796,193 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          {/* Image */}
-          {destination.image && (
-            <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800">
-              <img
-                src={destination.image}
-                alt={destination.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Silently handle broken images
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
+        <div className="p-4 sm:p-6 space-y-8">
+          {/* Hero */}
+          <div className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-800 bg-gray-900 text-white shadow-[0_35px_65px_-45px_rgba(15,23,42,1)]">
+            <div className="absolute inset-0">
+              {destination.image ? (
+                <img
+                  src={destination.image}
+                  alt={destination.name}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" aria-hidden />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/45 to-black/10" aria-hidden />
             </div>
-          )}
-
-          {/* Title */}
-          <div className="mb-6">
-            <div className="flex items-start gap-3 mb-4">
-              <h1 className="text-2xl font-bold flex-1">
-                {destination.name}
-              </h1>
-              {/* Crown hidden for now */}
+            <div className="relative flex h-full min-h-[320px] flex-col justify-between gap-6 p-6 sm:p-8">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] uppercase tracking-[0.4em] text-white/60">Destination</span>
+                <div className="flex items-center gap-2">
+                  {isAdmin && destination && (
+                    <button
+                      onClick={() => setIsEditDrawerOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-white"
+                      title="Edit destination"
+                      aria-label="Edit destination"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={handleShare}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span>{copied ? 'Link Copied!' : 'Share'}</span>
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-white/70">{capitalizeCity(destination.city)}</p>
+                  <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{destination.name}</h1>
+                </div>
+                {heroSummary && (
+                  <p className="max-w-2xl text-sm leading-relaxed text-white/80">{heroSummary}</p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <HeroPill>
+                    <MapPin className="h-3.5 w-3.5" />
+                    <span>{capitalizeCity(destination.city)}</span>
+                  </HeroPill>
+                  {destination.category && (
+                    <HeroPill>
+                      <Tag className="h-3.5 w-3.5" />
+                      <span>{destination.category}</span>
+                    </HeroPill>
+                  )}
+                  {destination.neighborhood && (
+                    <HeroPill>
+                      <span>{destination.neighborhood}</span>
+                    </HeroPill>
+                  )}
+                  {destination.tags && destination.tags.length > 0 && (
+                    <HeroPill>
+                      <span>{destination.tags[0]}</span>
+                    </HeroPill>
+                  )}
+                  {(enrichedData?.rating || destination.rating) && (
+                    <HeroPill>
+                      <span>⭐ {(enrichedData?.rating || destination.rating)?.toFixed(1)}</span>
+                    </HeroPill>
+                  )}
+                  {(enrichedData?.price_level || destination.price_level) && (
+                    <HeroPill>
+                      {'$'.repeat(enrichedData?.price_level || destination.price_level)}
+                    </HeroPill>
+                  )}
+                </div>
+              </div>
             </div>
+          </div>
 
-            {/* Meta Info */}
-            <div className="flex flex-wrap items-center gap-3 mt-3">
-              <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <SectionCard title="Plan Your Visit" icon={Heart}>
+            {user ? (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="flex flex-1 gap-2">
+                    <button
+                      onClick={handleSave}
+                      disabled={loading}
+                      className={`relative flex flex-1 items-center justify-center gap-2 rounded-2xl border px-4 py-4 text-sm font-semibold transition-all ${
+                        isSaved
+                          ? 'border-red-500/20 bg-red-500 text-white shadow-lg shadow-red-500/30'
+                          : 'border-gray-200/70 bg-gray-50 text-gray-900 hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white'
+                      } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
+                    >
+                      <Heart className={`h-5 w-5 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
+                      <span className={`${heartAnimating && isSaved ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
+                        {isSaved ? 'Saved' : 'Save'}
+                      </span>
+                      {heartAnimating && isSaved && (
+                        <style jsx>{`
+                          @keyframes heartBeat {
+                            0%, 100% { transform: scale(1); }
+                            15% { transform: scale(1.3); }
+                            30% { transform: scale(1.1); }
+                            45% { transform: scale(1.25); }
+                            60% { transform: scale(1.05); }
+                          }
+                          @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                          }
+                        `}</style>
+                      )}
+                    </button>
+                    <button
+                      onClick={openListsModal}
+                      disabled={loading}
+                      className="inline-flex items-center justify-center rounded-2xl border border-gray-200/70 bg-white px-4 py-4 text-sm font-medium text-gray-900 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                      title="Add to list"
+                      aria-label="Add to list"
+                    >
+                      <ChevronDown className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleVisitClick}
+                    disabled={loading}
+                    className={`relative flex flex-1 items-center justify-center gap-2 rounded-2xl border px-4 py-4 text-sm font-semibold transition-all ${
+                      isVisited
+                        ? 'border-green-500/20 bg-green-500 text-white shadow-lg shadow-green-500/30'
+                        : 'border-gray-200/70 bg-gray-50 text-gray-900 hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-white'
+                    } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
+                  >
+                    <Check className={`h-5 w-5 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
+                    <span className={`${checkAnimating && isVisited ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
+                      {isVisited ? 'Visited' : 'Mark as Visited'}
+                    </span>
+                    {checkAnimating && isVisited && (
+                      <style jsx>{`
+                        @keyframes checkPop {
+                          0%, 100% { transform: scale(1) rotate(0deg); }
+                          25% { transform: scale(1.3) rotate(-10deg); }
+                          50% { transform: scale(1.1) rotate(5deg); }
+                          75% { transform: scale(1.2) rotate(-5deg); }
+                        }
+                        @keyframes fadeIn {
+                          from { opacity: 0; }
+                          to { opacity: 1; }
+                        }
+                      `}</style>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Organize favorites and track where you've been.</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-gray-200/80 bg-gray-50/70 px-4 py-6 text-center text-sm text-gray-600 dark:border-gray-800/60 dark:bg-gray-900/40 dark:text-gray-300">
+                <a href="/auth/login" className="font-semibold underline-offset-4 hover:underline">Sign in</a> to save destinations and track your visits.
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Overview" icon={Tag}>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" />
                 <span>{capitalizeCity(destination.city)}</span>
               </div>
-
               {destination.category && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-1.5">
                   <Tag className="h-3.5 w-3.5" />
                   <span className="capitalize">{destination.category}</span>
                 </div>
               )}
-
               {typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-1.5">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
                     className="h-3.5 w-3.5"
                     onError={(e) => {
-                      // Fallback to local file if external URL fails
                       const target = e.currentTarget;
                       if (target.src !== '/michelin-star.svg') {
                         target.src = '/michelin-star.svg';
@@ -819,24 +992,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
                 </div>
               )}
-
-              {/* Instagram Handle */}
               {(destination.instagram_handle || destination.instagram_url) && (() => {
-                const instagramHandle = destination.instagram_handle || 
-                  (destination.instagram_url 
+                const instagramHandle = destination.instagram_handle ||
+                  (destination.instagram_url
                     ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
                     : null);
-                const instagramUrl = destination.instagram_url || 
+                const instagramUrl = destination.instagram_url ||
                   (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
-                
+
                 if (!instagramHandle || !instagramUrl) return null;
-                
+
                 return (
                   <a
                     href={instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                    className="flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-gray-200"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Instagram className="h-3.5 w-3.5" />
@@ -846,13 +1017,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               })()}
             </div>
 
-            {/* AI-Generated Tags */}
             {destination.tags && destination.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {destination.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-700"
+                    className="inline-flex items-center gap-1 rounded-full border border-gray-200/70 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
                   >
                     ✨ {tag}
                   </span>
@@ -860,9 +1030,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-            {/* Rating & Price Level */}
             {((enrichedData?.rating || enrichedData?.price_level) || (destination.rating || destination.price_level)) && (
-              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex flex-wrap items-center gap-4 text-sm">
                 {(enrichedData?.rating || destination.rating) && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-yellow-500">⭐</span>
@@ -883,22 +1052,30 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-            {/* Editorial Summary */}
             {enrichedData?.editorial_summary && (
-              <div className="mt-4">
-                <h3 className="text-sm font-bold uppercase mb-2 text-gray-500 dark:text-gray-400">From Google</h3>
-                <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">From Google</h3>
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                   {stripHtmlTags(enrichedData.editorial_summary)}
-                </span>
+                </p>
               </div>
             )}
 
-            {/* Architecture & Design */}
             {destination && <ArchitectDesignInfo destination={destination} />}
 
-            {/* Formatted Address */}
+            {destination.content && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">About</h3>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {stripHtmlTags(destination.content)}
+                </p>
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Details" icon={MapPin}>
             {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
-              <div className="mt-4">
+              <div className="rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-gray-50/70 dark:bg-gray-900/40 p-4">
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
@@ -914,15 +1091,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-            {/* Place Types */}
             {enrichedData?.place_types && Array.isArray(enrichedData.place_types) && enrichedData.place_types.length > 0 && (
-              <div className="mt-4">
-                <span className="text-xs text-gray-500 dark:text-gray-400 mb-2">Types</span>
-                <div className="flex flex-wrap gap-2">
+              <div>
+                <span className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">Types</span>
+                <div className="flex flex-wrap gap-2 mt-2">
                   {enrichedData.place_types.slice(0, 5).map((type: string, idx: number) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                      className="inline-flex items-center rounded-full border border-gray-200/70 bg-white px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
                     >
                       {type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                     </span>
@@ -931,26 +1107,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-            {/* Opening Hours */}
             {(() => {
               const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
-              // Only render if we have opening hours with weekday_text
               if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
-                // Debug: log why opening hours aren't showing
                 if (hours && !hours.weekday_text) {
                   console.log('Opening hours data exists but missing weekday_text:', hours);
                 }
                 return null;
               }
-              
+
               const openStatus = getOpenStatus(
-                hours, 
-                destination.city, 
-                enrichedData?.timezone_id, 
+                hours,
+                destination.city,
+                enrichedData?.timezone_id,
                 enrichedData?.utc_offset
               );
-              
-              // Calculate timezone for "today" highlighting using same logic as getOpenStatus
+
               let now: Date;
               if (enrichedData?.timezone_id) {
                 now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
@@ -962,10 +1134,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               } else {
                 now = new Date();
               }
-              
+
               return (
-                <div className="mt-4">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-900/40 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     {openStatus.todayHours && (
                       <span className={`text-sm font-semibold ${openStatus.isOpen ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -973,22 +1145,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       </span>
                     )}
                     {openStatus.todayHours && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        · {openStatus.todayHours}
-                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">· {openStatus.todayHours}</span>
                     )}
                     {enrichedData?.timezone_id && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                        ({enrichedData.timezone_id.replace('_', ' ')})
-                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">({enrichedData.timezone_id.replace('_', ' ')})</span>
                     )}
                   </div>
                   {hours.weekday_text && (
-                    <details className="text-sm">
-                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                    <details className="mt-3 text-sm">
+                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                         View all hours
                       </summary>
-                      <div className="mt-2 space-y-1 pl-6">
+                      <div className="mt-2 space-y-1 pl-4">
                         {hours.weekday_text.map((day: string, index: number) => {
                           const [dayName, hoursText] = day.split(': ');
                           const dayOfWeek = now.getDay();
@@ -996,7 +1164,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           const isToday = index === googleDayIndex;
 
                           return (
-                            <div key={index} className={`flex justify-between ${isToday ? 'font-semibold text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                            <div key={index} className={`flex justify-between text-xs sm:text-sm ${isToday ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                               <span>{dayName}</span>
                               <span>{hoursText}</span>
                             </div>
@@ -1008,112 +1176,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               );
             })()}
-          </div>
 
-          {/* Action Buttons */}
-          {user && (
-            <div className="flex gap-2 mb-6">
-              <div className="flex-1 flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
-                    isSaved
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
-                  } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
-                >
-                  <Heart className={`h-5 w-5 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
-                  <span className={`${heartAnimating && isSaved ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                    {isSaved ? 'Saved' : 'Save'}
-                  </span>
-                  {heartAnimating && isSaved && (
-                    <style jsx>{`
-                      @keyframes heartBeat {
-                        0%, 100% { transform: scale(1); }
-                        15% { transform: scale(1.3); }
-                        30% { transform: scale(1.1); }
-                        45% { transform: scale(1.25); }
-                        60% { transform: scale(1.05); }
-                      }
-                      @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                      }
-                    `}</style>
-                  )}
-                </button>
-                <button
-                  onClick={openListsModal}
-                  disabled={loading}
-                  className="px-3 py-3 min-h-11 min-w-11 flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-800 transition-colors touch-manipulation"
-                  title="Add to list"
-                  aria-label="Add to list"
-                >
-                  <ChevronDown className="h-5 w-5" />
-                </button>
-              </div>
-
-              <button
-                onClick={handleVisitClick}
-                disabled={loading}
-                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
-                  isVisited
-                    ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
-                } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
-              >
-                <Check className={`h-5 w-5 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
-                <span className={`${checkAnimating && isVisited ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
-                  {isVisited ? 'Visited' : 'Mark as Visited'}
-                </span>
-                {checkAnimating && isVisited && (
-                  <style jsx>{`
-                    @keyframes checkPop {
-                      0%, 100% { transform: scale(1) rotate(0deg); }
-                      25% { transform: scale(1.3) rotate(-10deg); }
-                      50% { transform: scale(1.1) rotate(5deg); }
-                      75% { transform: scale(1.2) rotate(-5deg); }
-                    }
-                    @keyframes fadeIn {
-                      from { opacity: 0; }
-                      to { opacity: 1; }
-                    }
-                  `}</style>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Sign in prompt */}
-          {!user && (
-            <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                <a href="/auth/login" className="font-medium hover:opacity-60">Sign in</a> to save destinations and track your visits
-              </span>
-            </div>
-          )}
-
-          {/* Description */}
-          {destination.content && (
-            <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">About</h3>
-              <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {stripHtmlTags(destination.content)}
-              </div>
-            </div>
-          )}
-
-          {/* Contact & Links Section */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
-            <div className="mb-6">
+            {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
               <div className="flex flex-wrap gap-2">
                 {destination.google_maps_url && (
                   <a
                     href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/70 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
                   >
                     <span>📍</span>
                     <span>Apple Maps</span>
@@ -1128,7 +1199,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       href={fullUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/70 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
                     >
                       <span>{domain}</span>
                       <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
@@ -1138,7 +1209,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {(enrichedData?.international_phone_number || destination.phone_number) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/70 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
                   >
                     <span>📞</span>
                     <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
@@ -1149,50 +1220,57 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.instagram_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/70 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
                   >
                     <span>📷</span>
                     <span>Instagram</span>
                   </a>
                 )}
               </div>
-            </div>
-          )}
+            )}
+          </SectionCard>
 
-          {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">Reviews</h3>
+            <SectionCard title="Reviews" icon={Sparkles}>
               <div className="space-y-3">
                 {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                  <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
-                    <div className="flex items-start justify-between mb-2">
+                  <div key={idx} className="rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-gray-50/80 dark:bg-gray-900/40 p-4">
+                    <div className="flex items-start justify-between">
                       <div>
                         <span className="font-medium text-sm">{review.author_name}</span>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-600 dark:text-gray-400">
                           <span className="text-yellow-500">⭐</span>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
+                          <span>{review.rating}</span>
                           {review.relative_time_description && (
-                            <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
+                            <span>· {review.relative_time_description}</span>
                           )}
                         </div>
                       </div>
                     </div>
                     {review.text && (
-                      <span className="text-sm text-gray-700 dark:text-gray-300 mt-2 line-clamp-3">{review.text}</span>
+                      <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 line-clamp-3">{review.text}</p>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
+            </SectionCard>
           )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
-
-          {/* Map Section */}
-          <div className="mb-6">
-            <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">Location</h3>
+          <SectionCard
+            title="Location"
+            icon={Navigation}
+            action={(
+              <a
+                href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200/70 bg-white px-4 py-2 text-xs font-semibold text-gray-900 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+              >
+                <Navigation className="h-4 w-4" />
+                <span>Get Directions</span>
+              </a>
+            )}
+          >
             <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               <GoogleMap
                 query={`${destination.name}, ${destination.city}`}
@@ -1200,63 +1278,37 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 className="rounded-2xl"
               />
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Directions Button */}
-          <div className="mb-6">
-            <a
-              href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-full border border-gray-200 dark:border-gray-800"
-            >
-              <Navigation className="h-4 w-4" />
-              <span>Get Directions</span>
-            </a>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
-
-          {/* AI Recommendations */}
           {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  You might also like
-                </h3>
-              </div>
-
+            <SectionCard title="You might also like" icon={Sparkles}>
               {loadingRecommendations ? (
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6">
+                <div className="flex gap-4 overflow-x-auto pb-2">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex-shrink-0 w-40">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
+                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-xl mb-2 animate-pulse" />
                       <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
                       <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+                <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
                   {recommendations.map(rec => (
                     <button
                       key={rec.slug}
                       onClick={() => {
-                        // Navigate to recommended destination
                         window.location.href = `/destination/${rec.slug}`;
                       }}
-                      className="flex-shrink-0 w-40 group text-left"
+                      className="flex-shrink-0 w-40 text-left snap-start"
                     >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+                      <div className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 mb-2">
                         {rec.image ? (
                           <img
                             src={rec.image}
                             alt={rec.name}
-                            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                            className="w-full h-full object-cover transition-opacity hover:opacity-90"
                             onError={(e) => {
-                              // Silently handle broken images
                               e.currentTarget.style.display = 'none';
                               const parent = e.currentTarget.parentElement;
                               if (parent && !parent.querySelector('.fallback-placeholder')) {
@@ -1272,15 +1324,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                             <MapPin className="h-8 w-8 opacity-20" />
                           </div>
                         )}
-                        {/* Crown hidden for now */}
                         {typeof rec.michelin_stars === 'number' && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
+                          <div className="absolute bottom-2 left-2 bg-white/90 dark:bg-gray-900 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-0.5">
                             <img
                               src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                               alt="Michelin star"
                               className="h-3 w-3"
                               onError={(e) => {
-                                // Fallback to local file if external URL fails
                                 const target = e.currentTarget;
                                 if (target.src !== '/michelin-star.svg') {
                                   target.src = '/michelin-star.svg';
@@ -1301,36 +1351,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   ))}
                 </div>
               )}
-            </div>
+            </SectionCard>
           )}
-
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-8" />
-
-          {/* Share and Edit Buttons */}
-          <div className="flex justify-center gap-3">
-            {isAdmin && destination && (
-              <button
-                onClick={() => setIsEditDrawerOpen(true)}
-                className="flex items-center gap-2 px-6 py-3 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg font-medium"
-                title="Edit destination"
-                aria-label="Edit destination"
-              >
-                <Edit className="h-4 w-4" />
-                <span>Edit</span>
-              </button>
-            )}
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity rounded-full font-medium"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>{copied ? 'Link Copied!' : 'Share'}</span>
-            </button>
-          </div>
         </div>
-      </div>
-
       {/* Lists Modal */}
       {showListsModal && (
         <div
