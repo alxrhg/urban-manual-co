@@ -6,7 +6,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Building2, ArrowRight } from 'lucide-react';
 import type { DesignMovement } from '@/types/architecture';
 import Link from 'next/link';

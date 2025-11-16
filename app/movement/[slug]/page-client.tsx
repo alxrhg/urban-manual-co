@@ -5,7 +5,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Building2, Calendar, MapPin } from 'lucide-react';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
@@ -90,7 +90,19 @@ export default function MovementPageClient({ slug }: MovementPageClientProps) {
         .limit(100);
 
       if (error) throw error;
-      setDestinations(data || []);
+      
+      // Transform data to match Destination type
+      const transformed = (data || []).map((dest: any) => ({
+        ...dest,
+        architect: Array.isArray(dest.architect) && dest.architect.length > 0 
+          ? dest.architect[0].name 
+          : dest.architect?.name || null,
+        movement: Array.isArray(dest.movement) && dest.movement.length > 0
+          ? dest.movement[0].name
+          : dest.movement?.name || null,
+      }));
+      
+      setDestinations(transformed as Destination[]);
     } catch (error) {
       console.error('Error fetching destinations:', error);
     } finally {
@@ -183,7 +195,8 @@ export default function MovementPageClient({ slug }: MovementPageClientProps) {
                 <DestinationCard
                   key={destination.slug}
                   destination={destination}
-                  visited={false}
+                  onClick={() => {}}
+                  isVisited={false}
                 />
               )}
             />

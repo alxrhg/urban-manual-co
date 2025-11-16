@@ -6,9 +6,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Building2, MapPin } from 'lucide-react';
 import type { ArchitectureDestination } from '@/types/architecture';
+import type { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
 
 // Lazy load map component
@@ -77,7 +78,20 @@ export function ArchitectureMap({ destinations: initialDestinations, architectId
       const { data, error } = await query;
 
       if (error) throw error;
-      setDestinations((data || []) as ArchitectureDestination[]);
+      
+      // Transform data to match ArchitectureDestination type
+      const transformed = (data || []).map((dest: any) => ({
+        ...dest,
+        architect: Array.isArray(dest.architect) && dest.architect.length > 0
+          ? dest.architect[0]
+          : dest.architect || null,
+        movement: Array.isArray(dest.movement) && dest.movement.length > 0
+          ? dest.movement[0]
+          : dest.movement || null,
+        created_at: dest.created_at || new Date().toISOString(),
+      }));
+      
+      setDestinations(transformed as ArchitectureDestination[]);
     } catch (error) {
       console.error('Error fetching destinations for map:', error);
     } finally {
@@ -104,19 +118,23 @@ export function ArchitectureMap({ destinations: initialDestinations, architectId
     );
   }
 
-  // Convert to format expected by MapView
-  const mapDestinations = destinations.map(dest => ({
+  // Convert to format expected by MapView (Destination type)
+  const mapDestinations: Destination[] = destinations.map(dest => ({
     id: dest.id,
     name: dest.name,
     slug: dest.slug,
     city: dest.city,
+    country: dest.country,
     category: dest.category,
-    image: dest.image,
-    lat: dest.latitude || 0,
-    lng: dest.longitude || 0,
-    architect: dest.architect,
-    movement: dest.movement,
-  }));
+    image: dest.image || dest.hero_image || null,
+    description: dest.description || null,
+    lat: dest.latitude || (dest.location as any)?.lat || 0,
+    lng: dest.longitude || (dest.location as any)?.lng || 0,
+    architect: typeof dest.architect === 'object' && dest.architect !== null
+      ? dest.architect.name
+      : (dest.architect as any) || null,
+    // Map other fields as needed
+  } as Destination));
 
   return (
     <div className="w-full h-96 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">

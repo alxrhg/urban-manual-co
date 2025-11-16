@@ -108,8 +108,13 @@ export interface ArchitectureDestination {
   
   // Rich content
   hero_image?: string | null;
+  image?: string | null; // Main image (for compatibility)
   architectural_photos?: ArchitecturalPhoto[] | null;
   description?: string | null;
+  
+  // Location (for map compatibility)
+  latitude?: number | null;
+  longitude?: number | null;
   
   // Intelligence metadata
   intelligence_score?: number | null;
