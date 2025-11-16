@@ -243,26 +243,28 @@ function DestinationForm({
 
       if (!res.ok) {
         let error;
+        let errorDetails: { error?: string } | null = null;
         try {
-          error = await res.json();
+          errorDetails = await res.json();
         } catch (parseError) {
           const text = await res.text();
           throw new Error(`Upload failed: ${text || res.statusText}`);
         }
-        throw new Error(error.error || 'Upload failed');
+        throw new Error(errorDetails?.error || 'Upload failed');
       }
 
-      let data;
+      let data: { url?: string };
       try {
         data = await res.json();
       } catch (parseError) {
         const text = await res.text();
         throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
       }
-      return data.url;
-    } catch (error: any) {
+      return data.url ?? null;
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      toast.error(`Image upload failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Image upload failed: ${message}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -297,45 +299,53 @@ function DestinationForm({
       });
 
       if (!res.ok) {
-        let error;
-        try {
-          error = await res.json();
-        } catch (parseError) {
-          const text = await res.text();
-          throw new Error(`Failed to fetch from Google: ${text || res.statusText}`);
-        }
-        throw new Error(error.error || 'Failed to fetch from Google');
-      }
-
-      let data;
+      let errorDetails: { error?: string } | null = null;
       try {
-        data = await res.json();
+        errorDetails = await res.json();
       } catch (parseError) {
         const text = await res.text();
-        throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
+        throw new Error(`Failed to fetch from Google: ${text || res.statusText}`);
+      }
+      throw new Error(errorDetails?.error || 'Failed to fetch from Google');
       }
 
-      // Auto-fill form with fetched data
-      setFormData(prev => ({
-        ...prev,
-        name: data.name || prev.name,
-        city: data.city || prev.city,
-        category: data.category || prev.category,
-        description: stripHtmlTags(data.description || prev.description),
-        content: stripHtmlTags(data.content || prev.content),
-        image: data.image || prev.image,
-      }));
+    let data: {
+      name?: string;
+      city?: string;
+      category?: string;
+      description?: string;
+      content?: string;
+      image?: string;
+    };
+    try {
+      data = await res.json();
+    } catch (parseError) {
+      const text = await res.text();
+      throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
+    }
 
-      // Update image preview if we got an image
-      if (data.image) {
-        setImagePreview(data.image);
-      }
+    // Auto-fill form with fetched data
+    setFormData(prev => ({
+      ...prev,
+      name: data.name || prev.name,
+      city: data.city || prev.city,
+      category: data.category || prev.category,
+      description: stripHtmlTags(data.description || prev.description),
+      content: stripHtmlTags(data.content || prev.content),
+      image: data.image || prev.image,
+    }));
 
-      // Show success message
-      toast.success(`Fetched data from Google Places! Name: ${data.name}, City: ${data.city}`);
-    } catch (error: any) {
-      console.error('Fetch Google error:', error);
-      toast.error(`Failed to fetch from Google: ${error.message}`);
+    // Update image preview if we got an image
+    if (data.image) {
+      setImagePreview(data.image);
+    }
+
+    // Show success message
+    toast.success(`Fetched data from Google Places! Name: ${data.name}, City: ${data.city}`);
+  } catch (error: unknown) {
+    console.error('Fetch Google error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    toast.error(`Failed to fetch from Google: ${message}`);
     } finally {
       setFetchingGoogle(false);
     }
@@ -397,19 +407,28 @@ function DestinationForm({
                         },
                         body: JSON.stringify({ placeId: placeDetails.placeId }),
                       });
-                      let data;
-                      try {
-                        data = await response.json();
-                      } catch (parseError) {
-                        const text = await response.text();
-                        console.error('Error parsing response:', text);
-                        toast.error('Invalid response format from Google Places API');
-                        return;
-                      }
-                      if (data.error) {
-                        console.error('Error fetching place:', data.error);
-                        return;
-                      }
+                        let data: {
+                          name?: string;
+                          city?: string;
+                          category?: string;
+                          description?: string;
+                          content?: string;
+                          image?: string;
+                          error?: string;
+                        };
+                        try {
+                          data = await response.json();
+                        } catch (parseError) {
+                          const text = await response.text();
+                          console.error('Error parsing response:', text);
+                          toast.error('Invalid response format from Google Places API');
+                          return;
+                        }
+                        if (data.error) {
+                          console.error('Error fetching place:', data.error);
+                          toast.error(data.error);
+                          return;
+                        }
                       // Auto-fill form with Google data
                       setFormData(prev => ({
                         ...prev,

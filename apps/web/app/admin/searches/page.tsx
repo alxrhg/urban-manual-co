@@ -3,12 +3,20 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
+type SearchMetadata = {
+  query?: string;
+  intent?: Record<string, string | number | undefined>;
+  filters?: Record<string, string | number | undefined>;
+  count?: number;
+  source?: string;
+};
+
 type SearchLog = {
   id: number;
   created_at: string;
   interaction_type: string;
   user_id: string | null;
-  metadata: any;
+  metadata: SearchMetadata | null;
 };
 
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '') as string;
@@ -33,16 +41,17 @@ export default function AdminSearchesPage() {
           return;
         }
 
-        const { data, error } = await supabase
+          const { data, error } = await supabase
           .from('user_interactions')
           .select('id, created_at, interaction_type, user_id, metadata')
           .eq('interaction_type', 'search')
           .order('created_at', { ascending: false })
           .limit(200);
         if (error) throw error;
-        setLogs(data as any);
-      } catch (e: any) {
-        setError(e.message || 'Failed to load');
+          setLogs((data ?? []) as SearchLog[]);
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : 'Failed to load';
+          setError(message);
       } finally {
         setLoading(false);
       }

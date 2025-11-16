@@ -20,8 +20,8 @@ export async function GET(_request: NextRequest) {
       supabase.rpc('get_user_visited_destinations', { target_user_id: user.id }),
     ]);
 
-    const saved = savedResult.data || [];
-    const visited = visitedResult.data || [];
+      const saved = (savedResult.data || []) as { brand?: string }[];
+      const visited = (visitedResult.data || []) as { brand?: string }[];
 
     // Calculate brand affinity scores
     const brandScores: Record<string, {
@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest) {
     }> = {};
 
     // Visited places have higher weight (3x) than saved
-    visited.forEach((place: any) => {
+      visited.forEach((place) => {
       if (place.brand) {
         const brand = place.brand;
         if (!brandScores[brand]) {
@@ -43,7 +43,7 @@ export async function GET(_request: NextRequest) {
       }
     });
 
-    saved.forEach((place: any) => {
+      saved.forEach((place) => {
       if (place.brand) {
         const brand = place.brand;
         if (!brandScores[brand]) {
@@ -79,10 +79,11 @@ export async function GET(_request: NextRequest) {
       brand_affinity: topBrandsWithExamples,
       total_brands: brandAffinity.length,
     });
-  } catch (error: any) {
-    console.error('Brand affinity API error:', error);
+    } catch (error: unknown) {
+      console.error('Brand affinity API error:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to get brand affinity', details: error.message },
+        { error: 'Failed to get brand affinity', details: message },
       { status: 500 }
     );
   }
