@@ -9,6 +9,7 @@
 
 // Re-export from new structure
 export { createServerClient, createServiceRoleClient } from './supabase/server';
+import { createClient } from './supabase/client';
 
 /**
  * Client component client (for backward compatibility)
@@ -16,7 +17,6 @@ export { createServerClient, createServiceRoleClient } from './supabase/server';
  */
 export function createClientComponentClient() {
   // Re-export from new client structure
-  const { createClient } = require('./supabase/client');
   return createClient();
 }
 

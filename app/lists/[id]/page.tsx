@@ -71,6 +71,7 @@ export default function ListDetailPage() {
     if (!authLoading) {
       fetchListDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, listId]);
 
   

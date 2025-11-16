@@ -40,7 +40,7 @@ export function GoogleAd({
           }
 
           try {
-            // @ts-ignore
+            // @ts-expect-error - Google AdSense types not available
             (window.adsbygoogle = window.adsbygoogle || []).push({});
             initializedRef.current = true;
           } catch (err) {
@@ -63,7 +63,7 @@ export function GoogleAd({
     }
 
     try {
-      // @ts-ignore
+      // @ts-expect-error - Google AdSense types not available
       (window.adsbygoogle = window.adsbygoogle || []).push({});
       initializedRef.current = true;
     } catch (err) {
@@ -132,7 +132,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
           }
 
           try {
-            // @ts-ignore
+            // @ts-expect-error - Google AdSense types not available
             (window.adsbygoogle = window.adsbygoogle || []).push({});
             initializedRef.current = true;
           } catch (err) {
@@ -155,7 +155,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
     }
 
     try {
-      // @ts-ignore
+      // @ts-expect-error - Google AdSense types not available
       (window.adsbygoogle = window.adsbygoogle || []).push({});
       initializedRef.current = true;
 

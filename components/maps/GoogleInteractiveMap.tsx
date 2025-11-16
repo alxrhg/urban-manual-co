@@ -92,6 +92,7 @@ export default function GoogleInteractiveMap({
       infoWindowsRef.current.forEach(iw => iw.close());
       infoWindowsRef.current = [];
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize map

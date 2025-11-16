@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 function getSupabaseClient() {
   // Use service role client for admin operations (bypasses RLS)
@@ -10,7 +11,6 @@ function getSupabaseClient() {
     // If service role is not configured, log error but continue
     // The client will be a placeholder and operations will fail gracefully
     console.error('[nearby API] Service role client not available, using placeholder');
-    const { createClient } = require('@supabase/supabase-js');
     return createClient('https://placeholder.supabase.co', 'placeholder-key');
   }
 }

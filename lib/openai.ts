@@ -3,6 +3,7 @@ try {
   // Dynamically import to avoid build errors if package not present in some environments
    
   if (typeof require !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     OpenAILib = require('openai');
   }
 } catch (error) {

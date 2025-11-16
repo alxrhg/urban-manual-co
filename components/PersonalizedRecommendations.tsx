@@ -31,6 +31,22 @@ function PersonalizedRecommendationsComponent({
     filterCity,
   });
 
+  // Compute destinations with useMemo before any early returns (Rules of Hooks)
+  const destinations = useMemo(() => {
+    let filtered = recommendations
+      .map((rec) => rec.destination)
+      .filter((d): d is Destination => !!d);
+
+    // Additional client-side city filtering (as backup)
+    if (filterCity) {
+      filtered = filtered.filter(d =>
+        d.city?.toLowerCase() === filterCity.toLowerCase()
+      );
+    }
+
+    return filtered;
+  }, [recommendations, filterCity]);
+
   // Don't show anything if not authenticated or no recommendations
   if (error || (!loading && recommendations.length === 0)) {
     return null;
@@ -57,21 +73,6 @@ function PersonalizedRecommendationsComponent({
       </div>
     );
   }
-
-  const destinations = useMemo(() => {
-    let filtered = recommendations
-      .map((rec) => rec.destination)
-      .filter((d): d is Destination => !!d);
-
-    // Additional client-side city filtering (as backup)
-    if (filterCity) {
-      filtered = filtered.filter(d =>
-        d.city?.toLowerCase() === filterCity.toLowerCase()
-      );
-    }
-
-    return filtered;
-  }, [recommendations, filterCity]);
 
   if (destinations.length === 0) {
     return null;
