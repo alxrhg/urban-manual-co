@@ -1,3 +1,22 @@
+/* Safe area insets for mobile devices with notch */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Header should respect safe areas */
+  header {
+    padding-left: max(1.5rem, env(safe-area-inset-left));
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+  }
+  
+  /* Fixed elements should respect safe areas */
+  .fixed-with-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* Ultra-minimal scrollbar for response section */
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;

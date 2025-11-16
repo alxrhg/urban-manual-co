@@ -29,6 +29,13 @@ module.exports = {
           600: '#1a2a3a',
         },
       },
+      keyframes: {
+        shimmer: {
+          '100%': {
+            transform: 'translateX(100%)',
+          },
+        },
+      },
     },
   },
 }

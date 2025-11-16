@@ -25,8 +25,9 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
 
-  const handleTouchStart = (e: TouchEvent) => {
-    const touch = e.touches[0];
+  const handleTouchStart = (e: Event) => {
+    const touchEvent = e as TouchEvent;
+    const touch = touchEvent.touches[0];
     touchStartRef.current = {
       x: touch.clientX,
       y: touch.clientY,
@@ -35,10 +36,11 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
     setIsDragging(true);
   };
 
-  const handleTouchMove = (e: TouchEvent) => {
+  const handleTouchMove = (e: Event) => {
+    const touchEvent = e as TouchEvent;
     if (!touchStartRef.current) return;
 
-    const touch = e.touches[0];
+    const touch = touchEvent.touches[0];
     const deltaY = touch.clientY - touchStartRef.current.y;
 
     // Only track downward swipes (for closing drawer)
@@ -52,10 +54,11 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
     }
   };
 
-  const handleTouchEnd = (e: TouchEvent) => {
+  const handleTouchEnd = (e: Event) => {
+    const touchEvent = e as TouchEvent;
     if (!touchStartRef.current) return;
 
-    const touch = e.changedTouches[0];
+    const touch = touchEvent.changedTouches[0];
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
     const deltaTime = Date.now() - touchStartRef.current.time;

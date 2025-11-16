@@ -21,19 +21,21 @@ export function usePullToRefresh(options: PullToRefreshOptions) {
   const touchStartRef = useRef<{ y: number; scrollTop: number } | null>(null);
   const containerRef = useRef<HTMLElement | null>(null);
 
-  const handleTouchStart = (e: TouchEvent) => {
+  const handleTouchStart = (e: Event) => {
+    const touchEvent = e as TouchEvent;
     // Only start pull if at the top of the page
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     if (scrollTop > 0) return;
 
-    const touch = e.touches[0];
+    const touch = touchEvent.touches[0];
     touchStartRef.current = {
       y: touch.clientY,
       scrollTop,
     };
   };
 
-  const handleTouchMove = (e: TouchEvent) => {
+  const handleTouchMove = (e: Event) => {
+    const touchEvent = e as TouchEvent;
     if (!touchStartRef.current || isRefreshing) return;
 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -46,7 +48,7 @@ export function usePullToRefresh(options: PullToRefreshOptions) {
       return;
     }
 
-    const touch = e.touches[0];
+    const touch = touchEvent.touches[0];
     const deltaY = touch.clientY - touchStartRef.current.y;
 
     // Only track downward pulls
