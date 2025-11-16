@@ -809,7 +809,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       return `${startLabel} – ${endLabel}`;
     })();
     const daysLabel = days.length ? `${days.length} day${days.length > 1 ? 's' : ''} planned` : 'No days yet';
-    const totalStops = days.reduce((sum, day) => sum + day.locations.length, 0);
 
     let content: React.ReactNode;
 
