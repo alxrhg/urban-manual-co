@@ -6,6 +6,7 @@ import { createHomepageVisitedHandler } from '@/app/api/homepage/visited/route';
 import { createHomepageFiltersHandler } from '@/app/api/homepage/filters/route';
 import { createHomepageDestinationsHandler } from '@/app/api/homepage/destinations/route';
 import type { Destination } from '@/types/destination';
+import type { UserProfile } from '@/types/personalization';
 
 const buildRequest = (path: string) =>
   new NextRequest(new Request(`http://localhost${path}`));
@@ -13,7 +14,7 @@ const buildRequest = (path: string) =>
 async function testProfileHandlers() {
   const unauthorizedHandler = createHomepageProfileHandler({
     getCurrentUserId: async () => null,
-    loadProfile: async () => ({}) as any,
+    loadProfile: async () => ({} as UserProfile),
   });
 
   const unauthorizedResponse = await unauthorizedHandler(buildRequest('/api/homepage/profile'));
@@ -21,7 +22,7 @@ async function testProfileHandlers() {
 
   const payloadHandler = createHomepageProfileHandler({
     getCurrentUserId: async () => 'user-123',
-    loadProfile: async (userId: string) => ({
+    loadProfile: async (userId: string): Promise<UserProfile> => ({
       user_id: userId,
       favorite_cities: ['Tokyo'],
       favorite_categories: ['Coffee'],
@@ -31,7 +32,7 @@ async function testProfileHandlers() {
       id: 'profile-1',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    }) as any,
+    }),
   });
 
   const okResponse = await payloadHandler(buildRequest('/api/homepage/profile'));

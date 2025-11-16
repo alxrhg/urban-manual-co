@@ -32,8 +32,9 @@ interface SearchFiltersProps {
 export function SearchFiltersComponent({
   filters,
   onFiltersChange,
-  availableCities: _availableCities,
-  availableCategories: _availableCategories,
+  // availableCities and availableCategories intentionally unused - kept in props for future use
+  availableCities: _availableCities, // eslint-disable-line @typescript-eslint/no-unused-vars
+  availableCategories: _availableCategories, // eslint-disable-line @typescript-eslint/no-unused-vars
   onLocationChange,
   sortBy = 'default',
   onSortChange,

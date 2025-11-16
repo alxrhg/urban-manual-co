@@ -5,7 +5,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { mock, test } from 'node:test';
+import { test } from 'node:test';
 
 // Mock environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
@@ -32,10 +32,6 @@ test('semantic search route validates query parameter', async () => {
 
 test('semantic search route handles empty results', async () => {
   // Mock the vector query to return no results
-  const mockRequest = {
-    json: async () => ({ query: 'test query', limit: 5 }),
-  };
-
   // We would need to mock the Upstash Vector and Supabase clients
   // For now, this is a basic structure test
   // Full integration tests would require mocking dependencies
