@@ -91,6 +91,17 @@ pnpm turbo run typecheck
 pnpm turbo run build --filter=@urban/web
 ```
 
+### Continuous Integration
+
+All pull requests must pass the GitHub Actions workflow defined in `infra/github/workflows/ci.yml`. The pipeline installs dependencies with `pnpm`, then runs:
+
+1. `pnpm turbo run lint`
+2. `pnpm turbo run typecheck`
+3. `pnpm turbo run test`
+4. `pnpm turbo run build --filter=@urban/web`
+
+If any task fails (for example due to legacy lint warnings), the PR must either address the failures or document the outstanding debt before merging.
+
 ## Deployment to Vercel
 
 ### Prerequisites

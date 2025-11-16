@@ -9,6 +9,7 @@
 - Infrastructure directories (`apps/`, `packages/`, `infra/github`) created with documentation to guide upcoming moves.
 - Next.js 16 experience relocated into `apps/web` (app/components/lib/etc., config files, middleware) with scripts, tsconfigs, and documentation updated to point to the new path.
 - Created `@urban/web` workspace package plus Turbo-powered commands documented in `README.md`.
+- Added pnpm/Turbo CI workflow (`infra/github/workflows/ci.yml`) covering lint, typecheck, tests, and `@urban/web` builds on PRs.
 
 ## 0. Alignment & Guardrails
 | ID | Task | Owner | Definition of Done | Status |

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - redo-project-fresh-start
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.22.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm turbo run lint --cache-dir=.turbo
+
+      - name: Typecheck
+        run: pnpm turbo run typecheck --cache-dir=.turbo
+
+      - name: Unit Tests
+        run: pnpm turbo run test --cache-dir=.turbo
+
+      - name: Build web app
+        run: pnpm turbo run build --filter=@urban/web --cache-dir=.turbo
