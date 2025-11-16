@@ -57,6 +57,12 @@ interface TripSummary {
   cover_image: string | null;
 }
 
+interface HotelOption {
+  slug: string;
+  name: string;
+  city: string | null;
+}
+
 const plannerPhases = [
   {
     key: 'brief',
@@ -95,6 +101,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [hotelOptions, setHotelOptions] = useState<HotelOption[]>([]);
+  const [hotelOptionsLoading, setHotelOptionsLoading] = useState(false);
+  const [useCustomHotel, setUseCustomHotel] = useState(false);
+  const [selectedHotelSlug, setSelectedHotelSlug] = useState('');
   const [justSaved, setJustSaved] = useState(false);
   const saveFeedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toast = useToast();
@@ -125,9 +135,38 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     }
   }, [user]);
 
+  const fetchHotels = useCallback(async () => {
+    try {
+      setHotelOptionsLoading(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+      const { data, error } = await supabaseClient
+        .from('destinations')
+        .select('slug,name,city,category')
+        .ilike('category', '%hotel%')
+        .order('name', { ascending: true })
+        .limit(200);
+      if (error) throw error;
+      const mapped = (data ?? [])
+        .filter((item) => item.name)
+        .map((item) => ({
+          slug: item.slug as string,
+          name: item.name as string,
+          city: (item.city as string | null) ?? null,
+        }));
+      setHotelOptions(mapped);
+    } catch (error) {
+      console.error('Error loading hotel list:', error);
+    } finally {
+      setHotelOptionsLoading(false);
+    }
+  }, []);
+
   // Load existing trip if tripId is provided
   useEffect(() => {
     if (!isOpen) return;
+
+    fetchHotels();
 
     if (tripId && user) {
       loadTrip(tripId);
@@ -137,17 +176,55 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     resetForm();
     setStudioMode('hub');
     fetchUserTrips();
-  }, [isOpen, tripId, user, fetchUserTrips]);
+  }, [isOpen, tripId, user, fetchUserTrips, fetchHotels]);
 
-  // Body scroll is handled by Drawer component
+  useEffect(() => {
+    return () => {
+      if (saveFeedbackTimeout.current) {
+        clearTimeout(saveFeedbackTimeout.current);
+      }
+    };
+  }, []);
 
-    useEffect(() => {
-      return () => {
-        if (saveFeedbackTimeout.current) {
-          clearTimeout(saveFeedbackTimeout.current);
-        }
-      };
-    }, []);
+  const formatHotelLabel = (option: HotelOption) =>
+    option.city ? `${option.name}, ${option.city}` : option.name;
+
+  useEffect(() => {
+    if (!hotelLocation) {
+      setSelectedHotelSlug('');
+      setUseCustomHotel(false);
+      return;
+    }
+    const match = hotelOptions.find((option) => formatHotelLabel(option) === hotelLocation);
+    if (match) {
+      setSelectedHotelSlug(match.slug);
+      setUseCustomHotel(false);
+    } else {
+      setSelectedHotelSlug('');
+      setUseCustomHotel(true);
+    }
+  }, [hotelLocation, hotelOptions]);
+
+  const handleHotelSelection = (value: string) => {
+    if (value === '__custom') {
+      setSelectedHotelSlug('');
+      setUseCustomHotel(true);
+      setHotelLocation('');
+      return;
+    }
+
+    if (!value) {
+      setSelectedHotelSlug('');
+      setUseCustomHotel(false);
+      setHotelLocation('');
+      return;
+    }
+
+    setUseCustomHotel(false);
+    setSelectedHotelSlug(value);
+    const match = hotelOptions.find((option) => option.slug === value);
+    setHotelLocation(match ? formatHotelLabel(match) : '');
+  };
 
   const resetForm = () => {
     setTripName('');
@@ -156,6 +233,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setEndDate('');
     setDays([]);
     setHotelLocation('');
+    setUseCustomHotel(false);
+    setSelectedHotelSlug('');
     setCurrentTripId(null);
     setCoverImage(null);
     setCoverImageFile(null);
@@ -876,19 +955,37 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                       className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
                     />
                   </div>
-                  <div>
-                    <label htmlFor="hotel" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                      Hotel / Base
-                    </label>
-                    <input
-                      id="hotel"
-                      type="text"
-                      value={hotelLocation}
-                      onChange={(e) => setHotelLocation(e.target.value)}
-                      placeholder="Aman Kyoto"
-                      className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
-                    />
-                  </div>
+                    <div>
+                      <label htmlFor="hotel" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        Hotel / Base
+                      </label>
+                      <div className="space-y-3">
+                        <select
+                          id="hotel"
+                          value={useCustomHotel ? '__custom' : selectedHotelSlug}
+                          onChange={(e) => handleHotelSelection(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          disabled={hotelOptionsLoading}
+                        >
+                          <option value="">{hotelOptionsLoading ? 'Loading hotels...' : 'Select a hotel'}</option>
+                          {hotelOptions.map((option) => (
+                            <option key={option.slug} value={option.slug}>
+                              {formatHotelLabel(option)}
+                            </option>
+                          ))}
+                          <option value="__custom">Other...</option>
+                        </select>
+                        {useCustomHotel && (
+                          <input
+                            type="text"
+                            value={hotelLocation}
+                            onChange={(e) => setHotelLocation(e.target.value)}
+                            placeholder="Custom hotel"
+                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          />
+                        )}
+                      </div>
+                    </div>
                 </div>
               </div>
 
