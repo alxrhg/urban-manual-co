@@ -9,6 +9,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
 
 interface POIDrawerProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ interface Destination {
   image?: string | null;
   michelin_stars?: number | null;
   crown?: boolean;
+  brand?: string | null;
+  architect?: string | null;
 }
 
 export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }: POIDrawerProps) {
@@ -51,6 +54,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     image: '',
     michelin_stars: null as number | null,
     crown: false,
+    brand: '',
+    architect: '',
   });
 
   // Reset form when drawer opens/closes, or load destination data for editing
@@ -66,6 +71,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: '',
         michelin_stars: null,
         crown: false,
+        brand: '',
+        architect: '',
       });
       setImageFile(null);
       setImagePreview(null);
@@ -82,6 +89,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: destination.image || '',
         michelin_stars: destination.michelin_stars || null,
         crown: destination.crown || false,
+        brand: destination.brand || '',
+        architect: destination.architect || '',
       });
       if (destination.image) {
         setImagePreview(destination.image);
@@ -98,6 +107,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: '',
         michelin_stars: null,
         crown: false,
+        brand: '',
+        architect: '',
       });
     }
   }, [isOpen, destination, initialCity]);
@@ -234,6 +245,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: imageUrl || null,
         michelin_stars: formData.michelin_stars || null,
         crown: formData.crown || false,
+        brand: formData.brand || null,
+        architect: formData.architect || null,
       };
 
       const isEditing = !!destination;
@@ -441,18 +454,45 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
           </div>
 
           {/* Category */}
-          <div>
+          <div className="mb-6">
             <label htmlFor="category" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
               Category *
             </label>
-            <input
-              id="category"
-              type="text"
+            <CategoryAutocompleteInput
               value={formData.category}
-              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              required
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
               placeholder="Dining"
+              required
+            />
+          </div>
+
+          {/* Brand */}
+          <div className="mb-6">
+            <label htmlFor="brand" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Brand
+            </label>
+            <input
+              id="brand"
+              type="text"
+              value={formData.brand}
+              onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Brand name"
+            />
+          </div>
+
+          {/* Architect */}
+          <div>
+            <label htmlFor="architect" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Architect
+            </label>
+            <input
+              id="architect"
+              type="text"
+              value={formData.architect}
+              onChange={(e) => setFormData(prev => ({ ...prev, architect: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Architect name"
             />
           </div>
         </div>
