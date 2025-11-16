@@ -224,6 +224,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     return insights;
   }, [destination, days.length, days, hotelLocation]);
 
+const travelSuggestions = useMemo(() => getAISuggestions(), []);
+
   const handleHotelSelection = (value: string) => {
     if (value === '__custom') {
       setSelectedHotelSlug('');
