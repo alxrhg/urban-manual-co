@@ -12,6 +12,13 @@ const config = defineConfig([
       },
     },
   },
+  {
+    files: ["services/**", "tests/**"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^ignored" }],
+    },
+  },
   globalIgnores([
     ".next/**",
     "apps/web/.next/**",

@@ -57,6 +57,14 @@
 | D2 | Accessibility + performance checklist automation (axe, Lighthouse budgets) | QA | CI step fails if contrast/motion/perf regress | ⏳ |
 | D3 | “Polish Patrol” regression suite (visual diff + motion assertions) | Frontend QA | Playwright traces verifying transitions, Chromatic diff gating | ⏳ |
 
+### Lint Remediation (L-series)
+| ID | Task | Owner | Definition of Done | Status |
+| --- | --- | --- | --- | --- |
+| L0 | Maintain lint override tracker (temporary warnings for `services/**`, `tests/**`) | Platform | Overrides documented in `docs/lint_remediation_plan.md`, expiry dates tracked | 🔄 |
+| L1 | apps/web lint cleanup (unescaped entities, `<img>`, admin forms) | Frontend | `apps/web` passes lint with zero warnings | ⏳ |
+| L2 | services/ lint cleanup (migrate to packages + typed services) | Backend | `services/**` passes lint | ⏳ |
+| L3 | tests/ lint cleanup (typed fixtures) | QA/Eng | `tests/**` passes lint | ⏳ |
+
 ## 6. Data & Automation Platform
 | ID | Task | Owner | Definition of Done | Status |
 | --- | --- | --- | --- | --- |
