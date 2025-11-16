@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Destination as DestinationType } from '@/types/destination';
+import { SemanticSearchToggle, useSemanticSearch } from '@/components/SemanticSearch';
 
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
   ssr: false,
@@ -57,6 +58,10 @@ function SearchPageContent() {
   const [editingDestination, setEditingDestination] = useState<DestinationType | null>(null);
   const [showPOIDrawer, setShowPOIDrawer] = useState(false);
   const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';
+  
+  // Semantic search state
+  const [useSemanticMode, setUseSemanticMode] = useState(false);
+  const { search: semanticSearch, results: semanticResults, loading: semanticLoading } = useSemanticSearch();
 
   const [searchState, setSearchState] = useState<SearchState>({
     originalQuery: query,
@@ -71,26 +76,41 @@ function SearchPageContent() {
     setSearchState(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
-      const data = await res.json();
-      const results: SearchDestination[] = data.results || [];
+      // Use semantic search if enabled
+      if (useSemanticMode) {
+        const results = await semanticSearch(searchQuery);
+        setSearchState({
+          originalQuery: searchQuery,
+          refinements: [],
+          allResults: results,
+          filteredResults: results,
+          conversationHistory: [],
+          suggestions: [],
+          isLoading: false,
+        });
+      } else {
+        // Regular keyword search
+        const res = await fetch(`/api/search/intelligent?q=${encodeURIComponent(searchQuery)}`);
+        const data = await res.json();
+        const results: SearchDestination[] = data.results || [];
 
-      setSearchState({
-        originalQuery: searchQuery,
-        refinements: [],
-        allResults: results,
-        filteredResults: results,
-        conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
-        suggestions: data.suggestions || [],
-        intent: data.intent,
-        isLoading: false,
-      });
+        setSearchState({
+          originalQuery: searchQuery,
+          refinements: [],
+          allResults: results,
+          filteredResults: results,
+          conversationHistory: data.contextResponse ? [{ role: 'assistant', content: data.contextResponse }] : [],
+          suggestions: data.suggestions || [],
+          intent: data.intent,
+          isLoading: false,
+        });
+      }
       setCurrentPage(1); // Reset to first page on new search
     } catch (error) {
       console.error('Search error:', error);
       setSearchState(prev => ({ ...prev, isLoading: false }));
     }
-  }, []);
+  }, [useSemanticMode, semanticSearch]);
 
   useEffect(() => {
     if (query) performInitialSearch(query);
@@ -270,14 +290,27 @@ function SearchPageContent() {
       {/* Results */}
       {!searchState.isLoading && searchState.filteredResults.length > 0 && (
         <>
-      <div className="mb-4 text-sm text-neutral-500">
-        Showing {searchState.filteredResults.length}
-        {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
-          <span> of {searchState.allResults.length}</span>
-        )}
-        {searchState.refinements.length > 0 && (
-          <span> (filtered by: {searchState.refinements.join(', ')})</span>
-        )}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-sm text-neutral-500">
+          Showing {searchState.filteredResults.length}
+          {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
+            <span> of {searchState.allResults.length}</span>
+          )}
+          {searchState.refinements.length > 0 && (
+            <span> (filtered by: {searchState.refinements.join(', ')})</span>
+          )}
+        </div>
+        <SemanticSearchToggle 
+          isEnabled={useSemanticMode}
+          onToggle={(enabled) => {
+            setUseSemanticMode(enabled);
+            if (query) {
+              // Re-run search with new mode
+              performInitialSearch(query);
+            }
+          }}
+        />
+      </div>
       </div>
 
           {(() => {

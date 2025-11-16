@@ -14,6 +14,7 @@ import { UniversalGrid } from '@/components/UniversalGrid';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { NeighborhoodBrowser } from '@/components/NeighborhoodBrowser';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -67,6 +68,7 @@ export default function CityPageClient() {
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   const [showPOIDrawer, setShowPOIDrawer] = useState(false);
   const [isCreatingNewPOI, setIsCreatingNewPOI] = useState(false);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
@@ -286,6 +288,20 @@ export default function CityPageClient() {
 
             {/* Filters - Matching homepage style */}
             <div className="space-y-4">
+              {/* Neighborhood Browser */}
+              <NeighborhoodBrowser
+                city={citySlug}
+                selectedNeighborhood={selectedNeighborhood}
+                onNeighborhoodSelect={(neighborhood) => {
+                  const newSelection = selectedNeighborhood === neighborhood.name ? null : neighborhood.name;
+                  setSelectedNeighborhood(newSelection);
+                  // Filter destinations by neighborhood if selected
+                  // This would require neighborhood data on destinations
+                  // For now, just set the state - backend integration needed
+                }}
+                className="mb-6"
+              />
+              
               {/* Categories */}
               {categories.length > 0 && (
                 <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
