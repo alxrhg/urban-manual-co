@@ -236,6 +236,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       try {
         const supabaseClient = createClient();
         if (!supabaseClient) return;
+        
+        // Check if destination has a valid slug
+        if (!destination?.slug) {
+          console.warn('Destination missing slug, skipping enriched data fetch');
+          return;
+        }
+        
         const { data, error } = await supabaseClient
           .from('destinations')
           .select(`
@@ -317,9 +324,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           console.log('Enriched data loaded:', enriched);
         } else if (error) {
           console.error('Error fetching enriched data:', error);
+          // Set enriched data to null on error to prevent rendering issues
+          setEnrichedData(null);
+        } else {
+          // No error but no data - destination might not exist
+          setEnrichedData(null);
         }
       } catch (error) {
         console.error('Error loading enriched data:', error);
+        // Set enriched data to null on error to prevent rendering issues
+        setEnrichedData(null);
       }
 
       // Load saved and visited status
