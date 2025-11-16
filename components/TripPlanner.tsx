@@ -218,10 +218,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     const insights: string[] = [];
     insights.push(destination ? `City: ${destination}` : 'Set a destination');
     insights.push(days.length ? `${days.length} day plan` : 'Add days to plan rhythm');
-    insights.push(totalStops ? `${totalStops} saved spots` : 'Pull places in from the guide');
+    const stops = days.reduce((sum, day) => sum + day.locations.length, 0);
+    insights.push(stops ? `${stops} saved spots` : 'Pull places in from the guide');
     if (hotelLocation) insights.push(`Base: ${hotelLocation}`);
     return insights;
-  }, [destination, days.length, totalStops, hotelLocation]);
+  }, [destination, days.length, days, hotelLocation]);
 
   const handleHotelSelection = (value: string) => {
     if (value === '__custom') {
@@ -791,6 +792,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       </div>
     );
 
+    const totalStops = days.reduce((sum, day) => sum + day.locations.length, 0);
     const formattedDateRange = (() => {
       if (!startDate) return 'Add dates';
       const start = new Date(startDate);
