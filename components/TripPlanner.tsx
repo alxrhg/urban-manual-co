@@ -990,18 +990,9 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 </ul>
               </div>
 
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-3">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Need fresh inspiration while planning? Jump back into the guide, save a few places, and return here to slot them into each day.
-                </p>
-                <button
-                  onClick={() => router.push('/')}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                  type="button"
-                >
-                  Browse the guide
-                </button>
-              </div>
+                <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                  Keep this drawer open while browsing—every saved location shows up here instantly.
+                </div>
             </div>
           </div>
         ) : (
