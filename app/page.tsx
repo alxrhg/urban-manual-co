@@ -1549,11 +1549,26 @@ export default function Home() {
   }, [user, searching, conversationHistory, trackAction, submittedQuery]);
 
   const handleIntentPromptClick = useCallback(() => {
+    const normalizePrompt = (prompt?: string | null) => {
+      if (!prompt) return 'hotel recommendations';
+      const trimmed = prompt.trim();
+      const addHotelMatch = trimmed.match(/add\s+a\s+hotel\s+in\s+(.+)/i);
+      if (addHotelMatch?.[1]) {
+        return `hotel in ${addHotelMatch[1].trim()}`;
+      }
+      const inMatch = trimmed.match(/in\s+([A-Za-z\s,'-]+)$/i);
+      if (inMatch?.[1]) {
+        return `hotel in ${inMatch[1].trim()}`;
+      }
+      return trimmed.toLowerCase().startsWith('hotel')
+        ? trimmed
+        : `hotel ${trimmed}`;
+    };
+
     const prompt = nextTripCity
-      ? `I'm planning a trip to ${nextTripCity}. Suggest three standout hotels or base neighborhoods from the Urban Manual database so I can add one to Trip Studio. Include why each fits and mention any notable amenities.`
-      : intentPrompt
-        ? `${intentPrompt}. Please respond with three hotel options and quick reasons so I can drop them into Trip Studio.`
-        : 'Suggest a few design-forward hotels I can anchor my next trip around, with one-line reasons so I can add them to Trip Studio.';
+      ? `hotel in ${nextTripCity}`
+      : normalizePrompt(intentPrompt);
+
     setSearchTerm(prompt);
     performAISearch(prompt);
   }, [nextTripCity, intentPrompt, performAISearch]);
