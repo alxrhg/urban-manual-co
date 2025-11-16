@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   CalendarIcon,
   MapPinIcon,
   ShareIcon,
   DownloadIcon,
-  SparklesIcon,
-  WalletIcon,
   PrinterIcon,
   SaveIcon,
   Loader2,
@@ -19,7 +17,6 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripShareModal } from './TripShareModal';
@@ -50,6 +47,16 @@ interface DayItinerary {
   notes?: string;
 }
 
+interface TripSummary {
+  id: string;
+  title: string;
+  destination: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  status: string;
+  cover_image: string | null;
+}
+
 const plannerPhases = [
   {
     key: 'brief',
@@ -70,15 +77,15 @@ const plannerPhases = [
 
 export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const { user } = useAuth();
-  const router = useRouter();
   const [tripName, setTripName] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [days, setDays] = useState<DayItinerary[]>([]);
   const [showAddLocation, setShowAddLocation] = useState<number | null>(null);
-  const [step, setStep] = useState<'create' | 'plan'>('create');
-  const [totalBudget, setTotalBudget] = useState<number>(0);
+  const [studioMode, setStudioMode] = useState<'hub' | 'create' | 'plan'>(tripId ? 'plan' : 'hub');
+  const [tripList, setTripList] = useState<TripSummary[]>([]);
+  const [tripListLoading, setTripListLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
@@ -92,15 +99,45 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const saveFeedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toast = useToast();
 
+  const fetchUserTrips = useCallback(async () => {
+    if (!user) {
+      setTripList([]);
+      return;
+    }
+
+    try {
+      setTripListLoading(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { data, error } = await supabaseClient
+        .from('trips')
+        .select('id,title,destination,start_date,end_date,status,cover_image')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      setTripList((data as TripSummary[]) ?? []);
+    } catch (error) {
+      console.error('Error fetching trip list:', error);
+    } finally {
+      setTripListLoading(false);
+    }
+  }, [user]);
+
   // Load existing trip if tripId is provided
   useEffect(() => {
-    if (isOpen && tripId && user) {
+    if (!isOpen) return;
+
+    if (tripId && user) {
       loadTrip(tripId);
-    } else if (isOpen && !tripId) {
-      // Reset form for new trip
-      resetForm();
+      return;
     }
-  }, [isOpen, tripId, user]);
+
+    resetForm();
+    setStudioMode('hub');
+    fetchUserTrips();
+  }, [isOpen, tripId, user, fetchUserTrips]);
 
   // Body scroll is handled by Drawer component
 
@@ -118,9 +155,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setStartDate('');
     setEndDate('');
     setDays([]);
-    setTotalBudget(0);
     setHotelLocation('');
-    setStep('create');
     setCurrentTripId(null);
     setCoverImage(null);
     setCoverImageFile(null);
@@ -257,7 +292,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         setDays(newDays);
       }
 
-      setStep('plan');
+        setStudioMode('plan');
     } catch (error) {
       console.error('Error loading trip:', error);
       alert('Failed to load trip');
@@ -316,7 +351,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       }
 
       setDays(newDays);
-      setStep('plan');
+        setStudioMode('plan');
     } catch (error: any) {
       console.error('Error creating trip:', error);
       alert(error?.message || 'Failed to create trip. Please try again.');
@@ -602,10 +637,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     ];
   };
 
-    const headerSubtitle =
-      step === 'create'
-        ? 'Start with the brief so pacing, neighborhoods, and tone feel intentional.'
-        : 'Fine tune days, sync exports, and keep the itinerary editorial-tight.';
+    const headerSubtitle = (() => {
+      if (studioMode === 'hub') {
+        return 'Pick a trip to open or start a new one.';
+      }
+      if (studioMode === 'create') {
+        return 'Name it, set the destination, lock the dates.';
+      }
+      return 'Reorder days, add locations, and export when ready.';
+    })();
 
     const headerContent = (
       <div className="w-full space-y-2">
@@ -615,10 +655,14 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               Trip Studio
             </p>
             <h2 className="text-base font-medium text-gray-900 dark:text-white">
-              {step === 'create' ? 'Launch a new itinerary' : tripName || 'Untitled trip'}
+              {studioMode === 'hub'
+                ? 'Your itineraries'
+                : studioMode === 'create'
+                  ? 'Launch a new itinerary'
+                  : tripName || 'Untitled trip'}
             </h2>
           </div>
-          {step === 'plan' && currentTripId && (
+          {studioMode === 'plan' && currentTripId && (
             <button
               onClick={handleSaveTrip}
               disabled={saving}
@@ -650,7 +694,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       </div>
     );
 
-    const activePhaseIndex = step === 'create' ? 0 : 1;
     const formattedDateRange = (() => {
       if (!startDate) return 'Add dates';
       const start = new Date(startDate);
@@ -669,82 +712,139 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     const daysLabel = days.length ? `${days.length} day${days.length > 1 ? 's' : ''} planned` : 'No days yet';
     const totalStops = days.reduce((sum, day) => sum + day.locations.length, 0);
 
-    const content = (
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {plannerPhases.map((phase, index) => {
-            const isActive = index === activePhaseIndex;
-            const isComplete = index < activePhaseIndex;
-            return (
-              <div
-                key={phase.key}
-                className={`rounded-2xl border p-4 ${
-                  isActive
-                    ? 'bg-black text-white border-black dark:border-white'
-                    : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
-                }`}
+    let content: React.ReactNode;
+
+    if (studioMode === 'hub') {
+      content = (
+        <div className="px-6 py-6 space-y-6">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+              Library
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchUserTrips()}
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    className={`text-xs uppercase tracking-[0.25em] ${
-                      isActive ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'
-                    }`}
-                  >
-                    {phase.label}
-                  </span>
-                  <span
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      isActive
-                        ? 'bg-white text-black'
-                        : isComplete
-                          ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                    }`}
-                  >
-                    {index + 1}
-                  </span>
+                Refresh
+              </button>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setStudioMode('create');
+                }}
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-85 transition-opacity"
+              >
+                Plan new trip
+              </button>
+            </div>
+          </div>
+          {tripListLoading ? (
+            <div className="text-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+            </div>
+          ) : tripList.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 py-12 text-center space-y-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                No trips yet. Create one to get started.
+              </p>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setStudioMode('create');
+                }}
+                className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+              >
+                Launch Trip Studio
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {tripList.map((trip) => (
+                <div
+                  key={trip.id}
+                  className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-4 bg-white dark:bg-gray-900"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{trip.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {trip.destination || 'Destination TBD'}
+                    </p>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mt-1">
+                      {trip.status}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => loadTrip(trip.id)}
+                      className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      Open
+                    </button>
+                  </div>
                 </div>
-                <p
-                  className={`text-sm ${
-                    isActive ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      const activePhaseIndex = studioMode === 'plan' ? 1 : 0;
+      content = (
+        <div className="px-6 py-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            {plannerPhases.map((phase, index) => {
+              const isActive = index === activePhaseIndex;
+              const isComplete = index < activePhaseIndex;
+              return (
+                <div
+                  key={phase.key}
+                  className={`rounded-2xl border p-4 ${
+                    isActive
+                      ? 'bg-black text-white border-black dark:border-white'
+                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
                   }`}
                 >
-                  {phase.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        {loading ? (
-          <div className="text-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <span
+                      className={`text-xs uppercase tracking-[0.25em] ${
+                        isActive ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'
+                      }`}
+                    >
+                      {phase.label}
+                    </span>
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        isActive
+                          ? 'bg-white text-black'
+                          : isComplete
+                            ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                  </div>
+                  <p
+                    className={`text-sm ${
+                      isActive ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {phase.description}
+                  </p>
+                </div>
+              );
+            })}
           </div>
-        ) : step === 'create' ? (
-          <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-8">
-            <div className="space-y-6">
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-black to-gray-900 text-white p-6 space-y-4">
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.25em] text-white/60">
-                  Trip Studio • Brief
-                </div>
-                <h3 className="text-2xl font-light leading-tight">
-                  Name the trip, lock dates, and tell us the tone—everything downstream inherits it.
-                </h3>
-                <p className="text-sm text-white/80">
-                  The brief powers pacing suggestions, keeps neighborhoods intentional, and ensures exports look editorial—not spreadsheet.
-                </p>
-                <div className="flex flex-wrap gap-3 text-xs text-white/70">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-white/20">
-                    <SparklesIcon className="w-3.5 h-3.5" />
-                    Brief → Compose → Polish
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-white/20">
-                    <CalendarIcon className="w-3.5 h-3.5" />
-                    Keep cadence calm
-                  </span>
-                </div>
-              </div>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
+            </div>
+          ) : studioMode === 'create' ? (
+            <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-8">
+              <div className="space-y-6">
               <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
@@ -828,19 +928,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                       className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
                     />
                   </div>
-                  <div>
-                    <label htmlFor="budget" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                      Budget (optional)
-                    </label>
-                    <input
-                      id="budget"
-                      type="number"
-                      value={totalBudget || ''}
-                      onChange={(e) => setTotalBudget(Number(e.target.value))}
-                      placeholder="4500"
-                      className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -889,13 +976,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                       <p>{formattedDateRange}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <WalletIcon className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Budget</p>
-                      <p>{totalBudget ? `$${totalBudget.toLocaleString()}` : 'Optional'}</p>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -940,7 +1020,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                   </p>
                 </div>
                 <button
-                  onClick={() => setStep('create')}
+                  onClick={() => setStudioMode('create')}
                   className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                   type="button"
                 >
@@ -1092,18 +1172,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                     <PrinterIcon className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
-
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-4">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-800 dark:text-gray-100">
-                  <SparklesIcon className="w-4 h-4" />
-                  Smart suggestions
-                </div>
-                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                  {getAISuggestions().map((suggestion, index) => (
-                    <li key={index}>• {suggestion}</li>
-                  ))}
-                </ul>
               </div>
             </div>
           </div>

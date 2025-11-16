@@ -37,7 +37,6 @@ import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
-import { TripFocusSection } from '@/components/TripFocusSection';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 
@@ -2102,12 +2101,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-      <TripFocusSection
-        user={user}
-        onCreateTrip={() => setShowTripPlanner(true)}
-        onViewTrips={() => router.push('/trips')}
-      />
 
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-6 md:px-10 pb-12 mt-8">
