@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Plus, X } from "lucide-react";
@@ -14,6 +15,33 @@ import DiscoverTab from '@/components/admin/DiscoverTab';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import ReindexTab from '@/components/admin/ReindexTab';
 import type { Destination } from '@/types/destination';
+import type { User } from "@supabase/supabase-js";
+
+type DestinationFormState = {
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  description: string;
+  content: string;
+  image: string;
+  michelin_stars: number | null;
+  crown: boolean;
+  parent_destination_id: number | null;
+};
+
+type SearchLog = {
+  id: string;
+  created_at: string;
+  user_id: string | null;
+  metadata: {
+    query?: string;
+    intent?: Record<string, string | number | undefined>;
+    filters?: Record<string, string | number | undefined>;
+    count?: number;
+    source?: string;
+  } | null;
+};
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -39,7 +67,7 @@ function DestinationForm({
   isSaving: boolean;
   toast: Toast;
 }) {
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<DestinationFormState>({
     slug: destination?.slug || '',
     name: destination?.name || '',
     city: destination?.city || '',
@@ -553,13 +581,16 @@ function DestinationForm({
               htmlFor="image-upload-input"
               className="flex flex-col items-center justify-center cursor-pointer"
             >
-              {imagePreview ? (
-                <div className="relative w-full">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-2xl mb-3"
-                  />
+                {imagePreview ? (
+                  <div className="relative w-full h-48 mb-3 rounded-2xl overflow-hidden">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      sizes="(min-width: 768px) 400px, 100vw"
+                      className="object-cover"
+                      onError={() => setImagePreview(null)}
+                    />
                   <button
                     type="button"
                     onClick={(e) => {
@@ -630,16 +661,20 @@ function DestinationForm({
             placeholder="Enter image URL"
             className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {imagePreview && (
-            <div className="mt-3">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm"
-                onError={() => setImagePreview(null)}
-              />
-            </div>
-          )}
+            {imagePreview && (
+              <div className="mt-3">
+                <div className="relative w-full h-64 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    fill
+                    sizes="(min-width: 768px) 500px, 100vw"
+                    className="object-cover"
+                    onError={() => setImagePreview(null)}
+                  />
+                </div>
+              </div>
+            )}
           {uploadingImage && (
             <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -750,25 +785,17 @@ export default function AdminPage() {
   const router = useRouter();
   const toast = useToast();
   const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
-  const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [destinationList, setDestinationList] = useState<any[]>([]);
+    const [destinationList, setDestinationList] = useState<Destination[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [listOffset, setListOffset] = useState(0);
   
   // Regenerate content state
-  const [regenerateRunning, setRegenerateRunning] = useState(false);
-  const [regenerateResult, setRegenerateResult] = useState<any>(null);
-  const [regenerateSlug, setRegenerateSlug] = useState('');
-  const [regenerateLimit, setRegenerateLimit] = useState(10);
-  const [regenerateOffset, setRegenerateOffset] = useState(0);
-  const [listSearchQuery, setListSearchQuery] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingDestination, setEditingDestination] = useState<any>(null);
+    const [listSearchQuery, setListSearchQuery] = useState('');
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover' | 'reindex'>('destinations');
 
@@ -782,7 +809,7 @@ export default function AdminPage() {
   }, []);
 
   // Searches state
-  const [searchLogs, setSearchLogs] = useState<any[]>([]);
+    const [searchLogs, setSearchLogs] = useState<SearchLog[]>([]);
   const [loadingSearches, setLoadingSearches] = useState(false);
 
   // Check authentication
@@ -915,17 +942,17 @@ export default function AdminPage() {
       
       console.log('[Admin] Connection test successful');
       
-      let query = supabase
-        .from('destinations')
-        .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating, michelin_stars, crown')
-        .order('slug', { ascending: true });
+        let query = supabase
+          .from('destinations')
+          .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating, michelin_stars, crown')
+          .order('slug', { ascending: true });
 
-      // Apply search filter if present
-      if (listSearchQuery.trim()) {
-        query = query.or(`name.ilike.%${listSearchQuery}%,city.ilike.%${listSearchQuery}%,slug.ilike.%${listSearchQuery}%,category.ilike.%${listSearchQuery}%`);
-      }
+        // Apply search filter if present
+        if (listSearchQuery.trim()) {
+          query = query.or(`name.ilike.%${listSearchQuery}%,city.ilike.%${listSearchQuery}%,slug.ilike.%${listSearchQuery}%,category.ilike.%${listSearchQuery}%`);
+        }
 
-      const { data, error } = await query.range(listOffset, listOffset + 19);
+        const { data, error } = await query.range(listOffset, listOffset + 19);
 
       if (error) {
         console.error('[Admin] Supabase error loading destinations:', error);
@@ -940,63 +967,56 @@ export default function AdminPage() {
         return;
       }
       
-      console.log('[Admin] Raw data received:', data?.length || 0, 'items');
-      
-      // Sanitize data to prevent JSON parse errors from malformed content
-      const sanitizedData = (data || []).map((item: any) => {
-        try {
-          // Ensure description and content are strings and handle any encoding issues
-          const sanitized = { ...item };
-          if (sanitized.description && typeof sanitized.description === 'string') {
-            // Remove any problematic characters that might break JSON
-            sanitized.description = sanitized.description.replace(/\u0000/g, ''); // Remove null bytes
-          }
-          if (sanitized.content && typeof sanitized.content === 'string') {
-            sanitized.content = sanitized.content.replace(/\u0000/g, ''); // Remove null bytes
-          }
-          return sanitized;
-        } catch (sanitizeError) {
-          console.warn('[Admin] Error sanitizing destination item:', item?.slug, sanitizeError);
-          // Return item as-is if sanitization fails
-          return item;
+        console.log('[Admin] Raw data received:', data?.length || 0, 'items');
+
+        // Sanitize data to prevent JSON parse errors from malformed content
+        const sanitizedData: Destination[] = ((data ?? []) as Destination[]).map((item) => {
+          const sanitizedDescription =
+            typeof item.description === 'string' ? item.description.replace(/\u0000/g, '') : item.description;
+          const sanitizedContent =
+            typeof item.content === 'string' ? item.content.replace(/\u0000/g, '') : item.content;
+          return {
+            ...item,
+            description: sanitizedDescription ?? undefined,
+            content: sanitizedContent ?? undefined,
+          };
+        });
+
+        console.log('[Admin] Loaded destinations:', sanitizedData.length);
+        setDestinationList(sanitizedData);
+
+        if (sanitizedData.length === 0 && !listSearchQuery.trim()) {
+          toast.warning('No destinations found in database. Add some destinations to get started.');
         }
-      });
-      
-      console.log('[Admin] Loaded destinations:', sanitizedData.length);
-      setDestinationList(sanitizedData);
-      
-      if (sanitizedData.length === 0 && !listSearchQuery.trim()) {
-        toast.warning('No destinations found in database. Add some destinations to get started.');
+      } catch (e: unknown) {
+        console.error('[Admin] Error loading destinations:', e);
+        const message = e instanceof Error ? e.message : '';
+        if (message.includes('JSON') || message.includes('parse') || e instanceof SyntaxError) {
+          toast.error('Failed to load destinations: Invalid data format. Some destinations may have corrupted content.');
+        } else {
+          toast.error(`Error loading destinations: ${message || 'Unknown error'}`);
+        }
+        setDestinationList([]);
+      } finally {
+        setIsLoadingList(false);
       }
-    } catch (e: any) {
-      console.error('[Admin] Error loading destinations:', e);
-      // Check if it's a JSON parse error
-      if (e.message?.includes('JSON') || e.message?.includes('parse') || e instanceof SyntaxError) {
-        toast.error('Failed to load destinations: Invalid data format. Some destinations may have corrupted content.');
-      } else {
-        toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
-      }
-      setDestinationList([]);
-    } finally {
-      setIsLoadingList(false);
-    }
   }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
 
   const loadSearchLogs = useCallback(async () => {
     setLoadingSearches(true);
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
+        const { data, error } = await supabase
         .from('user_interactions')
         .select('id, created_at, interaction_type, user_id, metadata')
         .eq('interaction_type', 'search')
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
-      setSearchLogs(data || []);
-    } catch (error) {
-      console.error('[Admin] Error loading search logs:', error);
+        if (error) throw error;
+        setSearchLogs(((data ?? []) as SearchLog[]));
+      } catch (error: unknown) {
+        console.error('[Admin] Error loading search logs:', error);
       toast.error('Failed to load search logs');
       setSearchLogs([]);
     } finally {
@@ -1064,26 +1084,6 @@ export default function AdminPage() {
         }
       }
     });
-  };
-
-  const handleSearchDestinations = async () => {
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('slug, name, city')
-        .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`)
-        .limit(10);
-      if (error) throw error;
-      setSearchResults(data || []);
-    } catch (e: any) {
-      setSearchResults([]);
-      console.error('Search error:', e);
-    } finally {
-      setIsSearching(false);
-    }
   };
 
   // Show loading state

@@ -4,33 +4,40 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 
+type EnrichOutput = {
+  error?: string
+  status?: string
+  [key: string]: unknown
+}
+
 export default function AdminEnrichPage() {
   const { user } = useAuth()
   const [slug, setSlug] = useState('')
-  const [output, setOutput] = useState<any>(null)
+  const [output, setOutput] = useState<EnrichOutput | null>(null)
   const [loading, setLoading] = useState(false)
 
   const run = async () => {
     if (!user?.email) { setOutput({ error: 'Please sign in' }); return }
     setLoading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
-      if (!token) {
-        throw new Error('Not authenticated')
-      }
-      const res = await fetch('/api/enrich-google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ slug: slug || undefined })
-      })
-      const json = await res.json()
-      setOutput(json)
-    } catch (e: any) {
-      setOutput({ error: e?.message || 'failed' })
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+    const res = await fetch('/api/enrich-google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ slug: slug || undefined })
+    })
+    const json = (await res.json()) as EnrichOutput
+    setOutput(json)
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'failed'
+    setOutput({ error: message })
     } finally {
       setLoading(false)
     }
