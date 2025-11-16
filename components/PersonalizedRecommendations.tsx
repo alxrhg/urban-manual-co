@@ -4,9 +4,10 @@ import { useRecommendations } from '@/hooks/useRecommendations';
 import { Destination } from '@/types/destination';
 import Image from 'next/image';
 import { MapPin, Sparkles } from 'lucide-react';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
+import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from './CardStyles';
 import Link from 'next/link';
 import { useMemo, memo } from 'react';
+import { MicroDescriptionHover } from './MicroDescriptionHover';
 
 interface PersonalizedRecommendationsProps {
   limit?: number;
@@ -142,23 +143,13 @@ function PersonalizedRecommendationsComponent({
               </div>
 
               {/* Info */}
-              <div className="space-y-0 flex-1 flex flex-col">
-                <h3 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>{destination.name}</h3>
-                <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
-                  {destination.micro_description || 
-                   (destination.category && destination.city 
-                     ? `${destination.category} in ${destination.city
-                         .split('-')
-                         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                         .join(' ')}`
-                     : destination.city 
-                       ? destination.city
-                         .split('-')
-                         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                         .join(' ')
-                       : destination.category || '')}
+                <div className="space-y-0 flex-1 flex flex-col">
+                  <h3 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>{destination.name}</h3>
+                  <MicroDescriptionHover
+                    destination={destination}
+                    textClassName="text-[10px] text-gray-600 dark:text-gray-400"
+                  />
                 </div>
-              </div>
 
               {/* AI Reason (tooltip on hover) */}
               {rec && rec.reason && (

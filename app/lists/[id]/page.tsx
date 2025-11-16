@@ -21,6 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/CardStyles';
+import { MicroDescriptionHover } from '@/components/MicroDescriptionHover';
 
 interface List {
   id: string;
@@ -388,14 +389,10 @@ export default function ListDetailPage() {
                     <h3 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>
                       {destination.name}
                     </h3>
-                    <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
-                      {destination.micro_description || 
-                       (destination.category && destination.city 
-                         ? `${destination.category} in ${capitalizeCity(destination.city)}`
-                         : destination.city 
-                           ? capitalizeCity(destination.city)
-                           : destination.category || '')}
-                    </div>
+                      <MicroDescriptionHover
+                        destination={destination}
+                        textClassName="text-[10px] text-gray-600 dark:text-gray-400"
+                      />
                   </div>
                 </Link>
                 {user?.id === list.user_id && (

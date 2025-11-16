@@ -29,6 +29,7 @@ import { ExplanationPanel } from '@/components/ExplanationPanel';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
+import { BrandHoverBadge } from '@/components/BrandHoverBadge';
 
 interface Recommendation {
   slug: string;
@@ -484,6 +485,9 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   {formatLabel(destination.category)}
                 </span>
               )}
+                {destination.brand && (
+                  <BrandHoverBadge destination={destination} />
+                )}
               {destination.michelin_stars && destination.michelin_stars > 0 && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <Image

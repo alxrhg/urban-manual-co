@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import { DestinationBadges } from './DestinationBadges';
+import { MicroDescriptionHover } from './MicroDescriptionHover';
 
 interface LovablyDestinationCardProps {
   destination: Destination;
@@ -62,14 +63,11 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
           <h3 className="text-xl md:text-2xl font-medium text-white line-clamp-2">
             {destination.name}
           </h3>
-          <p className="text-xs text-white/80 line-clamp-1">
-            {destination.micro_description || 
-             (destination.category && destination.city 
-               ? `${destination.category} in ${destination.city.charAt(0).toUpperCase() + destination.city.slice(1)}`
-               : destination.city 
-                 ? destination.city.charAt(0).toUpperCase() + destination.city.slice(1)
-                 : destination.category || '')}
-          </p>
+          <MicroDescriptionHover
+            destination={destination}
+            textClassName="text-xs text-white/80"
+            className="text-white"
+          />
         </div>
       </div>
 

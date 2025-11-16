@@ -1,6 +1,7 @@
 'use client';
 
 import { Destination } from '@/types/destination';
+import { MicroDescriptionHover } from './MicroDescriptionHover';
 
 interface DestinationCardListProps {
   destinations: Destination[];
@@ -29,15 +30,11 @@ export function DestinationCardList({
               : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-dark-blue-700'
           }`}
         >
-          <div className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{d.name}</div>
-          <div className="text-[10px] text-gray-500 line-clamp-1">
-            {d.micro_description || 
-             (d.category && d.city 
-               ? `${d.category} in ${d.city}`
-               : d.city 
-                 ? d.city
-                 : d.category || '')}
-          </div>
+            <div className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{d.name}</div>
+            <MicroDescriptionHover
+              destination={d}
+              textClassName="text-[10px] text-gray-500"
+            />
         </button>
       ))}
     </div>

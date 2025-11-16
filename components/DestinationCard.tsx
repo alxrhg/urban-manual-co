@@ -7,6 +7,7 @@ import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
+import { MicroDescriptionHover } from './MicroDescriptionHover';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -205,15 +206,10 @@ export const DestinationCard = memo(function DestinationCard({
           {destination.name}
         </h3>
 
-        {/* Micro Description - Always show with fallback, stuck to title */}
-        <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-          {destination.micro_description || 
-           (destination.category && destination.city 
-             ? `${destination.category} in ${capitalizeCity(destination.city)}`
-             : destination.city 
-               ? `Located in ${capitalizeCity(destination.city)}`
-               : destination.category || '')}
-        </div>
+        <MicroDescriptionHover
+          destination={destination}
+          textClassName="text-xs text-gray-600 dark:text-gray-400"
+        />
         
         {/* ML Forecasting Badges */}
         {showBadges && destination.id && (

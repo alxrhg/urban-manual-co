@@ -38,6 +38,8 @@ import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { MicroDescriptionHover } from '@/components/MicroDescriptionHover';
+import { BrandHoverBadge } from '@/components/BrandHoverBadge';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
@@ -1008,6 +1010,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     {destination.category}
                   </span>
                 )}
+                {destination.brand && (
+                  <BrandHoverBadge destination={destination} />
+                )}
                 {destination.crown && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
                     <Crown className="h-3.5 w-3.5" />
@@ -1024,9 +1029,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
 
             {destination.micro_description && (
-              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                {destination.micro_description}
-              </p>
+              <MicroDescriptionHover
+                destination={destination}
+                textClassName="text-sm leading-relaxed text-gray-700 dark:text-gray-300"
+                clamp={false}
+                className="max-w-2xl"
+              />
             )}
 
             {highlightTags.length > 0 && (
@@ -1341,9 +1349,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </div>
 
               {destination.micro_description && (
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {destination.micro_description}
-                </p>
+                <MicroDescriptionHover
+                  destination={destination}
+                  textClassName="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"
+                  clamp={false}
+                />
                 )}
               </div>
 

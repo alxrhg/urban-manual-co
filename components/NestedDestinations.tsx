@@ -4,8 +4,8 @@ import { Destination } from '@/types/destination';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { MapPin, ArrowRight } from 'lucide-react';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
-import { capitalizeCity } from '@/lib/utils';
+import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/CardStyles';
+import { MicroDescriptionHover } from './MicroDescriptionHover';
 
 interface NestedDestinationsProps {
   destinations: Destination[];
@@ -65,14 +65,10 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
 
             <div className="space-y-0 flex-1 flex flex-col">
               <h4 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>{dest.name}</h4>
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
-                {dest.micro_description || 
-                 (dest.category && dest.city 
-                   ? `${dest.category} in ${capitalizeCity(dest.city)}`
-                   : dest.city 
-                     ? capitalizeCity(dest.city)
-                     : dest.category || '')}
-              </div>
+                <MicroDescriptionHover
+                  destination={dest}
+                  textClassName="text-[10px] text-gray-600 dark:text-gray-400"
+                />
             </div>
 
             <div className="mt-2 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
