@@ -2123,14 +2123,25 @@ export default function Home() {
                             <span className="text-sm font-medium text-gray-900 dark:text-white">Add New POI</span>
                           </button>
                         )}
-                        <button
-                          onClick={() => setShowTripPlanner(true)}
-                          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.18)] hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                          aria-label="Open Trip Studio"
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          <span className="text-sm font-medium tracking-wide">Trip Studio</span>
-                        </button>
+                        {user ? (
+                          <button
+                            onClick={() => setShowTripPlanner(true)}
+                            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.18)] hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                            aria-label="Open Trip Studio"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                            <span className="text-sm font-medium tracking-wide">Trip Studio</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => router.push('/auth/login')}
+                            className="flex items-center justify-center gap-2 px-5 py-2.5 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                            aria-label="Sign in to plan trips"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                            <span className="text-sm font-medium tracking-wide">Sign in to plan</span>
+                          </button>
+                        )}
                       </div>
 
                     <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">

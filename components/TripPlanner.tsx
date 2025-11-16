@@ -845,15 +845,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           ) : studioMode === 'create' ? (
             <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-8">
               <div className="space-y-6">
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-5">
-                <div>
+                <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-5">
                   <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
                     Trip basics
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Set the context so the itinerary feels intentional.
-                  </p>
-                </div>
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="trip-name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
@@ -897,41 +892,39 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-5">
-                <div>
+                <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-5">
                   <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
-                    Dates & pacing
+                    Dates
                   </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="start-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                      Start Date *
-                    </label>
-                    <input
-                      id="start-date"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="start-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        Start Date *
+                      </label>
+                      <input
+                        id="start-date"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="end-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        End Date *
+                      </label>
+                      <input
+                        id="end-date"
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="end-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                      End Date *
-                    </label>
-                    <input
-                      id="end-date"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
-                    />
-                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleCreateTrip}
                   disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
@@ -1171,7 +1164,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     );
     }
 
-  return (
+    if (!user) {
+      return null;
+    }
+
+    return (
     <>
         <Drawer
           isOpen={isOpen}
