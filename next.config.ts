@@ -74,6 +74,9 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
+  // Enable standalone output for Docker deployments
+  output: 'standalone',
+
   env: {
     NEXT_PUBLIC_MAPKIT_AVAILABLE:
       process.env.MAPKIT_TEAM_ID && process.env.MAPKIT_KEY_ID && process.env.MAPKIT_PRIVATE_KEY ? 'true' : '',

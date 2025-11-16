@@ -1,0 +1,80 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    groups:
+      # Group minor and patch updates together
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      # Group React ecosystem updates
+      react:
+        patterns:
+          - "react*"
+          - "next*"
+      # Group Supabase updates
+      supabase:
+        patterns:
+          - "@supabase/*"
+      # Group Radix UI updates
+      radix:
+        patterns:
+          - "@radix-ui/*"
+      # Group testing libraries
+      testing:
+        patterns:
+          - "*test*"
+          - "vitest"
+      # Group build tools
+      build-tools:
+        patterns:
+          - "typescript"
+          - "eslint*"
+          - "tailwind*"
+          - "@tailwindcss/*"
+    # Only allow security updates for major versions
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+
+  # Enable version updates for Docker
+  - package-ecosystem: "docker"
+    directory: "/ml-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+
+  # Enable version updates for Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/ml-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    groups:
+      ml-libraries:
+        patterns:
+          - "scikit-learn"
+          - "prophet"
+          - "lightfm"
+          - "tensorflow"
+          - "torch"
