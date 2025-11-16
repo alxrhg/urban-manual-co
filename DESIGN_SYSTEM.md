@@ -21,6 +21,12 @@
 - Readable font sizes
 - Line clamping for overflow
 
+### 4. **No Dashboard Cards**
+- Ban floating boxes with heavy radii, shadows, or faux glass effects
+- Prefer text-first tables, definition lists, or inline stats separated by simple rules
+- Especially in `/admin`, never introduce AI-style analytics cards or neumorphic tiles
+- If more emphasis is needed, use typography, spacing, and dividers—not containers
+
 ---
 
 ## 📐 Design Tokens
