@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   XIcon,
   SearchIcon,
@@ -23,6 +23,31 @@ interface Airport {
   country: string;
 }
 
+interface AviationEdgeAirport {
+  codeIataAirport?: string;
+  iata?: string;
+  nameAirport?: string;
+  name?: string;
+  cityName?: string;
+  city?: string;
+  countryName?: string;
+  country?: string;
+}
+
+interface GooglePlaceDetails {
+  name?: string;
+  formatted_address?: string;
+  place_id?: string;
+  geometry?: {
+    location?: {
+      lat?: number;
+      lng?: number;
+    };
+  };
+  photos?: { name?: string }[];
+  [key: string]: unknown;
+}
+
 interface TripLocation {
   id: number;
   name: string;
@@ -33,11 +58,7 @@ interface TripLocation {
   notes?: string;
   duration?: number;
   blockType?: 'destination' | 'flight' | 'train' | 'custom';
-  customLocation?: {
-    place_id?: string;
-    formatted_address?: string;
-    geometry?: any;
-  };
+  customLocation?: GooglePlaceDetails | null;
   airline?: string;
 }
 
@@ -84,6 +105,57 @@ const blockTypeOptions: BlockTypeOption[] = [
 
 const durationPresets = [30, 60, 90, 120, 150];
 
+const majorAirports: Airport[] = [
+  { iata: 'JFK', name: 'John F. Kennedy International Airport', city: 'New York', country: 'United States' },
+  { iata: 'LAX', name: 'Los Angeles International Airport', city: 'Los Angeles', country: 'United States' },
+  { iata: 'LHR', name: 'Heathrow Airport', city: 'London', country: 'United Kingdom' },
+  { iata: 'CDG', name: 'Charles de Gaulle Airport', city: 'Paris', country: 'France' },
+  { iata: 'DXB', name: 'Dubai International Airport', city: 'Dubai', country: 'United Arab Emirates' },
+  { iata: 'HND', name: 'Tokyo Haneda Airport', city: 'Tokyo', country: 'Japan' },
+  { iata: 'NRT', name: 'Narita International Airport', city: 'Tokyo', country: 'Japan' },
+  { iata: 'SIN', name: 'Singapore Changi Airport', city: 'Singapore', country: 'Singapore' },
+  { iata: 'ICN', name: 'Incheon International Airport', city: 'Seoul', country: 'South Korea' },
+  { iata: 'HKG', name: 'Hong Kong International Airport', city: 'Hong Kong', country: 'Hong Kong' },
+  { iata: 'AMS', name: 'Amsterdam Airport Schiphol', city: 'Amsterdam', country: 'Netherlands' },
+  { iata: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'Germany' },
+  { iata: 'SFO', name: 'San Francisco International Airport', city: 'San Francisco', country: 'United States' },
+  { iata: 'ORD', name: "O'Hare International Airport", city: 'Chicago', country: 'United States' },
+  { iata: 'ATL', name: 'Hartsfield-Jackson Atlanta International Airport', city: 'Atlanta', country: 'United States' },
+  { iata: 'DFW', name: 'Dallas/Fort Worth International Airport', city: 'Dallas', country: 'United States' },
+  { iata: 'DEN', name: 'Denver International Airport', city: 'Denver', country: 'United States' },
+  { iata: 'SEA', name: 'Seattle-Tacoma International Airport', city: 'Seattle', country: 'United States' },
+  { iata: 'MIA', name: 'Miami International Airport', city: 'Miami', country: 'United States' },
+  { iata: 'LAS', name: 'Harry Reid International Airport', city: 'Las Vegas', country: 'United States' },
+  { iata: 'BOS', name: 'Logan International Airport', city: 'Boston', country: 'United States' },
+  { iata: 'MCO', name: 'Orlando International Airport', city: 'Orlando', country: 'United States' },
+  { iata: 'EWR', name: 'Newark Liberty International Airport', city: 'Newark', country: 'United States' },
+  { iata: 'YYZ', name: 'Toronto Pearson International Airport', city: 'Toronto', country: 'Canada' },
+  { iata: 'YVR', name: 'Vancouver International Airport', city: 'Vancouver', country: 'Canada' },
+  { iata: 'MEX', name: 'Mexico City International Airport', city: 'Mexico City', country: 'Mexico' },
+  { iata: 'GRU', name: 'São Paulo/Guarulhos International Airport', city: 'São Paulo', country: 'Brazil' },
+  { iata: 'MAD', name: 'Adolfo Suárez Madrid-Barajas Airport', city: 'Madrid', country: 'Spain' },
+  { iata: 'BCN', name: 'Barcelona-El Prat Airport', city: 'Barcelona', country: 'Spain' },
+  { iata: 'FCO', name: 'Leonardo da Vinci-Fiumicino Airport', city: 'Rome', country: 'Italy' },
+  { iata: 'MXP', name: 'Milan Malpensa Airport', city: 'Milan', country: 'Italy' },
+  { iata: 'MUC', name: 'Munich Airport', city: 'Munich', country: 'Germany' },
+  { iata: 'ZRH', name: 'Zurich Airport', city: 'Zurich', country: 'Switzerland' },
+  { iata: 'VIE', name: 'Vienna International Airport', city: 'Vienna', country: 'Austria' },
+  { iata: 'CPH', name: 'Copenhagen Airport', city: 'Copenhagen', country: 'Denmark' },
+  { iata: 'OSL', name: 'Oslo Airport', city: 'Oslo', country: 'Norway' },
+  { iata: 'ARN', name: 'Stockholm Arlanda Airport', city: 'Stockholm', country: 'Sweden' },
+  { iata: 'IST', name: 'Istanbul Airport', city: 'Istanbul', country: 'Turkey' },
+  { iata: 'DOH', name: 'Hamad International Airport', city: 'Doha', country: 'Qatar' },
+  { iata: 'SYD', name: 'Sydney Kingsford Smith Airport', city: 'Sydney', country: 'Australia' },
+  { iata: 'MEL', name: 'Melbourne Airport', city: 'Melbourne', country: 'Australia' },
+  { iata: 'AKL', name: 'Auckland Airport', city: 'Auckland', country: 'New Zealand' },
+  { iata: 'PEK', name: 'Beijing Capital International Airport', city: 'Beijing', country: 'China' },
+  { iata: 'PVG', name: 'Shanghai Pudong International Airport', city: 'Shanghai', country: 'China' },
+  { iata: 'BKK', name: 'Suvarnabhumi Airport', city: 'Bangkok', country: 'Thailand' },
+  { iata: 'KUL', name: 'Kuala Lumpur International Airport', city: 'Kuala Lumpur', country: 'Malaysia' },
+  { iata: 'DEL', name: 'Indira Gandhi International Airport', city: 'Delhi', country: 'India' },
+  { iata: 'BOM', name: 'Chhatrapati Shivaji Maharaj International Airport', city: 'Mumbai', country: 'India' },
+];
+
 export function AddLocationToTrip({
   onAdd,
   onClose,
@@ -101,7 +173,7 @@ export function AddLocationToTrip({
   // Custom location fields
   const [customLocationName, setCustomLocationName] = useState('');
   const [customLocationQuery, setCustomLocationQuery] = useState('');
-  const [customLocationData, setCustomLocationData] = useState<any>(null);
+  const [customLocationData, setCustomLocationData] = useState<GooglePlaceDetails | null>(null);
   
   // Flight fields
   const [flightNumber, setFlightNumber] = useState('');
@@ -163,124 +235,7 @@ export function AddLocationToTrip({
     }
   };
 
-  useEffect(() => {
-    if (searchQuery.trim().length >= 2 && blockType === 'destination') {
-      searchDestinations();
-    } else {
-      setDestinations([]);
-    }
-  }, [searchQuery, blockType]);
-
-  // Airport search effect
-  useEffect(() => {
-    if (activeAirportField === 'from' && flightFromQuery.trim().length >= 2) {
-      searchAirports(flightFromQuery);
-    } else if (activeAirportField === 'to' && flightToQuery.trim().length >= 2) {
-      searchAirports(flightToQuery);
-    } else {
-      setAirportSearchResults([]);
-    }
-  }, [flightFromQuery, flightToQuery, activeAirportField]);
-
-  const searchAirports = async (query: string) => {
-    setSearchingAirports(true);
-    try {
-      // Use Airport Data API (free tier available)
-      const response = await fetch(
-        `https://aviation-edge.com/v2/public/autocomplete?key=${process.env.NEXT_PUBLIC_AVIATION_EDGE_API_KEY}&city=${encodeURIComponent(query)}`
-      );
-      
-      if (!response.ok) {
-        // Fallback to a static list of major airports if API fails
-        const staticAirports = getMajorAirports().filter(
-          (airport) =>
-            airport.name.toLowerCase().includes(query.toLowerCase()) ||
-            airport.city.toLowerCase().includes(query.toLowerCase()) ||
-            airport.iata.toLowerCase().includes(query.toLowerCase())
-        );
-        setAirportSearchResults(staticAirports.slice(0, 10));
-        return;
-      }
-
-      const data = await response.json();
-      const airports: Airport[] = data.map((item: any) => ({
-        iata: item.codeIataAirport || item.iata || '',
-        name: item.nameAirport || item.name || '',
-        city: item.cityName || item.city || '',
-        country: item.countryName || item.country || '',
-      }));
-      
-      setAirportSearchResults(airports.slice(0, 10));
-    } catch (error) {
-      console.error('Error searching airports:', error);
-      // Fallback to static list
-      const staticAirports = getMajorAirports().filter(
-        (airport) =>
-          airport.name.toLowerCase().includes(query.toLowerCase()) ||
-          airport.city.toLowerCase().includes(query.toLowerCase()) ||
-          airport.iata.toLowerCase().includes(query.toLowerCase())
-      );
-      setAirportSearchResults(staticAirports.slice(0, 10));
-    } finally {
-      setSearchingAirports(false);
-    }
-  };
-
-  // Static list of major world airports as fallback
-  const getMajorAirports = (): Airport[] => {
-    return [
-      { iata: 'JFK', name: 'John F. Kennedy International Airport', city: 'New York', country: 'United States' },
-      { iata: 'LAX', name: 'Los Angeles International Airport', city: 'Los Angeles', country: 'United States' },
-      { iata: 'LHR', name: 'Heathrow Airport', city: 'London', country: 'United Kingdom' },
-      { iata: 'CDG', name: 'Charles de Gaulle Airport', city: 'Paris', country: 'France' },
-      { iata: 'DXB', name: 'Dubai International Airport', city: 'Dubai', country: 'United Arab Emirates' },
-      { iata: 'HND', name: 'Tokyo Haneda Airport', city: 'Tokyo', country: 'Japan' },
-      { iata: 'NRT', name: 'Narita International Airport', city: 'Tokyo', country: 'Japan' },
-      { iata: 'SIN', name: 'Singapore Changi Airport', city: 'Singapore', country: 'Singapore' },
-      { iata: 'ICN', name: 'Incheon International Airport', city: 'Seoul', country: 'South Korea' },
-      { iata: 'HKG', name: 'Hong Kong International Airport', city: 'Hong Kong', country: 'Hong Kong' },
-      { iata: 'AMS', name: 'Amsterdam Airport Schiphol', city: 'Amsterdam', country: 'Netherlands' },
-      { iata: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'Germany' },
-      { iata: 'SFO', name: 'San Francisco International Airport', city: 'San Francisco', country: 'United States' },
-      { iata: 'ORD', name: "O'Hare International Airport", city: 'Chicago', country: 'United States' },
-      { iata: 'ATL', name: 'Hartsfield-Jackson Atlanta International Airport', city: 'Atlanta', country: 'United States' },
-      { iata: 'DFW', name: 'Dallas/Fort Worth International Airport', city: 'Dallas', country: 'United States' },
-      { iata: 'DEN', name: 'Denver International Airport', city: 'Denver', country: 'United States' },
-      { iata: 'SEA', name: 'Seattle-Tacoma International Airport', city: 'Seattle', country: 'United States' },
-      { iata: 'MIA', name: 'Miami International Airport', city: 'Miami', country: 'United States' },
-      { iata: 'LAS', name: 'Harry Reid International Airport', city: 'Las Vegas', country: 'United States' },
-      { iata: 'BOS', name: 'Logan International Airport', city: 'Boston', country: 'United States' },
-      { iata: 'MCO', name: 'Orlando International Airport', city: 'Orlando', country: 'United States' },
-      { iata: 'EWR', name: 'Newark Liberty International Airport', city: 'Newark', country: 'United States' },
-      { iata: 'YYZ', name: 'Toronto Pearson International Airport', city: 'Toronto', country: 'Canada' },
-      { iata: 'YVR', name: 'Vancouver International Airport', city: 'Vancouver', country: 'Canada' },
-      { iata: 'MEX', name: 'Mexico City International Airport', city: 'Mexico City', country: 'Mexico' },
-      { iata: 'GRU', name: 'São Paulo/Guarulhos International Airport', city: 'São Paulo', country: 'Brazil' },
-      { iata: 'MAD', name: 'Adolfo Suárez Madrid-Barajas Airport', city: 'Madrid', country: 'Spain' },
-      { iata: 'BCN', name: 'Barcelona-El Prat Airport', city: 'Barcelona', country: 'Spain' },
-      { iata: 'FCO', name: 'Leonardo da Vinci-Fiumicino Airport', city: 'Rome', country: 'Italy' },
-      { iata: 'MXP', name: 'Milan Malpensa Airport', city: 'Milan', country: 'Italy' },
-      { iata: 'MUC', name: 'Munich Airport', city: 'Munich', country: 'Germany' },
-      { iata: 'ZRH', name: 'Zurich Airport', city: 'Zurich', country: 'Switzerland' },
-      { iata: 'VIE', name: 'Vienna International Airport', city: 'Vienna', country: 'Austria' },
-      { iata: 'CPH', name: 'Copenhagen Airport', city: 'Copenhagen', country: 'Denmark' },
-      { iata: 'OSL', name: 'Oslo Airport', city: 'Oslo', country: 'Norway' },
-      { iata: 'ARN', name: 'Stockholm Arlanda Airport', city: 'Stockholm', country: 'Sweden' },
-      { iata: 'IST', name: 'Istanbul Airport', city: 'Istanbul', country: 'Turkey' },
-      { iata: 'DOH', name: 'Hamad International Airport', city: 'Doha', country: 'Qatar' },
-      { iata: 'SYD', name: 'Sydney Kingsford Smith Airport', city: 'Sydney', country: 'Australia' },
-      { iata: 'MEL', name: 'Melbourne Airport', city: 'Melbourne', country: 'Australia' },
-      { iata: 'AKL', name: 'Auckland Airport', city: 'Auckland', country: 'New Zealand' },
-      { iata: 'PEK', name: 'Beijing Capital International Airport', city: 'Beijing', country: 'China' },
-      { iata: 'PVG', name: 'Shanghai Pudong International Airport', city: 'Shanghai', country: 'China' },
-      { iata: 'BKK', name: 'Suvarnabhumi Airport', city: 'Bangkok', country: 'Thailand' },
-      { iata: 'KUL', name: 'Kuala Lumpur International Airport', city: 'Kuala Lumpur', country: 'Malaysia' },
-      { iata: 'DEL', name: 'Indira Gandhi International Airport', city: 'Delhi', country: 'India' },
-      { iata: 'BOM', name: 'Chhatrapati Shivaji Maharaj International Airport', city: 'Mumbai', country: 'India' },
-    ];
-  };
-
-  const searchDestinations = async () => {
+  const searchDestinations = useCallback(async () => {
     setLoading(true);
     try {
       const supabaseClient = createClient();
@@ -289,9 +244,7 @@ export function AddLocationToTrip({
       const { data, error } = await supabaseClient
         .from('destinations')
         .select('*')
-        .or(
-          `name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`
-        )
+        .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`)
         .limit(20);
 
       if (error) throw error;
@@ -301,7 +254,74 @@ export function AddLocationToTrip({
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2 && blockType === 'destination') {
+      void searchDestinations();
+    } else {
+      setDestinations([]);
+    }
+  }, [searchQuery, blockType, searchDestinations]);
+
+  // Airport search effect
+  const searchAirports = useCallback(
+    async (query: string) => {
+      setSearchingAirports(true);
+      try {
+        const response = await fetch(
+          `https://aviation-edge.com/v2/public/autocomplete?key=${process.env.NEXT_PUBLIC_AVIATION_EDGE_API_KEY}&city=${encodeURIComponent(
+            query
+          )}`
+        );
+
+        if (!response.ok) {
+          const staticAirports = getMajorAirports().filter(
+            (airport) =>
+              airport.name.toLowerCase().includes(query.toLowerCase()) ||
+              airport.city.toLowerCase().includes(query.toLowerCase()) ||
+              airport.iata.toLowerCase().includes(query.toLowerCase())
+          );
+          setAirportSearchResults(staticAirports.slice(0, 10));
+          return;
+        }
+
+        const data: AviationEdgeAirport[] = await response.json();
+        const airports: Airport[] = data.map((item) => ({
+          iata: item.codeIataAirport || item.iata || '',
+          name: item.nameAirport || item.name || '',
+          city: item.cityName || item.city || '',
+          country: item.countryName || item.country || '',
+        }));
+
+        setAirportSearchResults(airports.slice(0, 10));
+      } catch (error) {
+        console.error('Error searching airports:', error);
+        const staticAirports = getMajorAirports().filter(
+          (airport) =>
+            airport.name.toLowerCase().includes(query.toLowerCase()) ||
+            airport.city.toLowerCase().includes(query.toLowerCase()) ||
+            airport.iata.toLowerCase().includes(query.toLowerCase())
+        );
+        setAirportSearchResults(staticAirports.slice(0, 10));
+      } finally {
+        setSearchingAirports(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (activeAirportField === 'from' && flightFromQuery.trim().length >= 2) {
+      void searchAirports(flightFromQuery);
+    } else if (activeAirportField === 'to' && flightToQuery.trim().length >= 2) {
+      void searchAirports(flightToQuery);
+    } else {
+      setAirportSearchResults([]);
+    }
+  }, [flightFromQuery, flightToQuery, activeAirportField, searchAirports]);
+
+  const getMajorAirports = (): Airport[] => majorAirports;
 
   const handleSelectDestination = (destination: Destination) => {
     setSelectedDestination(destination);
@@ -309,7 +329,7 @@ export function AddLocationToTrip({
     setSearchQuery(''); // Clear search to prevent re-population
   };
 
-  const handleGooglePlaceSelect = async (placeDetails: any, field?: 'from' | 'to') => {
+  const handleGooglePlaceSelect = (placeDetails: GooglePlaceDetails, field?: 'from' | 'to') => {
     if (blockType === 'custom') {
       setCustomLocationName(placeDetails.name || placeDetails.formatted_address || '');
       setCustomLocationData(placeDetails);
@@ -790,6 +810,7 @@ export function AddLocationToTrip({
     (blockType === 'flight' && (!flightFrom || !flightTo)) ||
     (blockType === 'train' && (!trainFrom || !trainTo)) ||
     (blockType === 'custom' && !customLocationName);
+  const activeBlock = blockTypeOptions.find((option) => option.value === blockType);
 
   const schedulePanel = (
     <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 space-y-5">
@@ -856,13 +877,13 @@ export function AddLocationToTrip({
   );
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 sm:p-10">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-950 w-full max-w-5xl max-h-[88vh] overflow-hidden border border-neutral-200 dark:border-neutral-800 flex flex-col rounded-[32px] shadow-2xl">
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-5 flex items-center justify-between">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-6xl h-[90vh] bg-white dark:bg-gray-950 border border-neutral-200 dark:border-neutral-800 rounded-[36px] shadow-2xl flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-6 py-4">
           <div>
-            <p className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 dark:text-neutral-500">Itinerary Builder</p>
-            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Add to trip</h3>
+            <p className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 dark:text-neutral-500">Itinerary Workshop</p>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Add a block</h3>
           </div>
           <button
             onClick={onClose}
@@ -872,42 +893,75 @@ export function AddLocationToTrip({
           </button>
         </div>
 
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-5 bg-neutral-50 dark:bg-gray-900/30">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {blockTypeOptions.map((option) => {
-              const Icon = option.icon;
-              const isActive = blockType === option.value;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => handleBlockTypeChange(option.value)}
-                  className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
-                    isActive
-                      ? 'border-neutral-900 dark:border-neutral-100 bg-white dark:bg-gray-950 shadow-sm'
-                      : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-500 dark:text-neutral-400'}`} />
-                  <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{option.label}</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{option.description}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <div className="flex-1 grid lg:grid-cols-[220px_1fr_320px] h-full">
+          <aside className="hidden lg:flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-gray-900/40 p-5 gap-4">
+            <div>
+              <p className="text-[11px] tracking-[0.4em] uppercase text-neutral-500 dark:text-neutral-400">Block library</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Curated inputs for every type of stop.</p>
+            </div>
+            <div className="space-y-3">
+              {blockTypeOptions.map((option) => {
+                const Icon = option.icon;
+                const isActive = option.value === blockType;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => handleBlockTypeChange(option.value)}
+                    className={`w-full text-left rounded-2xl border px-3 py-3 flex items-center gap-3 transition-colors ${
+                      isActive
+                        ? 'border-neutral-900 dark:border-neutral-100 bg-white dark:bg-gray-950'
+                        : 'border-transparent hover:border-neutral-300 dark:hover:border-neutral-700'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400'}`} />
+                    <div>
+                      <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{option.label}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{option.description}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
 
-        <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-950">
-          <div className="grid gap-6 lg:grid-cols-5">
-            <div className="space-y-6 lg:col-span-3">{blockSpecificFields}</div>
-            <div className="space-y-6 lg:col-span-2">
-              {selectionSummary}
-              {schedulePanel}
+          <div className="flex flex-col overflow-hidden">
+            <div className="lg:hidden border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-gray-900/30 px-4 py-3 overflow-x-auto">
+              <div className="flex gap-2">
+                {blockTypeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleBlockTypeChange(option.value)}
+                    className={`px-3 py-1.5 rounded-full text-xs border ${
+                      blockType === option.value
+                        ? 'border-neutral-900 bg-neutral-900 text-white'
+                        : 'border-neutral-300 text-neutral-600'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] tracking-[0.4em] uppercase text-neutral-500 dark:text-neutral-400">Now building</p>
+                <p className="text-base font-semibold text-neutral-900 dark:text-neutral-50">{activeBlock?.label}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{activeBlock?.description}</p>
+              </div>
+              <span className="text-[11px] uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">Stage 02</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-950">
+              <div className="max-w-3xl mx-auto space-y-6">{blockSpecificFields}</div>
             </div>
           </div>
+
+          <aside className="border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-gray-900/30 p-6 space-y-6 overflow-y-auto">
+            {selectionSummary}
+            {schedulePanel}
+          </aside>
         </div>
       </div>
     </div>
   );
+
 }

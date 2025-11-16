@@ -1,21 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   CalendarIcon,
   ShareIcon,
   DownloadIcon,
   SparklesIcon,
-  PrinterIcon,
   SaveIcon,
   Loader2,
   Camera,
+  NotebookPenIcon,
+  LayersIcon,
+  PlusIcon,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripShareModal } from './TripShareModal';
@@ -46,9 +47,23 @@ interface DayItinerary {
   notes?: string;
 }
 
+type WorkspaceTab = 'itinerary' | 'logistics' | 'journal';
+
+interface LogisticsTask {
+  id: number;
+  label: string;
+  done: boolean;
+}
+
+const defaultLogisticsTasks: LogisticsTask[] = [
+  { id: 1, label: 'Lock flights or trains', done: false },
+  { id: 2, label: 'Confirm hotel / base', done: false },
+  { id: 3, label: 'Outline daily anchor moments', done: false },
+  { id: 4, label: 'Share itinerary with travel partners', done: false },
+];
+
 export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const { user } = useAuth();
-  const router = useRouter();
   const [tripName, setTripName] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -66,6 +81,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>('itinerary');
+  const [tripMood, setTripMood] = useState('City discovery');
+  const [travelPace, setTravelPace] = useState<'structured' | 'loose'>('structured');
+  const [travelersCount, setTravelersCount] = useState(2);
+  const [logisticsTasks, setLogisticsTasks] = useState<LogisticsTask[]>(() =>
+    defaultLogisticsTasks.map((task) => ({ ...task }))
+  );
+  const [journalNotes, setJournalNotes] = useState('');
+  const [packingNotes, setPackingNotes] = useState('');
   const toast = useToast();
 
   // Load existing trip if tripId is provided
@@ -76,7 +100,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       // Reset form for new trip
       resetForm();
     }
-  }, [isOpen, tripId, user]);
+  }, [isOpen, tripId, user, loadTrip]);
 
   // Body scroll is handled by Drawer component
 
@@ -93,9 +117,16 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setCoverImage(null);
     setCoverImageFile(null);
     setCoverImagePreview(null);
+    setWorkspaceTab('itinerary');
+    setTripMood('City discovery');
+    setTravelPace('structured');
+    setTravelersCount(2);
+    setLogisticsTasks(defaultLogisticsTasks.map((task) => ({ ...task })));
+    setJournalNotes('');
+    setPackingNotes('');
   };
 
-  const loadTrip = async (id: string) => {
+  const loadTrip = useCallback(async (id: string) => {
     setLoading(true);
     try {
       const supabaseClient = createClient();
@@ -177,7 +208,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           const location: TripLocation = {
             id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
             name: item.title,
-            city: destination || '',
+            city: tripData.destination || '',
             category: item.description || '',
             image: notesData.image || '/placeholder-image.jpg',
             time: item.time || undefined,
@@ -232,6 +263,28 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     } finally {
       setLoading(false);
     }
+  }, [user]);
+
+  const toggleLogisticsTask = (taskId: number) => {
+    setLogisticsTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              done: !task.done,
+            }
+          : task
+      )
+    );
+  };
+
+  const adjustTravelers = (direction: 'inc' | 'dec') => {
+    setTravelersCount((prev) => {
+      if (direction === 'dec') {
+        return Math.max(1, prev - 1);
+      }
+      return Math.min(12, prev + 1);
+    });
   };
 
   const handleCreateTrip = async () => {
@@ -285,9 +338,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       setDays(newDays);
       setStep('plan');
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create trip. Please try again.';
       console.error('Error creating trip:', error);
-      alert(error?.message || 'Failed to create trip. Please try again.');
+      alert(message);
     } finally {
       setSaving(false);
     }
@@ -335,9 +389,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           const data = await res.json();
           coverImageUrl = data.url;
           setCoverImage(coverImageUrl);
-        } catch (error: any) {
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Upload failed';
           console.error('Cover image upload error:', error);
-          toast.error(`Cover image upload failed: ${error.message}`);
+          toast.error(`Cover image upload failed: ${message}`);
           setUploadingCover(false);
           return;
         } finally {
@@ -424,9 +479,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           saveButton.disabled = false;
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save trip. Please try again.';
       console.error('Error saving trip:', error);
-      alert(error?.message || 'Failed to save trip. Please try again.');
+      alert(message);
     } finally {
       setSaving(false);
     }
@@ -557,7 +613,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     let icsContent =
       'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Urban Manual//Trip Planner//EN\n';
 
-    days.forEach((day, dayIndex) => {
+    days.forEach((day) => {
       day.locations.forEach((location) => {
         const date = day.date.replace(/-/g, '');
         const time = location.time?.replace(':', '') || '0900';
@@ -580,10 +636,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     link.href = url;
     link.download = `${tripName.replace(/\s+/g, '_')}.ics`;
     link.click();
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const getAISuggestions = () => {
@@ -617,361 +669,360 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     });
   })();
 
-  const timelineEntries = days.map((day, index) => ({
-    label: `Day ${index + 1}`,
-    date: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-    stops: day.locations.length,
-  }));
+  const workspaceTabsConfig: Array<{ id: WorkspaceTab; label: string; helper: string }> = [
+    { id: 'itinerary', label: 'Itinerary', helper: 'Design each day with intention' },
+    { id: 'logistics', label: 'Logistics', helper: 'Budgets, transport, and tasks' },
+    { id: 'journal', label: 'Journal', helper: 'Notes, memories, and ideas' },
+  ];
 
   // Build custom header with tabs and actions
   const headerContent = step === 'plan' ? (
     <div className="w-full space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
-          <p className="text-[10px] tracking-[0.3em] text-gray-400 dark:text-gray-500 uppercase">Itinerary Studio</p>
+          <p className="text-[10px] tracking-[0.4em] text-gray-400 dark:text-gray-500 uppercase">Trip studio</p>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               {tripName || 'Untitled trip'}
             </h2>
-            {destination && (
-              <span className="text-xs px-3 py-1 rounded-full bg-gray-900 text-white dark:bg-white dark:text-gray-900">
-                {destination}
-              </span>
-            )}
-            {days.length > 0 && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {days.length} day{days.length === 1 ? '' : 's'} · {totalStops} stop{totalStops === 1 ? '' : 's'}
-              </span>
-            )}
-          </div>
-          {formattedRange && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">{formattedRange}</p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {currentTripId && (
-            <button
-              onClick={handleSaveTrip}
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Save trip"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <SaveIcon className="w-3 h-3" />
-                  Save
-                </>
-              )}
-            </button>
-          )}
-          <button
-            onClick={() => setShowShare(true)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Share trip"
-          >
-            <ShareIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-          </button>
-          <button
-            onClick={handleExportToCalendar}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Export to calendar"
-          >
-            <DownloadIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-          </button>
-          <button
-            onClick={handlePrint}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Print itinerary"
-          >
-            <PrinterIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-          </button>
-        </div>
-      </div>
-    </div>
-  ) : undefined;
-
-  const renderCreateStep = () => (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 text-white p-6">
-        <p className="text-[11px] tracking-[0.4em] uppercase text-white/60 mb-2">Step 1</p>
-        <h2 className="text-xl font-semibold mb-3">Design the outline of your trip</h2>
-        <p className="text-sm text-white/70 max-w-2xl">
-          Give the trip a name, anchor it to a destination, and set your dates. We will craft the planning workspace based on these foundations.
-        </p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 space-y-5">
-          <div>
-            <label htmlFor="trip-name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Trip Name *
-            </label>
-            <input
-              id="trip-name"
-              type="text"
-              value={tripName}
-              onChange={(e) => setTripName(e.target.value)}
-              placeholder="Summer in Paris"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="destination" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Destination *
-            </label>
-            <input
-              id="destination"
-              type="text"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder="Paris, France"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="hotel" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Base or hotel
-            </label>
-            <input
-              id="hotel"
-              type="text"
-              value={hotelLocation}
-              onChange={(e) => setHotelLocation(e.target.value)}
-              placeholder="Hotel Le Marais"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="start-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                Start Date *
-              </label>
-              <input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="end-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                End Date *
-              </label>
-              <input
-                id="end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="budget" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Total Budget
-            </label>
-            <input
-              id="budget"
-              type="number"
-              value={totalBudget || ''}
-              onChange={(e) => setTotalBudget(Number(e.target.value))}
-              placeholder="2000"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 transition-colors text-sm"
-            />
-          </div>
-
-          <button
-            onClick={handleCreateTrip}
-            disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-            className="w-full px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              'Create trip workspace'
-            )}
-          </button>
-        </div>
-
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 p-6 flex flex-col gap-6">
-          <div>
-            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500 mb-2">Live preview</p>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">{tripName || 'Your next escape'}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {destination ? `Planning around ${destination}` : 'Add a destination to unlock tailored suggestions'}
-            </p>
-          </div>
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4">
-              <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                <CalendarIcon className="w-4 h-4" />
-                {formattedRange || 'Select dates to see the rhythm of your trip'}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-4 space-y-4">
-              {previewTimeline.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Once you add dates we will map out each day for you.
-                </div>
-              ) : (
-                previewTimeline.map((entry) => (
-                  <div key={entry.label} className="flex items-center justify-between text-sm">
-                    <div className="font-medium text-gray-900 dark:text-white">{entry.label}</div>
-                    <div className="text-gray-500 dark:text-gray-400">{entry.date}</div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-            <SparklesIcon className="w-4 h-4" />
-            AI suggestions unlock after you create the trip.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderPlanStep = () => (
-    <div className="space-y-8">
-      <div className="rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-950">
-        <div className="grid lg:grid-cols-3">
-          <div className="lg:col-span-2 relative h-56 md:h-64 bg-gray-200 dark:bg-gray-800">
-            <Image
-              src={heroImage}
-              alt={tripName || 'Trip cover'}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 66vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-            <div className="absolute bottom-4 left-4 text-white space-y-1">
-              <p className="text-xs uppercase tracking-[0.4em] text-white/70">Destination</p>
-              <h3 className="text-2xl font-semibold">{destination || 'Set a destination'}</h3>
-              {formattedRange && <p className="text-sm text-white/80">{formattedRange}</p>}
-            </div>
-          </div>
-          <div className="p-6 space-y-4">
-            <div>
-              <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500 mb-2">Logistics</p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400">Start</p>
-                  <p className="text-gray-900 dark:text-white font-medium">{startDate ? new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400">End</p>
-                  <p className="text-gray-900 dark:text-white font-medium">{endDate ? new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400">Base</p>
-                  <p className="text-gray-900 dark:text-white font-medium">{hotelLocation || 'Add base'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400">Status</p>
-                  <p className="text-gray-900 dark:text-white font-medium capitalize">planning</p>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <input
-                id="cover-image-input"
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setCoverImageFile(file);
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setCoverImagePreview(reader.result as string);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                className="hidden"
-              />
-              <label
-                htmlFor="cover-image-input"
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900/60 transition-colors cursor-pointer text-sm font-medium"
-              >
-                {uploadingCover ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-4 h-4" />
-                    {coverImage || coverImagePreview ? 'Change cover image' : 'Upload cover image'}
-                  </>
-                )}
-              </label>
-              {(coverImage || coverImagePreview) && (
-                <button
-                  onClick={() => {
-                    setCoverImage(null);
-                    setCoverImageFile(null);
-                    setCoverImagePreview(null);
-                  }}
-                  className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                >
-                  Remove cover image
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 flex flex-wrap items-center gap-6 justify-between">
-        <div className="space-y-3">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500">Workflow</p>
-          <div className="flex flex-wrap items-center gap-4">
-            {['Set foundations', 'Design each day', 'Share & export'].map((stepLabel, index) => (
-              <div key={stepLabel} className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${index === 1 ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
-                  {index + 1}
-                </div>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{stepLabel}</span>
-                {index < 2 && <div className="w-10 h-px bg-gray-200 dark:bg-gray-700" />}
-              </div>
-            ))}
+            <span className="text-xs px-3 py-1 rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200">
+              {destination || 'Destination TBD'}
+            </span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={handleAddDay}
-            className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/60"
+            onClick={() => setShowShare(true)}
+            className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900/60 flex items-center gap-1"
           >
-            Add another day
+            <ShareIcon className="w-3.5 h-3.5" /> Share
           </button>
           <button
-            onClick={() => setShowShare(true)}
-            className="px-4 py-2 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium"
+            onClick={handleExportToCalendar}
+            className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900/60 flex items-center gap-1"
           >
-            Share link
+            <DownloadIcon className="w-3.5 h-3.5" /> Export
+          </button>
+          <button
+            onClick={handleSaveTrip}
+            disabled={saving}
+            className="px-4 py-2 rounded-full bg-gray-900 text-white dark:bg-white dark:text-gray-900 text-xs font-medium flex items-center gap-1 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SaveIcon className="w-3.5 h-3.5" />} {saving ? 'Saving' : 'Save'}
           </button>
         </div>
       </div>
+      <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 dark:text-gray-400">
+        <span className="flex items-center gap-1">
+          <CalendarIcon className="w-3 h-3" /> {formattedRange || 'Set dates'}
+        </span>
+        <span className="text-gray-300 dark:text-gray-700">•</span>
+        <span>{days.length} day plan</span>
+        <span className="text-gray-300 dark:text-gray-700">•</span>
+        <span>{totalStops} scheduled stops</span>
+        <span className="text-gray-300 dark:text-gray-700">•</span>
+        <span>{travelersCount} traveler{travelersCount === 1 ? '' : 's'}</span>
+      </div>
+    </div>
+  ) : undefined;
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          {days.map((day, index) => (
-            <div key={day.date} className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 sm:p-6">
+  const renderCreateStep = () => {
+    const moodOptions = ['City discovery', 'Design crawl', 'Slow mornings', 'Outdoor mix'];
+    return (
+      <div className="space-y-8">
+        <section className="rounded-[40px] border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 text-white p-8">
+          <div className="grid gap-6 md:grid-cols-2 md:items-center">
+            <div className="space-y-4">
+              <p className="text-[11px] tracking-[0.5em] uppercase text-white/60">Blueprint</p>
+              <h2 className="text-2xl font-semibold">Craft the north star of this trip</h2>
+              <p className="text-sm text-white/80">
+                Name the journey, anchor it to a place, and define the vibe. Your planning studio will adapt instantly once you hit build.
+              </p>
+            </div>
+            <div className="rounded-[28px] border border-white/20 bg-white/10 p-6 space-y-4">
+              <div>
+                <p className="text-[11px] tracking-[0.4em] uppercase text-white/70 mb-2">Live summary</p>
+                <p className="text-base font-semibold">{tripName || 'Untitled adventure'}</p>
+                <p className="text-sm text-white/70">{destination ? `Orbiting ${destination}` : 'Add a destination to unlock the workspace'}</p>
+              </div>
+              <div className="rounded-2xl border border-white/20 p-4 space-y-3 bg-white/5">
+                <div className="flex items-center gap-3 text-xs text-white/80">
+                  <CalendarIcon className="w-4 h-4" />
+                  {formattedRange || 'Set your dates'}
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs text-white/80">
+                  <div>
+                    <p className="text-white/60">Mood</p>
+                    <p className="font-semibold text-white">{tripMood}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/60">Travelers</p>
+                    <p className="font-semibold text-white">{travelersCount}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Trip name *</label>
+                <input
+                  id="trip-name"
+                  type="text"
+                  value={tripName}
+                  onChange={(e) => setTripName(e.target.value)}
+                  placeholder="Lisbon light tour"
+                  className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 text-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Destination *</label>
+                <input
+                  id="destination"
+                  type="text"
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  placeholder="Lisbon, Portugal"
+                  className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 text-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Start date *</label>
+                <input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 text-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">End date *</label>
+                <input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 text-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Home base / hotel</label>
+                <input
+                  id="hotel"
+                  type="text"
+                  value={hotelLocation}
+                  onChange={(e) => setHotelLocation(e.target.value)}
+                  placeholder="Memmo Alfama"
+                  className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 text-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Budget (optional)</label>
+                <input
+                  id="budget"
+                  type="number"
+                  value={totalBudget || ''}
+                  onChange={(e) => setTotalBudget(Number(e.target.value))}
+                  placeholder="3500"
+                  className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 text-sm bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Trip mood</p>
+                <div className="flex flex-wrap gap-2">
+                  {moodOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setTripMood(option)}
+                      className={`px-4 py-2 rounded-2xl text-xs font-medium border ${
+                        tripMood === option
+                          ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
+                          : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500 mb-3">Travel pace</p>
+                  <div className="flex gap-2">
+                    {(['structured', 'loose'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setTravelPace(mode)}
+                        className={`flex-1 px-3 py-2 rounded-2xl text-xs font-medium border ${
+                          travelPace === mode
+                            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
+                            : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300'
+                        }`}
+                      >
+                        {mode === 'structured' ? 'Structured' : 'Loose'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 space-y-3">
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">Travelers</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{travelersCount}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">people on this trip</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => adjustTravelers('dec')}
+                        className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center text-lg"
+                      >
+                        −
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => adjustTravelers('inc')}
+                        className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center text-lg"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleCreateTrip}
+              disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
+              className="w-full px-6 py-3 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <SparklesIcon className="w-4 h-4" />}
+              {saving ? 'Creating workspace...' : 'Build planning studio'}
+            </button>
+          </div>
+
+          <div className="space-y-5">
+            <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/30 p-6 space-y-4">
+              <p className="text-[11px] tracking-[0.4em] uppercase text-gray-500 dark:text-gray-400">Timeline preview</p>
+              <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
+                {previewTimeline.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Add dates to let us pre-build the day stack.</p>
+                ) : (
+                  previewTimeline.map((entry) => (
+                    <div key={entry.label} className="flex items-center justify-between rounded-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 px-4 py-3 text-sm">
+                      <span className="font-medium text-gray-900 dark:text-white">{entry.label}</span>
+                      <span className="text-gray-500 dark:text-gray-400">{entry.date}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="rounded-[32px] border border-dashed border-gray-300 dark:border-gray-700 p-6 space-y-4">
+              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <SparklesIcon className="w-4 h-4" />
+                Your trip mood ({tripMood}) and pace ({travelPace}) will influence AI recommendations.
+              </div>
+              <div className="rounded-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300">
+                {destination
+                  ? `We will prioritize experiences that feel like ${tripMood.toLowerCase()} moments in ${destination}.`
+                  : 'Set a destination to start getting location-aware prompts.'}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderPlanStep = () => {
+    const suggestions = getAISuggestions();
+    const stopsPerDay = days.length ? Math.max(1, Math.round(totalStops / days.length)) : 0;
+    const nextOpenDayIndex = days.findIndex((day) => day.locations.length === 0);
+    const focusDayLabel =
+      nextOpenDayIndex >= 0
+        ? `Day ${nextOpenDayIndex + 1}`
+        : days.length > 0
+          ? `Day ${days.length}`
+          : 'Start your first day';
+    const taskProgress = logisticsTasks.length
+      ? Math.round((logisticsTasks.filter((task) => task.done).length / logisticsTasks.length) * 100)
+      : 0;
+
+    const renderItineraryWorkspace = () => (
+      <div className="space-y-6">
+        <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/30 p-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-500 dark:text-gray-400">Focus day</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-white">{focusDayLabel}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {days.length ? `${days.length} days in play · ~${stopsPerDay} stops/day` : 'No days yet. Start building below.'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <button
+              onClick={handleAddDay}
+              className="px-4 py-2 rounded-full bg-gray-900 text-white dark:bg-white dark:text-gray-900 flex items-center gap-1"
+            >
+              <PlusIcon className="w-4 h-4" /> Add day
+            </button>
+            <button
+              onClick={() => setShowAddLocation(0)}
+              className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+            >
+              Drop a block
+            </button>
+          </div>
+        </div>
+        {days.length === 0 ? (
+          <div className="rounded-[32px] border-2 border-dashed border-gray-300 dark:border-gray-700 p-8 text-center space-y-3">
+            <p className="text-base font-semibold text-gray-900 dark:text-white">No days yet</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Click below to seed your itinerary canvas.</p>
+            <button
+              onClick={handleAddDay}
+              className="px-5 py-3 rounded-full bg-gray-900 text-white dark:bg-white dark:text-gray-900 text-sm font-medium"
+            >
+              Create day one
+            </button>
+          </div>
+        ) : (
+          days.map((day, index) => (
+            <div key={day.date} className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 sm:p-6 space-y-4 shadow-sm shadow-black/5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500">Day {index + 1}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <button
+                    onClick={() => setShowAddLocation(index)}
+                    className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+                  >
+                    Add block
+                  </button>
+                  <button
+                    onClick={() => handleDuplicateDay(index)}
+                    className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+                  >
+                    Duplicate
+                  </button>
+                </div>
+              </div>
               <TripDay
                 dayNumber={index + 1}
                 date={day.date}
@@ -983,84 +1034,270 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 onDuplicateDay={() => handleDuplicateDay(index)}
                 onOptimizeRoute={() => handleOptimizeRoute(index)}
               />
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
-                <span>{day.locations.length > 0 ? `${day.locations.length} planned stop${day.locations.length === 1 ? '' : 's'}` : 'No stops yet'}</span>
-                <button
-                  onClick={() => setShowAddLocation(index)}
-                  className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/60"
-                >
-                  Add location
-                </button>
-              </div>
             </div>
-          ))}
-        </div>
+          ))
+        )}
+      </div>
+    );
 
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-6 bg-white dark:bg-gray-950">
-            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500 mb-4">Trip timeline</p>
-            <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
-              {timelineEntries.map((entry) => (
-                <div key={entry.label} className="flex items-center justify-between text-sm">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{entry.label}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{entry.date}</p>
+    const renderLogisticsWorkspace = () => (
+      <div className="space-y-6">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-[28px] border border-gray-200 dark:border-gray-800 p-5 space-y-4 bg-white dark:bg-gray-950">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500">Key logistics</p>
+            <div className="space-y-3 text-sm">
+              <label className="block text-gray-600 dark:text-gray-300">
+                Start date
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-1 w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2 bg-white dark:bg-gray-900"
+                />
+              </label>
+              <label className="block text-gray-600 dark:text-gray-300">
+                End date
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-1 w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2 bg-white dark:bg-gray-900"
+                />
+              </label>
+              <label className="block text-gray-600 dark:text-gray-300">
+                Base / hotel
+                <input
+                  type="text"
+                  value={hotelLocation}
+                  onChange={(e) => setHotelLocation(e.target.value)}
+                  placeholder="Where are you staying?"
+                  className="mt-1 w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2 bg-white dark:bg-gray-900"
+                />
+              </label>
+              <label className="block text-gray-600 dark:text-gray-300">
+                Budget
+                <input
+                  type="number"
+                  value={totalBudget || ''}
+                  onChange={(e) => setTotalBudget(Number(e.target.value))}
+                  placeholder="5000"
+                  className="mt-1 w-full rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-2 bg-white dark:bg-gray-900"
+                />
+              </label>
+            </div>
+          </div>
+          <div className="rounded-[28px] border border-gray-200 dark:border-gray-800 p-5 space-y-4 bg-white dark:bg-gray-950">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500">Checklist</p>
+            <div className="space-y-3">
+              {logisticsTasks.map((task) => (
+                <label key={task.id} className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-200">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={task.done}
+                      onChange={() => toggleLogisticsTask(task.id)}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <span>{task.label}</span>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{entry.stops} stop{entry.stops === 1 ? '' : 's'}</span>
-                </div>
+                  {task.done && <SparklesIcon className="w-4 h-4 text-emerald-500" />}
+                </label>
               ))}
             </div>
-          </div>
-
-          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-6 bg-gray-50 dark:bg-gray-900/40 space-y-4">
-            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-500 dark:text-gray-400">Quick actions</p>
-            <button
-              onClick={() => setShowAddLocation(0)}
-              className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
-            >
-              Add featured place
-            </button>
-            <button
-              onClick={handleSaveTrip}
-              disabled={saving}
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50"
-            >
-              Save itinerary
-            </button>
-            <button
-              onClick={handleExportToCalendar}
-              className="w-full px-4 py-3 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
-            >
-              Export to calendar
-            </button>
-          </div>
-
-          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-6 bg-white dark:bg-gray-950">
-            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500 mb-4">Stats</p>
-            <dl className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500 dark:text-gray-400">Days planned</dt>
-                <dd className="text-gray-900 dark:text-white font-medium">{days.length}</dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500 dark:text-gray-400">Stops</dt>
-                <dd className="text-gray-900 dark:text-white font-medium">{totalStops}</dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500 dark:text-gray-400">Budget</dt>
-                <dd className="text-gray-900 dark:text-white font-medium">{totalBudget ? `$${totalBudget.toLocaleString()}` : 'Add budget'}</dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500 dark:text-gray-400">Base</dt>
-                <dd className="text-gray-900 dark:text-white font-medium">{hotelLocation || 'Unset'}</dd>
-              </div>
-            </dl>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{taskProgress}% complete</div>
           </div>
         </div>
+        <div className="rounded-[28px] border border-gray-200 dark:border-gray-800 p-5 bg-gray-50 dark:bg-gray-900/40">
+          <p className="text-[11px] tracking-[0.3em] uppercase text-gray-500 dark:text-gray-400 mb-2">Budget snapshot</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {totalBudget
+              ? `You have ${days.length} days to stretch ~$${Math.round(totalBudget / Math.max(1, days.length))} per day.`
+              : 'Add a budget to track pace per day.'}
+          </p>
+        </div>
       </div>
-    </div>
-  );
+    );
 
+    const renderJournalWorkspace = () => (
+      <div className="space-y-6">
+        <div className="rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5">
+          <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500 mb-3">Travel log</p>
+          <textarea
+            value={journalNotes}
+            onChange={(e) => setJournalNotes(e.target.value)}
+            rows={6}
+            placeholder="Capture intentions, inspiration, or daily recaps."
+            className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm px-4 py-3 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+          />
+        </div>
+        <div className="rounded-[28px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5">
+          <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500 mb-3">Packing + reminders</p>
+          <textarea
+            value={packingNotes}
+            onChange={(e) => setPackingNotes(e.target.value)}
+            rows={4}
+            placeholder="Adapters, film, outfits, essentials..."
+            className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm px-4 py-3 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+          />
+        </div>
+      </div>
+    );
+
+    const renderWorkspaceContent = () => {
+      switch (workspaceTab) {
+        case 'logistics':
+          return renderLogisticsWorkspace();
+        case 'journal':
+          return renderJournalWorkspace();
+        default:
+          return renderItineraryWorkspace();
+      }
+    };
+
+    return (
+      <div className="space-y-8">
+        <section className="rounded-[48px] border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-950">
+          <div className="relative h-72">
+            <Image
+              src={heroImage}
+              alt={tripName || 'Trip cover'}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 60vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+            <div className="absolute bottom-6 left-6 text-white space-y-1">
+              <p className="text-[11px] tracking-[0.4em] uppercase text-white/70">{destination || 'Choose a destination'}</p>
+              <h3 className="text-3xl font-semibold">{tripName || 'Untitled trip'}</h3>
+              {formattedRange && <p className="text-sm text-white/80">{formattedRange}</p>}
+            </div>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3 border-t border-gray-200 dark:border-gray-800 p-6">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-gray-500 dark:text-gray-400 mb-1">Logistics</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{hotelLocation || 'Add your base'} · {days.length} days planned</p>
+            </div>
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-gray-500 dark:text-gray-400 mb-1">Mood & pace</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{tripMood} · {travelPace === 'structured' ? 'Structured flow' : 'Loose wanderings'}</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs justify-start md:justify-end">
+              <button
+                onClick={() => setWorkspaceTab('itinerary')}
+                className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+              >
+                Jump to itinerary
+              </button>
+              <label className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 cursor-pointer text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setCoverImageFile(file);
+                      const reader = new FileReader();
+                      reader.onloadend = () => setCoverImagePreview(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                {uploadingCover ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Uploading…
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4" />
+                    Cover
+                  </>
+                )}
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1.65fr_0.85fr]">
+          <div className="space-y-6">
+            <div className="rounded-[40px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+                <div>
+                  <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500">Workspace</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-white">Plan, align, document</p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {workspaceTabsConfig.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setWorkspaceTab(tab.id)}
+                      className={`px-4 py-2 rounded-full border ${
+                        workspaceTab === tab.id
+                          ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
+                          : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-6">{renderWorkspaceContent()}</div>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 dark:text-gray-500">Trip stats</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{days.length} days · {totalStops} stops</p>
+                </div>
+                <LayersIcon className="w-4 h-4 text-gray-400" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Travelers</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{travelersCount}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Stops / day</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{stopsPerDay}</p>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Next to fill: {focusDayLabel}</div>
+            </div>
+
+            <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <SparklesIcon className="w-4 h-4" /> AI nudges
+              </div>
+              <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                {suggestions.map((suggestion) => (
+                  <p key={suggestion} className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 p-3">
+                    {suggestion}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[32px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <NotebookPenIcon className="w-4 h-4" /> Packing + reminders
+              </div>
+              <textarea
+                value={packingNotes}
+                onChange={(e) => setPackingNotes(e.target.value)}
+                rows={4}
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 text-sm px-4 py-3 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
+                placeholder="Sun hat, charger, reservation confirmations..."
+              />
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  };
   // Build content based on step and tab
   const content = (
     <div className="px-6 py-6">
