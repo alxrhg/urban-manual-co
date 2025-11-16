@@ -10,6 +10,8 @@ import { ensureConversationSessionToken, persistConversationSessionToken } from 
 interface ChatDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  initialPrompt?: string | null;
+  onInitialPromptConsumed?: () => void;
 }
 
 interface Message {
@@ -48,7 +50,7 @@ async function trackChatMessage(userId: string | undefined, payload: { messageLe
   });
 }
 
-export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
+export function ChatDrawer({ isOpen, onClose, initialPrompt, onInitialPromptConsumed }: ChatDrawerProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +60,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const [guestSessionToken, setGuestSessionToken] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const autoPromptRef = useRef<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -97,6 +100,25 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       loadConversationHistory();
     }
   }, [isOpen, user?.id, guestSessionToken]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      autoPromptRef.current = null;
+      return;
+    }
+    const trimmedPrompt = initialPrompt?.trim();
+    if (!trimmedPrompt || isLoading || isStreaming) return;
+    if (autoPromptRef.current === trimmedPrompt) return;
+    autoPromptRef.current = trimmedPrompt;
+    const triggerPrompt = async () => {
+      try {
+        await handleSubmitStreaming(trimmedPrompt);
+      } finally {
+        onInitialPromptConsumed?.();
+      }
+    };
+    triggerPrompt();
+  }, [isOpen, initialPrompt, isLoading, isStreaming, onInitialPromptConsumed]);
 
   async function loadConversationHistory() {
     try {

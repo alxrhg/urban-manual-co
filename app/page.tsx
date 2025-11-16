@@ -58,6 +58,7 @@ const DestinationBadges = dynamic(() => import('@/components/DestinationBadges')
 const FollowUpSuggestions = dynamic(() => import('@/components/FollowUpSuggestions').then(mod => ({ default: mod.FollowUpSuggestions })), { ssr: false });
 const RealtimeStatusBadge = dynamic(() => import('@/components/RealtimeStatusBadge').then(mod => ({ default: mod.RealtimeStatusBadge })), { ssr: false });
 const TripPlanner = dynamic(() => import('@/components/TripPlanner').then(mod => ({ default: mod.TripPlanner })), { ssr: false });
+const ChatDrawer = dynamic(() => import('@/components/ChatDrawer').then(mod => ({ default: mod.ChatDrawer })), { ssr: false });
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), { ssr: false });
 
 // Category icons using Untitled UI icons
@@ -275,6 +276,8 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showTripPlanner, setShowTripPlanner] = useState(false);
+  const [showChatDrawer, setShowChatDrawer] = useState(false);
+  const [chatAutoPrompt, setChatAutoPrompt] = useState<string | null>(null);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -328,6 +331,18 @@ export default function Home() {
   const [nextTripSummary, setNextTripSummary] = useState<{ id: string; title: string; destination: string | null; start_date: string | null; description: string | null } | null>(null);
   const [nextTripCountdownText, setNextTripCountdownText] = useState<string | null>(null);
   const [intentPrompt, setIntentPrompt] = useState<string | null>(null);
+
+  const nextTripCity = nextTripSummary?.destination?.trim() || null;
+
+  const handleIntentPromptClick = useCallback(() => {
+    const prompt = nextTripCity
+      ? `I'm planning a trip to ${nextTripCity}. Suggest three standout hotels or base neighborhoods from the Urban Manual database so I can add one to Trip Studio. Include why each fits and mention any notable amenities.`
+      : intentPrompt
+        ? `${intentPrompt}. Please respond with three hotel options and quick reasons so I can drop them into Trip Studio.`
+        : 'Suggest a few design-forward hotels I can anchor my next trip around, with one-line reasons so I can add them to Trip Studio.';
+    setChatAutoPrompt(prompt);
+    setShowChatDrawer(true);
+  }, [nextTripCity, intentPrompt]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
@@ -1900,15 +1915,15 @@ export default function Home() {
                             {nextTripCountdownText}
                           </div>
                         )}
-                        {intentPrompt && (
-                          <button
-                            onClick={() => (user ? setShowTripPlanner(true) : router.push('/auth/login'))}
-                            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                            <span>{intentPrompt}</span>
-                          </button>
-                        )}
+                          {intentPrompt && (
+                            <button
+                              onClick={handleIntentPromptClick}
+                              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>{intentPrompt}</span>
+                            </button>
+                          )}
                     </>
                   )}
 
@@ -2648,11 +2663,20 @@ export default function Home() {
             }}
           />
 
-          {/* Trip Planner Modal */}
-          <TripPlanner
-            isOpen={showTripPlanner}
-            onClose={() => setShowTripPlanner(false)}
-          />
+            {/* Trip Planner Modal */}
+            <TripPlanner
+              isOpen={showTripPlanner}
+              onClose={() => setShowTripPlanner(false)}
+            />
+            <ChatDrawer
+              isOpen={showChatDrawer}
+              onClose={() => {
+                setShowChatDrawer(false);
+                setChatAutoPrompt(null);
+              }}
+              initialPrompt={chatAutoPrompt}
+              onInitialPromptConsumed={() => setChatAutoPrompt(null)}
+            />
 
           {/* POI Drawer (Admin only) */}
           {isAdmin && (
