@@ -56,9 +56,27 @@ Next.js requires the `NEXT_PUBLIC_` prefix for any variable that must be availab
 
 ## Local Development
 
+### Quick Start
+
+Use the automated setup script:
+
+```bash
+# Run setup script (installs dependencies and creates .env.local)
+./scripts/setup-dev.sh
+
+# Start development server (http://localhost:3000)
+npm run dev
+```
+
+### Manual Setup
+
 ```bash
 # Install dependencies
 npm install
+
+# Copy environment template
+cp .env.example .env.local
+# Edit .env.local with your credentials
 
 # Run development server (http://localhost:3000)
 npm run dev
@@ -72,39 +90,62 @@ npm run build
 npm start
 ```
 
+### Docker Development
+
+```bash
+# Start all services (Next.js + ML service)
+docker-compose up
+
+# Start with hot reload (development mode)
+docker-compose --profile dev up
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
 ## Deployment to Vercel
 
-### Prerequisites
+See the [Deployment Playbook](./DEPLOYMENT_PLAYBOOK.md) for detailed deployment procedures.
+
+### Quick Deploy
+
+**Prerequisites:**
 - Vercel account (sign up at https://vercel.com)
-- GitHub account
-- This repository pushed to GitHub
+- GitHub account with this repository
 
-### Steps
+**Steps:**
 
-1. **Push to GitHub**
-   ```bash
-   git remote add origin https://github.com/yourusername/travel-guide.git
-   git push -u origin master
-   ```
-
-2. **Deploy on Vercel**
+1. **Connect to Vercel**
    - Go to https://vercel.com/new
-   - Click "Import Git Repository"
-   - Select your `travel-guide` repository
-   - Vercel will auto-detect the settings
-   - Add environment variables in the Vercel dashboard
-   - Click "Deploy"
+   - Import this repository
+   - Vercel auto-detects Next.js configuration
 
-3. **Configure Environment Variables in Vercel**
+2. **Configure Environment Variables**
    - Go to Project Settings → Environment Variables
-   - Add all variables from `.env` file
-   - Make sure to add them for Production, Preview, and Development
+   - Add required variables (see `.env.example`)
+   - Set for Production, Preview, and Development
 
-4. **Update Supabase URLs**
-   - After deployment, get your Vercel URL
-   - Add it to Supabase Authentication → URL Configuration
-   - Site URL: `https://your-project.vercel.app`
-   - Redirect URLs: `https://your-project.vercel.app/**`
+3. **Deploy**
+   - Push to `main` branch for production
+   - Create PR for automatic preview deployments
+
+### CI/CD Pipeline
+
+Automatic deployments on:
+- Push to `main` → Production deployment
+- Pull Request → Preview deployment with unique URL
+- Manual deployment via Vercel CLI
+
+GitHub Actions automatically:
+- Runs tests and linting
+- Builds the application
+- Scans for security issues
+- Checks dependencies
+
+See [INFRASTRUCTURE.md](./INFRASTRUCTURE.md) for complete infrastructure documentation.
 
 ## Legacy Note
 
@@ -164,6 +205,31 @@ Inspired by Urban Manual and Little Places London:
 - Large, beautiful imagery
 - Story-led content
 - Clean, editorial layout
+
+## Infrastructure & DevOps
+
+### CI/CD Pipeline
+- **Automated Testing**: Tests run on every push and PR
+- **Automated Builds**: Build verification before deployment
+- **Security Scanning**: Dependency and secret scanning
+- **Automated Updates**: Dependabot for dependency updates
+
+### Monitoring & Observability
+- **Health Checks**: `/api/health` endpoint for status monitoring
+- **Performance Monitoring**: Vercel Analytics for Core Web Vitals
+- **Error Tracking**: Built-in Next.js error handling
+- **Logging**: Structured logging with 7-day retention
+
+### Container Support
+- **Docker**: Production-ready Dockerfile included
+- **Docker Compose**: Local development environment
+- **ML Service**: Separate containerized Python service
+
+### Documentation
+- [Infrastructure Guide](./INFRASTRUCTURE.md) - Complete infrastructure documentation
+- [Deployment Playbook](./DEPLOYMENT_PLAYBOOK.md) - Deployment procedures and runbooks
+- [Monitoring Guide](./MONITORING.md) - Monitoring and observability
+- [Environment Variables](./.env.example) - All configuration options
 
 ## License
 
