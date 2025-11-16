@@ -82,7 +82,7 @@
 - Documentation updated (`README`, new plan doc, ADR references).
 
 ## 6. Next Steps Checklist
-- [ ] Create `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`.
+- [x] Create `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `turbo.json`, `tsconfig.base.json`, and shared config package scaffold.
 - [ ] Move Next app into `apps/web`.
 - [ ] Update import aliases + scripts.
 - [ ] Configure GitHub Actions for pnpm + Turbo.

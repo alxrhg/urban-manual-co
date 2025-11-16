@@ -3,6 +3,11 @@
 > Updated: 2025-11-16  
 > This backlog captures the first execution wave needed to realize ADR-000. Items are organized by lane, include explicit “definition of done,” and assume a zero-compromise polish bar.
 
+**Latest progress (2025-11-16 evening):**
+- pnpm workspace + Turbo config staged (`pnpm-workspace.yaml`, `pnpm-lock.yaml`, `turbo.json`, `tsconfig.base.json`).
+- `packages/config` established as the shared tooling preset (ESLint + Tailwind stubs) and wired into the root config.
+- Infrastructure directories (`apps/`, `packages/`, `infra/github`) created with documentation to guide upcoming moves.
+
 ## 0. Alignment & Guardrails
 | ID | Task | Owner | Definition of Done | Status |
 | --- | --- | --- | --- | --- |
@@ -13,9 +18,9 @@
 ## 1. Monorepo & Toolchain Scaffold
 | ID | Task | Owner | Definition of Done | Status |
 | --- | --- | --- | --- | --- |
-| M0 | Initialize Turborepo (`apps/{web,cms,workers}`, `packages/{domain,ui,data-access,ai,config,design-tokens}`, `infra/`) | Platform | Repo refactor complete, lint/test pass, docs updated | ⏳ |
+| M0 | Initialize Turborepo (`apps/{web,cms,workers}`, `packages/{domain,ui,data-access,ai,config,design-tokens}`, `infra/`) | Platform | Repo refactor complete, lint/test pass, docs updated | 🔄 |
 | M1 | Adopt `pnpm` workspaces + scripts (`lint`, `typecheck`, `test`, `storybook`, `build`) | Platform | `pnpm install` + `pnpm dev` commands documented, CI green | ⏳ |
-| M2 | Configure shared ESLint + Biome/Prettier + commit hooks (Husky) | Platform | Pre-commit enforces lint/format, CI gate uses same configs | ⏳ |
+| M2 | Configure shared ESLint + Biome/Prettier + commit hooks (Husky) | Platform | Pre-commit enforces lint/format, CI gate uses same configs | 🔄 |
 | M3 | GitHub Actions pipeline (lint → test → build → storybook → deploy preview) | Platform | Required status checks enforced on `main` | ⏳ |
 
 ## 2. Catalog Graph & Data Contracts
