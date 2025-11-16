@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { parseTripDescription, serializeTripDescription, formatDayHotelSummary } from '@/lib/trips';
 import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripShareModal } from './TripShareModal';
