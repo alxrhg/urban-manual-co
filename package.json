@@ -5,10 +5,12 @@
   "scripts": {
     "test:intelligence": "tsx scripts/test-intelligence-endpoints.ts",
     "test:unit": "tsx --test tests/**/*.test.ts",
+    "test": "tsx --test tests/**/*.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "enrich:google": "tsx scripts/enrich-with-google.ts",
     "enrich": "tsx scripts/enrich-destinations.ts",
     "backfill-embeddings": "tsx scripts/backfill-embeddings.ts",
@@ -95,9 +97,11 @@
     "@types/react-dom": "^19",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",
+    "turbo": "^2.0.11",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.7.0",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@10.22.0"
 }

@@ -57,20 +57,23 @@ Next.js requires the `NEXT_PUBLIC_` prefix for any variable that must be availab
 ## Local Development
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (pnpm workspace)
+pnpm install
 
 # Run development server (http://localhost:3000)
-npm run dev
+pnpm dev
 
-# Run linting / unit tests
-npm run lint
-npm run test:unit
+# Run linting / unit tests / type-checks
+pnpm lint
+pnpm test
+pnpm typecheck
 
 # Build and start production server
-npm run build
-npm start
+pnpm build
+pnpm start
 ```
+
+> ℹ️ The repository is being migrated to a Turborepo/pnpm workspace. See `docs/turborepo_scaffold_plan.md` and `docs/fresh_start_backlog.md` for sequencing details.
 
 ## Deployment to Vercel
 

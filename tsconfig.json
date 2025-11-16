@@ -1,36 +1,5 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "allowJs": true,
-    "module": "esnext",
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@payload-config": [
-        "./payload.config.ts"
-      ]
-    }
-  },
+  "extends": "./tsconfig.base.json",
   "include": [
     "next-env.d.ts",
     "**/*.ts",
