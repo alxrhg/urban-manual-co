@@ -384,7 +384,7 @@ function checkSystemRequirements() {
     try {
       const output = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trim();
       console.log(`  ✅ ${name}: ${output.split('\n')[0]}`);
-    } catch (error) {
+    } catch {
       if (optional) {
         console.log(`  ℹ️  ${name}: Not available (required for iOS development on macOS)`);
       } else {
