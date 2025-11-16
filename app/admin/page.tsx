@@ -82,7 +82,7 @@ function DestinationForm({
       if (destination.parent_destination_id) {
         (async () => {
           try {
-            const supabase = createClient();
+            const supabase = createClient({ skipValidation: true });
             const { data } = await supabase
               .from('destinations')
               .select('id, slug, name, city')
@@ -130,7 +130,7 @@ function DestinationForm({
   const searchParentDestinations = async (query: string) => {
     setIsSearchingParent(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       const { data, error } = await supabase
         .from('destinations')
         .select('id, slug, name, city, category')
@@ -197,7 +197,7 @@ function DestinationForm({
       formDataToSend.append('file', imageFile);
       formDataToSend.append('slug', formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -248,7 +248,7 @@ function DestinationForm({
 
     setFetchingGoogle(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -354,7 +354,7 @@ function DestinationForm({
                     setFetchingGoogle(true);
                     try {
                       // Get user email from session
-                      const supabase = createClient();
+                      const supabase = createClient({ skipValidation: true });
                       const { data: { session } } = await supabase.auth.getSession();
                       const token = session?.access_token;
                       if (!token) {
@@ -745,34 +745,6 @@ function DestinationForm({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  helperText,
-  isLoading,
-}: {
-  label: string;
-  value?: number;
-  helperText?: string;
-  isLoading?: boolean;
-}) {
-  return (
-    <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 shadow-sm">
-      <p className="text-xs tracking-[0.25em] uppercase text-gray-400 dark:text-gray-500">{label}</p>
-      {isLoading ? (
-        <div className="mt-4 h-8 w-24 rounded-full bg-gray-100 dark:bg-gray-800 animate-pulse" />
-      ) : (
-        <p className="mt-4 text-2xl font-semibold text-gray-900 dark:text-white">
-          {value !== undefined ? value.toLocaleString() : '—'}
-        </p>
-      )}
-      {helperText && (
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{helperText}</p>
-      )}
-    </div>
-  );
-}
-
 export default function AdminPage() {
   const toast = useToast();
   const {
@@ -798,7 +770,7 @@ export default function AdminPage() {
   const loadAdminStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
 
       const totalPromise = supabase
         .from('destinations')
@@ -856,7 +828,7 @@ export default function AdminPage() {
   const loadDestinationList = useCallback(async () => {
     setIsLoadingList(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       
       // Test connection first
       const { data: testData, error: testError } = await supabase
@@ -963,7 +935,7 @@ export default function AdminPage() {
       cancelText: 'Cancel',
       onConfirm: async () => {
           try {
-            const supabase = createClient();
+            const supabase = createClient({ skipValidation: true });
             const { error } = await supabase
               .from('destinations')
               .delete()
@@ -989,133 +961,93 @@ export default function AdminPage() {
 
   // Show loading state
   return (
-    <>
+    <div className="space-y-10 text-sm">
       <section className="space-y-10">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Destinations" value={stats.total} helperText="Published records" isLoading={statsLoading} />
-          <StatCard label="Google Enriched" value={stats.enriched} helperText="Have Google data" isLoading={statsLoading} />
-          <StatCard label="Michelin Spots" value={stats.michelin} helperText="Starred locations" isLoading={statsLoading} />
-          <StatCard label="Crown Picks" value={stats.crown} helperText="Featured experiences" isLoading={statsLoading} />
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Stats</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Live counts pulled directly from Supabase.
+          </p>
+          <dl className="space-y-1">
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Destinations</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.total.toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Google enriched</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.enriched.toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Michelin spots</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.michelin.toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Crown picks</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.crown.toLocaleString()}</dd>
+            </div>
+          </dl>
+          <button
+            onClick={() => loadAdminStats()}
+            disabled={statsLoading}
+            className="mt-2 inline-flex items-center gap-2 text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 disabled:opacity-50"
+          >
+            <Loader2 className={`h-3 w-3 ${statsLoading ? 'animate-spin' : 'hidden'}`} />
+            Refresh stats
+          </button>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 p-6 shadow-sm">
-            <div className="flex flex-col gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">Inline Edit Mode</p>
-                <h3 className="text-xl font-semibold mt-2 text-gray-900 dark:text-white">Update content on the live site</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-                  Open any frontend page with admin-only edit affordances. Changes sync instantly with Supabase.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full font-semibold ${
-                    inlineEditModeEnabled
-                      ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
-                  }`}
-                >
-                  {inlineEditModeEnabled ? 'Active' : 'Disabled'}
-                </span>
-                <span className="text-gray-500 dark:text-gray-400">Persists across tabs</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleLaunchEditMode('/')}
-                  className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition"
-                >
-                  Open homepage
-                </button>
-                <button
-                  onClick={() => handleLaunchEditMode(`/city/${inlineCitySlug}`)}
-                  className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                >
-                  Edit {inlineCityLabel}
-                </button>
-                {inlineEditModeEnabled ? (
-                  <button
-                    onClick={disableInlineEditMode}
-                    className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-                  >
-                    Turn off
-                  </button>
-                ) : (
-                  <button
-                    onClick={enableInlineEditMode}
-                    className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-                  >
-                    Enable now
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">Workspace Shortcuts</p>
-            <h3 className="text-xl font-semibold mt-2 text-gray-900 dark:text-white">Keep content fresh</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-              Quickly reload the dataset or jump into inline editing.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => loadDestinationList()}
-                className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-              >
-                Reload table
-              </button>
-              <button
-                onClick={() => loadAdminStats()}
-                className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-              >
-                Refresh stats
-              </button>
-              <Link
-                href="/admin/discover"
-                className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-              >
-                Open Discover
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {inlineEditModeEnabled && (
-          <div className="rounded-3xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                Edit mode is active
-              </p>
-              <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
-                Click any card’s edit badge to update details or add a brand new place directly from this page.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => {
-                  setEditingDestination(null);
-                  setShowCreateModal(true);
-                }}
-                className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-white text-amber-900 border border-amber-200 shadow-sm hover:bg-amber-100 transition-all"
-              >
-                <Plus className="h-4 w-4" />
-                Add Place
-              </button>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Inline editing</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Toggle edit affordances on the live site. Changes sync straight to Supabase.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <button
+              onClick={() => handleLaunchEditMode('/')}
+              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+            >
+              Open homepage
+            </button>
+            <button
+              onClick={() => handleLaunchEditMode(`/city/${inlineCitySlug}`)}
+              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+            >
+              Edit {inlineCityLabel}
+            </button>
+            {inlineEditModeEnabled ? (
               <button
                 onClick={disableInlineEditMode}
-                className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-amber-900 text-white border border-transparent hover:bg-amber-800 transition-all"
+                className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
               >
-                Exit Edit Mode
+                Turn off
               </button>
-            </div>
+            ) : (
+              <button
+                onClick={enableInlineEditMode}
+                className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+              >
+                Enable now
+              </button>
+            )}
+            <Link
+              href="/admin/discover"
+              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+            >
+              Go to Discover
+            </Link>
           </div>
-        )}
+          {inlineEditModeEnabled && (
+            <p className="text-xs text-amber-800 dark:text-amber-200 italic">
+              Edit mode is active. Use the edit badge on any destination card to make changes in place.
+            </p>
+          )}
+        </div>
 
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Destinations</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Destinations</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Search, edit, or delete any record in the catalog.
               </p>
             </div>
@@ -1124,15 +1056,16 @@ export default function AdminPage() {
                 setEditingDestination(null);
                 setShowCreateModal(true);
               }}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity text-sm font-medium flex items-center gap-2"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-100"
             >
               <Plus className="h-4 w-4" />
-              Add Place
+              Add place
             </button>
           </div>
           {isLoadingList ? (
-            <div className="text-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Loading destinations…
             </div>
           ) : (
             <DataTable
@@ -1239,6 +1172,6 @@ export default function AdminPage() {
       )}
 
       <ConfirmDialogComponent />
-    </>
+    </div>
   );
 }
