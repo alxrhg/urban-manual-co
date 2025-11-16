@@ -38,6 +38,12 @@
    - Point `apps/web` configs to the shared package (import/export pattern).
 5. **CI + scripts**
    - Update GitHub Actions to run `pnpm install` + `pnpm turbo run lint test build`.
+   - Standard CI flow (see `infra/github/workflows/ci.yml`):
+     1. `pnpm turbo run lint`
+     2. `pnpm turbo run typecheck`
+     3. `pnpm turbo run test`
+     4. `pnpm turbo run build --filter=@urban/web`
+   - Treat lint/typecheck/test failures as blockers unless explicitly waived via ADR/tracking ticket.
    - Add `pre-commit` hook via Husky calling `pnpm lint:fix` + `pnpm test:changed`.
 6. **Verification**
    - `pnpm turbo run dev --filter=web` works locally.
