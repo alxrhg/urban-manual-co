@@ -21,15 +21,19 @@ export const aiRouter = router({
       const sessionId = input.sessionId || crypto.randomUUID();
       
       // Upsert conversation session
-      await supabase.from('conversation_sessions').upsert({
-        id: sessionId,
-        user_id: userId,
-        started_at: new Date().toISOString(),
-        last_activity: new Date().toISOString(),
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: false
-      });
+      const now = new Date().toISOString();
+      if (input.sessionId) {
+        await supabase.from('conversation_sessions').update({
+          last_activity: now,
+        }).eq('id', input.sessionId);
+      } else {
+        await supabase.from('conversation_sessions').insert({
+          id: sessionId,
+          user_id: userId,
+          started_at: now,
+          last_activity: now,
+        });
+      }
       
       // Save user message
       await supabase.from('conversation_messages').insert({
