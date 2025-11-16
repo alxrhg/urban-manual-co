@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {
   XIcon,
   SearchIcon,
-  DollarSignIcon,
   ClockIcon,
   Loader2,
   Plane,
@@ -12,6 +11,7 @@ import {
   MapPin,
   Building,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
@@ -46,11 +46,49 @@ interface AddLocationToTripProps {
   onClose: () => void;
 }
 
+type BlockType = 'destination' | 'flight' | 'train' | 'custom';
+
+interface BlockTypeOption {
+  value: BlockType;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}
+
+const blockTypeOptions: BlockTypeOption[] = [
+  {
+    value: 'destination',
+    label: 'Destination',
+    description: 'Places curated inside Urban Manual',
+    icon: Building,
+  },
+  {
+    value: 'flight',
+    label: 'Flight',
+    description: 'Flights, lounges, transfers',
+    icon: Plane,
+  },
+  {
+    value: 'train',
+    label: 'Train',
+    description: 'Rail, metro, regional hops',
+    icon: Train,
+  },
+  {
+    value: 'custom',
+    label: 'Custom',
+    description: 'Anything via Google Places',
+    icon: MapPin,
+  },
+];
+
+const durationPresets = [30, 60, 90, 120, 150];
+
 export function AddLocationToTrip({
   onAdd,
   onClose,
 }: AddLocationToTripProps) {
-  const [blockType, setBlockType] = useState<'destination' | 'flight' | 'train' | 'custom'>('destination');
+  const [blockType, setBlockType] = useState<BlockType>('destination');
   const [searchQuery, setSearchQuery] = useState('');
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(false);
@@ -87,6 +125,43 @@ export function AddLocationToTrip({
   const [trainToQuery, setTrainToQuery] = useState('');
   const [trainDepartureTime, setTrainDepartureTime] = useState('');
   const [trainArrivalTime, setTrainArrivalTime] = useState('');
+  const handleBlockTypeChange = (type: BlockType) => {
+    setBlockType(type);
+    setSelectedDestination(null);
+    setSearchQuery('');
+    setDestinations([]);
+    setSelectedTime('');
+    setDuration(60);
+    setNotes('');
+
+    if (type !== 'flight') {
+      setFlightNumber('');
+      setAirline('');
+      setLounge('');
+      setFlightFrom(null);
+      setFlightTo(null);
+      setFlightFromQuery('');
+      setFlightToQuery('');
+      setFlightDepartureTime('');
+      setFlightArrivalTime('');
+    }
+
+    if (type !== 'train') {
+      setTrainNumber('');
+      setTrainFrom('');
+      setTrainTo('');
+      setTrainFromQuery('');
+      setTrainToQuery('');
+      setTrainDepartureTime('');
+      setTrainArrivalTime('');
+    }
+
+    if (type !== 'custom') {
+      setCustomLocationName('');
+      setCustomLocationData(null);
+      setCustomLocationQuery('');
+    }
+  };
 
   useEffect(() => {
     if (searchQuery.trim().length >= 2 && blockType === 'destination') {
@@ -333,597 +408,503 @@ export function AddLocationToTrip({
     onAdd(location);
   };
 
+  const blockSpecificFields = (() => {
+    if (blockType === 'destination') {
+      return (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase">Curated destinations</p>
+              <span className="text-[11px] text-neutral-400 dark:text-neutral-500">{destinations.length > 0 ? `${destinations.length} results` : 'Search to explore'}</span>
+            </div>
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Type a neighborhood, category, or name"
+                className="w-full pl-10 pr-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+              />
+            </div>
+          </div>
+          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-4 min-h-[260px]">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+              </div>
+            ) : destinations.length === 0 && searchQuery.trim().length >= 2 ? (
+              <div className="text-center py-12 text-sm text-neutral-500 dark:text-neutral-400">No destinations found</div>
+            ) : destinations.length === 0 ? (
+              <div className="text-center py-12 text-sm text-neutral-500 dark:text-neutral-400">Start typing to surface the best picks.</div>
+            ) : (
+              <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                {destinations.map((destination) => (
+                  <button
+                    key={destination.slug}
+                    onClick={() => handleSelectDestination(destination)}
+                    className={`w-full flex items-center gap-4 p-4 border rounded-2xl transition-colors ${
+                      selectedDestination?.slug === destination.slug
+                        ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-50 dark:bg-neutral-900/40'
+                        : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
+                    }`}
+                  >
+                    {destination.image && (
+                      <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
+                        <img src={destination.image} alt={destination.name} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="text-sm font-medium text-neutral-900 dark:text-neutral-50 truncate">{destination.name}</div>
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-500 dark:text-neutral-400 uppercase tracking-[0.2em]">
+                        <span>{destination.category}</span>
+                        {destination.city && (
+                          <>
+                            <span className="text-neutral-300 dark:text-neutral-600">•</span>
+                            <span className="normal-case tracking-normal">{destination.city}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (blockType === 'flight') {
+      return (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Airline</label>
+              <input
+                type="text"
+                value={airline}
+                onChange={(e) => setAirline(e.target.value)}
+                placeholder="e.g., Delta Air Lines"
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Flight Number</label>
+              <input
+                type="text"
+                value={flightNumber}
+                onChange={(e) => setFlightNumber(e.target.value)}
+                placeholder="e.g., DL7"
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Lounge / Notes</label>
+              <input
+                type="text"
+                value={lounge}
+                onChange={(e) => setLounge(e.target.value)}
+                placeholder="Centurion Lounge before boarding"
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+          </div>
+          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 space-y-5">
+            {[{ label: 'From (Airport)', value: flightFrom, query: flightFromQuery, setter: setFlightFromQuery, onSelect: setFlightFrom, field: 'from' as const }, { label: 'To (Airport)', value: flightTo, query: flightToQuery, setter: setFlightToQuery, onSelect: setFlightTo, field: 'to' as const }].map(({ label, value, query, setter, onSelect, field }) => (
+              <div key={field}>
+                <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">{label}</label>
+                {!value ? (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => {
+                        setter(e.target.value);
+                        setActiveAirportField(field);
+                      }}
+                      onFocus={() => setActiveAirportField(field)}
+                      placeholder="Search airport (city, name, code)..."
+                      className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+                    />
+                    {searchingAirports && activeAirportField === field && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
+                      </div>
+                    )}
+                    {airportSearchResults.length > 0 && activeAirportField === field && (
+                      <div className="absolute z-10 mt-2 w-full bg-white dark:bg-gray-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xl max-h-56 overflow-y-auto">
+                        {airportSearchResults.map((airport) => (
+                          <button
+                            key={`${field}-${airport.iata}`}
+                            onClick={() => {
+                              onSelect(airport);
+                              setter('');
+                              setAirportSearchResults([]);
+                              setActiveAirportField(null);
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{airport.name}</p>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">{airport.city}, {airport.country}</p>
+                              </div>
+                              <span className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">{airport.iata}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-neutral-900 dark:text-neutral-100">{value.name}</p>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{value.city}, {value.country}</p>
+                        </div>
+                        <span className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">{value.iata}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        onSelect(null);
+                        setter('');
+                      }}
+                      className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-2xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Departure time</label>
+              <input
+                type="time"
+                value={flightDepartureTime}
+                onChange={(e) => setFlightDepartureTime(e.target.value)}
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Arrival time</label>
+              <input
+                type="time"
+                value={flightArrivalTime}
+                onChange={(e) => setFlightArrivalTime(e.target.value)}
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (blockType === 'train') {
+      return (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 space-y-4">
+            <div>
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Train number / line</label>
+              <input
+                type="text"
+                value={trainNumber}
+                onChange={(e) => setTrainNumber(e.target.value)}
+                placeholder="Shinkansen, Eurostar..."
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+            {[{ label: 'From (Station)', value: trainFrom, query: trainFromQuery, setter: setTrainFromQuery, updater: setTrainFrom, field: 'from' as const }, { label: 'To (Station)', value: trainTo, query: trainToQuery, setter: setTrainToQuery, updater: setTrainTo, field: 'to' as const }].map(({ label, value, query, setter, updater, field }) => (
+              <div key={field}>
+                <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">{label}</label>
+                {!value ? (
+                  <GooglePlacesAutocompleteNative
+                    value={query}
+                    onChange={setter}
+                    onPlaceSelect={(place) => handleGooglePlaceSelect(place, field)}
+                    placeholder="Search station"
+                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 text-sm"
+                    types={['transit_station']}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={value}
+                      readOnly
+                      className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm"
+                    />
+                    <button
+                      onClick={() => updater('')}
+                      className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-2xl hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Departure time</label>
+              <input
+                type="time"
+                value={trainDepartureTime}
+                onChange={(e) => setTrainDepartureTime(e.target.value)}
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Arrival time</label>
+              <input
+                type="time"
+                value={trainArrivalTime}
+                onChange={(e) => setTrainArrivalTime(e.target.value)}
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-5">
+        <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5">
+          <label className="block text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-2">Search any place</label>
+          {!customLocationName ? (
+            <GooglePlacesAutocompleteNative
+              value={customLocationQuery}
+              onChange={setCustomLocationQuery}
+              onPlaceSelect={handleGooglePlaceSelect}
+              placeholder="Search Google Places"
+              className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 text-sm"
+              types={[]}
+            />
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={customLocationName}
+                readOnly
+                className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm"
+              />
+              <button
+                onClick={() => {
+                  setCustomLocationName('');
+                  setCustomLocationData(null);
+                  setCustomLocationQuery('');
+                }}
+                className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-2xl hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  })();
+
+  const selectionSummary = (() => {
+    if (blockType === 'destination') {
+      return (
+        <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5">
+          {selectedDestination ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                {selectedDestination.image && (
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                    <img src={selectedDestination.image} alt={selectedDestination.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{selectedDestination.name}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{selectedDestination.city}</p>
+                </div>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Add timing and notes then drop it into your day.</p>
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Select a destination to preview details.</p>
+          )}
+        </div>
+      );
+    }
+
+    if (blockType === 'flight') {
+      return (
+        <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 space-y-3">
+          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase">Flight overview</p>
+          {flightFrom && flightTo ? (
+            <div>
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{flightFrom.city} → {flightTo.city}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{airline || 'Flight'} • {flightFrom.iata} to {flightTo.iata}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Add both airports to build this block.</p>
+          )}
+        </div>
+      );
+    }
+
+    if (blockType === 'train') {
+      return (
+        <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5">
+          {trainFrom && trainTo ? (
+            <div>
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{trainFrom} → {trainTo}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{trainNumber || 'Train segment'}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Add origin and destination stations.</p>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5">
+        {customLocationName ? (
+          <div>
+            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{customLocationName}</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">Custom block</p>
+          </div>
+        ) : (
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Search Google Places to pin any venue.</p>
+        )}
+      </div>
+    );
+  })();
+
+  const showTimeInputs = blockType === 'destination' || blockType === 'custom';
+  const addDisabled =
+    (blockType === 'destination' && !selectedDestination) ||
+    (blockType === 'flight' && (!flightFrom || !flightTo)) ||
+    (blockType === 'train' && (!trainFrom || !trainTo)) ||
+    (blockType === 'custom' && !customLocationName);
+
+  const schedulePanel = (
+    <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-950 p-5 space-y-5">
+      <div>
+        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 tracking-[0.3em] uppercase mb-3">Schedule details</p>
+        {showTimeInputs ? (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-300 flex items-center gap-2 mb-1">
+                <ClockIcon className="w-4 h-4" /> Time of visit
+              </label>
+              <input
+                type="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 mb-2">
+                <span>Duration</span>
+                <span>{duration} min</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {durationPresets.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setDuration(value)}
+                    className={`px-3 py-1.5 rounded-full border text-xs ${
+                      duration === value
+                        ? 'border-neutral-900 dark:border-neutral-100 text-neutral-900 dark:text-neutral-100'
+                        : 'border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400'
+                    }`}
+                  >
+                    {value}m
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">Departure and arrival times are captured above.</p>
+        )}
+      </div>
+      <div>
+        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-300 mb-2 block">Notes (optional)</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          className="w-full px-4 py-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 resize-none"
+          placeholder={blockType === 'destination' ? 'Reservation details, reminders...' : 'Anything you need to remember'}
+        />
+      </div>
+      <button
+        onClick={handleAddLocation}
+        disabled={addDisabled}
+        className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-[0.3em] uppercase rounded-2xl disabled:opacity-40"
+      >
+        Add to trip
+      </button>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-8">
-      <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative bg-white dark:bg-gray-950 w-full max-w-4xl max-h-[85vh] overflow-hidden border border-neutral-200 dark:border-neutral-800 flex flex-col">
-        {/* Header */}
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-5 flex items-center justify-between flex-shrink-0">
-          <h3 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
-            Add to Trip
-          </h3>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 sm:p-10">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white dark:bg-gray-950 w-full max-w-5xl max-h-[88vh] overflow-hidden border border-neutral-200 dark:border-neutral-800 flex flex-col rounded-[32px] shadow-2xl">
+        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-5 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] tracking-[0.4em] uppercase text-neutral-400 dark:text-neutral-500">Itinerary Builder</p>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Add to trip</h3>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors rounded-lg"
+            className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
           >
-            <XIcon className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
+            <XIcon className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Block Type Selector */}
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                setBlockType('destination');
-                setSelectedDestination(null);
-                setCustomLocationName('');
-                setFlightNumber('');
-                setTrainNumber('');
-              }}
-              className={`flex items-center gap-2 px-4 py-2 text-xs border transition-colors rounded-lg ${
-                blockType === 'destination'
-                  ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
-                  : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-600'
-              }`}
-            >
-              <Building className="w-4 h-4" />
-              Destination
-            </button>
-            <button
-              onClick={() => {
-                setBlockType('flight');
-                setSelectedDestination(null);
-                setCustomLocationName('');
-                setTrainNumber('');
-              }}
-              className={`flex items-center gap-2 px-4 py-2 text-xs border transition-colors rounded-lg ${
-                blockType === 'flight'
-                  ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
-                  : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-600'
-              }`}
-            >
-              <Plane className="w-4 h-4" />
-              Flight
-            </button>
-            <button
-              onClick={() => {
-                setBlockType('train');
-                setSelectedDestination(null);
-                setCustomLocationName('');
-                setFlightNumber('');
-              }}
-              className={`flex items-center gap-2 px-4 py-2 text-xs border transition-colors rounded-lg ${
-                blockType === 'train'
-                  ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
-                  : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-600'
-              }`}
-            >
-              <Train className="w-4 h-4" />
-              Train
-            </button>
-            <button
-              onClick={() => {
-                setBlockType('custom');
-                setSelectedDestination(null);
-                setFlightNumber('');
-                setTrainNumber('');
-              }}
-              className={`flex items-center gap-2 px-4 py-2 text-xs border transition-colors rounded-lg ${
-                blockType === 'custom'
-                  ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
-                  : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-600'
-              }`}
-            >
-              <MapPin className="w-4 h-4" />
-              Custom Location
-            </button>
+        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-5 bg-neutral-50 dark:bg-gray-900/30">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {blockTypeOptions.map((option) => {
+              const Icon = option.icon;
+              const isActive = blockType === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => handleBlockTypeChange(option.value)}
+                  className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
+                    isActive
+                      ? 'border-neutral-900 dark:border-neutral-100 bg-white dark:bg-gray-950 shadow-sm'
+                      : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-500 dark:text-neutral-400'}`} />
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{option.label}</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{option.description}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {blockType === 'destination' ? (
-            <div className="space-y-6">
-              {/* Search for destinations */}
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Search Destinations
-                </label>
-                <div className="relative">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search saved locations..."
-                    className="w-full pl-10 pr-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Destination List */}
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-5 h-5 animate-spin text-neutral-400 dark:text-neutral-500" />
-                </div>
-              ) : destinations.length === 0 && searchQuery.trim().length >= 2 ? (
-                <div className="text-center py-12">
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    No destinations found
-                  </p>
-                </div>
-              ) : destinations.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-sm text-neutral-400 dark:text-neutral-500">
-                    Start typing to search destinations
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {destinations.map((destination) => (
-                    <button
-                      key={destination.slug}
-                      onClick={() => handleSelectDestination(destination)}
-                      className={`w-full flex items-center gap-4 p-3 border transition-colors text-left rounded-lg ${
-                        selectedDestination?.slug === destination.slug
-                          ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-50 dark:bg-neutral-900/50'
-                          : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
-                      }`}
-                    >
-                      {destination.image && (
-                        <div className="w-14 h-14 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800 rounded-lg">
-                          <img
-                            src={destination.image}
-                            alt={destination.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-normal text-neutral-900 dark:text-neutral-100 truncate mb-1">
-                          {destination.name}
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
-                            {destination.category}
-                          </span>
-                          {destination.city && (
-                            <>
-                              <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                              <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                                {destination.city}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+        <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-950">
+          <div className="grid gap-6 lg:grid-cols-5">
+            <div className="space-y-6 lg:col-span-3">{blockSpecificFields}</div>
+            <div className="space-y-6 lg:col-span-2">
+              {selectionSummary}
+              {schedulePanel}
             </div>
-          ) : blockType === 'flight' ? (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Airline (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={airline}
-                  onChange={(e) => setAirline(e.target.value)}
-                  placeholder="e.g., American Airlines, Delta"
-                  className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Flight Number (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={flightNumber}
-                  onChange={(e) => setFlightNumber(e.target.value)}
-                  placeholder="e.g., AA123"
-                  className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Lounge (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={lounge}
-                  onChange={(e) => setLounge(e.target.value)}
-                  placeholder="e.g., American Express Centurion, Delta Sky Club"
-                  className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  From (Airport)
-                </label>
-                {!flightFrom ? (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={flightFromQuery}
-                      onChange={(e) => {
-                        setFlightFromQuery(e.target.value);
-                        setActiveAirportField('from');
-                      }}
-                      onFocus={() => setActiveAirportField('from')}
-                      placeholder="Search airport (city, name, or code)..."
-                      className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                    />
-                    {searchingAirports && activeAirportField === 'from' && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
-                      </div>
-                    )}
-                    {airportSearchResults.length > 0 && activeAirportField === 'from' && (
-                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {airportSearchResults.map((airport) => (
-                          <button
-                            key={airport.iata}
-                            onClick={() => {
-                              setFlightFrom(airport);
-                              setFlightFromQuery('');
-                              setAirportSearchResults([]);
-                              setActiveAirportField(null);
-                            }}
-                            className="w-full px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                  {airport.name}
-                                </div>
-                                <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                                  {airport.city}, {airport.country}
-                                </div>
-                              </div>
-                              <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
-                                {airport.iata}
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm text-neutral-900 dark:text-neutral-100">
-                            {flightFrom.name}
-                          </div>
-                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                            {flightFrom.city}, {flightFrom.country}
-                          </div>
-                        </div>
-                        <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
-                          {flightFrom.iata}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setFlightFrom(null);
-                        setFlightFromQuery('');
-                      }}
-                      className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                    >
-                      <XIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  To (Airport)
-                </label>
-                {!flightTo ? (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={flightToQuery}
-                      onChange={(e) => {
-                        setFlightToQuery(e.target.value);
-                        setActiveAirportField('to');
-                      }}
-                      onFocus={() => setActiveAirportField('to')}
-                      placeholder="Search airport (city, name, or code)..."
-                      className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                    />
-                    {searchingAirports && activeAirportField === 'to' && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
-                      </div>
-                    )}
-                    {airportSearchResults.length > 0 && activeAirportField === 'to' && (
-                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {airportSearchResults.map((airport) => (
-                          <button
-                            key={airport.iata}
-                            onClick={() => {
-                              setFlightTo(airport);
-                              setFlightToQuery('');
-                              setAirportSearchResults([]);
-                              setActiveAirportField(null);
-                            }}
-                            className="w-full px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                  {airport.name}
-                                </div>
-                                <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                                  {airport.city}, {airport.country}
-                                </div>
-                              </div>
-                              <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
-                                {airport.iata}
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm text-neutral-900 dark:text-neutral-100">
-                            {flightTo.name}
-                          </div>
-                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                            {flightTo.city}, {flightTo.country}
-                          </div>
-                        </div>
-                        <div className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-400">
-                          {flightTo.iata}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setFlightTo(null);
-                        setFlightToQuery('');
-                      }}
-                      className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                    >
-                      <XIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Departure Time (Optional)
-                  </label>
-                  <input
-                    type="time"
-                    value={flightDepartureTime}
-                    onChange={(e) => setFlightDepartureTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Arrival Time (Optional)
-                  </label>
-                  <input
-                    type="time"
-                    value={flightArrivalTime}
-                    onChange={(e) => setFlightArrivalTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : blockType === 'train' ? (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Train Number / Line (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={trainNumber}
-                  onChange={(e) => setTrainNumber(e.target.value)}
-                  placeholder="e.g., Shinkansen, Eurostar"
-                  className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  From (Station)
-                </label>
-                {!trainFrom ? (
-                  <GooglePlacesAutocompleteNative
-                    value={trainFromQuery}
-                    onChange={setTrainFromQuery}
-                    onPlaceSelect={(place) => handleGooglePlaceSelect(place, 'from')}
-                    placeholder="Search train station..."
-                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors text-sm"
-                    types={['transit_station']}
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={trainFrom}
-                      readOnly
-                      className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100"
-                    />
-                    <button
-                      onClick={() => setTrainFrom('')}
-                      className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                    >
-                      <XIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  To (Station)
-                </label>
-                {!trainTo ? (
-                  <GooglePlacesAutocompleteNative
-                    value={trainToQuery}
-                    onChange={setTrainToQuery}
-                    onPlaceSelect={(place) => handleGooglePlaceSelect(place, 'to')}
-                    placeholder="Search train station..."
-                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors text-sm"
-                    types={['transit_station']}
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={trainTo}
-                      readOnly
-                      className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100"
-                    />
-                    <button
-                      onClick={() => setTrainTo('')}
-                      className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                    >
-                      <XIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Departure Time (Optional)
-                  </label>
-                  <input
-                    type="time"
-                    value={trainDepartureTime}
-                    onChange={(e) => setTrainDepartureTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Arrival Time (Optional)
-                  </label>
-                  <input
-                    type="time"
-                    value={trainArrivalTime}
-                    onChange={(e) => setTrainArrivalTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : blockType === 'custom' ? (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                  Search Location
-                </label>
-                {!customLocationName ? (
-                  <GooglePlacesAutocompleteNative
-                    value={customLocationQuery}
-                    onChange={setCustomLocationQuery}
-                    onPlaceSelect={handleGooglePlaceSelect}
-                    placeholder="Search for any place on Google..."
-                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors text-sm"
-                    types={[]}
-                  />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={customLocationName}
-                      readOnly
-                      className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100"
-                    />
-                    <button
-                      onClick={() => {
-                        setCustomLocationName('');
-                        setCustomLocationData(null);
-                        setCustomLocationQuery('');
-                      }}
-                      className="px-3 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                    >
-                      <XIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Details Section - Common for all block types */}
-          <div className="border-t border-neutral-200 dark:border-neutral-800 pt-6 mt-6 space-y-6">
-            {/* Only show Time and Duration for destination and custom location types */}
-            {(blockType === 'destination' || blockType === 'custom') && (
-              <>
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Time (Optional)
-                  </label>
-                  <input
-                    type="time"
-                    value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                    Duration (minutes, Optional)
-                  </label>
-                  <input
-                    type="number"
-                    value={duration}
-                    onChange={(e) => setDuration(Number(e.target.value))}
-                    className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
-                  />
-                </div>
-              </>
-            )}
-            <div>
-              <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
-                Notes (Optional)
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder={blockType === 'destination' ? 'Reservation needed, try the signature dish...' : 'Additional notes...'}
-                rows={3}
-                className="w-full px-4 py-3 bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors resize-none"
-              />
-            </div>
-            <button
-              onClick={handleAddLocation}
-              disabled={
-                (blockType === 'destination' && !selectedDestination) ||
-                (blockType === 'flight' && (!flightFrom || !flightTo)) ||
-                (blockType === 'train' && (!trainFrom || !trainTo)) ||
-                (blockType === 'custom' && !customLocationName)
-              }
-              className="w-full px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
-            >
-              Add to Trip
-            </button>
           </div>
         </div>
       </div>
