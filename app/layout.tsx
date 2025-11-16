@@ -1,17 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { TRPCProvider } from "@/lib/trpc/provider";
-import { CookieConsent } from "@/components/CookieConsent";
 import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
+import { LayoutShell } from "@/src/modules/layout/public-api";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -163,12 +161,9 @@ export default function RootLayout({
           <TRPCProvider>
             <AuthProvider>
               <ItineraryProvider>
-                <Header />
-                <main className="min-h-screen page-transition">
+                <LayoutShell>
                   {children}
-                </main>
-                <Footer />
-                <CookieConsent />
+                </LayoutShell>
               </ItineraryProvider>
             </AuthProvider>
           </TRPCProvider>

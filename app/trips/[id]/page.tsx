@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { DestinationCard } from '@/components/DestinationCard';
+import { DestinationCard } from '@/src/modules/search/public-api';
 import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';

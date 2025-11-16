@@ -12,6 +12,52 @@ const eslintConfig = defineConfig([
       "react/no-unescaped-entities": "warn",
     },
   },
+  {
+    files: ["app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/src/modules/*/view/*"],
+              message: "Routes must consume module public APIs instead of internal view files.",
+            },
+            {
+              group: [
+                "@/components/DestinationCard",
+                "@/components/IntentConfirmationChips",
+                "@/components/POIDrawer",
+                "@/components/Header",
+                "@/components/Footer",
+              ],
+              message: "Routes should import feature components via their module public-api entry point.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/modules/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/src/modules/*/view/*",
+                "@/src/modules/*/hooks/*",
+                "@/src/modules/*/api/*",
+              ],
+              message: "Modules must reference other modules via their public API to preserve layering.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

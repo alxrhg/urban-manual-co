@@ -26,7 +26,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
-import { POIDrawer } from './POIDrawer';
+import { POIDrawer } from '@/src/modules/search/public-api';
 import { ArchitectDesignInfo } from './ArchitectDesignInfo';
 
 // Dynamically import GoogleMap to avoid SSR issues

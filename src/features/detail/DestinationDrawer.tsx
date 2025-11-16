@@ -43,7 +43,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 
 // Dynamically import POIDrawer to avoid SSR issues
-const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
+const POIDrawer = dynamic(() => import('@/src/modules/search/public-api').then(mod => ({ default: mod.POIDrawer })), {
   ssr: false,
 });
 

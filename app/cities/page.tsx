@@ -7,7 +7,7 @@ import { Destination } from '@/types/destination';
 import { MapPin, ArrowLeft, Loader2, X } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { UniversalGrid } from '@/components/UniversalGrid';
-import { DestinationCard } from '@/components/DestinationCard';
+import { DestinationCard } from '@/src/modules/search/public-api';
 import Image from 'next/image';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { toast } from 'sonner';

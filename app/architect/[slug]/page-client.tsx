@@ -8,7 +8,7 @@ import { ArrowLeft, Building2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
-import { DestinationCard } from '@/components/DestinationCard';
+import { DestinationCard } from '@/src/modules/search/public-api';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { slugToArchitectName } from '@/lib/architect-utils';

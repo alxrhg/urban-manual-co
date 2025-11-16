@@ -13,7 +13,6 @@ interface IntentConfirmationChipsProps {
 export function IntentConfirmationChips({
   intent,
   onChipRemove,
-  onChipEdit,
   editable = true,
 }: IntentConfirmationChipsProps) {
   const chips: Array<{ type: string; value: string; label: string; icon?: string }> = [];

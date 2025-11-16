@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
-import { DestinationCard } from '@/components/DestinationCard';
+import { DestinationCard } from '@/src/modules/search/public-api';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
@@ -24,7 +24,7 @@ const DestinationDrawer = dynamic(
 );
 
 const POIDrawer = dynamic(
-  () => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })),
+  () => import('@/src/modules/search/public-api').then(mod => ({ default: mod.POIDrawer })),
   {
     ssr: false,
   }

@@ -27,6 +27,22 @@ Need to work on the tagging/enrichment system? Read the [Semantic Tags Guide](do
 - **Authentication**: Supabase Auth with Google OAuth
 - **Deployment**: Vercel
 
+## Modular Architecture & Layering
+
+The production app now enforces a clear layering rule so that features stay isolated and reusable:
+
+1. **Routes (`app/`) → Modules (`src/modules/*/public-api.ts`)**: Route files render feature modules instead of reaching into components or contexts directly.
+2. **Modules → Shared UI/Lib**: Modules compose feature-specific views, hooks, and API helpers and can import from shared `components/`, `lib/`, or `src/ui/` folders as needed.
+3. **Shared UI/Lib → (no upstream deps)**: Primitive UI building blocks, contexts, and libraries remain import-free from feature modules.
+
+Each module exposes three entry points:
+
+- `view/` — React components rendered by routes or other modules.
+- `hooks/` — Feature-specific hooks that encapsulate state or cross-feature contracts.
+- `api/` — Client-side helpers for feature-specific network requests.
+
+Cross-feature usage must go through the module's `public-api.ts`. For example, `app/search/page.tsx` now renders `src/modules/search/view/SearchPage.tsx` and other routes import `DestinationCard` via `@/src/modules/search/public-api`. This structure keeps feature contracts explicit and prevents accidental coupling.
+
 ## Environment Variables
 
 Create a `.env.local` file in the repository root:

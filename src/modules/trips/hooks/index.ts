@@ -1,0 +1,1 @@
+export { useTripsShell } from './useTripsShell';

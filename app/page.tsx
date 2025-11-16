@@ -35,7 +35,7 @@ import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
-import { DestinationCard } from '@/components/DestinationCard';
+import { DestinationCard } from '@/src/modules/search/public-api';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
@@ -51,13 +51,13 @@ const MultiplexAd = dynamic(() => import('@/components/GoogleAd').then(mod => ({
 const MarkdownRenderer = dynamic(() => import('@/src/components/MarkdownRenderer').then(mod => ({ default: mod.MarkdownRenderer })), { ssr: false });
 const SessionResume = dynamic(() => import('@/components/SessionResume').then(mod => ({ default: mod.SessionResume })), { ssr: false });
 const ContextCards = dynamic(() => import('@/components/ContextCards').then(mod => ({ default: mod.ContextCards })), { ssr: false });
-const IntentConfirmationChips = dynamic(() => import('@/components/IntentConfirmationChips').then(mod => ({ default: mod.IntentConfirmationChips })), { ssr: false });
+const IntentConfirmationChips = dynamic(() => import('@/src/modules/search/public-api').then(mod => ({ default: mod.IntentConfirmationChips })), { ssr: false });
 const RefinementChips = dynamic(() => import('@/components/RefinementChips').then(mod => ({ default: mod.RefinementChips })), { ssr: false });
 const DestinationBadges = dynamic(() => import('@/components/DestinationBadges').then(mod => ({ default: mod.DestinationBadges })), { ssr: false });
 const FollowUpSuggestions = dynamic(() => import('@/components/FollowUpSuggestions').then(mod => ({ default: mod.FollowUpSuggestions })), { ssr: false });
 const RealtimeStatusBadge = dynamic(() => import('@/components/RealtimeStatusBadge').then(mod => ({ default: mod.RealtimeStatusBadge })), { ssr: false });
 const TripPlanner = dynamic(() => import('@/components/TripPlanner').then(mod => ({ default: mod.TripPlanner })), { ssr: false });
-const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), { ssr: false });
+const POIDrawer = dynamic(() => import('@/src/modules/search/public-api').then(mod => ({ default: mod.POIDrawer })), { ssr: false });
 
 // Category icons using Untitled UI icons
 function getCategoryIcon(category: string): React.ComponentType<{ className?: string; size?: number | string }> | null {

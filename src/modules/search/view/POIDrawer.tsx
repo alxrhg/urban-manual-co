@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { Drawer } from '@/components/ui/Drawer';
 import { Loader2, X, Trash2 } from 'lucide-react';
-import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
@@ -30,8 +29,12 @@ interface Destination {
   crown?: boolean;
 }
 
+interface GooglePlaceSelection {
+  place_id?: string;
+  placeId?: string;
+}
+
 export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }: POIDrawerProps) {
-  const { user } = useAuth();
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -111,7 +114,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         .replace(/^-+|-+$/g, '');
       setFormData(prev => ({ ...prev, slug }));
     }
-  }, [formData.name]);
+  }, [formData.name, formData.slug]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -185,9 +188,10 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
 
       const data = await res.json();
       return data.url;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Upload error:', error);
-      toast.error(`Image upload failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Image upload failed: ${message}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -266,9 +270,10 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
       toast.success(isEditing ? 'Destination updated successfully' : 'POI created successfully');
       onSave?.();
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating POI:', error);
-      toast.error(error.message || 'Failed to create POI');
+      const message = error instanceof Error ? error.message : 'Failed to create POI';
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -306,16 +311,17 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
       toast.success('Destination deleted successfully');
       onSave?.();
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting destination:', error);
-      toast.error(error.message || 'Failed to delete destination');
+      const message = error instanceof Error ? error.message : 'Failed to delete destination';
+      toast.error(message);
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
     }
   };
 
-  const handleGooglePlaceSelect = async (placeDetails: any) => {
+  const handleGooglePlaceSelect = async (placeDetails: GooglePlaceSelection) => {
     const placeId = placeDetails?.place_id || placeDetails?.placeId;
     if (!placeId) return;
     
@@ -368,7 +374,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         setGooglePlaceQuery('');
         toast.success('Place details loaded from Google');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching Google place:', error);
       toast.error('Failed to load place details');
     }
@@ -525,9 +531,11 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
               >
                 {imagePreview ? (
                   <div className="relative w-full group">
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Preview"
+                      width={600}
+                      height={400}
                       className="w-full h-48 object-cover rounded-xl mb-3 border border-gray-200 dark:border-gray-800"
                     />
                     <button
@@ -596,9 +604,11 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
             />
             {imagePreview && formData.image && !imageFile && (
               <div className="mt-4">
-                <img
+                <Image
                   src={imagePreview}
                   alt="Preview"
+                  width={600}
+                  height={400}
                   className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-800"
                   onError={() => setImagePreview(null)}
                 />
@@ -686,7 +696,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
                 <div className="space-y-4">
                   <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-xl">
                     <p className="text-sm text-gray-900 dark:text-white text-center font-medium mb-1">
-                      Delete "{destination.name}"?
+                      Delete &ldquo;{destination.name}&rdquo;?
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                       This action cannot be undone.

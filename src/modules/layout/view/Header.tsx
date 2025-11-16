@@ -1,99 +1,20 @@
 'use client';
 
-import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
-import { Menu, X, User } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { createClient } from "@/lib/supabase/client";
-import { AccountDrawer } from "@/components/AccountDrawer";
+import { useRouter } from "next/navigation";
+import { useState, useRef } from "react";
+import { Menu, User } from "lucide-react";
 import { ChatDrawer } from "@/components/ChatDrawer";
-import { LoginDrawer } from "@/components/LoginDrawer";
+import { useAccountShell, AccountDrawer, LoginDrawer } from "@/src/modules/account/public-api";
 
 export function Header() {
   const router = useRouter();
-  const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin, buildVersion } = useAccountShell();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [buildVersion, setBuildVersion] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const isHome = pathname === '/';
-  const isMap = pathname === '/map';
-
-  // Fetch user profile and avatar
-  useEffect(() => {
-    async function fetchProfile() {
-      if (!user?.id) {
-        setAvatarUrl(null);
-        return;
-      }
-
-      try {
-        // Use profiles table (standard Supabase structure)
-        const supabaseClient = createClient();
-        const { data, error } = await supabaseClient
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (!error && data?.avatar_url) {
-          setAvatarUrl(data.avatar_url);
-        } else {
-          setAvatarUrl(null);
-        }
-      } catch {
-        // Ignore errors (table might not exist or RLS blocking)
-        setAvatarUrl(null);
-      }
-    }
-
-    fetchProfile();
-  }, [user]);
-
-  // Determine admin role from user metadata
-  useEffect(() => {
-    const role = (user?.app_metadata as Record<string, any> | undefined)?.role;
-    const isAdminUser = role === 'admin';
-    setIsAdmin(isAdminUser);
-    if (!isAdminUser) {
-      setBuildVersion(null);
-    }
-  }, [user]);
-
-  // Fetch build version for admins
-  useEffect(() => {
-    async function fetchBuildVersion() {
-      if (!isAdmin) return;
-      try {
-        const versionRes = await fetch('/api/build-version');
-        const versionData = await versionRes.json();
-        setBuildVersion(
-          versionData.shortSha ||
-            versionData.commitSha?.substring(0, 7) ||
-            versionData.version ||
-            null
-        );
-      } catch {
-        // Ignore version fetch errors
-        setBuildVersion(null);
-      }
-    }
-    fetchBuildVersion();
-  }, [isAdmin]);
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-
   const navigate = (path: string) => {
     router.push(path);
     setIsMenuOpen(false);

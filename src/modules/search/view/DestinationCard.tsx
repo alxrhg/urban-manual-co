@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
-import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
-import { DestinationBadges } from './DestinationBadges';
+import { DestinationCardSkeleton } from '@/components/skeletons/DestinationCardSkeleton';
+import { DestinationBadges } from '@/components/DestinationBadges';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -172,16 +172,19 @@ export const DestinationCard = memo(function DestinationCard({
                     shadow-sm group-hover:shadow-md
                   `}
                 >
-                  <img
+                  <Image
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
+                    width={12}
+                    height={12}
                     className="h-3 w-3"
-                    onError={(e) => {
-                      // Fallback to local file if external URL fails
-                      const target = e.currentTarget;
-                      if (target.src !== '/michelin-star.svg') {
-                        target.src = '/michelin-star.svg';
+                    onError={(event) => {
+                      const target = event.currentTarget;
+                      if (target.getAttribute('data-fallback') === 'true') {
+                        return;
                       }
+                      target.setAttribute('data-fallback', 'true');
+                      target.setAttribute('src', '/michelin-star.svg');
                     }}
                   />
                   <span>{destination.michelin_stars}</span>
