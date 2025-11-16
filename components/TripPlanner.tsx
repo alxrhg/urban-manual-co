@@ -63,23 +63,14 @@ interface HotelOption {
   city: string | null;
 }
 
-const plannerPhases = [
-  {
-    key: 'brief',
-    label: 'Intent',
-    description: 'Lock the city, base, and dates.',
-  },
-  {
-    key: 'compose',
-    label: 'Itinerary',
-    description: 'Drop discoveries into each day.',
-  },
-  {
-    key: 'polish',
-    label: 'Intelligence',
-    description: 'Surface gaps, share when ready.',
-  },
+const studioFlowSteps = [
+  { key: 'create', label: 'Create' },
+  { key: 'view', label: 'View' },
+  { key: 'edit', label: 'Edit' },
+  { key: 'save', label: 'Save' },
 ] as const;
+
+type StudioFlowKey = (typeof studioFlowSteps)[number]['key'];
 
 export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const { user } = useAuth();
@@ -232,6 +223,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     ],
     []
   );
+
+  const currentFlowStep: StudioFlowKey =
+    saving || justSaved
+      ? 'save'
+      : studioMode === 'create'
+        ? 'create'
+        : studioMode === 'hub'
+          ? 'view'
+          : 'edit';
 
   const handleHotelSelection = (value: string) => {
     if (value === '__custom') {
@@ -894,56 +894,29 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           )}
         </div>
       );
-    } else {
-      const activePhaseIndex = studioMode === 'plan' ? 1 : 0;
-      content = (
-        <div className="px-6 py-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            {plannerPhases.map((phase, index) => {
-              const isActive = index === activePhaseIndex;
-              const isComplete = index < activePhaseIndex;
-              return (
-                <div
-                  key={phase.key}
-                  className={`rounded-2xl border p-4 ${
-                    isActive
-                      ? 'bg-black text-white border-black dark:border-white'
-                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`text-xs uppercase tracking-[0.25em] ${
-                        isActive ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'
-                      }`}
-                    >
-                      {phase.label}
-                    </span>
-                    <span
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        isActive
-                          ? 'bg-white text-black'
-                          : isComplete
-                            ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                      }`}
-                    >
-                      {index + 1}
-                    </span>
-                  </div>
-                  <p
-                    className={`text-sm ${
-                      isActive ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+      } else {
+        content = (
+          <div className="px-6 py-6">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400 mb-8">
+              {studioFlowSteps.map((step, index) => (
+                <React.Fragment key={step.key}>
+                  <span
+                    className={`px-3 py-1 rounded-full border text-[10px] tracking-[0.2em] ${
+                      currentFlowStep === step.key
+                        ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                        : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400'
                     }`}
                   >
-                    {phase.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+                    {step.label}
+                  </span>
+                  {index < studioFlowSteps.length - 1 && (
+                    <span className="text-[10px] text-gray-400 dark:text-gray-600 mx-1">-&gt;</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
 
-          {loading ? (
+            {loading ? (
             <div className="text-center py-12">
               <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
               <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
