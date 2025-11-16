@@ -98,11 +98,20 @@ async function getDestinationsByMovement(
     .eq('slug', movementSlug)
     .single();
 
+  // Transform data to match ArchitectureDestination type
+  const transformDestination = (d: any): ArchitectureDestination => ({
+    ...d,
+    architect: Array.isArray(d.architect) && d.architect.length > 0 ? d.architect[0] : d.architect || null,
+    movement: Array.isArray(d.movement) && d.movement.length > 0 ? d.movement[0] : d.movement || null,
+    created_at: d.created_at || new Date().toISOString(),
+    country: d.country || '',
+  });
+
   if (movement) {
-    return (data || []).filter(d => d.movement_id === movement.id) as ArchitectureDestination[];
+    return (data || []).filter(d => d.movement_id === movement.id).map(transformDestination);
   }
 
-  return (data || []) as ArchitectureDestination[];
+  return (data || []).map(transformDestination);
 }
 
 /**
@@ -150,7 +159,14 @@ async function getDestinationsByArchitect(
     throw new Error(`Failed to fetch destinations by architect: ${error.message}`);
   }
 
-  return (data || []) as ArchitectureDestination[];
+  // Transform data to match ArchitectureDestination type
+  return (data || []).map((d: any) => ({
+    ...d,
+    architect: Array.isArray(d.architect) && d.architect.length > 0 ? d.architect[0] : d.architect || null,
+    movement: Array.isArray(d.movement) && d.movement.length > 0 ? d.movement[0] : d.movement || null,
+    created_at: d.created_at || new Date().toISOString(),
+    country: d.country || '',
+  })) as ArchitectureDestination[];
 }
 
 /**
@@ -209,7 +225,14 @@ async function getDestinationsByMaterial(
     throw new Error(`Failed to fetch destinations by material: ${error.message}`);
   }
 
-  return (data || []) as ArchitectureDestination[];
+  // Transform data to match ArchitectureDestination type
+  return (data || []).map((d: any) => ({
+    ...d,
+    architect: Array.isArray(d.architect) && d.architect.length > 0 ? d.architect[0] : d.architect || null,
+    movement: Array.isArray(d.movement) && d.movement.length > 0 ? d.movement[0] : d.movement || null,
+    created_at: d.created_at || new Date().toISOString(),
+    country: d.country || '',
+  })) as ArchitectureDestination[];
 }
 
 /**
@@ -246,7 +269,14 @@ async function getDestinationsByCity(
     throw new Error(`Failed to fetch destinations by city: ${error.message}`);
   }
 
-  return (data || []) as ArchitectureDestination[];
+  // Transform data to match ArchitectureDestination type
+  return (data || []).map((d: any) => ({
+    ...d,
+    architect: Array.isArray(d.architect) && d.architect.length > 0 ? d.architect[0] : d.architect || null,
+    movement: Array.isArray(d.movement) && d.movement.length > 0 ? d.movement[0] : d.movement || null,
+    created_at: d.created_at || new Date().toISOString(),
+    country: d.country || '',
+  })) as ArchitectureDestination[];
 }
 
 /**
