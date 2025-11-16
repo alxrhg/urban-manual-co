@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check, Edit } from 'lucide-react';
+import { MapPin, Check, Edit, Instagram } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
+import { resolveInstagramProfile } from '@/lib/social/instagram';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -36,7 +37,16 @@ export const DestinationCard = memo(function DestinationCard({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [instagramAvatarError, setInstagramAvatarError] = useState(false);
   const cardRef = useRef<HTMLButtonElement>(null);
+  const instagramProfile = resolveInstagramProfile({
+    handle: destination.instagram_handle,
+    url: destination.instagram_url,
+  });
+
+  useEffect(() => {
+    setInstagramAvatarError(false);
+  }, [instagramProfile?.handle]);
 
   // Intersection Observer for progressive loading
   useEffect(() => {
@@ -78,7 +88,7 @@ export const DestinationCard = memo(function DestinationCard({
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
       {/* Image Container with Progressive Loading */}
-      <div
+        <div
         className={`
           relative aspect-video overflow-hidden rounded-2xl
           bg-gray-100 dark:bg-gray-800
@@ -121,7 +131,7 @@ export const DestinationCard = memo(function DestinationCard({
           </div>
         )}
 
-        {/* Hover Overlay */}
+          {/* Hover Overlay */}
         <div
           className={`
             absolute inset-0
@@ -131,6 +141,47 @@ export const DestinationCard = memo(function DestinationCard({
             pointer-events-none
           `}
         />
+
+          {instagramProfile && (
+            <div
+              role="button"
+              tabIndex={-1}
+              aria-label={`Open ${instagramProfile.displayHandle} on Instagram`}
+              className="absolute left-3 bottom-3 z-20 flex items-center gap-2 rounded-2xl border border-white/80 dark:border-gray-900/70 bg-white/95 dark:bg-gray-900/90 px-3 py-2 shadow-lg backdrop-blur"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (typeof window !== 'undefined') {
+                  window.open(instagramProfile.url, '_blank', 'noopener,noreferrer');
+                }
+              }}
+            >
+              <div className="relative h-9 w-9 rounded-full overflow-hidden border border-white/80 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                {!instagramAvatarError ? (
+                  <Image
+                    src={instagramProfile.avatarUrl}
+                    alt={`${instagramProfile.displayHandle} avatar`}
+                    fill
+                    sizes="36px"
+                    className="object-cover"
+                    onError={() => setInstagramAvatarError(true)}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-gray-500 dark:text-gray-300">
+                    IG
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col leading-tight text-left">
+                <div className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  <Instagram className="h-3 w-3" />
+                  <span>Instagram</span>
+                </div>
+                <span className="text-xs font-semibold text-gray-900 dark:text-white">
+                  {instagramProfile.displayHandle}
+                </span>
+              </div>
+            </div>
+          )}
 
         {/* Visited Check Badge - Center */}
         {isVisited && (

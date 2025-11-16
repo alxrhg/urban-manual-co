@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -28,6 +28,8 @@ import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import { POIDrawer } from './POIDrawer';
 import { ArchitectDesignInfo } from './ArchitectDesignInfo';
+import { InstagramProfileCard } from '@/components/social/InstagramProfileCard';
+import { resolveInstagramProfile } from '@/lib/social/instagram';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -188,6 +190,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [enrichedData, setEnrichedData] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const instagramProfile = useMemo(
+    () =>
+      resolveInstagramProfile({
+        handle: destination?.instagram_handle,
+        url: destination?.instagram_url,
+      }),
+    [destination?.instagram_handle, destination?.instagram_url]
+  );
 
   // List management state
   const [showListsModal, setShowListsModal] = useState(false);
@@ -837,31 +847,24 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               )}
 
-              {/* Instagram Handle */}
-              {(destination.instagram_handle || destination.instagram_url) && (() => {
-                const instagramHandle = destination.instagram_handle || 
-                  (destination.instagram_url 
-                    ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
-                    : null);
-                const instagramUrl = destination.instagram_url || 
-                  (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
-                
-                if (!instagramHandle || !instagramUrl) return null;
-                
-                return (
+                {/* Instagram Handle */}
+                {instagramProfile && (
                   <a
-                    href={instagramUrl}
+                    href={instagramProfile.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Instagram className="h-3.5 w-3.5" />
-                    <span>@{instagramHandle.replace('@', '')}</span>
+                    <span>{instagramProfile.displayHandle}</span>
                   </a>
-                );
-              })()}
-            </div>
+                )}
+              </div>
+
+              {instagramProfile && (
+                <InstagramProfileCard profile={instagramProfile} className="mt-4" />
+              )}
 
             {/* AI-Generated Tags */}
             {destination.tags && destination.tags.length > 0 && (
@@ -1121,10 +1124,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Contact & Links Section */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
-            <div className="mb-6">
-              <div className="flex flex-wrap gap-2">
+            {/* Contact & Links Section */}
+            {(enrichedData?.website ||
+              enrichedData?.international_phone_number ||
+              destination.website ||
+              destination.phone_number ||
+              instagramProfile ||
+              destination.google_maps_url) && (
+              <div className="mb-6">
+                <div className="flex flex-wrap gap-2">
                 {destination.google_maps_url && (
                   <a
                     href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ', ' + destination.city)}`}
@@ -1152,7 +1160,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </a>
                   );
                 })()}
-                {(enrichedData?.international_phone_number || destination.phone_number) && (
+                  {(enrichedData?.international_phone_number || destination.phone_number) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
                     className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -1161,20 +1169,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <span>{enrichedData?.international_phone_number || destination.phone_number}</span>
                   </a>
                 )}
-                {destination.instagram_url && (
+                  {instagramProfile && (
                   <a
-                    href={destination.instagram_url}
+                      href={instagramProfile.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <span>📷</span>
-                    <span>Instagram</span>
+                      <Instagram className="h-3.5 w-3.5" />
+                      <span>{instagramProfile.displayHandle}</span>
                   </a>
                 )}
               </div>
-            </div>
-          )}
+              </div>
+            )}
 
           {/* Reviews */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (

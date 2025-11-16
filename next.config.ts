@@ -147,18 +147,20 @@ const nextConfig: NextConfig = {
         }
       } catch {}
       // Add common image CDN domains
-      patterns.push(
-        { protocol: 'https', hostname: 'guide.michelin.com' },
-        // Legacy: Framer/Webflow patterns kept for backwards compatibility
-        // All images have been migrated to Supabase Storage
-        { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
-        { protocol: 'https', hostname: 'framerusercontent.com' },
-        { protocol: 'https', hostname: '*.framerusercontent.com' },
-        { protocol: 'https', hostname: '*.webflow.com' },
-        // Supabase Storage (primary image hosting)
-        { protocol: 'https', hostname: '*.supabase.co' },
-        { protocol: 'https', hostname: '*.supabase.in' }
-      )
+        patterns.push(
+          { protocol: 'https', hostname: 'guide.michelin.com' },
+          // Legacy: Framer/Webflow patterns kept for backwards compatibility
+          // All images have been migrated to Supabase Storage
+          { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
+          { protocol: 'https', hostname: 'framerusercontent.com' },
+          { protocol: 'https', hostname: '*.framerusercontent.com' },
+          { protocol: 'https', hostname: '*.webflow.com' },
+          // Supabase Storage (primary image hosting)
+          { protocol: 'https', hostname: '*.supabase.co' },
+          { protocol: 'https', hostname: '*.supabase.in' },
+          // Instagram avatars via Unavatar
+          { protocol: 'https', hostname: 'unavatar.io' }
+        )
       return patterns
     })(),
   },

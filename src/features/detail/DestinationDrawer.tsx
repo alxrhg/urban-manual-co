@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram } from 'lucide-react';
@@ -41,6 +41,8 @@ import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinati
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
+import { InstagramProfileCard } from '@/components/social/InstagramProfileCard';
+import { resolveInstagramProfile } from '@/lib/social/instagram';
 
 // Dynamically import POIDrawer to avoid SSR issues
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
@@ -216,6 +218,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const instagramProfile = useMemo(
+    () =>
+      resolveInstagramProfile({
+        handle: destination?.instagram_handle,
+        url: destination?.instagram_url,
+      }),
+    [destination?.instagram_handle, destination?.instagram_url]
+  );
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -1314,36 +1324,28 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </span>
               )}
 
-              {/* Instagram Handle */}
-              {(destination.instagram_handle || destination.instagram_url) && (() => {
-                const instagramHandle = destination.instagram_handle || 
-                  (destination.instagram_url 
-                    ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
-                    : null);
-                const instagramUrl = destination.instagram_url || 
-                  (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
-                
-                if (!instagramHandle || !instagramUrl) return null;
-                
-                return (
+                {/* Instagram Handle */}
+                {instagramProfile && (
                   <a
-                    href={instagramUrl}
+                    href={instagramProfile.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Instagram className="h-3 w-3" />
-                    @{instagramHandle.replace('@', '')}
+                    {instagramProfile.displayHandle}
                   </a>
-                );
-              })()}
+                )}
                   </div>
 
               {destination.micro_description && (
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {destination.micro_description}
                 </p>
+                )}
+                {instagramProfile && (
+                  <InstagramProfileCard profile={instagramProfile} className="mt-4" />
                 )}
               </div>
 
@@ -1727,51 +1729,59 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Architecture & Design */}
-          {destination && <ArchitectDesignInfo destination={destination} />}
+            {/* Architecture & Design */}
+            {destination && <ArchitectDesignInfo destination={destination} />}
 
-          {/* Contact & Links */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact</h3>
-              <div className="flex flex-wrap gap-2">
-                {(enrichedData?.website || destination.website) && (() => {
-                  const websiteUrl = (enrichedData?.website || destination.website) || '';
-                  const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
-                  const domain = extractDomain(websiteUrl);
-                  return (
+            {/* Contact & Links */}
+            {(enrichedData?.website ||
+              enrichedData?.international_phone_number ||
+              destination.website ||
+              destination.phone_number ||
+              instagramProfile) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">
+                  Contact
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {(enrichedData?.website || destination.website) &&
+                    (() => {
+                      const websiteUrl = (enrichedData?.website || destination.website) || '';
+                      const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                      const domain = extractDomain(websiteUrl);
+                      return (
+                        <a
+                          href={fullUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <span>{domain}</span>
+                          <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                        </a>
+                      );
+                    })()}
+                  {(enrichedData?.international_phone_number || destination.phone_number) && (
                     <a
-                      href={fullUrl}
+                      href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                      className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      {enrichedData?.international_phone_number || destination.phone_number}
+                    </a>
+                  )}
+                  {instagramProfile && (
+                    <a
+                      href={instagramProfile.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
-                      <span>{domain}</span>
-                      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                      <Instagram className="h-3.5 w-3.5" />
+                      {instagramProfile.displayHandle}
                     </a>
-                  );
-                })()}
-                {(enrichedData?.international_phone_number || destination.phone_number) && (
-                  <a
-                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    {enrichedData?.international_phone_number || destination.phone_number}
-                  </a>
-                )}
-                {destination.instagram_url && (
-                  <a
-                    href={destination.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Instagram
-                  </a>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* AI Review Summary */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
