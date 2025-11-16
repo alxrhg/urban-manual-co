@@ -65,7 +65,6 @@ import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
-const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 const SequencePredictionsInline = dynamic(
   () =>
     import("@/components/SequencePredictionsInline").then(mod => ({

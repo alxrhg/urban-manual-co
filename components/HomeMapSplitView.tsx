@@ -3,8 +3,10 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
-import MapView from '@/components/MapView';
+import dynamic from 'next/dynamic';
 import { ChevronLeft, ChevronRight, List, MapPin, X } from 'lucide-react';
+
+const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
 interface HomeMapSplitViewProps {
   destinations: Destination[];
