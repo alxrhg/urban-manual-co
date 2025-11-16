@@ -30,9 +30,18 @@
     "enrich:exa": "tsx scripts/enrich-with-exa.ts",
     "list:columns": "tsx scripts/list-destination-columns.ts",
     "list:all-columns": "tsx scripts/list-all-columns.ts",
-    "check:exa-progress": "tsx scripts/check-exa-enrichment-progress.ts"
+    "check:exa-progress": "tsx scripts/check-exa-enrichment-progress.ts",
+    "check:ios": "tsx scripts/check-ios-compatibility.ts",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/haptics": "^7.0.2",
+    "@capacitor/keyboard": "^7.0.3",
+    "@capacitor/splash-screen": "^7.0.3",
+    "@capacitor/status-bar": "^7.0.3",
     "@amcharts/amcharts5": "^5.14.4",
     "@amcharts/amcharts5-geodata": "^5.1.5",
     "@google-cloud/discoveryengine": "^2.5.2",
@@ -86,6 +95,8 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/dompurify": "^3.0.5",
     "@types/google.maps": "^3.58.1",
