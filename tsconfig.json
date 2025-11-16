@@ -1,16 +1,17 @@
 {
   "extends": "./tsconfig.base.json",
   "include": [
-    "next-env.d.ts",
+    "apps/web/next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.mts",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    "apps/web/.next/types/**/*.ts",
+    "apps/web/.next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     ".next",
+    "apps/web/.next",
     "capacitor.config.ts",
     "drizzle",
     "scripts",

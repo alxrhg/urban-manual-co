@@ -8,7 +8,7 @@ Need to work on the tagging/enrichment system? Read the [Semantic Tags Guide](do
 
 ## Active Development (Next.js 16)
 
-**Location**: Repository root (`/`)
+**Location**: `apps/web`
 
 ### Features
 

@@ -83,8 +83,8 @@
 
 ## 6. Next Steps Checklist
 - [x] Create `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `turbo.json`, `tsconfig.base.json`, and shared config package scaffold.
-- [ ] Move Next app into `apps/web`.
-- [ ] Update import aliases + scripts.
+- [x] Move Next app into `apps/web`.
+- [x] Update import aliases + scripts.
 - [ ] Configure GitHub Actions for pnpm + Turbo.
 - [ ] Draft ADR-001 for job orchestrator once workers app scaffolded.
 

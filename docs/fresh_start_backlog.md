@@ -7,6 +7,7 @@
 - pnpm workspace + Turbo config staged (`pnpm-workspace.yaml`, `pnpm-lock.yaml`, `turbo.json`, `tsconfig.base.json`).
 - `packages/config` established as the shared tooling preset (ESLint + Tailwind stubs) and wired into the root config.
 - Infrastructure directories (`apps/`, `packages/`, `infra/github`) created with documentation to guide upcoming moves.
+- Next.js 16 experience relocated into `apps/web` (app/components/lib/etc., config files, middleware) with scripts, tsconfigs, and documentation updated to point to the new path.
 
 ## 0. Alignment & Guardrails
 | ID | Task | Owner | Definition of Done | Status |
@@ -19,7 +20,7 @@
 | ID | Task | Owner | Definition of Done | Status |
 | --- | --- | --- | --- | --- |
 | M0 | Initialize Turborepo (`apps/{web,cms,workers}`, `packages/{domain,ui,data-access,ai,config,design-tokens}`, `infra/`) | Platform | Repo refactor complete, lint/test pass, docs updated | 🔄 |
-| M1 | Adopt `pnpm` workspaces + scripts (`lint`, `typecheck`, `test`, `storybook`, `build`) | Platform | `pnpm install` + `pnpm dev` commands documented, CI green | ⏳ |
+| M1 | Adopt `pnpm` workspaces + scripts (`lint`, `typecheck`, `test`, `storybook`, `build`) | Platform | `pnpm install` + `pnpm dev` commands documented, CI green | 🔄 |
 | M2 | Configure shared ESLint + Biome/Prettier + commit hooks (Husky) | Platform | Pre-commit enforces lint/format, CI gate uses same configs | 🔄 |
 | M3 | GitHub Actions pipeline (lint → test → build → storybook → deploy preview) | Platform | Required status checks enforced on `main` | ⏳ |
 

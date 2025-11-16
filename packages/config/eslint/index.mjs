@@ -6,17 +6,18 @@ const config = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    rules: {
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/purity": "warn",
-      "react/no-unescaped-entities": "warn",
+    settings: {
+      next: {
+        rootDir: ["apps/web/"],
+      },
     },
   },
   globalIgnores([
     ".next/**",
+    "apps/web/.next/**",
     "out/**",
     "build/**",
-    "next-env.d.ts",
+    "**/next-env.d.ts",
     "public/assets/**",
     "dist/**",
     "*.dist",
