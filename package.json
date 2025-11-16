@@ -30,7 +30,10 @@
     "enrich:exa": "tsx scripts/enrich-with-exa.ts",
     "list:columns": "tsx scripts/list-destination-columns.ts",
     "list:all-columns": "tsx scripts/list-all-columns.ts",
-    "check:exa-progress": "tsx scripts/check-exa-enrichment-progress.ts"
+    "check:exa-progress": "tsx scripts/check-exa-enrichment-progress.ts",
+    "enrich:architects": "tsx scripts/enrich-architects.ts",
+    "enrich:movements": "tsx scripts/enrich-movements.ts",
+    "enrich:materials": "tsx scripts/enrich-materials.ts"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.4",
