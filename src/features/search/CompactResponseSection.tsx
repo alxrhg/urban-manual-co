@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 export interface Message {
   role: 'assistant' | 'user';
@@ -101,13 +102,16 @@ export function CompactResponseSection({
       {suggestions.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {suggestions.map((suggestion, i) => (
-            <button
+            <Button
               key={i}
+              type="button"
+              variant="pill"
+              size="xs"
               onClick={() => onChipClick(suggestion.refinement)}
-              className="px-3 py-1.5 text-xs font-medium border border-neutral-300 rounded-full hover:border-neutral-900 hover:bg-gray-900 hover:text-white transition-all duration-200 active:scale-95"
+              className="border-neutral-300 text-neutral-600 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-200"
             >
               {suggestion.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}

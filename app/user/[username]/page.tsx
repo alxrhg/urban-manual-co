@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { MapPin, Users, Heart, Calendar } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
+import { Button } from '@/components/ui/button';
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -88,12 +89,15 @@ export default function UserProfilePage() {
       <main className="w-full px-6 md:px-10 lg:px-12 py-20">
         <div className="w-full text-center">
           <h1 className="text-2xl font-light mb-4">User not found</h1>
-          <button
+          <Button
+            type="button"
+            variant="subtle"
+            size="xs"
             onClick={() => router.push('/')}
-            className="text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+            className="px-0"
           >
             Go back home
-          </button>
+          </Button>
         </div>
       </main>
     );
@@ -128,25 +132,27 @@ export default function UserProfilePage() {
               <div className="flex items-center justify-between mb-2">
                 <h1 className="text-2xl font-light">{profile.display_name || profile.username}</h1>
                 {!isOwnProfile && currentUser && (
-                  <button
+                  <Button
+                    type="button"
                     onClick={handleFollow}
                     disabled={followLoading}
-                    className={`px-6 py-2 text-sm font-medium rounded-2xl transition-all ${
-                      isFollowing
-                        ? 'border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-80'
-                    }`}
+                    variant={isFollowing ? 'outline' : 'default'}
+                    size="sm"
+                    aria-pressed={isFollowing}
+                    className="min-w-[112px]"
                   >
                     {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-                  </button>
+                  </Button>
                 )}
                 {isOwnProfile && (
-                  <button
+                  <Button
+                    type="button"
                     onClick={() => router.push('/account')}
-                    className="px-6 py-2 text-sm font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    variant="outline"
+                    size="sm"
                   >
                     Edit Profile
-                  </button>
+                  </Button>
                 )}
               </div>
 
