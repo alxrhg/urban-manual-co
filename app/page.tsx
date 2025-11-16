@@ -17,6 +17,7 @@ const DestinationDrawer = dynamic(
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -324,6 +325,9 @@ export default function Home() {
     content: string;
     contextPrompt?: string;
   }>>([]);
+  const [nextTripSummary, setNextTripSummary] = useState<{ id: string; title: string; destination: string | null; start_date: string | null; description: string | null } | null>(null);
+  const [nextTripCountdownText, setNextTripCountdownText] = useState<string | null>(null);
+  const [intentPrompt, setIntentPrompt] = useState<string | null>(null);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
@@ -637,6 +641,100 @@ export default function Home() {
     } else {
       setIsAdmin(false);
     }
+  }, [user]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadNextTrip = async () => {
+      if (!user) {
+        setNextTripSummary(null);
+        setNextTripCountdownText(null);
+        setIntentPrompt(null);
+        return;
+      }
+
+      try {
+        const supabaseClient = createClient();
+        const { data: trip } = await supabaseClient
+          .from('trips')
+          .select('id,title,destination,start_date,description,status')
+          .eq('user_id', user.id)
+          .neq('status', 'completed')
+          .order('start_date', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (!active) return;
+
+        if (!trip) {
+          setNextTripSummary(null);
+          setNextTripCountdownText(null);
+          setIntentPrompt(null);
+          return;
+        }
+
+        setNextTripSummary(trip);
+
+        if (trip.start_date) {
+          const diffMs = new Date(trip.start_date).getTime() - Date.now();
+          if (Number.isFinite(diffMs)) {
+            const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            let countdown: string | null = null;
+            if (days > 0) countdown = `${days} day${days === 1 ? '' : 's'} until ${trip.destination || 'your trip'}`;
+            else if (days === 0) countdown = `Trip in ${trip.destination || 'your city'} starts today`;
+            else countdown = `${trip.destination || 'Trip'} is in progress`;
+            setNextTripCountdownText(countdown);
+          } else {
+            setNextTripCountdownText(null);
+          }
+        } else {
+          setNextTripCountdownText(null);
+        }
+
+        let prompt: string | null = null;
+        if (!trip.description || !trip.description.trim()) {
+          prompt = `Add a hotel in ${trip.destination || 'your city'}`;
+        } else {
+          const { data: items } = await supabaseClient
+            .from('itinerary_items')
+            .select('title,description,day')
+            .eq('trip_id', trip.id)
+            .limit(50);
+
+          if (active) {
+            const hasDinner = (items ?? []).some((item) => {
+              const text = `${item.title ?? ''} ${item.description ?? ''}`.toLowerCase();
+              return text.includes('dinner');
+            });
+
+            if (!hasDinner) {
+              const dayLabel = trip.start_date
+                ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : undefined;
+              prompt = `Plan dinner in ${trip.destination || 'your city'}${dayLabel ? ` on ${dayLabel}` : ''}`;
+            }
+          }
+        }
+
+        if (active) {
+          setIntentPrompt(prompt);
+        }
+      } catch (error) {
+        console.error('Error loading next trip context:', error);
+        if (active) {
+          setNextTripSummary(null);
+          setNextTripCountdownText(null);
+          setIntentPrompt(null);
+        }
+      }
+    };
+
+    loadNextTrip();
+
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   // Phase 2 & 3: Fetch enriched greeting context when user profile is loaded
@@ -1797,6 +1895,20 @@ export default function Home() {
                 availableCities={cities}
                 availableCategories={categories}
                   />
+                        {nextTripCountdownText && (
+                          <div className="mt-6 text-[11px] uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400">
+                            {nextTripCountdownText}
+                          </div>
+                        )}
+                        {intentPrompt && (
+                          <button
+                            onClick={() => (user ? setShowTripPlanner(true) : router.push('/auth/login'))}
+                            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            <span>{intentPrompt}</span>
+                          </button>
+                        )}
                     </>
                   )}
 

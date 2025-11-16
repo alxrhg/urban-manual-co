@@ -32,6 +32,9 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [nextTrip, setNextTrip] = useState<{ title: string; destination: string | null; start_date: string | null } | null>(null);
+  const [nextTripCountdown, setNextTripCountdown] = useState<string | null>(null);
+  const [nextTripLoading, setNextTripLoading] = useState(false);
 
   // Fetch user profile and avatar
   useEffect(() => {
@@ -64,11 +67,72 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     }
   }, [user, isOpen]);
 
-  // Determine admin role
+    // Determine admin role
   useEffect(() => {
     const role = (user?.app_metadata as Record<string, any> | undefined)?.role;
     setIsAdmin(role === 'admin');
   }, [user]);
+
+    useEffect(() => {
+      if (!isOpen || !user) {
+        setNextTrip(null);
+        setNextTripCountdown(null);
+        return;
+      }
+
+      let active = true;
+      setNextTripLoading(true);
+
+      (async () => {
+        try {
+          const supabaseClient = createClient();
+          const { data: trip } = await supabaseClient
+            .from('trips')
+            .select('id,title,destination,start_date,status')
+            .eq('user_id', user.id)
+            .neq('status', 'completed')
+            .order('start_date', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (!active) return;
+
+          if (!trip) {
+            setNextTrip(null);
+            setNextTripCountdown(null);
+            return;
+          }
+
+          setNextTrip(trip);
+
+          if (trip.start_date) {
+            const diffMs = new Date(trip.start_date).getTime() - Date.now();
+            const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            let text: string | null = null;
+            if (Number.isFinite(days)) {
+              if (days > 0) text = `${days} day${days === 1 ? '' : 's'} away`;
+              else if (days === 0) text = 'Starts today';
+              else text = 'In progress';
+            }
+            setNextTripCountdown(text);
+          } else {
+            setNextTripCountdown(null);
+          }
+        } catch (error) {
+          console.error('Error loading next trip:', error);
+          setNextTrip(null);
+          setNextTripCountdown(null);
+        } finally {
+          if (active) {
+            setNextTripLoading(false);
+          }
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, [isOpen, user]);
 
 
   const handleSignOut = async () => {
@@ -190,7 +254,38 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 </div>
               </div>
 
-              {/* Quick Links */}
+                {/* Countdown Widget */}
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900">
+                  <div className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500 mb-2">
+                    Next trip
+                  </div>
+                  {nextTripLoading ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Checking your itineraries…</p>
+                  ) : nextTrip ? (
+                    <>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{nextTrip.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {nextTrip.destination || 'Destination TBD'}
+                      </p>
+                      {nextTripCountdown && (
+                        <p className="text-xs text-gray-900 dark:text-white mt-3">{nextTripCountdown}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">No upcoming trips yet.</p>
+                  )}
+                  <button
+                    onClick={() => {
+                      onClose();
+                      setTimeout(() => setIsTripsOpen(true), 300);
+                    }}
+                    className="mt-4 inline-flex items-center justify-center w-full px-4 py-2 text-xs font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Open Trip Studio
+                  </button>
+                </div>
+
+                {/* Quick Links */}
               <div className="space-y-2">
                 <button
                   onClick={() => handleNavigate('/account')}
