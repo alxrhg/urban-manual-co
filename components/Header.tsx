@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +11,6 @@ import { LoginDrawer } from "@/components/LoginDrawer";
 
 export function Header() {
   const router = useRouter();
-  const pathname = usePathname();
   const { user } = useAuth();
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
@@ -82,20 +81,8 @@ export function Header() {
     fetchBuildVersion();
   }, [isAdmin]);
 
-    const navLinks = [
-      { label: "Discover by Cities", href: "/cities", description: "Browse every curated guide" },
-    ];
-
   const navigate = (path: string) => {
     router.push(path);
-  };
-
-  const isActiveLink = (href: string) => {
-    if (!pathname) return false;
-    if (href === "/") {
-      return pathname === "/";
-    }
-    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   const actionButtons = (
@@ -147,59 +134,21 @@ export function Header() {
       className="mt-6 md:mt-8 relative z-50 bg-white dark:bg-gray-900"
       role="banner"
     >
-      {/* Primary Nav: Brand + Menu */}
+      {/* Primary Nav */}
       <div className="w-full px-6 md:px-10">
         <nav
-          className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between py-4"
+          className="flex items-center justify-between py-4"
           aria-label="Main navigation"
         >
-          {/* Logo + mobile actions */}
-          <div className="flex items-center justify-between gap-4">
-            <button
-              onClick={() => navigate("/")}
-              className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
-              aria-label="Go to homepage"
-            >
-              Urban Manual®
-            </button>
-            <div className="flex items-center gap-2 md:hidden">
-              {actionButtons}
-            </div>
-          </div>
-
-          {/* Middle navigation */}
-          <div
-            className="flex justify-center md:flex-1"
-            aria-label="Primary site links"
+          <button
+            onClick={() => navigate("/")}
+            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+            aria-label="Go to homepage"
           >
-            <div className="flex w-full md:w-auto items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/80 shadow-sm px-1.5 py-1 overflow-x-auto">
-              {navLinks.map(link => {
-                const active = isActiveLink(link.href);
-                return (
-                  <button
-                    key={link.href}
-                    onClick={() => navigate(link.href)}
-                    className={`flex flex-col md:flex-row md:items-center md:gap-2 px-4 py-2 rounded-full transition-colors min-w-[120px] md:min-w-0 ${
-                      active
-                        ? "bg-black text-white dark:bg-white dark:text-black"
-                        : "text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                    }`}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <span className="text-sm font-medium">{link.label}</span>
-                    <span className="hidden md:inline text-xs text-gray-400 dark:text-gray-500">
-                      {link.description}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            Urban Manual®
+          </button>
 
-          {/* Desktop actions */}
-          <div className="hidden md:flex items-center gap-3 shrink-0">
-            {actionButtons}
-          </div>
+          <div className="flex items-center gap-2">{actionButtons}</div>
         </nav>
       </div>
 
