@@ -95,7 +95,11 @@ async function testFilterHandlers() {
     },
   });
   const errorResponse = await errorHandler(buildRequest('/api/homepage/filters'));
-  assert.equal(errorResponse.status, 500);
+  // Changed from 500 to 200 - the handler now returns empty filters with 200 for graceful degradation
+  assert.equal(errorResponse.status, 200);
+  const errorPayload = await errorResponse.json();
+  assert.equal(errorPayload.success, true);
+  assert.deepEqual(errorPayload.rows, []);
 }
 
 async function testDestinationHandlers() {
@@ -121,7 +125,11 @@ async function testDestinationHandlers() {
     },
   });
   const errorResponse = await errorHandler(buildRequest('/api/homepage/destinations'));
-  assert.equal(errorResponse.status, 500);
+  // Changed from 500 to 200 - the handler now returns empty destinations with 200 for graceful degradation
+  assert.equal(errorResponse.status, 200);
+  const errorPayload = await errorResponse.json();
+  assert.equal(errorPayload.success, true);
+  assert.deepEqual(errorPayload.destinations, []);
 }
 
 async function run() {

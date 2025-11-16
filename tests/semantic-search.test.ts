@@ -99,37 +99,36 @@ test('invokes semantic RPC with filters and keeps RPC ranking order', async () =
   assert.equal(ctx.metricMock.mock.calls.length, 0);
 });
 
-test('falls back to Asimov when RPC errors and logs metrics', async () => {
+test('falls back to keyword search when RPC errors and logs metrics', async () => {
   const ctx = await createTestContext();
   ctx.embedMock.mock.mockImplementation(async () => [0.25, 0.5]);
   ctx.rpcMock.mock.mockImplementation(async () => ({ data: null, error: { message: 'rpc broke' } }));
-  ctx.asimovSearchMock.mock.mockImplementation(async () => ([{ title: 'Fallback', metadata: { slug: 'asimov' } }]));
-  ctx.asimovMapMock.mock.mockImplementation(() => ([{ slug: 'asimov', name: 'Fallback', _asimov_score: 0.8 }]));
-  ctx.enqueueResponse({ data: [{ slug: 'asimov', name: 'Fallback' }] });
+  ctx.enqueueResponse({ data: [{ slug: 'keyword', name: 'Keyword Result', content: 'Match' }] });
 
   const results = await ctx.search('Museums in Paris', buildFilters({ city: 'Paris' }));
 
   assert.equal(results.length, 1);
-  assert.equal(results[0].slug, 'asimov');
+  assert.equal(results[0].slug, 'keyword');
+  // Changed expectation: Asimov integration was removed, now goes directly to keyword search
   assert.equal(ctx.metricMock.mock.calls.length, 2);
   assert.equal(ctx.metricMock.mock.calls[0].arguments[0], 'vector_failure');
-  assert.equal(ctx.metricMock.mock.calls[1].arguments[1].strategy, 'asimov');
-  assert.equal(ctx.asimovSearchMock.mock.calls.length, 1);
+  assert.equal(ctx.metricMock.mock.calls[1].arguments[1].strategy, 'keyword');
+  assert.equal(ctx.asimovSearchMock.mock.calls.length, 0); // Asimov no longer called
 });
 
 test('falls back to keyword search when Asimov has no data', async () => {
   const ctx = await createTestContext();
   ctx.embedMock.mock.mockImplementation(async () => [0.4, 0.2]);
   ctx.rpcMock.mock.mockImplementation(async () => ({ data: null, error: { message: 'rpc broke' } }));
-  ctx.asimovSearchMock.mock.mockImplementation(async () => null);
   ctx.enqueueResponse({ data: [{ slug: 'keyword', name: 'Keyword Result', content: 'Match' }] });
 
   const results = await ctx.search('Hidden bars', buildFilters({ category: 'Bar', open_now: true }));
 
   assert.equal(results.length, 1);
   assert.equal(results[0].slug, 'keyword');
+  // Changed expectation: With Asimov removed, we now get 2 metric calls (vector_failure + vector_fallback)
   assert.equal(ctx.metricMock.mock.calls.length, 2);
-  assert.equal(ctx.metricMock.mock.calls[1].arguments[0], 'vector_fallback');
+  assert.equal(ctx.metricMock.mock.calls[0].arguments[0], 'vector_failure');
   assert.equal(ctx.metricMock.mock.calls[1].arguments[1].strategy, 'keyword');
-  assert.equal(ctx.asimovSearchMock.mock.calls.length, 1);
+  assert.equal(ctx.asimovSearchMock.mock.calls.length, 0); // Asimov no longer called
 });
