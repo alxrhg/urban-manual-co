@@ -1178,6 +1178,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         )}
       </div>
     );
+    }
 
   return (
     <>
