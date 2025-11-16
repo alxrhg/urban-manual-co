@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -163,16 +164,18 @@ export default function RootLayout({
           <SplashScreen />
           <TRPCProvider>
               <AuthProvider>
-                <AdminEditModeProvider>
-                  <ItineraryProvider>
-                    <Header />
-                    <main className="min-h-screen page-transition">
-                      {children}
-                    </main>
-                    <Footer />
-                    <CookieConsent />
-                  </ItineraryProvider>
-                </AdminEditModeProvider>
+                <Suspense fallback={null}>
+                  <AdminEditModeProvider>
+                    <ItineraryProvider>
+                      <Header />
+                      <main className="min-h-screen page-transition">
+                        {children}
+                      </main>
+                      <Footer />
+                      <CookieConsent />
+                    </ItineraryProvider>
+                  </AdminEditModeProvider>
+                </Suspense>
               </AuthProvider>
           </TRPCProvider>
           <ToastContainer />
