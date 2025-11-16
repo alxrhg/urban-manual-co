@@ -162,14 +162,14 @@ export default function RootLayout({
           <SplashScreen />
           <TRPCProvider>
             <AuthProvider>
-              <ItineraryProvider>
-                <Header />
-                <main className="min-h-screen page-transition">
+              <Header />
+              <main className="min-h-screen page-transition">
+                <ItineraryProvider>
                   {children}
-                </main>
-                <Footer />
-                <CookieConsent />
-              </ItineraryProvider>
+                </ItineraryProvider>
+              </main>
+              <Footer />
+              <CookieConsent />
             </AuthProvider>
           </TRPCProvider>
           <ToastContainer />
