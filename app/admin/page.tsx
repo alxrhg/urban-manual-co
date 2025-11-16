@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Plus, X } from "lucide-react";
 import { stripHtmlTags } from "@/lib/stripHtmlTags";
@@ -10,10 +10,9 @@ import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
-import DiscoverTab from '@/components/admin/DiscoverTab';
-import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
-import ReindexTab from '@/components/admin/ReindexTab';
 import type { Destination } from '@/types/destination';
+import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { capitalizeCity } from '@/lib/utils';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -83,7 +82,7 @@ function DestinationForm({
       if (destination.parent_destination_id) {
         (async () => {
           try {
-            const supabase = createClient();
+            const supabase = createClient({ skipValidation: true });
             const { data } = await supabase
               .from('destinations')
               .select('id, slug, name, city')
@@ -131,7 +130,7 @@ function DestinationForm({
   const searchParentDestinations = async (query: string) => {
     setIsSearchingParent(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       const { data, error } = await supabase
         .from('destinations')
         .select('id, slug, name, city, category')
@@ -198,7 +197,7 @@ function DestinationForm({
       formDataToSend.append('file', imageFile);
       formDataToSend.append('slug', formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -249,7 +248,7 @@ function DestinationForm({
 
     setFetchingGoogle(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -355,7 +354,7 @@ function DestinationForm({
                     setFetchingGoogle(true);
                     try {
                       // Get user email from session
-                      const supabase = createClient();
+                      const supabase = createClient({ skipValidation: true });
                       const { data: { session } } = await supabase.auth.getSession();
                       const token = session?.access_token;
                       if (!token) {
@@ -742,166 +741,94 @@ function DestinationForm({
           )}
         </button>
       </div>
-    </form>
+      </form>
   );
 }
 
 export default function AdminPage() {
-  const router = useRouter();
   const toast = useToast();
+  const {
+    isEditMode: inlineEditModeEnabled,
+    enableEditMode: enableInlineEditMode,
+    disableEditMode: disableInlineEditMode,
+  } = useAdminEditMode();
   const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
-  const [user, setUser] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [destinationList, setDestinationList] = useState<any[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
-  const [listOffset, setListOffset] = useState(0);
-  
-  // Regenerate content state
-  const [regenerateRunning, setRegenerateRunning] = useState(false);
-  const [regenerateResult, setRegenerateResult] = useState<any>(null);
-  const [regenerateSlug, setRegenerateSlug] = useState('');
-  const [regenerateLimit, setRegenerateLimit] = useState(10);
-  const [regenerateOffset, setRegenerateOffset] = useState(0);
+  const [stats, setStats] = useState({
+    total: 0,
+    enriched: 0,
+    michelin: 0,
+    crown: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
   const [listSearchQuery, setListSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'destinations' | 'analytics' | 'searches' | 'discover' | 'reindex'>('destinations');
 
-  // Check for tab query parameter on mount
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
-    if (tab && ['destinations', 'analytics', 'searches', 'discover', 'reindex'].includes(tab)) {
-      setActiveTab(tab as any);
-    }
-  }, []);
+  const loadAdminStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const supabase = createClient({ skipValidation: true });
 
-  // Searches state
-  const [searchLogs, setSearchLogs] = useState<any[]>([]);
-  const [loadingSearches, setLoadingSearches] = useState(false);
+      const totalPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true });
+      const enrichedPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true })
+        .not('google_place_id', 'is', null);
+      const michelinPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true })
+        .gt('michelin_stars', 0);
+      const crownPromise = supabase
+        .from('destinations')
+        .select('id', { count: 'exact', head: true })
+        .eq('crown', true);
 
-  // Check authentication
-  useEffect(() => {
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
-    
-    async function checkAuth() {
-      try {
-        // Set a timeout to prevent infinite loading
-        timeoutId = setTimeout(() => {
-          if (isMounted) {
-            console.warn('[Admin] Auth check timed out after 10 seconds');
-            setAuthChecked(true);
-            setIsAdmin(false);
-          }
-        }, 10000);
-        
-        // Use skipValidation to bypass strict validation that might be too restrictive
-        // This allows admin page to work even if validation fails due to strict checks
-        const supabase = createClient({ skipValidation: true });
-        
-        // Try to get session - this will fail if using placeholder client
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        clearTimeout(timeoutId);
+      const [totalRes, enrichedRes, michelinRes, crownRes] = await Promise.all([
+        totalPromise,
+        enrichedPromise,
+        michelinPromise,
+        crownPromise,
+      ]);
 
-        if (!isMounted) return;
-
-        if (error) {
-          console.error('[Admin] Auth error:', error);
-          
-          // Check if this is a placeholder client error (invalid config)
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-          const isPlaceholderError = error.message?.includes('placeholder') || 
-                                    error.message?.includes('Invalid API key') ||
-                                    supabaseUrl.includes('placeholder') ||
-                                    !supabaseUrl;
-          
-          if (isPlaceholderError) {
-            console.error('[Admin] Invalid Supabase configuration detected');
-          }
-          
-          if (isMounted) {
-            setAuthChecked(true);
-            setIsAdmin(false);
-            // Redirect to account page on auth error
-            setTimeout(() => {
-              if (isMounted) {
-                router.push('/account');
-              }
-            }, 1000);
-          }
-          return;
-        }
-
-        if (!session) {
-          if (isMounted) {
-            setAuthChecked(true);
-            setIsAdmin(false);
-            router.push('/account');
-          }
-          return;
-        }
-
-        const role = (session.user.app_metadata as Record<string, any> | null)?.role;
-        const admin = role === 'admin';
-        
-        if (isMounted) {
-          setUser(session.user);
-          setIsAdmin(admin);
-          setAuthChecked(true);
-          
-          if (!admin) {
-            // Small delay before redirect to show access denied message
-            setTimeout(() => {
-              if (isMounted) {
-                router.push('/account');
-              }
-            }, 1500);
-          }
-        }
-      } catch (error) {
-        clearTimeout(timeoutId);
-        console.error('[Admin] Error checking auth:', error);
-        if (isMounted) {
-          setAuthChecked(true);
-          setIsAdmin(false);
-          // Redirect on error after showing message
-          setTimeout(() => {
-            if (isMounted) {
-              router.push('/account');
-            }
-          }, 2000);
+      const responses = [totalRes, enrichedRes, michelinRes, crownRes];
+      for (const res of responses) {
+        if (res.error) {
+          throw res.error;
         }
       }
-    }
 
-    checkAuth();
-    
-    return () => {
-      isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [router]);
+      setStats({
+        total: totalRes.count ?? 0,
+        enriched: enrichedRes.count ?? 0,
+        michelin: michelinRes.count ?? 0,
+        crown: crownRes.count ?? 0,
+      });
+    } catch (error) {
+      console.error('[Admin] Error loading stats:', error);
+      toast.error('Failed to load admin stats');
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [toast]);
+
+  const handleLaunchEditMode = useCallback((path: string) => {
+    if (typeof window === 'undefined') return;
+    const formattedPath = path.startsWith('/') ? path : `/${path}`;
+    enableInlineEditMode();
+    const url = formattedPath.includes('?') ? `${formattedPath}&edit=1` : `${formattedPath}?edit=1`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [enableInlineEditMode]);
 
   // Load destination list once on mount (client-side filtering/sorting handled by TanStack Table)
   const loadDestinationList = useCallback(async () => {
-    if (!isAdmin || !authChecked) {
-      console.log('[Admin] Skipping load - not admin or auth not checked', { isAdmin, authChecked });
-      return;
-    }
-    
-    console.log('[Admin] Starting loadDestinationList...', { listSearchQuery, listOffset });
     setIsLoadingList(true);
     try {
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       
       // Test connection first
       const { data: testData, error: testError } = await supabase
@@ -913,8 +840,6 @@ export default function AdminPage() {
         throw new Error(`Database connection failed: ${testError.message}`);
       }
       
-      console.log('[Admin] Connection test successful');
-      
       let query = supabase
         .from('destinations')
         .select('slug, name, city, category, description, content, image, google_place_id, formatted_address, rating, michelin_stars, crown')
@@ -925,7 +850,7 @@ export default function AdminPage() {
         query = query.or(`name.ilike.%${listSearchQuery}%,city.ilike.%${listSearchQuery}%,slug.ilike.%${listSearchQuery}%,category.ilike.%${listSearchQuery}%`);
       }
 
-      const { data, error } = await query.range(listOffset, listOffset + 19);
+        const { data, error } = await query.limit(200);
 
       if (error) {
         console.error('[Admin] Supabase error loading destinations:', error);
@@ -939,9 +864,7 @@ export default function AdminPage() {
         setDestinationList([]);
         return;
       }
-      
-      console.log('[Admin] Raw data received:', data?.length || 0, 'items');
-      
+       
       // Sanitize data to prevent JSON parse errors from malformed content
       const sanitizedData = (data || []).map((item: any) => {
         try {
@@ -962,7 +885,6 @@ export default function AdminPage() {
         }
       });
       
-      console.log('[Admin] Loaded destinations:', sanitizedData.length);
       setDestinationList(sanitizedData);
       
       if (sanitizedData.length === 0 && !listSearchQuery.trim()) {
@@ -980,51 +902,18 @@ export default function AdminPage() {
     } finally {
       setIsLoadingList(false);
     }
-  }, [isAdmin, authChecked, listSearchQuery, listOffset, toast]);
-
-  const loadSearchLogs = useCallback(async () => {
-    setLoadingSearches(true);
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('user_interactions')
-        .select('id, created_at, interaction_type, user_id, metadata')
-        .eq('interaction_type', 'search')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      setSearchLogs(data || []);
-    } catch (error) {
-      console.error('[Admin] Error loading search logs:', error);
-      toast.error('Failed to load search logs');
-      setSearchLogs([]);
-    } finally {
-      setLoadingSearches(false);
-    }
-  }, [toast]);
+    }, [listSearchQuery, toast]);
 
   // Load destinations when admin/auth is ready, or when search/offset changes
   useEffect(() => {
-    if (isAdmin && authChecked) {
-      // Reset offset when search query changes
-      if (listSearchQuery !== '' && listOffset !== 0) {
-        setListOffset(0);
-        return; // Will trigger another effect run with offset=0
-      }
-      loadDestinationList();
-    }
-  }, [isAdmin, authChecked, listSearchQuery, listOffset, loadDestinationList]);
+    loadDestinationList();
+  }, [loadDestinationList]);
+
+  useEffect(() => {
+    loadAdminStats();
+  }, [loadAdminStats]);
 
   // Load data when tab changes
-  useEffect(() => {
-    if (!isAdmin || !authChecked) return;
-
-    if (activeTab === 'searches' && searchLogs.length === 0) {
-      loadSearchLogs();
-    }
-  }, [activeTab, isAdmin, authChecked, searchLogs.length, loadSearchLogs]);
-
   // Prevent body scroll when drawer is open
   useEffect(() => {
     if (showCreateModal) {
@@ -1045,17 +934,18 @@ export default function AdminPage() {
       confirmText: 'Delete',
       cancelText: 'Cancel',
       onConfirm: async () => {
-        try {
-          const supabase = createClient();
-          const { error } = await supabase
-            .from('destinations')
-            .delete()
-            .eq('slug', slug);
+          try {
+            const supabase = createClient({ skipValidation: true });
+            const { error } = await supabase
+              .from('destinations')
+              .delete()
+              .eq('slug', slug);
 
-          if (error) throw error;
+            if (error) throw error;
 
-          // Reload the list after deletion
-          await loadDestinationList();
+            // Reload the list after deletion
+            await loadDestinationList();
+            await loadAdminStats();
 
           toast.success(`Successfully deleted "${name}"`);
         } catch (e: any) {
@@ -1066,120 +956,116 @@ export default function AdminPage() {
     });
   };
 
-  const handleSearchDestinations = async () => {
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('slug, name, city')
-        .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`)
-        .limit(10);
-      if (error) throw error;
-      setSearchResults(data || []);
-    } catch (e: any) {
-      setSearchResults([]);
-      console.error('Search error:', e);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  const inlineCitySlug = destinationList[0]?.city || 'tokyo';
+  const inlineCityLabel = capitalizeCity(inlineCitySlug);
 
   // Show loading state
-  if (!authChecked) {
-    return (
-      <main className="px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
-        <div className="container mx-auto flex flex-col items-center justify-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Checking authentication...</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <main className="px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
-        <div className="container mx-auto">
-          <div className="text-center max-w-md mx-auto">
-            <h1 className="text-2xl font-light mb-4 dark:text-white">Access Denied</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              You need admin privileges to access this page.
-            </p>
-            <button
-              onClick={() => router.push('/account')}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
-            >
-              Back to Account
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="px-6 md:px-10 py-20 min-h-screen">
-      <div className="container mx-auto">
-        {/* Header - Matches account page spacing and style */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Admin</h1>
+    <div className="space-y-10 text-sm">
+      <section className="space-y-10">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Stats</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Live counts pulled directly from Supabase.
+          </p>
+          <dl className="space-y-1">
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Destinations</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.total.toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Google enriched</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.enriched.toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Michelin spots</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.michelin.toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
+              <dt className="text-gray-500 dark:text-gray-400">Crown picks</dt>
+              <dd className="font-mono">{statsLoading ? '…' : stats.crown.toLocaleString()}</dd>
+            </div>
+          </dl>
+          <button
+            onClick={() => loadAdminStats()}
+            disabled={statsLoading}
+            className="mt-2 inline-flex items-center gap-2 text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 disabled:opacity-50"
+          >
+            <Loader2 className={`h-3 w-3 ${statsLoading ? 'animate-spin' : 'hidden'}`} />
+            Refresh stats
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Inline editing</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Toggle edit affordances on the live site. Changes sync straight to Supabase.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs">
             <button
-              onClick={() => router.push('/account')}
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              onClick={() => handleLaunchEditMode('/')}
+              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
             >
-              Back to Account
+              Open homepage
             </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
-            <span className="text-xs bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full font-medium">Admin</span>
-          </div>
-        </div>
-
-        {/* Tab Navigation - Matches account page style */}
-        <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs border-b border-gray-200 dark:border-gray-800 pb-3">
-            {['destinations', 'analytics', 'searches', 'discover', 'reindex'].map((tab) => (
+            <button
+              onClick={() => handleLaunchEditMode(`/city/${inlineCitySlug}`)}
+              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+            >
+              Edit {inlineCityLabel}
+            </button>
+            {inlineEditModeEnabled ? (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={`transition-all pb-1 ${
-                  activeTab === tab
-                    ? "font-medium text-black dark:text-white border-b-2 border-black dark:border-white"
-                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                }`}
+                onClick={disableInlineEditMode}
+                className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                Turn off
               </button>
-            ))}
+            ) : (
+              <button
+                onClick={enableInlineEditMode}
+                className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+              >
+                Enable now
+              </button>
+            )}
+            <Link
+              href="/admin/discover"
+              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+            >
+              Go to Discover
+            </Link>
           </div>
+          {inlineEditModeEnabled && (
+            <p className="text-xs text-amber-800 dark:text-amber-200 italic">
+              Edit mode is active. Use the edit badge on any destination card to make changes in place.
+            </p>
+          )}
         </div>
 
-        {/* Destinations Tab */}
-        {activeTab === 'destinations' && (
-          <div className="fade-in space-y-12">
-
-        {/* Destination List */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Destinations</h2>
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Destinations</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Search, edit, or delete any record in the catalog.
+              </p>
+            </div>
             <button
               onClick={() => {
                 setEditingDestination(null);
                 setShowCreateModal(true);
               }}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center gap-2"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-100"
             >
               <Plus className="h-4 w-4" />
-              Add Place
+              Add place
             </button>
           </div>
           {isLoadingList ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Loading destinations…
             </div>
           ) : (
             <DataTable
@@ -1192,189 +1078,100 @@ export default function AdminPage() {
               )}
               data={destinationList}
               searchQuery={listSearchQuery}
-              onSearchChange={(query) => {
-                setListSearchQuery(query);
-              }}
+              onSearchChange={setListSearchQuery}
               isLoading={isLoadingList}
             />
           )}
         </div>
-        </div>
-        )}
+      </section>
 
-
-        {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
-          <div className="fade-in">
-            <AnalyticsDashboard variant="embedded" />
-          </div>
-        )}
-
-        {/* Searches Tab */}
-        {activeTab === 'searches' && (
-          <div className="fade-in">
-            {loadingSearches ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : searchLogs.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">No search logs available</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-left border-b border-gray-200 dark:border-gray-800">
-                      <th className="py-2 pr-4 font-medium text-gray-500">Time</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">User</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Query</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">City</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Category</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Count</th>
-                      <th className="py-2 pr-4 font-medium text-gray-500">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchLogs.map((log) => {
-                      const q = log.metadata?.query || '';
-                      const intent = log.metadata?.intent || {};
-                      const filters = log.metadata?.filters || {};
-                      const count = log.metadata?.count ?? '';
-                      const source = log.metadata?.source || '';
-                      return (
-                        <tr key={log.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
-                          <td className="py-2 pr-4">{log.user_id ? log.user_id.substring(0, 8) : 'anon'}</td>
-                          <td className="py-2 pr-4 max-w-[360px] truncate" title={q}>{q}</td>
-                          <td className="py-2 pr-4">{intent.city || filters.city || ''}</td>
-                          <td className="py-2 pr-4">{intent.category || filters.category || ''}</td>
-                          <td className="py-2 pr-4">{count}</td>
-                          <td className="py-2 pr-4">{source}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Discover Tab */}
-        {activeTab === 'discover' && (
-          <div className="fade-in">
-            <DiscoverTab />
-          </div>
-        )}
-
-        {/* Reindex Tab */}
-        {activeTab === 'reindex' && (
-          <div className="fade-in">
-            <ReindexTab />
-          </div>
-        )}
-
-        {/* Create/Edit Drawer - Outside tabs, always available */}
-        {showCreateModal && (
-          <>
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black/50 z-40 transition-opacity"
-              onClick={() => {
-                setShowCreateModal(false);
-                setEditingDestination(null);
-              }}
-            />
-
-            {/* Drawer */}
-            <div
-              className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-                showCreateModal ? 'translate-x-0' : 'translate-x-full'
-              } overflow-y-auto`}
-            >
-              {/* Header */}
-              <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-bold">
-                  {editingDestination ? 'Edit Destination' : 'Create New Destination'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setEditingDestination(null);
-                  }}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                <DestinationForm
-                  destination={editingDestination}
-                  toast={toast}
-                  onSave={async (data) => {
-                    setIsSaving(true);
-                    try {
-                      // Special rules: Places starting with "apple" or "aesop"/"aēsop" should be Shopping (retail stores)
-                      if (data.name) {
-                        const nameLower = data.name.toLowerCase();
-                        if (nameLower.startsWith('apple') || nameLower.startsWith('aesop') || nameLower.startsWith('aēsop')) {
-                          data.category = 'Shopping';
-                        }
-                      }
-                      // Ensure Michelin-starred destinations are categorized as Restaurant
-                      if (data.michelin_stars && data.michelin_stars > 0) {
-                        data.category = 'Restaurant';
-                      }
-
-                      const supabase = createClient();
-                      if (editingDestination) {
-                        // Update existing
-                        const { error } = await supabase
-                          .from('destinations')
-                          .update(data)
-                          .eq('slug', editingDestination.slug);
-
-                        if (error) throw error;
-                      } else {
-                        // Create new - generate slug if not provided
-                        if (!data.slug && data.name) {
-                          data.slug = data.name.toLowerCase()
-                            .replace(/[^a-z0-9]+/g, '-')
-                            .replace(/(^-|-$)/g, '');
-                        }
-
-                        const { error } = await supabase
-                          .from('destinations')
-                          .insert([data] as any);
-
-                        if (error) throw error;
-                      }
-
-                      setShowCreateModal(false);
-                      setEditingDestination(null);
-                      await loadDestinationList();
-                      toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
-                    } catch (e: any) {
-                      toast.error(`Error: ${e.message}`);
-                    } finally {
-                      setIsSaving(false);
-                    }
-                  }}
-                  onCancel={() => {
-                    setShowCreateModal(false);
-                    setEditingDestination(null);
-                  }}
-                  isSaving={isSaving}
-                />
-              </div>
+      {showCreateModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+            onClick={() => {
+              setShowCreateModal(false);
+              setEditingDestination(null);
+            }}
+          />
+          <div
+            className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+              showCreateModal ? 'translate-x-0' : 'translate-x-full'
+            } overflow-y-auto`}
+          >
+            <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold">
+                {editingDestination ? 'Edit Destination' : 'Create New Destination'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditingDestination(null);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-          </>
-        )}
+            <div className="p-6">
+              <DestinationForm
+                destination={editingDestination}
+                toast={toast}
+                onSave={async (data) => {
+                  setIsSaving(true);
+                  try {
+                    if (data.name) {
+                      const nameLower = data.name.toLowerCase();
+                      if (nameLower.startsWith('apple') || nameLower.startsWith('aesop') || nameLower.startsWith('aēsop')) {
+                        data.category = 'Shopping';
+                      }
+                    }
+                    if (data.michelin_stars && data.michelin_stars > 0) {
+                      data.category = 'Restaurant';
+                    }
 
-        {/* Confirm Dialog */}
-        <ConfirmDialogComponent />
-      </div>
-    </main>
+                    const supabase = createClient();
+                    if (editingDestination) {
+                      const { error } = await supabase
+                        .from('destinations')
+                        .update(data)
+                        .eq('slug', editingDestination.slug);
+                      if (error) throw error;
+                    } else {
+                      if (!data.slug && data.name) {
+                        data.slug = data.name.toLowerCase()
+                          .replace(/[^a-z0-9]+/g, '-')
+                          .replace(/(^-|-$)/g, '');
+                      }
+                      const { error } = await supabase
+                        .from('destinations')
+                        .insert([data] as any);
+                      if (error) throw error;
+                    }
+
+                    setShowCreateModal(false);
+                    setEditingDestination(null);
+                    await loadDestinationList();
+                    await loadAdminStats();
+                    toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
+                  } catch (e: any) {
+                    toast.error(`Error: ${e.message}`);
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+                onCancel={() => {
+                  setShowCreateModal(false);
+                  setEditingDestination(null);
+                }}
+                isSaving={isSaving}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      <ConfirmDialogComponent />
+    </div>
   );
 }
