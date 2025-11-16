@@ -483,21 +483,21 @@ export default function Account() {
               </div>
               {stats.curationCompletionPercentage < 100 && (
                 <p className="text-xs text-gray-400 mt-3">
-                  {stats.curationCompletionPercentage < 10
-                    ? "Just getting started! Keep exploring."
-                    : stats.curationCompletionPercentage < 25
-                    ? "Great start! Many more places to discover."
-                    : stats.curationCompletionPercentage < 50
-                    ? "Halfway there! You're doing amazing."
-                    : stats.curationCompletionPercentage < 75
-                    ? "Impressive! You're a seasoned explorer."
-                    : "Almost there! You've explored most of our curation."}
+                    {stats.curationCompletionPercentage < 10
+                      ? 'Just getting started! Keep exploring.'
+                      : stats.curationCompletionPercentage < 25
+                      ? 'Great start! Many more places to discover.'
+                      : stats.curationCompletionPercentage < 50
+                      ? 'Halfway there! You’re doing amazing.'
+                      : stats.curationCompletionPercentage < 75
+                      ? 'Impressive! You’re a seasoned explorer.'
+                      : 'Almost there! You’ve explored most of our curation.'}
                 </p>
               )}
               {stats.curationCompletionPercentage === 100 && (
-                <p className="text-xs text-gray-400 mt-3">
-                  🎉 Incredible! You've visited every place in our curation!
-                </p>
+                  <p className="text-xs text-gray-400 mt-3">
+                    🎉 Incredible! You’ve visited every place in our curation!
+                  </p>
               )}
             </div>
 

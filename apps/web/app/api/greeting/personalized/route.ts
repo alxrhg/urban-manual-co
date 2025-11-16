@@ -139,9 +139,9 @@ The greeting should be:
 - NO emojis in the greeting text itself (emojis will be added separately)
 
 Examples:
-- "Good morning! Still planning that Tokyo trip? I have some new Michelin spots to show you."
-- "Welcome back! Ready to continue exploring romantic spots in Paris?"
-- "Evening! You're on a 5-day streak. What adventure can I help with today?"
+  - "Good morning! Still planning that Tokyo trip? I have some new Michelin spots to show you."
+  - "Welcome back! Ready to continue exploring romantic spots in Paris?"
+  - "Evening! You’re on a 5-day streak. What adventure can I help with today?"
 
 Generate ONE greeting:`;
 

@@ -25,11 +25,11 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
           />
           <AccountPrivacyManager />
         </div>
-      ) : (
-        <div className="text-center py-8">
-          <p className="text-sm text-gray-600 dark:text-gray-400">You're not signed in</p>
-        </div>
-      )}
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-600 dark:text-gray-400">You&rsquo;re not signed in</p>
+          </div>
+        )}
     </div>
   );
 

@@ -18,9 +18,9 @@ export default function SubmitPage() {
 
         <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-4">How to Submit</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
-            We're always looking to add new destinations to our guide. To submit a place:
-          </p>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              We&rsquo;re always looking to add new destinations to our guide. To submit a place:
+            </p>
           
           <ol className="list-decimal pl-6 space-y-4 text-gray-700 dark:text-gray-300">
             <li>
@@ -36,7 +36,7 @@ export default function SubmitPage() {
         </div>
 
         <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">What We're Looking For</h2>
+            <h2 className="text-2xl font-semibold mb-4">What We&rsquo;re Looking For</h2>
           <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
             <li>Restaurants, cafes, bars, and dining experiences</li>
             <li>Hotels, accommodations, and unique stays</li>

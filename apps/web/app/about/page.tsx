@@ -61,9 +61,9 @@ export default function AboutPage() {
 
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Get Involved</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                We're always looking to grow our collection. You can help by:
-              </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                  We&rsquo;re always looking to grow our collection. You can help by:
+                </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <span className="text-gray-400 dark:text-gray-600">•</span>

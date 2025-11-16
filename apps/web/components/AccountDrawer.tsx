@@ -277,17 +277,17 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">You're not signed in</p>
-              <button
-                onClick={() => handleNavigate('/auth/login')}
-                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
-              >
-                Sign In
-              </button>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">You&rsquo;re not signed in</p>
+                <button
+                  onClick={() => handleNavigate('/auth/login')}
+                  className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                >
+                  Sign In
+                </button>
+              </div>
+            )}
     </div>
   );
 

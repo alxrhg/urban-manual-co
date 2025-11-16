@@ -45,11 +45,11 @@ export default function NewsletterPage() {
 
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Coming Soon</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
-                Our newsletter is currently in development. We're working on creating something special for our subscribers.
-              </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
+                  Our newsletter is currently in development. We&rsquo;re working on creating something special for our subscribers.
+                </p>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                In the meantime, you can stay connected by following us or checking back soon. We'll announce when the newsletter is ready!
+                  In the meantime, you can stay connected by following us or checking back soon. We&rsquo;ll announce when the newsletter is ready!
               </p>
             </div>
 

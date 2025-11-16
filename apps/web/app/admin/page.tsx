@@ -422,9 +422,9 @@ function DestinationForm({
                 )}
               </button>
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              💡 Type to see Google Places suggestions, or click "Fetch Details" to auto-fill all fields
-            </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                💡 Type to see Google Places suggestions, or click &quot;Fetch Details&quot; to auto-fill all fields
+              </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

@@ -244,7 +244,7 @@ function calculateStreak(sessions: any[]): number {
 export function getJourneyGreetingMessage(journey: JourneyInsights): string | null {
   // Exploration streak
   if (journey.explorationStreak && journey.explorationStreak >= 3) {
-    return `${journey.explorationStreak} days exploring! You're on a roll 🔥`;
+    return `${journey.explorationStreak} days exploring! You’re on a roll 🔥`;
   }
 
   // Recent pattern
