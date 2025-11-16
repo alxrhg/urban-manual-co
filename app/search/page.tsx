@@ -311,7 +311,6 @@ function SearchPageContent() {
           }}
         />
       </div>
-      </div>
 
           {(() => {
             const startIndex = (currentPage - 1) * itemsPerPage;
