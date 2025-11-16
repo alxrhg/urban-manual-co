@@ -99,8 +99,8 @@ export interface ItineraryItemNotes {
   city?: string;
   category?: string;
   // Flight-specific fields
-  from?: any;
-  to?: any;
+  from?: string | { airport?: string; city?: string };
+  to?: string | { airport?: string; city?: string };
   airline?: string;
   flightNumber?: string;
   departureTime?: string;

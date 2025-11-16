@@ -124,13 +124,14 @@ export async function testNLU() {
           confidence: result.confidence,
           success: result.confidence > 0.5,
         });
-      } catch (err: any) {
-        console.error(`Failed: ${query}`, err.message);
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error(`Failed: ${query}`, error.message);
         results.push({
           query,
           category,
           success: false,
-          error: err.message,
+          error: error.message,
         });
       }
     }

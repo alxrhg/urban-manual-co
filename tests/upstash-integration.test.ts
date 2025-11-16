@@ -6,6 +6,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import type { NextRequest } from 'next/server';
 
 // Mock environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
@@ -14,16 +15,21 @@ process.env.UPSTASH_VECTOR_REST_URL = 'https://test.upstash.io';
 process.env.UPSTASH_VECTOR_REST_TOKEN = 'test-token';
 process.env.OPENAI_API_KEY = 'sk-test';
 
+// Helper to create a mock request that satisfies NextRequest type
+function createMockRequest(jsonData: unknown): Partial<NextRequest> {
+  return {
+    json: async () => jsonData,
+  } as Partial<NextRequest>;
+}
+
 test('semantic search route validates query parameter', async () => {
   // Test that the route requires a query parameter
-  const mockRequest = {
-    json: async () => ({ limit: 10 }),
-  };
+  const mockRequest = createMockRequest({ limit: 10 });
 
   // Import the route handler
   const { POST } = await import('../app/api/search/semantic/route');
   
-  const response = await POST(mockRequest as any);
+  const response = await POST(mockRequest as NextRequest);
   const data = await response.json();
 
   assert.equal(response.status, 400);
@@ -38,13 +44,11 @@ test('semantic search route handles empty results', async () => {
 });
 
 test('reindex route validates mode parameter', async () => {
-  const mockRequest = {
-    json: async () => ({ mode: 'invalid' }),
-  };
+  const mockRequest = createMockRequest({ mode: 'invalid' });
 
   const { POST } = await import('../app/api/admin/reindex-destinations/route');
   
-  const response = await POST(mockRequest as any);
+  const response = await POST(mockRequest as NextRequest);
   const data = await response.json();
 
   assert.equal(response.status, 400);
@@ -56,13 +60,11 @@ test('geocode job validates Google API key', async () => {
   const originalKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
   delete process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
-  const mockRequest = {
-    json: async () => ({ batchSize: 10 }),
-  };
+  const mockRequest = createMockRequest({ batchSize: 10 });
 
   const { POST } = await import('../app/api/jobs/geocode-missing/route');
   
-  const response = await POST(mockRequest as any);
+  const response = await POST(mockRequest as NextRequest);
   const data = await response.json();
 
   assert.equal(response.status, 500);
@@ -79,13 +81,11 @@ test('generate descriptions job validates Gemini API key', async () => {
   delete process.env.GEMINI_API_KEY;
   delete process.env.GOOGLE_AI_API_KEY;
 
-  const mockRequest = {
-    json: async () => ({ batchSize: 5 }),
-  };
+  const mockRequest = createMockRequest({ batchSize: 5 });
 
   const { POST } = await import('../app/api/jobs/generate-descriptions/route');
   
-  const response = await POST(mockRequest as any);
+  const response = await POST(mockRequest as NextRequest);
   const data = await response.json();
 
   assert.equal(response.status, 500);
@@ -131,13 +131,11 @@ test('embedding client uses ML service URL from env', async () => {
 });
 
 test('concierge API validates query parameter', async () => {
-  const mockRequest = {
-    json: async () => ({ limit: 5 }),
-  };
+  const mockRequest = createMockRequest({ limit: 5 });
 
   const { POST } = await import('../app/api/concierge/query/route');
   
-  const response = await POST(mockRequest as any);
+  const response = await POST(mockRequest as NextRequest);
   const data = await response.json();
 
   assert.equal(response.status, 400);
@@ -145,21 +143,18 @@ test('concierge API validates query parameter', async () => {
 });
 
 test('concierge API accepts valid request structure', async () => {
-  const mockRequest = {
-    json: async () => ({
-      query: 'romantic restaurants',
-      userContext: {
-        budget: 'luxury',
-        travelStyle: 'romantic',
-      },
-      limit: 5,
-      includeExternal: false,
-    }),
+  const requestData = {
+    query: 'romantic restaurants',
+    userContext: {
+      budget: 'luxury',
+      travelStyle: 'romantic',
+    },
+    limit: 5,
+    includeExternal: false,
   };
 
   // This test validates the request structure
   // Full integration would require mocking vector DB and Supabase
-  const requestData = await mockRequest.json();
   
   assert.equal(typeof requestData.query, 'string');
   assert.equal(requestData.limit, 5);

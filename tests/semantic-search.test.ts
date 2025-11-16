@@ -9,26 +9,44 @@ const semanticModulePromise = import('../lib/search/semanticSearch');
 type SemanticSearchModule = typeof import('../lib/search/semanticSearch');
 type SearchFn = ReturnType<SemanticSearchModule['createSemanticBlendSearch']>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QueryResponse = { data?: any[]; error?: any };
+
+interface QueryBuilder {
+  select: () => QueryBuilder;
+  ilike: () => QueryBuilder;
+  eq: () => QueryBuilder;
+  or: () => QueryBuilder;
+  limit: () => QueryBuilder;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  then: (resolve: (value: { data?: any[]; error?: any }) => any) => Promise<{ data?: any[]; error?: any }>;
+}
 
 type TestContext = {
   search: SearchFn;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   embedMock: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rpcMock: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fromMock: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   asimovSearchMock: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   asimovMapMock: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metricMock: any;
   enqueueResponse: (response: QueryResponse) => void;
 };
 
-function createQueryBuilder(response?: QueryResponse) {
-  const result: any = {
+function createQueryBuilder(response?: QueryResponse): QueryBuilder {
+  const result: QueryBuilder = {
     select: () => result,
     ilike: () => result,
     eq: () => result,
     or: () => result,
     limit: () => result,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     then: (resolve: (value: { data?: any[]; error?: any }) => any) =>
       Promise.resolve(resolve({ data: response?.data ?? [], error: response?.error ?? null })),
   };
@@ -44,19 +62,26 @@ async function createTestContext(): Promise<TestContext> {
     const response = responses.shift() ?? { data: [] };
     return createQueryBuilder(response);
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const asimovSearchMock = mock.fn(async () => null as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const asimovMapMock = mock.fn((results: any[]) => results);
   const metricMock = mock.fn(async () => {});
 
   const { createSemanticBlendSearch } = await semanticModulePromise;
   const search = createSemanticBlendSearch({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     embed: embedMock as any,
     supabaseClient: {
       rpc: rpcMock,
       from: fromMock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     asimovSearch: asimovSearchMock as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     asimovMapper: asimovMapMock as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metricTracker: metricMock as any,
   });
 
