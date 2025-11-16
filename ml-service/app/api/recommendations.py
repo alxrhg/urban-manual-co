@@ -6,14 +6,23 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.models.collaborative_filtering import get_model, CollaborativeFilteringModel
+from app.models.content_based import ContentBasedModel
 from app.utils.database import get_db_connection
 from app.utils.logger import get_logger
 from app.config import get_settings
+import pandas as pd
 
 router = APIRouter()
 logger = get_logger(__name__)
 settings = get_settings()
 
+content_model = ContentBasedModel()
+
+@router.on_event("startup")
+async def load_content_model():
+    with get_db_connection() as conn:
+        data = pd.read_sql("SELECT id, slug, name, city, category, tags, description FROM destinations", conn)
+        content_model.train(data)
 
 class RecommendationRequest(BaseModel):
     """Request model for recommendations."""
@@ -379,4 +388,67 @@ async def get_batch_recommendations(
         raise
     except Exception as e:
         logger.error(f"Error in batch recommendations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class HybridRecommendationRequest(BaseModel):
+    """Request model for hybrid recommendations."""
+    user_id: str = Field(..., description="User ID to get recommendations for")
+    destination_slugs: List[str] = Field(..., description="List of destination slugs to base recommendations on")
+    top_n: int = Field(10, ge=1, le=50, description="Number of recommendations")
+
+@router.post("/hybrid", response_model=RecommendationResponse, tags=["Recommendations"])
+async def get_hybrid_recommendations(request: HybridRecommendationRequest):
+    """
+    Get hybrid recommendations for a user based on a list of destinations.
+
+    Combines content-based filtering with collaborative filtering.
+
+    Args:
+        request: Hybrid recommendation request parameters
+
+    Returns:
+        List of personalized recommendations
+    """
+    logger.info(f"Getting hybrid recommendations for user {request.user_id}")
+
+    try:
+        # Get content-based recommendations
+        content_recs = content_model.get_recommendations(request.destination_slugs, top_n=request.top_n)
+
+        # Get collaborative filtering model
+        collab_model = get_model()
+        if not collab_model.model:
+            return RecommendationResponse(
+                user_id=request.user_id,
+                recommendations=content_recs,
+                total=len(content_recs),
+                model_version="content-based-v1",
+                generated_at=datetime.utcnow().isoformat(),
+                from_cache=False
+            )
+
+        # Get user's excluded destinations
+        exclude_ids = _get_user_interactions(request.user_id)
+
+        # Rerank content-based recommendations using collaborative filtering model
+        reranked_recs = []
+        for rec in content_recs:
+            if rec['destination_id'] not in exclude_ids:
+                score = collab_model.predict_for_user_item(request.user_id, rec['destination_id'])
+                rec['score'] = score
+                reranked_recs.append(rec)
+
+        reranked_recs = sorted(reranked_recs, key=lambda x: x['score'], reverse=True)
+
+        return RecommendationResponse(
+            user_id=request.user_id,
+            recommendations=reranked_recs,
+            total=len(reranked_recs),
+            model_version="hybrid-v1",
+            generated_at=datetime.utcnow().isoformat(),
+            from_cache=False
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating hybrid recommendations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
