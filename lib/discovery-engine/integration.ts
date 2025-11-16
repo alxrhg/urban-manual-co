@@ -6,6 +6,9 @@
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { getFeatureFlags, getABTestVariant } from '@/lib/discovery-engine/feature-flags';
 import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
+import { semanticBlendSearch } from '@/lib/search/semanticSearch';
+import { advancedRecommendationEngine } from '@/services/intelligence/recommendations-advanced';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
 export interface SearchOptions {
   query: string;
@@ -53,11 +56,16 @@ export async function unifiedSearch(options: SearchOptions): Promise<SearchResul
     useDiscoveryEngine = variant === 'discovery_engine';
   }
 
+  const cache = getDiscoveryEngineCache();
+
   // Try Discovery Engine if enabled and available
   if (useDiscoveryEngine && discoveryEngine.isAvailable()) {
     try {
-      const cache = getDiscoveryEngineCache();
-      const cacheKey = cache.generateSearchKey(query, { city, category, priceLevel, minRating }, userId);
+      const cacheKey = cache.generateSearchKey(
+        query,
+        { city, category, priceLevel, minRating, backend: 'discovery_engine' },
+        userId
+      );
 
       const searchFn = () =>
         discoveryEngine.search(query, {
@@ -86,13 +94,17 @@ export async function unifiedSearch(options: SearchOptions): Promise<SearchResul
         ? await withCache(cacheKey, searchFn, 5 * 60 * 1000)
         : await searchFn();
 
-      return {
-        results: results.results,
-        totalSize: results.totalSize,
-        nextPageToken: results.nextPageToken,
-        query,
-        source: 'discovery_engine',
-      };
+      if (results.results?.length) {
+        return {
+          results: results.results,
+          totalSize: results.totalSize,
+          nextPageToken: results.nextPageToken,
+          query,
+          source: 'discovery_engine',
+        };
+      }
+
+      console.debug('[Discovery Engine] No results returned, trying fallback');
     } catch (error: any) {
       console.warn('Discovery Engine search failed, falling back:', error);
       // Fall through to fallback
@@ -100,6 +112,39 @@ export async function unifiedSearch(options: SearchOptions): Promise<SearchResul
   }
 
   // Fallback to Supabase search
+  const fallbackKey = cache.generateSearchKey(
+    query,
+    { city, category, priceLevel, minRating, backend: 'supabase' },
+    userId
+  );
+
+  const fallbackResult = useCache
+    ? await withCache(
+        fallbackKey,
+        () =>
+          runSupabaseSearchFallback({
+            query,
+            city,
+            category,
+            priceLevel,
+            minRating,
+            pageSize,
+          }),
+        60 * 1000
+      )
+    : await runSupabaseSearchFallback({
+        query,
+        city,
+        category,
+        priceLevel,
+        minRating,
+        pageSize,
+      });
+
+  if (fallbackResult.results.length > 0) {
+    return fallbackResult;
+  }
+
   return {
     results: [],
     totalSize: 0,
@@ -126,12 +171,12 @@ export async function unifiedRecommendations(
   const flags = getFeatureFlags();
 
   if (!flags.enablePersonalization || !discoveryEngine.isAvailable()) {
-    return [];
+    return runRecommendationsFallback(userId, { city, category, pageSize });
   }
 
   try {
     const cache = getDiscoveryEngineCache();
-    const cacheKey = cache.generateRecommendationKey(userId, { city, category });
+    const cacheKey = cache.generateRecommendationKey(userId, { city, category, backend: 'discovery_engine' });
 
     const recommendFn = () =>
       discoveryEngine.recommend(userId, {
@@ -146,11 +191,16 @@ export async function unifiedRecommendations(
       ? await withCache(cacheKey, recommendFn, 10 * 60 * 1000) // 10 minute cache for recommendations
       : await recommendFn();
 
-    return recommendations;
+    if (Array.isArray(recommendations) && recommendations.length > 0) {
+      return recommendations;
+    }
+
+    console.debug('[Discovery Engine] No recommendations returned, trying fallback');
   } catch (error: any) {
     console.warn('Discovery Engine recommendations failed:', error);
-    return [];
   }
+
+  return runRecommendationsFallback(userId, { city, category, pageSize });
 }
 
 /**
@@ -209,5 +259,126 @@ export function getFeatureAvailability(): {
     multimodal: flags.useMultimodalSearch && isAvailable,
     naturalLanguage: flags.useNaturalLanguageFilters && isAvailable,
   };
+}
+
+type SearchFallbackOptions = Pick<
+  SearchOptions,
+  'query' | 'city' | 'category' | 'priceLevel' | 'minRating' | 'pageSize'
+>;
+
+async function runSupabaseSearchFallback(options: SearchFallbackOptions): Promise<SearchResult> {
+  const { query, city, category, priceLevel, minRating, pageSize = 20 } = options;
+
+  try {
+    const filters: { city?: string; category?: string } = {};
+    if (city) filters.city = city;
+    if (category) filters.category = category;
+
+    const candidates = await semanticBlendSearch(query, filters);
+
+    const filtered = (candidates || []).filter((result: any) => {
+      const priceValue = result.price_level ?? result.priceLevel ?? null;
+      const ratingValue = result.rating ?? result.average_rating ?? result.score ?? null;
+
+      const pricePass =
+        typeof priceLevel === 'number'
+          ? typeof priceValue === 'number'
+            ? priceValue <= priceLevel
+            : true
+          : true;
+
+      const ratingPass =
+        typeof minRating === 'number'
+          ? typeof ratingValue === 'number'
+            ? ratingValue >= minRating
+            : true
+          : true;
+
+      return pricePass && ratingPass;
+    });
+
+    const limited = filtered.slice(0, pageSize);
+
+    return {
+      results: limited,
+      totalSize: filtered.length,
+      query,
+      source: limited.length > 0 ? 'supabase' : 'fallback',
+    };
+  } catch (error) {
+    console.warn('[Discovery Engine] Supabase fallback search failed:', error);
+    return {
+      results: [],
+      totalSize: 0,
+      query,
+      source: 'fallback',
+    };
+  }
+}
+
+async function runRecommendationsFallback(
+  userId: string,
+  options: { city?: string; category?: string; pageSize: number }
+): Promise<any[]> {
+  try {
+    const recommendations = await advancedRecommendationEngine.getRecommendations(
+      userId,
+      options.pageSize,
+      {
+        city: options.city,
+        category: options.category,
+        excludeVisited: true,
+      }
+    );
+
+    if (!recommendations || recommendations.length === 0) {
+      return [];
+    }
+
+    let supabase: ReturnType<typeof createServiceRoleClient> | null = null;
+    try {
+      supabase = createServiceRoleClient();
+    } catch (clientError) {
+      console.warn('[Discovery Engine] Unable to create Supabase client for recommendation fallback:', clientError);
+    }
+
+    if (!supabase) {
+      return [];
+    }
+
+    const destinationIds = recommendations.map((rec) => rec.destination_id);
+    const { data: destinations, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .in('id', destinationIds);
+
+    if (error) {
+      console.warn('[Discovery Engine] Failed to fetch destinations for fallback recommendations:', error);
+      return [];
+    }
+
+    const destinationMap = new Map<string, any>();
+    (destinations || []).forEach((dest: any) => {
+      destinationMap.set(String(dest.id), dest);
+    });
+
+    return recommendations
+      .map((rec) => {
+        const destination = destinationMap.get(String(rec.destination_id));
+        if (!destination) {
+          return null;
+        }
+        return {
+          destination,
+          score: rec.score,
+          reason: rec.reason,
+          factors: rec.factors,
+        };
+      })
+      .filter((value): value is { destination: any; score: number; reason: string; factors: any } => Boolean(value));
+  } catch (error) {
+    console.warn('[Discovery Engine] Recommendation fallback failed:', error);
+    return [];
+  }
 }
 
