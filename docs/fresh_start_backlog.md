@@ -8,6 +8,7 @@
 - `packages/config` established as the shared tooling preset (ESLint + Tailwind stubs) and wired into the root config.
 - Infrastructure directories (`apps/`, `packages/`, `infra/github`) created with documentation to guide upcoming moves.
 - Next.js 16 experience relocated into `apps/web` (app/components/lib/etc., config files, middleware) with scripts, tsconfigs, and documentation updated to point to the new path.
+- Created `@urban/web` workspace package plus Turbo-powered commands documented in `README.md`.
 
 ## 0. Alignment & Guardrails
 | ID | Task | Owner | Definition of Done | Status |

@@ -32,6 +32,7 @@
    - Move current Next app into `apps/web`.
    - Update import aliases to use `@/` via `tsconfig.base.json`.
    - Ensure `next.config.ts`, `public/`, `app/`, `components/`, `contexts/`, etc., follow new relative paths.
+   - Create `apps/web/package.json` (workspace name `@urban/web`) with scripts (`dev`, `build`, `start`, `lint`, `typecheck`, `test`) so Turbo/pnpm can target the app directly.
 4. **Shared packages (phase 1)**
    - Create `packages/config` with ESLint + tsconfig + Tailwind config.
    - Point `apps/web` configs to the shared package (import/export pattern).

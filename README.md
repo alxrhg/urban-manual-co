@@ -75,6 +75,22 @@ pnpm start
 
 > ℹ️ The repository is being migrated to a Turborepo/pnpm workspace. See `docs/turborepo_scaffold_plan.md` and `docs/fresh_start_backlog.md` for sequencing details.
 
+### Turborepo Commands
+
+The Next.js app now lives in the `@urban/web` workspace package inside `apps/web`. Common commands can be run through Turbo:
+
+```bash
+# Run dev server for the web app
+pnpm turbo run dev --filter=@urban/web
+
+# Lint and type-check all affected packages
+pnpm turbo run lint
+pnpm turbo run typecheck
+
+# Build the production bundle for the web app
+pnpm turbo run build --filter=@urban/web
+```
+
 ## Deployment to Vercel
 
 ### Prerequisites
