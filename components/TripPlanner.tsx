@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   CalendarIcon,
   MapPinIcon,
@@ -66,18 +66,18 @@ interface HotelOption {
 const plannerPhases = [
   {
     key: 'brief',
-    label: 'Brief',
-    description: 'Trip name, destination, dates, and guardrails.',
+    label: 'Intent',
+    description: 'Lock the city, base, and dates.',
   },
   {
     key: 'compose',
     label: 'Itinerary',
-    description: 'Build each day with curated stops and pacing.',
+    description: 'Drop discoveries into each day.',
   },
   {
     key: 'polish',
-    label: 'Polish & Share',
-    description: 'Add cover art, notes, and export-ready outputs.',
+    label: 'Intelligence',
+    description: 'Surface gaps, share when ready.',
   },
 ] as const;
 
@@ -134,6 +134,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       setTripListLoading(false);
     }
   }, [user]);
+
+  const hubStats = useMemo(() => {
+    const total = tripList.length;
+    const inMotion = tripList.filter((trip) => trip.status !== 'completed').length;
+    return [
+      { label: 'Trips', value: total },
+      { label: 'In motion', value: inMotion },
+    ];
+  }, [tripList]);
 
   const fetchHotels = useCallback(async () => {
     try {
@@ -204,6 +213,17 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       setUseCustomHotel(true);
     }
   }, [hotelLocation, hotelOptions]);
+
+  const totalStops = days.reduce((sum, day) => sum + day.locations.length, 0);
+
+  const travelInsights = useMemo(() => {
+    const insights: string[] = [];
+    insights.push(destination ? `City: ${destination}` : 'Set a destination');
+    insights.push(days.length ? `${days.length} day plan` : 'Add days to plan rhythm');
+    insights.push(totalStops ? `${totalStops} saved spots` : 'Pull places in from the guide');
+    if (hotelLocation) insights.push(`Base: ${hotelLocation}`);
+    return insights;
+  }, [destination, days.length, totalStops, hotelLocation]);
 
   const handleHotelSelection = (value: string) => {
     if (value === '__custom') {
@@ -716,15 +736,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     ];
   };
 
-    const headerSubtitle = (() => {
-      if (studioMode === 'hub') {
-        return 'Pick a trip to open or start a new one.';
-      }
-      if (studioMode === 'create') {
-        return 'Name it, set the destination, lock the dates.';
-      }
-      return 'Reorder days, add locations, and export when ready.';
-    })();
+  const headerSubtitle = (() => {
+    if (studioMode === 'hub') {
+      return 'Everything you save flows here. Pick a trip or start fresh.';
+    }
+    if (studioMode === 'create') {
+      return 'Name it, set the base, lock the dates.';
+    }
+    return 'Keep composing with live intelligence from your saves.';
+  })();
 
     const headerContent = (
       <div className="w-full space-y-2">
@@ -818,6 +838,14 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               </button>
             </div>
           </div>
+        <div className="grid grid-cols-2 gap-3">
+          {hubStats.map((stat) => (
+            <div key={stat.label} className="rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 bg-white dark:bg-gray-900">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">{stat.label}</p>
+              <p className="text-xl font-light text-gray-900 dark:text-white">{stat.value}</p>
+            </div>
+          ))}
+        </div>
           {tripListLoading ? (
             <div className="text-center py-10">
               <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
@@ -1127,8 +1155,29 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-4">
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-4">
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
+                    Travel intelligence
+                  </p>
+                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    {travelInsights.map((insight, index) => (
+                      <li key={index}>{insight}</li>
+                    ))}
+                  </ul>
+                  <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-2 text-sm text-gray-500 dark:text-gray-400">
+                    {travelSuggestions.map((suggestion, index) => (
+                      <p key={index}>{suggestion}</p>
+                    ))}
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="w-full px-4 py-2 mt-2 text-sm font-medium text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  >
+                    Back to discovery
+                  </button>
+                </div>
+                <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
