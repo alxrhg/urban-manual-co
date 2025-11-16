@@ -2,8 +2,23 @@
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Destination } from '@/types/destination';
-import { 
-  Search, MapPin, Clock, Map, Grid3x3, SlidersHorizontal, X, Star, LayoutGrid, Plus, Sparkles
+import {
+  Search,
+  MapPin,
+  Clock,
+  Map,
+  Grid3x3,
+  SlidersHorizontal,
+  X,
+  Star,
+  LayoutGrid,
+  Plus,
+  Sparkles,
+  Bot,
+  Workflow,
+  Shuffle,
+  Radar,
+  Layers,
 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 // Lazy load drawer (only when opened)
@@ -244,6 +259,75 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
     price_level: priceLevel,
   };
 }
+
+type ProcessIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+type ConversationalFlowStep = {
+  title: string;
+  description: string;
+  meta: string;
+  output: string;
+  icon: ProcessIcon;
+};
+
+type GridAlgorithmSignal = {
+  title: string;
+  description: string;
+  detail: string;
+  icon: ProcessIcon;
+};
+
+const conversationalFlowSteps: ConversationalFlowStep[] = [
+  {
+    title: 'Intent Capture',
+    description: 'We merge what you type with saved filters, session resumes, and follow-up chips to understand the full brief.',
+    meta: 'Search input + session memory',
+    output: 'Cities, categories, time windows',
+    icon: Search,
+  },
+  {
+    title: 'Context Enrichment',
+    description: 'User profiles, weather, and seasonal cues shape a personalized prompt before the query ever hits the models.',
+    meta: 'Profiles + seasonal context',
+    output: 'Personalized AI prompt',
+    icon: Bot,
+  },
+  {
+    title: 'Discovery & Ranking',
+    description: 'The AI chat route orchestrates Gemini, Discovery Engine, and Supabase quality data for conversational answers.',
+    meta: 'Gemini + Discovery Engine',
+    output: 'Ranked destinations + copy',
+    icon: Workflow,
+  },
+  {
+    title: 'Feedback Loop',
+    description: 'Clicks and saves feed the sequence tracker so each follow-up feels smarter, not repetitive.',
+    meta: 'Trackers + follow-ups',
+    output: 'Refined next suggestions',
+    icon: Radar,
+  },
+];
+
+const gridAlgorithmSignals: GridAlgorithmSignal[] = [
+  {
+    title: 'Quality Signals',
+    description: 'Crown picks and rich imagery get priority so editorials never disappear beneath the fold.',
+    detail: '+20 crown • +10 imagery',
+    icon: Star,
+  },
+  {
+    title: 'Diversity Cycle',
+    description: 'Categories rotate every seven cards to mimic the Pinterest-style balance of cuisines, stays, and spaces.',
+    detail: '(index % 7) × 5 boost',
+    icon: Layers,
+  },
+  {
+    title: 'Serendipity Boost',
+    description: 'A light shuffle keeps new gems pulsing through the grid without feeling chaotic.',
+    detail: 'Random 0 – 30 pts',
+    icon: Shuffle,
+  },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -1716,8 +1800,9 @@ export default function Home() {
         <h1 className="sr-only">Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual</h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
         <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
+          <div className="w-full flex-1">
+            <div className="grid gap-10 md:grid-cols-[minmax(0,1.05fr)_minmax(320px,420px)] items-start md:items-stretch">
+              <div className="w-full max-w-2xl flex flex-col h-full mx-auto md:mx-0">
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
                 <div className="w-full">
@@ -2098,6 +2183,97 @@ export default function Home() {
                   </div>
                 </div>
               )}
+              </div>
+              <aside className="flex flex-col gap-6">
+                <div className="rounded-3xl border border-black/5 dark:border-white/10 bg-white/70 dark:bg-gray-950/60 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[3px] text-gray-500 dark:text-gray-400">Conversational AI</p>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Process flow</h2>
+                    </div>
+                    <Sparkles className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <div className="mt-6 space-y-4">
+                    {conversationalFlowSteps.map((step, index) => {
+                      const Icon = step.icon;
+                      return (
+                        <div
+                          key={step.title}
+                          className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/80 dark:bg-gray-900/60 p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 flex items-center justify-center">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-[3px] text-gray-400">Step {String(index + 1).padStart(2, '0')}</p>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">{step.title}</p>
+                            </div>
+                          </div>
+                          <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{step.description}</p>
+                          <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] uppercase tracking-[2px] text-gray-400 dark:text-gray-500">
+                            <div>
+                              <p className="mb-1">Signals</p>
+                              <p className="text-[13px] font-medium normal-case text-gray-900 dark:text-gray-100">{step.meta}</p>
+                            </div>
+                            <div>
+                              <p className="mb-1">Output</p>
+                              <p className="text-[13px] font-medium normal-case text-gray-900 dark:text-gray-100">{step.output}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="rounded-3xl border border-black/5 dark:border-white/10 bg-white/70 dark:bg-gray-950/60 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[3px] text-gray-500 dark:text-gray-400">Grid Algorithm</p>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Editorial balance</h2>
+                    </div>
+                    <LayoutGrid className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <div className="mt-6 space-y-4">
+                    {gridAlgorithmSignals.map((signal) => {
+                      const Icon = signal.icon;
+                      return (
+                        <div
+                          key={signal.title}
+                          className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/80 dark:bg-gray-900/60 p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              <Icon className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">{signal.title}</p>
+                              <p className="text-xs uppercase tracking-[2px] text-gray-400">{signal.detail}</p>
+                            </div>
+                          </div>
+                          <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{signal.description}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-6 grid grid-cols-2 gap-4 text-[11px] uppercase tracking-[2px] text-gray-500 dark:text-gray-400">
+                    <div>
+                      <p className="mb-1">Cards Per Load</p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{itemsPerPage}</p>
+                    </div>
+                    <div>
+                      <p className="mb-1">Rows Locked</p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">4</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="mb-1">Active Layout</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                        {viewMode === 'grid' ? 'Editorial grid' : 'Map canvas'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
         </section>
