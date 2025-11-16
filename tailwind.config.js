@@ -15,11 +15,20 @@ module.exports = {
           lg: '3rem',
         },
         screens: {
+          xs: '375px',  // iPhone SE, iPhone 12 mini
           sm: '640px',
-          md: '768px',
-          lg: '1024px',
+          md: '768px',  // iPad portrait
+          lg: '1024px', // iPad landscape
           xl: '1280px',
         },
+      },
+      screens: {
+        'xs': '375px',     // Small mobile (iPhone SE, iPhone 12 mini)
+        'sm': '640px',     // Mobile landscape / small tablets
+        'md': '768px',     // Tablets portrait (iPad)
+        'lg': '1024px',    // Tablets landscape / small desktop
+        'xl': '1280px',    // Desktop
+        '2xl': '1536px',   // Large desktop
       },
       colors: {
         'dark-blue': {

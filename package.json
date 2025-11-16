@@ -32,6 +32,7 @@
     "list:all-columns": "tsx scripts/list-all-columns.ts",
     "check:exa-progress": "tsx scripts/check-exa-enrichment-progress.ts",
     "check:ios": "tsx scripts/check-ios-compatibility.ts",
+    "check:ios-web": "tsx scripts/check-ios-web-compatibility.ts",
     "ios:sync": "npx cap sync ios",
     "ios:open": "npx cap open ios"
   },

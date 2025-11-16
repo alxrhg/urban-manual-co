@@ -24,6 +24,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
   description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Urban Manual',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },

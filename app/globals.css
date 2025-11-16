@@ -48,6 +48,24 @@
     --popover-foreground: 0 0% 3.9%;
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 98%;
+    
+    /* iOS-specific CSS variables for viewport height fix */
+    --vh: 1vh;
+  }
+  
+  /* iOS Safari tap highlight optimization */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Better tap highlight for interactive elements */
+  a, button, [role="button"], input[type="submit"] {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark a, .dark button, .dark [role="button"], .dark input[type="submit"] {
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.05);
+  }
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
