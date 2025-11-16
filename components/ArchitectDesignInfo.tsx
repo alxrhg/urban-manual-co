@@ -1,12 +1,10 @@
 'use client';
 
 import { Building2, Palette, Calendar, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 import { Destination } from '@/types/destination';
-import { architectNameToSlug } from '@/lib/architect-utils';
-import { DesktopHoverCard } from './DesktopHoverCard';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { truncate } from '@/lib/utils';
+import { ArchitectHoverPill } from './ArchitectHoverPill';
 
 interface ArchitectDesignInfoProps {
   destination: Destination;
@@ -52,31 +50,11 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
             <Building2 className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Architect</div>
-                <DesktopHoverCard
-                  align="left"
-                  title="Architect insight"
-                  content={
-                    <div className="space-y-1.5">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{architect}</p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
-                        {architectSummary || `Explore additional works from ${architect} and compare their signature style.`}
-                      </p>
-                      {sources.length > 0 && (
-                        <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                          {sources.length} source{sources.length === 1 ? '' : 's'} cited
-                        </p>
-                      )}
-                    </div>
-                  }
-                  widthClass="w-80"
-                >
-                  <Link
-                    href={`/architect/${architectNameToSlug(architect)}`}
-                    className="text-sm text-gray-900 dark:text-white font-medium hover:underline inline-block"
-                  >
-                    {architect}
-                  </Link>
-                </DesktopHoverCard>
+                <ArchitectHoverPill
+                  name={architect}
+                  summary={architectSummary}
+                  sourcesCount={sources.length}
+                />
             </div>
           </div>
         )}

@@ -40,6 +40,7 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { MicroDescriptionHover } from '@/components/MicroDescriptionHover';
 import { BrandHoverBadge } from '@/components/BrandHoverBadge';
+import { CityHoverPill } from '@/components/CityHoverPill';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
@@ -997,36 +998,38 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </h1>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                <MapPin className="h-3.5 w-3.5" />
-                <span>{capitalizeCity(destination.city)}</span>
-              </div>
+              <div className="flex flex-col gap-2">
+                <CityHoverPill
+                  city={destination.city}
+                  country={destination.country}
+                  microDescription={destination.micro_description}
+                  href={`/city/${destination.city}`}
+                />
 
-              <div className="flex flex-wrap items-center gap-2">
-                {destination.category && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
-                    <Tag className="h-3.5 w-3.5" />
-                    {destination.category}
-                  </span>
-                )}
-                {destination.brand && (
-                  <BrandHoverBadge destination={destination} />
-                )}
-                {destination.crown && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-                    <Crown className="h-3.5 w-3.5" />
-                    Crown
-                  </span>
-                )}
-                {rating && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
-                    <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
-                    {rating.toFixed(1)}
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {destination.category && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
+                      <Tag className="h-3.5 w-3.5" />
+                      {destination.category}
+                    </span>
+                  )}
+                  {destination.brand && (
+                    <BrandHoverBadge destination={destination} />
+                  )}
+                  {destination.crown && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                      <Crown className="h-3.5 w-3.5" />
+                      Crown
+                    </span>
+                  )}
+                  {rating && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+                      <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
+                      {rating.toFixed(1)}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
 
             {destination.micro_description && (
               <MicroDescriptionHover

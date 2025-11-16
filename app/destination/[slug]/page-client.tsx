@@ -30,6 +30,7 @@ import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { BrandHoverBadge } from '@/components/BrandHoverBadge';
+import { CityHoverPill } from '@/components/CityHoverPill';
 
 interface Recommendation {
   slug: string;
@@ -392,15 +393,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
           <div className="space-y-3">
             {/* Location */}
-            <div className="flex items-center gap-2">
-              <a
-                href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 text-xs"
-              >
-                <MapPin className="h-3 w-3" />
-                {destination.country ? `${cityName}, ${destination.country}` : cityName}
-              </a>
-            </div>
+              <div>
+                <CityHoverPill
+                  city={destination.city}
+                  country={destination.country}
+                  microDescription={destination.micro_description}
+                  href={`/city/${destination.city}`}
+                />
+              </div>
 
             {/* Title and Action Buttons */}
             <div className="flex items-start justify-between gap-4">
