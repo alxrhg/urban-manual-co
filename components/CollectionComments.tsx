@@ -1,53 +1,44 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { trpc } from '@/lib/trpc/client';
 
 interface CollectionCommentsProps {
   collectionId: string;
   isOwner?: boolean;
 }
 
-interface Comment {
-  id: string;
-  comment_text: string;
-  created_at: string;
-  updated_at: string;
-  user_profiles: {
-    user_id: string;
-    username: string;
-    display_name: string;
-    avatar_url: string;
-  };
-}
-
 export function CollectionComments({ collectionId, isOwner }: CollectionCommentsProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadComments();
-  }, [collectionId]);
+  const { data: comments, isLoading: loading, refetch: refetchComments } = trpc.collections.getComments.useQuery({
+    collectionId,
+  });
 
-  const loadComments = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/collections/${collectionId}/comments`);
-      const data = await response.json();
-      setComments(data.comments || []);
-    } catch (error) {
-      console.error('Error loading comments:', error);
-    } finally {
-      setLoading(false);
+  const createCommentMutation = trpc.collections.createComment.useMutation({
+    onSuccess: () => {
+      refetchComments();
+      setNewComment('');
+    },
+    onError: (error) => {
+      alert(`Error posting comment: ${error.message}`);
     }
-  };
+  });
+
+  const deleteCommentMutation = trpc.collections.deleteComment.useMutation({
+    onSuccess: () => {
+      refetchComments();
+    },
+    onError: (error) => {
+      alert(`Error deleting comment: ${error.message}`);
+    }
+  });
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,47 +50,16 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
 
     if (!newComment.trim()) return;
 
-    setSubmitting(true);
-    try {
-      const response = await fetch(`/api/collections/${collectionId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment_text: newComment.trim() })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setComments([data.comment, ...comments]);
-        setNewComment('');
-      } else {
-        alert(data.error || 'Failed to post comment');
-      }
-    } catch (error) {
-      console.error('Error posting comment:', error);
-      alert('Failed to post comment');
-    } finally {
-      setSubmitting(false);
-    }
+    createCommentMutation.mutate({
+      collectionId,
+      comment_text: newComment.trim(),
+    });
   };
 
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm('Delete this comment?')) return;
 
-    try {
-      const response = await fetch(`/api/collections/${collectionId}/comments/${commentId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setComments(comments.filter(c => c.id !== commentId));
-      } else {
-        alert('Failed to delete comment');
-      }
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-      alert('Failed to delete comment');
-    }
+    deleteCommentMutation.mutate({ commentId });
   };
 
   return (
@@ -108,7 +68,7 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
       <div className="flex items-center gap-2">
         <MessageCircle className="h-5 w-5 text-gray-400" />
         <h3 className="text-lg font-light">
-          Comments {comments.length > 0 && `(${comments.length})`}
+          Comments {comments && comments.length > 0 && `(${comments.length})`}
         </h3>
       </div>
 
@@ -126,10 +86,10 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={!newComment.trim() || submitting}
+              disabled={!newComment.trim() || createCommentMutation.isLoading}
               className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Posting...' : 'Post Comment'}
+              {createCommentMutation.isLoading ? 'Posting...' : 'Post Comment'}
             </button>
           </div>
         </form>
@@ -152,13 +112,13 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
         <div className="text-center py-8 text-gray-500">
           <p className="text-sm">Loading comments...</p>
         </div>
-      ) : comments.length === 0 ? (
+      ) : comments?.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <p className="text-sm">No comments yet. Be the first to comment!</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {comments.map((comment) => {
+          {comments?.map((comment) => {
             const canDelete = user && (user.id === comment.user_profiles.user_id || isOwner);
 
             return (

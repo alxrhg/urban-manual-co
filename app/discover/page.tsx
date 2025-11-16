@@ -6,6 +6,7 @@ import { Search, Sparkles, TrendingUp, Heart, Tag, AlertTriangle, Info, Network,
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { trpc } from '@/lib/trpc/client';
 
 // ML Components
 import { ForYouSectionML } from '@/components/ForYouSectionML';
@@ -31,10 +32,15 @@ export default function DiscoverPage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('recommendations');
   const [selectedCity, setSelectedCity] = useState<string>('');
-  const [collections, setCollections] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
-  const [loading, setLoading] = useState(true);
+
+  const { data: collections, isLoading: loading } = trpc.collections.getPublicCollections.useQuery({
+    sortBy,
+    searchQuery,
+  }, {
+    enabled: activeTab === 'collections',
+  });
 
   // Check admin status
   useEffect(() => {
@@ -69,39 +75,6 @@ export default function DiscoverPage() {
   // Sequence prediction demo
   const [currentSequence, setCurrentSequence] = useState<string[]>([]);
   const { predictions, predict } = useMLSequence({ enabled: true });
-
-  useEffect(() => {
-    if (activeTab === 'collections') {
-    loadCollections();
-    }
-  }, [sortBy, activeTab]);
-
-  useEffect(() => {
-    if (activeTab === 'collections' && searchQuery.trim()) {
-    const timer = setTimeout(() => {
-        loadCollections();
-    }, 300);
-    return () => clearTimeout(timer);
-    }
-  }, [searchQuery, activeTab]);
-
-  const loadCollections = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        sort: sortBy,
-        ...(searchQuery.trim() && { q: searchQuery })
-      });
-
-      const response = await fetch(`/api/collections/discover?${params}`);
-      const data = await response.json();
-      setCollections(data.collections || []);
-    } catch (error) {
-      console.error('Error loading collections:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const tabs = [
     { id: 'recommendations' as TabType, label: 'For You', icon: Sparkles, description: 'Personalized recommendations' },
@@ -497,7 +470,7 @@ export default function DiscoverPage() {
           <div className="text-center py-20 text-gray-500">
             <p className="text-sm">Loading...</p>
           </div>
-        ) : collections.length === 0 ? (
+        ) : collections?.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
             <p className="text-sm">No collections found</p>
           </div>

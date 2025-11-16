@@ -4,6 +4,7 @@ import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { trpc } from "@/lib/trpc/client";
 import { MapPin, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
@@ -35,7 +36,6 @@ export default function Account() {
   const [user, setUser] = useState<User | null>(null);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
@@ -43,6 +43,23 @@ export default function Account() {
   // Get initial tab from URL query param - use useEffect to avoid SSR issues
   const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips'>('profile');
   
+  // tRPC queries and mutations
+  const { data: collections, isLoading: isLoadingCollections, refetch: refetchCollections } = trpc.collections.getCollections.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const createCollectionMutation = trpc.collections.createCollection.useMutation({
+    onSuccess: () => {
+      refetchCollections();
+      setShowCreateModal(false);
+      setNewCollectionName('');
+      setNewCollectionDescription('');
+    },
+    onError: (error) => {
+      alert(`Error creating collection: ${error.message}`);
+    }
+  });
+
+
   // Update tab from URL params after mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -61,7 +78,6 @@ export default function Account() {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [newCollectionPublic, setNewCollectionPublic] = useState(true);
-  const [creatingCollection, setCreatingCollection] = useState(false);
 
   // Trip management state
   const [showTripDialog, setShowTripDialog] = useState(false);
@@ -111,7 +127,7 @@ export default function Account() {
       setIsLoadingData(true);
 
       // Load saved, visited, collections, and trips
-      const [savedResult, visitedResult, collectionsResult, tripsResult] = await Promise.all([
+      const [savedResult, visitedResult, tripsResult] = await Promise.all([
         supabase
           .from('saved_places')
           .select('destination_slug')
@@ -121,11 +137,6 @@ export default function Account() {
           .select('destination_slug, visited_at, rating, notes')
           .eq('user_id', user.id)
           .order('visited_at', { ascending: false }),
-        supabase
-          .from('collections')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false }),
         supabase
           .from('trips')
           .select('*')
@@ -225,14 +236,9 @@ export default function Account() {
         }
       }
 
-      // Set collections
-      if (collectionsResult.data) {
-        setCollections(collectionsResult.data);
-      }
-
       // Set trips
       if (tripsResult.data) {
-        setTrips(tripsResult.data);
+        setTrips(tripsResult.data as Trip[]);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -251,56 +257,14 @@ export default function Account() {
     router.push("/");
   };
 
-  const handleCreateCollection = async () => {
-    if (!user || !newCollectionName.trim()) return;
+  const handleCreateCollection = () => {
+    if (!newCollectionName.trim()) return;
 
-    setCreatingCollection(true);
-    try {
-      // Use API endpoint for better error handling and RLS compliance
-      const response = await fetch('/api/collections', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newCollectionName.trim(),
-          description: newCollectionDescription.trim() || null,
-          is_public: newCollectionPublic,
-          emoji: '📚',
-          color: '#3B82F6',
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        const errorMessage = responseData.error || responseData.details || 'Failed to create collection';
-        throw new Error(errorMessage);
-      }
-
-      // Response is ok, extract collection data
-      const data = responseData.collection;
-
-      if (!data) {
-        throw new Error('Invalid response from server');
-      }
-
-      // Add new collection to list and reload to ensure consistency
-      setCollections([data, ...collections]);
-      setNewCollectionName('');
-      setNewCollectionDescription('');
-      setNewCollectionPublic(true);
-      setShowCreateModal(false);
-      
-      // Reload collections to ensure we have the latest data
-      await loadUserData();
-    } catch (error) {
-      console.error('Error creating collection:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create collection. Please try again.';
-      alert(errorMessage);
-    } finally {
-      setCreatingCollection(false);
-    }
+    createCollectionMutation.mutate({
+      name: newCollectionName.trim(),
+      description: newCollectionDescription.trim(),
+      is_public: newCollectionPublic,
+    });
   };
 
   // Calculate stats
@@ -387,7 +351,7 @@ export default function Account() {
       uniqueCountries,
       visitedCount: visitedPlaces.length,
       savedCount: savedPlaces.length,
-      collectionsCount: collections.length,
+      collectionsCount: collections?.length || 0,
       curationCompletionPercentage,
       visitedDestinationsWithCoords
     };
@@ -598,7 +562,9 @@ export default function Account() {
         {/* Collections Tab */}
         {activeTab === 'collections' && (
           <div className="fade-in">
-            {collections.length === 0 ? (
+            {isLoadingCollections ? (
+                <PageLoader />
+            ) : collections?.length === 0 ? (
               <NoCollectionsEmptyState onCreateCollection={() => setShowCreateModal(true)} />
             ) : (
               <>
@@ -611,7 +577,7 @@ export default function Account() {
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {collections.map((collection) => (
+                  {collections?.map((collection) => (
                     <button
                       key={collection.id}
                       onClick={() => router.push(`/collection/${collection.id}`)}
@@ -847,16 +813,16 @@ export default function Account() {
                 <button
                   onClick={() => setShowCreateModal(false)}
                   className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
-                  disabled={creatingCollection}
+                  disabled={createCollectionMutation.isLoading}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateCollection}
-                  disabled={!newCollectionName.trim() || creatingCollection}
+                  disabled={!newCollectionName.trim() || createCollectionMutation.isLoading}
                   className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >
-                  {creatingCollection ? 'Creating...' : 'Create'}
+                  {createCollectionMutation.isLoading ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </div>

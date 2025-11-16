@@ -1,0 +1,4 @@
+ALTER TABLE collections
+ADD COLUMN is_public BOOLEAN DEFAULT false,
+ADD COLUMN emoji TEXT,
+ADD COLUMN destination_count INTEGER DEFAULT 0;

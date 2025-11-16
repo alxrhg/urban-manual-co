@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Collection } from '@/types/personalization';
 import { Plus, X, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { trpc } from '@/lib/trpc/client';
 
 interface CollectionsManagerProps {
   destinationId: number;
@@ -14,41 +15,49 @@ interface CollectionsManagerProps {
 
 export function CollectionsManager({ destinationId, onCollectionSelect, onClose }: CollectionsManagerProps) {
   const { user } = useAuth();
-  const [collections, setCollections] = useState<Collection[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [newCollectionEmoji, setNewCollectionEmoji] = useState('📍');
-  const [creating, setCreating] = useState(false);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+
+  const { data: collections, isLoading: loading, refetch: refetchCollections } = trpc.collections.getCollections.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  const createCollectionMutation = trpc.collections.createCollection.useMutation({
+    onSuccess: (data) => {
+      refetchCollections();
+      setNewCollectionName('');
+      setNewCollectionDescription('');
+      setShowCreateForm(false);
+      if (onCollectionSelect) {
+        onCollectionSelect(data.id);
+        setSelectedCollectionId(data.id);
+      }
+    },
+    onError: (error) => {
+      alert(`Error creating collection: ${error.message}`);
+    }
+  });
+
+  const deleteCollectionMutation = trpc.collections.deleteCollection.useMutation({
+    onSuccess: () => {
+      refetchCollections();
+      if (selectedCollectionId) {
+        setSelectedCollectionId(null);
+      }
+    },
+    onError: (error) => {
+      alert(`Error deleting collection: ${error.message}`);
+    }
+  });
 
   useEffect(() => {
     if (user) {
-      loadCollections();
       loadCurrentCollection();
     }
   }, [user, destinationId]);
-
-  async function loadCollections() {
-    if (!user) return;
-    
-    try {
-      // Use API endpoint for better RLS compliance
-      const response = await fetch('/api/collections');
-      
-      if (!response.ok) {
-        throw new Error('Failed to load collections');
-      }
-
-      const { collections: data } = await response.json();
-      setCollections(data || []);
-    } catch (error) {
-      console.error('Error loading collections:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function loadCurrentCollection() {
     if (!user) return;
@@ -74,49 +83,12 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
   }
 
   async function createCollection() {
-    if (!user || !newCollectionName.trim()) return;
+    if (!newCollectionName.trim()) return;
 
-    setCreating(true);
-    try {
-      // Use API endpoint for better error handling and RLS compliance
-      const response = await fetch('/api/collections', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newCollectionName.trim(),
-          description: newCollectionDescription.trim() || null,
-          emoji: newCollectionEmoji,
-          color: '#3B82F6',
-          is_public: false,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || errorData.details || 'Failed to create collection';
-        throw new Error(errorMessage);
-      }
-
-      const { collection: data } = await response.json();
-
-      setCollections([data, ...collections]);
-      setNewCollectionName('');
-      setNewCollectionDescription('');
-      setShowCreateForm(false);
-
-      // Automatically select the new collection
-      if (onCollectionSelect) {
-        onCollectionSelect(data.id);
-        setSelectedCollectionId(data.id);
-      }
-    } catch (error: any) {
-      console.error('Error creating collection:', error);
-      alert(error.message || 'Failed to create collection. Please try again.');
-    } finally {
-      setCreating(false);
-    }
+    createCollectionMutation.mutate({
+      name: newCollectionName.trim(),
+      description: newCollectionDescription.trim(),
+    });
   }
 
   async function selectCollection(collectionId: string | null) {
@@ -133,36 +105,9 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
 
   async function deleteCollection(collectionId: string, e: React.MouseEvent) {
     e.stopPropagation();
-    if (!user) return;
     if (!confirm('Are you sure you want to delete this collection? This will remove it from all saved destinations.')) return;
 
-    try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-      
-      // Remove collection from all saved destinations
-      await supabaseClient
-        .from('saved_destinations')
-        .update({ collection_id: null })
-        .eq('collection_id', collectionId);
-
-      // Delete the collection
-      const { error } = await supabaseClient
-        .from('collections')
-        .delete()
-        .eq('id', collectionId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setCollections(collections.filter(c => c.id !== collectionId));
-      if (selectedCollectionId === collectionId) {
-        setSelectedCollectionId(null);
-      }
-    } catch (error) {
-      console.error('Error deleting collection:', error);
-      alert('Failed to delete collection. Please try again.');
-    }
+    deleteCollectionMutation.mutate({ collectionId });
   }
 
   if (!user) {
@@ -248,10 +193,10 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
           <div className="flex gap-2">
             <button
               onClick={createCollection}
-              disabled={creating || !newCollectionName.trim()}
+              disabled={createCollectionMutation.isLoading || !newCollectionName.trim()}
               className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {creating ? 'Creating...' : 'Create'}
+              {createCollectionMutation.isLoading ? 'Creating...' : 'Create'}
             </button>
             <button
               onClick={() => {
@@ -280,7 +225,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
           <span className="flex-1 text-left">Uncategorized</span>
         </button>
 
-        {collections.map((collection) => (
+        {collections?.map((collection) => (
           <button
             key={collection.id}
             onClick={() => selectCollection(collection.id)}
@@ -315,7 +260,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
           </button>
         ))}
 
-        {collections.length === 0 && !showCreateForm && (
+        {collections?.length === 0 && !showCreateForm && (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-20" />
             <p>No collections yet</p>
@@ -326,4 +271,3 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
     </div>
   );
 }
-
