@@ -123,7 +123,10 @@ export default function AppleMap({
 
   if (error) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 ${className}`}>
+      <div 
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 ${className}`}
+        style={{ height }}
+      >
         <div className="text-center">
           <p className="text-sm text-red-600 dark:text-red-400 mb-1">Map unavailable</p>
           <p className="text-xs text-gray-500 dark:text-gray-500">{error}</p>
@@ -134,7 +137,10 @@ export default function AppleMap({
 
   if (!loaded) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}>
+      <div 
+        className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}
+        style={{ height }}
+      >
         <div className="text-center">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
           <span className="text-xs text-gray-600 dark:text-gray-400">Loading map...</span>
@@ -146,8 +152,8 @@ export default function AppleMap({
   return (
     <div
       ref={mapRef}
-      className={`w-full ${height} rounded-lg overflow-hidden ${className}`}
-      style={{ minHeight: height }}
+      className={`w-full rounded-lg overflow-hidden ${className}`}
+      style={{ height, minHeight: height }}
     />
   );
 }
