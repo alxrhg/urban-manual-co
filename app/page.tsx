@@ -16,7 +16,7 @@ const DestinationDrawer = dynamic(
 );
 import { useAuth } from '@/contexts/AuthContext';
 import dynamic from 'next/dynamic';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import Image from 'next/image';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -247,7 +247,6 @@ function normalizeDiscoveryEngineRecord(recordInput: unknown): Destination | nul
 
 export default function Home() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { trackAction, predictions } = useSequenceTracker();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -278,13 +277,22 @@ export default function Home() {
   const [showTripSidebar, setShowTripSidebar] = useState(false);
 
   useEffect(() => {
-    const viewParam = searchParams.get('view');
-    if (viewParam === 'map' && viewMode !== 'map') {
-      setViewMode('map');
-    } else if (viewParam === 'grid' && viewMode !== 'grid') {
-      setViewMode('grid');
-    }
-  }, [searchParams, viewMode]);
+    if (typeof window === 'undefined') return;
+
+    const applyViewFromQuery = () => {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get('view');
+      if (viewParam === 'map') {
+        setViewMode(prev => (prev === 'map' ? prev : 'map'));
+      } else if (viewParam === 'grid') {
+        setViewMode(prev => (prev === 'grid' ? prev : 'grid'));
+      }
+    };
+
+    applyViewFromQuery();
+    window.addEventListener('popstate', applyViewFromQuery);
+    return () => window.removeEventListener('popstate', applyViewFromQuery);
+  }, []);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
