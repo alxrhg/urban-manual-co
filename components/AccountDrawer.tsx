@@ -326,192 +326,148 @@ export function AccountDrawer({
     }
   };
 
-  // Render main drawer content
+  // Render main drawer content (Tier 1)
   const renderMainDrawer = () => (
-    <div className="px-6 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {user ? (
         <>
-          {/* Identity Section */}
-          <SectionCard>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
-                  {avatarUrl ? (
+          {/* Header: Avatar, Name, Username */}
+          <div className="flex items-center gap-3">
+            <div className="relative w-[42px] h-[42px] rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt="Profile"
+                  fill
+                  className="object-cover"
+                  sizes="42px"
+                />
+              ) : (
+                <User className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[18px] font-medium text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight">
+                {displayUsername}
+              </p>
+              <p className="text-[14px] text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)] truncate leading-tight mt-0.5">
+                @{displayUsername.toLowerCase().replace(/\s+/g, '')}
+              </p>
+            </div>
+            <button
+              onClick={() => handleNavigateToFullPage("/account")}
+              className="text-xs font-medium text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)] hover:text-[#F5F5F5] dark:hover:text-[#F5F5F5] transition-colors flex items-center gap-1"
+            >
+              View Full Profile
+              <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
+            </button>
+          </div>
+
+          {/* Quick Stats: Pill Group */}
+          <div className="flex flex-wrap gap-2">
+            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.visited}</div>
+              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Visited</div>
+            </div>
+            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.saved}</div>
+              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Saved</div>
+            </div>
+            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.trips}</div>
+              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Trips</div>
+            </div>
+            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.cities}</div>
+              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Cities</div>
+            </div>
+          </div>
+
+          {/* Quick Actions: Card Menu */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigateToSubpage('saved_subpage')}
+              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
+            >
+              <Bookmark className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Saved</div>
+            </button>
+            <button
+              onClick={() => navigateToSubpage('visited_subpage')}
+              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
+            >
+              <MapPin className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Visited</div>
+            </button>
+            <button
+              onClick={() => navigateToSubpage('collections_subpage')}
+              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
+            >
+              <Folder className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Lists</div>
+            </button>
+            <button
+              onClick={() => navigateToSubpage('trips_subpage')}
+              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
+            >
+              <Compass className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Trips</div>
+            </button>
+            <button
+              onClick={() => navigateToSubpage('settings_subpage')}
+              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left col-span-2"
+            >
+              <Settings className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
+              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Settings</div>
+            </button>
+          </div>
+
+          {/* Contextual Section: Continue Planning */}
+          {recentTrips.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-[#F5F5F5] dark:text-[#F5F5F5]">
+                Continue Planning
+              </h3>
+              <button
+                onClick={() => navigateToSubpage('trip_details_subpage', recentTrips[0].id)}
+                className="w-full p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
+              >
+                {recentTrips[0].cover_image && (
+                  <div className="relative w-full h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
                     <Image
-                      src={avatarUrl}
-                      alt="Profile"
+                      src={recentTrips[0].cover_image}
+                      alt={recentTrips[0].title}
                       fill
                       className="object-cover"
-                      sizes="48px"
+                      sizes="100%"
                     />
-                  ) : (
-                    <User className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-                  )}
+                  </div>
+                )}
+                <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5] mb-1">
+                  {recentTrips[0].title}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                    {displayUsername}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {user.email}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleNavigateToFullPage("/account")}
-                  className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1"
-                >
-                  View Full Profile
-                  <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
-                </button>
-              </div>
+                {recentTrips[0].start_date && (
+                  <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">
+                    {new Date(recentTrips[0].start_date).toLocaleDateString("en-US", { 
+                      month: "short", 
+                      day: "numeric",
+                      year: "numeric"
+                    })}
+                  </div>
+                )}
+              </button>
             </div>
-          </SectionCard>
-
-          {/* Stats Section - Two Column Grid */}
-          <SectionCard>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.visited}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Visited</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.saved}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Saved</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.trips}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Trips</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.cities}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cities</div>
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Navigation Spaces Section */}
-          <SectionCard>
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Your Spaces
-              </h3>
-              <div className="space-y-1">
-                <button
-                  onClick={() => navigateToSubpage('visited_subpage')}
-                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                >
-                  <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <span className="flex-1 text-left">Visited</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button
-                  onClick={() => navigateToSubpage('saved_subpage')}
-                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                >
-                  <Bookmark className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <span className="flex-1 text-left">Saved</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button
-                  onClick={() => navigateToSubpage('collections_subpage')}
-                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                >
-                  <Folder className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <span className="flex-1 text-left">Collections</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button
-                  onClick={() => navigateToSubpage('trips_subpage')}
-                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                >
-                  <Compass className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <span className="flex-1 text-left">Trips</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button
-                  onClick={() => navigateToSubpage('achievements_subpage')}
-                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                >
-                  <Trophy className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <span className="flex-1 text-left">Achievements</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button
-                  onClick={() => navigateToSubpage('settings_subpage')}
-                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                >
-                  <Settings className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <span className="flex-1 text-left">Settings</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Trips Preview Section */}
-          {recentTrips.length > 0 && (
-            <SectionCard>
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  My Trips
-                </h3>
-                <div className="space-y-2">
-                  {recentTrips.slice(0, 3).map((trip) => (
-                    <button
-                      key={trip.id}
-                      onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
-                      className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
-                    >
-                      {trip.cover_image && (
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                          <Image
-                            src={trip.cover_image}
-                            alt={trip.title}
-                            fill
-                            className="object-cover"
-                            sizes="48px"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {trip.title}
-                        </p>
-                        {trip.start_date && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(trip.start_date).toLocaleDateString("en-US", { 
-                              month: "short", 
-                              day: "numeric",
-                              year: "numeric"
-                            })}
-                          </p>
-                        )}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </SectionCard>
           )}
 
-          {/* Sign Out Section */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          {/* Footer: Sign Out */}
+          <div className="pt-4 border-t border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
             <button
               type="button"
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5] hover:opacity-70 transition-opacity"
             >
-              <LogOut className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-              <span className="flex-1 text-left">Sign Out</span>
+              <LogOut className="w-4 h-4" strokeWidth={1.5} />
+              <span>Sign Out</span>
             </button>
           </div>
         </>
@@ -900,22 +856,29 @@ export function AccountDrawer({
     }
   };
 
-  // Render header with back button for subpages
+  // Render header with back button for subpages (Tier 2)
   const renderHeader = () => {
     if (currentSubpage === 'main_drawer') {
       return undefined; // Use default header
     }
 
     return (
-      <div className="flex items-center gap-3 px-6 h-14">
+      <div 
+        className="flex items-center gap-3 px-6 h-14"
+        style={{
+          background: 'rgba(18,18,18,0.6)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+        }}
+      >
         <button
           onClick={navigateBack}
           className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
           aria-label="Back"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+          <ArrowLeft className="h-5 w-5 text-[#F5F5F5] dark:text-[#F5F5F5]" />
         </button>
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1">
+        <h2 className="text-[20px] font-semibold text-[#F5F5F5] dark:text-[#F5F5F5] flex-1" style={{ fontWeight: 600 }}>
           {getDrawerTitle()}
         </h2>
         <div className="w-9" /> {/* Spacer for centering */}
@@ -931,20 +894,25 @@ export function AccountDrawer({
     return 120; // Tier 2
   };
 
+  const isTier1 = currentSubpage === 'main_drawer';
+  const isTier2 = currentSubpage !== 'main_drawer';
+
   return (
     <Drawer 
       isOpen={isOpen} 
       onClose={onClose}
-      title={currentSubpage === 'main_drawer' ? getDrawerTitle() : undefined}
+      title={currentSubpage === 'main_drawer' ? undefined : getDrawerTitle()}
       headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
       mobileVariant="bottom"
       desktopSpacing="right-4 top-4 bottom-4"
       desktopWidth="420px"
       position="right"
       style="glassy"
-      backdropOpacity="15"
+      backdropOpacity={isTier1 ? "18" : "18"}
       keepStateOnClose={true}
       zIndex={getZIndex()}
+      tier={isTier1 ? 'tier1' : 'tier2'}
+      showHandle={isTier1}
     >
       <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
         {renderContent()}

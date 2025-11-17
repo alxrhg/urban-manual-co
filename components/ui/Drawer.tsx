@@ -16,6 +16,8 @@ export interface DrawerProps {
   zIndex?: number;
   showBackdrop?: boolean;
   backdropOpacity?: string;
+  tier?: 'tier1' | 'tier2' | 'tier3';
+  showHandle?: boolean;
   position?: 'right' | 'left';
   style?: 'glassy' | 'solid';
   mobileWidth?: string;
@@ -57,6 +59,8 @@ export function Drawer({
   mobileBorderRadius,
   mobileExpanded = false,
   keepStateOnClose = true,
+  tier = 'tier1',
+  showHandle = false,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
@@ -177,11 +181,13 @@ export function Drawer({
       {/* Backdrop */}
       {showBackdrop && (
         <div
-          className={`fixed inset-0 transition-opacity duration-220 ${
+          className={`fixed inset-0 transition-opacity duration-300 ${
             isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
             backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
+            backdropFilter: isOpen ? 'blur(18px)' : 'none',
+            WebkitBackdropFilter: isOpen ? 'blur(18px)' : 'none',
             zIndex: zIndex - 10,
           }}
           onClick={onClose}
@@ -197,11 +203,20 @@ export function Drawer({
           } ${!isOpen ? 'translate-y-full pointer-events-none' : ''}`}
           style={{
             zIndex,
-            maxHeight: 'calc(100vh - 20px)',
-            height: mobileHeight ? `calc(${mobileHeight} - 20px)` : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)',
+            maxHeight: tier === 'tier1' ? '45%' : tier === 'tier2' ? '88%' : 'calc(100vh - 20px)',
+            height: tier === 'tier1' ? 'auto' : (mobileHeight ? `calc(${mobileHeight} - 20px)` : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)'),
             transform: isOpen ? bottomSheetTransform : 'translate3d(0, 120%, 0) scale(0.98)',
+            borderRadius: tier === 'tier1' || tier === 'tier2' ? '22px' : undefined,
+            boxShadow: DRAWER_STYLES.shadow.enabled ? DRAWER_STYLES.shadow.value : undefined,
+            backgroundColor: tier === 'tier1' ? DRAWER_STYLES.darkMode.tier1Bg : tier === 'tier2' ? DRAWER_STYLES.darkMode.tier2Bg : undefined,
           }}
         >
+          {/* Handle */}
+          {showHandle && (
+            <div className="flex-shrink-0 flex justify-center pt-3 pb-2">
+              <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full" />
+            </div>
+          )}
           {/* Header - 56px height, blurred */}
           {(title || headerContent) && (
             <div className={`flex-shrink-0 h-14 px-6 flex items-center justify-between ${headerBackground} border-b border-gray-200/50 dark:border-gray-800/50`}>
