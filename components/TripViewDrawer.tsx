@@ -5,15 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import {
-  Calendar,
-  MapPin,
   Edit2,
   Trash2,
   Loader2,
   ArrowLeft,
   Share2,
   Link2,
-  Globe,
   PlaneTakeoff,
   PlaneLanding,
   UserPlus,
@@ -282,44 +279,32 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     { label: 'Status', value: tripStatusLabel },
   ];
   const designTokens = {
-    surface: {
-      base: 'bg-[#f6f1e9] dark:bg-gray-950',
-      card: 'bg-white/80 dark:bg-gray-950/60',
-      accent: 'bg-gradient-to-br from-[#f9efe1] via-[#f4f0ff] to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-900',
-      muted: 'bg-white/60 dark:bg-gray-900/60',
-    },
-    border: 'border border-[#e7ddcf] dark:border-gray-800',
-    label: 'text-[11px] uppercase tracking-[0.35em] text-[#7d6755] dark:text-gray-400',
+    section: 'space-y-4 border-t border-gray-200 dark:border-gray-800 pt-8',
+    label: 'text-[11px] uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400',
+    subtext: 'text-sm text-gray-600 dark:text-gray-300',
+    divider: 'border-gray-200 dark:border-gray-800',
   } as const;
-  const heroAnchors = [
-    { label: 'Cities', value: visitingCities || trip?.destination || 'Drop a city' },
-    { label: 'Dates', value: dateRangeLabel ?? 'Pick dates' },
-    { label: 'Status', value: tripStatusLabel },
-  ];
   const tripLastTouched = formatRelativeTime(trip?.updated_at);
   const flowSteps = [
-    {
-      id: 'shape',
-      label: 'Shape the vibe',
-      description: 'Name the trip and anchor the experience.',
-      done: Boolean(editedTitle.trim() && (trip?.destination || visitingCities)),
-      accent: 'from-amber-200/70 to-amber-100/20',
-    },
-    {
-      id: 'crew',
-      label: 'Invite your crew',
-      description: 'Share a code, toggle visibility, or DM a link.',
-      done: Boolean(trip?.is_public || shareMessage),
-      accent: 'from-blue-200/60 to-indigo-100/20',
-    },
-    {
-      id: 'timeline',
-      label: 'Build the days',
-      description: 'Drop must-do stops into each day.',
-      done: itineraryItems.length > 0,
-      accent: 'from-emerald-200/60 to-emerald-100/20',
-    },
-  ];
+      {
+        id: 'shape',
+        label: 'Shape the vibe',
+        description: 'Name the trip and anchor the experience.',
+        done: Boolean(editedTitle.trim() && (trip?.destination || visitingCities)),
+      },
+      {
+        id: 'crew',
+        label: 'Invite your crew',
+        description: 'Share a code, toggle visibility, or DM a link.',
+        done: Boolean(trip?.is_public || shareMessage),
+      },
+      {
+        id: 'timeline',
+        label: 'Build the days',
+        description: 'Drop must-do stops into each day.',
+        done: itineraryItems.length > 0,
+      },
+    ];
   const shareIntents = [
     {
       title: 'Invite followers',
@@ -603,7 +588,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
   const renderFlightTicket = (
     label: string,
     flight?: { item: ItineraryItem; notesData: ItineraryItemNotes },
-    icon?: React.ReactNode,
+    icon?: ReactNode,
   ) => {
     const defaultDate = flight ? getDateForDay(flight.item.day) : null;
     const formattedDate = defaultDate ? formatDate(defaultDate) : null;
@@ -617,15 +602,15 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     const time = flight?.notesData.departureTime || flight?.notesData.arrivalTime || flight?.item.time;
 
     return (
-      <div className="rounded-2xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-gray-950/80 p-4 shadow-sm">
-        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-blue-600 dark:text-blue-300">
+      <div className="space-y-2 border-t border-gray-200 dark:border-gray-800 pt-3">
+        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300">
           <div className="flex items-center gap-2">
             {icon}
             <span>{label}</span>
           </div>
           <span>{formattedDate || 'Set date'}</span>
         </div>
-        <div className="mt-3 space-y-2">
+        <div className="space-y-1">
           <p className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">{route}</p>
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>{flightNumber}</span>
@@ -711,29 +696,25 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
   const content = (
     <div className="px-5 py-6">
       {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
+        <div className="py-12 text-center">
+          <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-400" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
         </div>
       ) : !trip ? (
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
         </div>
       ) : (
-        <div className="space-y-8 pb-16">
+        <div className="space-y-10 pb-16">
           {isEditMode && (
-            <div className="rounded-3xl border border-blue-200/60 dark:border-blue-900/40 bg-blue-50/80 dark:bg-blue-950/30 px-4 py-3 text-xs text-blue-900 dark:text-blue-100">
-              <strong className="font-semibold">Edit mode</strong> — Live inputs unlock across this drawer. Save before leaving so the crew sees the updates.
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-700 dark:border-gray-800 dark:bg-gray-900/30 dark:text-gray-200">
+              <strong className="font-semibold">Edit mode:</strong> inputs stay live across this drawer. Save before closing so the crew sees the changes.
             </div>
           )}
 
-          <section className={`relative overflow-hidden rounded-[32px] ${designTokens.border} ${designTokens.surface.accent} p-6 space-y-6`}>
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/40 blur-3xl" />
-              <div className="absolute left-10 bottom-0 h-32 w-32 rounded-full bg-amber-100/60 blur-2xl" />
-            </div>
-            <div className="relative z-10 flex flex-col gap-6 lg:flex-row">
-              <div className="flex-1 space-y-5">
+          <section className={`${designTokens.section} border-t-0 pt-0`}>
+            <div className="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
+              <div className="space-y-5">
                 <div className="space-y-3">
                   <p className={designTokens.label}>Trip identity</p>
                   {isEditMode ? (
@@ -741,17 +722,17 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                       type="text"
                       value={editedTitle}
                       onChange={(e) => setEditedTitle(e.target.value)}
-                      className="w-full rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-lg font-semibold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                      className="w-full border-b border-gray-300 bg-transparent pb-2 text-3xl font-semibold text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:text-white"
                       placeholder="Name this trip"
                     />
                   ) : (
                     <h2 className="text-3xl font-semibold text-gray-900 dark:text-white">{trip.title || 'Name this trip'}</h2>
                   )}
-                  <p className="text-sm text-gray-700/80 dark:text-gray-200">
+                  <p className={designTokens.subtext}>
                     {trip.description?.trim() || 'Give the crew a vibe line so everyone knows what this journey is about.'}
                   </p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-1">
                     <p className={designTokens.label}>Depart</p>
                     {isEditMode ? (
@@ -759,7 +740,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                         type="date"
                         value={formatDateForInput(editedStartDate)}
                         onChange={(e) => setEditedStartDate(e.target.value)}
-                        className="w-full rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200"
+                        className="w-full border-b border-gray-300 bg-transparent pb-1 text-sm font-medium text-gray-900 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:text-white"
                       />
                     ) : (
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{formatDate(editedStartDate) || 'Add date'}</p>
@@ -772,7 +753,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                         type="date"
                         value={formatDateForInput(editedEndDate)}
                         onChange={(e) => setEditedEndDate(e.target.value)}
-                        className="w-full rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200"
+                        className="w-full border-b border-gray-300 bg-transparent pb-1 text-sm font-medium text-gray-900 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:text-white"
                       />
                     ) : (
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{formatDate(editedEndDate) || 'Add date'}</p>
@@ -785,7 +766,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                         type="text"
                         value={editedDestination}
                         onChange={(e) => setEditedDestination(e.target.value)}
-                        className="w-full rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200"
+                        className="w-full border-b border-gray-300 bg-transparent pb-1 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:text-white"
                         placeholder="Seoul, Busan, Tokyo"
                       />
                     ) : (
@@ -793,195 +774,182 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                     )}
                   </div>
                 </div>
-                {!isEditMode && (
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {heroAnchors.map((anchor) => (
-                      <div key={anchor.label} className="rounded-2xl border border-white/60 bg-white/80 px-4 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400">{anchor.label}</p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-900">{anchor.value}</p>
+                <dl className="grid gap-4 sm:grid-cols-3">
+                  {overviewStats.map((stat) => (
+                    <div key={stat.label} className={`space-y-1 border-t ${designTokens.divider} pt-3`}>
+                      <dt className={designTokens.label}>{stat.label}</dt>
+                      <dd className="text-lg font-semibold text-gray-900 dark:text-white">{stat.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div className="space-y-6">
+                <div className={`space-y-2 border-t ${designTokens.divider} pt-4`}>
+                  <p className={designTokens.label}>Crew code</p>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <p className="text-2xl font-semibold tracking-[0.2em] text-gray-900 dark:text-white">{shareCode}</p>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Share in chat</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Keep this code inside DM threads to invite collaborators.</p>
+                </div>
+                <figure className="space-y-2">
+                  <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
+                    <img src={coverImageUrl} alt={`${trip.title} cover art`} className="h-48 w-full object-cover" />
+                  </div>
+                  <figcaption className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>Trip moodboard</span>
+                    <button
+                      onClick={() => handleShareAction('Cover uploads coming soon')}
+                      className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.3em] text-gray-600 hover:text-gray-900"
+                    >
+                      Edit
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+          </section>
+
+          <section className={designTokens.section}>
+            <div className="flex flex-col gap-2">
+              <p className={designTokens.label}>Flow</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">Design cadence for this trip</p>
+            </div>
+            <ol className="space-y-4">
+              {flowSteps.map((step, index) => (
+                <li key={step.id} className={`flex items-start gap-4 border-t ${designTokens.divider} pt-4`}>
+                  <span className="text-xs font-semibold text-gray-400">{String(index + 1).padStart(2, '0')}</span>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between text-sm font-medium text-gray-900 dark:text-white">
+                      <span>{step.label}</span>
+                      <span className={step.done ? 'text-emerald-600' : 'text-gray-400'}>{step.done ? 'Ready' : 'Open'}</span>
+                    </div>
+                    <p className={designTokens.subtext}>{step.description}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className={designTokens.section}>
+            <div className="grid gap-8 lg:grid-cols-[1.4fr,0.8fr]">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={designTokens.label}>Share & crew</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">Move from inspiration to collaboration</p>
+                  </div>
+                  <UserPlus className="h-5 w-5 text-gray-400" />
+                </div>
+                <div className="space-y-4">
+                  {shareIntents.map((intent) => (
+                    <button
+                      key={intent.title}
+                      onClick={intent.action}
+                      className={`group flex w-full items-start gap-3 border-t ${designTokens.divider} pt-4 text-left`}
+                    >
+                      <intent.icon className="h-5 w-5 text-gray-400 group-hover:text-gray-900" />
+                      <div className="space-y-1">
+                        <p className={designTokens.label}>{intent.title}</p>
+                        <p className={designTokens.subtext}>{intent.body}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                  <button
+                    onClick={handleCopyShareLink}
+                    className="inline-flex items-center gap-2 border border-gray-300 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                  >
+                    <Link2 className="h-4 w-4" /> Copy share link
+                  </button>
+                  {shareMessage && <span>{shareMessage}</span>}
+                </div>
+                <div className={`flex items-center justify-between border-t ${designTokens.divider} pt-4`}>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Publish itinerary</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Let the crew view the timeline without edits.</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={trip.is_public}
+                    onClick={() => handleVisibilityToggle(!trip.is_public)}
+                    disabled={updatingVisibility}
+                    className={`relative inline-flex h-6 w-12 items-center rounded-full border border-gray-300 dark:border-gray-700 transition-colors ${trip.is_public ? 'bg-gray-900 dark:bg-white' : 'bg-transparent'} ${updatingVisibility ? 'opacity-60' : ''}`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform dark:bg-gray-900 ${trip.is_public ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <p className={designTokens.label}>Trip insights</p>
+                  <dl className="space-y-3">
+                    {insightCards.map((insight) => (
+                      <div key={insight.label} className={`space-y-1 border-t ${designTokens.divider} pt-3`}>
+                        <dt className={designTokens.label}>{insight.label}</dt>
+                        <dd className="text-lg font-semibold text-gray-900 dark:text-white">{insight.value}</dd>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{insight.helper}</p>
                       </div>
                     ))}
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-3">
-                  {overviewStats.map((stat) => (
-                    <div key={stat.label} className="rounded-full border border-white/70 bg-white/80 px-4 py-2 text-left">
-                      <span className="block text-[10px] uppercase tracking-[0.3em] text-amber-500">{stat.label}</span>
-                      <span className="text-base font-semibold text-gray-900">{stat.value}</span>
-                    </div>
-                  ))}
+                  </dl>
                 </div>
-              </div>
-              <div className="w-full max-w-sm space-y-4">
-                <div className="rounded-[28px] border border-white/70 bg-white/80 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={designTokens.label}>Crew code</p>
-                      <p className="text-3xl font-semibold tracking-[0.2em] text-gray-900">{shareCode}</p>
-                      <p className="text-xs text-gray-500">Drop in chat to bring friends into the board.</p>
-                    </div>
-                    <div className="flex -space-x-2">
-                      <div className="h-10 w-10 rounded-full border border-white/80 bg-gray-100 text-[11px] text-gray-600 flex items-center justify-center">You</div>
-                      <div className="h-10 w-10 rounded-full border border-dashed border-gray-300 text-lg text-gray-400 flex items-center justify-center">+</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-[28px] border border-white/80 bg-white overflow-hidden shadow-sm">
-                  <div className="relative">
-                    <img src={coverImageUrl} alt={`${trip.title} cover art`} className="h-48 w-full object-cover" />
-                    <div className="absolute inset-x-3 bottom-3 flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2 text-xs text-gray-700">
-                      <span>Trip moodboard</span>
-                      <button
-                        onClick={() => handleShareAction('Cover uploads coming soon')}
-                        className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.3em] text-gray-500"
-                      >
-                        Edit
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                <div className={`space-y-2 border-t ${designTokens.divider} pt-4`}>
+                  <p className={designTokens.label}>Crew visibility</p>
+                  <p className={designTokens.subtext}>
+                    Your link resolves to <span className="font-semibold text-gray-900 dark:text-white">{shareUrl || 'urbanmanual.com/trips'}</span>.
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Last touched {tripLastTouched}</p>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className={`rounded-[28px] ${designTokens.border} ${designTokens.surface.muted} p-5 space-y-4`}>
-            <div className="flex flex-col gap-3">
-              <p className={designTokens.label}>Flow</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">Design system steps for this trip</p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {flowSteps.map((step) => (
-                <div key={step.id} className={`rounded-2xl border border-white/80 bg-gradient-to-br ${step.accent} p-4`}>
-                  <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-200">
-                    <span className="font-semibold">{step.label}</span>
-                    <span className={step.done ? 'text-emerald-600 font-semibold' : 'text-gray-400'}>
-                      {step.done ? 'Ready' : 'Open'}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-200">{step.description}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-5 lg:grid-cols-[1.4fr,0.6fr]">
-            <div className={`rounded-[28px] ${designTokens.border} ${designTokens.surface.card} p-6 space-y-5`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={designTokens.label}>Share & crew</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">Move from inspiration to collaboration</p>
-                </div>
-                <UserPlus className="h-5 w-5 text-gray-400" />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {shareIntents.map((intent) => (
-                  <button
-                    key={intent.title}
-                    onClick={intent.action}
-                    className="flex items-center justify-between rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-white/70 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200"
-                  >
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-gray-400">{intent.title}</p>
-                      <p>{intent.body}</p>
-                    </div>
-                    <intent.icon className="h-5 w-5 text-gray-400" />
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={handleCopyShareLink}
-                  className="inline-flex items-center gap-2 rounded-full border border-dashed border-gray-300 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-600"
-                >
-                  <Link2 className="h-4 w-4" /> Copy share link
-                </button>
-                {shareMessage && <span className="text-xs text-gray-500">{shareMessage}</span>}
-              </div>
-              <div className="flex items-center justify-between rounded-2xl border border-dashed border-gray-300 bg-white/70 p-4">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Publish itinerary</p>
-                  <p className="text-xs text-gray-500">Flip public mode to let everyone peek the timeline.</p>
-                </div>
-                <button
-                  role="switch"
-                  aria-checked={trip.is_public}
-                  onClick={() => handleVisibilityToggle(!trip.is_public)}
-                  disabled={updatingVisibility}
-                  className={`relative h-7 w-14 rounded-full transition-colors ${trip.is_public ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-700'} ${updatingVisibility ? 'opacity-60' : ''}`}
-                >
-                  <span
-                    className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${trip.is_public ? 'translate-x-7' : 'translate-x-0.5'}`}
-                  />
-                </button>
-              </div>
-            </div>
-            <div className="space-y-5">
-              <div className={`rounded-[28px] ${designTokens.border} ${designTokens.surface.card} p-5 space-y-4`}>
-                <p className={designTokens.label}>Trip insights</p>
-                <div className="space-y-3">
-                  {insightCards.map((insight) => (
-                    <div key={insight.label} className="rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-white/70 px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.3em] text-gray-400">{insight.label}</p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{insight.value}</p>
-                      <p className="text-xs text-gray-500">{insight.helper}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className={`rounded-[28px] ${designTokens.border} ${designTokens.surface.card} p-5 space-y-4`}>
-                <p className={designTokens.label}>Crew visibility</p>
-                <p className="text-sm text-gray-600 dark:text-gray-200">Your link resolves to <span className="font-semibold">{shareUrl || 'urbanmanual.com/trips'}</span>. Adjust privacy in the share card.</p>
-                <div className="rounded-2xl border border-dashed border-gray-300 bg-white/70 px-4 py-3 text-xs text-gray-500">
-                  Last touched {tripLastTouched}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="grid gap-5 lg:grid-cols-2">
-            <div className={`rounded-[28px] ${designTokens.border} ${designTokens.surface.card} p-5 space-y-4`}>
-              <div className="flex items-center justify-between">
+          <section className={designTokens.section}>
+            <div className="grid gap-8 lg:grid-cols-2">
+              <div className="space-y-4">
                 <div>
                   <p className={designTokens.label}>Flights & rails</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-200">Keep departure + return tickets pinned here.</p>
+                  <p className={designTokens.subtext}>Keep departure and return tickets visible.</p>
                 </div>
-                <Globe className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="space-y-3">
-                {renderFlightTicket('Departure', departureFlight, <PlaneTakeoff className="w-4 h-4" />)}
-                {renderFlightTicket('Return', returnFlight, <PlaneLanding className="w-4 h-4" />)}
-              </div>
-            </div>
-            <div className={`rounded-[28px] ${designTokens.border} ${designTokens.surface.card} p-5 space-y-4`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={designTokens.label}>Trip memo</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">Pin inspiration, reminders, or packing notes.</p>
+                <div className="space-y-4">
+                  {renderFlightTicket('Departure', departureFlight, <PlaneTakeoff className="h-4 w-4" />)}
+                  {renderFlightTicket('Return', returnFlight, <PlaneLanding className="h-4 w-4" />)}
                 </div>
-                {!isEditMode && trip.user_id === user?.id && (
-                  <button onClick={() => setIsEditMode(true)} className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50">
-                    <StickyNote className="h-4 w-4" />
-                  </button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={designTokens.label}>Trip memo</p>
+                    <p className={designTokens.subtext}>Pin inspiration, reminders, or packing notes.</p>
+                  </div>
+                  {!isEditMode && trip.user_id === user?.id && (
+                    <button onClick={() => setIsEditMode(true)} className="rounded-full border border-gray-300 p-2 text-gray-500 hover:text-gray-900 dark:border-gray-700 dark:text-gray-300">
+                      <StickyNote className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                {isEditMode ? (
+                  <textarea
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-xl border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-900 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:text-gray-100"
+                    placeholder={memoPlaceholder}
+                  />
+                ) : (
+                  <p className="whitespace-pre-line text-sm text-gray-700 dark:text-gray-200">
+                    {trip.description?.trim() || memoPlaceholder}
+                  </p>
                 )}
               </div>
-              {isEditMode ? (
-                <textarea
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  rows={4}
-                  className="w-full rounded-2xl border border-gray-200 bg-white/80 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                  placeholder={memoPlaceholder}
-                />
-              ) : (
-                <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-line">
-                  {trip.description?.trim() || memoPlaceholder}
-                </p>
-              )}
             </div>
           </section>
 
-          <section className={`rounded-[32px] ${designTokens.border} ${designTokens.surface.card} p-6 space-y-5`}>
+          <section className={designTokens.section}>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className={designTokens.label}>Add experiences</p>
@@ -989,18 +957,18 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
               </div>
               <button
                 onClick={() => setShowDayPicker((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-4 py-2 text-sm font-medium text-gray-700"
+                className="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 dark:border-gray-700 dark:text-white"
               >
                 <Plus className="h-4 w-4" /> {showDayPicker ? 'Close day picker' : 'Choose a day'}
               </button>
             </div>
             {showDayPicker && (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="flex flex-wrap gap-2">
                 {dayNumbers.map((dayNumber) => (
                   <button
                     key={dayNumber}
                     onClick={() => handleDayPickerSelect(dayNumber)}
-                    className="rounded-2xl border border-gray-200 bg-white/80 px-3 py-2 text-xs font-semibold text-gray-700"
+                    className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-gray-700 dark:border-gray-700 dark:text-gray-200"
                   >
                     Day {dayNumber}
                   </button>
@@ -1009,28 +977,28 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
             )}
           </section>
 
-          <section className={`rounded-[32px] ${designTokens.border} ${designTokens.surface.base} p-6 space-y-6`}>
+          <section className={designTokens.section}>
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className={designTokens.label}>Itinerary blueprint</p>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white">Day-by-day experience map</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Drag to reorder, add new stops, and keep each day balanced.</p>
+                <p className={designTokens.subtext}>Drag to reorder, add new stops, and keep each day balanced.</p>
               </div>
               <span className="text-xs uppercase tracking-[0.3em] text-gray-400">{totalDays} day plan</span>
             </div>
             {dayNumbers.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 px-4 py-8 text-center text-sm text-gray-500">
+              <div className="border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                 No itinerary items yet. Use “Add experiences” to pin your first stop.
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {dayNumbers.map((dayNumber) => {
                   const items = itemsByDay[dayNumber] || [];
                   const transformedLocations = transformItemsToLocations(items);
                   const dayDate = getDateForDay(dayNumber);
 
                   return (
-                    <div key={dayNumber} className="rounded-3xl border border-white/70 bg-white/90 p-4 shadow-sm">
+                    <div key={dayNumber} className="rounded-2xl border border-gray-200 p-4 dark:border-gray-800">
                       <TripDay
                         dayNumber={dayNumber}
                         date={dayDate}
