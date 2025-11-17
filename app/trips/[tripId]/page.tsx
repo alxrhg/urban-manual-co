@@ -1,8 +1,9 @@
 
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { TripDay } from '@/components/TripDay';
 import { ItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import TripActions from '@/components/TripActions';
 
 async function getTripDetails(tripId: string) {
     const supabase = createClient();
@@ -66,8 +67,6 @@ export default async function TripDetailsPage({ params }: { params: { tripId: st
         startDate.setDate(startDate.getDate() + dayNumber - 1);
         return startDate.toISOString().split('T')[0];
     };
-
-import TripActions from '@/components/TripActions';
 
     return (
         <div className="p-6">
