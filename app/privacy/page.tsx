@@ -232,6 +232,58 @@ export default function PrivacyPage() {
                       </p>
                     </div>
 
+                    <div className="mt-4">
+                      <strong className="font-medium text-black dark:text-white">Google Signals Data Collection:</strong> We have enabled Google Signals, which allows Google Analytics to collect additional data about your traffic. When Google Signals is active, Google Analytics may:
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        <li>Associate your visitation information with Google&apos;s information from accounts of signed-in users who have consented to ads personalization</li>
+                        <li>Collect data including end-user location, search history, YouTube history, and data from sites that partner with Google</li>
+                        <li>Provide additional insights about users and enable audience sharing capabilities</li>
+                      </ul>
+                      <p className="mt-2">
+                        This data collection is used to provide enhanced analytics features and is subject to Google&apos;s Advertising Features Policy. 
+                        You can control this data collection through your Google account settings or by disabling analytics cookies in our Cookie Settings.
+                      </p>
+                    </div>
+
+                    <div className="mt-4">
+                      <strong className="font-medium text-black dark:text-white">User-ID and User-Provided Data Collection:</strong> We may use Google Analytics User-ID and user-provided data features to:
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        <li>Connect user behavior across different sessions and devices</li>
+                        <li>Provide more accurate user counts and a holistic view of user interactions</li>
+                        <li>Improve conversion measurement and audience sharing capabilities</li>
+                        <li>Supplement analytics data with consented, hashed customer data in a privacy-safe way</li>
+                      </ul>
+                      <p className="mt-2">
+                        We do not send personally identifiable information as User-ID. Any user-provided data is hashed and processed in accordance with Google Analytics policies. 
+                        This feature requires appropriate privacy disclosures, which are provided in this Privacy Policy.
+                      </p>
+                    </div>
+
+                    <div className="mt-4">
+                      <strong className="font-medium text-black dark:text-white">Granular Location and Device Data Collection:</strong> We collect granular location and device metadata to:
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        <li>Collect city-level location information (in addition to country/region data collected by default)</li>
+                        <li>Collect detailed device information to provide location and device-based capabilities</li>
+                        <li>Support regional privacy policies and region-based Analytics settings</li>
+                      </ul>
+                      <p className="mt-2">
+                        Region and country-level metadata is collected by default for all traffic. City-level and device details are collected when you consent to analytics cookies.
+                      </p>
+                    </div>
+
+                    <div className="mt-4">
+                      <strong className="font-medium text-black dark:text-white">Ads Personalization:</strong> When ads personalization is enabled, we may:
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        <li>Export Google Analytics audiences and key events to linked advertising accounts</li>
+                        <li>Use data collected through Google Signals, User ID, and ads integrations for personalized advertising experiences</li>
+                        <li>Share data with Google for ads personalization purposes in connection with enabled features</li>
+                      </ul>
+                      <p className="mt-2">
+                        Ads personalization is optional and can be controlled through your cookie preferences. 
+                        Disabling ads personalization means that shared audience lists are marked as inactive and no new users will be shared via audience lists.
+                      </p>
+                    </div>
+
                     <p>
                       <strong className="font-medium text-black dark:text-white">Google Places Autocomplete:</strong> When you use our trip planning feature to search for and add locations,
                       we use Google Places Autocomplete to provide location suggestions. We track anonymized analytics about which places

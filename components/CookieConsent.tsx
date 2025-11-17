@@ -211,8 +211,13 @@ export function CookieConsent() {
                       <div className="text-xs font-medium mb-1">
                         Analytics Cookies
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
-                        We use Google Analytics to understand how you use our site, including page views, navigation patterns, and user interactions. This helps us improve your experience and optimize our content. You can opt out at any time.
+                      <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                        <p>
+                          We use Google Analytics to understand how you use our site, including page views, navigation patterns, and user interactions. This helps us improve your experience and optimize our content.
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-500">
+                          When enabled, this may include: Google Signals data collection, User-ID tracking, granular location and device data, and ads personalization features. See our Privacy Policy for details.
+                        </p>
                       </div>
                     </div>
                     <div className="flex-shrink-0">
