@@ -2581,8 +2581,8 @@ export default function Home() {
                         ))}
                       </div>
 
-                      {/* More Cities Button */}
-                      {cities.length > displayedCities.length && (
+                      {/* More Cities / Hide Cities Button */}
+                      {!showAllCities && cities.length > displayedCities.length && (
                         <button
                           onClick={() => {
                             setShowAllCities(true);
@@ -2591,6 +2591,16 @@ export default function Home() {
                         >
                           + More cities (
                           {cities.length - displayedCities.length})
+                        </button>
+                      )}
+                      {showAllCities && (
+                        <button
+                          onClick={() => {
+                            setShowAllCities(false);
+                          }}
+                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
+                        >
+                          Hide cities
                         </button>
                       )}
                     </div>
