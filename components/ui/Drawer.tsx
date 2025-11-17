@@ -127,13 +127,13 @@ export function Drawer({
       {/* Mobile Drawer - Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
-          className={`md:hidden fixed inset-x-4 bottom-4 transform transition-transform duration-500 ease-[cubic-bezier(0.18,0.89,0.32,1.28)] will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-2rem)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
+          className={`md:hidden fixed inset-[10px] transform transition-transform duration-500 ease-[cubic-bezier(0.18,0.89,0.32,1.28)] will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
             mobileExpanded ? 'drawer-expanded' : 'drawer-collapsed'
           }`}
           style={{
             zIndex,
-            maxHeight: computedMobileMaxHeight,
-            height: computedMobileHeight,
+            maxHeight: `calc(${computedMobileMaxHeight} - 20px)`,
+            height: `calc(${computedMobileHeight} - 20px)`,
             transform: bottomSheetTransform,
           }}
         >
