@@ -87,12 +87,12 @@ export function Drawer({
       <div
         className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden overscroll-contain rounded-t-3xl`}
+        } flex flex-col bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-t border-white/20 dark:border-gray-800/20 w-full max-w-full overflow-hidden overscroll-contain rounded-t-3xl`}
         style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
       >
         {/* Header */}
         {(title || headerContent) && (
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-transparent">
             {headerContent || (
               <>
                 <button
@@ -120,7 +120,7 @@ export function Drawer({
 
         {/* Footer */}
         {footerContent && (
-          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+          <div className="flex-shrink-0 border-t border-white/20 dark:border-gray-800/20 bg-transparent">
             {footerContent}
           </div>
         )}
@@ -130,12 +130,12 @@ export function Drawer({
       <div
         className={`hidden md:flex fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden rounded-t-3xl`}
+        } flex-col bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-t border-white/20 dark:border-gray-800/20 w-full max-w-full overflow-hidden rounded-t-3xl`}
         style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
       >
         {/* Header */}
         {(title || headerContent) && (
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-transparent">
             {headerContent || (
               <>
                 <button
@@ -163,7 +163,7 @@ export function Drawer({
 
         {/* Footer */}
         {footerContent && (
-          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+          <div className="flex-shrink-0 border-t border-white/20 dark:border-gray-800/20 bg-transparent">
             {footerContent}
           </div>
         )}

@@ -1016,8 +1016,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           onClick={onClose}
         />
         {/* Drawer with loading state */}
-        <div className="md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 rounded-l-3xl overflow-hidden flex flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+        <div className="md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-l border-white/20 dark:border-gray-800/20 z-50 rounded-l-3xl overflow-hidden flex flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-transparent">
             <button
               onClick={onClose}
               className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
@@ -1036,8 +1036,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
         </div>
         {/* Desktop drawer loading state */}
-        <div className="hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 rounded-l-3xl overflow-hidden flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+        <div className="hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-l border-white/20 dark:border-gray-800/20 z-50 rounded-l-3xl overflow-hidden flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-transparent">
             <button
               onClick={onClose}
               className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
@@ -1092,12 +1092,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Mobile Drawer (mimics desktop design) */}
       <div
-        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
+        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-l border-white/20 dark:border-gray-800/20 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex flex-col`}
       >
         {/* Header with Close Button */}
-        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-transparent">
           <button
             onClick={onClose}
             className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
@@ -1320,7 +1320,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
 
         {/* Action Buttons */}
-        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+        <div className="flex-shrink-0 px-6 py-4 border-t border-white/20 dark:border-gray-800/20 bg-transparent">
           <div className="flex gap-3">
             {destination.slug && (
               <Link
@@ -1369,12 +1369,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Desktop Slideover Card (existing design) */}
       <div
-        className={`hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
+        className={`hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-l border-white/20 dark:border-gray-800/20 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex-col`}
       >
         {/* Header with Close Button */}
-        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-transparent">
           <button
             onClick={onClose}
             className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
