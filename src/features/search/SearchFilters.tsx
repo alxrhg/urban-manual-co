@@ -27,6 +27,8 @@ interface SearchFiltersProps {
   sortBy?: 'default' | 'recent';
   onSortChange?: (sortBy: 'default' | 'recent') => void;
   isAdmin?: boolean;
+  fullWidthPanel?: boolean;
+  onPanelToggle?: (isOpen: boolean) => void;
 }
 
 export function SearchFiltersComponent({
@@ -38,9 +40,17 @@ export function SearchFiltersComponent({
   sortBy = 'default',
   onSortChange,
   isAdmin = false,
+  fullWidthPanel = false,
+  onPanelToggle,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = (newState: boolean) => {
+    setIsOpen(newState);
+    onPanelToggle?.(newState);
+  };
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
   const [searchQuery, setSearchQuery] = useState(filters.searchQuery || '');
@@ -126,261 +136,639 @@ export function SearchFiltersComponent({
 
   return (
     <div className="relative">
-      {/* Trigger Button - Capsule Shape with Sliders Icon */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
-        aria-label={isOpen ? 'Close filters' : 'Open filters'}
+        ref={buttonRef}
+        onClick={() => {
+          if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setDropdownPosition({
+              top: rect.bottom + 8,
+              right: window.innerWidth - rect.right,
+            });
+          }
+          handleToggle(!isOpen);
+        }}
+        className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-[20px] transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+        aria-label="Toggle filters"
         aria-expanded={isOpen}
       >
-        <SlidersHorizontal className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+        <SlidersHorizontal className="h-4 w-4" />
         <span>Filters</span>
         {hasActiveFilters && (
-          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full">
-            {activeFilterCount}
+          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
+            {Object.keys(filters).length}
           </span>
         )}
-        <ChevronDown
-          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-[220ms] ease-out ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-          strokeWidth={1.5}
-        />
       </button>
+      <span aria-live="polite" role="status" className="sr-only">
+        {hasActiveFilters
+          ? `${activeFilterCount} active ${activeFilterCount === 1 ? 'filter' : 'filters'}`
+          : 'No filters applied'}
+      </span>
 
-      {/* Expanded Panel - Full Width Pushdown */}
+      {/* Filter panel - Full width or dropdown */}
       {isOpen && (
-        <div
-          ref={panelRef}
-          className="absolute top-full left-0 w-screen -ml-[calc(50vw-50%)] mt-2 bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden z-50"
-          style={{
-            animation: 'expandCollapse 220ms ease-out',
-          }}
-        >
-          <div className="px-6 pt-5 pb-6 space-y-5">
-            {/* Heading */}
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Filter destinations
-            </h3>
+        <>
+          {fullWidthPanel ? (
+            /* Full-width panel attached under top controls */
+            <div className="absolute left-0 right-0 top-full mt-2 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50 shadow-lg">
+              <div className="w-full px-6 md:px-10 py-8">
+                <div className="max-w-[1800px] mx-auto">
+                  <div className="space-y-8">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
+                      <div className="flex items-center gap-3">
+                        {hasActiveFilters && (
+                          <button
+                            onClick={clearAll}
+                            className="text-sm text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                          >
+                            Clear all
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleToggle(false)}
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                          aria-label="Close filters"
+                        >
+                          <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Text Search - Only filters grid, doesn't trigger top search */}
+                    <fieldset className="space-y-3">
+                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Search</legend>
+                      <div className="relative">
+                        <label htmlFor="search-filter-full" className="sr-only">
+                          Filter destinations
+                        </label>
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-600" />
+                        <input
+                          id="search-filter-full"
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Filter destinations..."
+                          className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
+                        />
+                        {searchQuery && (
+                          <button
+                            onClick={() => {
+                              setSearchQuery('');
+                              clearFilter('searchQuery');
+                            }}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-black dark:hover:text-white transition-colors"
+                            aria-label="Clear search"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </fieldset>
 
-            {/* Search Field */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search destinations..."
-                className="w-full pl-10 pr-10 py-3 px-4 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    clearFilter('searchQuery');
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="h-4 w-4" strokeWidth={1.5} />
-                </button>
-              )}
-            </div>
+                    {/* Special Filters */}
+                    <fieldset>
+                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Special</legend>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (filters.michelin) {
+                              clearFilter('michelin');
+                            } else {
+                              updateFilter('michelin', true);
+                            }
+                          }}
+                          className={`transition-all ${
+                            filters.michelin
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                          }`}
+                          aria-pressed={Boolean(filters.michelin)}
+                        >
+                          Michelin
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (filters.openNow) {
+                              clearFilter('openNow');
+                            } else {
+                              updateFilter('openNow', true);
+                            }
+                          }}
+                          className={`transition-all ${
+                            filters.openNow
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                          }`}
+                          aria-pressed={Boolean(filters.openNow)}
+                        >
+                          Open Now
+                        </button>
+                      </div>
+                    </fieldset>
 
-            {/* Special Section - Chips */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Special</h4>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (filters.michelin) {
-                      clearFilter('michelin');
-                    } else {
-                      updateFilter('michelin', true);
-                    }
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
-                    filters.michelin
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                  aria-pressed={Boolean(filters.michelin)}
-                >
-                  Michelin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (filters.openNow) {
-                      clearFilter('openNow');
-                    } else {
-                      updateFilter('openNow', true);
-                    }
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
-                    filters.openNow
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                  aria-pressed={Boolean(filters.openNow)}
-                >
-                  Open Now
-                </button>
-              </div>
-            </div>
+                    {/* Rating Filter */}
+                    <fieldset>
+                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Minimum Rating</legend>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                        <button
+                          type="button"
+                          onClick={() => clearFilter('minRating')}
+                          className={`transition-all ${
+                            !filters.minRating
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                          }`}
+                          aria-pressed={!filters.minRating}
+                        >
+                          Any
+                        </button>
+                        {[4.5, 4.0, 3.5, 3.0].map((rating) => (
+                          <button
+                            type="button"
+                            key={rating}
+                            onClick={() => {
+                              if (filters.minRating === rating) {
+                                clearFilter('minRating');
+                              } else {
+                                updateFilter('minRating', rating);
+                              }
+                            }}
+                            className={`transition-all ${
+                              filters.minRating === rating
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={filters.minRating === rating}
+                          >
+                            {rating}+
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
 
-            {/* Rating Section - Choice Chips */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Minimum Rating</h4>
-              <div className="flex flex-wrap gap-2">
-                {['Any', '4.5+', '4+', '3.5+', '3+'].map((option) => {
-                  const rating = option === 'Any' ? null : parseFloat(option.replace('+', ''));
-                  const isSelected = rating === null
-                    ? !filters.minRating
-                    : filters.minRating === rating;
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => {
-                        if (rating === null) {
-                          clearFilter('minRating');
-                        } else {
-                          if (filters.minRating === rating) {
-                            clearFilter('minRating');
-                          } else {
-                            updateFilter('minRating', rating);
-                          }
-                        }
-                      }}
-                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
-                        isSelected
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                      }`}
-                      aria-pressed={isSelected}
-                    >
-                      {option}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Price Level Section - Choice Chips */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Price Level</h4>
-              <div className="flex flex-wrap gap-2">
-                {['Any', '$', '$$', '$$$', '$$$$'].map((option) => {
-                  const priceLevel = option === 'Any' ? null : option.length;
-                  const isSelected = priceLevel === null
-                    ? !filters.minPrice && !filters.maxPrice
-                    : filters.minPrice === priceLevel && filters.maxPrice === priceLevel;
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => {
-                        if (priceLevel === null) {
-                          clearFilter('minPrice');
-                          clearFilter('maxPrice');
-                        } else {
-                          if (filters.minPrice === priceLevel && filters.maxPrice === priceLevel) {
+                    {/* Price Filter */}
+                    <fieldset>
+                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Price Level</legend>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
                             clearFilter('minPrice');
                             clearFilter('maxPrice');
-                          } else {
-                            updateFilter('minPrice', priceLevel);
-                            updateFilter('maxPrice', priceLevel);
-                          }
-                        }
-                      }}
-                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
-                        isSelected
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                      }`}
-                      aria-pressed={isSelected}
-                    >
-                      {option}
-                    </button>
-                  );
-                })}
+                          }}
+                          className={`transition-all ${
+                            !filters.minPrice && !filters.maxPrice
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                          }`}
+                          aria-pressed={!filters.minPrice && !filters.maxPrice}
+                        >
+                          Any
+                        </button>
+                        {[1, 2, 3, 4].map((level) => (
+                          <button
+                            type="button"
+                            key={level}
+                            onClick={() => {
+                              if (filters.minPrice === level && filters.maxPrice === level) {
+                                clearFilter('minPrice');
+                                clearFilter('maxPrice');
+                              } else {
+                                updateFilter('minPrice', level);
+                                updateFilter('maxPrice', level);
+                              }
+                            }}
+                            className={`transition-all ${
+                              filters.minPrice === level && filters.maxPrice === level
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={filters.minPrice === level && filters.maxPrice === level}
+                          >
+                            {'$'.repeat(level)}
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    {/* Sort Filter (Admin Only) */}
+                    {isAdmin && onSortChange && (
+                      <fieldset className="pt-6 border-t border-gray-200 dark:border-gray-800">
+                        <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Sort</legend>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                          <button
+                            type="button"
+                            onClick={() => onSortChange('default')}
+                            className={`flex items-center gap-1.5 transition-all ${
+                              sortBy === 'default'
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={sortBy === 'default'}
+                          >
+                            Default
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSortChange('recent')}
+                            className={`flex items-center gap-1.5 transition-all ${
+                              sortBy === 'recent'
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={sortBy === 'recent'}
+                          >
+                            <Sparkles className="h-4 w-4" />
+                            Recent Added
+                          </button>
+                        </div>
+                      </fieldset>
+                    )}
+
+                    {/* Near Me Filter */}
+                    <fieldset className="pt-6 border-t border-gray-200 dark:border-gray-800">
+                      <legend className="flex items-center gap-2 mb-4 text-sm font-medium text-gray-900 dark:text-white">
+                        <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                        Near Me
+                      </legend>
+
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm text-gray-500 dark:text-gray-500">Use current location</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleNearMe(!filters.nearMe)}
+                          disabled={loading}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                            filters.nearMe ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'
+                          }`}
+                          aria-pressed={Boolean(filters.nearMe)}
+                          aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
+                        >
+                          <span
+                            className={`inline-block h-3 w-3 transform rounded-full bg-white dark:bg-black transition-transform ${
+                              filters.nearMe ? 'translate-x-5' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {loading && (
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500 mb-3">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Getting your location...</span>
+                        </div>
+                      )}
+
+                      {error && filters.nearMe && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                          Location access denied. Please enable in browser settings.
+                        </div>
+                      )}
+
+                      {filters.nearMe && hasLocation && !error && (
+                        <div className="space-y-3 mt-4">
+                          <label htmlFor="near-me-radius-full" className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500 dark:text-gray-500">Radius</span>
+                            <span className="font-medium text-black dark:text-white">{formatDistance(nearMeRadius)}</span>
+                          </label>
+                          <input
+                            id="near-me-radius-full"
+                            type="range"
+                            min="0.5"
+                            max="25"
+                            step="0.5"
+                            value={nearMeRadius}
+                            onChange={(e) => updateRadius(parseFloat(e.target.value))}
+                            className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
+                            aria-valuenow={nearMeRadius}
+                            aria-valuetext={formatDistance(nearMeRadius)}
+                          />
+                          <div className="flex justify-between text-sm text-gray-400 dark:text-gray-600">
+                            <span>500m</span>
+                            <span>25km</span>
+                          </div>
+                        </div>
+                      )}
+                    </fieldset>
+                  </div>
+                </div>
               </div>
             </div>
+          ) : (
+            /* Dropdown popover (original behavior) */
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 bg-black/30 z-40"
+                onClick={() => handleToggle(false)}
+                aria-hidden="true"
+              />
+              {/* Dropdown popover */}
+              <div
+                className="fixed z-50 w-[90vw] max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+                style={{
+                  top: `${dropdownPosition.top}px`,
+                  right: `${dropdownPosition.right}px`,
+                }}
+              >
+                {/* Arrow/caret */}
+                <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
+                
+                <div className="max-h-[80vh] overflow-y-auto">
+                  <div className="px-6 py-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
+                      <div className="flex items-center gap-3">
+                        {hasActiveFilters && (
+                          <button
+                            onClick={clearAll}
+                            className="text-xs text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                          >
+                            Clear all
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleToggle(false)}
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                          aria-label="Close filters"
+                        >
+                          <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        </button>
+                      </div>
+                    </div>
 
-            {/* Location Section - Action Row */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Location</h4>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Use current location</span>
-                  <button
-                    type="button"
-                    onClick={() => toggleNearMe(!filters.nearMe)}
-                    disabled={loading}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      filters.nearMe ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
-                    }`}
-                    aria-pressed={Boolean(filters.nearMe)}
-                    aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
-                        filters.nearMe ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                {loading && (
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 px-3">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Getting your location...</span>
-                  </div>
-                )}
-                {error && filters.nearMe && (
-                  <div className="text-xs text-red-600 dark:text-red-400 px-3">
-                    Location access denied. Please enable in browser settings.
-                  </div>
-                )}
-                {filters.nearMe && hasLocation && !error && (
-                  <div className="space-y-2 px-3">
-                    <label htmlFor="near-me-radius" className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                      <span>Radius</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{formatDistance(nearMeRadius)}</span>
-                    </label>
-                    <input
-                      id="near-me-radius"
-                      type="range"
-                      min="0.5"
-                      max="25"
-                      step="0.5"
-                      value={nearMeRadius}
-                      onChange={(e) => updateRadius(parseFloat(e.target.value))}
-                      className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 dark:[&::-webkit-slider-thumb]:bg-white"
-                      aria-valuenow={nearMeRadius}
-                      aria-valuetext={formatDistance(nearMeRadius)}
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
-                      <span>500m</span>
-                      <span>25km</span>
+                    {/* Scrollable Content */}
+                    <div className="space-y-6">
+                      {/* Text Search - Only filters grid, doesn't trigger top search */}
+                      <fieldset className="space-y-3">
+                        <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Search</legend>
+                        <div className="relative">
+                          <label htmlFor="search-filter" className="sr-only">
+                            Filter destinations
+                          </label>
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-600" />
+                          <input
+                            id="search-filter"
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Filter destinations..."
+                            className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
+                          />
+                          {searchQuery && (
+                            <button
+                              onClick={() => {
+                                setSearchQuery('');
+                                clearFilter('searchQuery');
+                              }}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-black dark:hover:text-white transition-colors"
+                              aria-label="Clear search"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </fieldset>
+
+                      {/* Special Filters */}
+                      <fieldset>
+                        <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Special</legend>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (filters.michelin) {
+                                clearFilter('michelin');
+                              } else {
+                                updateFilter('michelin', true);
+                              }
+                            }}
+                            className={`transition-all ${
+                              filters.michelin
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={Boolean(filters.michelin)}
+                          >
+                            Michelin
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (filters.openNow) {
+                                clearFilter('openNow');
+                              } else {
+                                updateFilter('openNow', true);
+                              }
+                            }}
+                            className={`transition-all ${
+                              filters.openNow
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={Boolean(filters.openNow)}
+                          >
+                            Open Now
+                          </button>
+                        </div>
+                      </fieldset>
+
+                      {/* Rating Filter */}
+                      <fieldset>
+                        <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Minimum Rating</legend>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => clearFilter('minRating')}
+                            className={`transition-all ${
+                              !filters.minRating
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={!filters.minRating}
+                          >
+                            Any
+                          </button>
+                          {[4.5, 4.0, 3.5, 3.0].map((rating) => (
+                            <button
+                              type="button"
+                              key={rating}
+                              onClick={() => {
+                                if (filters.minRating === rating) {
+                                  clearFilter('minRating');
+                                } else {
+                                  updateFilter('minRating', rating);
+                                }
+                              }}
+                              className={`transition-all ${
+                                filters.minRating === rating
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                              }`}
+                              aria-pressed={filters.minRating === rating}
+                            >
+                              {rating}+
+                            </button>
+                          ))}
+                        </div>
+                      </fieldset>
+
+                      {/* Price Filter */}
+                      <fieldset>
+                        <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Price Level</legend>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              clearFilter('minPrice');
+                              clearFilter('maxPrice');
+                            }}
+                            className={`transition-all ${
+                              !filters.minPrice && !filters.maxPrice
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                            }`}
+                            aria-pressed={!filters.minPrice && !filters.maxPrice}
+                          >
+                            Any
+                          </button>
+                          {[1, 2, 3, 4].map((level) => (
+                            <button
+                              type="button"
+                              key={level}
+                              onClick={() => {
+                                if (filters.minPrice === level && filters.maxPrice === level) {
+                                  clearFilter('minPrice');
+                                  clearFilter('maxPrice');
+                                } else {
+                                  updateFilter('minPrice', level);
+                                  updateFilter('maxPrice', level);
+                                }
+                              }}
+                              className={`transition-all ${
+                                filters.minPrice === level && filters.maxPrice === level
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                              }`}
+                              aria-pressed={filters.minPrice === level && filters.maxPrice === level}
+                            >
+                              {'$'.repeat(level)}
+                            </button>
+                          ))}
+                        </div>
+                      </fieldset>
+
+                      {/* Sort Filter (Admin Only) */}
+                      {isAdmin && onSortChange && (
+                        <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                          <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Sort</legend>
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => onSortChange('default')}
+                              className={`flex items-center gap-1.5 transition-all ${
+                                sortBy === 'default'
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                              }`}
+                              aria-pressed={sortBy === 'default'}
+                            >
+                              Default
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onSortChange('recent')}
+                              className={`flex items-center gap-1.5 transition-all ${
+                                sortBy === 'recent'
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
+                              }`}
+                              aria-pressed={sortBy === 'recent'}
+                            >
+                              <Sparkles className="h-3 w-3" />
+                              Recent Added
+                            </button>
+                          </div>
+                        </fieldset>
+                      )}
+
+                      {/* Near Me Filter */}
+                      <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                        <legend className="flex items-center gap-2 mb-3 text-xs font-medium text-gray-500 dark:text-gray-500">
+                          <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                          Near Me
+                        </legend>
+
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs text-gray-500 dark:text-gray-500">Use current location</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleNearMe(!filters.nearMe)}
+                            disabled={loading}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                              filters.nearMe ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'
+                            }`}
+                            aria-pressed={Boolean(filters.nearMe)}
+                            aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
+                          >
+                            <span
+                              className={`inline-block h-3 w-3 transform rounded-full bg-white dark:bg-black transition-transform ${
+                                filters.nearMe ? 'translate-x-5' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        {loading && (
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 mb-3">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>Getting your location...</span>
+                          </div>
+                        )}
+
+                        {error && filters.nearMe && (
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                            Location access denied. Please enable in browser settings.
+                          </div>
+                        )}
+
+                        {filters.nearMe && hasLocation && !error && (
+                          <div className="space-y-3 mt-4">
+                            <label htmlFor="near-me-radius" className="flex items-center justify-between text-xs">
+                              <span className="text-gray-500 dark:text-gray-500">Radius</span>
+                              <span className="font-medium text-black dark:text-white">{formatDistance(nearMeRadius)}</span>
+                            </label>
+                            <input
+                              id="near-me-radius"
+                              type="range"
+                              min="0.5"
+                              max="25"
+                              step="0.5"
+                              value={nearMeRadius}
+                              onChange={(e) => updateRadius(parseFloat(e.target.value))}
+                              className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
+                              aria-valuenow={nearMeRadius}
+                              aria-valuetext={formatDistance(nearMeRadius)}
+                            />
+                            <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
+                              <span>500m</span>
+                              <span>25km</span>
+                            </div>
+                          </div>
+                        )}
+                      </fieldset>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-
-            {/* Apply Button */}
-            <div className="pt-2">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-full py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
-              >
-                Apply Filters
-              </button>
-            </div>
-          </div>
-        </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );

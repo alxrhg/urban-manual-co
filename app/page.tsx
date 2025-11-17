@@ -2571,174 +2571,6 @@ export default function Home() {
                     )}
                 </div>
               </div>
-
-              {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
-              {!submittedQuery && (
-                <div className="flex-1 flex items-end">
-                  <div className="w-full pt-6">
-                    {/* City List - Only shows Taipei, Tokyo, New York, and London */}
-                    <div className="mb-[50px]">
-                      {/* City Buttons */}
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => {
-                            setSelectedCity("");
-                            setCurrentPage(1);
-                            trackFilterChange({
-                              filterType: "city",
-                              value: "all",
-                            });
-                          }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          All Cities
-                        </button>
-                        {displayedCities.map(city => (
-                          <button
-                            key={city}
-                            onClick={() => {
-                              const newCity = city === selectedCity ? "" : city;
-                              setSelectedCity(newCity);
-                              setCurrentPage(1);
-                              trackFilterChange({
-                                filterType: "city",
-                                value: newCity || "all",
-                              });
-                            }}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCity === city
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
-                          >
-                            {capitalizeCity(city)}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* More Cities / Hide Cities Button */}
-                      {!showAllCities && cities.length > displayedCities.length && (
-                        <button
-                          onClick={() => {
-                            setShowAllCities(true);
-                          }}
-                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
-                        >
-                          + More cities (
-                          {cities.length - displayedCities.length})
-                        </button>
-                      )}
-                      {showAllCities && (
-                        <button
-                          onClick={() => {
-                            setShowAllCities(false);
-                          }}
-                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
-                        >
-                          Hide cities
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Category List (including Michelin) */}
-                    {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => {
-                            setSelectedCategory("");
-                            setAdvancedFilters(prev => ({
-                              ...prev,
-                              category: undefined,
-                              michelin: undefined,
-                            }));
-                            setCurrentPage(1);
-                            trackFilterChange({
-                              filterType: "category",
-                              value: "all",
-                            });
-                          }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCategory && !advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          All Categories
-                        </button>
-                        {/* Michelin right after All Categories */}
-                        <button
-                          onClick={() => {
-                            const newValue = !advancedFilters.michelin;
-                            setSelectedCategory("");
-                            setAdvancedFilters(prev => ({
-                              ...prev,
-                              category: undefined,
-                              michelin: newValue || undefined,
-                            }));
-                            setCurrentPage(1);
-                            trackFilterChange({
-                              filterType: "michelin",
-                              value: newValue,
-                            });
-                          }}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                            advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
-                        >
-                          <Image
-                            src="/michelin-star.svg"
-                            alt="Michelin star"
-                            width={12}
-                            height={12}
-                            className="h-3 w-3"
-                          />
-                          Michelin
-                        </button>
-                        {categories.map(category => {
-                          const IconComponent = getCategoryIcon(category);
-                          return (
-                            <button
-                              key={category}
-                              onClick={() => {
-                                const newCategory =
-                                  category === selectedCategory ? "" : category;
-                                setSelectedCategory(newCategory);
-                                setAdvancedFilters(prev => ({
-                                  ...prev,
-                                  category: newCategory || undefined,
-                                  michelin: undefined,
-                                }));
-                                setCurrentPage(1);
-                                trackFilterChange({
-                                  filterType: "category",
-                                  value: newCategory || "all",
-                                });
-                              }}
-                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                selectedCategory === category &&
-                                !advancedFilters.michelin
-                                  ? "font-medium text-black dark:text-white"
-                                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                              }`}
-                            >
-                              {IconComponent && (
-                                <IconComponent className="h-3 w-3" size={12} />
-                              )}
-                              {capitalizeCategory(category)}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </section>
@@ -2878,6 +2710,148 @@ export default function Home() {
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
+                {/* Unified Top Controls - Pill Bar */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-[10px] h-10 px-4 bg-gray-50 dark:bg-gray-900 rounded-[20px] flex-wrap">
+                    {/* Discover by Cities */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {displayedCities.map((city) => (
+                        <button
+                          key={city}
+                          onClick={() => {
+                            const newCity = city === selectedCity ? "" : city;
+                            setSelectedCity(newCity);
+                            setCurrentPage(1);
+                            trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                          }}
+                          className={`h-10 px-4 text-sm font-medium rounded-[20px] transition-all duration-200 ease-out flex items-center ${
+                            selectedCity === city
+                              ? "bg-black dark:bg-white text-white dark:text-black"
+                              : "bg-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                          }`}
+                        >
+                          {capitalizeCity(city)}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Filter Button */}
+                    <div className="flex-shrink-0 relative">
+                      <SearchFiltersComponent
+                        filters={advancedFilters}
+                        onFiltersChange={(newFilters) => {
+                          setAdvancedFilters(newFilters);
+                          if (newFilters.city !== undefined) {
+                            setSelectedCity(newFilters.city || '');
+                          }
+                          if (newFilters.category !== undefined) {
+                            setSelectedCategory(newFilters.category || '');
+                          }
+                          Object.entries(newFilters).forEach(([key, value]) => {
+                            if (value !== undefined && value !== null && value !== '') {
+                              trackFilterChange({ filterType: key, value });
+                            }
+                          });
+                        }}
+                        availableCities={cities}
+                        availableCategories={categories}
+                        onLocationChange={handleLocationChange}
+                        sortBy={sortBy}
+                        onSortChange={(newSort) => {
+                          setSortBy(newSort);
+                          setCurrentPage(1);
+                        }}
+                        isAdmin={isAdmin}
+                        fullWidthPanel={true}
+                      />
+                    </div>
+
+                    {/* View Toggle */}
+                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-[20px] p-1 flex-shrink-0 h-10">
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        className={`flex items-center gap-1.5 px-3 h-8 text-sm font-medium transition-all rounded-[20px] ${
+                          viewMode === 'grid'
+                            ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                        aria-label="Grid view"
+                      >
+                        <LayoutGrid className="h-4 w-4" />
+                        <span>Grid</span>
+                      </button>
+                      <button
+                        onClick={() => setViewMode('map')}
+                        className={`flex items-center gap-1.5 px-3 h-8 text-sm font-medium transition-all rounded-[20px] ${
+                          viewMode === 'map'
+                            ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                        aria-label="Map view"
+                      >
+                        <Map className="h-4 w-4" />
+                        <span>Map</span>
+                      </button>
+                    </div>
+
+                    {/* Create Trip / Add New POI Button */}
+                    {isAdmin ? (
+                      <button
+                        onClick={() => {
+                          setEditingDestination(null);
+                          setShowPOIDrawer(true);
+                        }}
+                        className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-[20px] hover:opacity-90 transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        aria-label="Add New POI"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add New POI</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowTripPlanner(true)}
+                        className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-[20px] hover:opacity-90 transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        aria-label="Create Trip"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Create Trip</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Category Navigation - Simple Pill Row */}
+                {categories.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((category) => {
+                        const IconComponent = getCategoryIcon(category);
+                        return (
+                          <button
+                            key={category}
+                            onClick={() => {
+                              const newCategory = category === selectedCategory ? "" : category;
+                              setSelectedCategory(newCategory);
+                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                              setCurrentPage(1);
+                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                            }}
+                            className={`h-10 px-4 text-sm font-medium rounded-[20px] transition-all duration-200 ease-out flex items-center gap-1.5 ${
+                              selectedCategory === category && !advancedFilters.michelin
+                                ? "bg-black dark:bg-white text-white dark:text-black"
+                                : "bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                            }`}
+                          >
+                            {IconComponent && (
+                              <IconComponent className="h-4 w-4" size={16} />
+                            )}
+                            {capitalizeCategory(category)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
