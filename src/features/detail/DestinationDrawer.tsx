@@ -41,7 +41,7 @@ import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinati
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
-import { DRAWER_STYLES } from '@/lib/drawer-styles';
+import { Drawer } from '@/components/ui/Drawer';
 
 // Dynamically import POIDrawer to avoid SSR issues
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {

@@ -604,7 +604,16 @@ export function AccountDrawer({
 
   return (
     <>
-      <Drawer isOpen={isOpen} onClose={onClose} title="Account">
+      <Drawer 
+        isOpen={isOpen} 
+        onClose={onClose} 
+        title="Account"
+        mobileVariant="bottom"
+        desktopSpacing="right-4 top-4 bottom-4"
+        desktopWidth="440px"
+        position="right"
+        style="glassy"
+      >
         {accountContent}
       </Drawer>
       <SavedPlacesDrawer

@@ -11,23 +11,28 @@ export interface DrawerProps {
   children: ReactNode;
   headerContent?: ReactNode;
   footerContent?: ReactNode;
-  mobileFullScreen?: boolean;
+  mobileVariant?: 'bottom' | 'side'; // Mobile drawer variant
   desktopWidth?: string;
   zIndex?: number;
   showBackdrop?: boolean;
   backdropOpacity?: string;
+  position?: 'right' | 'left'; // For side drawer
+  style?: 'glassy' | 'solid'; // Background style
+  mobileWidth?: string; // For side drawer on mobile
+  desktopSpacing?: string; // Spacing for desktop side drawer (e.g., 'right-4 top-4 bottom-4')
 }
 
 /**
  * Universal Drawer Component
  * 
  * A reusable drawer component that handles:
- * - Mobile: Half-height bottom sheet (50vh)
- * - Desktop: Half-height bottom sheet (50vh)
+ * - Mobile: Bottom sheet (default) or side drawer
+ * - Desktop: Side drawer only (no bottom sheets on desktop)
  * - Backdrop with click-to-close
  * - Body scroll lock
  * - Escape key handling
  * - Smooth animations
+ * - Spacing on all four sides for side drawers
  */
 export function Drawer({
   isOpen,
@@ -36,11 +41,15 @@ export function Drawer({
   children,
   headerContent,
   footerContent,
-  mobileFullScreen = true,
+  mobileVariant = 'bottom',
   desktopWidth = '440px',
   zIndex = 50,
   showBackdrop = true,
   backdropOpacity = '50',
+  position = 'right',
+  style = 'glassy',
+  mobileWidth = 'max-w-md',
+  desktopSpacing = 'right-4 top-4 bottom-4',
 }: DrawerProps) {
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -68,6 +77,17 @@ export function Drawer({
 
   if (!isOpen) return null;
 
+  // Determine background classes based on style
+  const backgroundClasses = style === 'glassy' 
+    ? `${DRAWER_STYLES.glassyBackground} ${position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight}`
+    : 'bg-white dark:bg-gray-950';
+  
+  const borderClasses = style === 'glassy'
+    ? (position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight)
+    : (position === 'right' ? 'border-l border-gray-200 dark:border-gray-800' : 'border-r border-gray-200 dark:border-gray-800');
+
+  const shadowClasses = style === 'solid' ? 'shadow-2xl ring-1 ring-black/5' : '';
+
   return (
     <>
       {/* Backdrop */}
@@ -84,74 +104,115 @@ export function Drawer({
         />
       )}
 
-      {/* Mobile Drawer - Half height bottom sheet */}
-      <div
-        className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex flex-col ${DRAWER_STYLES.glassyBackground} ${DRAWER_STYLES.glassyBorderTop} w-full max-w-full overflow-hidden overscroll-contain rounded-t-3xl`}
-        style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
-      >
-        {/* Header */}
-        {(title || headerContent) && (
-          <div className={`flex-shrink-0 px-6 py-4 flex items-center justify-between ${DRAWER_STYLES.headerBackground}`}>
-            {headerContent || (
-              <>
-                <button
-                  onClick={onClose}
-                  className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity touch-manipulation"
-                  aria-label="Close"
-                >
-                  <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
-                </button>
-                {title && (
-                  <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">
-                    {title}
-                  </h2>
-                )}
-                <div className="w-9" /> {/* Spacer for centering */}
-              </>
-            )}
-          </div>
-        )}
+      {/* Mobile Drawer - Bottom Sheet */}
+      {mobileVariant === 'bottom' && (
+        <div
+          className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
+            isOpen ? 'translate-y-0' : 'translate-y-full'
+          } flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-full max-w-full overflow-hidden overscroll-contain rounded-t-3xl`}
+          style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
+        >
+          {/* Header */}
+          {(title || headerContent) && (
+            <div className={`flex-shrink-0 px-6 py-4 flex items-center justify-between ${DRAWER_STYLES.headerBackground}`}>
+              {headerContent || (
+                <>
+                  <button
+                    onClick={onClose}
+                    className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity touch-manipulation"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+                  </button>
+                  {title && (
+                    <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">
+                      {title}
+                    </h2>
+                  )}
+                  <div className="w-9" /> {/* Spacer for centering */}
+                </>
+              )}
+            </div>
+          )}
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">
-          {children}
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">
+            {children}
+          </div>
+
+          {/* Footer */}
+          {footerContent && (
+            <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${DRAWER_STYLES.footerBackground}`}>
+              {footerContent}
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Footer */}
-        {footerContent && (
-          <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${DRAWER_STYLES.footerBackground}`}>
-            {footerContent}
+      {/* Mobile Drawer - Side Drawer */}
+      {mobileVariant === 'side' && (
+        <div
+          className={`md:hidden fixed ${position === 'right' ? 'right-0 rounded-l-2xl' : 'left-0 rounded-r-2xl'} top-0 bottom-0 w-full ${mobileWidth} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
+            isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
+          } overflow-hidden flex flex-col`}
+          style={{ zIndex }}
+        >
+          {/* Header */}
+          {(title || headerContent) && (
+            <div className={`flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between ${style === 'glassy' ? DRAWER_STYLES.headerBackground : 'bg-transparent'}`}>
+              {headerContent || (
+                <>
+                  {title && (
+                    <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">{title}</h2>
+                  )}
+                  <button
+                    onClick={onClose}
+                    className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {children}
           </div>
-        )}
-      </div>
 
-      {/* Desktop Drawer - Half height bottom sheet */}
+          {/* Footer */}
+          {footerContent && (
+            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-transparent'}`}>
+              {footerContent}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Desktop Drawer - Always Side Drawer with spacing */}
       <div
-        className={`hidden md:flex fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex-col ${DRAWER_STYLES.glassyBackground} ${DRAWER_STYLES.glassyBorderTop} w-full max-w-full overflow-hidden rounded-t-3xl`}
-        style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
+        className={`hidden md:flex fixed ${desktopSpacing} ${position === 'right' ? 'rounded-l-2xl' : 'rounded-r-2xl'} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
+        } overflow-hidden flex-col`}
+        style={{ zIndex, width: desktopWidth, maxWidth: 'calc(100vw - 2rem)' }}
       >
         {/* Header */}
         {(title || headerContent) && (
-          <div className={`flex-shrink-0 px-6 py-4 flex items-center justify-between ${DRAWER_STYLES.headerBackground}`}>
+          <div className={`flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative ${style === 'glassy' ? DRAWER_STYLES.headerBackground : 'bg-transparent'}`}>
             {headerContent || (
               <>
+                {title && (
+                  <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">{title}</h2>
+                )}
                 <button
                   onClick={onClose}
-                  className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity touch-manipulation"
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   aria-label="Close"
                 >
-                  <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+                  <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
                 </button>
-                {title && (
-                  <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">
-                    {title}
-                  </h2>
-                )}
-                <div className="w-9" /> {/* Spacer for centering */}
               </>
             )}
           </div>
@@ -164,7 +225,7 @@ export function Drawer({
 
         {/* Footer */}
         {footerContent && (
-          <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${DRAWER_STYLES.footerBackground}`}>
+          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-transparent'}`}>
             {footerContent}
           </div>
         )}
@@ -172,4 +233,3 @@ export function Drawer({
     </>
   );
 }
-

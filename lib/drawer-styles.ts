@@ -24,6 +24,7 @@ export const DRAWER_STYLES = {
   glassyBackground: 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl',
   glassyBorderTop: 'border-t border-white/20 dark:border-gray-800/20',
   glassyBorderLeft: 'border-l border-white/20 dark:border-gray-800/20',
+  glassyBorderRight: 'border-r border-white/20 dark:border-gray-800/20',
 } as const;
 
 /**
