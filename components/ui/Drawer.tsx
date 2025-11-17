@@ -194,7 +194,7 @@ export function Drawer({
           ref={drawerRef}
           className={`md:hidden fixed inset-[10px] transform transition-transform duration-[220ms] ease-out will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
             mobileExpanded ? 'drawer-expanded' : 'drawer-collapsed'
-          } ${!isOpen ? 'translate-y-full' : ''}`}
+          } ${!isOpen ? 'translate-y-full pointer-events-none' : ''}`}
           style={{
             zIndex,
             maxHeight: 'calc(100vh - 20px)',
@@ -245,7 +245,7 @@ export function Drawer({
           ref={drawerRef}
           className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
             isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
-          } overflow-hidden flex flex-col`}
+          } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex flex-col`}
           style={{ zIndex }}
         >
           {/* Header - 56px height, blurred */}
@@ -290,7 +290,7 @@ export function Drawer({
         ref={drawerRef}
         className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
-        } overflow-hidden flex-col`}
+        } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
         style={{ 
           zIndex, 
           width: '70%', // Tablet: 70% width
@@ -338,7 +338,7 @@ export function Drawer({
         ref={drawerRef}
         className={`hidden lg:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
-        } overflow-hidden flex-col`}
+        } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
         style={{ 
           zIndex, 
           width: desktopWidth, // Desktop: fixed width (420px)
