@@ -2777,6 +2777,30 @@ export default function Home() {
                 {/* Mid Nav - Vertical Pile, Right Aligned */}
                 <div className="mb-6 flex justify-end">
                   <div className="flex flex-col items-end gap-3 w-auto" style={{ gap: '12px' }}>
+                    {/* Create Trip - Pill Filled (Black) - At Top */}
+                    {isAdmin ? (
+                      <button
+                        onClick={() => {
+                          setEditingDestination(null);
+                          setShowPOIDrawer(true);
+                        }}
+                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        aria-label="Add New POI"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add New POI</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowTripPlanner(true)}
+                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        aria-label="Create Trip"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Create Trip</span>
+                      </button>
+                    )}
+
                     {/* Discover by Cities - Pill (Link to /cities) */}
                     <Link
                       href="/cities"
@@ -2847,30 +2871,6 @@ export default function Home() {
                         <span>Map</span>
                       </button>
                     </div>
-
-                    {/* Create Trip - Pill Filled (Black) */}
-                    {isAdmin ? (
-                      <button
-                        onClick={() => {
-                          setEditingDestination(null);
-                          setShowPOIDrawer(true);
-                        }}
-                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Add New POI"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add New POI</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Create Trip"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Create Trip</span>
-                      </button>
-                    )}
                   </div>
                 </div>
 
