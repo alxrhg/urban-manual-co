@@ -163,6 +163,9 @@
 
 ### 🤖 Cloudflare AutoRAG (Fully Managed RAG Service)
 
+#### ✅ You Already Have R2!
+Based on your Cloudflare subscriptions, you already have **R2 Paid** active, which is perfect for AutoRAG! This means you can start using AutoRAG immediately.
+
 #### What is AutoRAG?
 AutoRAG is Cloudflare's fully managed retrieval-augmented generation (RAG) service that automatically indexes your data sources and provides AI-powered search and responses.
 
@@ -236,34 +239,69 @@ AutoRAG is Cloudflare's fully managed retrieval-augmented generation (RAG) servi
 - **Workers AI**: Pay-as-you-go for inference
 - **Vectorize**: Included with AutoRAG
 
-#### Implementation Steps:
+#### Implementation Steps (You're Ready to Start!):
 
-1. **Set up R2 Bucket**:
+1. **Set up R2 Bucket** (You already have R2 Paid):
    ```bash
-   # Create bucket for destination data
-   # Upload destination markdown files
+   # Create a new R2 bucket for destination data
+   # Name it something like "urban-manual-destinations"
+   # Upload destination markdown files or JSON data
    ```
 
-2. **Create AutoRAG Instance**:
-   - Go to Cloudflare Dashboard → AI → AutoRAG
-   - Create new instance
-   - Connect to R2 bucket
-   - Configure indexing settings
+2. **Export Your Destination Data to R2**:
+   - Export destination descriptions, reviews, and details from Supabase
+   - Convert to Markdown format (AutoRAG prefers Markdown)
+   - Upload to R2 bucket
+   - AutoRAG will automatically index everything
 
-3. **Query AutoRAG**:
-   ```javascript
-   // Example: Query AutoRAG API
-   const response = await fetch('https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/autorag/{instance_id}/query', {
-     method: 'POST',
-     headers: {
-       'Authorization': 'Bearer {api_token}',
-       'Content-Type': 'application/json',
-     },
-     body: JSON.stringify({
-       query: 'What are the best restaurants in Paris?',
-       max_results: 10,
-     }),
-   });
+3. **Create AutoRAG Instance**:
+   - Go to Cloudflare Dashboard → AI → AutoRAG
+   - Click "Create AutoRAG Instance"
+   - Connect to your R2 bucket
+   - Configure indexing settings:
+     - Chunk size: 512-1024 tokens (default is usually fine)
+     - Embedding model: Auto-selected by Cloudflare
+     - Enable query rewriting: Yes (improves results)
+
+4. **Query AutoRAG from Your App**:
+   ```typescript
+   // Example: Query AutoRAG API from Next.js
+   async function queryAutoRAG(query: string) {
+     const response = await fetch(
+       `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/autorag/${process.env.AUTORAG_INSTANCE_ID}/query`,
+       {
+         method: 'POST',
+         headers: {
+           'Authorization': `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify({
+           query: query,
+           max_results: 10,
+           // Optional: enable query rewriting
+           rewrite_query: true,
+         }),
+       }
+     );
+     
+     const data = await response.json();
+     return data.result;
+   }
+   
+   // Usage in your API route
+   // app/api/concierge/autorag/route.ts
+   export async function POST(request: NextRequest) {
+     const { query } = await request.json();
+     const results = await queryAutoRAG(query);
+     return Response.json({ results });
+   }
+   ```
+
+5. **Set Up Environment Variables**:
+   ```env
+   CLOUDFLARE_ACCOUNT_ID=your_account_id
+   CLOUDFLARE_API_TOKEN=your_api_token
+   AUTORAG_INSTANCE_ID=your_instance_id
    ```
 
 #### Recommendation:
@@ -280,10 +318,21 @@ AutoRAG is Cloudflare's fully managed retrieval-augmented generation (RAG) servi
 - ✅ You want to avoid vendor lock-in
 - ✅ Cost is a primary concern
 
-**Hybrid Approach:**
-- Use Supabase vector search for structured queries with filters
+**Hybrid Approach (Recommended):**
+- Use Supabase vector search for structured queries with filters (city, category, price, etc.)
 - Use AutoRAG for conversational queries and knowledge base Q&A
+- Use AutoRAG for "Tell me about..." type queries
 - Best of both worlds!
+
+**Quick Start Checklist:**
+- [x] ✅ R2 Paid subscription active
+- [ ] Create R2 bucket for destination data
+- [ ] Export destination data to Markdown/JSON
+- [ ] Upload to R2 bucket
+- [ ] Create AutoRAG instance in Cloudflare Dashboard
+- [ ] Connect AutoRAG to R2 bucket
+- [ ] Test with sample queries
+- [ ] Integrate into your concierge/chat API
 
 ### 🔐 Security Features
 
