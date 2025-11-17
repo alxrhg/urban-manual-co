@@ -125,7 +125,7 @@ export function SearchFiltersComponent({
   };
 
   return (
-    <div className="relative">
+    <div>
       {/* Trigger Button - Pill Shape */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -150,8 +150,8 @@ export function SearchFiltersComponent({
       {/* Expanded Panel - Directly Under Button, Pushdown */}
       <div
         ref={panelRef}
-        className={`absolute top-full left-0 mt-2 w-[320px] overflow-hidden transition-all duration-200 ease-out ${
-          isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+        className={`w-[320px] overflow-hidden transition-all duration-200 ease-out ${
+          isOpen ? 'max-h-[800px] opacity-100 mt-2' : 'max-h-0 opacity-0'
         }`}
       >
         <div className="bg-transparent py-4 space-y-6">
