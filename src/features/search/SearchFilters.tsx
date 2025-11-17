@@ -439,7 +439,6 @@ export function SearchFiltersComponent({
               </div>
             </div>
           </div>
-        </div>
       )}
     </>
   );
