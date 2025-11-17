@@ -21,7 +21,7 @@ const sections = [
 
 export default function PrivacyPage() {
   const [activeSection, setActiveSection] = useState(sections[0].id);
-  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
 
   useEffect(() => {
     const handleScroll = () => {
