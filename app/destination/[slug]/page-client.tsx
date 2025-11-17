@@ -372,7 +372,18 @@ export default function DestinationPageClient({ initialDestination, parentDestin
     }
   };
 
-  const cityName = capitalizeCity(destination.city);
+  // Guard clause - ensure destination exists
+  if (!destination) {
+    return (
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+        <div className="text-center py-20">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
+        </div>
+      </main>
+    );
+  }
+
+  const cityName = capitalizeCity(destination.city || '');
 
   return (
     <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">

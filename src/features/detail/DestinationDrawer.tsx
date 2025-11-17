@@ -1005,7 +1005,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Always render drawer when open, even if destination is null (show loading state)
   if (!isOpen) return null;
 
-  if (!destination) {
+  // Check if destination is null, undefined, or missing required fields
+  if (!destination || !destination.slug || !destination.name) {
+    // Show loading state if destination is incomplete
     return (
       <>
         {/* Backdrop */}
@@ -1033,8 +1035,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           </div>
         </div>
-        {/* Desktop drawer loading state */}
-        <div className="hidden md:flex fixed left-4 right-4 top-auto bottom-4 bg-white dark:bg-gray-950 z-50 rounded-3xl overflow-hidden flex-col transform transition-transform duration-300 ease-out translate-y-0" style={{ maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}>
+        {/* Desktop drawer loading state - Right side */}
+        <div className="hidden md:flex fixed right-4 top-4 bottom-4 bg-white dark:bg-gray-950 z-50 rounded-l-3xl overflow-hidden flex-col transform transition-transform duration-300 ease-out translate-x-0" style={{ width: '480px', maxWidth: 'calc(100vw - 2rem)' }}>
           <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
             <button
               onClick={onClose}
@@ -1070,7 +1072,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     .filter((tag: unknown): tag is string => Boolean(tag))
     .slice(0, 8);
 
-  const defaultMapsQuery = `${destination.name}, ${capitalizeCity(destination.city)}`;
+  const defaultMapsQuery = `${destination.name || 'Destination'}, ${destination.city ? capitalizeCity(destination.city) : ''}`;
   const googleMapsDirectionsUrl = destination.google_maps_url
     || (destination.latitude && destination.longitude
       ? `https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`
@@ -1125,7 +1127,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {/* Hero Image */}
           {destination.image && (
             <div className="mt-4 rounded-3xl overflow-hidden aspect-[16/10] relative bg-gray-100 dark:bg-gray-800">
@@ -1304,6 +1306,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             </div>
           </div>
+
+          {/* Sign in prompt */}
+          {!user && (
+            <div className="px-6 pb-4">
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign in to save and track visits
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -1354,12 +1368,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
       </div>
 
-      {/* Desktop Drawer - Half height bottom sheet with spacing on all sides */}
+      {/* Desktop Drawer - Right side slide-out panel */}
       <div
-        className={`hidden md:flex fixed left-4 right-4 top-auto bottom-4 bg-white dark:bg-gray-950 z-50 rounded-3xl transform transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
+        className={`hidden md:flex fixed right-4 top-4 bottom-4 bg-white dark:bg-gray-950 z-50 rounded-l-3xl transform transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex-col`}
-        style={{ maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}
+        style={{ width: '480px', maxWidth: 'calc(100vw - 2rem)' }}
       >
         {/* Header with Close Button */}
         <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
@@ -1391,7 +1405,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {/* Image */}
           {destination.image && (
             <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
@@ -1660,6 +1674,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               ) : null}
                   </div>
                 </div>
+
+          {/* Sign in prompt */}
+          {!user && (
+            <div className="mt-6">
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign in to save and track visits
+              </button>
+            </div>
+          )}
 
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
@@ -1955,7 +1981,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Map Section */}
-          {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
+          {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
               <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
@@ -1971,9 +1997,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   }}
                   zoom={15}
                   isDark={false}
-              />
+                />
+              </div>
             </div>
-          </div>
           )}
 
           {/* AI Recommendations */}
@@ -2054,7 +2080,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-      </div>
+        </div>
 
         {/* Desktop Action Buttons - Bottom */}
         <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
@@ -2104,7 +2130,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </button>
           </div>
         </div>
-            </div>
+      </div>
 
       {/* Save Destination Modal */}
       {destination?.id && (

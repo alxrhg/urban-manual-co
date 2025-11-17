@@ -128,7 +128,7 @@ export function SearchFiltersComponent({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full flex justify-end">
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}

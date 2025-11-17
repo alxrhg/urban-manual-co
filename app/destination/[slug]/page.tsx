@@ -12,10 +12,12 @@ import { createServerClient } from '@/lib/supabase-server';
 import { Destination } from '@/types/destination';
 import DestinationPageClient from './page-client';
 
-// Validate and sanitize slug
+// Validate and sanitize slug - more permissive to handle various slug formats
 function validateSlug(slug: string): boolean {
-  // Slug should only contain lowercase letters, numbers, and hyphens
-  return /^[a-z0-9-]+$/.test(slug);
+  // Allow lowercase letters, numbers, hyphens, and underscores
+  // Also handle URL-encoded slugs
+  const decodedSlug = decodeURIComponent(slug);
+  return /^[a-z0-9_-]+$/i.test(decodedSlug) && decodedSlug.length > 0;
 }
 
 // Generate metadata for SEO
@@ -26,12 +28,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  // Validate slug format
-  if (!validateSlug(slug)) {
-    return {};
+  // Decode URL-encoded slug
+  try {
+    const decodedSlug = decodeURIComponent(slug);
+    return generateDestinationMetadata(decodedSlug);
+  } catch (error) {
+    // If decoding fails, try with original slug
+    return generateDestinationMetadata(slug);
   }
-
-  return generateDestinationMetadata(slug);
 }
 
 // Server component wrapper
@@ -42,14 +46,26 @@ export default async function DestinationPage({
 }) {
   const { slug } = await params;
 
-  // Validate slug format
-  if (!validateSlug(slug)) {
+  // Decode URL-encoded slug (handle both encoded and non-encoded slugs)
+  let decodedSlug: string;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (error) {
+    // If decoding fails, use original slug (might not be URL-encoded)
+    decodedSlug = slug;
+  }
+  
+  // Validate slug format - more permissive
+  if (!decodedSlug || decodedSlug.length === 0) {
+    console.error('[Destination Page] Invalid slug:', slug);
     notFound();
   }
 
   // Fetch destination data on server using server-side client
   const supabase = await createServerClient();
-  const { data: destination, error } = await supabase
+  
+  // Try exact match first
+  let { data: destination, error } = await supabase
     .from('destinations')
     .select(`
       *,
@@ -81,8 +97,40 @@ export default async function DestinationPage({
       architect_info_json,
       web_content_json
     `)
-    .eq('slug', slug)
-    .single();
+    .eq('slug', decodedSlug)
+    .maybeSingle();
+
+  // If not found with exact match, try case-insensitive match
+  if (!destination && !error) {
+    const { data: caseInsensitiveMatch, error: caseError } = await supabase
+      .from('destinations')
+      .select('*')
+      .ilike('slug', decodedSlug)
+      .maybeSingle();
+    
+    if (caseInsensitiveMatch && !caseError) {
+      destination = caseInsensitiveMatch;
+      error = null;
+    } else {
+      error = caseError;
+    }
+  }
+
+  // If still not found, try with lowercase
+  if (!destination && !error) {
+    const { data: lowerMatch, error: lowerError } = await supabase
+      .from('destinations')
+      .select('*')
+      .eq('slug', decodedSlug.toLowerCase())
+      .maybeSingle();
+    
+    if (lowerMatch && !lowerError) {
+      destination = lowerMatch;
+      error = null;
+    } else if (lowerError) {
+      error = lowerError;
+    }
+  }
 
   // Load parent destination if this is a nested destination
   let parentDestination: Destination | null = null;
@@ -91,7 +139,7 @@ export default async function DestinationPage({
       .from('destinations')
       .select('id, slug, name, city, category, image')
       .eq('id', destination.parent_destination_id)
-      .single();
+      .maybeSingle();
     if (parent) parentDestination = parent as Destination;
   }
 
@@ -104,9 +152,15 @@ export default async function DestinationPage({
     if (nested) nestedDestinations = nested as Destination[];
   }
 
-  // If destination not found, show 404
-  if (error || !destination) {
+  // If destination not found after all attempts, show 404
+  if (error) {
     console.error('[Destination Page] Error fetching destination:', error);
+    console.error('[Destination Page] Slug attempted:', decodedSlug);
+    notFound();
+  }
+  
+  if (!destination) {
+    console.error('[Destination Page] Destination not found for slug:', decodedSlug);
     notFound();
   }
 
