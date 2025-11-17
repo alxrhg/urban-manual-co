@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, SlidersHorizontal, MapPin, Loader2, Search, Sparkles } from 'lucide-react';
+import { X, SlidersHorizontal, MapPin, Loader2, Search, Sparkles, ChevronDown, Globe2 } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 export interface SearchFilters {
@@ -40,7 +40,7 @@ export function SearchFiltersComponent({
   isAdmin = false,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
   const [searchQuery, setSearchQuery] = useState(filters.searchQuery || '');
@@ -118,9 +118,20 @@ export function SearchFiltersComponent({
 
   const activeFilterCount = Object.keys(filters).length;
   const hasActiveFilters = activeFilterCount > 0;
-  const activeFiltersAnnouncement = hasActiveFilters
-    ? `${activeFilterCount} active ${activeFilterCount === 1 ? 'filter' : 'filters'}`
-    : 'No filters applied';
+
+  // Build active filter summary
+  const getActiveFilterSummary = () => {
+    const parts: string[] = [];
+    if (filters.michelin) parts.push('Michelin');
+    if (filters.openNow) parts.push('Open Now');
+    if (filters.minRating) parts.push(`${filters.minRating}+`);
+    if (filters.minPrice && filters.maxPrice && filters.minPrice === filters.maxPrice) {
+      parts.push('$'.repeat(filters.minPrice));
+    }
+    if (filters.nearMe) parts.push('Near Me');
+    if (filters.searchQuery) parts.push('Search');
+    return parts.length > 0 ? parts.join(', ') : 'No filters';
+  };
 
   const formatDistance = (km: number) => {
     if (km < 1) return `${Math.round(km * 1000)}m`;
@@ -128,318 +139,308 @@ export function SearchFiltersComponent({
   };
 
   return (
-    <div className="w-full flex justify-end">
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
-        aria-label="Toggle filters"
-        aria-expanded={isOpen}
-      >
-        <SlidersHorizontal className="h-5 w-5" />
-        <span className="text-sm font-medium">Filters</span>
-        {hasActiveFilters && (
-          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
-            {Object.keys(filters).length}
+    <div className="w-full">
+      {/* Closed State - Horizontal Bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 rounded-t-lg">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+            {hasActiveFilters ? getActiveFilterSummary() : 'No filters'}
           </span>
-        )}
-      </button>
-      <span aria-live="polite" role="status" className="sr-only">
-        {activeFiltersAnnouncement}
-      </span>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {hasActiveFilters && (
+            <button
+              onClick={clearAll}
+              className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1"
+            >
+              Clear all
+            </button>
+          )}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center justify-center gap-1.5 px-2 py-1 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label={isOpen ? 'Close filters' : 'Open filters'}
+            aria-expanded={isOpen}
+          >
+            <SlidersHorizontal className="h-4 w-4 stroke-[1.5]" />
+            <ChevronDown
+              className={`h-4 w-4 stroke-[1.5] transition-transform duration-200 ${
+                isOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+        </div>
+      </div>
 
-      {/* Expanded filter panel - Full width below row, pushes down grid */}
-      {isOpen && (
-        <div className="w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-4" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
-          <div className="max-h-[80vh] overflow-y-auto">
-            <div className="px-6 py-6 max-w-[1800px] mx-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
-                  <div className="flex items-center gap-3">
-                    {hasActiveFilters && (
-                      <button
-                        onClick={clearAll}
-                        className="text-xs text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-                      >
-                        Clear all
-                      </button>
-                    )}
+      {/* Expanded Panel - Vertical Pushdown */}
+      <div
+        ref={panelRef}
+        className={`overflow-hidden transition-all duration-200 ease-out ${
+          isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+          <div className="px-6 py-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Search */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                  Filter destinations
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search destinations..."
+                    className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent transition-all"
+                  />
+                  {searchQuery && (
                     <button
-                      onClick={() => setIsOpen(false)}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                      aria-label="Close filters"
+                      onClick={() => {
+                        setSearchQuery('');
+                        clearFilter('searchQuery');
+                      }}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                      aria-label="Clear search"
                     >
-                      <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      <X className="h-4 w-4" />
                     </button>
-                  </div>
+                  )}
                 </div>
+              </div>
 
-                {/* Scrollable Content */}
-                <div className="space-y-6">
-                  {/* Text Search - Only filters grid, doesn't trigger top search */}
-                  <fieldset className="space-y-3">
-                    <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Search</legend>
-                    <div className="relative">
-                      <label htmlFor="search-filter" className="sr-only">
-                        Filter destinations
-                      </label>
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-600" />
-                      <input
-                        id="search-filter"
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Filter destinations..."
-                        className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => {
-                            setSearchQuery('');
-                            clearFilter('searchQuery');
-                          }}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-black dark:hover:text-white transition-colors"
-                          aria-label="Clear search"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </fieldset>
+              {/* Special Tags */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                  Special
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (filters.michelin) {
+                        clearFilter('michelin');
+                      } else {
+                        updateFilter('michelin', true);
+                      }
+                    }}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
+                      filters.michelin
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                    aria-pressed={Boolean(filters.michelin)}
+                  >
+                    Michelin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (filters.openNow) {
+                        clearFilter('openNow');
+                      } else {
+                        updateFilter('openNow', true);
+                      }
+                    }}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
+                      filters.openNow
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                    aria-pressed={Boolean(filters.openNow)}
+                  >
+                    Open Now
+                  </button>
+                </div>
+              </div>
 
-                  {/* Special Filters */}
-                  <fieldset>
-                    <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Special</legend>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+              {/* Minimum Rating */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                  Minimum Rating
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Any', '4.5+', '4+', '3.5+', '3+'].map((option) => {
+                    const rating = option === 'Any' ? null : parseFloat(option.replace('+', ''));
+                    const isSelected = rating === null
+                      ? !filters.minRating
+                      : filters.minRating === rating;
+                    return (
                       <button
+                        key={option}
                         type="button"
                         onClick={() => {
-                          if (filters.michelin) {
-                            clearFilter('michelin');
+                          if (rating === null) {
+                            clearFilter('minRating');
                           } else {
-                            updateFilter('michelin', true);
-                          }
-                        }}
-                        className={`transition-all ${
-                          filters.michelin
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                        }`}
-                        aria-pressed={Boolean(filters.michelin)}
-                      >
-                        Michelin
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (filters.openNow) {
-                            clearFilter('openNow');
-                          } else {
-                            updateFilter('openNow', true);
-                          }
-                        }}
-                        className={`transition-all ${
-                          filters.openNow
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                        }`}
-                        aria-pressed={Boolean(filters.openNow)}
-                      >
-                        Open Now
-                      </button>
-                    </div>
-                  </fieldset>
-
-                  {/* Rating Filter */}
-                  <fieldset>
-                    <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Minimum Rating</legend>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => clearFilter('minRating')}
-                        className={`transition-all ${
-                          !filters.minRating
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                        }`}
-                        aria-pressed={!filters.minRating}
-                      >
-                        Any
-                      </button>
-                      {[4.5, 4.0, 3.5, 3.0].map((rating) => (
-                        <button
-                          type="button"
-                          key={rating}
-                          onClick={() => {
                             if (filters.minRating === rating) {
                               clearFilter('minRating');
                             } else {
                               updateFilter('minRating', rating);
                             }
-                          }}
-                          className={`transition-all ${
-                            filters.minRating === rating
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                          }`}
-                          aria-pressed={filters.minRating === rating}
-                        >
-                          {rating}+
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
+                          isSelected
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                            : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                        }`}
+                        aria-pressed={isSelected}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-                  {/* Price Filter */}
-                  <fieldset>
-                    <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Price Level</legend>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+              {/* Price Level */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                  Price Level
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Any', '$', '$$', '$$$', '$$$$'].map((option) => {
+                    const priceLevel = option === 'Any' ? null : option.length;
+                    const isSelected = priceLevel === null
+                      ? !filters.minPrice && !filters.maxPrice
+                      : filters.minPrice === priceLevel && filters.maxPrice === priceLevel;
+                    return (
                       <button
+                        key={option}
                         type="button"
                         onClick={() => {
-                          clearFilter('minPrice');
-                          clearFilter('maxPrice');
-                        }}
-                        className={`transition-all ${
-                          !filters.minPrice && !filters.maxPrice
-                            ? "font-medium text-black dark:text-white"
-                            : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                        }`}
-                        aria-pressed={!filters.minPrice && !filters.maxPrice}
-                      >
-                        Any
-                      </button>
-                      {[1, 2, 3, 4].map((level) => (
-                        <button
-                          type="button"
-                          key={level}
-                          onClick={() => {
-                            if (filters.minPrice === level && filters.maxPrice === level) {
+                          if (priceLevel === null) {
+                            clearFilter('minPrice');
+                            clearFilter('maxPrice');
+                          } else {
+                            if (filters.minPrice === priceLevel && filters.maxPrice === priceLevel) {
                               clearFilter('minPrice');
                               clearFilter('maxPrice');
                             } else {
-                              updateFilter('minPrice', level);
-                              updateFilter('maxPrice', level);
+                              updateFilter('minPrice', priceLevel);
+                              updateFilter('maxPrice', priceLevel);
                             }
-                          }}
-                          className={`transition-all ${
-                            filters.minPrice === level && filters.maxPrice === level
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                          }`}
-                          aria-pressed={filters.minPrice === level && filters.maxPrice === level}
-                        >
-                          {'$'.repeat(level)}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-
-                  {/* Sort Filter (Admin Only) */}
-                  {isAdmin && onSortChange && (
-                    <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
-                      <legend className="text-xs font-medium mb-3 text-gray-500 dark:text-gray-500">Sort</legend>
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                        <button
-                          type="button"
-                          onClick={() => onSortChange('default')}
-                          className={`flex items-center gap-1.5 transition-all ${
-                            sortBy === 'default'
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                          }`}
-                          aria-pressed={sortBy === 'default'}
-                        >
-                          Default
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onSortChange('recent')}
-                          className={`flex items-center gap-1.5 transition-all ${
-                            sortBy === 'recent'
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
-                          }`}
-                          aria-pressed={sortBy === 'recent'}
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          Recent Added
-                        </button>
-                      </div>
-                    </fieldset>
-                  )}
-
-                  {/* Near Me Filter */}
-                  <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
-                    <legend className="flex items-center gap-2 mb-3 text-xs font-medium text-gray-500 dark:text-gray-500">
-                      <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
-                      Near Me
-                    </legend>
-
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-gray-500 dark:text-gray-500">Use current location</span>
-                      <button
-                        type="button"
-                        onClick={() => toggleNearMe(!filters.nearMe)}
-                        disabled={loading}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                          filters.nearMe ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
+                          isSelected
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                            : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
                         }`}
-                        aria-pressed={Boolean(filters.nearMe)}
-                        aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
+                        aria-pressed={isSelected}
                       >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white dark:bg-black transition-transform ${
-                            filters.nearMe ? 'translate-x-5' : 'translate-x-1'
-                          }`}
-                        />
+                        {option}
                       </button>
-                    </div>
-
-                    {loading && (
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 mb-3">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Getting your location...</span>
-                      </div>
-                    )}
-
-                    {error && filters.nearMe && (
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                        Location access denied. Please enable in browser settings.
-                      </div>
-                    )}
-
-                    {filters.nearMe && hasLocation && !error && (
-                      <div className="space-y-3 mt-4">
-                        <label htmlFor="near-me-radius" className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500 dark:text-gray-500">Radius</span>
-                          <span className="font-medium text-black dark:text-white">{formatDistance(nearMeRadius)}</span>
-                        </label>
-                        <input
-                          id="near-me-radius"
-                          type="range"
-                          min="0.5"
-                          max="25"
-                          step="0.5"
-                          value={nearMeRadius}
-                          onChange={(e) => updateRadius(parseFloat(e.target.value))}
-                          className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
-                          aria-valuenow={nearMeRadius}
-                          aria-valuetext={formatDistance(nearMeRadius)}
-                        />
-                        <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
-                          <span>500m</span>
-                          <span>25km</span>
-                        </div>
-                      </div>
-                    )}
-                  </fieldset>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* Near Me */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                  Location
+                </label>
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Use current location</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleNearMe(!filters.nearMe)}
+                    disabled={loading}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      filters.nearMe ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
+                    }`}
+                    aria-pressed={Boolean(filters.nearMe)}
+                    aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
+                        filters.nearMe ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {loading && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Getting your location...</span>
+                  </div>
+                )}
+                {error && filters.nearMe && (
+                  <div className="text-xs text-red-600 dark:text-red-400">
+                    Location access denied. Please enable in browser settings.
+                  </div>
+                )}
+                {filters.nearMe && hasLocation && !error && (
+                  <div className="space-y-2 mt-2">
+                    <label htmlFor="near-me-radius" className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                      <span>Radius</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{formatDistance(nearMeRadius)}</span>
+                    </label>
+                    <input
+                      id="near-me-radius"
+                      type="range"
+                      min="0.5"
+                      max="25"
+                      step="0.5"
+                      value={nearMeRadius}
+                      onChange={(e) => updateRadius(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 dark:[&::-webkit-slider-thumb]:bg-white"
+                      aria-valuenow={nearMeRadius}
+                      aria-valuetext={formatDistance(nearMeRadius)}
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
+                      <span>500m</span>
+                      <span>25km</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Discover Cities */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                  Explore
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Navigate to cities page
+                    if (typeof window !== 'undefined') {
+                      window.location.href = '/cities';
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180"
+                >
+                  <Globe2 className="h-4 w-4 stroke-[1.5]" />
+                  Discover by Cities
+                </button>
+              </div>
+            </div>
+
+            {/* Actions Bar - Bottom of Panel */}
+            <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAll}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Apply Filters
+              </button>
             </div>
           </div>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -2820,34 +2820,6 @@ export default function Home() {
                     {/* Middle Nav Buttons - Separate row, always right-aligned */}
                     <div className="w-full">
                       <div className="flex justify-end items-center gap-3 flex-wrap">
-                        {/* Filter Button */}
-                        <SearchFiltersComponent
-                          filters={advancedFilters}
-                          onFiltersChange={(newFilters) => {
-                            setAdvancedFilters(newFilters);
-                            if (newFilters.city !== undefined) {
-                              setSelectedCity(newFilters.city || '');
-                            }
-                            if (newFilters.category !== undefined) {
-                              setSelectedCategory(newFilters.category || '');
-                            }
-                            Object.entries(newFilters).forEach(([key, value]) => {
-                              if (value !== undefined && value !== null && value !== '') {
-                                trackFilterChange({ filterType: key, value });
-                              }
-                            });
-                          }}
-                          availableCities={cities}
-                          availableCategories={categories}
-                          onLocationChange={handleLocationChange}
-                          sortBy={sortBy}
-                          onSortChange={(newSort) => {
-                            setSortBy(newSort);
-                            setCurrentPage(1);
-                          }}
-                          isAdmin={isAdmin}
-                        />
-
                         <button
                           type="button"
                           onClick={() => router.push("/cities")}
@@ -2999,6 +2971,36 @@ export default function Home() {
                   </p>
                 </div>
               )}
+
+            {/* Filter Panel - Full width, pushes grid down */}
+            <div className="mb-6">
+              <SearchFiltersComponent
+                filters={advancedFilters}
+                onFiltersChange={(newFilters) => {
+                  setAdvancedFilters(newFilters);
+                  if (newFilters.city !== undefined) {
+                    setSelectedCity(newFilters.city || '');
+                  }
+                  if (newFilters.category !== undefined) {
+                    setSelectedCategory(newFilters.category || '');
+                  }
+                  Object.entries(newFilters).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                      trackFilterChange({ filterType: key, value });
+                    }
+                  });
+                }}
+                availableCities={cities}
+                availableCategories={categories}
+                onLocationChange={handleLocationChange}
+                sortBy={sortBy}
+                onSortChange={(newSort) => {
+                  setSortBy(newSort);
+                  setCurrentPage(1);
+                }}
+                isAdmin={isAdmin}
+              />
+            </div>
 
             {/* Destination Grid - Original design */}
             {(() => {
