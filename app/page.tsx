@@ -2781,37 +2781,12 @@ export default function Home() {
                 <div className="max-w-[1800px] mx-auto">
                 {/* Mid Nav - Vertical Pile, Right Aligned */}
                 <div className="mb-6 flex justify-end">
-                  <div className="flex flex-col items-end gap-3 w-auto" style={{ gap: '12px' }}>
-                    {/* Create Trip - Pill Filled (Black) - At Top */}
-                    {isAdmin ? (
-                      <button
-                        onClick={() => {
-                          setEditingDestination(null);
-                          setShowPOIDrawer(true);
-                        }}
-                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Add New POI"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add New POI</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        aria-label="Create Trip"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Create Trip</span>
-                      </button>
-                    )}
-
-                    {/* Discover by Cities - Pill (Link to /cities) */}
+                  <div className="flex flex-col items-end w-auto" style={{ gap: '12px' }}>
+                    {/* Discover by Cities - Pill */}
                     <Link
                       href="/cities"
-                      className={`h-11 px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out flex items-center gap-2 ${
-                        "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                      className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out bg-white border border-gray-200 text-gray-900 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
+                      style={{ borderRadius: '9999px' }}
                     >
                       <Globe className="h-4 w-4" />
                       <span>Discover by Cities</span>
@@ -2850,14 +2825,15 @@ export default function Home() {
                     </div>
 
                     {/* View Switch - Segment Control */}
-                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 h-11">
+                    <div className="flex items-center rounded-full h-[44px] px-1.5 bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.10)]" style={{ borderRadius: '9999px' }}>
                       <button
                         onClick={() => setViewMode('grid')}
                         className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
                           viewMode === 'grid'
-                            ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[rgba(255,255,255,0.95)] dark:border dark:border-[rgba(255,255,255,0.22)] shadow-sm'
+                            : 'text-gray-600 dark:text-[rgba(255,255,255,0.68)] hover:text-gray-900 dark:hover:text-[rgba(255,255,255,0.92)]'
                         }`}
+                        style={{ borderRadius: '9999px' }}
                         aria-label="Grid view"
                       >
                         <LayoutGrid className="h-4 w-4" />
@@ -2867,15 +2843,42 @@ export default function Home() {
                         onClick={() => setViewMode('map')}
                         className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
                           viewMode === 'map'
-                            ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[rgba(255,255,255,0.95)] dark:border dark:border-[rgba(255,255,255,0.22)] shadow-sm'
+                            : 'text-gray-600 dark:text-[rgba(255,255,255,0.68)] hover:text-gray-900 dark:hover:text-[rgba(255,255,255,0.92)]'
                         }`}
+                        style={{ borderRadius: '9999px' }}
                         aria-label="Map view"
                       >
                         <Map className="h-4 w-4" />
                         <span>Map</span>
                       </button>
                     </div>
+
+                    {/* Create Trip - Pill Filled (Black) */}
+                    {isAdmin ? (
+                      <button
+                        onClick={() => {
+                          setEditingDestination(null);
+                          setShowPOIDrawer(true);
+                        }}
+                        className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        style={{ borderRadius: '9999px' }}
+                        aria-label="Add New POI"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add New POI</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowTripPlanner(true)}
+                        className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        style={{ borderRadius: '9999px' }}
+                        aria-label="Create Trip"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Create Trip</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
