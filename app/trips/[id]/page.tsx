@@ -23,6 +23,7 @@ import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';
 import type { Trip, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
 export default function TripDetailPage() {
   const { user, loading: authLoading } = useAuth();
@@ -607,7 +608,7 @@ export default function TripDetailPage() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setIsDrawerOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 rounded-t-2xl max-h-[80vh] overflow-y-auto">
+          <div className={`absolute bottom-0 left-0 right-0 ${DRAWER_STYLES.glassyBackground} ${DRAWER_STYLES.glassyBorderTop} rounded-t-2xl max-h-[80vh] overflow-y-auto`}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">{selectedDestination.name}</h2>
