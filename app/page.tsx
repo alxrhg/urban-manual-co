@@ -3018,26 +3018,26 @@ export default function Home() {
                 return null; // Message shown above
               }
 
-                const findDestinationPosition = (slug: string) =>
-                  displayDestinations.findIndex(
-                    destination => destination.slug === slug
-                  );
+              const findDestinationPosition = (slug: string) =>
+                displayDestinations.findIndex(
+                  destination => destination.slug === slug
+                );
 
-                const openDestinationFromMap = (
-                  destination: Destination,
-                  source: "map_marker" | "map_list"
-                ) => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
-                  const position = findDestinationPosition(destination.slug);
-                  trackDestinationEngagement(
-                    destination,
-                    source,
-                    position >= 0 ? position : undefined
-                  );
-                };
+              const openDestinationFromMap = (
+                destination: Destination,
+                source: "map_marker" | "map_list"
+              ) => {
+                setSelectedDestination(destination);
+                setIsDrawerOpen(true);
+                const position = findDestinationPosition(destination.slug);
+                trackDestinationEngagement(
+                  destination,
+                  source,
+                  position >= 0 ? position : undefined
+                );
+              };
 
-                return (
+              return (
                   <>
                     {viewMode === "map" ? (
                       <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
