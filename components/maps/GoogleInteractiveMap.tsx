@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Destination } from '@/types/destination';
 
 interface GoogleInteractiveMapProps {
@@ -32,70 +32,89 @@ export default function GoogleInteractiveMap({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load Google Maps script
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // Add markers
+  const addMarkers = useCallback(() => {
+    if (!mapInstanceRef.current || !window.google?.maps) return;
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-    
-    if (!apiKey) {
-      setError('Google Maps API key not found');
-      setIsLoading(false);
-      return;
-    }
+    // Clear existing markers
+    markersRef.current.forEach(marker => {
+      marker.map = null;
+    });
+    markersRef.current = [];
+    infoWindowsRef.current.forEach(iw => iw.close());
+    infoWindowsRef.current = [];
 
-    // Check if already loaded
-    if (window.google?.maps) {
-      setIsLoading(false);
-      initializeMap();
-      return;
-    }
+    const bounds = new google.maps.LatLngBounds();
+    let hasValidMarkers = false;
 
-    // Check if script is already being loaded
-    if (document.querySelector('script[data-google-maps]')) {
-      const checkInterval = setInterval(() => {
-        if (window.google?.maps) {
-          setIsLoading(false);
-          initializeMap();
-          clearInterval(checkInterval);
+    destinations.forEach((dest) => {
+      if (!dest.latitude || !dest.longitude) return;
+
+      const position = { lat: dest.latitude, lng: dest.longitude };
+      bounds.extend(position);
+      hasValidMarkers = true;
+
+      // Create marker
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        map: mapInstanceRef.current!,
+        position: position,
+        title: dest.name || '',
+      });
+
+      // Create info window content
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 12px; min-width: 200px; font-family: system-ui, -apple-system, sans-serif;">
+            <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
+              ${dest.name || 'Destination'}
+            </h3>
+            ${dest.category ? `<p style="margin: 0 0 4px 0; font-size: 13px; color: #666;">${dest.category}</p>` : ''}
+            ${dest.city ? `<p style="margin: 4px 0; font-size: 12px; color: #888;">${dest.city}</p>` : ''}
+            ${dest.rating ? `<div style="margin: 6px 0 0 0; font-size: 12px; color: #666;">⭐ ${dest.rating.toFixed(1)}</div>` : ''}
+          </div>
+        `,
+      });
+
+      // Add click listener
+      marker.addListener('click', () => {
+        // Close all other info windows
+        infoWindowsRef.current.forEach(iw => iw.close());
+        
+        // Open this info window
+        infoWindow.open({
+          anchor: marker,
+          map: mapInstanceRef.current!,
+        });
+
+        // Call onMarkerClick callback
+        if (onMarkerClick) {
+          onMarkerClick(dest);
         }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
+      });
 
-    setIsLoading(true);
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.setAttribute('data-google-maps', 'true');
-    
-    script.onload = () => {
-      if (window.google?.maps) {
-        setIsLoading(false);
-        setError(null);
-        initializeMap();
+      markersRef.current.push(marker);
+      infoWindowsRef.current.push(infoWindow);
+    });
+
+    // Fit bounds if we have markers
+    if (hasValidMarkers && markersRef.current.length > 0) {
+      mapInstanceRef.current.fitBounds(bounds);
+      // Don't zoom in too much if only one marker
+      if (markersRef.current.length === 1) {
+        const listener = google.maps.event.addListener(mapInstanceRef.current, 'bounds_changed', () => {
+          if (mapInstanceRef.current) {
+            if (mapInstanceRef.current.getZoom()! > 15) {
+              mapInstanceRef.current.setZoom(15);
+            }
+            google.maps.event.removeListener(listener);
+          }
+        });
       }
-    };
-
-    script.onerror = () => {
-      setError('Failed to load Google Maps API');
-      setIsLoading(false);
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup markers
-      markersRef.current.forEach(marker => marker.map = null);
-      markersRef.current = [];
-      infoWindowsRef.current.forEach(iw => iw.close());
-      infoWindowsRef.current = [];
-    };
-  }, []);
+    }
+  }, [destinations, onMarkerClick]);
 
   // Initialize map
-  const initializeMap = () => {
+  const initializeMap = useCallback(() => {
     if (!mapRef.current || !window.google?.maps) return;
 
     try {
@@ -195,7 +214,69 @@ export default function GoogleInteractiveMap({
       console.error('Error initializing Google Map:', err);
       setError('Failed to initialize map');
     }
-  };
+  }, [center.lat, center.lng, zoom, isDark, addMarkers]);
+
+  // Load Google Maps script
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    
+    if (!apiKey) {
+      setError('Google Maps API key not found');
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if already loaded
+    if (window.google?.maps) {
+      setIsLoading(false);
+      initializeMap();
+      return;
+    }
+
+    // Check if script is already being loaded
+    if (document.querySelector('script[data-google-maps]')) {
+      const checkInterval = setInterval(() => {
+        if (window.google?.maps) {
+          setIsLoading(false);
+          initializeMap();
+          clearInterval(checkInterval);
+        }
+      }, 100);
+      return () => clearInterval(checkInterval);
+    }
+
+    setIsLoading(true);
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker&loading=async`;
+    script.async = true;
+    script.defer = true;
+    script.setAttribute('data-google-maps', 'true');
+    
+    script.onload = () => {
+      if (window.google?.maps) {
+        setIsLoading(false);
+        setError(null);
+        initializeMap();
+      }
+    };
+
+    script.onerror = () => {
+      setError('Failed to load Google Maps API');
+      setIsLoading(false);
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup markers
+      markersRef.current.forEach(marker => marker.map = null);
+      markersRef.current = [];
+      infoWindowsRef.current.forEach(iw => iw.close());
+      infoWindowsRef.current = [];
+    };
+  }, [initializeMap]);
 
   // Update map center and zoom when props change
   useEffect(() => {
@@ -205,93 +286,12 @@ export default function GoogleInteractiveMap({
     }
   }, [center.lat, center.lng, zoom]);
 
-  // Add markers
-  const addMarkers = () => {
-    if (!mapInstanceRef.current || !window.google?.maps) return;
-
-    // Clear existing markers
-    markersRef.current.forEach(marker => {
-      marker.map = null;
-    });
-    markersRef.current = [];
-    infoWindowsRef.current.forEach(iw => iw.close());
-    infoWindowsRef.current = [];
-
-    const bounds = new google.maps.LatLngBounds();
-    let hasValidMarkers = false;
-
-    destinations.forEach((dest) => {
-      if (!dest.latitude || !dest.longitude) return;
-
-      const position = { lat: dest.latitude, lng: dest.longitude };
-      bounds.extend(position);
-      hasValidMarkers = true;
-
-      // Create marker
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map: mapInstanceRef.current!,
-        position: position,
-        title: dest.name || '',
-      });
-
-      // Create info window content
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-          <div style="padding: 12px; min-width: 200px; font-family: system-ui, -apple-system, sans-serif;">
-            <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
-              ${dest.name || 'Destination'}
-            </h3>
-            ${dest.category ? `<p style="margin: 0 0 4px 0; font-size: 13px; color: #666;">${dest.category}</p>` : ''}
-            ${dest.city ? `<p style="margin: 4px 0; font-size: 12px; color: #888;">${dest.city}</p>` : ''}
-            ${dest.rating ? `<div style="margin: 6px 0 0 0; font-size: 12px; color: #666;">⭐ ${dest.rating.toFixed(1)}</div>` : ''}
-          </div>
-        `,
-      });
-
-      // Add click listener
-      marker.addListener('click', () => {
-        // Close all other info windows
-        infoWindowsRef.current.forEach(iw => iw.close());
-        
-        // Open this info window
-        infoWindow.open({
-          anchor: marker,
-          map: mapInstanceRef.current!,
-        });
-
-        // Call onMarkerClick callback
-        if (onMarkerClick) {
-          onMarkerClick(dest);
-        }
-      });
-
-      markersRef.current.push(marker);
-      infoWindowsRef.current.push(infoWindow);
-    });
-
-    // Fit bounds if we have markers
-    if (hasValidMarkers && markersRef.current.length > 0) {
-      mapInstanceRef.current.fitBounds(bounds);
-      // Don't zoom in too much if only one marker
-      if (markersRef.current.length === 1) {
-        const listener = google.maps.event.addListener(mapInstanceRef.current, 'bounds_changed', () => {
-          if (mapInstanceRef.current) {
-            if (mapInstanceRef.current.getZoom()! > 15) {
-              mapInstanceRef.current.setZoom(15);
-            }
-            google.maps.event.removeListener(listener);
-          }
-        });
-      }
-    }
-  };
-
   // Update markers when destinations change
   useEffect(() => {
     if (mapInstanceRef.current && window.google?.maps) {
       addMarkers();
     }
-  }, [destinations, onMarkerClick]);
+  }, [addMarkers]);
 
   if (error) {
     return (
