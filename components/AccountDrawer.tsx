@@ -15,7 +15,7 @@ import {
   Layers,
   Trophy,
   Compass,
-  Pin,
+  MapPin,
   Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -200,7 +200,7 @@ export function AccountDrawer({
 
   const navigationItems = [
     { icon: Bookmark, label: "Saved", action: () => handleNavigate("/account?tab=saved") },
-    { icon: Pin, label: "Visited", action: () => handleNavigate("/account?tab=visited") },
+    { icon: MapPin, label: "Visited", action: () => handleNavigate("/account?tab=visited") },
     { icon: Layers, label: "Collections", action: () => handleNavigate("/account?tab=collections") },
     { icon: Compass, label: "Trips", action: () => handleNavigate("/trips") },
     { icon: Trophy, label: "Achievements", action: () => handleNavigate("/account?tab=achievements") },
