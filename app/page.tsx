@@ -2711,7 +2711,7 @@ export default function Home() {
                 <div className="mb-8 md:mb-10">
                   <div className="flex flex-col items-end gap-3">
                     {/* Create Trip / Add New POI Button */}
-                    <div className="flex justify-end w-full flex-wrap gap-3">
+                    <div className="flex justify-end w-full gap-3">
                       {isAdmin ? (
                         <>
                           <button
@@ -2742,113 +2742,111 @@ export default function Home() {
                       )}
                     </div>
 
-                      {editModeActive && (
-                        <div className="w-full rounded-3xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                              Edit mode is active
-                            </p>
-                            <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
-                              Click any card’s edit badge to update details or add a brand new place directly from this page.
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingDestination(null);
-                                setShowPOIDrawer(true);
-                              }}
-                              className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-white text-amber-900 border border-amber-200 shadow-sm hover:bg-amber-100 transition-all"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Add Place
-                            </button>
-                            <button
-                              onClick={() => disableEditMode()}
-                              className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-amber-900 text-white border border-transparent hover:bg-amber-800 transition-all"
-                            >
-                              Exit Edit Mode
-                            </button>
-                          </div>
+                    {editModeActive && (
+                      <div className="w-full rounded-3xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                            Edit mode is active
+                          </p>
+                          <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
+                            Click any card's edit badge to update details or add a brand new place directly from this page.
+                          </p>
                         </div>
-                      )}
-
-                    <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">
-                      {/* Wrapper for Filter and Map Toggle to ensure alignment */}
-                      <div className="flex items-center gap-3 flex-nowrap relative w-full">
-                        {/* Filter Button - Expands inline below */}
-                        <div className="relative">
-                          <SearchFiltersComponent
-                            filters={advancedFilters}
-                            onFiltersChange={(newFilters) => {
-                              setAdvancedFilters(newFilters);
-                              if (newFilters.city !== undefined) {
-                                setSelectedCity(newFilters.city || '');
-                              }
-                              if (newFilters.category !== undefined) {
-                                setSelectedCategory(newFilters.category || '');
-                              }
-                              Object.entries(newFilters).forEach(([key, value]) => {
-                                if (value !== undefined && value !== null && value !== '') {
-                                  trackFilterChange({ filterType: key, value });
-                                }
-                              });
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingDestination(null);
+                              setShowPOIDrawer(true);
                             }}
-                            availableCities={cities}
-                            availableCategories={categories}
-                            onLocationChange={handleLocationChange}
-                            sortBy={sortBy}
-                            onSortChange={(newSort) => {
-                              setSortBy(newSort);
-                              setCurrentPage(1);
-                            }}
-                            isAdmin={isAdmin}
-                          />
+                            className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-white text-amber-900 border border-amber-200 shadow-sm hover:bg-amber-100 transition-all"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add Place
+                          </button>
+                          <button
+                            onClick={() => disableEditMode()}
+                            className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-amber-900 text-white border border-transparent hover:bg-amber-800 transition-all"
+                          >
+                            Exit Edit Mode
+                          </button>
                         </div>
+                      </div>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => router.push("/cities")}
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                      aria-label="Discover by cities"
-                    >
-                      <Globe2 className="h-5 w-5" />
-                      <span className="text-sm font-medium whitespace-nowrap">
-                        Discover by Cities
-                      </span>
-                    </button>
+                    {/* Middle Nav Buttons - Separate row, always right-aligned */}
+                    <div className="flex justify-end items-center gap-3 flex-wrap w-full">
+                      {/* Filter Button - Expands inline below */}
+                      <div className="relative">
+                        <SearchFiltersComponent
+                          filters={advancedFilters}
+                          onFiltersChange={(newFilters) => {
+                            setAdvancedFilters(newFilters);
+                            if (newFilters.city !== undefined) {
+                              setSelectedCity(newFilters.city || '');
+                            }
+                            if (newFilters.category !== undefined) {
+                              setSelectedCategory(newFilters.category || '');
+                            }
+                            Object.entries(newFilters).forEach(([key, value]) => {
+                              if (value !== undefined && value !== null && value !== '') {
+                                trackFilterChange({ filterType: key, value });
+                              }
+                            });
+                          }}
+                          availableCities={cities}
+                          availableCategories={categories}
+                          onLocationChange={handleLocationChange}
+                          sortBy={sortBy}
+                          onSortChange={(newSort) => {
+                            setSortBy(newSort);
+                            setCurrentPage(1);
+                          }}
+                          isAdmin={isAdmin}
+                        />
+                      </div>
 
-                    {/* Grid/Map Toggle */}
-                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
                       <button
-                        onClick={() => setViewMode("grid")}
-                        className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                          viewMode === "grid"
-                            ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                        }`}
-                        aria-label="Grid view"
+                        type="button"
+                        onClick={() => router.push("/cities")}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2 flex-shrink-0"
+                        aria-label="Discover by cities"
                       >
-                        <LayoutGrid className="h-4 w-4" />
-                        <span>Grid</span>
+                        <Globe2 className="h-5 w-5" />
+                        <span className="text-sm font-medium whitespace-nowrap">
+                          Discover by Cities
+                        </span>
                       </button>
-                      <button
-                        onClick={() => setViewMode("map")}
-                        className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                          viewMode === "map"
-                            ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                        }`}
-                        aria-label="Map view"
-                      >
-                        <Map className="h-4 w-4" />
-                        <span>Map</span>
-                      </button>
+
+                      {/* Grid/Map Toggle */}
+                      <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                        <button
+                          onClick={() => setViewMode("grid")}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                            viewMode === "grid"
+                              ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                          }`}
+                          aria-label="Grid view"
+                        >
+                          <LayoutGrid className="h-4 w-4" />
+                          <span>Grid</span>
+                        </button>
+                        <button
+                          onClick={() => setViewMode("map")}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                            viewMode === "map"
+                              ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                          }`}
+                          aria-label="Map view"
+                        >
+                          <Map className="h-4 w-4" />
+                          <span>Map</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
@@ -3208,8 +3206,8 @@ export default function Home() {
                 </>
               );
             })()}
-          </div>
-        </div>
+              </div>
+            </div>
 
         {/* Destination Drawer */}
         <DestinationDrawer
