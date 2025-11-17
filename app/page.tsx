@@ -56,6 +56,7 @@ import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
+import HomeMapSplitView from '@/components/HomeMapSplitView';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
@@ -64,7 +65,6 @@ import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
-const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 const SequencePredictionsInline = dynamic(
   () =>
     import("@/components/SequencePredictionsInline").then(mod => ({
@@ -415,6 +415,62 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
+
+  const trackDestinationEngagement = useCallback(
+    (
+      destination: Destination,
+      source: "grid" | "map_marker" | "map_list",
+      position?: number
+    ) => {
+      trackDestinationClick({
+        destinationSlug: destination.slug,
+        position: typeof position === "number" ? position : undefined,
+        source,
+      });
+
+      if (destination.id) {
+        import("@/lib/analytics/track")
+          .then(({ trackEvent }) => {
+            trackEvent({
+              event_type: "click",
+              destination_id: destination.id,
+              destination_slug: destination.slug,
+              metadata: {
+                category: destination.category,
+                city: destination.city,
+                source:
+                  source === "grid"
+                    ? "homepage_grid"
+                    : source === "map_marker"
+                      ? "homepage_map_marker"
+                      : "homepage_map_list",
+                position,
+              },
+            });
+          })
+          .catch(error => {
+            console.warn("Failed to record analytics event:", error);
+          });
+      }
+
+      if (user?.id) {
+        fetch("/api/discovery/track-event", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            eventType: "click",
+            documentId: destination.slug,
+          }),
+        }).catch(error => {
+          console.warn("Failed to track click event:", error);
+        });
+      }
+    },
+    [user?.id]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -2916,99 +2972,84 @@ export default function Home() {
                 return null; // Message shown above
               }
 
-              return (
-                <>
-                  {viewMode === "map" ? (
-                    <div className="w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 relative">
-                      <MapView
-                        destinations={displayDestinations}
-                        onMarkerClick={dest => {
-                          setSelectedDestination(dest);
-                          setIsDrawerOpen(true);
-                        }}
-                      />
-                    </div>
-                  ) : (
+                const findDestinationPosition = (slug: string) =>
+                  displayDestinations.findIndex(
+                    destination => destination.slug === slug
+                  );
+
+                const openDestinationFromMap = (
+                  destination: Destination,
+                  source: "map_marker" | "map_list"
+                ) => {
+                  setSelectedDestination(destination);
+                  setIsDrawerOpen(true);
+                  const position = findDestinationPosition(destination.slug);
+                  trackDestinationEngagement(
+                    destination,
+                    source,
+                    position >= 0 ? position : undefined
+                  );
+                };
+
+                return (
+                  <>
+                    {viewMode === "map" ? (
+                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                        <HomeMapSplitView
+                          destinations={displayDestinations}
+                          selectedDestination={selectedDestination}
+                          onMarkerSelect={destination =>
+                            openDestinationFromMap(destination, "map_marker")
+                          }
+                          onListItemSelect={destination =>
+                            openDestinationFromMap(destination, "map_list")
+                          }
+                        />
+                      </div>
+                    ) : (
                     (() => {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
                       const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-                  return (
-                    <UniversalGrid
-                      items={paginatedDestinations}
-                      renderItem={(destination, index) => {
-                        const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                        const globalIndex = startIndex + index;
-                        
-                        return (
-                          <DestinationCard
-                            key={destination.slug}
-                            destination={destination}
-                            isAdmin={isAdmin}
-                            onEdit={(dest) => {
-                              setEditingDestination(dest);
-                              setShowPOIDrawer(true);
-                            }}
+                    return (
+                      <UniversalGrid
+                        items={paginatedDestinations}
+                        renderItem={(destination, index) => {
+                          const isVisited = !!(
+                            user && visitedSlugs.has(destination.slug)
+                          );
+                          const globalIndex = startIndex + index;
+
+                          return (
+                            <DestinationCard
+                              key={destination.slug}
+                              destination={destination}
+                              isAdmin={isAdmin}
+                              onEdit={dest => {
+                                setEditingDestination(dest);
+                                setShowPOIDrawer(true);
+                              }}
                               showEditAffordance={editModeActive}
-                            onClick={() => {
-                              setSelectedDestination(destination);
-                              setIsDrawerOpen(true);
-
-                              // Track destination click
-                              trackDestinationClick({
-                                destinationSlug: destination.slug,
-                                position: globalIndex,
-                                source: 'grid',
-                              });
-                              
-                              // Also track with new analytics system
-                              if (destination.id) {
-                                import('@/lib/analytics/track').then(({ trackEvent }) => {
-                                  trackEvent({
-                                    event_type: 'click',
-                                    destination_id: destination.id,
-                                    destination_slug: destination.slug,
-                                    metadata: {
-                                      category: destination.category,
-                                      city: destination.city,
-                                      source: 'homepage_grid',
-                                      position: globalIndex,
-                                    },
-                                  });
-                                });
-                              }
-
-                              // Track click event to Discovery Engine for personalization
-                              if (user?.id) {
-                                fetch("/api/discovery/track-event", {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    userId: user.id,
-                                    eventType: "click",
-                                    documentId: destination.slug,
-                                  }),
-                                }).catch(error => {
-                                  console.warn(
-                                    "Failed to track click event:",
-                                    error
-                                  );
-                                });
-                              }
-                            }}
-                            index={globalIndex}
-                            isVisited={isVisited}
-                            showBadges={true}
-                          />
-                            );
-                          }}
-                        />
-                      );
-                    })()
-                  )}
+                              onClick={() => {
+                                setSelectedDestination(destination);
+                                setIsDrawerOpen(true);
+                                trackDestinationEngagement(
+                                  destination,
+                                  "grid",
+                                  globalIndex
+                                );
+                              }}
+                              index={globalIndex}
+                              isVisited={isVisited}
+                              showBadges={true}
+                            />
+                          );
+                        }}
+                      />
+                    );
+                  })()
+                )}
 
                   {/* Pagination - Only show in grid view */}
                   {viewMode === "grid" &&
