@@ -488,7 +488,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     handleAddLocation(dayNumber);
   };
 
-  const formatDate = (dateStr: string | null) => {
+  function formatDate(dateStr: string | null) {
     if (!dateStr) return null;
     try {
       return new Date(dateStr).toLocaleDateString('en-US', {
@@ -499,16 +499,16 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     } catch {
       return dateStr;
     }
-  };
+  }
 
-  const formatDateForInput = (dateStr: string | null) => {
+  function formatDateForInput(dateStr: string | null) {
     if (!dateStr) return '';
     try {
       return new Date(dateStr).toISOString().split('T')[0];
     } catch {
       return '';
     }
-  };
+  }
 
   const renderFlightTicket = (
     label: string,
