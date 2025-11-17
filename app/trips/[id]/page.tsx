@@ -479,193 +479,169 @@ export default function TripDetailPage() {
   }
 
   const coverImageUrl = coverImagePreview || trip.cover_image;
-  const metaInfo = [
-    trip.destination,
-    trip.start_date && trip.end_date
-      ? `${formatDate(trip.start_date)}–${formatDate(trip.end_date)}`
-      : trip.start_date
-      ? `From ${formatDate(trip.start_date)}`
-      : null,
-  ].filter(Boolean).join(' · ');
+  const dateRange = trip.start_date && trip.end_date
+    ? `${formatDate(trip.start_date)}–${formatDate(trip.end_date)}`
+    : trip.start_date
+    ? `From ${formatDate(trip.start_date)}`
+    : null;
+  const metaInfo = [trip.destination, dateRange].filter(Boolean).join(' · ');
 
   return (
     <main className="w-full min-h-screen bg-white dark:bg-gray-950">
-      {/* Hero Header - Full-width 16:9 banner */}
-      <div className="relative w-full aspect-[16/9] bg-gray-100 dark:bg-gray-900 overflow-hidden">
-        {coverImageUrl ? (
-          <Image
-            src={coverImageUrl}
-            alt={trip.title}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="w-24 h-24 text-gray-300 dark:text-gray-700" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        
-        {/* Back Button */}
+      {/* Back Button */}
+      <div className="w-full px-6 md:px-10 lg:px-12 pt-6">
         <button
           onClick={() => router.push('/trips')}
-          className="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           aria-label="Back to Trips"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Trips</span>
         </button>
       </div>
 
-      {/* Title and Meta Info */}
-      <div className="w-full px-6 md:px-10 lg:px-12 py-8 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto">
-          {isEditingTitle ? (
-            <div className="flex items-center gap-3 mb-4">
-              <input
-                type="text"
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                className="flex-1 text-3xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gray-900 dark:focus:border-white"
-                autoFocus
-              />
-              <button
-                onClick={() => {
-                  setEditedTitle(trip.title);
-                  setIsEditingTitle(false);
-                }}
-                className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white"
+      {/* Main Content - 720px width, centered */}
+      <div className="w-full flex justify-center px-6 md:px-10 lg:px-12 py-12">
+        <div className="w-full max-w-[720px] flex flex-col gap-12">
+          {/* Header Section - Inline Header */}
+          <div className="flex flex-col gap-3">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className="flex-1 text-xl font-semibold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gray-900 dark:focus:border-white"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    setEditedTitle(trip.title);
+                    setIsEditingTitle(false);
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <h1
+                className="text-xl font-semibold text-gray-900 dark:text-white cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={() => trip.user_id === user?.id && setIsEditingTitle(true)}
               >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <h1
-              className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight cursor-pointer hover:opacity-70 transition-opacity"
-              onClick={() => trip.user_id === user?.id && setIsEditingTitle(true)}
-            >
-              {trip.title}
-            </h1>
-          )}
-          
-          {isEditingDates ? (
-            <div className="flex items-center gap-3 mb-4">
-              <input
-                type="date"
-                value={formatDateForInput(editedStartDate)}
-                onChange={(e) => setEditedStartDate(e.target.value)}
-                className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
-              />
-              <span className="text-gray-500">–</span>
-              <input
-                type="date"
-                value={formatDateForInput(editedEndDate)}
-                onChange={(e) => setEditedEndDate(e.target.value)}
-                className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
-              />
-              <button
-                onClick={() => {
-                  setEditedStartDate(trip.start_date || '');
-                  setEditedEndDate(trip.end_date || '');
-                  setIsEditingDates(false);
-                }}
-                className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                {trip.title}
+              </h1>
+            )}
+            
+            {isEditingDates ? (
+              <div className="flex items-center gap-3">
+                <input
+                  type="date"
+                  value={formatDateForInput(editedStartDate)}
+                  onChange={(e) => setEditedStartDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+                />
+                <span className="text-gray-500">–</span>
+                <input
+                  type="date"
+                  value={formatDateForInput(editedEndDate)}
+                  onChange={(e) => setEditedEndDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+                />
+                <button
+                  onClick={() => {
+                    setEditedStartDate(trip.start_date || '');
+                    setEditedEndDate(trip.end_date || '');
+                    setIsEditingDates(false);
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div
+                className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={() => trip.user_id === user?.id && setIsEditingDates(true)}
               >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div
-              className="text-base text-gray-600 dark:text-gray-400 mb-6 cursor-pointer hover:opacity-70 transition-opacity"
-              onClick={() => trip.user_id === user?.id && setIsEditingDates(true)}
-            >
-              {metaInfo}
-            </div>
-          )}
+                {metaInfo}
+              </div>
+            )}
+          </div>
 
-          {/* Action Bar */}
-          <div className="flex items-center gap-3 flex-wrap">
+          {/* Action Row - Button Group, Subtle Variant, Small Size */}
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <Share2 className="w-4 h-4" />
               Share
             </button>
             <button
               onClick={handleExportToCalendar}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <Download className="w-4 h-4" />
-              Export to Calendar
+              Export
             </button>
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <Printer className="w-4 h-4" />
-              Print Itinerary
+              Print
             </button>
             {trip.user_id === user?.id && (
               <button
                 onClick={deleteTrip}
-                className="flex items-center gap-2 px-4 py-2 border border-red-200 dark:border-red-800 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-auto"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-auto"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
               </button>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="w-full px-6 md:px-10 lg:px-12 py-12">
-        <div className="max-w-7xl mx-auto space-y-12">
-          {/* Smart Suggestions */}
+          {/* Smart Suggestions - Card */}
           {smartSuggestions.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
                 Smart Suggestions
               </h2>
-              <div className="space-y-3">
+              <ul className="space-y-2">
                 {smartSuggestions.map((suggestion, index) => {
                   const Icon = suggestion.icon;
                   return (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
-                    >
-                      <Icon className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-700 dark:text-gray-300 flex-1">
+                    <li key={index} className="flex items-start gap-3">
+                      <Icon className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {suggestion.text}
                       </p>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
-            </section>
+              </ul>
+            </div>
           )}
 
-          {/* Itinerary */}
-          <section className="space-y-8">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+          {/* Itinerary Section */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Itinerary
             </h2>
             {Object.keys(itemsByDay).length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 px-10 py-16 text-center space-y-4">
+              <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 px-10 py-16 text-center space-y-4">
                 <MapPin className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-700" />
-                <h3 className="text-xl font-medium text-gray-900 dark:text-white">No items yet</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Add destinations to this trip to start building your itinerary.
                 </p>
                 <button
@@ -677,7 +653,7 @@ export default function TripDetailPage() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {Object.entries(itemsByDay)
                   .sort(([a], [b]) => Number(a) - Number(b))
                   .map(([day, items]) => {
@@ -688,7 +664,7 @@ export default function TripDetailPage() {
                     return (
                       <div
                         key={day}
-                        className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6"
+                        className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6"
                       >
                         <TripDay
                           dayNumber={dayNumber}
@@ -769,45 +745,43 @@ export default function TripDetailPage() {
 
           {/* Cover Image Section */}
           {trip.user_id === user?.id && (
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+            <section className="flex flex-col gap-2">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
                 Cover Image
               </h2>
-              <div className="space-y-3">
-                <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
-                  {coverImagePreview ? (
-                    <Image
-                      src={coverImagePreview}
-                      alt="Cover"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 80vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <MapPin className="w-16 h-16 text-gray-300 dark:text-gray-700" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverImageChange}
-                    className="hidden"
+              <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+                {coverImagePreview ? (
+                  <Image
+                    src={coverImagePreview}
+                    alt="Cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 720px"
                   />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Upload Cover Image
-                  </button>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Recommended: 16:9 aspect ratio, at least 1920x1080px
-                  </p>
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <MapPin className="w-16 h-16 text-gray-300 dark:text-gray-700" />
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverImageChange}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Cover Image
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Recommended: 16:9, 1920x1080px
+                </p>
               </div>
             </section>
           )}
