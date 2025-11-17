@@ -132,8 +132,8 @@ export function Drawer({
           }`}
           style={{
             zIndex,
-            maxHeight: `calc(${computedMobileMaxHeight} - 20px)`,
-            height: `calc(${computedMobileHeight} - 20px)`,
+            maxHeight: 'calc(100vh - 20px)',
+            height: mobileHeight ? `calc(${mobileHeight} - 20px)` : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)',
             transform: bottomSheetTransform,
           }}
         >
