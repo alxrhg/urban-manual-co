@@ -235,6 +235,13 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         throw new Error('Not authenticated');
       }
 
+      // Ensure category is not empty
+      if (!formData.category || !formData.category.trim()) {
+        toast.error('Category is required');
+        setIsSaving(false);
+        return;
+      }
+
       const destinationData = {
         slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         name: formData.name.trim(),
@@ -249,17 +256,32 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         architect: formData.architect?.trim() || null,
       };
 
+      // Log the data being sent for debugging
+      console.log('Updating destination with data:', {
+        slug: destination?.slug,
+        category: destinationData.category,
+        fullData: destinationData
+      });
+
       const isEditing = !!destination;
       
       let error;
       let result;
       if (isEditing) {
-        // Update existing destination
+        // Update existing destination - explicitly select category to verify it was updated
+        // First, let's try updating just to see if there are any permission issues
+        console.log('Attempting to update destination:', {
+          slug: destination.slug,
+          currentCategory: destination.category,
+          newCategory: destinationData.category,
+          allFields: Object.keys(destinationData)
+        });
+        
         const { data: updateData, error: updateError } = await supabase
           .from('destinations')
           .update(destinationData)
           .eq('slug', destination.slug)
-          .select();
+          .select('slug, name, city, category, brand, architect');
         error = updateError;
         result = updateData;
         
@@ -267,8 +289,16 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         if (error) {
           console.error('Update error:', error);
           console.error('Destination data being sent:', destinationData);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          console.error('Error details:', error.details);
         } else {
           console.log('Update successful:', updateData);
+          console.log('Updated category:', updateData?.[0]?.category);
+          // Verify category was actually updated
+          if (updateData && updateData[0] && updateData[0].category !== destinationData.category) {
+            console.warn('Category mismatch! Expected:', destinationData.category, 'Got:', updateData[0].category);
+          }
         }
       } else {
         // Create new destination
@@ -293,6 +323,22 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
           throw error;
         }
         return;
+      }
+
+      // Verify the update was successful, especially for category
+      if (isEditing && result && result[0]) {
+        const updatedCategory = result[0].category;
+        if (updatedCategory !== destinationData.category) {
+          console.error('Category update verification failed:', {
+            expected: destinationData.category,
+            actual: updatedCategory,
+            fullResult: result[0]
+          });
+          toast.error(`Category update may have failed. Expected "${destinationData.category}" but got "${updatedCategory}"`);
+          setIsSaving(false);
+          return;
+        }
+        console.log('Category update verified successfully:', updatedCategory);
       }
 
       toast.success(isEditing ? 'Destination updated successfully' : 'POI created successfully');
