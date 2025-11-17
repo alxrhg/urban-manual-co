@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -14,16 +14,19 @@ import {
   Plus,
   X,
   Loader2,
-  Clock,
+  Share2,
+  Download,
+  Printer,
+  Save,
+  Upload,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { DestinationCard } from '@/components/DestinationCard';
-import { capitalizeCity } from '@/lib/utils';
 import { TripDay } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';
 import type { Trip, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
-import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
 export default function TripDetailPage() {
   const { user, loading: authLoading } = useAuth();
@@ -36,13 +39,17 @@ export default function TripDetailPage() {
   const [destinations, setDestinations] = useState<Map<string, Destination>>(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
   const [isEditingDates, setIsEditingDates] = useState(false);
   const [editedStartDate, setEditedStartDate] = useState('');
   const [editedEndDate, setEditedEndDate] = useState('');
-  const [savingDates, setSavingDates] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -84,8 +91,12 @@ export default function TripDetailPage() {
       }
 
       setTrip(trip);
+      setEditedTitle(trip.title);
       setEditedStartDate(trip.start_date || '');
       setEditedEndDate(trip.end_date || '');
+      if (trip.cover_image) {
+        setCoverImagePreview(trip.cover_image);
+      }
 
       // Fetch itinerary items
       const { data: itemsData, error: itemsError } = await supabaseClient
@@ -124,6 +135,143 @@ export default function TripDetailPage() {
       console.error('Error fetching trip details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!trip || !user) return;
+
+    try {
+      setSaving(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const updates: any = {};
+      
+      if (editedTitle !== trip.title) {
+        updates.title = editedTitle;
+      }
+      
+      if (editedStartDate !== (trip.start_date || '')) {
+        updates.start_date = editedStartDate || null;
+      }
+      
+      if (editedEndDate !== (trip.end_date || '')) {
+        updates.end_date = editedEndDate || null;
+      }
+
+      // Handle cover image upload
+      if (coverImageFile) {
+        const fileExt = coverImageFile.name.split('.').pop();
+        const fileName = `${trip.id}-${Date.now()}.${fileExt}`;
+        const filePath = `trip-covers/${fileName}`;
+
+        const { error: uploadError } = await supabaseClient.storage
+          .from('trip-covers')
+          .upload(filePath, coverImageFile);
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabaseClient.storage
+            .from('trip-covers')
+            .getPublicUrl(filePath);
+          updates.cover_image = publicUrl;
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabaseClient
+          .from('trips')
+          .update(updates)
+          .eq('id', trip.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        // Update local state
+        setTrip({
+          ...trip,
+          ...updates,
+        });
+        setIsEditingTitle(false);
+        setIsEditingDates(false);
+        setCoverImageFile(null);
+        setCoverImagePreview(updates.cover_image || coverImagePreview);
+      }
+    } catch (error) {
+      console.error('Error saving trip:', error);
+      alert('Failed to save trip. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!trip) return;
+    
+    const url = `${window.location.origin}/trips/${trip.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: trip.title,
+          text: `Check out my trip: ${trip.title}`,
+          url: url,
+        });
+      } catch (err) {
+        // User cancelled or error occurred
+        navigator.clipboard.writeText(url);
+        alert('Link copied to clipboard!');
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  const handleExportToCalendar = () => {
+    if (!trip || !trip.start_date) {
+      alert('Please set a start date for your trip first.');
+      return;
+    }
+
+    // Generate ICS file
+    const startDate = new Date(trip.start_date);
+    const endDate = trip.end_date ? new Date(trip.end_date) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Urban Manual//Trip Calendar//EN',
+      'BEGIN:VEVENT',
+      `DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `SUMMARY:${trip.title}`,
+      `DESCRIPTION:${trip.description || ''}`,
+      `LOCATION:${trip.destination || ''}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${trip.title.replace(/\s+/g, '-')}.ics`;
+    link.click();
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -181,7 +329,6 @@ export default function TripDetailPage() {
   // Calculate date for a specific day based on trip start_date
   const getDateForDay = (dayNumber: number): string => {
     if (!trip?.start_date) {
-      // If no start date, use today as base
       const date = new Date();
       date.setDate(date.getDate() + dayNumber - 1);
       return date.toISOString().split('T')[0];
@@ -191,35 +338,33 @@ export default function TripDetailPage() {
     return startDate.toISOString().split('T')[0];
   };
 
-      // Transform itinerary items to TripLocation format
-      const transformItemsToLocations = (items: ItineraryItem[]) => {
-        return items.map((item) => {
-          const destination = item.destination_slug
-            ? destinations.get(item.destination_slug)
-            : null;
+  const transformItemsToLocations = (items: ItineraryItem[]) => {
+    return items.map((item) => {
+      const destination = item.destination_slug
+        ? destinations.get(item.destination_slug)
+        : null;
 
-          // Parse notes for additional data (duration, etc.)
-          let notesData: ItineraryItemNotes = {};
-          if (item.notes) {
-            try {
-              notesData = JSON.parse(item.notes) as ItineraryItemNotes;
-            } catch {
-              notesData = { raw: item.notes };
-            }
-          }
+      let notesData: ItineraryItemNotes = {};
+      if (item.notes) {
+        try {
+          notesData = JSON.parse(item.notes) as ItineraryItemNotes;
+        } catch {
+          notesData = { raw: item.notes };
+        }
+      }
 
-          return {
-            id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
-            name: destination?.name || item.title,
-            city: destination?.city || notesData.city || '',
-            category: destination?.category || item.description || '',
-            image: destination?.image || notesData.image || '/placeholder-image.jpg',
-            time: item.time || undefined,
-            notes: notesData.raw || undefined,
-            duration: notesData.duration || undefined,
-          };
-        });
+      return {
+        id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+        name: destination?.name || item.title,
+        city: destination?.city || notesData.city || '',
+        category: destination?.category || item.description || '',
+        image: destination?.image || notesData.image || '/placeholder-image.jpg',
+        time: item.time || undefined,
+        notes: notesData.raw || undefined,
+        duration: notesData.duration || undefined,
       };
+    });
+  };
 
   const handleAddLocation = (dayNumber: number) => {
     setSelectedDay(dayNumber);
@@ -242,7 +387,6 @@ export default function TripDetailPage() {
       const supabaseClient = createClient();
       if (!supabaseClient || !user) return;
 
-      // Get the next order_index for this day
       const { data: existingItems } = await supabaseClient
         .from('itinerary_items')
         .select('order_index')
@@ -254,7 +398,6 @@ export default function TripDetailPage() {
 
       const nextOrder = existingItems ? (existingItems.order_index || 0) + 1 : 0;
 
-      // Store additional data in notes as JSON
       const notesData = {
         raw: location.notes || '',
         duration: location.duration,
@@ -263,7 +406,6 @@ export default function TripDetailPage() {
         category: location.category,
       };
 
-      // Add destination to itinerary
       const { error } = await supabaseClient
         .from('itinerary_items')
         .insert({
@@ -279,7 +421,6 @@ export default function TripDetailPage() {
 
       if (error) throw error;
 
-      // Reload trip data
       await fetchTripDetails();
       setShowAddLocationModal(false);
       setSelectedDay(null);
@@ -318,46 +459,12 @@ export default function TripDetailPage() {
     }
   };
 
-  const handleSaveDates = async () => {
-    if (!trip || !user) return;
-
-    try {
-      setSavingDates(true);
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-
-      const { error } = await supabaseClient
-        .from('trips')
-        .update({
-          start_date: editedStartDate || null,
-          end_date: editedEndDate || null,
-        })
-        .eq('id', trip.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setTrip({
-        ...trip,
-        start_date: editedStartDate || null,
-        end_date: editedEndDate || null,
-      });
-
-      setIsEditingDates(false);
-    } catch (error) {
-      console.error('Error updating dates:', error);
-      alert('Failed to update dates. Please try again.');
-    } finally {
-      setSavingDates(false);
-    }
-  };
-
-  const handleCancelEditDates = () => {
-    setEditedStartDate(trip?.start_date || '');
-    setEditedEndDate(trip?.end_date || '');
-    setIsEditingDates(false);
-  };
+  // Smart suggestions (mock data - can be replaced with real suggestions)
+  const smartSuggestions = [
+    { text: 'Add breakfast spots near your first destination', icon: CheckCircle2 },
+    { text: 'Consider adding a museum visit for Day 2', icon: Sparkles },
+    { text: 'You might enjoy a sunset dinner at the waterfront', icon: CheckCircle2 },
+  ];
 
   if (loading || authLoading) {
     return (
@@ -371,264 +478,341 @@ export default function TripDetailPage() {
     return null;
   }
 
+  const coverImageUrl = coverImagePreview || trip.cover_image;
+  const metaInfo = [
+    trip.destination,
+    trip.start_date && trip.end_date
+      ? `${formatDate(trip.start_date)}–${formatDate(trip.end_date)}`
+      : trip.start_date
+      ? `From ${formatDate(trip.start_date)}`
+      : null,
+  ].filter(Boolean).join(' · ');
+
   return (
-    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
-      <div className="w-full max-w-[1800px] mx-auto">
-        {/* Header - Matches trips page style */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex-1">
-              <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                ITINERARY STUDIO
-              </div>
-              <div className="flex items-center gap-3 mb-1">
-                <button
-                  onClick={() => router.push('/trips')}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  aria-label="Back to Trips"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </button>
-                <h1 className="text-2xl font-light text-black dark:text-white">{trip.title}</h1>
-              </div>
-              {trip.description && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-11">
-                  {trip.description}
-                </p>
-              )}
+    <main className="w-full min-h-screen bg-white dark:bg-gray-950">
+      {/* Hero Header - Full-width 16:9 banner */}
+      <div className="relative w-full aspect-[16/9] bg-gray-100 dark:bg-gray-900 overflow-hidden">
+        {coverImageUrl ? (
+          <Image
+            src={coverImageUrl}
+            alt={trip.title}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin className="w-24 h-24 text-gray-300 dark:text-gray-700" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/trips')}
+          className="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+          aria-label="Back to Trips"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Title and Meta Info */}
+      <div className="w-full px-6 md:px-10 lg:px-12 py-8 border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto">
+          {isEditingTitle ? (
+            <div className="flex items-center gap-3 mb-4">
+              <input
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                className="flex-1 text-3xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gray-900 dark:focus:border-white"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  setEditedTitle(trip.title);
+                  setIsEditingTitle(false);
+                }}
+                className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              >
+                Cancel
+              </button>
             </div>
+          ) : (
+            <h1
+              className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight cursor-pointer hover:opacity-70 transition-opacity"
+              onClick={() => trip.user_id === user?.id && setIsEditingTitle(true)}
+            >
+              {trip.title}
+            </h1>
+          )}
+          
+          {isEditingDates ? (
+            <div className="flex items-center gap-3 mb-4">
+              <input
+                type="date"
+                value={formatDateForInput(editedStartDate)}
+                onChange={(e) => setEditedStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+              />
+              <span className="text-gray-500">–</span>
+              <input
+                type="date"
+                value={formatDateForInput(editedEndDate)}
+                onChange={(e) => setEditedEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+              />
+              <button
+                onClick={() => {
+                  setEditedStartDate(trip.start_date || '');
+                  setEditedEndDate(trip.end_date || '');
+                  setIsEditingDates(false);
+                }}
+                className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div
+              className="text-base text-gray-600 dark:text-gray-400 mb-6 cursor-pointer hover:opacity-70 transition-opacity"
+              onClick={() => trip.user_id === user?.id && setIsEditingDates(true)}
+            >
+              {metaInfo}
+            </div>
+          )}
+
+          {/* Action Bar */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            >
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
+            <button
+              onClick={handleExportToCalendar}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export to Calendar
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Print Itinerary
+            </button>
             {trip.user_id === user?.id && (
               <button
                 onClick={deleteTrip}
-                className="p-2 text-red-600 dark:text-red-400 hover:opacity-80 transition-opacity"
-                aria-label="Delete trip"
+                className="flex items-center gap-2 px-4 py-2 border border-red-200 dark:border-red-800 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-auto"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="w-4 h-4" />
+                Delete
               </button>
             )}
           </div>
         </div>
-
-        <div className="space-y-8">
-        {/* Trip Metadata */}
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-          {trip.destination && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>{trip.destination}</span>
-            </div>
-          )}
-          {trip.user_id === user?.id ? (
-            isEditingDates ? (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={formatDateForInput(editedStartDate)}
-                    onChange={(e) => setEditedStartDate(e.target.value)}
-                    className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  />
-                  <span>–</span>
-                  <input
-                    type="date"
-                    value={formatDateForInput(editedEndDate)}
-                    onChange={(e) => setEditedEndDate(e.target.value)}
-                    className="px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  />
-                  <button
-                    onClick={handleSaveDates}
-                    disabled={savingDates}
-                    className="px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
-                  >
-                    {savingDates ? 'Saving...' : 'Save'}
-                  </button>
-                  <button
-                    onClick={handleCancelEditDates}
-                    disabled={savingDates}
-                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  {formatDate(trip.start_date)}
-                  {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                </span>
-                <button
-                  onClick={() => setIsEditingDates(true)}
-                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                  title="Edit dates"
-                  aria-label="Edit dates"
-                >
-                  <Edit2 className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-            )
-          ) : (
-            (trip.start_date || trip.end_date) && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  {formatDate(trip.start_date)}
-                  {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                </span>
-              </div>
-            )
-          )}
-          <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-              trip.status === 'planning' ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' :
-              trip.status === 'upcoming' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-              trip.status === 'ongoing' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-              'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-            }`}>
-              {trip.status}
-            </span>
-          </div>
-        </div>
-
-        {/* Itinerary by Day */}
-        {Object.keys(itemsByDay).length === 0 ? (
-          <div className="rounded-[32px] border border-dashed border-gray-300 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 px-10 py-16 text-center space-y-5">
-            <MapPin className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-700" />
-            <h3 className="text-xl font-medium">No items yet</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Add destinations to this trip to start building your itinerary.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-12">
-            {Object.entries(itemsByDay)
-              .sort(([a], [b]) => Number(a) - Number(b))
-              .map(([day, items]) => {
-                const dayNumber = Number(day);
-                const dayDate = getDateForDay(dayNumber);
-                const locations = transformItemsToLocations(items);
-
-                return (
-                  <TripDay
-                    key={day}
-                    dayNumber={dayNumber}
-                    date={dayDate}
-                    locations={locations}
-                    onAddLocation={() => handleAddLocation(dayNumber)}
-                    onRemoveLocation={handleRemoveLocation}
-                    onReorderLocations={async (reorderedLocations) => {
-                      // Handle reordering - update order_index in database
-                      try {
-                        const supabaseClient = createClient();
-                        if (!supabaseClient || !user) return;
-
-                        // Delete existing items for this day
-                        await supabaseClient
-                          .from('itinerary_items')
-                          .delete()
-                          .eq('trip_id', tripId)
-                          .eq('day', dayNumber);
-
-                        // Insert reordered items - match by title/name
-                        const itemsToInsert = reorderedLocations.map((loc, idx) => {
-                          const originalItem = items.find(
-                            (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
-                          );
-                          
-                          // Parse notes if it contains JSON data
-                          let notesData: ItineraryItemNotes = {};
-                          if (originalItem?.notes) {
-                            try {
-                              notesData = JSON.parse(originalItem.notes) as ItineraryItemNotes;
-                            } catch {
-                              notesData = { raw: originalItem.notes };
-                            }
-                          }
-
-                          // Update notes with location data
-                          const updatedNotes = JSON.stringify({
-                            raw: loc.notes || notesData.raw || '',
-                            duration: loc.duration || notesData.duration,
-                            image: loc.image || notesData.image,
-                            city: loc.city || notesData.city,
-                            category: loc.category || notesData.category,
-                          });
-
-                          return {
-                            trip_id: tripId,
-                            destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
-                            day: dayNumber,
-                            order_index: idx,
-                            time: loc.time || originalItem?.time || null,
-                            title: loc.name,
-                            description: loc.category || originalItem?.description || '',
-                            notes: updatedNotes,
-                          };
-                        });
-
-                        if (itemsToInsert.length > 0) {
-                          await supabaseClient
-                            .from('itinerary_items')
-                            .insert(itemsToInsert);
-                        }
-
-                        // Reload trip data
-                        await fetchTripDetails();
-                      } catch (error) {
-                        console.error('Error reordering locations:', error);
-                        alert('Failed to reorder locations. Please try again.');
-                      }
-                    }}
-                    onDuplicateDay={async () => {
-                      // Duplicate day functionality
-                      alert('Duplicate day feature coming soon');
-                    }}
-                    onOptimizeRoute={async () => {
-                      // Optimize route functionality
-                      alert('Route optimization feature coming soon');
-                    }}
-                  />
-                );
-              })}
-          </div>
-        )}
-        </div>
       </div>
 
-      {/* Destination Drawer */}
-      {selectedDestination && (
-        <div
-          className={`fixed inset-0 z-50 md:hidden ${
-            isDrawerOpen ? 'block' : 'hidden'
-          }`}
-        >
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setIsDrawerOpen(false)}
-          />
-          <div className={`absolute bottom-0 left-0 right-0 ${DRAWER_STYLES.glassyBackground} ${DRAWER_STYLES.glassyBorderTop} rounded-t-2xl max-h-[80vh] overflow-y-auto`}>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">{selectedDestination.name}</h2>
+      {/* Main Content */}
+      <div className="w-full px-6 md:px-10 lg:px-12 py-12">
+        <div className="max-w-7xl mx-auto space-y-12">
+          {/* Smart Suggestions */}
+          {smartSuggestions.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                Smart Suggestions
+              </h2>
+              <div className="space-y-3">
+                {smartSuggestions.map((suggestion, index) => {
+                  const Icon = suggestion.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-start gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
+                    >
+                      <Icon className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-gray-700 dark:text-gray-300 flex-1">
+                        {suggestion.text}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* Itinerary */}
+          <section className="space-y-8">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+              Itinerary
+            </h2>
+            {Object.keys(itemsByDay).length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 px-10 py-16 text-center space-y-4">
+                <MapPin className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-700" />
+                <h3 className="text-xl font-medium text-gray-900 dark:text-white">No items yet</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Add destinations to this trip to start building your itinerary.
+                </p>
                 <button
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                  onClick={() => handleAddLocation(1)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  <X className="h-5 w-5" />
+                  <Plus className="w-4 h-4" />
+                  Add First Location
                 </button>
               </div>
-              <Link
-                href={`/destination/${selectedDestination.slug}`}
-                className="block w-full text-center py-3 px-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium text-sm hover:opacity-90 transition-opacity"
-              >
-                View Full Details
-              </Link>
-            </div>
-          </div>
+            ) : (
+              <div className="space-y-8">
+                {Object.entries(itemsByDay)
+                  .sort(([a], [b]) => Number(a) - Number(b))
+                  .map(([day, items]) => {
+                    const dayNumber = Number(day);
+                    const dayDate = getDateForDay(dayNumber);
+                    const locations = transformItemsToLocations(items);
+
+                    return (
+                      <div
+                        key={day}
+                        className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6"
+                      >
+                        <TripDay
+                          dayNumber={dayNumber}
+                          date={dayDate}
+                          locations={locations}
+                          onAddLocation={() => handleAddLocation(dayNumber)}
+                          onRemoveLocation={handleRemoveLocation}
+                          onReorderLocations={async (reorderedLocations) => {
+                            try {
+                              const supabaseClient = createClient();
+                              if (!supabaseClient || !user) return;
+
+                              await supabaseClient
+                                .from('itinerary_items')
+                                .delete()
+                                .eq('trip_id', tripId)
+                                .eq('day', dayNumber);
+
+                              const itemsToInsert = reorderedLocations.map((loc, idx) => {
+                                const originalItem = items.find(
+                                  (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
+                                );
+                                
+                                let notesData: ItineraryItemNotes = {};
+                                if (originalItem?.notes) {
+                                  try {
+                                    notesData = JSON.parse(originalItem.notes) as ItineraryItemNotes;
+                                  } catch {
+                                    notesData = { raw: originalItem.notes };
+                                  }
+                                }
+
+                                const updatedNotes = JSON.stringify({
+                                  raw: loc.notes || notesData.raw || '',
+                                  duration: loc.duration || notesData.duration,
+                                  image: loc.image || notesData.image,
+                                  city: loc.city || notesData.city,
+                                  category: loc.category || notesData.category,
+                                });
+
+                                return {
+                                  trip_id: tripId,
+                                  destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
+                                  day: dayNumber,
+                                  order_index: idx,
+                                  time: loc.time || originalItem?.time || null,
+                                  title: loc.name,
+                                  description: loc.category || originalItem?.description || '',
+                                  notes: updatedNotes,
+                                };
+                              });
+
+                              if (itemsToInsert.length > 0) {
+                                await supabaseClient
+                                  .from('itinerary_items')
+                                  .insert(itemsToInsert);
+                              }
+
+                              await fetchTripDetails();
+                            } catch (error) {
+                              console.error('Error reordering locations:', error);
+                              alert('Failed to reorder locations. Please try again.');
+                            }
+                          }}
+                          onDuplicateDay={async () => {
+                            alert('Duplicate day feature coming soon');
+                          }}
+                          onOptimizeRoute={async () => {
+                            alert('Route optimization feature coming soon');
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </section>
+
+          {/* Cover Image Section */}
+          {trip.user_id === user?.id && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                Cover Image
+              </h2>
+              <div className="space-y-3">
+                <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+                  {coverImagePreview ? (
+                    <Image
+                      src={coverImagePreview}
+                      alt="Cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 80vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <MapPin className="w-16 h-16 text-gray-300 dark:text-gray-700" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverImageChange}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Cover Image
+                  </button>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Recommended: 16:9 aspect ratio, at least 1920x1080px
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Add Location Modal */}
       {trip && selectedDay !== null && (
@@ -643,4 +827,3 @@ export default function TripDetailPage() {
     </main>
   );
 }
-

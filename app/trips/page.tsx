@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Trash2, Edit2, Eye, Calendar, MapPin, Loader2, X } from 'lucide-react';
 import { TripPlanner } from '@/components/TripPlanner';
-import { TripViewDrawer } from '@/components/TripViewDrawer';
 import type { Trip } from '@/types/trip';
 import Image from 'next/image';
 
@@ -21,7 +20,6 @@ export default function TripsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
-  const [viewingTripId, setViewingTripId] = useState<string | null>(null);
   const [deleteConfirmTrip, setDeleteConfirmTrip] = useState<{ id: string; title: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'planning' | 'upcoming' | 'past'>('all');
 
@@ -322,7 +320,7 @@ export default function TripsPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      onView={() => setViewingTripId(trip.id)}
+                      onView={() => router.push(`/trips/${trip.id}`)}
                       onEdit={() => {
                         setEditingTripId(trip.id);
                         setShowCreateDialog(true);
@@ -353,7 +351,7 @@ export default function TripsPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      onView={() => setViewingTripId(trip.id)}
+                      onView={() => router.push(`/trips/${trip.id}`)}
                       onEdit={() => {
                         setEditingTripId(trip.id);
                         setShowCreateDialog(true);
@@ -384,7 +382,7 @@ export default function TripsPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      onView={() => setViewingTripId(trip.id)}
+                      onView={() => router.push(`/trips/${trip.id}`)}
                       onEdit={() => {
                         setEditingTripId(trip.id);
                         setShowCreateDialog(true);
@@ -414,26 +412,6 @@ export default function TripsPage() {
           }
         }}
       />
-
-      {/* Trip View Drawer */}
-      {viewingTripId && (
-        <TripViewDrawer
-          isOpen={!!viewingTripId}
-          onClose={() => {
-            setViewingTripId(null);
-            fetchTrips();
-          }}
-          tripId={viewingTripId}
-          onEdit={() => {
-            setEditingTripId(viewingTripId);
-            setViewingTripId(null);
-            setShowCreateDialog(true);
-          }}
-          onDelete={() => {
-            fetchTrips();
-          }}
-        />
-      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmTrip && (
