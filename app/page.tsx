@@ -38,6 +38,7 @@ const DestinationDrawer = dynamic(
 import { useAuth } from "@/contexts/AuthContext";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSequenceTracker } from "@/hooks/useSequenceTracker";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -2571,6 +2572,139 @@ export default function Home() {
                     )}
                 </div>
               </div>
+              
+              {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
+              {!submittedQuery && (
+                <div className="flex-1 flex items-end">
+                  <div className="w-full pt-6">
+                    {/* City List - Only shows Taipei, Tokyo, New York, and London */}
+                    <div className="mb-[50px]">
+                      {/* CITIES Heading */}
+                      <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+                        CITIES
+                      </div>
+                      
+                      {/* City Buttons */}
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                        <button
+                          onClick={() => {
+                            setSelectedCity("");
+                            setCurrentPage(1);
+                            trackFilterChange({ filterType: 'city', value: 'all' });
+                          }}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCity
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          All Cities
+                        </button>
+                        {displayedCities.map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => {
+                              const newCity = city === selectedCity ? "" : city;
+                              setSelectedCity(newCity);
+                              setCurrentPage(1);
+                              trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                            }}
+                            className={`transition-all duration-200 ease-out ${
+                              selectedCity === city
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            {capitalizeCity(city)}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* More Cities Button */}
+                      {cities.length > displayedCities.length && (
+                        <button
+                          onClick={() => {
+                            setShowAllCities(!showAllCities);
+                          }}
+                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
+                        >
+                          {showAllCities ? 'Hide cities' : `+ More cities (${cities.length - displayedCities.length})`}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Category List (including Michelin) */}
+                    {categories.length > 0 && (
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                        <button
+                          onClick={() => {
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: undefined }));
+                            setCurrentPage(1);
+                            trackFilterChange({ filterType: 'category', value: 'all' });
+                          }}
+                          className={`transition-all duration-200 ease-out ${
+                            !selectedCategory && !advancedFilters.michelin
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          All Categories
+                        </button>
+                        {/* Michelin right after All Categories */}
+                        <button
+                          onClick={() => {
+                            const newValue = !advancedFilters.michelin;
+                            setSelectedCategory("");
+                            setAdvancedFilters(prev => ({ ...prev, category: undefined, michelin: newValue || undefined }));
+                            setCurrentPage(1);
+                            trackFilterChange({ filterType: 'michelin', value: newValue });
+                          }}
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                            advancedFilters.michelin
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          <Image
+                            src="/michelin-star.svg"
+                            alt="Michelin star"
+                            width={12}
+                            height={12}
+                            className="h-3 w-3"
+                          />
+                          Michelin
+                        </button>
+                        {categories.map((category) => {
+                          const IconComponent = getCategoryIcon(category);
+                          return (
+                            <button
+                              key={category}
+                              onClick={() => {
+                                const newCategory = category === selectedCategory ? "" : category;
+                                setSelectedCategory(newCategory);
+                                setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
+                                setCurrentPage(1);
+                                trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                              }}
+                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                                selectedCategory === category && !advancedFilters.michelin
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                              }`}
+                            >
+                              {IconComponent && (
+                                <IconComponent className="h-3 w-3" size={12} />
+                              )}
+                              {capitalizeCategory(category)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -2643,27 +2777,16 @@ export default function Home() {
                 {/* Mid Nav - Vertical Pile, Right Aligned */}
                 <div className="mb-6 flex justify-end">
                   <div className="flex flex-col items-end gap-3 w-auto" style={{ gap: '12px' }}>
-                    {/* Discover by Cities - Pill */}
-                    <button
-                      onClick={() => {
-                        // Toggle or open city selector - for now just toggle first city
-                        const firstCity = displayedCities[0];
-                        if (firstCity) {
-                          const newCity = firstCity === selectedCity ? "" : firstCity;
-                          setSelectedCity(newCity);
-                          setCurrentPage(1);
-                          trackFilterChange({ filterType: 'city', value: newCity || 'all' });
-                        }
-                      }}
+                    {/* Discover by Cities - Pill (Link to /cities) */}
+                    <Link
+                      href="/cities"
                       className={`h-11 px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out flex items-center gap-2 ${
-                        selectedCity
-                          ? "bg-black dark:bg-white text-white dark:text-black"
-                          : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+                        "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
                       }`}
                     >
                       <Globe className="h-4 w-4" />
                       <span>Discover by Cities</span>
-                    </button>
+                    </Link>
 
                     {/* Filters - Pill */}
                     <div className="relative">
@@ -2751,38 +2874,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Category Navigation - Simple Pill Row */}
-                {categories.length > 0 && (
-                  <div className="mb-6">
-                    <div className="flex flex-wrap gap-2">
-                      {categories.map((category) => {
-                        const IconComponent = getCategoryIcon(category);
-                        return (
-                          <button
-                            key={category}
-                            onClick={() => {
-                              const newCategory = category === selectedCategory ? "" : category;
-                              setSelectedCategory(newCategory);
-                              setAdvancedFilters(prev => ({ ...prev, category: newCategory || undefined, michelin: undefined }));
-                              setCurrentPage(1);
-                              trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                            }}
-                            className={`h-10 px-4 text-sm font-medium rounded-[20px] transition-all duration-200 ease-out flex items-center gap-1.5 ${
-                              selectedCategory === category && !advancedFilters.michelin
-                                ? "bg-black dark:bg-white text-white dark:text-black"
-                                : "bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
-                            }`}
-                          >
-                            {IconComponent && (
-                              <IconComponent className="h-4 w-4" size={16} />
-                            )}
-                            {capitalizeCategory(category)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
