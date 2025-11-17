@@ -210,33 +210,29 @@ export function ExpandableHomeControls({
             )}
           </button>
 
-          {/* Grid/Map Toggle */}
-          <div className="flex items-center rounded-xl h-11 px-1.5 bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] backdrop-blur-[12px]" style={{ borderRadius: '12px' }}>
-            <button
-              onClick={() => onViewModeChange('grid')}
-              className={`flex items-center gap-1.5 px-3 h-full text-sm font-medium transition-all rounded-xl ${
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[#F7F7F7] shadow-sm'
-                  : 'text-gray-600 dark:text-[rgba(255,255,255,0.52)] hover:text-gray-900 dark:hover:text-[#F7F7F7]'
-              }`}
-              style={{ borderRadius: '12px' }}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              <span>Grid</span>
-            </button>
-            <button
-              onClick={() => onViewModeChange('map')}
-              className={`flex items-center gap-1.5 px-3 h-full text-sm font-medium transition-all rounded-xl ${
-                viewMode === 'map'
-                  ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[#F7F7F7] shadow-sm'
-                  : 'text-gray-600 dark:text-[rgba(255,255,255,0.52)] hover:text-gray-900 dark:hover:text-[#F7F7F7]'
-              }`}
-              style={{ borderRadius: '12px' }}
-            >
-              <Map className="h-4 w-4" />
-              <span>Map</span>
-            </button>
-          </div>
+          {/* Grid/Map Toggle - Single Toggle Button */}
+          <button
+            onClick={() => onViewModeChange(viewMode === 'grid' ? 'map' : 'grid')}
+            className="flex items-center justify-center gap-1.5 h-11 px-4 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] active:bg-gray-100 dark:active:bg-[rgba(255,255,255,0.18)] backdrop-blur-[14px]"
+            style={{ 
+              borderRadius: '12px',
+              gap: '6px',
+              fontWeight: 500
+            }}
+            aria-label={viewMode === 'grid' ? 'Switch to Map' : 'Switch to Grid'}
+          >
+            {viewMode === 'grid' ? (
+              <>
+                <Map className="h-4 w-4" style={{ width: '16px', height: '16px' }} />
+                <span>Map</span>
+              </>
+            ) : (
+              <>
+                <LayoutGrid className="h-4 w-4" style={{ width: '16px', height: '16px' }} />
+                <span>Grid</span>
+              </>
+            )}
+          </button>
 
           {/* Create Trip Pill */}
           {isAdmin && onAddPOI ? (
