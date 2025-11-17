@@ -278,7 +278,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         newDays.push({
           date: date.toISOString().split('T')[0],
           locations: [],
-          budget: 0,
         });
       }
 
