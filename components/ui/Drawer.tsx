@@ -83,12 +83,12 @@ export function Drawer({
         />
       )}
 
-      {/* Mobile Drawer - Half height bottom sheet */}
+      {/* Mobile Drawer - Half height bottom sheet with spacing on all sides */}
       <div
-        className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
+        className={`md:hidden fixed left-4 right-4 top-auto bottom-4 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden overscroll-contain rounded-t-3xl`}
-        style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
+        } flex flex-col bg-white dark:bg-gray-950 overflow-hidden overscroll-contain rounded-3xl`}
+        style={{ zIndex, maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}
       >
         {/* Header */}
         {(title || headerContent) && (
@@ -126,12 +126,12 @@ export function Drawer({
         )}
       </div>
 
-      {/* Desktop Drawer - Half height bottom sheet */}
+      {/* Desktop Drawer - Half height bottom sheet with spacing on all sides */}
       <div
-        className={`hidden md:flex fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
+        className={`hidden md:flex fixed left-4 right-4 top-auto bottom-4 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden rounded-t-3xl`}
-        style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
+        } flex-col bg-white dark:bg-gray-950 overflow-hidden rounded-3xl`}
+        style={{ zIndex, maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}
       >
         {/* Header */}
         {(title || headerContent) && (

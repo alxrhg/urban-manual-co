@@ -1014,7 +1014,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           onClick={onClose}
         />
         {/* Drawer with loading state */}
-        <div className="md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 rounded-l-3xl overflow-hidden flex flex-col">
+        <div className="md:hidden fixed left-4 right-4 top-auto bottom-4 bg-white dark:bg-gray-950 z-50 rounded-3xl overflow-hidden flex flex-col transform transition-transform duration-300 ease-out translate-y-0" style={{ maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}>
           <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
             <button
               onClick={onClose}
@@ -1034,7 +1034,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
         </div>
         {/* Desktop drawer loading state */}
-        <div className="hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 rounded-l-3xl overflow-hidden flex-col">
+        <div className="hidden md:flex fixed left-4 right-4 top-auto bottom-4 bg-white dark:bg-gray-950 z-50 rounded-3xl overflow-hidden flex-col transform transition-transform duration-300 ease-out translate-y-0" style={{ maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}>
           <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
             <button
               onClick={onClose}
@@ -1088,11 +1088,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClick={onClose}
       />
 
-      {/* Mobile Drawer (mimics desktop design) */}
+      {/* Mobile Drawer - Half height bottom sheet with spacing on all sides */}
       <div
-        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`md:hidden fixed left-4 right-4 top-auto bottom-4 bg-white dark:bg-gray-950 z-50 rounded-3xl transform transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-y-0' : 'translate-y-full'
         } overflow-hidden flex flex-col`}
+        style={{ maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}
       >
         {/* Header with Close Button */}
         <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
@@ -1353,11 +1354,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         </div>
       </div>
 
-      {/* Desktop Slideover Card (existing design) */}
+      {/* Desktop Drawer - Half height bottom sheet with spacing on all sides */}
       <div
-        className={`hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`hidden md:flex fixed left-4 right-4 top-auto bottom-4 bg-white dark:bg-gray-950 z-50 rounded-3xl transform transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-y-0' : 'translate-y-full'
         } overflow-hidden flex-col`}
+        style={{ maxHeight: 'calc(50vh - 2rem)', height: 'calc(50vh - 2rem)' }}
       >
         {/* Header with Close Button */}
         <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
@@ -1994,7 +1996,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 items-start">
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
                   {recommendations.map(rec => (
                     <button
                       key={rec.slug}
@@ -2003,7 +2005,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                         router.push(`/destination/${rec.slug}`);
                         }
                       }}
-                      className="group text-left w-full flex flex-col"
+                      className="group text-left flex-shrink-0 w-32 flex flex-col"
                     >
                       <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (
