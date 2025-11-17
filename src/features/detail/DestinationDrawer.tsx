@@ -1009,16 +1009,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           onClick={onClose}
         />
         {/* Drawer with loading state */}
-        <div className="md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl overflow-hidden flex flex-col">
-          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+        <div className="md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 rounded-l-3xl overflow-hidden flex flex-col">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
               aria-label="Close"
             >
-              <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+              <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
             </button>
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">Details</h2>
+            <div className="w-9" />
           </div>
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center">
@@ -1028,16 +1029,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
         </div>
         {/* Desktop drawer loading state */}
-        <div className="hidden md:flex fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl overflow-hidden flex-col">
-          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+        <div className="hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 rounded-l-3xl overflow-hidden flex-col">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
               aria-label="Close"
             >
-              <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+              <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
             </button>
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">Details</h2>
+            <div className="w-9" />
           </div>
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center">
@@ -1083,13 +1085,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Mobile Drawer (mimics desktop design) */}
       <div
-        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex flex-col`}
       >
         {/* Header with Close Button */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+          <button
+            onClick={onClose}
+            className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+          </button>
+          <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">Details</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && destination.slug.trim() && (
               <Link
@@ -1099,7 +1108,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2 hover:opacity-70 transition-opacity"
                 title="Open destination page in new tab"
                 aria-label="Open destination page in new tab"
               >
@@ -1107,14 +1116,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </Link>
             )}
           </div>
-          {/* Close Button - Top Right */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-          </button>
         </div>
 
         {/* Content */}
@@ -1349,13 +1350,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       {/* Desktop Slideover Card (existing design) */}
       <div
-        className={`hidden md:flex fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
+        className={`hidden md:flex fixed right-0 top-0 bottom-0 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex-col`}
       >
         {/* Header with Close Button */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
+          <button
+            onClick={onClose}
+            className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+          </button>
+          <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">Details</h2>
           <div className="flex items-center gap-2">
             {destination?.slug && destination.slug.trim() && (
               <Link
@@ -1365,7 +1373,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-full transition-colors"
+                className="p-2 hover:opacity-70 transition-opacity"
                 title="Open destination page in new tab"
                 aria-label="Open destination page in new tab"
               >
@@ -1373,14 +1381,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </Link>
             )}
           </div>
-          {/* Close Button - Top Right */}
-            <button
-              onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close"
-            >
-            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-            </button>
         </div>
 
         {/* Content */}

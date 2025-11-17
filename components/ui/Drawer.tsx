@@ -89,26 +89,29 @@ export function Drawer({
           mobileFullScreen ? 'bottom-0 top-0' : 'bottom-0'
         } transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex flex-col bg-white dark:bg-gray-950 shadow-2xl w-full max-w-full overflow-hidden overscroll-contain`}
+        } flex flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden overscroll-contain ${
+          !mobileFullScreen ? 'rounded-t-3xl' : ''
+        }`}
         style={{ zIndex }}
       >
         {/* Header */}
         {(title || headerContent) && (
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
             {headerContent || (
               <>
-                {title && (
-                  <h2 className="text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">
-                    {title}
-                  </h2>
-                )}
                 <button
                   onClick={onClose}
-                  className="p-2.5 min-h-11 min-w-11 flex items-center justify-center rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 touch-manipulation"
+                  className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity touch-manipulation"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
                 </button>
+                {title && (
+                  <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">
+                    {title}
+                  </h2>
+                )}
+                <div className="w-9" /> {/* Spacer for centering */}
               </>
             )}
           </div>
@@ -129,28 +132,29 @@ export function Drawer({
 
       {/* Desktop Slideover */}
       <div
-        className={`hidden md:flex fixed right-4 top-4 bottom-4 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
+        className={`hidden md:flex fixed right-0 top-0 bottom-0 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex-col`}
         style={{ width: desktopWidth, zIndex }}
       >
         {/* Header */}
         {(title || headerContent) && (
-          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between bg-white dark:bg-gray-950">
             {headerContent || (
               <>
-                {title && (
-                  <h2 className="text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">
-                    {title}
-                  </h2>
-                )}
                 <button
                   onClick={onClose}
-                  className="p-2.5 min-h-11 min-w-11 flex items-center justify-center rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 touch-manipulation"
+                  className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity touch-manipulation"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
                 </button>
+                {title && (
+                  <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">
+                    {title}
+                  </h2>
+                )}
+                <div className="w-9" /> {/* Spacer for centering */}
               </>
             )}
           </div>
