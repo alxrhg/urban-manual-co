@@ -111,7 +111,7 @@ export default async function DestinationPage({
     if (caseInsensitiveMatch && !caseError) {
       destination = caseInsensitiveMatch;
       error = null;
-    } else {
+    } else if (caseError) {
       error = caseError;
     }
   }
@@ -129,6 +129,24 @@ export default async function DestinationPage({
       error = null;
     } else if (lowerError) {
       error = lowerError;
+    }
+  }
+
+  // If still not found, try pattern matching (for partial matches or variations)
+  if (!destination && !error) {
+    const { data: patternMatch, error: patternError } = await supabase
+      .from('destinations')
+      .select('*')
+      .ilike('slug', `%${decodedSlug}%`)
+      .limit(1)
+      .maybeSingle();
+    
+    if (patternMatch && !patternError) {
+      destination = patternMatch;
+      error = null;
+    } else if (patternError) {
+      // Don't set error for pattern match failures - it's just a fallback
+      console.warn('[Destination Page] Pattern match failed:', patternError);
     }
   }
 
@@ -156,11 +174,14 @@ export default async function DestinationPage({
   if (error) {
     console.error('[Destination Page] Error fetching destination:', error);
     console.error('[Destination Page] Slug attempted:', decodedSlug);
+    console.error('[Destination Page] Original slug:', slug);
     notFound();
   }
   
   if (!destination) {
     console.error('[Destination Page] Destination not found for slug:', decodedSlug);
+    console.error('[Destination Page] Original slug:', slug);
+    console.error('[Destination Page] Tried: exact match, case-insensitive, lowercase');
     notFound();
   }
 
