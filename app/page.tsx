@@ -2262,7 +2262,7 @@ export default function Home() {
                     <div className="overflow-x-auto scrollbar-hide px-4 sm:px-2">
                       <div className="flex gap-4 md:gap-5 pb-2">
                         {featuredHeroDestinations.map((destination, index) => {
-                          const isVisited = user && visitedSlugs.has(destination.slug);
+                          const isVisited = !!(user && visitedSlugs.has(destination.slug));
                           
                           return (
                             <div 
