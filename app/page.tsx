@@ -419,7 +419,7 @@ export default function Home() {
   const trackDestinationEngagement = useCallback(
     (
       destination: Destination,
-      source: "grid" | "map_marker" | "map_list",
+      source: "grid" | "map_marker" | "map_list" | "hero_carousel",
       position?: number
     ) => {
       trackDestinationClick({
@@ -443,7 +443,9 @@ export default function Home() {
                     ? "homepage_grid"
                     : source === "map_marker"
                       ? "homepage_map_marker"
-                      : "homepage_map_list",
+                      : source === "map_list"
+                        ? "homepage_map_list"
+                        : "homepage_hero_carousel",
                 position,
               },
             });
@@ -2152,6 +2154,38 @@ export default function Home() {
     ? [...featuredCities, ...remainingCities]
     : featuredCities;
 
+  const featuredHeroDestinations = useMemo(() => {
+    if (destinations.length === 0) {
+      return [];
+    }
+
+    const sortedByQuality = [...destinations].sort((a, b) => {
+      const crownDiff = Number(b.crown ?? false) - Number(a.crown ?? false);
+      if (crownDiff !== 0) return crownDiff;
+
+      const michelinDiff = (b.michelin_stars ?? 0) - (a.michelin_stars ?? 0);
+      if (michelinDiff !== 0) return michelinDiff;
+
+      const ratingDiff = (b.rating ?? 0) - (a.rating ?? 0);
+      if (ratingDiff !== 0) return ratingDiff;
+
+      return a.name.localeCompare(b.name);
+    });
+
+    const prioritized: Destination[] = [];
+    for (const destination of sortedByQuality) {
+      if (!prioritized.find(item => item.slug === destination.slug)) {
+        prioritized.push(destination);
+      }
+
+      if (prioritized.length >= 8) {
+        break;
+      }
+    }
+
+    return prioritized;
+  }, [destinations]);
+
   return (
     <ErrorBoundary>
       {/* Structured Data for SEO */}
@@ -2209,6 +2243,78 @@ export default function Home() {
         <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
+              {featuredHeroDestinations.length > 0 && (
+                <div className="mb-8 md:mb-10">
+                  <div className="flex items-end justify-between mb-4">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+                        Featured Places
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Editors' picks that locals love right now
+                      </p>
+                    </div>
+                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                      {featuredHeroDestinations.length} picks
+                    </div>
+                  </div>
+                  <div className="relative -mx-4 sm:-mx-2">
+                    <div className="overflow-x-auto scrollbar-hide px-4 sm:px-2">
+                      <div className="flex gap-4 md:gap-5 pb-2">
+                        {featuredHeroDestinations.map((destination, index) => (
+                          <button
+                            key={destination.slug}
+                            type="button"
+                            onClick={() => {
+                              setSelectedDestination(destination);
+                              setIsDrawerOpen(true);
+                              trackDestinationEngagement(
+                                destination,
+                                "hero_carousel",
+                                index
+                              );
+                            }}
+                            className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] text-left group focus:outline-none"
+                            aria-label={`Open ${destination.name}`}
+                          >
+                            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-900">
+                              {destination.image ? (
+                                <Image
+                                  src={destination.image}
+                                  alt={destination.name}
+                                  fill
+                                  sizes="(max-width: 768px) 60vw, (max-width: 1200px) 35vw, 320px"
+                                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                                  priority={index < 2}
+                                />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
+                                  No image
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80" />
+                              <div className="absolute inset-x-4 bottom-4 text-white">
+                                <p className="text-sm font-semibold leading-tight line-clamp-2">
+                                  {destination.name}
+                                </p>
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mt-2">
+                                  {capitalizeCity(destination.city)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-3">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-[0.2em]">
+                                {capitalizeCategory(destination.category)}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
                 <div className="w-full">
