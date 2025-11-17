@@ -195,7 +195,7 @@ export default function RootLayout({
                   <AdminEditModeProvider>
                     <ItineraryProvider>
                       <Header />
-                      <main className="min-h-screen page-transition">
+                      <main id="main-content" className="min-h-screen page-transition" style={{ zIndex: 200 }}>
                         {children}
                       </main>
                       <Footer />

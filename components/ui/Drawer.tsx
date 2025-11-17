@@ -181,6 +181,7 @@ export function Drawer({
       {/* Backdrop */}
       {showBackdrop && (
         <div
+          id="drawer-overlay"
           className={`fixed inset-0 transition-opacity duration-300 ${
             isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
@@ -188,7 +189,7 @@ export function Drawer({
             backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
             backdropFilter: isOpen ? 'blur(18px)' : 'none',
             WebkitBackdropFilter: isOpen ? 'blur(18px)' : 'none',
-            zIndex: zIndex - 10,
+            zIndex: 999,
           }}
           onClick={onClose}
         />
@@ -197,6 +198,7 @@ export function Drawer({
       {/* Mobile Drawer - Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
+          id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
           ref={drawerRef}
           className={`md:hidden fixed inset-[10px] transform transition-transform duration-[220ms] ease-out will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
             mobileExpanded ? 'drawer-expanded' : 'drawer-collapsed'
@@ -302,6 +304,7 @@ export function Drawer({
 
       {/* Desktop Drawer - Side Drawer with responsive widths */}
       <div
+        id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
         ref={drawerRef}
         className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')

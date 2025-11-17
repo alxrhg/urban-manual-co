@@ -57,7 +57,7 @@ export function Footer() {
   const [isSitemapExpanded, setIsSitemapExpanded] = useState(false);
 
   return (
-    <footer className="mt-20 border-t border-gray-200 dark:border-gray-800 relative">
+    <footer id="footer" className="mt-20 border-t border-gray-200 dark:border-gray-800 relative" style={{ zIndex: 100 }}>
       <div className="w-full px-6 md:px-10 lg:px-12 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
           <div>© {new Date().getFullYear()} The Manual Company. All Rights Reserved.</div>

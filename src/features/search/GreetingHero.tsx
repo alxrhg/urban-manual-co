@@ -162,7 +162,7 @@ export default function GreetingHero({
   }, []);
 
   return (
-    <div className="w-full h-full relative" data-name="Search Bar">
+    <div id="search-bar" className="w-full h-full relative" data-name="Search Bar" style={{ zIndex: 300 }}>
       <div className="w-full relative">
         {/* Greeting above search - Enhanced with context */}
         <div className="text-left mb-[50px]">

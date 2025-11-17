@@ -889,9 +889,9 @@ export function AccountDrawer({
   // Determine z-index based on subpage tier
   const getZIndex = () => {
     if (currentSubpage === 'main_drawer') {
-      return 100; // Tier 1
+      return 1000; // Tier 1
     }
-    return 120; // Tier 2
+    return 1100; // Tier 2
   };
 
   const isTier1 = currentSubpage === 'main_drawer';

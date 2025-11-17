@@ -156,7 +156,7 @@ export function ExpandableHomeControls({
   };
 
   return (
-    <div className="relative w-full">
+    <div id="mid-nav" className="relative w-full sticky" style={{ top: '56px', zIndex: 250 }}>
       {/* Backdrop blur when expanded */}
       {isExpanded && (
         <div 

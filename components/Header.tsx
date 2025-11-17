@@ -131,7 +131,9 @@ export function Header() {
 
   return (
     <header
-      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-900"
+      id="top-header"
+      className="mt-6 md:mt-8 sticky top-0 bg-white dark:bg-gray-900"
+      style={{ zIndex: 400 }}
       role="banner"
     >
       {/* Primary Nav */}
