@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface GoogleAdProps {
   slot: string;
@@ -96,25 +96,12 @@ export function GoogleAd({
 
 /**
  * Display ad with minimal border to match homepage design
- */
-export function DisplayAd({ slot, className = '' }: { slot: string; className?: string }) {
-  return (
-    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl p-4 ${className}`}>
-      <div className="text-xs text-gray-400 mb-2 text-center">Advertisement</div>
-      <GoogleAd slot={slot} format="auto" responsive />
-    </div>
-  );
-}
-
-/**
- * Multiplex ad - Grid of native ads matching your card layout
- * Perfect for insertion between rows in destination grids
  * Automatically hides if no ad content is available
  */
-export function MultiplexAd({ slot, className = '' }: { slot: string; className?: string }) {
+export function DisplayAd({ slot, className = '' }: { slot: string; className?: string }) {
   const adRef = useRef<HTMLModElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const [shouldShow, setShouldShow] = useState(true);
 
   useEffect(() => {
     // Prevent double initialization (React Strict Mode, re-renders)
@@ -159,36 +146,191 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
       (window.adsbygoogle = window.adsbygoogle || []).push({});
       initializedRef.current = true;
 
-      // Check if ad loaded after a delay
-      const checkAdLoaded = setTimeout(() => {
-        if (adRef.current && containerRef.current) {
-          const adStatus = adRef.current.getAttribute('data-ad-status');
-          const hasContent = adRef.current.innerHTML.trim().length > 0;
+      // Check if ad loaded - use multiple checks with increasing delays
+      const checkAdLoaded = () => {
+        if (!adRef.current) return;
 
-          // Hide container if ad didn't load or has no content
-          if (adStatus === 'unfilled' || !hasContent) {
-            containerRef.current.style.display = 'none';
-          }
+        const adStatus = adRef.current.getAttribute('data-ad-status');
+        const hasContent = adRef.current.innerHTML.trim().length > 0;
+        const hasIframes = adRef.current.querySelectorAll('iframe').length > 0;
+
+        // Hide if ad status is unfilled or if there's no content and no iframes
+        if (adStatus === 'unfilled' || (!hasContent && !hasIframes)) {
+          setShouldShow(false);
+        } else if (adStatus === 'filled' || hasContent || hasIframes) {
+          setShouldShow(true);
         }
-      }, 1000);
+      };
 
-      return () => clearTimeout(checkAdLoaded);
+      // Check immediately, then after delays
+      checkAdLoaded();
+      const timer1 = setTimeout(checkAdLoaded, 1000);
+      const timer2 = setTimeout(checkAdLoaded, 2000);
+      const timer3 = setTimeout(checkAdLoaded, 3000);
+
+      // Also observe mutations to catch late-loading ads
+      const observer = new MutationObserver(checkAdLoaded);
+      if (adRef.current) {
+        observer.observe(adRef.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['data-ad-status']
+        });
+      }
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+        observer.disconnect();
+      };
     } catch (err) {
       // Silently handle duplicate initialization errors
       if (err instanceof Error && err.message?.includes('already have ads')) {
         initializedRef.current = true;
       } else {
         console.error('AdSense error:', err);
-        // Hide on error
-        if (containerRef.current) {
-          containerRef.current.style.display = 'none';
-        }
+        setShouldShow(false);
       }
     }
   }, []);
 
+  // Don't render if ad didn't load
+  if (!shouldShow) {
+    return null;
+  }
+
   return (
-    <div ref={containerRef} className={`col-span-full ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl p-4 ${className}`}>
+      <div className="text-xs text-gray-400 mb-2 text-center">Advertisement</div>
+      <div className="overflow-hidden">
+        <ins
+          ref={adRef}
+          className="adsbygoogle"
+          style={{
+            display: 'block',
+          }}
+          data-ad-client="ca-pub-3052286230434362"
+          data-ad-slot={slot}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Multiplex ad - Grid of native ads matching your card layout
+ * Perfect for insertion between rows in destination grids
+ * Automatically hides if no ad content is available
+ */
+export function MultiplexAd({ slot, className = '' }: { slot: string; className?: string }) {
+  const adRef = useRef<HTMLModElement>(null);
+  const initializedRef = useRef(false);
+  const [shouldShow, setShouldShow] = useState(true);
+
+  useEffect(() => {
+    // Prevent double initialization (React Strict Mode, re-renders)
+    if (initializedRef.current) return;
+    
+    // Wait for DOM element to be ready
+    if (!adRef.current) {
+      // Retry after a short delay if element isn't ready yet
+      const timer = setTimeout(() => {
+        if (adRef.current && !initializedRef.current) {
+          // Check if ad is already initialized by Google
+          if (adRef.current.getAttribute('data-ad-status')) {
+            initializedRef.current = true;
+            return;
+          }
+
+          try {
+            // @ts-ignore
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            initializedRef.current = true;
+          } catch (err) {
+            // Silently handle duplicate initialization errors
+            if (err instanceof Error && err.message?.includes('already have ads')) {
+              initializedRef.current = true;
+            } else {
+              console.error('AdSense error:', err);
+            }
+          }
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    
+    // Check if ad is already initialized by Google
+    if (adRef.current.getAttribute('data-ad-status')) {
+      initializedRef.current = true;
+      return;
+    }
+
+    try {
+      // @ts-ignore
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      initializedRef.current = true;
+
+      // Check if ad loaded - use multiple checks with increasing delays
+      const checkAdLoaded = () => {
+        if (!adRef.current) return;
+
+        const adStatus = adRef.current.getAttribute('data-ad-status');
+        const hasContent = adRef.current.innerHTML.trim().length > 0;
+        const hasIframes = adRef.current.querySelectorAll('iframe').length > 0;
+
+        // Hide if ad status is unfilled or if there's no content and no iframes
+        if (adStatus === 'unfilled' || (!hasContent && !hasIframes)) {
+          setShouldShow(false);
+        } else if (adStatus === 'filled' || hasContent || hasIframes) {
+          setShouldShow(true);
+        }
+      };
+
+      // Check immediately, then after delays
+      checkAdLoaded();
+      const timer1 = setTimeout(checkAdLoaded, 1000);
+      const timer2 = setTimeout(checkAdLoaded, 2000);
+      const timer3 = setTimeout(checkAdLoaded, 3000);
+
+      // Also observe mutations to catch late-loading ads
+      const observer = new MutationObserver(checkAdLoaded);
+      if (adRef.current) {
+        observer.observe(adRef.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['data-ad-status']
+        });
+      }
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+        observer.disconnect();
+      };
+    } catch (err) {
+      // Silently handle duplicate initialization errors
+      if (err instanceof Error && err.message?.includes('already have ads')) {
+        initializedRef.current = true;
+      } else {
+        console.error('AdSense error:', err);
+        setShouldShow(false);
+      }
+    }
+  }, []);
+
+  // Don't render if ad didn't load
+  if (!shouldShow) {
+    return null;
+  }
+
+  return (
+    <div className={`col-span-full ${className}`}>
       <div className="w-full max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
         <div className="text-xs text-gray-400 mb-3 text-center">Sponsored</div>
         <ins
