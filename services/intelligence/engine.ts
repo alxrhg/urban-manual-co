@@ -130,7 +130,8 @@ async function generateArchitecturalJourney(
       movement_id,
       architectural_significance,
       design_story,
-      intelligence_score
+      intelligence_score,
+      created_at
     `)
     .eq('city', input.destination.toLowerCase().replace(/\s+/g, '-'))
     .not('architect_id', 'is', null)
@@ -143,11 +144,18 @@ async function generateArchitecturalJourney(
     // For now, we'll filter client-side after fetching
   }
 
-  const { data: destinations, error } = await query;
+  const { data: destinationsData, error } = await query;
 
-  if (error || !destinations) {
+  if (error || !destinationsData) {
     throw new Error(`Failed to fetch destinations: ${error?.message}`);
   }
+
+  // Transform destinations to match ArchitectureDestination type
+  const destinations: ArchitectureDestination[] = destinationsData.map((dest: any) => ({
+    ...dest,
+    country: dest.country || '',
+    created_at: dest.created_at || new Date().toISOString(),
+  }));
 
   // Determine journey type and focus
   let journeyType: ArchitecturalJourney['type'] = 'city';
