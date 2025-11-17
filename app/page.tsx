@@ -20,7 +20,8 @@ import {
   LayoutGrid,
   Plus,
   Sparkles,
-  Globe2,
+  Globe,
+  Funnel,
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 // Lazy load drawer (only when opened)
@@ -2710,33 +2711,33 @@ export default function Home() {
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
-                {/* Unified Top Controls - Pill Bar */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-[10px] h-10 px-4 bg-gray-50 dark:bg-gray-900 rounded-[20px] flex-wrap">
-                    {/* Discover by Cities */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {displayedCities.map((city) => (
-                        <button
-                          key={city}
-                          onClick={() => {
-                            const newCity = city === selectedCity ? "" : city;
-                            setSelectedCity(newCity);
-                            setCurrentPage(1);
-                            trackFilterChange({ filterType: 'city', value: newCity || 'all' });
-                          }}
-                          className={`h-10 px-4 text-sm font-medium rounded-[20px] transition-all duration-200 ease-out flex items-center ${
-                            selectedCity === city
-                              ? "bg-black dark:bg-white text-white dark:text-black"
-                              : "bg-transparent text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
-                          }`}
-                        >
-                          {capitalizeCity(city)}
-                        </button>
-                      ))}
-                    </div>
+                {/* Mid Nav - Vertical Pile, Right Aligned */}
+                <div className="mb-6 flex justify-end">
+                  <div className="flex flex-col items-end gap-3 w-auto" style={{ gap: '12px' }}>
+                    {/* Discover by Cities - Pill */}
+                    <button
+                      onClick={() => {
+                        // Toggle or open city selector - for now just toggle first city
+                        const firstCity = displayedCities[0];
+                        if (firstCity) {
+                          const newCity = firstCity === selectedCity ? "" : firstCity;
+                          setSelectedCity(newCity);
+                          setCurrentPage(1);
+                          trackFilterChange({ filterType: 'city', value: newCity || 'all' });
+                        }
+                      }}
+                      className={`h-11 px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out flex items-center gap-2 ${
+                        selectedCity
+                          ? "bg-black dark:bg-white text-white dark:text-black"
+                          : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      <Globe className="h-4 w-4" />
+                      <span>Discover by Cities</span>
+                    </button>
 
-                    {/* Filter Button */}
-                    <div className="flex-shrink-0 relative">
+                    {/* Filters - Pill */}
+                    <div className="relative">
                       <SearchFiltersComponent
                         filters={advancedFilters}
                         onFiltersChange={(newFilters) => {
@@ -2763,14 +2764,15 @@ export default function Home() {
                         }}
                         isAdmin={isAdmin}
                         fullWidthPanel={true}
+                        useFunnelIcon={true}
                       />
                     </div>
 
-                    {/* View Toggle */}
-                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-[20px] p-1 flex-shrink-0 h-10">
+                    {/* View Switch - Segment Control */}
+                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 h-11">
                       <button
                         onClick={() => setViewMode('grid')}
-                        className={`flex items-center gap-1.5 px-3 h-8 text-sm font-medium transition-all rounded-[20px] ${
+                        className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
                           viewMode === 'grid'
                             ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
                             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -2782,7 +2784,7 @@ export default function Home() {
                       </button>
                       <button
                         onClick={() => setViewMode('map')}
-                        className={`flex items-center gap-1.5 px-3 h-8 text-sm font-medium transition-all rounded-[20px] ${
+                        className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
                           viewMode === 'map'
                             ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
                             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -2794,14 +2796,14 @@ export default function Home() {
                       </button>
                     </div>
 
-                    {/* Create Trip / Add New POI Button */}
+                    {/* Create Trip - Pill Filled (Black) */}
                     {isAdmin ? (
                       <button
                         onClick={() => {
                           setEditingDestination(null);
                           setShowPOIDrawer(true);
                         }}
-                        className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-[20px] hover:opacity-90 transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
                         aria-label="Add New POI"
                       >
                         <Plus className="h-4 w-4" />
@@ -2810,7 +2812,7 @@ export default function Home() {
                     ) : (
                       <button
                         onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-[20px] hover:opacity-90 transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                        className="flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
                         aria-label="Create Trip"
                       >
                         <Plus className="h-4 w-4" />

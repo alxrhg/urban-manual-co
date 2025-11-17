@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, MapPin, Loader2, Search, ChevronDown, Globe2, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { X, MapPin, Loader2, Search, ChevronDown, Globe2, SlidersHorizontal, Sparkles, Funnel } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 export interface SearchFilters {
@@ -29,6 +29,7 @@ interface SearchFiltersProps {
   isAdmin?: boolean;
   fullWidthPanel?: boolean;
   onPanelToggle?: (isOpen: boolean) => void;
+  useFunnelIcon?: boolean;
 }
 
 export function SearchFiltersComponent({
@@ -42,6 +43,7 @@ export function SearchFiltersComponent({
   isAdmin = false,
   fullWidthPanel = false,
   onPanelToggle,
+  useFunnelIcon = false,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -148,11 +150,19 @@ export function SearchFiltersComponent({
           }
           handleToggle(!isOpen);
         }}
-        className="flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-[20px] transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+        className={`flex items-center justify-center gap-2 h-11 px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out ${
+          useFunnelIcon
+            ? "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+            : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+        }`}
         aria-label="Toggle filters"
         aria-expanded={isOpen}
       >
-        <SlidersHorizontal className="h-4 w-4" />
+        {useFunnelIcon ? (
+          <Funnel className="h-4 w-4" />
+        ) : (
+          <SlidersHorizontal className="h-4 w-4" />
+        )}
         <span>Filters</span>
         {hasActiveFilters && (
           <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
