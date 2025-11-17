@@ -16,14 +16,16 @@ import {
   Loader2,
   Trophy,
   Folder,
+  ArrowLeft,
+  Plus,
+  Share2,
+  Download,
+  Trash2,
+  Calendar,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
-import { SavedPlacesDrawer } from "@/components/SavedPlacesDrawer";
-import { VisitedPlacesDrawer } from "@/components/VisitedPlacesDrawer";
-import { TripsDrawer } from "@/components/TripsDrawer";
-import { SettingsDrawer } from "@/components/SettingsDrawer";
 import type { Trip } from "@/types/trip";
 
 interface AccountDrawerProps {
@@ -38,8 +40,18 @@ interface UserStats {
   trips: number;
   cities: number;
   countries: number;
-  explorationProgress: number; // Percentage
+  explorationProgress: number;
 }
+
+type SubpageId = 
+  | 'main_drawer'
+  | 'visited_subpage'
+  | 'saved_subpage'
+  | 'collections_subpage'
+  | 'trips_subpage'
+  | 'trip_details_subpage'
+  | 'achievements_subpage'
+  | 'settings_subpage';
 
 export function AccountDrawer({
   isOpen,
@@ -48,6 +60,8 @@ export function AccountDrawer({
 }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats>({ 
@@ -60,19 +74,23 @@ export function AccountDrawer({
   });
   const [statsLoading, setStatsLoading] = useState(false);
   const [recentTrips, setRecentTrips] = useState<Trip[]>([]);
-  const [recentVisits, setRecentVisits] = useState<Array<{ 
-    name: string; 
-    visited_at: string;
-    image: string | null;
-    slug: string;
-  }>>([]);
-  const [totalDestinations, setTotalDestinations] = useState(0);
-  const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(false);
-  const [isVisitedPlacesOpen, setIsVisitedPlacesOpen] = useState(false);
-  const [isTripsOpen, setIsTripsOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
+  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch user profile, avatar, stats, and recent activity
+  // Reset to main drawer when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentSubpage('main_drawer');
+      setSelectedTripId(null);
+      setSelectedTrip(null);
+    }
+  }, [isOpen]);
+
+  // Fetch user profile, avatar, stats, and data
   useEffect(() => {
     async function fetchProfileAndStats() {
       if (!user?.id) {
@@ -87,13 +105,13 @@ export function AccountDrawer({
         const supabaseClient = createClient();
         
         // Fetch profile
-        const { data: profileData, error: profileError } = await supabaseClient
+        const { data: profileData } = await supabaseClient
           .from("profiles")
           .select("avatar_url, username")
           .eq("id", user.id)
           .maybeSingle();
 
-        if (!profileError && profileData) {
+        if (profileData) {
           setAvatarUrl(profileData.avatar_url || null);
           setUsername(profileData.username || null);
         } else {
@@ -113,10 +131,10 @@ export function AccountDrawer({
         const { count: totalDest } = await supabaseClient
           .from("destinations")
           .select("*", { count: "exact", head: true });
-        setTotalDestinations(totalDest || 0);
+        const totalDestinations = totalDest || 0;
 
         // Fetch stats
-        const [visitedResult, savedResult, tripsResult, visitedPlacesResult] = await Promise.all([
+        const [visitedResult, savedResult, tripsResult] = await Promise.all([
           supabaseClient
             .from("visited_places")
             .select("destination_slug, destination:destinations(city, country)", { count: "exact" })
@@ -129,29 +147,19 @@ export function AccountDrawer({
             .from("trips")
             .select("*", { count: "exact", head: true })
             .eq("user_id", user.id),
-          supabaseClient
-            .from("visited_places")
-            .select("destination_slug, visited_at, destination:destinations(name, image)")
-            .eq("user_id", user.id)
-            .order("visited_at", { ascending: false })
-            .limit(4),
         ]);
 
         const visitedCount = visitedResult.count || 0;
         const savedCount = savedResult.count || 0;
         const tripsCount = tripsResult.count || 0;
 
-        // Count unique cities and countries from visited places
+        // Count unique cities and countries
         const citiesSet = new Set<string>();
         const countriesSet = new Set<string>();
         if (visitedResult.data) {
           visitedResult.data.forEach((item: any) => {
-            if (item.destination?.city) {
-              citiesSet.add(item.destination.city);
-            }
-            if (item.destination?.country) {
-              countriesSet.add(item.destination.country);
-            }
+            if (item.destination?.city) citiesSet.add(item.destination.city);
+            if (item.destination?.country) countriesSet.add(item.destination.country);
           });
         }
         const citiesCount = citiesSet.size;
@@ -171,7 +179,7 @@ export function AccountDrawer({
           explorationProgress,
         });
 
-        // Fetch recent trips
+        // Fetch recent trips (limit 3)
         const { data: tripsData } = await supabaseClient
           .from("trips")
           .select("*")
@@ -180,17 +188,6 @@ export function AccountDrawer({
           .limit(3);
 
         setRecentTrips((tripsData as Trip[]) || []);
-
-        // Set recent visits with thumbnails
-        if (visitedPlacesResult.data) {
-          const visits = visitedPlacesResult.data.map((item: any) => ({
-            name: item.destination?.name || item.destination_slug,
-            visited_at: item.visited_at,
-            image: item.destination?.image || null,
-            slug: item.destination_slug,
-          }));
-          setRecentVisits(visits);
-        }
       } catch (error) {
         console.error("Error fetching profile and stats:", error);
       } finally {
@@ -203,13 +200,78 @@ export function AccountDrawer({
     }
   }, [user, isOpen]);
 
+  // Fetch data for subpages
+  useEffect(() => {
+    async function fetchSubpageData() {
+      if (!user?.id || !isOpen) return;
+
+      const supabaseClient = createClient();
+      setLoading(true);
+
+      try {
+        if (currentSubpage === 'visited_subpage') {
+          const { data: visitedResult } = await supabaseClient
+            .from('visited_places')
+            .select('destination_slug, visited_at, destination:destinations(name, image, city)')
+            .eq('user_id', user.id)
+            .order('visited_at', { ascending: false })
+            .limit(20);
+
+          if (visitedResult) {
+            const mapped = visitedResult.map((item: any) => ({
+              slug: item.destination_slug,
+              visited_at: item.visited_at,
+              destination: item.destination,
+            }));
+            setVisitedPlaces(mapped);
+          }
+        } else if (currentSubpage === 'saved_subpage') {
+          const { data: savedResult } = await supabaseClient
+            .from('saved_places')
+            .select('destination_slug, destination:destinations(name, image, city)')
+            .eq('user_id', user.id)
+            .limit(20);
+
+          if (savedResult) {
+            const mapped = savedResult.map((item: any) => ({
+              slug: item.destination_slug,
+              destination: item.destination,
+            }));
+            setSavedPlaces(mapped);
+          }
+        } else if (currentSubpage === 'trips_subpage' || currentSubpage === 'trip_details_subpage') {
+          const { data: tripsData } = await supabaseClient
+            .from('trips')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          setTrips((tripsData as Trip[]) || []);
+
+          if (selectedTripId && currentSubpage === 'trip_details_subpage') {
+            const trip = tripsData?.find((t: Trip) => t.id === selectedTripId);
+            setSelectedTrip(trip || null);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching subpage data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (currentSubpage !== 'main_drawer' && currentSubpage !== 'settings_subpage' && currentSubpage !== 'achievements_subpage' && currentSubpage !== 'collections_subpage') {
+      fetchSubpageData();
+    }
+  }, [user, isOpen, currentSubpage, selectedTripId]);
+
   const handleSignOut = async () => {
     await signOut();
     onClose();
     router.push("/");
   };
 
-  const handleNavigate = (path: string) => {
+  const handleNavigateToFullPage = (path: string) => {
     onClose();
     setTimeout(() => {
       router.push(path);
@@ -218,11 +280,6 @@ export function AccountDrawer({
 
   const displayUsername = username || user?.email?.split("@")[0] || "user";
 
-  const runAfterClose = (callback: () => void) => {
-    onClose();
-    setTimeout(callback, 200);
-  };
-
   // Section Card Component
   const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
     <div className={`px-5 py-4 bg-white dark:bg-gray-950 rounded-2xl ${className}`}>
@@ -230,20 +287,51 @@ export function AccountDrawer({
     </div>
   );
 
-  const shortcuts = [
-    { icon: MapPin, label: "Visited", action: () => runAfterClose(() => setIsVisitedPlacesOpen(true)) },
-    { icon: Bookmark, label: "Saved", action: () => runAfterClose(() => setIsSavedPlacesOpen(true)) },
-    { icon: Layers, label: "Lists", action: () => handleNavigate("/account?tab=collections") },
-    { icon: Compass, label: "Trips", action: () => runAfterClose(() => setIsTripsOpen(true)) },
-    { icon: Folder, label: "Collections", action: () => handleNavigate("/account?tab=collections") },
-    { icon: Trophy, label: "Achievements", action: () => handleNavigate("/account?tab=achievements") },
-  ];
+  // Navigation handler
+  const navigateToSubpage = (subpage: SubpageId, tripId?: string) => {
+    if (tripId) {
+      setSelectedTripId(tripId);
+    }
+    setCurrentSubpage(subpage);
+  };
 
-  const accountContent = (
-    <div className="px-6 py-8 space-y-12">
+  const navigateBack = () => {
+    if (currentSubpage === 'trip_details_subpage') {
+      setCurrentSubpage('trips_subpage');
+      setSelectedTripId(null);
+    } else {
+      setCurrentSubpage('main_drawer');
+    }
+  };
+
+  // Get drawer title based on current subpage
+  const getDrawerTitle = () => {
+    switch (currentSubpage) {
+      case 'visited_subpage':
+        return 'Visited';
+      case 'saved_subpage':
+        return 'Saved';
+      case 'collections_subpage':
+        return 'Collections';
+      case 'trips_subpage':
+        return 'Your Trips';
+      case 'trip_details_subpage':
+        return selectedTrip?.name || 'Trip Details';
+      case 'achievements_subpage':
+        return 'Achievements';
+      case 'settings_subpage':
+        return 'Settings';
+      default:
+        return 'Your Manual';
+    }
+  };
+
+  // Render main drawer content
+  const renderMainDrawer = () => (
+    <div className="px-6 py-8 space-y-8">
       {user ? (
         <>
-          {/* Hero Card - Profile Header with Exploration Progress */}
+          {/* Identity Section */}
           <SectionCard>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -269,106 +357,145 @@ export function AccountDrawer({
                   </p>
                 </div>
                 <button
-                  onClick={() => handleNavigate("/account")}
+                  onClick={() => handleNavigateToFullPage("/account")}
                   className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1"
                 >
                   View Full Profile
                   <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
                 </button>
               </div>
-
-              {/* Exploration Progress */}
-              {statsLoading ? (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600 dark:text-gray-400">Exploration Progress</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {stats.explorationProgress}%
-                    </span>
-                  </div>
-                  {/* Thin subtle progress bar */}
-                  <div className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gray-900 dark:bg-white transition-all duration-500 ease-out"
-                      style={{ width: `${Math.min(stats.explorationProgress, 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>Visited: {stats.visited}</span>
-                    <span>Saved: {stats.saved}</span>
-                    <span>Cities: {stats.cities}</span>
-                    <span>Countries: {stats.countries}</span>
-                  </div>
-                </div>
-              )}
             </div>
           </SectionCard>
 
-          {/* Shortcuts - Your Spaces */}
+          {/* Stats Section - Two Column Grid */}
+          <SectionCard>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.visited}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Visited</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.saved}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Saved</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.trips}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Trips</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.cities}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cities</div>
+              </div>
+            </div>
+          </SectionCard>
+
+          {/* Navigation Spaces Section */}
           <SectionCard>
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Your Spaces
               </h3>
               <div className="space-y-1">
-                {shortcuts.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={item.action}
-                      className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                    >
-                      <Icon className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                      <span className="flex-1 text-left">{item.label}</span>
-                    </button>
-                  );
-                })}
+                <button
+                  onClick={() => navigateToSubpage('visited_subpage')}
+                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
+                >
+                  <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  <span className="flex-1 text-left">Visited</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => navigateToSubpage('saved_subpage')}
+                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
+                >
+                  <Bookmark className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  <span className="flex-1 text-left">Saved</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => navigateToSubpage('collections_subpage')}
+                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
+                >
+                  <Folder className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  <span className="flex-1 text-left">Collections</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => navigateToSubpage('trips_subpage')}
+                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
+                >
+                  <Compass className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  <span className="flex-1 text-left">Trips</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => navigateToSubpage('achievements_subpage')}
+                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
+                >
+                  <Trophy className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  <span className="flex-1 text-left">Achievements</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => navigateToSubpage('settings_subpage')}
+                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
+                >
+                  <Settings className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  <span className="flex-1 text-left">Settings</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
               </div>
             </div>
           </SectionCard>
 
-          {/* Recent Activity - Recent Visits with Thumbnails */}
-          {recentVisits.length > 0 && (
+          {/* Trips Preview Section */}
+          {recentTrips.length > 0 && (
             <SectionCard>
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Recent Visits
+                  My Trips
                 </h3>
                 <div className="space-y-2">
-                  {recentVisits.slice(0, 4).map((visit, index) => (
+                  {recentTrips.slice(0, 3).map((trip) => (
                     <button
-                      key={index}
-                      onClick={() => handleNavigate(`/destination/${visit.slug}`)}
-                      className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity"
+                      key={trip.id}
+                      onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
+                      className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
                     >
-                      {visit.image && (
+                      {trip.cover_image && (
                         <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                           <Image
-                            src={visit.image}
-                            alt={visit.name}
+                            src={trip.cover_image}
+                            alt={trip.name}
                             fill
                             className="object-cover"
                             sizes="48px"
                           />
                         </div>
                       )}
-                      <div className="flex-1 min-w-0 text-left">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {visit.name}
+                          {trip.name}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(visit.visited_at).toLocaleDateString("en-US", { 
-                            month: "short", 
-                            day: "numeric" 
-                          })}
-                        </p>
+                        {trip.start_date && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(trip.start_date).toLocaleDateString("en-US", { 
+                              month: "short", 
+                              day: "numeric",
+                              year: "numeric"
+                            })}
+                          </p>
+                        )}
                       </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
                     </button>
                   ))}
                 </div>
@@ -376,16 +503,8 @@ export function AccountDrawer({
             </SectionCard>
           )}
 
-          {/* Footer - Settings and Sign Out */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-800 space-y-2">
-            <button
-              type="button"
-              onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
-              className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-            >
-              <Settings className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-              <span className="flex-1 text-left">Settings</span>
-            </button>
+          {/* Sign Out Section */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
             <button
               type="button"
               onClick={handleSignOut}
@@ -408,7 +527,7 @@ export function AccountDrawer({
           </div>
           <button
             type="button"
-            onClick={() => handleNavigate("/auth/login")}
+            onClick={() => handleNavigateToFullPage("/auth/login")}
             className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
           >
             Sign In
@@ -418,35 +537,418 @@ export function AccountDrawer({
     </div>
   );
 
-  return (
-    <>
-      <Drawer 
-        isOpen={isOpen} 
-        onClose={onClose}
-        title="Your Manual"
-        mobileVariant="bottom"
-        desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
-        position="right"
-        style="solid"
-        backdropOpacity="15"
-        keepStateOnClose={true}
+  // Render visited subpage
+  const renderVisitedSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      {loading ? (
+        <div className="text-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
+      ) : visitedPlaces.length > 0 ? (
+        <div className="space-y-2">
+          {visitedPlaces.map((visit, index) => (
+            <button
+              key={index}
+              onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
+              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            >
+              {visit.destination?.image && (
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <Image
+                    src={visit.destination.image}
+                    alt={visit.destination.name}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {visit.destination?.name || visit.slug}
+                </p>
+                {visit.visited_at && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(visit.visited_at).toLocaleDateString("en-US", { 
+                      month: "short", 
+                      day: "numeric",
+                      year: "numeric"
+                    })}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No visited places yet</p>
+        </div>
+      )}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/visited")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Visited
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render saved subpage
+  const renderSavedSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      {loading ? (
+        <div className="text-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
+      ) : savedPlaces.length > 0 ? (
+        <div className="space-y-2">
+          {savedPlaces.map((saved, index) => (
+            <button
+              key={index}
+              onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
+              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            >
+              {saved.destination?.image && (
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <Image
+                    src={saved.destination.image}
+                    alt={saved.destination.name}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {saved.destination?.name || saved.slug}
+                </p>
+                {saved.destination?.city && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {saved.destination.city}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No saved places yet</p>
+        </div>
+      )}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/saved")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View Full Saved
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render collections subpage
+  const renderCollectionsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <div className="text-center py-12">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Collections coming soon</p>
+      </div>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/collections")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Collections
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render trips subpage
+  const renderTripsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <button
+        onClick={() => {
+          // Open trip planner - you may need to pass a callback or use a context
+          onClose();
+        }}
+        className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium flex items-center justify-center gap-2"
       >
-        {accountContent}
-      </Drawer>
-      <SavedPlacesDrawer
-        isOpen={isSavedPlacesOpen}
-        onClose={() => setIsSavedPlacesOpen(false)}
-      />
-      <VisitedPlacesDrawer
-        isOpen={isVisitedPlacesOpen}
-        onClose={() => setIsVisitedPlacesOpen(false)}
-      />
-      <TripsDrawer isOpen={isTripsOpen} onClose={() => setIsTripsOpen(false)} />
-      <SettingsDrawer
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-    </>
+        <Plus className="w-4 h-4" />
+        New Trip
+      </button>
+      {loading ? (
+        <div className="text-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
+      ) : trips.length > 0 ? (
+        <div className="space-y-2">
+          {trips.map((trip) => (
+            <button
+              key={trip.id}
+              onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
+              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            >
+              {trip.cover_image && (
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <Image
+                    src={trip.cover_image}
+                    alt={trip.name}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {trip.name}
+                </p>
+                {trip.start_date && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(trip.start_date).toLocaleDateString("en-US", { 
+                      month: "short", 
+                      day: "numeric",
+                      year: "numeric"
+                    })}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No trips yet</p>
+        </div>
+      )}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/trips")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Trips
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render trip details subpage
+  const renderTripDetailsSubpage = () => {
+    if (!selectedTrip) {
+      return (
+        <div className="px-6 py-6">
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="px-6 py-6 space-y-4">
+        {selectedTrip.cover_image && (
+          <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <Image
+              src={selectedTrip.cover_image}
+              alt={selectedTrip.name}
+              fill
+              className="object-cover"
+              sizes="100vw"
+            />
+          </div>
+        )}
+        {selectedTrip.start_date && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <Calendar className="w-4 h-4" />
+            <span>
+              {new Date(selectedTrip.start_date).toLocaleDateString("en-US", { 
+                month: "long", 
+                day: "numeric",
+                year: "numeric"
+              })}
+              {selectedTrip.end_date && ` - ${new Date(selectedTrip.end_date).toLocaleDateString("en-US", { 
+                month: "long", 
+                day: "numeric",
+                year: "numeric"
+              })}`}
+            </span>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+            <Share2 className="w-4 h-4" />
+            Share
+          </button>
+          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => handleNavigateToFullPage(`/trips/${selectedTrip.id}`)}
+            className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          >
+            Open Full Trip
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Render achievements subpage
+  const renderAchievementsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <div className="text-center py-12">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Achievements coming soon</p>
+      </div>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/achievements")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Achievements
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render settings subpage
+  const renderSettingsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <div className="space-y-2">
+        <button
+          onClick={() => handleNavigateToFullPage("/settings?section=privacy")}
+          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+        >
+          <span>Privacy</span>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </button>
+        <button
+          onClick={() => handleNavigateToFullPage("/settings?section=personalization")}
+          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+        >
+          <span>Personalization</span>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </button>
+        <button
+          onClick={() => handleNavigateToFullPage("/settings?section=notifications")}
+          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+        >
+          <span>Notifications</span>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </button>
+        <button
+          onClick={() => handleNavigateToFullPage("/account")}
+          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+        >
+          <span>Account Info</span>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </button>
+        <button
+          onClick={() => handleNavigateToFullPage("/settings?section=profile")}
+          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+        >
+          <span>Public Profile</span>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </button>
+      </div>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/settings")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          Open Full Settings
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render content based on current subpage
+  const renderContent = () => {
+    switch (currentSubpage) {
+      case 'visited_subpage':
+        return renderVisitedSubpage();
+      case 'saved_subpage':
+        return renderSavedSubpage();
+      case 'collections_subpage':
+        return renderCollectionsSubpage();
+      case 'trips_subpage':
+        return renderTripsSubpage();
+      case 'trip_details_subpage':
+        return renderTripDetailsSubpage();
+      case 'achievements_subpage':
+        return renderAchievementsSubpage();
+      case 'settings_subpage':
+        return renderSettingsSubpage();
+      default:
+        return renderMainDrawer();
+    }
+  };
+
+  // Render header with back button for subpages
+  const renderHeader = () => {
+    if (currentSubpage === 'main_drawer') {
+      return undefined; // Use default header
+    }
+
+    return (
+      <div className="flex items-center gap-3 px-6 h-14">
+        <button
+          onClick={navigateBack}
+          className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+        </button>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1">
+          {getDrawerTitle()}
+        </h2>
+        <div className="w-9" /> {/* Spacer for centering */}
+      </div>
+    );
+  };
+
+  // Determine z-index based on subpage tier
+  const getZIndex = () => {
+    if (currentSubpage === 'main_drawer') {
+      return 100; // Tier 1
+    }
+    return 120; // Tier 2
+  };
+
+  return (
+    <Drawer 
+      isOpen={isOpen} 
+      onClose={onClose}
+      title={currentSubpage === 'main_drawer' ? getDrawerTitle() : undefined}
+      headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
+      mobileVariant="bottom"
+      desktopSpacing="right-4 top-4 bottom-4"
+      desktopWidth="420px"
+      position="right"
+      style="glassy"
+      backdropOpacity="15"
+      keepStateOnClose={true}
+      zIndex={getZIndex()}
+    >
+      <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
+        {renderContent()}
+      </div>
+    </Drawer>
   );
 }
