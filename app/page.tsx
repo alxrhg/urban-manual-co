@@ -2261,54 +2261,38 @@ export default function Home() {
                   <div className="relative -mx-4 sm:-mx-2">
                     <div className="overflow-x-auto scrollbar-hide px-4 sm:px-2">
                       <div className="flex gap-4 md:gap-5 pb-2">
-                        {featuredHeroDestinations.map((destination, index) => (
-                          <button
-                            key={destination.slug}
-                            type="button"
-                            onClick={() => {
-                              setSelectedDestination(destination);
-                              setIsDrawerOpen(true);
-                              trackDestinationEngagement(
-                                destination,
-                                "hero_carousel",
-                                index
-                              );
-                            }}
-                            className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] text-left group focus:outline-none"
-                            aria-label={`Open ${destination.name}`}
-                          >
-                            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-900">
-                              {destination.image ? (
-                                <Image
-                                  src={destination.image}
-                                  alt={destination.name}
-                                  fill
-                                  sizes="(max-width: 768px) 60vw, (max-width: 1200px) 35vw, 320px"
-                                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                                  priority={index < 2}
-                                />
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
-                                  No image
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80" />
-                              <div className="absolute inset-x-4 bottom-4 text-white">
-                                <p className="text-sm font-semibold leading-tight line-clamp-2">
-                                  {destination.name}
-                                </p>
-                                <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mt-2">
-                                  {capitalizeCity(destination.city)}
-                                </p>
-                              </div>
+                        {featuredHeroDestinations.map((destination, index) => {
+                          const isVisited = user && visitedSlugs.has(destination.slug);
+                          
+                          return (
+                            <div 
+                              key={destination.slug}
+                              className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px]"
+                            >
+                              <DestinationCard
+                                destination={destination}
+                                isAdmin={isAdmin}
+                                onEdit={dest => {
+                                  setEditingDestination(dest);
+                                  setShowPOIDrawer(true);
+                                }}
+                                showEditAffordance={editModeActive}
+                                onClick={() => {
+                                  setSelectedDestination(destination);
+                                  setIsDrawerOpen(true);
+                                  trackDestinationEngagement(
+                                    destination,
+                                    "hero_carousel",
+                                    index
+                                  );
+                                }}
+                                index={index}
+                                isVisited={isVisited}
+                                showBadges={true}
+                              />
                             </div>
-                            <div className="mt-3">
-                              <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-[0.2em]">
-                                {capitalizeCategory(destination.category)}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
