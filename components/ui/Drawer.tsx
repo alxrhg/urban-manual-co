@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, ReactNode } from 'react';
+import { useEffect, ReactNode, useRef } from 'react';
 import { X } from 'lucide-react';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
@@ -11,32 +11,30 @@ export interface DrawerProps {
   children: ReactNode;
   headerContent?: ReactNode;
   footerContent?: ReactNode;
-  mobileVariant?: 'bottom' | 'side'; // Mobile drawer variant
+  mobileVariant?: 'bottom' | 'side';
   desktopWidth?: string;
   zIndex?: number;
   showBackdrop?: boolean;
   backdropOpacity?: string;
-  position?: 'right' | 'left'; // For side drawer
-  style?: 'glassy' | 'solid'; // Background style
-  mobileWidth?: string; // For side drawer on mobile
-  desktopSpacing?: string; // Spacing for desktop side drawer (e.g., 'right-4 top-4 bottom-4')
-  mobileHeight?: string; // Height for the mobile bottom sheet
-  mobileMaxHeight?: string; // Max height for the mobile bottom sheet
-  mobileBorderRadius?: string; // Custom border radius for the mobile bottom sheet
-  mobileExpanded?: boolean; // Whether the sheet should be fully expanded
+  position?: 'right' | 'left';
+  style?: 'glassy' | 'solid';
+  mobileWidth?: string;
+  desktopSpacing?: string;
+  mobileHeight?: string;
+  mobileMaxHeight?: string;
+  mobileBorderRadius?: string;
+  mobileExpanded?: boolean;
+  keepStateOnClose?: boolean; // New: Keep state when drawer closes
 }
 
 /**
  * Universal Drawer Component
  * 
- * A reusable drawer component that handles:
- * - Mobile: Bottom sheet (default) or side drawer
- * - Desktop: Side drawer only (no bottom sheets on desktop)
- * - Backdrop with click-to-close
- * - Body scroll lock
- * - Escape key handling
- * - Smooth animations
- * - Spacing on all four sides for side drawers
+ * Philosophy: "Drawers behave like pulling out a phone from your pocket."
+ * - Every quick action is handled in a drawer; every deep action goes to a full page.
+ * - Drawers never float; they slide from the right and sit above content.
+ * - Smooth horizontal slide animation (220ms ease-out).
+ * - Page scroll locked but visible.
  */
 export function Drawer({
   isOpen,
@@ -46,10 +44,10 @@ export function Drawer({
   headerContent,
   footerContent,
   mobileVariant = 'bottom',
-  desktopWidth = '440px',
+  desktopWidth = '420px',
   zIndex = 50,
   showBackdrop = true,
-  backdropOpacity = '50',
+  backdropOpacity = '15', // 0.15 opacity = 15/100
   position = 'right',
   style = 'solid',
   mobileWidth = 'max-w-md',
@@ -58,16 +56,27 @@ export function Drawer({
   mobileMaxHeight,
   mobileBorderRadius,
   mobileExpanded = false,
+  keepStateOnClose = true,
 }: DrawerProps) {
-  // Prevent body scroll when drawer is open
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef<number | null>(null);
+
+  // Prevent body scroll when drawer is open (but keep page visible)
   useEffect(() => {
     if (isOpen) {
-      document.documentElement.style.overflow = 'hidden';
+      // Lock scroll but keep page visible
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
     } else {
-      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     }
     return () => {
-      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     };
   }, [isOpen]);
 
@@ -83,7 +92,54 @@ export function Drawer({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  // Swipe right to dismiss (mobile)
+  useEffect(() => {
+    if (!isOpen || mobileVariant !== 'bottom') return;
+
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startXRef.current = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (startXRef.current === null) return;
+      const currentX = e.touches[0].clientX;
+      const diffX = currentX - startXRef.current;
+
+      // Only allow swipe right (positive diffX)
+      if (diffX > 0) {
+        const translateX = Math.min(diffX, drawer.offsetWidth);
+        drawer.style.transform = `translateX(${translateX}px)`;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (startXRef.current === null) return;
+      const currentX = e.changedTouches[0].clientX;
+      const diffX = currentX - startXRef.current;
+
+      // If swiped more than 30% of drawer width, close
+      if (diffX > drawer.offsetWidth * 0.3) {
+        onClose();
+      } else {
+        // Snap back
+        drawer.style.transform = '';
+      }
+      startXRef.current = null;
+    };
+
+    drawer.addEventListener('touchstart', handleTouchStart);
+    drawer.addEventListener('touchmove', handleTouchMove);
+    drawer.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      drawer.removeEventListener('touchstart', handleTouchStart);
+      drawer.removeEventListener('touchmove', handleTouchMove);
+      drawer.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isOpen, mobileVariant, onClose]);
 
   // Determine background classes based on style
   const backgroundClasses = style === 'glassy' 
@@ -95,6 +151,11 @@ export function Drawer({
     : (position === 'right' ? 'border-l border-gray-200 dark:border-gray-800' : 'border-r border-gray-200 dark:border-gray-800');
 
   const shadowClasses = style === 'solid' ? 'shadow-2xl ring-1 ring-black/5' : '';
+
+  // Header background: blurred/translucent
+  const headerBackground = style === 'glassy'
+    ? DRAWER_STYLES.headerBackground
+    : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md';
 
   const computedMobileHeight =
     mobileHeight ?? 'calc(96vh - env(safe-area-inset-bottom) - 1rem)';
@@ -108,12 +169,15 @@ export function Drawer({
     : `translate3d(0, ${peekOffset}, 0) scale(0.985)`;
   const radiusClass = mobileBorderRadius ?? 'rounded-[32px]';
 
+  // Don't unmount if keepStateOnClose is true
+  if (!isOpen && !keepStateOnClose) return null;
+
   return (
     <>
       {/* Backdrop */}
       {showBackdrop && (
         <div
-          className={`fixed inset-0 transition-opacity duration-300 ${
+          className={`fixed inset-0 transition-opacity duration-220 ${
             isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
@@ -127,19 +191,20 @@ export function Drawer({
       {/* Mobile Drawer - Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
-          className={`md:hidden fixed inset-[10px] transform transition-transform duration-500 ease-[cubic-bezier(0.18,0.89,0.32,1.28)] will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
+          ref={drawerRef}
+          className={`md:hidden fixed inset-[10px] transform transition-transform duration-[220ms] ease-out will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
             mobileExpanded ? 'drawer-expanded' : 'drawer-collapsed'
-          }`}
+          } ${!isOpen ? 'translate-y-full' : ''}`}
           style={{
             zIndex,
             maxHeight: 'calc(100vh - 20px)',
             height: mobileHeight ? `calc(${mobileHeight} - 20px)` : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)',
-            transform: bottomSheetTransform,
+            transform: isOpen ? bottomSheetTransform : 'translate3d(0, 120%, 0) scale(0.98)',
           }}
         >
-          {/* Header */}
+          {/* Header - 56px height, blurred */}
           {(title || headerContent) && (
-            <div className={`flex-shrink-0 px-6 py-4 flex items-center justify-between ${DRAWER_STYLES.headerBackground}`}>
+            <div className={`flex-shrink-0 h-14 px-6 flex items-center justify-between ${headerBackground} border-b border-gray-200/50 dark:border-gray-800/50`}>
               {headerContent || (
                 <>
                   <button
@@ -150,7 +215,7 @@ export function Drawer({
                     <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
                   </button>
                   {title && (
-                    <h2 className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-center">
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center">
                       {title}
                     </h2>
                   )}
@@ -160,14 +225,14 @@ export function Drawer({
             </div>
           )}
 
-          {/* Content */}
+          {/* Content - Independent scroll */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">
             {children}
           </div>
 
           {/* Footer */}
           {footerContent && (
-            <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${DRAWER_STYLES.footerBackground}`}>
+            <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
               {footerContent}
             </div>
           )}
@@ -177,19 +242,17 @@ export function Drawer({
       {/* Mobile Drawer - Side Drawer */}
       {mobileVariant === 'side' && (
         <div
-          className={`md:hidden fixed ${position === 'right' ? 'right-4' : 'left-4'} top-4 bottom-4 rounded-2xl w-full ${mobileWidth} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
+          ref={drawerRef}
+          className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
             isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
           } overflow-hidden flex flex-col`}
           style={{ zIndex }}
         >
-          {/* Header */}
+          {/* Header - 56px height, blurred */}
           {(title || headerContent) && (
-            <div className={`flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between ${style === 'glassy' ? DRAWER_STYLES.headerBackground : 'bg-transparent'}`}>
+            <div className={`flex-shrink-0 h-14 border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between ${headerBackground}`}>
               {headerContent || (
                 <>
-                  {title && (
-                    <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">{title}</h2>
-                  )}
                   <button
                     onClick={onClose}
                     className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
@@ -197,64 +260,127 @@ export function Drawer({
                   >
                     <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
                   </button>
+                  {title && (
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center">
+                      {title}
+                    </h2>
+                  )}
+                  <div className="w-9" />
                 </>
               )}
             </div>
           )}
 
-          {/* Content */}
+          {/* Content - Independent scroll */}
           <div className="flex-1 overflow-y-auto">
             {children}
           </div>
 
           {/* Footer */}
           {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-transparent'}`}>
+            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
               {footerContent}
             </div>
           )}
         </div>
       )}
 
-      {/* Desktop Drawer - Always Side Drawer with spacing */}
+      {/* Desktop Drawer - Side Drawer with responsive widths */}
       <div
-        className={`hidden md:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
+        ref={drawerRef}
+        className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
         } overflow-hidden flex-col`}
-        style={{ zIndex, width: desktopWidth, maxWidth: 'calc(100vw - 2rem)' }}
+        style={{ 
+          zIndex, 
+          width: '70%', // Tablet: 70% width
+          maxWidth: 'calc(100vw - 2rem)',
+        }}
       >
-        {/* Header */}
+        {/* Header - 56px height, blurred */}
         {(title || headerContent) && (
-          <div className={`flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative ${style === 'glassy' ? DRAWER_STYLES.headerBackground : 'bg-transparent'}`}>
+          <div className={`flex-shrink-0 h-14 border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between relative ${headerBackground}`}>
             {headerContent || (
               <>
-                {title && (
-                  <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">{title}</h2>
-                )}
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   aria-label="Close"
                 >
                   <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
                 </button>
+                {title && (
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center">
+                    {title}
+                  </h2>
+                )}
+                <div className="w-8" />
               </>
             )}
           </div>
         )}
 
-        {/* Content */}
+        {/* Content - Independent scroll */}
         <div className="flex-1 overflow-y-auto">
           {children}
         </div>
 
         {/* Footer */}
         {footerContent && (
-          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-transparent'}`}>
+          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
             {footerContent}
           </div>
         )}
       </div>
+
+      {/* Desktop Drawer - Fixed width for large screens */}
+      <div
+        ref={drawerRef}
+        className={`hidden lg:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+          isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
+        } overflow-hidden flex-col`}
+        style={{ 
+          zIndex, 
+          width: desktopWidth, // Desktop: fixed width (420px)
+          maxWidth: 'calc(100vw - 2rem)',
+        }}
+      >
+        {/* Header - 56px height, blurred */}
+        {(title || headerContent) && (
+          <div className={`flex-shrink-0 h-14 border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between relative ${headerBackground}`}>
+            {headerContent || (
+              <>
+                <button
+                  onClick={onClose}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+                </button>
+                {title && (
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center">
+                    {title}
+                  </h2>
+                )}
+                <div className="w-8" />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Content - Independent scroll */}
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footerContent && (
+          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
+            {footerContent}
+          </div>
+        )}
+      </div>
+
     </>
   );
 }

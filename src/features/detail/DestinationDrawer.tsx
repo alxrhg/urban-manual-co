@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -1056,25 +1056,65 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const appleMapsDirectionsUrl = `https://maps.apple.com/?q=${encodeURIComponent(defaultMapsQuery)}`;
   const directionsUrl = googleMapsDirectionsUrl || appleMapsDirectionsUrl;
 
-  // Create custom header content
+  // Create custom header content - Place Drawer spec
   const headerContent = (
     <div className="flex items-center justify-between w-full relative">
-      <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-      <div className="flex items-center gap-2">
-        {destination?.slug && destination.slug.trim() && (
-          <Link
-            href={`/destination/${destination.slug}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Open destination page"
-            aria-label="Open destination page"
-          >
-            <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          </Link>
-        )}
+      <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate flex-1">
+        {destination.name || 'Destination'}
+      </h2>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Bookmark Action */}
+        <button
+          onClick={async () => {
+            if (!user) {
+              router.push('/auth/login');
+              return;
+            }
+            if (!isSaved) {
+              setShowSaveModal(true);
+            } else {
+              try {
+                const supabaseClient = createClient();
+                if (!supabaseClient) return;
+                const { error } = await supabaseClient
+                  .from('saved_places')
+                  .delete()
+                  .eq('user_id', user.id)
+                  .eq('destination_slug', destination.slug);
+                if (!error) {
+                  setIsSaved(false);
+                  if (onSaveToggle) onSaveToggle(destination.slug, false);
+                }
+              } catch (error) {
+                console.error('Error unsaving:', error);
+              }
+            }
+          }}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
+        >
+          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
+        </button>
+        {/* Trip Action */}
+        <button
+          onClick={() => {
+            if (!user) {
+              router.push('/auth/login');
+              return;
+            }
+            if (isAddedToTrip) return;
+            setShowAddToTripModal(true);
+          }}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          aria-label="Add to trip"
+          disabled={isAddedToTrip}
+        >
+          {isAddedToTrip ? (
+            <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
+          ) : (
+            <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+          )}
+        </button>
       </div>
     </div>
   );
@@ -1092,7 +1132,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             }}
             className="flex-1 rounded-2xl bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
           >
-            View details
+            View Full Details
           </Link>
         )}
 
@@ -1141,7 +1181,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             }}
             className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
           >
-            View More Details
+            View Full Details
           </Link>
         )}
         
@@ -1184,9 +1224,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClose={onClose}
         mobileVariant="side"
         desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="440px"
+        desktopWidth="420px"
         position="right"
         style="solid"
+        backdropOpacity="15"
+        keepStateOnClose={true}
         headerContent={headerContent}
         footerContent={
           <>
@@ -1343,7 +1385,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </button>
 
                 <a
-                  href={directionsUrl}
+                  href={directionsUrl || undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
@@ -1360,6 +1402,30 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <Navigation className="h-4 w-4" />
                   Directions
                 </a>
+
+                {/* Website Quick Action */}
+                {destination.website && (
+                  <a
+                    href={destination.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Website
+                  </a>
+                )}
+
+                {/* Call Quick Action */}
+                {destination.phone_number && (
+                  <a
+                    href={`tel:${destination.phone_number}`}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
+                )}
 
                 {isAdmin && destination && (
                   <button

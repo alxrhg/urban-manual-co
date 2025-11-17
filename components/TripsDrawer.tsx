@@ -6,8 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
-import { TripViewDrawer } from '@/components/TripViewDrawer';
-import { Plus, MapPin, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Plus, MapPin, Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface TripsDrawerProps {
   isOpen: boolean;
@@ -21,7 +21,6 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   const [loading, setLoading] = useState(true);
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
-  const [viewingTripId, setViewingTripId] = useState<string | null>(null);
 
   const fetchTrips = useCallback(async () => {
     if (!user) {
@@ -46,12 +45,10 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
       // Fetch first location image for each trip
       const tripsWithImages = await Promise.all(
         (data || []).map(async (trip) => {
-          // If trip has cover_image, use it
           if (trip.cover_image) {
             return { ...trip, firstLocationImage: null };
           }
 
-          // Otherwise, fetch first itinerary item's image
           const { data: items } = await supabaseClient
             .from('itinerary_items')
             .select('destination_slug, notes')
@@ -64,7 +61,6 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
           let firstLocationImage: string | null = null;
 
           if (items?.destination_slug) {
-            // Try to get image from destination
             const { data: dest } = await supabaseClient
               .from('destinations')
               .select('image')
@@ -75,7 +71,6 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
               firstLocationImage = dest.image;
             }
           } else if (items?.notes) {
-            // Try to parse image from notes JSON
             try {
               const notesData = JSON.parse(items.notes);
               if (notesData.image) {
@@ -105,26 +100,6 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
     }
   }, [isOpen, fetchTrips]);
 
-  const deleteTrip = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
-
-    try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-
-      const { error } = await supabaseClient
-        .from('trips')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      await fetchTrips();
-    } catch (error) {
-      console.error('Error deleting trip:', error);
-      alert('Failed to delete trip');
-    }
-  };
-
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -134,33 +109,58 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
     });
   };
 
+  const formatDateRange = (start: string | null, end: string | null) => {
+    if (!start && !end) return null;
+    const startFormatted = formatDate(start);
+    const endFormatted = formatDate(end);
+    if (startFormatted && endFormatted) {
+      return `${startFormatted} – ${endFormatted}`;
+    }
+    return startFormatted || endFormatted;
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'planning':
+        return 'Planning';
+      case 'upcoming':
+        return 'Upcoming';
+      case 'ongoing':
+        return 'Ongoing';
+      case 'completed':
+        return 'Completed';
+      default:
+        return status;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'planning':
+        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300';
+      case 'upcoming':
+      case 'ongoing':
+        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300';
+      case 'completed':
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
+      default:
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
+    }
+  };
+
   const content = (
-    <div className="px-6 py-6">
+    <div className="px-5 py-6">
       {loading ? (
         <div className="text-center py-12">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       ) : (
         <div className="space-y-6">
-          <button
-            onClick={() => {
-              if (!user) {
-                router.push('/auth/login');
-              } else {
-                setEditingTripId(null);
-                setShowTripDialog(true);
-              }
-            }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{user ? "New Trip" : "Sign in to create trip"}</span>
-          </button>
-
           {trips.length === 0 ? (
             <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
               <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">You have no trips yet.</p>
               <button
                 onClick={() => {
                   if (!user) {
@@ -170,84 +170,81 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
                     setShowTripDialog(true);
                   }
                 }}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-xl hover:opacity-80 transition-opacity"
               >
-                Create your first trip
+                Create Trip
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {trips.map((trip) => (
-                <div
-                  key={trip.id}
-                  className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
-                >
-                  <div className="relative h-24 bg-gray-200 dark:bg-gray-800">
-                    {(trip.cover_image || (trip as any).firstLocationImage) ? (
-                      <img 
-                        src={trip.cover_image || (trip as any).firstLocationImage} 
-                        alt={trip.title} 
-                        className="h-full w-full object-cover" 
-                      />
-                    ) : null}
-                    <div className="absolute top-2 right-2">
-                      <span className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm text-gray-900 dark:text-white text-xs px-2 py-0.5 rounded-full font-medium capitalize">
-                        {trip.status || 'planning'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm mb-2 line-clamp-2 text-black dark:text-white">{trip.title}</h3>
-                    {trip.description && (
-                      <p className="text-xs text-gray-500 line-clamp-2 mb-2">{trip.description}</p>
+            <div className="space-y-3">
+              {trips.map((trip) => {
+                const imageUrl = trip.cover_image || (trip as any).firstLocationImage;
+                const dateRange = formatDateRange(trip.start_date, trip.end_date);
+
+                return (
+                  <div
+                    key={trip.id}
+                    className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                  >
+                    {/* Thumbnail */}
+                    {imageUrl && (
+                      <div className="relative w-full h-32 bg-gray-200 dark:bg-gray-800">
+                        <Image
+                          src={imageUrl}
+                          alt={trip.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 420px"
+                        />
+                        {/* Status Badge */}
+                        <div className="absolute top-3 right-3">
+                          <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(trip.status || 'planning')}`}>
+                            {getStatusLabel(trip.status || 'planning')}
+                          </span>
+                        </div>
+                      </div>
                     )}
-                    <div className="space-y-1 text-xs text-gray-400 mb-4">
+
+                    {/* Content */}
+                    <div className="p-4 space-y-2">
+                      {/* Trip Title */}
+                      <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
+                        {trip.title}
+                      </h3>
+
+                      {/* Date Range */}
+                      {dateRange && (
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <Calendar className="w-3 h-3" />
+                          <span>{dateRange}</span>
+                        </div>
+                      )}
+
+                      {/* City */}
                       {trip.destination && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3 w-3" />
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <MapPin className="w-3 h-3" />
                           <span>{trip.destination}</span>
                         </div>
                       )}
-                      {(trip.start_date || trip.end_date) && (
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-3 w-3" />
-                          <span>
-                            {formatDate(trip.start_date)}
-                            {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-800">
+
+                      {/* Action - Arrow Right */}
                       <button
                         onClick={() => {
-                          setViewingTripId(trip.id);
+                          onClose();
+                          setTimeout(() => {
+                            router.push(`/trips/${trip.id}`);
+                          }, 200);
                         }}
-                        className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-black dark:text-white"
+                        className="w-full flex items-center justify-end gap-2 pt-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                       >
-                        View
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingTripId(trip.id);
-                          setShowTripDialog(true);
-                        }}
-                        className="p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        aria-label={`Edit ${trip.title}`}
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={() => deleteTrip(trip.id, trip.title)}
-                        className="p-2 rounded-xl text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                        aria-label={`Delete ${trip.title}`}
-                      >
-                        <Trash2 className="h-3 w-3" />
+                        <span>View Trip</span>
+                        <ArrowRight className="w-3 h-3" strokeWidth={1.5} />
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -260,7 +257,31 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
       <Drawer
         isOpen={isOpen}
         onClose={onClose}
-        title="Trips"
+        title="Your Trips"
+        headerContent={
+          <div className="flex items-center justify-between w-full">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Your Trips</h2>
+            <button
+              onClick={() => {
+                if (!user) {
+                  router.push('/auth/login');
+                } else {
+                  setEditingTripId(null);
+                  setShowTripDialog(true);
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New Trip
+            </button>
+          </div>
+        }
+        desktopWidth="420px"
+        position="right"
+        style="solid"
+        backdropOpacity="15"
+        keepStateOnClose={true}
       >
         {content}
       </Drawer>
@@ -273,27 +294,6 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
           fetchTrips();
         }}
       />
-
-      {/* Trip View Drawer */}
-      {viewingTripId && (
-        <TripViewDrawer
-          isOpen={!!viewingTripId}
-          onClose={() => {
-            setViewingTripId(null);
-            fetchTrips();
-          }}
-          tripId={viewingTripId}
-          onEdit={() => {
-            setEditingTripId(viewingTripId);
-            setViewingTripId(null);
-            setShowTripDialog(true);
-          }}
-          onDelete={() => {
-            fetchTrips();
-          }}
-        />
-      )}
     </>
   );
 }
-

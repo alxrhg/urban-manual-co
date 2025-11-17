@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Loader2, MapPin, Calendar } from 'lucide-react';
-import { Drawer } from './ui/Drawer';
+import { Drawer } from '@/components/ui/Drawer';
 import type { Trip, ItineraryItemNotes } from '@/types/trip';
 
 interface AddToTripModalProps {
@@ -256,94 +256,209 @@ export function AddToTripModal({
     }
   };
 
+  // Group trips by status
+  const upcomingTrips = trips.filter(t => t.status === 'upcoming' || t.status === 'ongoing');
+  const planningTrips = trips.filter(t => t.status === 'planning');
+  const completedTrips = trips.filter(t => t.status === 'completed');
+
   const content = (
-    <div className="px-6 py-6">
-      {/* Pending Destination Info */}
+    <div className="px-5 py-6">
+      {/* Selected Place Preview */}
       {destinationName && (
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Adding <span className="font-medium text-gray-900 dark:text-white">{destinationName}</span> to your trip
           </p>
         </div>
       )}
 
-      {/* Existing Trips */}
+      {/* Trip List - Grouped by status */}
       {!showCreateForm && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white">Your Trips</h3>
-            {trips.length > 0 && (
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                + New Trip
-              </button>
-            )}
-          </div>
-
+        <div className="space-y-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             </div>
           ) : trips.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
+            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
+                className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-xl hover:opacity-80 transition-opacity"
               >
                 Create your first trip
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
-              {trips.map((trip) => {
-                const startDate = formatDateForDisplay(trip.start_date);
-                const endDate = formatDateForDisplay(trip.end_date);
-                return (
-                  <button
-                    key={trip.id}
-                    onClick={() => handleAddToTrip(trip.id)}
-                    disabled={adding === trip.id}
-                    className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1 truncate">
-                          {trip.title}
-                        </h4>
-                        {(startDate || endDate || trip.destination) && (
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                            {trip.destination && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {trip.destination}
-                              </span>
-                            )}
-                            {(startDate || endDate) && (
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {startDate && endDate
-                                  ? `${startDate} - ${endDate}`
-                                  : startDate || endDate}
+            <>
+              {/* Upcoming Trips */}
+              {upcomingTrips.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Upcoming Trips
+                  </h3>
+                  <div className="space-y-2">
+                    {upcomingTrips.map((trip) => {
+                      const startDate = formatDateForDisplay(trip.start_date);
+                      const endDate = formatDateForDisplay(trip.end_date);
+                      return (
+                        <button
+                          key={trip.id}
+                          onClick={() => handleAddToTrip(trip.id)}
+                          disabled={adding === trip.id}
+                          className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                {trip.title}
+                              </h4>
+                              {(startDate || endDate || trip.destination) && (
+                                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                  {trip.destination && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {trip.destination}
+                                    </span>
+                                  )}
+                                  {(startDate || endDate) && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {startDate && endDate
+                                        ? `${startDate} - ${endDate}`
+                                        : startDate || endDate}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {adding === trip.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
+                            ) : (
+                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
+                                Add
                               </span>
                             )}
                           </div>
-                        )}
-                      </div>
-                      {adding === trip.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
-                      ) : (
-                        <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
-                          Add
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Active Trips (ongoing) */}
+              {trips.filter(t => t.status === 'ongoing').length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Active Trips
+                  </h3>
+                  <div className="space-y-2">
+                    {trips.filter(t => t.status === 'ongoing').map((trip) => {
+                      const startDate = formatDateForDisplay(trip.start_date);
+                      const endDate = formatDateForDisplay(trip.end_date);
+                      return (
+                        <button
+                          key={trip.id}
+                          onClick={() => handleAddToTrip(trip.id)}
+                          disabled={adding === trip.id}
+                          className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                {trip.title}
+                              </h4>
+                              {(startDate || endDate || trip.destination) && (
+                                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                  {trip.destination && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {trip.destination}
+                                    </span>
+                                  )}
+                                  {(startDate || endDate) && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {startDate && endDate
+                                        ? `${startDate} - ${endDate}`
+                                        : startDate || endDate}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {adding === trip.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
+                            ) : (
+                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
+                                Add
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Planning Trips */}
+              {planningTrips.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Planning Trips
+                  </h3>
+                  <div className="space-y-2">
+                    {planningTrips.map((trip) => {
+                      const startDate = formatDateForDisplay(trip.start_date);
+                      const endDate = formatDateForDisplay(trip.end_date);
+                      return (
+                        <button
+                          key={trip.id}
+                          onClick={() => handleAddToTrip(trip.id)}
+                          disabled={adding === trip.id}
+                          className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                {trip.title}
+                              </h4>
+                              {(startDate || endDate || trip.destination) && (
+                                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                  {trip.destination && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {trip.destination}
+                                    </span>
+                                  )}
+                                  {(startDate || endDate) && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {startDate && endDate
+                                        ? `${startDate} - ${endDate}`
+                                        : startDate || endDate}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {adding === trip.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
+                            ) : (
+                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
+                                Add
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -446,7 +561,24 @@ export function AddToTripModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Add to Trip"
-      desktopWidth="440px"
+      desktopWidth="420px"
+      position="right"
+      style="solid"
+      backdropOpacity="15"
+      keepStateOnClose={true}
+      footerContent={
+        !showCreateForm && trips.length > 0 && (
+          <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800">
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-4 h-4" />
+              Create New Trip
+            </button>
+          </div>
+        )
+      }
     >
       {content}
     </Drawer>
