@@ -17,7 +17,7 @@ export function Footer() {
             <Link href="/contact" className="hover:text-gray-900 dark:hover:text-white transition-colors">
               Contact
             </Link>
-            <Link href="/sitemap" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+            <Link href="/site-map" className="hover:text-gray-900 dark:hover:text-white transition-colors">
               Sitemap
             </Link>
           </div>

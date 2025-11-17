@@ -405,7 +405,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           
           // Merge architect data into destination for ArchitectDesignInfo component
           // Handle architect object (from join) - could be array or single object
-          let updatedDestination = { ...destination };
+          let updatedDestination: Destination & {
+            architect_obj?: any;
+            design_firm_obj?: any;
+            interior_designer_obj?: any;
+            movement_obj?: any;
+          } = { ...destination };
           
           if (dataObj.architect) {
             const architectObj = Array.isArray(dataObj.architect) && dataObj.architect.length > 0
