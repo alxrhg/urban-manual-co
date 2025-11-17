@@ -516,6 +516,44 @@ export default function Home() {
   const [nearbyDestinations, setNearbyDestinations] = useState<Destination[]>(
     []
   );
+
+  // Arrow key navigation for pagination
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if user is typing in an input, textarea, or contenteditable
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      // Only handle if pagination is visible
+      const displayDestinations =
+        advancedFilters.nearMe && nearbyDestinations.length > 0
+          ? nearbyDestinations
+          : filteredDestinations;
+      const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
+      
+      if (totalPages <= 1 || viewMode !== 'grid') {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentPage(prev => Math.max(1, prev - 1));
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setCurrentPage(prev => Math.min(totalPages, prev + 1));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, advancedFilters.nearMe, nearbyDestinations, filteredDestinations, itemsPerPage]);
+
   // Featured cities to always show in filter
   const FEATURED_CITIES = ["taipei", "tokyo", "new-york", "london"];
 
