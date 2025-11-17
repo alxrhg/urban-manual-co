@@ -45,6 +45,7 @@ export function AccountDrawer({
   const { user, signOut } = useAuth();
   const toast = useToast();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(false);
   const [isVisitedPlacesOpen, setIsVisitedPlacesOpen] = useState(false);
@@ -67,24 +68,40 @@ export function AccountDrawer({
     async function fetchProfile() {
       if (!user?.id) {
         setAvatarUrl(null);
+        setUsername(null);
         return;
       }
 
       try {
         const supabaseClient = createClient();
-        const { data, error } = await supabaseClient
+        // Try profiles table first, then user_profiles
+        const { data: profileData, error: profileError } = await supabaseClient
           .from("profiles")
-          .select("avatar_url")
+          .select("avatar_url, username")
           .eq("id", user.id)
           .maybeSingle();
 
-        if (!error && data?.avatar_url) {
-          setAvatarUrl(data.avatar_url);
+        if (!profileError && profileData) {
+          setAvatarUrl(profileData.avatar_url || null);
+          setUsername(profileData.username || null);
         } else {
+          // Try user_profiles table
+          const { data: userProfileData, error: userProfileError } = await supabaseClient
+            .from("user_profiles")
+            .select("username")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (!userProfileError && userProfileData?.username) {
+            setUsername(userProfileData.username);
+          } else {
+            setUsername(null);
+          }
           setAvatarUrl(null);
         }
       } catch {
         setAvatarUrl(null);
+        setUsername(null);
       }
     }
 
@@ -257,6 +274,8 @@ export function AccountDrawer({
     (user?.user_metadata as Record<string, any> | undefined)?.full_name ||
     user?.email?.split("@")[0] ||
     "Explorer";
+  
+  const displayUsername = username || user?.email?.split("@")[0] || "user";
 
   const runAfterClose = (callback: () => void) => {
     onClose();
@@ -354,12 +373,13 @@ export function AccountDrawer({
   const accountContent = (
     <div className="px-4 sm:px-6 py-6">
       {user ? (
-        <div className="space-y-8">
-          <section className="rounded-3xl bg-gradient-to-br from-gray-900 via-gray-900 to-black text-white p-6 shadow-xl border border-white/10">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="space-y-6">
+          {/* Profile Section */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-4">
               <button
                 onClick={handleAvatarClick}
-                className="relative w-20 h-20 rounded-3xl overflow-hidden bg-white/10 flex items-center justify-center group cursor-pointer hover:opacity-90 transition-opacity border border-white/20"
+                className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center group cursor-pointer hover:opacity-90 transition-opacity border border-gray-200 dark:border-gray-700"
                 aria-label="Change profile picture"
               >
                 {avatarUrl ? (
@@ -368,34 +388,29 @@ export function AccountDrawer({
                     alt="Profile"
                     fill
                     className="object-cover"
-                    sizes="80px"
+                    sizes="64px"
                   />
                 ) : (
-                  <User className="w-10 h-10 text-white/70" />
+                  <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <Camera className="w-5 h-5 text-white" />
+                  <Camera className="w-4 h-4 text-white" />
                 </div>
               </button>
-              <div className="flex-1 space-y-1">
-                <p className="text-xs uppercase tracking-wide text-white/60">
-                  Signed in as
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {displayUsername}
                 </p>
-                <h3 className="text-xl font-semibold">{displayName}</h3>
-                <p className="text-sm text-white/70">{user.email}</p>
-                {isAdmin && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full bg-white/15 text-white mt-2">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    Admin
-                  </span>
-                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {user.email}
+                </p>
               </div>
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => handleNavigate("/account")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 bg-white/10 text-sm font-medium hover:bg-white/20 transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 Open full account
                 <ExternalLink className="w-4 h-4" />
@@ -403,50 +418,50 @@ export function AccountDrawer({
               <button
                 type="button"
                 onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-white/5 text-sm font-medium hover:bg-white/15 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
               >
-                Preferences
                 <Settings className="w-4 h-4" />
+                Preferences
               </button>
             </div>
           </section>
 
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
-                Travel snapshot
-              </p>
-              {statsLoading && (
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {statCards.map(card => (
-                <div
-                  key={card.label}
-                  className="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-4"
-                >
-                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-                    {card.label}
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-semibold text-gray-900 dark:text-white">
-                      {card.value}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
+          {/* Travel Snapshot */}
+          <section className="space-y-4">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white">
+              Travel Snapshot
+            </h2>
+            <div className="rounded-3xl bg-gray-900 dark:bg-gray-900 p-6">
+              <div className="grid grid-cols-2 gap-6">
+                {statCards.map(card => (
+                  <div key={card.label} className="space-y-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {card.label}
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[32px] font-semibold text-white leading-none">
+                        {statsLoading ? (
+                          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                        ) : (
+                          card.value
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {card.caption}
-                    </span>
+                    </p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </section>
 
-          <section>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
-              Travel toolkit
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Travel Toolkit */}
+          <section className="space-y-4">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white">
+              Travel Toolkit
+            </h2>
+            <div className="space-y-3">
               {travelToolkit.map(item => {
                 const Icon = item.icon;
                 return (
@@ -454,13 +469,13 @@ export function AccountDrawer({
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="flex items-start gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 p-4 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
+                    className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
                   >
-                    <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
+                    <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white flex-shrink-0">
                       <Icon className="w-4 h-4" />
                     </span>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {item.label}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -473,108 +488,40 @@ export function AccountDrawer({
             </div>
           </section>
 
-          <section>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
-              Explore Urban Manual
-            </p>
-            <div className="space-y-2">
-              {exploreNavigation.map(item => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    type="button"
-                    key={item.label}
-                    onClick={item.action}
-                    className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-4 py-3 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
-                  >
-                    <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-4 h-4" />
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {item.description}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          <section>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
+          {/* Account & Support */}
+          <section className="space-y-4">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white">
               Account & Support
-            </p>
-            <div className="space-y-2">
+            </h2>
+            <div className="space-y-3">
               {accountLinks.map(item => {
-                const Icon = item.icon;
                 return (
                   <button
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-4 py-3 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
+                    className="w-full flex items-start gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
                   >
-                    <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-4 h-4" />
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {item.label}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {item.description}
                       </p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
                   </button>
                 );
               })}
             </div>
           </section>
 
-          {isAdmin && (
-            <section>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
-                Admin Tools
-              </p>
-              <div className="space-y-2">
-                {adminLinks.map(item => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      type="button"
-                      key={item.label}
-                      onClick={item.action}
-                      className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-4 py-3 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
-                    >
-                      <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                        <Icon className="w-4 h-4" />
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {item.label}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {item.description}
-                        </p>
-                      </div>
-                      <ExternalLink className="w-4 h-4 text-gray-400" />
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          <section className="pt-2 border-t border-gray-200 dark:border-gray-800">
+          {/* Sign Out */}
+          <section className="pt-2 border-t border-gray-200/12 dark:border-gray-800/12">
             <button
               type="button"
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -607,7 +554,11 @@ export function AccountDrawer({
       <Drawer 
         isOpen={isOpen} 
         onClose={onClose} 
-        title="Account"
+        headerContent={
+          <div className="flex items-center justify-between w-full">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white">Account</h2>
+          </div>
+        }
         mobileVariant="bottom"
         desktopSpacing="right-4 top-4 bottom-4"
         desktopWidth="440px"
