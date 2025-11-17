@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, MapPin, Loader2, Search, ChevronDown, Globe2, SlidersHorizontal } from 'lucide-react';
+import { X, MapPin, Loader2, Search, ChevronDown, Globe2, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 export interface SearchFilters {
