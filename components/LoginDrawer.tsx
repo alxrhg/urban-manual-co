@@ -116,7 +116,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                 <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-3 bg-white dark:bg-gray-950 text-gray-400 dark:text-gray-500">
+                <span className="px-3 bg-transparent text-gray-400 dark:text-gray-500">
                   Or
                 </span>
               </div>
