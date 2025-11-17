@@ -1,6 +1,6 @@
 export type MapProvider = 'apple' | 'mapbox' | 'google';
 
-const MAP_PROVIDER_ORDER: MapProvider[] = ['apple', 'mapbox', 'google'];
+const MAP_PROVIDER_ORDER: MapProvider[] = ['google', 'apple', 'mapbox'];
 
 const appleAvailable = process.env.NEXT_PUBLIC_MAPKIT_AVAILABLE === 'true';
 const mapboxAvailable = Boolean(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN);
