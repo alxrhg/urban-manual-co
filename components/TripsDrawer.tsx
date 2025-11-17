@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
-import { TripViewDrawer } from '@/components/TripViewDrawer';
 import { Plus, MapPin, Calendar, Edit2, Trash2 } from 'lucide-react';
 
 interface TripsDrawerProps {
@@ -268,21 +267,13 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
 
       {/* Trip View Drawer */}
       {viewingTripId && (
-        <TripViewDrawer
+        <TripPlanner
           isOpen={!!viewingTripId}
           onClose={() => {
             setViewingTripId(null);
             fetchTrips();
           }}
           tripId={viewingTripId}
-          onEdit={() => {
-            setEditingTripId(viewingTripId);
-            setViewingTripId(null);
-            setShowTripDialog(true);
-          }}
-          onDelete={() => {
-            fetchTrips();
-          }}
         />
       )}
     </>
