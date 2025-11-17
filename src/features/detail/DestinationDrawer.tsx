@@ -997,7 +997,58 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     loadRecommendations();
   }, [destination, isOpen]);
 
-  if (!destination) return null;
+  // Always render drawer when open, even if destination is null (show loading state)
+  if (!isOpen) return null;
+
+  if (!destination) {
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 opacity-100"
+          onClick={onClose}
+        />
+        {/* Drawer with loading state */}
+        <div className="md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl overflow-hidden flex flex-col">
+          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
+            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
+            </div>
+          </div>
+        </div>
+        {/* Desktop drawer loading state */}
+        <div className="hidden md:flex fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl overflow-hidden flex-col">
+          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
+            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   // Get rating for display
   const rating = enrichedData?.rating || destination.rating;
@@ -1095,15 +1146,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Details</p>
               <h1 className="mt-1 text-[26px] font-semibold leading-tight text-gray-900 dark:text-white">
-                {destination.name}
+                {destination.name || 'Destination'}
               </h1>
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                <MapPin className="h-3.5 w-3.5" />
-                <span>{capitalizeCity(destination.city)}</span>
-              </div>
+              {destination.city && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>{capitalizeCity(destination.city)}</span>
+                </div>
+              )}
 
               <div className="flex flex-wrap items-center gap-2">
                 {destination.category && (
