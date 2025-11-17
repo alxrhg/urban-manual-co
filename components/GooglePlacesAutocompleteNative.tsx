@@ -26,17 +26,17 @@ export default function GooglePlacesAutocompleteNative({
   className = '',
   types = ['establishment'],
 }: GooglePlacesAutocompleteNativeProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const autocompleteElementRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
-  // Load Google Maps JavaScript API
+  // Load Google Maps JavaScript API with Places Library (New)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     // Check if already loaded
-    if (window.google?.maps?.places) {
+    if (window.google?.maps?.places?.PlaceAutocompleteElement) {
       setIsScriptLoaded(true);
       return;
     }
@@ -44,7 +44,7 @@ export default function GooglePlacesAutocompleteNative({
     // Check if script is already being loaded
     if (document.querySelector('script[data-google-maps-autocomplete]')) {
       const checkInterval = setInterval(() => {
-        if (window.google?.maps?.places) {
+        if (window.google?.maps?.places?.PlaceAutocompleteElement) {
           setIsScriptLoaded(true);
           clearInterval(checkInterval);
         }
@@ -61,6 +61,7 @@ export default function GooglePlacesAutocompleteNative({
       return;
     }
 
+    // Load the new Places API library
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
     script.async = true;
@@ -68,10 +69,23 @@ export default function GooglePlacesAutocompleteNative({
     script.setAttribute('data-google-maps-autocomplete', 'true');
     
     script.onload = () => {
-      if (window.google?.maps?.places) {
-        setIsScriptLoaded(true);
-        setIsLoading(false);
-      }
+      // Wait for PlaceAutocompleteElement to be available
+      const checkPlaceElement = setInterval(() => {
+        if (window.google?.maps?.places?.PlaceAutocompleteElement) {
+          setIsScriptLoaded(true);
+          setIsLoading(false);
+          clearInterval(checkPlaceElement);
+        }
+      }, 100);
+
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        clearInterval(checkPlaceElement);
+        if (!window.google?.maps?.places?.PlaceAutocompleteElement) {
+          console.error('PlaceAutocompleteElement not available');
+          setIsLoading(false);
+        }
+      }, 5000);
     };
 
     script.onerror = () => {
@@ -82,79 +96,196 @@ export default function GooglePlacesAutocompleteNative({
     document.head.appendChild(script);
 
     return () => {
-      // Cleanup autocomplete on unmount
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        autocompleteRef.current = null;
+      // Cleanup autocomplete element on unmount
+      if (autocompleteElementRef.current && containerRef.current) {
+        containerRef.current.innerHTML = '';
+        autocompleteElementRef.current = null;
       }
     };
   }, []);
 
-  // Initialize Autocomplete when script is loaded
+  // Initialize PlaceAutocompleteElement when script is loaded
   useEffect(() => {
-    if (!isScriptLoaded || !inputRef.current || !window.google?.maps?.places) return;
+    if (!isScriptLoaded || !containerRef.current) return;
 
-    // Create autocomplete instance
-    const autocompleteOptions: google.maps.places.AutocompleteOptions = {
-      fields: ['place_id', 'name', 'formatted_address', 'geometry', 'types', 'photos'],
-    };
-    
-    // Only add types if provided and not empty
-    if (types && types.length > 0) {
-      autocompleteOptions.types = types;
-    }
-    
-    const autocomplete = new google.maps.places.Autocomplete(inputRef.current, autocompleteOptions);
+    // Try to use new PlaceAutocompleteElement if available, otherwise fall back to old Autocomplete
+    if (window.google?.maps?.places?.PlaceAutocompleteElement) {
+      // Clear container
+      containerRef.current.innerHTML = '';
 
-    autocompleteRef.current = autocomplete;
+      // Create the PlaceAutocompleteElement
+      const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
+        requestedResultTypes: types && types.length > 0 ? (types as any) : ['establishment', 'geocode'],
+      });
 
-    // Handle place selection
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
+      // Set up the input element
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = value;
+      input.placeholder = placeholder;
+      input.className = className;
+      input.disabled = isLoading;
+
+      // Append input to container
+      containerRef.current.appendChild(input);
+      autocompleteElement.attachTo(input);
+
+      autocompleteElementRef.current = autocompleteElement as any;
+
+      // Handle input changes to sync with parent
+      input.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.value !== value) {
+          onChange(target.value);
+        }
+      });
+
+      // Handle place selection
+      autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
+        const place = event.place;
+        
+        if (!place.id) {
+          return;
+        }
+
+        // Fetch full place details
+        const placeDetails = await place.fetchFields({
+          fields: ['id', 'displayName', 'formattedAddress', 'location', 'types', 'photos'],
+        });
+
+        // Update input value
+        const placeName = placeDetails.displayName || placeDetails.formattedAddress || '';
+        onChange(placeName);
+
+        // Track Google Autocomplete usage for trip planning
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+          (window as any).gtag('event', 'trip_place_autocomplete', {
+            place_id: placeDetails.id,
+            place_name: placeName,
+            place_types: placeDetails.types?.join(',') || '',
+            has_geometry: !!placeDetails.location,
+          });
+        }
+
+        // Call onPlaceSelect callback with place details
+        if (onPlaceSelect) {
+          onPlaceSelect({
+            place_id: placeDetails.id,
+            placeId: placeDetails.id,
+            name: placeDetails.displayName,
+            formatted_address: placeDetails.formattedAddress,
+            geometry: placeDetails.location ? {
+              location: {
+                lat: () => placeDetails.location.lat,
+                lng: () => placeDetails.location.lng,
+              },
+            } : undefined,
+            types: placeDetails.types,
+            photos: placeDetails.photos,
+          });
+        }
+      });
+
+      // Sync external value changes
+      const syncValue = () => {
+        if (input.value !== value) {
+          input.value = value;
+        }
+      };
+      syncValue();
+
+      return () => {
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
+        }
+        autocompleteElementRef.current = null;
+      };
+    } else if (window.google?.maps?.places?.Autocomplete) {
+      // Fallback to old Autocomplete API (for backward compatibility)
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = value;
+      input.placeholder = placeholder;
+      input.className = className;
+      input.disabled = isLoading;
+      containerRef.current.appendChild(input);
+
+      const autocompleteOptions: google.maps.places.AutocompleteOptions = {
+        fields: ['place_id', 'name', 'formatted_address', 'geometry', 'types', 'photos'],
+      };
       
-      if (!place.place_id) {
-        return;
+      if (types && types.length > 0) {
+        autocompleteOptions.types = types;
       }
+      
+      const autocomplete = new google.maps.places.Autocomplete(input, autocompleteOptions);
+      autocompleteElementRef.current = autocomplete as any;
 
-      // Update input value
-      const placeName = place.name || place.formatted_address || '';
-      onChange(placeName);
+      // Handle input changes to sync with parent
+      input.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.value !== value) {
+          onChange(target.value);
+        }
+      });
 
-      // Track Google Autocomplete usage for trip planning
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', 'trip_place_autocomplete', {
-          place_id: place.place_id,
-          place_name: placeName,
-          place_types: place.types?.join(',') || '',
-          has_geometry: !!place.geometry,
-        });
-      }
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        
+        if (!place.place_id) {
+          return;
+        }
 
-      // Call onPlaceSelect callback with place details
-      if (onPlaceSelect) {
-        onPlaceSelect({
-          place_id: place.place_id,
-          placeId: place.place_id,
-          name: place.name,
-          formatted_address: place.formatted_address,
-          geometry: place.geometry,
-          types: place.types,
-          photos: place.photos,
-        });
-      }
-    });
+        const placeName = place.name || place.formatted_address || '';
+        onChange(placeName);
+
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+          (window as any).gtag('event', 'trip_place_autocomplete', {
+            place_id: place.place_id,
+            place_name: placeName,
+            place_types: place.types?.join(',') || '',
+            has_geometry: !!place.geometry,
+          });
+        }
+
+        if (onPlaceSelect) {
+          onPlaceSelect({
+            place_id: place.place_id,
+            placeId: place.place_id,
+            name: place.name,
+            formatted_address: place.formatted_address,
+            geometry: place.geometry,
+            types: place.types,
+            photos: place.photos,
+          });
+        }
+      });
+
+      return () => {
+        if (autocompleteElementRef.current) {
+          google.maps.event.clearInstanceListeners(autocompleteElementRef.current as any);
+        }
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
+        }
+        autocompleteElementRef.current = null;
+      };
+    }
 
     return () => {
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
+      autocompleteElementRef.current = null;
     };
-  }, [isScriptLoaded, onChange, onPlaceSelect, types]);
+  }, [isScriptLoaded, onChange, onPlaceSelect, types, placeholder, className, isLoading]);
 
-  // Sync external value changes
+  // Sync external value changes to input
   useEffect(() => {
-    if (inputRef.current && inputRef.current.value !== value) {
-      inputRef.current.value = value;
+    if (!containerRef.current) return;
+    const input = containerRef.current.querySelector('input');
+    if (input && input.value !== value) {
+      input.value = value;
     }
   }, [value]);
 
@@ -237,15 +368,9 @@ export default function GooglePlacesAutocompleteNative({
 
   return (
     <div className="relative">
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={className}
-        disabled={isLoading}
-      />
+      <div ref={containerRef} className="w-full">
+        {/* Input will be dynamically created and inserted here */}
+      </div>
       {isLoading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
