@@ -2579,11 +2579,6 @@ export default function Home() {
                   <div className="w-full pt-6">
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="mb-[50px]">
-                      {/* CITIES Heading */}
-                      <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                        CITIES
-                      </div>
-                      
                       {/* City Buttons */}
                       <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
@@ -2620,15 +2615,25 @@ export default function Home() {
                         ))}
                       </div>
                       
-                      {/* More Cities Button */}
-                      {cities.length > displayedCities.length && (
+                      {/* More Cities / Show Less Button */}
+                      {cities.length > displayedCities.length && !showAllCities && (
                         <button
                           onClick={() => {
-                            setShowAllCities(!showAllCities);
+                            setShowAllCities(true);
                           }}
                           className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
                         >
-                          {showAllCities ? 'Hide cities' : `+ More cities (${cities.length - displayedCities.length})`}
+                          + More cities ({cities.length - displayedCities.length})
+                        </button>
+                      )}
+                      {showAllCities && (
+                        <button
+                          onClick={() => {
+                            setShowAllCities(false);
+                          }}
+                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-colors duration-200 ease-out"
+                        >
+                          Show less
                         </button>
                       )}
                     </div>
