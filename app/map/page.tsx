@@ -382,7 +382,6 @@ export default function MapPage() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Destination Drawer */}
       <DestinationDrawer
