@@ -428,122 +428,136 @@ export function AccountDrawer({
     <div className="px-4 sm:px-6 py-6">
       {user ? (
         <div className="space-y-6">
-          <section className="relative overflow-hidden rounded-[32px] bg-gray-900 text-white px-6 py-8 shadow-2xl border border-white/10">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black" />
-            <div className="absolute -top-16 right-0 w-56 h-56 bg-white/10 rounded-full blur-3xl" />
+          <section className="relative overflow-hidden rounded-[36px] border border-white/15 bg-gradient-to-br from-[#12141F] via-[#161B2E] to-[#05060C] px-6 py-8 text-white shadow-2xl">
+            <div className="absolute inset-0 opacity-60" aria-hidden="true">
+              <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+              <div className="absolute -bottom-16 left-4 h-48 w-48 rounded-full bg-[#5F7DFF]/20 blur-3xl" />
+            </div>
             <div className="relative flex flex-col items-center text-center gap-6">
               <button
                 onClick={handleAvatarClick}
-                className="relative w-24 h-24 rounded-[26px] overflow-hidden bg-white/10 flex items-center justify-center group cursor-pointer border border-white/20"
+                className="relative flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/30 bg-white/10 p-1 transition hover:border-white/60"
                 aria-label="Change profile picture"
               >
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Profile"
-                    fill
-                    className="object-cover"
-                    sizes="96px"
-                  />
-                ) : (
-                  <User className="w-11 h-11 text-white/70" />
-                )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <Camera className="w-5 h-5 text-white" />
+                <div className="relative h-full w-full rounded-[24px] overflow-hidden bg-white/10">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="Profile"
+                      fill
+                      className="object-cover"
+                      sizes="96px"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <User className="h-12 w-12 text-white/70" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity hover:opacity-100">
+                    <Camera className="h-5 w-5 text-white" />
+                  </div>
                 </div>
               </button>
+
               <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/60">Account</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/60">Account</p>
                 <h3 className="text-2xl font-semibold">{displayName}</h3>
                 <p className="text-sm text-white/70">@{username}</p>
-                <p className="text-xs text-white/60 flex items-center justify-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-[11px] font-medium">
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] font-medium text-white/80">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/25 px-3 py-1">
                     {user.email}
                   </span>
                   {isAdmin && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[11px] font-medium">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Admin
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Admin
                     </span>
                   )}
-                </p>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-3">
+
+              <div className="flex w-full flex-col gap-3">
                 <button
                   type="button"
                   onClick={() => handleNavigate("/account")}
-                  className="inline-flex items-center gap-2 rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-semibold shadow-lg shadow-black/20"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-black/30"
                 >
                   Open full account
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="h-4 w-4" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/90 hover:bg-white/15 transition"
-                >
-                  Preferences
-                  <Settings className="w-4 h-4" />
-                </button>
-                {onOpenChat && (
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => runAfterClose(() => onOpenChat())}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/90 hover:bg-white/15 transition"
+                    onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
+                    className="flex-1 min-w-[120px] inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20"
                   >
-                    Concierge chat
-                    <MessageSquare className="w-4 h-4" />
+                    Preferences
+                    <Settings className="h-4 w-4" />
                   </button>
-                )}
+                  {onOpenChat && (
+                    <button
+                      type="button"
+                      onClick={() => runAfterClose(() => onOpenChat())}
+                      className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20"
+                    >
+                      Concierge chat
+                      <MessageSquare className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => handleNavigate("/account")}
-                className="absolute top-6 right-6 hidden sm:inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold tracking-wide uppercase"
+                className="absolute top-6 right-6 hidden rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:bg-white/20 sm:inline-flex"
               >
                 Upgrade
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink className="h-3.5 w-3.5" />
               </button>
             </div>
           </section>
 
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {lifestyleCards.map(card => {
               const Icon = card.icon;
               return (
                 <button
                   key={card.label}
                   onClick={card.onClick}
-                  className="group flex w-full items-center gap-3 rounded-3xl border border-gray-200/70 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 px-4 py-4 text-left backdrop-blur-md transition hover:border-gray-900 dark:hover:border-white"
+                  className="group flex w-full items-center justify-between gap-4 rounded-[28px] border border-gray-200 bg-white/90 px-5 py-4 text-left shadow-sm transition hover:shadow-lg dark:border-gray-800 dark:bg-gray-950/80"
                 >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-900 text-white dark:bg-white/10">
-                    <Icon className="w-5 h-5" />
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-xs uppercase tracking-wide text-gray-500">{card.description}</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{card.label}</p>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">{card.description}</p>
+                    <p className="text-xl font-semibold text-gray-900 dark:text-white">{card.label}</p>
                   </div>
-                  <span className="text-xs font-semibold text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 group-hover:text-gray-900 dark:text-gray-300 dark:group-hover:text-white">
                     {card.actionLabel}
-                  </span>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-900 text-white dark:bg-white/10">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                  </div>
                 </button>
               );
             })}
           </section>
 
-          <section className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 p-5 backdrop-blur">
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                Travel snapshot
-              </p>
-              {statsLoading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+          <section className="rounded-[32px] border border-gray-200 bg-white/90 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">Travel snapshot</p>
+              {statsLoading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {statCards.map(card => (
-                <div key={card.label} className="rounded-2xl bg-gray-50 dark:bg-gray-900/40 p-4">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                <div
+                  key={card.label}
+                  className="rounded-2xl bg-gray-50 p-4 text-left shadow-inner dark:bg-gray-900/60"
+                >
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
                     {card.label}
                   </p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">{card.value}</p>
+                  <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+                    {statsLoading ? "—" : card.value}
+                  </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{card.caption}</p>
                 </div>
               ))}
@@ -551,8 +565,8 @@ export function AccountDrawer({
           </section>
 
           <section>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Travel toolkit</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">Travel toolkit</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {travelToolkit.map(item => {
                 const Icon = item.icon;
                 return (
@@ -560,13 +574,13 @@ export function AccountDrawer({
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="flex items-center gap-3 rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 px-4 py-4 text-left backdrop-blur-md transition hover:border-gray-900 dark:hover:border-white"
+                    className="flex items-center gap-4 rounded-[28px] border border-gray-200 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950/70"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-5 h-5" />
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-900 text-white dark:bg-white/10">
+                      <Icon className="h-5 w-5" />
                     </span>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">{item.label}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                     </div>
                   </button>
@@ -576,8 +590,8 @@ export function AccountDrawer({
           </section>
 
           <section>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Explore</p>
-            <div className="space-y-2">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">Explore more</p>
+            <div className="space-y-3">
               {exploreNavigation.map(item => {
                 const Icon = item.icon;
                 return (
@@ -585,16 +599,16 @@ export function AccountDrawer({
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="flex w-full items-center gap-3 rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 px-4 py-3 text-left backdrop-blur transition hover:border-gray-900 dark:hover:border-white"
+                    className="flex w-full items-center gap-4 rounded-[24px] border border-gray-200 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950/70"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-5 h-5" />
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white">
+                      <Icon className="h-5 w-5" />
                     </span>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
+                    <ExternalLink className="h-4 w-4 text-gray-400" />
                   </button>
                 );
               })}
@@ -602,8 +616,8 @@ export function AccountDrawer({
           </section>
 
           <section>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Account & Support</p>
-            <div className="space-y-2">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">Account & Support</p>
+            <div className="space-y-3">
               {essentials.map(item => {
                 const Icon = item.icon;
                 return (
@@ -611,10 +625,10 @@ export function AccountDrawer({
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="flex w-full items-center gap-3 rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 px-4 py-3 text-left backdrop-blur transition hover:border-gray-900 dark:hover:border-white"
+                    className="flex w-full items-center gap-4 rounded-[24px] border border-gray-200 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950/70"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-5 h-5" />
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white">
+                      <Icon className="h-5 w-5" />
                     </span>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
@@ -628,8 +642,8 @@ export function AccountDrawer({
 
           {isAdmin && (
             <section>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Admin tools</p>
-              <div className="space-y-2">
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">Admin tools</p>
+              <div className="space-y-3">
                 {adminLinks.map(item => {
                   const Icon = item.icon;
                   return (
@@ -637,16 +651,16 @@ export function AccountDrawer({
                       type="button"
                       key={item.label}
                       onClick={item.action}
-                      className="flex w-full items-center gap-3 rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 px-4 py-3 text-left backdrop-blur transition hover:border-gray-900 dark:hover:border-white"
+                      className="flex w-full items-center gap-4 rounded-[24px] border border-gray-200 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950/70"
                     >
-                      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                        <Icon className="w-5 h-5" />
+                      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white">
+                        <Icon className="h-5 w-5" />
                       </span>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.label}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                       </div>
-                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                      <ExternalLink className="h-4 w-4 text-gray-400" />
                     </button>
                   );
                 })}
@@ -658,26 +672,26 @@ export function AccountDrawer({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center justify-center gap-2 rounded-3xl border border-gray-200 bg-white/80 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-white"
+              className="flex w-full items-center justify-center gap-2 rounded-[28px] border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-900 transition hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950/70 dark:text-white"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="h-4 w-4" />
               Sign out
             </button>
           </div>
         </div>
       ) : (
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-b from-gray-900 to-black text-white p-8 text-center space-y-4">
-          <h3 className="text-2xl font-semibold">Sign in to unlock the drawer</h3>
-          <p className="text-sm text-white/70">
-            Save favorite places, log trips, and access concierge chat in seconds.
+        <div className="rounded-[36px] border border-gray-200 bg-gradient-to-br from-gray-900 via-gray-800 to-black px-8 py-10 text-center text-white shadow-2xl dark:border-gray-800">
+          <h3 className="text-2xl font-semibold">Sign in to unlock Urban Manual</h3>
+          <p className="mt-2 text-sm text-white/70">
+            Save favorite places, log trips, and access concierge chat instantly.
           </p>
           <button
             type="button"
             onClick={() => handleNavigate("/auth/login")}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-gray-900"
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-gray-900"
           >
-            <User className="w-4 h-4" />
-            Sign In
+            <User className="h-4 w-4" />
+            Sign in
           </button>
         </div>
       )}
