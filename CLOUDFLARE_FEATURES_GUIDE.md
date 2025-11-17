@@ -161,6 +161,130 @@
   - Free: 10GB storage, 1M Class A operations
   - Paid: $0.015/GB storage, $4.50/million Class A ops
 
+### 🤖 Cloudflare AutoRAG (Fully Managed RAG Service)
+
+#### What is AutoRAG?
+AutoRAG is Cloudflare's fully managed retrieval-augmented generation (RAG) service that automatically indexes your data sources and provides AI-powered search and responses.
+
+#### Key Features:
+- **Automated Indexing**: Continuously monitors and indexes connected data sources
+- **Seamless Integration**: Works with R2, Vectorize, Workers AI, and AI Gateway
+- **Flexible Data Sources**: Supports file uploads to R2 (databases and web crawling coming soon)
+- **Query Rewriting**: Automatically improves query quality for better retrieval
+- **Context-Aware Responses**: Uses Workers AI to generate responses based on retrieved content
+
+#### How AutoRAG Works:
+
+1. **Indexing Process**:
+   - Reads from your data source (R2 files)
+   - Converts data to structured Markdown
+   - Chunks content into smaller pieces
+   - Generates vector embeddings
+   - Stores vectors in Vectorize database
+
+2. **Querying Process**:
+   - Receives user queries via API
+   - Optionally rewrites queries for better retrieval
+   - Converts query to vector embedding
+   - Finds relevant content using vector similarity
+   - Retrieves original data from R2
+   - Generates context-aware responses with Workers AI
+
+#### Use Cases for Urban Manual:
+
+1. **Destination Knowledge Base**
+   - Upload destination descriptions, reviews, and details to R2
+   - AutoRAG indexes all content automatically
+   - Users can ask natural language questions about destinations
+   - Get accurate, context-aware answers
+
+2. **Travel Intelligence Assistant**
+   - Index city guides, travel tips, and recommendations
+   - Power conversational AI with up-to-date information
+   - No need to manually manage embeddings or vector databases
+
+3. **Content Search Enhancement**
+   - Complement your existing Supabase vector search
+   - Use AutoRAG for conversational queries
+   - Use Supabase for structured search with filters
+
+#### Current Implementation vs AutoRAG:
+
+**Your Current Setup:**
+- ✅ OpenAI embeddings (`text-embedding-3-large`, 3072 dimensions)
+- ✅ Supabase pgvector for storage and similarity search
+- ✅ Custom RPC functions for vector matching
+- ✅ Upstash Vector (mentioned in codebase)
+- ✅ Manual embedding generation and indexing
+
+**AutoRAG Benefits:**
+- ✅ **Fully Managed**: No need to manage embeddings, chunking, or indexing
+- ✅ **Automatic Updates**: Continuously monitors and re-indexes data
+- ✅ **Query Rewriting**: Automatically improves query quality
+- ✅ **Integrated Stack**: Works seamlessly with Cloudflare ecosystem
+- ✅ **Simpler Architecture**: Less code to maintain
+
+**Considerations:**
+- ⚠️ **Vendor Lock-in**: Tied to Cloudflare ecosystem
+- ⚠️ **Cost**: R2 storage + Workers AI usage (billed separately)
+- ⚠️ **Current Setup Works**: Your Supabase vector search is already functional
+- ⚠️ **Migration Effort**: Would need to migrate data to R2
+
+#### Pricing:
+- **AutoRAG**: Free during open beta
+- **R2 Storage**: $0.015/GB storage, no egress fees
+- **Workers AI**: Pay-as-you-go for inference
+- **Vectorize**: Included with AutoRAG
+
+#### Implementation Steps:
+
+1. **Set up R2 Bucket**:
+   ```bash
+   # Create bucket for destination data
+   # Upload destination markdown files
+   ```
+
+2. **Create AutoRAG Instance**:
+   - Go to Cloudflare Dashboard → AI → AutoRAG
+   - Create new instance
+   - Connect to R2 bucket
+   - Configure indexing settings
+
+3. **Query AutoRAG**:
+   ```javascript
+   // Example: Query AutoRAG API
+   const response = await fetch('https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/autorag/{instance_id}/query', {
+     method: 'POST',
+     headers: {
+       'Authorization': 'Bearer {api_token}',
+       'Content-Type': 'application/json',
+     },
+     body: JSON.stringify({
+       query: 'What are the best restaurants in Paris?',
+       max_results: 10,
+     }),
+   });
+   ```
+
+#### Recommendation:
+
+**Consider AutoRAG if:**
+- ✅ You want to reduce maintenance overhead
+- ✅ You need conversational AI features
+- ✅ You're already using Cloudflare ecosystem
+- ✅ You want automatic content updates
+
+**Stick with Current Setup if:**
+- ✅ Your Supabase vector search works well
+- ✅ You need fine-grained control over embeddings
+- ✅ You want to avoid vendor lock-in
+- ✅ Cost is a primary concern
+
+**Hybrid Approach:**
+- Use Supabase vector search for structured queries with filters
+- Use AutoRAG for conversational queries and knowledge base Q&A
+- Best of both worlds!
+
 ### 🔐 Security Features
 
 #### 1. **Bot Management**
@@ -212,6 +336,7 @@
 1. ⚠️ Cloudflare Workers ($5/month) - Only if you need edge computing
 2. ⚠️ Cloudflare R2 - Only if you want to migrate from Supabase Storage
 3. ⚠️ Argo Smart Routing ($5/month) - Only if you have international traffic
+4. ⚠️ Cloudflare AutoRAG (Free beta) - Consider for conversational AI and knowledge base Q&A
 
 ### ⚠️ Important Considerations
 
@@ -260,4 +385,6 @@
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
 - [Cloudflare Page Rules](https://developers.cloudflare.com/fundamentals/get-started/concepts/how-cloudflare-works/#page-rules)
 - [Cloudflare Firewall Rules](https://developers.cloudflare.com/fundamentals/get-started/concepts/how-cloudflare-works/#firewall-rules)
+- [Cloudflare AutoRAG Docs](https://developers.cloudflare.com/autorag/)
+- [Cloudflare AutoRAG Blog Post](https://blog.cloudflare.com/introducing-autorag-on-cloudflare/)
 
