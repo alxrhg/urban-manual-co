@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, MapPin, Loader2, Search, ChevronDown, Globe2 } from 'lucide-react';
+import { X, MapPin, Loader2, Search, ChevronDown, Globe2, SlidersHorizontal } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 export interface SearchFilters {
@@ -126,13 +126,14 @@ export function SearchFiltersComponent({
 
   return (
     <div>
-      {/* Trigger Button - Pill Shape */}
+      {/* Trigger Button - Capsule Shape with Sliders Icon */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 h-9 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
+        className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
         aria-label={isOpen ? 'Close filters' : 'Open filters'}
         aria-expanded={isOpen}
       >
+        <SlidersHorizontal className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
         <span>Filters</span>
         {hasActiveFilters && (
           <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full">
