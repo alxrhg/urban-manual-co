@@ -41,7 +41,7 @@ const securityHeaders: { key: string; value: string }[] = [
   },
   {
     key: 'Access-Control-Allow-Origin',
-    value: '*',
+    value: process.env.NODE_ENV === 'production' ? 'https://www.urbanmanual.co' : '*',
   },
   {
     key: 'Access-Control-Allow-Methods',
