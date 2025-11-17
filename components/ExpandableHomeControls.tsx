@@ -38,7 +38,6 @@ interface ExpandableHomeControlsProps {
   
   // Create Trip
   onCreateTrip: () => void;
-  isAdmin?: boolean;
   onAddPOI?: () => void;
 }
 
