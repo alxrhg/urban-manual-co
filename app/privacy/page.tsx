@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { ChevronUp } from 'lucide-react';
+import { openCookieSettings } from '@/components/CookieConsent';
 
 const sections = [
   { id: 'introduction', title: 'Introduction' },
@@ -25,7 +26,16 @@ export default function PrivacyPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + 200;
+      const header = document.querySelector('header');
+      let headerBottom = 120; // fallback
+      
+      if (header) {
+        const headerTop = header.offsetTop;
+        const headerHeight = header.offsetHeight;
+        headerBottom = headerTop + headerHeight;
+      }
+      
+      const scrollPosition = window.scrollY + headerBottom + 100;
 
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
@@ -44,9 +54,20 @@ export default function PrivacyPage() {
   const scrollToSection = (id: string) => {
     const element = sectionRefs.current[id];
     if (element) {
-      const offset = 120;
+      // Calculate header bottom position (including margin-top)
+      const header = document.querySelector('header');
+      let headerBottom = 120; // fallback
+      
+      if (header) {
+        // Get the header's position from top of document
+        const headerTop = header.offsetTop;
+        const headerHeight = header.offsetHeight;
+        headerBottom = headerTop + headerHeight;
+      }
+      
+      const offset = headerBottom + 24; // Add extra spacing below header
       const elementPosition = element.offsetTop;
-      const offsetPosition = elementPosition - offset;
+      const offsetPosition = Math.max(0, elementPosition - offset);
 
       window.scrollTo({
         top: offsetPosition,
@@ -58,34 +79,31 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Large Centered Title */}
-      <div className="px-6 md:px-10 py-12 md:py-16">
+      <div className="px-6 md:px-10 py-16 md:py-24">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-center text-black dark:text-white mb-16">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-normal text-center text-black dark:text-white mb-20 md:mb-24">
             Privacy Policy
           </h1>
 
           {/* Two-Column Layout */}
-          <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
+          <div className="flex flex-col lg:flex-row gap-16 lg:gap-20">
             {/* Left Sidebar - Navigation */}
-            <aside className="lg:w-64 flex-shrink-0">
+            <aside className="lg:w-56 flex-shrink-0">
               <div className="sticky top-24">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white mb-6">
-                  Privacy Policy
-                </h2>
-                <nav className="space-y-1">
+                <nav className="space-y-0.5">
                   {sections.map((section, index) => (
                     <button
                       key={section.id}
                       onClick={() => scrollToSection(section.id)}
-                      className={`w-full text-left px-0 py-2 text-sm transition-colors flex items-center justify-between group ${
+                      className={`w-full text-left px-0 py-2.5 text-xs tracking-wide transition-colors flex items-center justify-between ${
                         activeSection === section.id
-                          ? 'text-black dark:text-white font-medium'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                          ? 'text-black dark:text-white'
+                          : 'text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white'
                       }`}
                     >
-                      <span>{section.title}</span>
+                      <span className={activeSection === section.id ? 'font-medium' : ''}>{section.title}</span>
                       {activeSection === section.id && (
-                        <ChevronUp className="h-4 w-4 text-black dark:text-white" />
+                        <ChevronUp className="h-3 w-3 text-black dark:text-white" />
                       )}
                     </button>
                   ))}
@@ -95,15 +113,15 @@ export default function PrivacyPage() {
 
             {/* Main Content Area */}
             <main className="flex-1 max-w-3xl">
-              <div className="space-y-12">
+              <div className="space-y-16 md:space-y-20">
                 {/* Introduction */}
                 <section
                   id="introduction"
                   ref={(el) => { sectionRefs.current['introduction'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Introduction</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Introduction</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       The Urban Manual (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) helps you discover, save, and organize destinations.
                       This Privacy Policy describes the personal information we process when you visit theurbanmanual.com, use our
@@ -118,8 +136,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['information-we-collect'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Information We Collect</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Information We Collect</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       We collect information you provide directly to us, including:
                     </p>
@@ -142,8 +160,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['how-we-use'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">How We Use Your Information</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">How We Use Your Information</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>We use personal information to:</p>
                     <ul className="space-y-2 ml-4">
                       <li className="list-disc">Authenticate you, maintain your account, and sync your saved content across devices.</li>
@@ -161,8 +179,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['how-we-share'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">How We Share Information</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">How We Share Information</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       We do not sell your personal information. We share it only with:
                     </p>
@@ -190,12 +208,30 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['cookies-tracking'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Cookies & Tracking</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Cookies & Tracking</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       We use first-party cookies and local storage to keep you signed in, remember preferences, and understand how the product performs.
                       You can control cookies through your browser settings, though disabling them may limit core functionality.
                     </p>
+                    
+                    <div>
+                      <strong className="font-medium text-black dark:text-white">Google Analytics:</strong> We use Google Analytics (Measurement ID: G-ZLGK6QXD88) to collect information about how visitors use our website. This includes:
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        <li>Page views and navigation patterns</li>
+                        <li>Time spent on pages</li>
+                        <li>User interactions (clicks, scrolls, etc.)</li>
+                        <li>Device and browser information</li>
+                        <li>General geographic location (country/city level)</li>
+                      </ul>
+                      <p className="mt-2">
+                        This data is collected anonymously and aggregated to help us understand website usage trends and improve user experience. 
+                        Google Analytics uses cookies and may collect information according to Google&apos;s Privacy Policy. 
+                        You can manage your cookie preferences at any time by clicking <button onClick={openCookieSettings} className="underline hover:text-black dark:hover:text-white transition-colors">Cookie Settings</button> in the footer, 
+                        or by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="underline hover:text-black dark:hover:text-white transition-colors">Google Analytics Opt-out Browser Add-on</a>.
+                      </p>
+                    </div>
+
                     <p>
                       <strong className="font-medium text-black dark:text-white">Google Places Autocomplete:</strong> When you use our trip planning feature to search for and add locations,
                       we use Google Places Autocomplete to provide location suggestions. We track anonymized analytics about which places
@@ -212,8 +248,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['location-data'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Location Data</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Location Data</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       If you allow location permissions, we use your approximate device location to show nearby destinations and tailor suggestions.
                       Location data stays on our servers long enough to return relevant results and is not stored with your profile unless you save a place.
@@ -228,8 +264,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['data-retention'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Data Retention</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Data Retention</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       We retain account data while your profile remains active so that your saved places, trips, and history stay available across devices.
                       If you delete specific content, it is removed from active systems immediately and from encrypted backups within 30 days.
@@ -247,8 +283,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['data-export-deletion'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Data Export & Deletion Requests</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Data Export & Deletion Requests</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       You can manage your data from <strong className="font-medium text-black dark:text-white">Account → Settings</strong>. Every request is logged in Supabase, processed by our background worker,
                       and confirmed via email.
@@ -273,8 +309,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['your-rights'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Your Rights & Choices</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Your Rights & Choices</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <ul className="space-y-2 ml-4">
                       <li className="list-disc">Access, correct, or update your profile information directly within your account.</li>
                       <li className="list-disc">Request a copy of your data or deletion of your account as described above.</li>
@@ -290,8 +326,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['security'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Security</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Security</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       We secure your information using HTTPS encryption, encrypted storage provided by Supabase, role-based access controls, and continuous monitoring.
                       While no online service can guarantee absolute security, we regularly review safeguards and limit data access to team members who need it.
@@ -305,8 +341,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['children'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Children</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Children</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       The Urban Manual is not directed to children under 16, and we do not knowingly collect personal information from them.
                       If you believe we have done so, please contact us so we can delete the information.
@@ -320,8 +356,8 @@ export default function PrivacyPage() {
                   ref={(el) => { sectionRefs.current['contact'] = el; }}
                   className="scroll-mt-24"
                 >
-                  <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Contact Us</h2>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Contact Us</h2>
+                  <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       Questions or concerns about this Privacy Policy can be sent to <a className="underline hover:text-black dark:hover:text-white transition-colors" href="mailto:privacy@theurbanmanual.com">privacy@theurbanmanual.com</a>.
                     </p>
@@ -329,8 +365,8 @@ export default function PrivacyPage() {
                 </section>
 
                 {/* Last Updated */}
-                <div className="pt-8 border-t border-gray-200 dark:border-gray-800">
-                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                <div className="pt-12">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 tracking-wide">
                     Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>

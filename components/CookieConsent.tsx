@@ -73,6 +73,13 @@ interface CookiePreferences {
   marketing: boolean;
 }
 
+// Function to open cookie settings (can be called from anywhere)
+export function openCookieSettings() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('open-cookie-settings'));
+  }
+}
+
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -87,21 +94,43 @@ export function CookieConsent() {
 
     if (consent) {
       setPreferences(prev => ({ ...prev, ...consent }));
-      return;
     }
 
-    // Show banner after a small delay for better UX when no consent is stored
-    const timer = setTimeout(() => setIsVisible(true), 1000);
-    return () => clearTimeout(timer);
+    // Show banner if no consent is stored
+    if (!consent) {
+      const timer = setTimeout(() => setIsVisible(true), 1000);
+      return () => clearTimeout(timer);
+    }
+
+    // Listen for requests to open cookie settings
+    const handleOpenSettings = () => {
+      setIsVisible(true);
+      setShowDetails(true);
+    };
+
+    window.addEventListener('open-cookie-settings', handleOpenSettings);
+    return () => {
+      window.removeEventListener('open-cookie-settings', handleOpenSettings);
+    };
   }, []);
 
   const savePreferences = (prefs: CookiePreferences) => {
     persistConsent(prefs);
 
     // Set cookies based on preferences
-    if (prefs.analytics) {
-      // Enable Google Analytics or other analytics
-      // window.gtag(...);
+    if (prefs.analytics && typeof window !== 'undefined' && window.gtag) {
+      // Enable Google Analytics
+      window.gtag('consent', 'update', {
+        analytics_storage: 'granted',
+      });
+      window.gtag('config', 'G-ZLGK6QXD88', {
+        page_path: window.location.pathname,
+      });
+    } else if (!prefs.analytics && typeof window !== 'undefined' && window.gtag) {
+      // Revoke consent
+      window.gtag('consent', 'update', {
+        analytics_storage: 'denied',
+      });
     }
 
     if (prefs.marketing) {
@@ -183,7 +212,7 @@ export function CookieConsent() {
                         Analytics Cookies
                       </div>
                       <div className="text-xs text-gray-600 dark:text-gray-400">
-                        Help us understand how you use our site to improve your experience.
+                        We use Google Analytics to understand how you use our site, including page views, navigation patterns, and user interactions. This helps us improve your experience and optimize our content. You can opt out at any time.
                       </div>
                     </div>
                     <div className="flex-shrink-0">

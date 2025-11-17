@@ -132,7 +132,7 @@ export function Drawer({
 
       {/* Desktop Slideover */}
       <div
-        className={`hidden md:flex fixed right-0 top-0 bottom-0 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
+        className={`hidden md:flex fixed right-4 top-4 bottom-4 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } overflow-hidden flex-col`}
         style={{ width: desktopWidth, zIndex }}
