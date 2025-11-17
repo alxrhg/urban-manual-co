@@ -99,7 +99,7 @@ export default function PrivacyPage() {
                 {/* Introduction */}
                 <section
                   id="introduction"
-                  ref={(el) => (sectionRefs.current['introduction'] = el)}
+                  ref={(el) => { sectionRefs.current['introduction'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Introduction</h2>
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
                 {/* Information We Collect */}
                 <section
                   id="information-we-collect"
-                  ref={(el) => (sectionRefs.current['information-we-collect'] = el)}
+                  ref={(el) => { sectionRefs.current['information-we-collect'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Information We Collect</h2>
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
                 {/* How We Use Your Information */}
                 <section
                   id="how-we-use"
-                  ref={(el) => (sectionRefs.current['how-we-use'] = el)}
+                  ref={(el) => { sectionRefs.current['how-we-use'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">How We Use Your Information</h2>
@@ -158,7 +158,7 @@ export default function PrivacyPage() {
                 {/* How We Share Information */}
                 <section
                   id="how-we-share"
-                  ref={(el) => (sectionRefs.current['how-we-share'] = el)}
+                  ref={(el) => { sectionRefs.current['how-we-share'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">How We Share Information</h2>
@@ -187,7 +187,7 @@ export default function PrivacyPage() {
                 {/* Cookies & Tracking */}
                 <section
                   id="cookies-tracking"
-                  ref={(el) => (sectionRefs.current['cookies-tracking'] = el)}
+                  ref={(el) => { sectionRefs.current['cookies-tracking'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Cookies & Tracking</h2>
@@ -209,7 +209,7 @@ export default function PrivacyPage() {
                 {/* Location Data */}
                 <section
                   id="location-data"
-                  ref={(el) => (sectionRefs.current['location-data'] = el)}
+                  ref={(el) => { sectionRefs.current['location-data'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Location Data</h2>
@@ -225,7 +225,7 @@ export default function PrivacyPage() {
                 {/* Data Retention */}
                 <section
                   id="data-retention"
-                  ref={(el) => (sectionRefs.current['data-retention'] = el)}
+                  ref={(el) => { sectionRefs.current['data-retention'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Data Retention</h2>
@@ -244,7 +244,7 @@ export default function PrivacyPage() {
                 {/* Data Export & Deletion Requests */}
                 <section
                   id="data-export-deletion"
-                  ref={(el) => (sectionRefs.current['data-export-deletion'] = el)}
+                  ref={(el) => { sectionRefs.current['data-export-deletion'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Data Export & Deletion Requests</h2>
@@ -270,7 +270,7 @@ export default function PrivacyPage() {
                 {/* Your Rights & Choices */}
                 <section
                   id="your-rights"
-                  ref={(el) => (sectionRefs.current['your-rights'] = el)}
+                  ref={(el) => { sectionRefs.current['your-rights'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Your Rights & Choices</h2>
@@ -287,7 +287,7 @@ export default function PrivacyPage() {
                 {/* Security */}
                 <section
                   id="security"
-                  ref={(el) => (sectionRefs.current['security'] = el)}
+                  ref={(el) => { sectionRefs.current['security'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Security</h2>
@@ -302,7 +302,7 @@ export default function PrivacyPage() {
                 {/* Children */}
                 <section
                   id="children"
-                  ref={(el) => (sectionRefs.current['children'] = el)}
+                  ref={(el) => { sectionRefs.current['children'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Children</h2>
@@ -317,7 +317,7 @@ export default function PrivacyPage() {
                 {/* Contact Us */}
                 <section
                   id="contact"
-                  ref={(el) => (sectionRefs.current['contact'] = el)}
+                  ref={(el) => { sectionRefs.current['contact'] = el; }}
                   className="scroll-mt-24"
                 >
                   <h2 className="text-2xl font-medium mb-4 text-black dark:text-white">Contact Us</h2>

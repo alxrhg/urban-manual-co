@@ -40,7 +40,6 @@ export function SearchFiltersComponent({
   isAdmin = false,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
@@ -128,31 +127,11 @@ export function SearchFiltersComponent({
     return `${km}km`;
   };
 
-  // Calculate dropdown position when opening
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-      });
-    }
-  }, [isOpen]);
-
   return (
-    <div className="relative">
+    <>
       <button
         ref={buttonRef}
-        onClick={() => {
-          if (buttonRef.current) {
-            const rect = buttonRef.current.getBoundingClientRect();
-            setDropdownPosition({
-              top: rect.bottom + 8,
-              right: window.innerWidth - rect.right,
-            });
-          }
-          setIsOpen(!isOpen);
-        }}
+        onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
         aria-label="Toggle filters"
         aria-expanded={isOpen}
@@ -169,28 +148,11 @@ export function SearchFiltersComponent({
         {activeFiltersAnnouncement}
       </span>
 
-      {/* Dropdown filter panel */}
+      {/* Expanded filter panel - Full width below row */}
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={() => setIsOpen(false)}
-            aria-hidden="true"
-          />
-          {/* Dropdown popover */}
-          <div
-            className="fixed z-50 w-[90vw] max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
-            style={{
-              top: `${dropdownPosition.top}px`,
-              right: `${dropdownPosition.right}px`,
-            }}
-          >
-            {/* Arrow/caret */}
-            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 bg-white dark:bg-gray-900 border-t border-l border-gray-200 dark:border-gray-800" aria-hidden="true" />
-            
-            <div className="max-h-[80vh] overflow-y-auto">
-              <div className="px-6 py-6">
+        <div className="absolute left-0 right-0 top-full mt-4 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
+          <div className="max-h-[80vh] overflow-y-auto">
+            <div className="px-6 py-6 max-w-[1800px] mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
@@ -477,8 +439,8 @@ export function SearchFiltersComponent({
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 }

@@ -17,6 +17,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
   const searchParams = useSearchParams();
   const { signIn, signUp, signInWithApple } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
   useEffect(() => {
     if (!isOpen) {
       // Reset form when drawer closes
+      setName('');
       setEmail('');
       setPassword('');
       setError('');
@@ -56,8 +58,9 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
     try {
       if (isSignUp) {
-        await signUp(email, password);
+        await signUp(email, password, name);
         setSuccess('Account created! Please check your email to verify your account.');
+        setName('');
         setEmail('');
         setPassword('');
       } else {
@@ -121,6 +124,24 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
             {/* Email Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name - Only show for sign up */}
+              {isSignUp && (
+                <div>
+                  <label htmlFor="name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required={isSignUp}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                    placeholder="Your name"
+                  />
+                </div>
+              )}
+
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">

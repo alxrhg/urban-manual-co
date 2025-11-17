@@ -2775,9 +2775,9 @@ export default function Home() {
 
                     <div className="flex justify-end items-center gap-3 relative flex-nowrap w-full">
                       {/* Wrapper for Filter and Map Toggle to ensure alignment */}
-                      <div className="flex items-center gap-3 flex-nowrap">
+                      <div className="flex items-center gap-3 flex-nowrap relative w-full">
                         {/* Filter Button - Expands inline below */}
-                        <div>
+                        <div className="relative">
                           <SearchFiltersComponent
                             filters={advancedFilters}
                             onFiltersChange={(newFilters) => {
