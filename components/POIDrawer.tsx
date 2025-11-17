@@ -237,40 +237,59 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
 
       const destinationData = {
         slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        name: formData.name,
-        city: formData.city,
-        category: formData.category,
-        description: formData.description || null,
-        content: formData.content || null,
+        name: formData.name.trim(),
+        city: formData.city.trim(),
+        category: formData.category.trim(),
+        description: formData.description?.trim() || null,
+        content: formData.content?.trim() || null,
         image: imageUrl || null,
         michelin_stars: formData.michelin_stars || null,
         crown: formData.crown || false,
-        brand: formData.brand || null,
-        architect: formData.architect || null,
+        brand: formData.brand?.trim() || null,
+        architect: formData.architect?.trim() || null,
       };
 
       const isEditing = !!destination;
       
       let error;
+      let result;
       if (isEditing) {
         // Update existing destination
-        const { error: updateError } = await supabase
+        const { data: updateData, error: updateError } = await supabase
           .from('destinations')
           .update(destinationData)
-          .eq('slug', destination.slug);
+          .eq('slug', destination.slug)
+          .select();
         error = updateError;
+        result = updateData;
+        
+        // Log for debugging
+        if (error) {
+          console.error('Update error:', error);
+          console.error('Destination data being sent:', destinationData);
+        } else {
+          console.log('Update successful:', updateData);
+        }
       } else {
         // Create new destination
-        const { error: insertError } = await supabase
+        const { data: insertData, error: insertError } = await supabase
           .from('destinations')
-          .insert([destinationData]);
+          .insert([destinationData])
+          .select();
         error = insertError;
+        result = insertData;
       }
 
       if (error) {
         if (error.code === '23505') { // Unique constraint violation
           toast.error('A destination with this slug already exists');
         } else {
+          console.error('Save error details:', {
+            error,
+            destinationData,
+            isEditing,
+            destinationSlug: destination?.slug
+          });
           throw error;
         }
         return;
