@@ -1018,7 +1018,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         desktopSpacing="right-4 top-4 bottom-4"
         desktopWidth="440px"
         position="right"
-        style="solid"
+        style="glassy"
         headerContent={
           <div className="flex items-center justify-between w-full">
             <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
@@ -1186,7 +1186,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         desktopSpacing="right-4 top-4 bottom-4"
         desktopWidth="440px"
         position="right"
-        style="solid"
+        style="glassy"
         headerContent={headerContent}
         footerContent={
           <>
