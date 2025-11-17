@@ -316,7 +316,7 @@ export function AccountDrawer({
       case 'trips_subpage':
         return 'Your Trips';
       case 'trip_details_subpage':
-        return selectedTrip?.name || 'Trip Details';
+        return selectedTrip?.title || 'Trip Details';
       case 'achievements_subpage':
         return 'Achievements';
       case 'settings_subpage':
@@ -474,7 +474,7 @@ export function AccountDrawer({
                         <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                           <Image
                             src={trip.cover_image}
-                            alt={trip.name}
+                            alt={trip.title}
                             fill
                             className="object-cover"
                             sizes="48px"
@@ -483,7 +483,7 @@ export function AccountDrawer({
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {trip.name}
+                          {trip.title}
                         </p>
                         {trip.start_date && (
                           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -702,7 +702,7 @@ export function AccountDrawer({
                 <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                   <Image
                     src={trip.cover_image}
-                    alt={trip.name}
+                    alt={trip.title}
                     fill
                     className="object-cover"
                     sizes="48px"
@@ -711,7 +711,7 @@ export function AccountDrawer({
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {trip.name}
+                  {trip.title}
                 </p>
                 {trip.start_date && (
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -761,7 +761,7 @@ export function AccountDrawer({
           <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
             <Image
               src={selectedTrip.cover_image}
-              alt={selectedTrip.name}
+              alt={selectedTrip.title}
               fill
               className="object-cover"
               sizes="100vw"
