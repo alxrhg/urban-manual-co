@@ -209,6 +209,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
+  const [enhancedDestination, setEnhancedDestination] = useState<Destination | null>(destination);
   const [parentDestination, setParentDestination] = useState<Destination | null>(null);
   const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
   const [loadingNested, setLoadingNested] = useState(false);
@@ -273,11 +274,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // Update enhanced destination when destination prop changes
+  useEffect(() => {
+    setEnhancedDestination(destination);
+  }, [destination]);
+
   // Load enriched data and saved/visited status
   useEffect(() => {
     async function loadDestinationData() {
       if (!destination) {
         setEnrichedData(null);
+        setEnhancedDestination(null);
         setIsSaved(false);
         setIsVisited(false);
         setIsAddedToTrip(false); // Reset immediately
@@ -329,12 +336,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             icon_mask_base_uri,
             google_place_id,
             architect,
-            design_firm,
             architectural_style,
             design_period,
             designer_name,
             architect_info_json,
-            web_content_json
+            web_content_json,
+            architect_id,
+            design_firm_id,
+            interior_designer_id,
+            movement_id,
+            architectural_significance,
+            design_story,
+            construction_year,
+            architect:architects(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
+            design_firm:design_firms(id, name, slug, description, founded_year, image_url),
+            interior_designer:architects!interior_designer_id(id, name, slug, bio, birth_year, death_year, nationality, image_url),
+            movement:design_movements(id, name, slug, description, period_start, period_end)
           `)
           .eq('slug', destination.slug)
           .single();
@@ -385,6 +402,93 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               console.error('Error parsing address_components_json:', e);
             }
           }
+          
+          // Merge architect data into destination for ArchitectDesignInfo component
+          // Handle architect object (from join) - could be array or single object
+          let updatedDestination = { ...destination };
+          
+          if (dataObj.architect) {
+            const architectObj = Array.isArray(dataObj.architect) && dataObj.architect.length > 0
+              ? dataObj.architect[0]
+              : dataObj.architect;
+            if (architectObj && architectObj.name) {
+              // Update destination with architect object
+              updatedDestination = {
+                ...updatedDestination,
+                architect_id: architectObj.id,
+                architect_obj: architectObj,
+                // Keep legacy text field for backward compatibility
+                architect: updatedDestination.architect || architectObj.name,
+              };
+            }
+          }
+          
+          // Handle design firm object (note: Supabase join returns it as 'design_firm' object, not text)
+          // Check if design_firm is an object (from join) vs string (legacy field)
+          if (dataObj.design_firm && typeof dataObj.design_firm === 'object' && !Array.isArray(dataObj.design_firm) && dataObj.design_firm.name) {
+            // This is the joined object
+            const firmObj = dataObj.design_firm;
+            updatedDestination = {
+              ...updatedDestination,
+              design_firm_id: firmObj.id,
+              design_firm_obj: firmObj,
+              design_firm: firmObj.name,
+            };
+          } else if (dataObj.design_firm && Array.isArray(dataObj.design_firm) && dataObj.design_firm.length > 0) {
+            // Handle array case (shouldn't happen but just in case)
+            const firmObj = dataObj.design_firm[0];
+            if (firmObj && firmObj.name) {
+              updatedDestination = {
+                ...updatedDestination,
+                design_firm_id: firmObj.id,
+                design_firm_obj: firmObj,
+                design_firm: firmObj.name,
+              };
+            }
+          }
+          
+          // Handle interior designer object
+          if (dataObj.interior_designer) {
+            const interiorDesignerObj = Array.isArray(dataObj.interior_designer) && dataObj.interior_designer.length > 0
+              ? dataObj.interior_designer[0]
+              : dataObj.interior_designer;
+            if (interiorDesignerObj && interiorDesignerObj.name) {
+              updatedDestination = {
+                ...updatedDestination,
+                interior_designer_id: interiorDesignerObj.id,
+                interior_designer_obj: interiorDesignerObj,
+                interior_designer: updatedDestination.interior_designer || interiorDesignerObj.name,
+              };
+            }
+          }
+          
+          // Handle movement object
+          if (dataObj.movement) {
+            const movementObj = Array.isArray(dataObj.movement) && dataObj.movement.length > 0
+              ? dataObj.movement[0]
+              : dataObj.movement;
+            if (movementObj && movementObj.name) {
+              updatedDestination = {
+                ...updatedDestination,
+                movement_id: movementObj.id,
+                movement_obj: movementObj,
+              };
+            }
+          }
+          
+          // Merge architectural fields
+          if (dataObj.architectural_significance) {
+            updatedDestination = { ...updatedDestination, architectural_significance: dataObj.architectural_significance };
+          }
+          if (dataObj.design_story) {
+            updatedDestination = { ...updatedDestination, design_story: dataObj.design_story };
+          }
+          if (dataObj.construction_year) {
+            updatedDestination = { ...updatedDestination, construction_year: dataObj.construction_year };
+          }
+          
+          setEnhancedDestination(updatedDestination);
+          
           setEnrichedData(enriched);
           console.log('Enriched data loaded:', enriched);
         } else if (error) {
@@ -1728,7 +1832,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Architecture & Design */}
-          {destination && <ArchitectDesignInfo destination={destination} />}
+          {enhancedDestination && <ArchitectDesignInfo destination={enhancedDestination} />}
 
           {/* Contact & Links */}
           {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
