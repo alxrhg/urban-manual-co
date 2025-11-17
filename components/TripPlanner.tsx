@@ -46,7 +46,6 @@ interface TripLocation {
 interface DayItinerary {
   date: string;
   locations: TripLocation[];
-  budget?: number;
   notes?: string;
 }
 
@@ -60,7 +59,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [days, setDays] = useState<DayItinerary[]>([]);
   const [showAddLocation, setShowAddLocation] = useState<number | null>(null);
   const [step, setStep] = useState<'create' | 'plan'>('create');
-  const [totalBudget, setTotalBudget] = useState<number>(0);
   const [showShare, setShowShare] = useState(false);
   const [hotelLocation, setHotelLocation] = useState('');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
@@ -90,7 +88,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setStartDate('');
     setEndDate('');
     setDays([]);
-    setTotalBudget(0);
     setHotelLocation('');
     setStep('create');
     setCurrentTripId(null);
@@ -205,7 +202,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           newDays.push({
             date: date.toISOString().split('T')[0],
             locations: daysMap.get(dayNum) || [],
-            budget: 0,
           });
         }
 
@@ -223,7 +219,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           newDays.push({
             date: date.toISOString().split('T')[0],
             locations: [],
-            budget: 0,
           });
         }
         setDays(newDays);
@@ -283,7 +278,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         newDays.push({
           date: date.toISOString().split('T')[0],
           locations: [],
-          budget: 0,
         });
       }
 
@@ -349,7 +343,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         }
       }
 
-      // Update trip (note: budget is not in schema, storing in description or notes)
+      // Update trip
       const { error: tripError } = await supabaseClient
         .from('trips')
         .update({
@@ -709,20 +703,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               />
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="budget" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Total Budget
-            </label>
-            <input
-              id="budget"
-              type="number"
-              value={totalBudget || ''}
-              onChange={(e) => setTotalBudget(Number(e.target.value))}
-              placeholder="2000"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-            />
           </div>
 
           <button

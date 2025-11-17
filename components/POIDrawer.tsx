@@ -9,6 +9,7 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
 
 interface POIDrawerProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ interface Destination {
   image?: string | null;
   michelin_stars?: number | null;
   crown?: boolean;
+  brand?: string | null;
+  architect?: string | null;
 }
 
 export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }: POIDrawerProps) {
@@ -51,6 +54,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     image: '',
     michelin_stars: null as number | null,
     crown: false,
+    brand: '',
+    architect: '',
   });
 
   // Reset form when drawer opens/closes, or load destination data for editing
@@ -66,6 +71,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: '',
         michelin_stars: null,
         crown: false,
+        brand: '',
+        architect: '',
       });
       setImageFile(null);
       setImagePreview(null);
@@ -82,6 +89,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: destination.image || '',
         michelin_stars: destination.michelin_stars || null,
         crown: destination.crown || false,
+        brand: destination.brand || '',
+        architect: destination.architect || '',
       });
       if (destination.image) {
         setImagePreview(destination.image);
@@ -98,6 +107,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: '',
         michelin_stars: null,
         crown: false,
+        brand: '',
+        architect: '',
       });
     }
   }, [isOpen, destination, initialCity]);
@@ -224,43 +235,110 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         throw new Error('Not authenticated');
       }
 
+      // Ensure category is not empty
+      if (!formData.category || !formData.category.trim()) {
+        toast.error('Category is required');
+        setIsSaving(false);
+        return;
+      }
+
       const destinationData = {
         slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        name: formData.name,
-        city: formData.city,
-        category: formData.category,
-        description: formData.description || null,
-        content: formData.content || null,
+        name: formData.name.trim(),
+        city: formData.city.trim(),
+        category: formData.category.trim(),
+        description: formData.description?.trim() || null,
+        content: formData.content?.trim() || null,
         image: imageUrl || null,
         michelin_stars: formData.michelin_stars || null,
         crown: formData.crown || false,
+        brand: formData.brand?.trim() || null,
+        architect: formData.architect?.trim() || null,
       };
+
+      // Log the data being sent for debugging
+      console.log('Updating destination with data:', {
+        slug: destination?.slug,
+        category: destinationData.category,
+        fullData: destinationData
+      });
 
       const isEditing = !!destination;
       
       let error;
+      let result;
       if (isEditing) {
-        // Update existing destination
-        const { error: updateError } = await supabase
+        // Update existing destination - explicitly select category to verify it was updated
+        // First, let's try updating just to see if there are any permission issues
+        console.log('Attempting to update destination:', {
+          slug: destination.slug,
+          currentCategory: destination.category,
+          newCategory: destinationData.category,
+          allFields: Object.keys(destinationData)
+        });
+        
+        const { data: updateData, error: updateError } = await supabase
           .from('destinations')
           .update(destinationData)
-          .eq('slug', destination.slug);
+          .eq('slug', destination.slug)
+          .select('slug, name, city, category, brand, architect');
         error = updateError;
+        result = updateData;
+        
+        // Log for debugging
+        if (error) {
+          console.error('Update error:', error);
+          console.error('Destination data being sent:', destinationData);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          console.error('Error details:', error.details);
+        } else {
+          console.log('Update successful:', updateData);
+          console.log('Updated category:', updateData?.[0]?.category);
+          // Verify category was actually updated
+          if (updateData && updateData[0] && updateData[0].category !== destinationData.category) {
+            console.warn('Category mismatch! Expected:', destinationData.category, 'Got:', updateData[0].category);
+          }
+        }
       } else {
         // Create new destination
-        const { error: insertError } = await supabase
+        const { data: insertData, error: insertError } = await supabase
           .from('destinations')
-          .insert([destinationData]);
+          .insert([destinationData])
+          .select();
         error = insertError;
+        result = insertData;
       }
 
       if (error) {
         if (error.code === '23505') { // Unique constraint violation
           toast.error('A destination with this slug already exists');
         } else {
+          console.error('Save error details:', {
+            error,
+            destinationData,
+            isEditing,
+            destinationSlug: destination?.slug
+          });
           throw error;
         }
         return;
+      }
+
+      // Verify the update was successful, especially for category
+      if (isEditing && result && result[0]) {
+        const updatedCategory = result[0].category;
+        if (updatedCategory !== destinationData.category) {
+          console.error('Category update verification failed:', {
+            expected: destinationData.category,
+            actual: updatedCategory,
+            fullResult: result[0]
+          });
+          toast.error(`Category update may have failed. Expected "${destinationData.category}" but got "${updatedCategory}"`);
+          setIsSaving(false);
+          return;
+        }
+        console.log('Category update verified successfully:', updatedCategory);
       }
 
       toast.success(isEditing ? 'Destination updated successfully' : 'POI created successfully');
@@ -441,18 +519,45 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
           </div>
 
           {/* Category */}
-          <div>
+          <div className="mb-6">
             <label htmlFor="category" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
               Category *
             </label>
-            <input
-              id="category"
-              type="text"
+            <CategoryAutocompleteInput
               value={formData.category}
-              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              required
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
               placeholder="Dining"
+              required
+            />
+          </div>
+
+          {/* Brand */}
+          <div className="mb-6">
+            <label htmlFor="brand" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Brand
+            </label>
+            <input
+              id="brand"
+              type="text"
+              value={formData.brand}
+              onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Brand name"
+            />
+          </div>
+
+          {/* Architect */}
+          <div>
+            <label htmlFor="architect" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Architect
+            </label>
+            <input
+              id="architect"
+              type="text"
+              value={formData.architect}
+              onChange={(e) => setFormData(prev => ({ ...prev, architect: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Architect name"
             />
           </div>
         </div>

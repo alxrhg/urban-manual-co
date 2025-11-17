@@ -151,7 +151,6 @@ export function Header() {
           <div className="flex items-center gap-2">{actionButtons}</div>
         </nav>
       </div>
-
       {/* Account Drawer */}
       <AccountDrawer
         isOpen={isAccountDrawerOpen}
