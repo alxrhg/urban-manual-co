@@ -210,7 +210,7 @@ export default function HomeMapSplitView({
         }`}
       >
         <MapView
-          destinations={destinations}
+          destinations={destinationsWithCoords}
           onMarkerClick={destination => {
             onMarkerSelect?.(destination);
           }}

@@ -54,11 +54,23 @@ export default function GoogleInteractiveMap({
       bounds.extend(position);
       hasValidMarkers = true;
 
-      // Create marker
+      // Create a visible pin element
+      const pinElement = document.createElement('div');
+      pinElement.style.width = '12px';
+      pinElement.style.height = '12px';
+      pinElement.style.borderRadius = '50%';
+      pinElement.style.backgroundColor = '#1C1C1C';
+      pinElement.style.border = '1.5px solid #FFFFFF';
+      pinElement.style.cursor = 'pointer';
+      pinElement.style.transition = 'all 0.2s ease';
+      pinElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+
+      // Create marker with visible element
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map: mapInstanceRef.current!,
         position: position,
         title: dest.name || '',
+        content: pinElement,
       });
 
       // Create info window content
