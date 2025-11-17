@@ -125,7 +125,7 @@ export function SearchFiltersComponent({
   };
 
   return (
-    <div>
+    <div className="relative">
       {/* Trigger Button - Capsule Shape with Sliders Icon */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -141,34 +141,37 @@ export function SearchFiltersComponent({
           </span>
         )}
         <ChevronDown
-          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-[220ms] ease-out ${
             isOpen ? 'rotate-180' : ''
           }`}
           strokeWidth={1.5}
         />
       </button>
 
-      {/* Expanded Panel - Directly Under Button, Pushdown */}
-      <div
-        ref={panelRef}
-        className={`w-[320px] overflow-hidden transition-all duration-200 ease-out ${
-          isOpen ? 'max-h-[800px] opacity-100 mt-2' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="bg-transparent py-4 space-y-6">
-          {/* Search */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
+      {/* Expanded Panel - Full Width Pushdown */}
+      {isOpen && (
+        <div
+          ref={panelRef}
+          className="absolute top-full left-0 w-screen -ml-[calc(50vw-50%)] mt-2 bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden z-50"
+          style={{
+            animation: 'expandCollapse 220ms ease-out',
+          }}
+        >
+          <div className="px-6 pt-5 pb-6 space-y-5">
+            {/* Heading */}
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
               Filter destinations
-            </label>
+            </h3>
+
+            {/* Search Field */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search destinations..."
-                className="w-full pl-10 pr-10 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent transition-all"
+                className="w-full pl-10 pr-10 py-3 px-4 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent transition-all"
               />
               {searchQuery && (
                 <button
@@ -176,234 +179,209 @@ export function SearchFiltersComponent({
                     setSearchQuery('');
                     clearFilter('searchQuery');
                   }}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                   aria-label="Clear search"
                 >
                   <X className="h-4 w-4" strokeWidth={1.5} />
                 </button>
               )}
             </div>
-          </div>
 
-          {/* Special */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
-              Special
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (filters.michelin) {
-                    clearFilter('michelin');
-                  } else {
-                    updateFilter('michelin', true);
-                  }
-                }}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
-                  filters.michelin
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-                aria-pressed={Boolean(filters.michelin)}
-              >
-                Michelin
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (filters.openNow) {
-                    clearFilter('openNow');
-                  } else {
-                    updateFilter('openNow', true);
-                  }
-                }}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
-                  filters.openNow
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-                aria-pressed={Boolean(filters.openNow)}
-              >
-                Open Now
-              </button>
+            {/* Special Section - Chips */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Special</h4>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (filters.michelin) {
+                      clearFilter('michelin');
+                    } else {
+                      updateFilter('michelin', true);
+                    }
+                  }}
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                    filters.michelin
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  aria-pressed={Boolean(filters.michelin)}
+                >
+                  Michelin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (filters.openNow) {
+                      clearFilter('openNow');
+                    } else {
+                      updateFilter('openNow', true);
+                    }
+                  }}
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                    filters.openNow
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  aria-pressed={Boolean(filters.openNow)}
+                >
+                  Open Now
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Minimum Rating */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
-              Minimum Rating
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {['Any', '4.5+', '4+', '3.5+', '3+'].map((option) => {
-                const rating = option === 'Any' ? null : parseFloat(option.replace('+', ''));
-                const isSelected = rating === null
-                  ? !filters.minRating
-                  : filters.minRating === rating;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => {
-                      if (rating === null) {
-                        clearFilter('minRating');
-                      } else {
-                        if (filters.minRating === rating) {
+            {/* Rating Section - Choice Chips */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Minimum Rating</h4>
+              <div className="flex flex-wrap gap-2">
+                {['Any', '4.5+', '4+', '3.5+', '3+'].map((option) => {
+                  const rating = option === 'Any' ? null : parseFloat(option.replace('+', ''));
+                  const isSelected = rating === null
+                    ? !filters.minRating
+                    : filters.minRating === rating;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        if (rating === null) {
                           clearFilter('minRating');
                         } else {
-                          updateFilter('minRating', rating);
+                          if (filters.minRating === rating) {
+                            clearFilter('minRating');
+                          } else {
+                            updateFilter('minRating', rating);
+                          }
                         }
-                      }
-                    }}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
-                      isSelected
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
-                    aria-pressed={isSelected}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
+                      }}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                        isSelected
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                      aria-pressed={isSelected}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Price Level */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
-              Price Level
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {['Any', '$', '$$', '$$$', '$$$$'].map((option) => {
-                const priceLevel = option === 'Any' ? null : option.length;
-                const isSelected = priceLevel === null
-                  ? !filters.minPrice && !filters.maxPrice
-                  : filters.minPrice === priceLevel && filters.maxPrice === priceLevel;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => {
-                      if (priceLevel === null) {
-                        clearFilter('minPrice');
-                        clearFilter('maxPrice');
-                      } else {
-                        if (filters.minPrice === priceLevel && filters.maxPrice === priceLevel) {
+            {/* Price Level Section - Choice Chips */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Price Level</h4>
+              <div className="flex flex-wrap gap-2">
+                {['Any', '$', '$$', '$$$', '$$$$'].map((option) => {
+                  const priceLevel = option === 'Any' ? null : option.length;
+                  const isSelected = priceLevel === null
+                    ? !filters.minPrice && !filters.maxPrice
+                    : filters.minPrice === priceLevel && filters.maxPrice === priceLevel;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        if (priceLevel === null) {
                           clearFilter('minPrice');
                           clearFilter('maxPrice');
                         } else {
-                          updateFilter('minPrice', priceLevel);
-                          updateFilter('maxPrice', priceLevel);
+                          if (filters.minPrice === priceLevel && filters.maxPrice === priceLevel) {
+                            clearFilter('minPrice');
+                            clearFilter('maxPrice');
+                          } else {
+                            updateFilter('minPrice', priceLevel);
+                            updateFilter('maxPrice', priceLevel);
+                          }
                         }
-                      }
-                    }}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-180 ${
-                      isSelected
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
-                    aria-pressed={isSelected}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
+                      }}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                        isSelected
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                      aria-pressed={isSelected}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Location */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
-              Location
-            </label>
-            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Use current location</span>
+            {/* Location Section - Action Row */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">Location</h4>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Use current location</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleNearMe(!filters.nearMe)}
+                    disabled={loading}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      filters.nearMe ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
+                    }`}
+                    aria-pressed={Boolean(filters.nearMe)}
+                    aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
+                        filters.nearMe ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {loading && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 px-3">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Getting your location...</span>
+                  </div>
+                )}
+                {error && filters.nearMe && (
+                  <div className="text-xs text-red-600 dark:text-red-400 px-3">
+                    Location access denied. Please enable in browser settings.
+                  </div>
+                )}
+                {filters.nearMe && hasLocation && !error && (
+                  <div className="space-y-2 px-3">
+                    <label htmlFor="near-me-radius" className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                      <span>Radius</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{formatDistance(nearMeRadius)}</span>
+                    </label>
+                    <input
+                      id="near-me-radius"
+                      type="range"
+                      min="0.5"
+                      max="25"
+                      step="0.5"
+                      value={nearMeRadius}
+                      onChange={(e) => updateRadius(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 dark:[&::-webkit-slider-thumb]:bg-white"
+                      aria-valuenow={nearMeRadius}
+                      aria-valuetext={formatDistance(nearMeRadius)}
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
+                      <span>500m</span>
+                      <span>25km</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Apply Button */}
+            <div className="pt-2">
               <button
-                type="button"
-                onClick={() => toggleNearMe(!filters.nearMe)}
-                disabled={loading}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  filters.nearMe ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
-                aria-pressed={Boolean(filters.nearMe)}
-                aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
+                onClick={() => setIsOpen(false)}
+                className="w-full py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform ${
-                    filters.nearMe ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                Apply Filters
               </button>
             </div>
-            {loading && (
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>Getting your location...</span>
-              </div>
-            )}
-            {error && filters.nearMe && (
-              <div className="text-xs text-red-600 dark:text-red-400">
-                Location access denied. Please enable in browser settings.
-              </div>
-            )}
-            {filters.nearMe && hasLocation && !error && (
-              <div className="space-y-2 mt-2">
-                <label htmlFor="near-me-radius" className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                  <span>Radius</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{formatDistance(nearMeRadius)}</span>
-                </label>
-                <input
-                  id="near-me-radius"
-                  type="range"
-                  min="0.5"
-                  max="25"
-                  step="0.5"
-                  value={nearMeRadius}
-                  onChange={(e) => updateRadius(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 dark:[&::-webkit-slider-thumb]:bg-white"
-                  aria-valuenow={nearMeRadius}
-                  aria-valuetext={formatDistance(nearMeRadius)}
-                />
-                <div className="flex justify-between text-xs text-gray-400 dark:text-gray-600">
-                  <span>500m</span>
-                  <span>25km</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Explore */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
-              Explore
-            </label>
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.location.href = '/cities';
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180"
-            >
-              <Globe2 className="h-4 w-4" strokeWidth={1.5} />
-              Discover by Cities
-            </button>
-          </div>
-
-          {/* Apply Button */}
-          <div className="pt-2">
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Apply Filters
-            </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
