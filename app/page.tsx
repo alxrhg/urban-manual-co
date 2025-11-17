@@ -64,6 +64,7 @@ import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { ExpandableHomeControls } from '@/components/ExpandableHomeControls';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -2779,107 +2780,53 @@ export default function Home() {
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
-                {/* Mid Nav - Vertical Pile, Right Aligned */}
-                <div className="mb-6 flex justify-end">
-                  <div className="flex flex-col items-end w-auto" style={{ gap: '12px' }}>
-                    {/* Discover by Cities - Pill */}
-                    <Link
-                      href="/cities"
-                      className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out bg-white border border-gray-200 text-gray-900 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
-                      style={{ borderRadius: '9999px' }}
-                    >
-                      <Globe className="h-4 w-4" />
-                      <span>Discover by Cities</span>
-                    </Link>
-
-                    {/* Filters - Pill */}
-                    <div className="relative">
-                      <SearchFiltersComponent
-                        filters={advancedFilters}
-                        onFiltersChange={(newFilters) => {
-                          setAdvancedFilters(newFilters);
-                          if (newFilters.city !== undefined) {
-                            setSelectedCity(newFilters.city || '');
-                          }
-                          if (newFilters.category !== undefined) {
-                            setSelectedCategory(newFilters.category || '');
-                          }
-                          Object.entries(newFilters).forEach(([key, value]) => {
-                            if (value !== undefined && value !== null && value !== '') {
-                              trackFilterChange({ filterType: key, value });
-                            }
-                          });
-                        }}
-                        availableCities={cities}
-                        availableCategories={categories}
-                        onLocationChange={handleLocationChange}
-                        sortBy={sortBy}
-                        onSortChange={(newSort) => {
-                          setSortBy(newSort);
-                          setCurrentPage(1);
-                        }}
-                        isAdmin={isAdmin}
-                        fullWidthPanel={true}
-                        useFunnelIcon={true}
-                      />
-                    </div>
-
-                    {/* View Switch - Segment Control */}
-                    <div className="flex items-center rounded-full h-[44px] px-1.5 bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.10)]" style={{ borderRadius: '9999px' }}>
-                      <button
-                        onClick={() => setViewMode('grid')}
-                        className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
-                          viewMode === 'grid'
-                            ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[rgba(255,255,255,0.95)] dark:border dark:border-[rgba(255,255,255,0.22)] shadow-sm'
-                            : 'text-gray-600 dark:text-[rgba(255,255,255,0.68)] hover:text-gray-900 dark:hover:text-[rgba(255,255,255,0.92)]'
-                        }`}
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Grid view"
-                      >
-                        <LayoutGrid className="h-4 w-4" />
-                        <span>Grid</span>
-                      </button>
-                      <button
-                        onClick={() => setViewMode('map')}
-                        className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
-                          viewMode === 'map'
-                            ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[rgba(255,255,255,0.95)] dark:border dark:border-[rgba(255,255,255,0.22)] shadow-sm'
-                            : 'text-gray-600 dark:text-[rgba(255,255,255,0.68)] hover:text-gray-900 dark:hover:text-[rgba(255,255,255,0.92)]'
-                        }`}
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Map view"
-                      >
-                        <Map className="h-4 w-4" />
-                        <span>Map</span>
-                      </button>
-                    </div>
-
-                    {/* Create Trip - Pill Filled (Black) */}
-                    {isAdmin ? (
-                      <button
-                        onClick={() => {
-                          setEditingDestination(null);
-                          setShowPOIDrawer(true);
-                        }}
-                        className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Add New POI"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add New POI</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Create Trip"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Create Trip</span>
-                      </button>
-                    )}
-                  </div>
+                {/* Expandable Home Controls */}
+                <div className="mb-6">
+                  <ExpandableHomeControls
+                    cities={cities}
+                    selectedCity={selectedCity}
+                    onCityChange={(city) => {
+                      setSelectedCity(city);
+                      setCurrentPage(1);
+                    }}
+                    displayedCities={displayedCities}
+                    showAllCities={showAllCities}
+                    onToggleShowAllCities={() => setShowAllCities(!showAllCities)}
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    onCategoryChange={(category) => {
+                      setSelectedCategory(category);
+                      setCurrentPage(1);
+                    }}
+                    advancedFilters={advancedFilters}
+                    onFiltersChange={(newFilters) => {
+                      setAdvancedFilters(newFilters);
+                      if (newFilters.city !== undefined) {
+                        setSelectedCity(newFilters.city || '');
+                      }
+                      if (newFilters.category !== undefined) {
+                        setSelectedCategory(newFilters.category || '');
+                      }
+                      setCurrentPage(1);
+                    }}
+                    availableCities={cities}
+                    availableCategories={categories}
+                    onLocationChange={handleLocationChange}
+                    sortBy={sortBy}
+                    onSortChange={(newSort) => {
+                      setSortBy(newSort);
+                      setCurrentPage(1);
+                    }}
+                    isAdmin={isAdmin}
+                    onTrackFilterChange={trackFilterChange}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    onCreateTrip={() => setShowTripPlanner(true)}
+                    onAddPOI={() => {
+                      setEditingDestination(null);
+                      setShowPOIDrawer(true);
+                    }}
+                  />
                 </div>
 
 
