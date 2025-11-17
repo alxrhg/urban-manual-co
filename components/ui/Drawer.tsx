@@ -107,9 +107,9 @@ export function Drawer({
       {/* Mobile Drawer - Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
-          className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
+          className={`md:hidden fixed inset-x-4 bottom-4 transform transition-transform duration-300 ease-out ${
             isOpen ? 'translate-y-0' : 'translate-y-full'
-          } flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-full max-w-full overflow-hidden overscroll-contain rounded-t-3xl`}
+          } flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-2rem)] max-w-full overflow-hidden overscroll-contain rounded-3xl`}
           style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
         >
           {/* Header */}
@@ -152,7 +152,7 @@ export function Drawer({
       {/* Mobile Drawer - Side Drawer */}
       {mobileVariant === 'side' && (
         <div
-          className={`md:hidden fixed ${position === 'right' ? 'right-0 rounded-l-2xl' : 'left-0 rounded-r-2xl'} top-0 bottom-0 w-full ${mobileWidth} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
+          className={`md:hidden fixed ${position === 'right' ? 'right-4' : 'left-4'} top-4 bottom-4 rounded-2xl w-full ${mobileWidth} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
             isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
           } overflow-hidden flex flex-col`}
           style={{ zIndex }}
@@ -193,7 +193,7 @@ export function Drawer({
 
       {/* Desktop Drawer - Always Side Drawer with spacing */}
       <div
-        className={`hidden md:flex fixed ${desktopSpacing} ${position === 'right' ? 'rounded-l-2xl' : 'rounded-r-2xl'} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`hidden md:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
         } overflow-hidden flex-col`}
         style={{ zIndex, width: desktopWidth, maxWidth: 'calc(100vw - 2rem)' }}
