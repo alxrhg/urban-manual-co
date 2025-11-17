@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -20,6 +20,9 @@ import {
   Globe2,
   Bookmark,
   ShieldCheck,
+  Gift,
+  CreditCard,
+  LifeBuoy,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -258,9 +261,52 @@ export function AccountDrawer({
     user?.email?.split("@")[0] ||
     "Explorer";
 
+  const username =
+    (user?.user_metadata as Record<string, any> | undefined)?.username ||
+    user?.email?.split("@")[0] ||
+    "urban-explorer";
+
   const runAfterClose = (callback: () => void) => {
     onClose();
     setTimeout(callback, 300);
+  };
+
+  const handleInviteFriends = async () => {
+    const inviteUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/?ref=${user?.id ?? ""}`
+        : "https://urbanmanual.com";
+
+    const canShare =
+      typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+    if (canShare) {
+      try {
+        await navigator.share({
+          title: "Explore Urban Manual",
+          text: "Discover curated city guides with me on Urban Manual.",
+          url: inviteUrl,
+        });
+        toast.success("Invite sent");
+        return;
+      } catch (error) {
+        if ((error as DOMException).name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        toast.success("Invite link copied");
+        return;
+      } catch {
+        // fall through to error toast
+      }
+    }
+
+    toast.error("Unable to share invite link");
   };
 
   const travelToolkit = [
@@ -351,102 +397,180 @@ export function AccountDrawer({
     { label: "Collections", value: stats.collections, caption: "Lists" },
   ];
 
+  const lifestyleCards = [
+    {
+      label: "Standard",
+      description: "Your plan",
+      icon: CreditCard,
+      actionLabel: "Manage",
+      onClick: () => handleNavigate("/account"),
+    },
+    {
+      label: "Invite friends",
+      description: "Earn $80 or more",
+      icon: Gift,
+      actionLabel: "Share",
+      onClick: handleInviteFriends,
+    },
+  ];
+
+  const essentials = [
+    {
+      label: "Help Center",
+      description: "Questions, tips & policies",
+      icon: LifeBuoy,
+      action: () => handleNavigate("/account"),
+    },
+    ...accountLinks,
+  ];
+
+  const SectionHeading = ({ children }: { children: ReactNode }) => (
+    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
+      {children}
+    </p>
+  );
+
+  const ListGroup = ({ children }: { children: ReactNode }) => (
+    <div className="divide-y divide-gray-200 rounded-3xl border border-gray-200 bg-white/70 dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-950/40">
+      {children}
+    </div>
+  );
+
   const accountContent = (
     <div className="px-4 sm:px-6 py-6">
       {user ? (
         <div className="space-y-8">
-          <section className="rounded-3xl bg-gradient-to-br from-gray-900 via-gray-900 to-black text-white p-6 shadow-xl border border-white/10">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <button
-                onClick={handleAvatarClick}
-                className="relative w-20 h-20 rounded-3xl overflow-hidden bg-white/10 flex items-center justify-center group cursor-pointer hover:opacity-90 transition-opacity border border-white/20"
-                aria-label="Change profile picture"
-              >
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Profile"
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                ) : (
-                  <User className="w-10 h-10 text-white/70" />
-                )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <Camera className="w-5 h-5 text-white" />
+          <section className="rounded-3xl border border-gray-200 bg-white/70 p-6 text-gray-900 dark:border-gray-800 dark:bg-gray-950/60 dark:text-white">
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start gap-4">
+                <button
+                  onClick={handleAvatarClick}
+                  className="relative h-16 w-16 rounded-2xl border border-gray-200 bg-white text-gray-500 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900"
+                  aria-label="Change profile picture"
+                >
+                  <div className="relative h-full w-full overflow-hidden rounded-[18px]">
+                    {avatarUrl ? (
+                      <Image
+                        src={avatarUrl}
+                        alt="Profile"
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <User className="h-6 w-6" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+                      <Camera className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                </button>
+                <div className="flex-1 space-y-2">
+                  <SectionHeading>Account</SectionHeading>
+                  <div>
+                    <p className="text-xl font-semibold leading-tight">{displayName}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">@{username}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-[11px] font-medium text-gray-600 dark:text-gray-300">
+                    <span className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 dark:border-gray-800">
+                      {user.email}
+                    </span>
+                    {isAdmin && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-gray-900 dark:border-gray-700 dark:text-gray-100">
+                        <ShieldCheck className="h-3.5 w-3.5" /> Admin
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </button>
-              <div className="flex-1 space-y-1">
-                <p className="text-xs uppercase tracking-wide text-white/60">
-                  Signed in as
-                </p>
-                <h3 className="text-xl font-semibold">{displayName}</h3>
-                <p className="text-sm text-white/70">{user.email}</p>
-                {isAdmin && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full bg-white/15 text-white mt-2">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    Admin
-                  </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleNavigate("/account")}
+                  className="inline-flex flex-1 min-w-[180px] items-center justify-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-black dark:bg-white dark:text-black"
+                >
+                  Open full account
+                  <ExternalLink className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
+                  className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
+                >
+                  Preferences
+                  <Settings className="h-4 w-4" />
+                </button>
+                {onOpenChat && (
+                  <button
+                    type="button"
+                    onClick={() => runAfterClose(() => onOpenChat())}
+                    className="inline-flex flex-1 min-w-[150px] items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
+                  >
+                    Concierge chat
+                    <MessageSquare className="h-4 w-4" />
+                  </button>
                 )}
               </div>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => handleNavigate("/account")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 bg-white/10 text-sm font-medium hover:bg-white/20 transition-colors"
-              >
-                Open full account
-                <ExternalLink className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-white/5 text-sm font-medium hover:bg-white/15 transition-colors"
-              >
-                Preferences
-                <Settings className="w-4 h-4" />
-              </button>
+
             </div>
           </section>
 
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
-                Travel snapshot
-              </p>
-              {statsLoading && (
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-              )}
+          <section className="space-y-3">
+            <SectionHeading>Plan & invites</SectionHeading>
+            <ListGroup>
+              {lifestyleCards.map(card => {
+                const Icon = card.icon;
+                return (
+                  <button
+                    key={card.label}
+                    onClick={card.onClick}
+                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{card.label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{card.description}</p>
+                    </div>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                      {card.actionLabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </ListGroup>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <SectionHeading>Activity snapshot</SectionHeading>
+              {statsLoading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {statCards.map(card => (
                 <div
                   key={card.label}
-                  className="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-4"
+                  className="rounded-2xl border border-gray-200 p-4 dark:border-gray-800"
                 >
-                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
                     {card.label}
                   </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-semibold text-gray-900 dark:text-white">
-                      {card.value}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {card.caption}
-                    </span>
-                  </div>
+                  <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                    {statsLoading ? "—" : card.value}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{card.caption}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
-              Travel toolkit
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <section className="space-y-3">
+            <SectionHeading>Travel toolkit</SectionHeading>
+            <ListGroup>
               {travelToolkit.map(item => {
                 const Icon = item.icon;
                 return (
@@ -454,30 +578,24 @@ export function AccountDrawer({
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="flex items-start gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 p-4 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
+                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
                   >
-                    <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-4 h-4" />
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                      <Icon className="h-4 w-4" />
                     </span>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {item.description}
-                      </p>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                     </div>
                   </button>
                 );
               })}
-            </div>
+            </ListGroup>
           </section>
 
-          <section>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
-              Explore Urban Manual
-            </p>
-            <div className="space-y-2">
+          <section className="space-y-3">
+            <SectionHeading>Explore more</SectionHeading>
+            <ListGroup>
               {exploreNavigation.map(item => {
                 const Icon = item.icon;
                 return (
@@ -485,63 +603,51 @@ export function AccountDrawer({
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-4 py-3 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
+                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
                   >
-                    <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-4 h-4" />
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                      <Icon className="h-4 w-4" />
                     </span>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {item.description}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                     </div>
+                    <ExternalLink className="h-4 w-4 text-gray-400" />
                   </button>
                 );
               })}
-            </div>
+            </ListGroup>
           </section>
 
-          <section>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
-              Account & Support
-            </p>
-            <div className="space-y-2">
-              {accountLinks.map(item => {
+          <section className="space-y-3">
+            <SectionHeading>Account & Support</SectionHeading>
+            <ListGroup>
+              {essentials.map(item => {
                 const Icon = item.icon;
                 return (
                   <button
                     type="button"
                     key={item.label}
                     onClick={item.action}
-                    className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-4 py-3 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
+                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
                   >
-                    <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                      <Icon className="w-4 h-4" />
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                      <Icon className="h-4 w-4" />
                     </span>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {item.description}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
                   </button>
                 );
               })}
-            </div>
+            </ListGroup>
           </section>
 
           {isAdmin && (
-            <section>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">
-                Admin Tools
-              </p>
-              <div className="space-y-2">
+            <section className="space-y-3">
+              <SectionHeading>Admin tools</SectionHeading>
+              <ListGroup>
                 {adminLinks.map(item => {
                   const Icon = item.icon;
                   return (
@@ -549,53 +655,50 @@ export function AccountDrawer({
                       type="button"
                       key={item.label}
                       onClick={item.action}
-                      className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 px-4 py-3 text-left hover:border-gray-900 dark:hover:border-white transition-colors"
+                      className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
                     >
-                      <span className="p-2 rounded-xl bg-gray-100 dark:bg-gray-900/60 text-gray-900 dark:text-white">
-                        <Icon className="w-4 h-4" />
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                        <Icon className="h-4 w-4" />
                       </span>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {item.label}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {item.description}
-                        </p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                       </div>
-                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                      <ExternalLink className="h-4 w-4 text-gray-400" />
                     </button>
                   );
                 })}
-              </div>
+              </ListGroup>
             </section>
           )}
 
-          <section className="pt-2 border-t border-gray-200 dark:border-gray-800">
+          <div className="pt-2">
             <button
               type="button"
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-900 transition hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
             >
-              <LogOut className="w-4 h-4" />
-              Sign Out
+              <LogOut className="h-4 w-4" />
+              Sign out
             </button>
-          </section>
+          </div>
         </div>
       ) : (
-        <div className="text-center py-10 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Join The Urban Manual
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Save places, build trips, and sync your travel profile across every
-            device.
-          </p>
+        <div className="space-y-4 rounded-3xl border border-gray-200 bg-white/70 px-8 py-10 text-center text-gray-900 dark:border-gray-800 dark:bg-gray-950/60 dark:text-white">
+          <SectionHeading>Account</SectionHeading>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">Sign in to continue</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Save favorite places, log trips, and access concierge chat instantly.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => handleNavigate("/auth/login")}
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-black dark:bg-white dark:text-black"
           >
-            Sign In
+            <User className="h-4 w-4" />
+            Sign in
           </button>
         </div>
       )}
