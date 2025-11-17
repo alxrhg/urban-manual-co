@@ -2774,9 +2774,9 @@ export default function Home() {
                     )}
 
                     {/* Middle Nav Buttons - Separate row, always right-aligned */}
-                    <div className="flex justify-end items-center gap-3 flex-wrap w-full">
-                      {/* Filter Button - Expands inline below */}
-                      <div className="relative">
+                    <div className="w-full">
+                      <div className="flex justify-end items-center gap-3 flex-wrap">
+                        {/* Filter Button */}
                         <SearchFiltersComponent
                           filters={advancedFilters}
                           onFiltersChange={(newFilters) => {
@@ -2803,46 +2803,46 @@ export default function Home() {
                           }}
                           isAdmin={isAdmin}
                         />
-                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => router.push("/cities")}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2 flex-shrink-0"
-                        aria-label="Discover by cities"
-                      >
-                        <Globe2 className="h-5 w-5" />
-                        <span className="text-sm font-medium whitespace-nowrap">
-                          Discover by Cities
-                        </span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => router.push("/cities")}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2 flex-shrink-0"
+                          aria-label="Discover by cities"
+                        >
+                          <Globe2 className="h-5 w-5" />
+                          <span className="text-sm font-medium whitespace-nowrap">
+                            Discover by Cities
+                          </span>
+                        </button>
 
-                      {/* Grid/Map Toggle */}
-                      <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
-                        <button
-                          onClick={() => setViewMode("grid")}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === "grid"
-                              ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                          }`}
-                          aria-label="Grid view"
-                        >
-                          <LayoutGrid className="h-4 w-4" />
-                          <span>Grid</span>
-                        </button>
-                        <button
-                          onClick={() => setViewMode("map")}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
-                            viewMode === "map"
-                              ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                          }`}
-                          aria-label="Map view"
-                        >
-                          <Map className="h-4 w-4" />
-                          <span>Map</span>
-                        </button>
+                        {/* Grid/Map Toggle */}
+                        <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+                          <button
+                            onClick={() => setViewMode("grid")}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === "grid"
+                                ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                            }`}
+                            aria-label="Grid view"
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            <span>Grid</span>
+                          </button>
+                          <button
+                            onClick={() => setViewMode("map")}
+                            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+                              viewMode === "map"
+                                ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                            }`}
+                            aria-label="Map view"
+                          >
+                            <Map className="h-4 w-4" />
+                            <span>Map</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

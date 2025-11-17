@@ -21,8 +21,8 @@ export interface DrawerProps {
  * Universal Drawer Component
  * 
  * A reusable drawer component that handles:
- * - Mobile: Full-screen bottom sheet or slideover
- * - Desktop: Slideover from right
+ * - Mobile: Half-height bottom sheet (50vh)
+ * - Desktop: Half-height bottom sheet (50vh)
  * - Backdrop with click-to-close
  * - Body scroll lock
  * - Escape key handling
@@ -83,16 +83,12 @@ export function Drawer({
         />
       )}
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer - Half height bottom sheet */}
       <div
-        className={`md:hidden fixed inset-x-0 ${
-          mobileFullScreen ? 'bottom-0 top-0' : 'bottom-0'
-        } transform transition-transform duration-300 ease-out ${
+        className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } flex flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden overscroll-contain ${
-          !mobileFullScreen ? 'rounded-t-3xl' : ''
-        }`}
-        style={{ zIndex }}
+        } flex flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden overscroll-contain rounded-t-3xl`}
+        style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
       >
         {/* Header */}
         {(title || headerContent) && (
@@ -130,12 +126,12 @@ export function Drawer({
         )}
       </div>
 
-      {/* Desktop Slideover */}
+      {/* Desktop Drawer - Half height bottom sheet */}
       <div
-        className={`hidden md:flex fixed right-4 top-4 bottom-4 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 rounded-l-3xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-hidden flex-col`}
-        style={{ width: desktopWidth, zIndex }}
+        className={`hidden md:flex fixed inset-x-0 bottom-0 transform transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-y-0' : 'translate-y-full'
+        } flex-col bg-white dark:bg-gray-950 w-full max-w-full overflow-hidden rounded-t-3xl`}
+        style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
       >
         {/* Header */}
         {(title || headerContent) && (

@@ -128,7 +128,7 @@ export function SearchFiltersComponent({
   };
 
   return (
-    <>
+    <div className="w-full">
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
@@ -148,9 +148,9 @@ export function SearchFiltersComponent({
         {activeFiltersAnnouncement}
       </span>
 
-      {/* Expanded filter panel - Full width below row */}
+      {/* Expanded filter panel - Full width below row, pushes down grid */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-4 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
+        <div className="w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-4" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
           <div className="max-h-[80vh] overflow-y-auto">
             <div className="px-6 py-6 max-w-[1800px] mx-auto">
                 {/* Header */}
@@ -440,6 +440,6 @@ export function SearchFiltersComponent({
             </div>
           </div>
       )}
-    </>
+    </div>
   );
 }
