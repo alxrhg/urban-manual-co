@@ -642,13 +642,17 @@ export default function Account() {
             <div className="flex justify-end mb-4">
               <button
                 onClick={() => {
-                  setEditingTripId(null);
-                  setShowTripDialog(true);
+                  if (!user) {
+                    router.push('/auth/login');
+                  } else {
+                    setEditingTripId(null);
+                    setShowTripDialog(true);
+                  }
                 }}
                 className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
               >
                 <Plus className="h-3 w-3" />
-                New Trip
+                {user ? "New Trip" : "Sign in to create trip"}
               </button>
             </div>
 
@@ -658,12 +662,16 @@ export default function Account() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
                 <button
                   onClick={() => {
-                    setEditingTripId(null);
-                    setShowTripDialog(true);
+                    if (!user) {
+                      router.push('/auth/login');
+                    } else {
+                      setEditingTripId(null);
+                      setShowTripDialog(true);
+                    }
                   }}
                   className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
                 >
-                  Create your first trip
+                  {user ? "Create your first trip" : "Sign in to create trip"}
                 </button>
               </div>
             ) : (

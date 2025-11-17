@@ -144,13 +144,17 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
         <div className="space-y-6">
           <button
             onClick={() => {
-              setEditingTripId(null);
-              setShowTripDialog(true);
+              if (!user) {
+                router.push('/auth/login');
+              } else {
+                setEditingTripId(null);
+                setShowTripDialog(true);
+              }
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
           >
             <Plus className="h-4 w-4" />
-            <span>New Trip</span>
+            <span>{user ? "New Trip" : "Sign in to create trip"}</span>
           </button>
 
           {trips.length === 0 ? (
@@ -159,8 +163,12 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
               <button
                 onClick={() => {
-                  setEditingTripId(null);
-                  setShowTripDialog(true);
+                  if (!user) {
+                    router.push('/auth/login');
+                  } else {
+                    setEditingTripId(null);
+                    setShowTripDialog(true);
+                  }
                 }}
                 className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
               >

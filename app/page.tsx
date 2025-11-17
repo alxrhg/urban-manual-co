@@ -2770,12 +2770,18 @@ export default function Home() {
                         </>
                       ) : (
                         <button
-                          onClick={() => setShowTripPlanner(true)}
+                          onClick={() => {
+                            if (!user) {
+                              router.push('/auth/login');
+                            } else {
+                              setShowTripPlanner(true);
+                            }
+                          }}
                           className="flex items-center justify-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                          aria-label="Create Trip"
+                          aria-label={user ? "Create Trip" : "Sign in to create trip"}
                         >
                           <Plus className="h-5 w-5" />
-                          <span className="text-sm font-medium">Create Trip</span>
+                          <span className="text-sm font-medium">{user ? "Create Trip" : "Sign in to create trip"}</span>
                         </button>
                       )}
                     </div>
