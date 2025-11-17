@@ -2850,88 +2850,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Smart Recommendations - Show only when user is logged in and no active search */}
-            {user && !submittedQuery && !selectedCity && !selectedCategory && (
-              <div className="mb-12 md:mb-16">
-                <SmartRecommendations
-                  onCardClick={destination => {
-                    setSelectedDestination(destination);
-                    setIsDrawerOpen(true);
-
-                    // Track destination click
-                    trackDestinationClick({
-                      destinationSlug: destination.slug,
-                      position: 0,
-                      source: "smart_recommendations",
-                    });
-
-                    // Track for sequence prediction
-                    trackAction({
-                      type: "click",
-                      destination_id: destination.id,
-                      destination_slug: destination.slug,
-                    });
-
-                    // Also track with new analytics system
-                    if (destination.id) {
-                      import("@/lib/analytics/track").then(({ trackEvent }) => {
-                        trackEvent({
-                          event_type: "click",
-                          destination_id: destination.id,
-                          destination_slug: destination.slug,
-                          metadata: {
-                            category: destination.category,
-                            city: destination.city,
-                            source: "smart_recommendations",
-                          },
-                        });
-                      });
-                    }
-
-                    // Track click event to Discovery Engine for personalization
-                    if (user?.id) {
-                      fetch("/api/discovery/track-event", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          userId: user.id,
-                          eventType: "click",
-                          documentId: destination.slug,
-                          source: "smart_recommendations",
-                        }),
-                      }).catch(error => {
-                        console.warn(
-                          "Failed to track Discovery Engine event:",
-                          error
-                        );
-                      });
-                    }
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Sequence Predictions - Show after user has performed some actions */}
-            {user &&
-              predictions &&
-              predictions.predictions &&
-              predictions.predictions.length > 0 &&
-              !submittedQuery && (
-                <div className="mb-8">
-                  <SequencePredictionsInline
-                    predictions={predictions.predictions}
-                    compact={false}
-                  />
-                </div>
-              )}
-
-            {/* Trending Section - ML-powered Prophet forecasting */}
-            {!submittedQuery && (
-              <div className="mb-12 md:mb-16">
-                <TrendingSectionML limit={12} forecastDays={7} />
-              </div>
-            )}
-
             {/* Near Me - No Results Message */}
             {advancedFilters.nearMe &&
               userLocation &&
@@ -3167,6 +3085,90 @@ export default function Home() {
                 </>
               );
             })()}
+
+            {/* Smart Recommendations - Show only when user is logged in and no active search */}
+            {user && !submittedQuery && !selectedCity && !selectedCategory && (
+              <div className="mb-12 md:mb-16">
+                <SmartRecommendations
+                  onCardClick={destination => {
+                    setSelectedDestination(destination);
+                    setIsDrawerOpen(true);
+
+                    // Track destination click
+                    trackDestinationClick({
+                      destinationSlug: destination.slug,
+                      position: 0,
+                      source: "smart_recommendations",
+                    });
+
+                    // Track for sequence prediction
+                    trackAction({
+                      type: "click",
+                      destination_id: destination.id,
+                      destination_slug: destination.slug,
+                    });
+
+                    // Also track with new analytics system
+                    if (destination.id) {
+                      import("@/lib/analytics/track").then(({ trackEvent }) => {
+                        trackEvent({
+                          event_type: "click",
+                          destination_id: destination.id,
+                          destination_slug: destination.slug,
+                          metadata: {
+                            category: destination.category,
+                            city: destination.city,
+                            source: "smart_recommendations",
+                          },
+                        });
+                      });
+                    }
+
+                    // Track click event to Discovery Engine for personalization
+                    if (user?.id) {
+                      fetch("/api/discovery/track-event", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          userId: user.id,
+                          eventType: "click",
+                          documentId: destination.slug,
+                          source: "smart_recommendations",
+                        }),
+                      }).catch(error => {
+                        console.warn(
+                          "Failed to track Discovery Engine event:",
+                          error
+                        );
+                      });
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Sequence Predictions - Show after user has performed some actions */}
+            {user &&
+              predictions &&
+              predictions.predictions &&
+              predictions.predictions.length > 0 &&
+              !submittedQuery && (
+                <div className="mb-8">
+                  <SequencePredictionsInline
+                    predictions={predictions.predictions}
+                    compact={false}
+                  />
+                </div>
+              )}
+
+            {/* Trending Section - ML-powered Prophet forecasting */}
+            {!submittedQuery && (
+              <div className="mb-12 md:mb-16">
+                <TrendingSectionML limit={12} forecastDays={7} />
+              </div>
+            )}
+
+
           </div>
         </div>
 
