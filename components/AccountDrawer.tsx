@@ -14,6 +14,8 @@ import {
   Bookmark,
   ChevronRight,
   Loader2,
+  Trophy,
+  Folder,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -233,10 +235,12 @@ export function AccountDrawer({
     { icon: Bookmark, label: "Saved", action: () => runAfterClose(() => setIsSavedPlacesOpen(true)) },
     { icon: Layers, label: "Lists", action: () => handleNavigate("/account?tab=collections") },
     { icon: Compass, label: "Trips", action: () => runAfterClose(() => setIsTripsOpen(true)) },
+    { icon: Folder, label: "Collections", action: () => handleNavigate("/account?tab=collections") },
+    { icon: Trophy, label: "Achievements", action: () => handleNavigate("/account?tab=achievements") },
   ];
 
   const accountContent = (
-    <div className="px-5 py-6 space-y-7">
+    <div className="px-6 py-8 space-y-12">
       {user ? (
         <>
           {/* Hero Card - Profile Header with Exploration Progress */}
@@ -306,7 +310,7 @@ export function AccountDrawer({
 
           {/* Shortcuts - Your Spaces */}
           <SectionCard>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Your Spaces
               </h3>

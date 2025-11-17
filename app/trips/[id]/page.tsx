@@ -570,7 +570,7 @@ export default function TripDetailPage() {
           </div>
 
           {/* Action Row - Button Group, Subtle Variant, Small Size */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={handleSave}
               disabled={saving}
@@ -603,7 +603,7 @@ export default function TripDetailPage() {
             {trip.user_id === user?.id && (
               <button
                 onClick={deleteTrip}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-auto"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-800/50 rounded-lg hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors ml-auto"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -745,7 +745,7 @@ export default function TripDetailPage() {
 
           {/* Cover Image Section */}
           {trip.user_id === user?.id && (
-            <section className="flex flex-col gap-2">
+            <section className="flex flex-col gap-3">
               <h2 className="text-base font-semibold text-gray-900 dark:text-white">
                 Cover Image
               </h2>

@@ -247,7 +247,7 @@ export function NavigationRow({
             )}
           </div>
 
-          {/* 3. Filter Button - Capsule, opens filters expand pushdown */}
+          {/* 3. Filter Button - Right of city buttons */}
           <div className="relative">
             <button
               onClick={() => setIsFiltersOpen(!isFiltersOpen)}
@@ -400,8 +400,8 @@ export function NavigationRow({
         }}
       >
         <div className="w-full px-6 md:px-10 lg:px-12 pt-5 pb-6 mb-6">
-          <div className="w-full bg-white dark:bg-gray-950 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 px-6 pt-5 pb-6">
-            <div className="flex flex-col space-y-5">
+          <div className="w-full bg-gray-50 dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 px-8 pt-6 pb-8">
+            <div className="flex flex-col space-y-12">
               {/* Heading */}
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Filter destinations

@@ -206,15 +206,15 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
                     )}
 
                     {/* Content */}
-                    <div className="p-4 space-y-2">
+                    <div className="p-3 space-y-1.5">
                       {/* Trip Title */}
                       <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
                         {trip.title}
                       </h3>
 
-                      {/* Date Range */}
+                      {/* Date Range - Compact Layout */}
                       {dateRange && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                           <Calendar className="w-3 h-3" />
                           <span>{dateRange}</span>
                         </div>
@@ -222,7 +222,7 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
 
                       {/* City */}
                       {trip.destination && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                           <MapPin className="w-3 h-3" />
                           <span>{trip.destination}</span>
                         </div>

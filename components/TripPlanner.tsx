@@ -634,10 +634,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
         </div>
       ) : step === 'create' ? (
-        <div className="space-y-6">
-          <div>
-            <label htmlFor="trip-name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Trip Name *
+        <div className="space-y-8">
+          <div className="space-y-3">
+            <label htmlFor="trip-name" className="block text-sm text-gray-700 dark:text-gray-300">
+              Trip Name
             </label>
             <input
               id="trip-name"
@@ -649,9 +649,9 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             />
           </div>
 
-          <div>
-            <label htmlFor="destination" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Destination *
+          <div className="space-y-3">
+            <label htmlFor="destination" className="block text-sm text-gray-700 dark:text-gray-300">
+              Destination
             </label>
             <input
               id="destination"
@@ -663,8 +663,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             />
           </div>
 
-          <div>
-            <label htmlFor="hotel" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+          <div className="space-y-3">
+            <label htmlFor="hotel" className="block text-sm text-gray-700 dark:text-gray-300">
               Hotel / Base Location
             </label>
             <input
@@ -678,9 +678,9 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="start-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                Start Date *
+            <div className="space-y-3">
+              <label htmlFor="start-date" className="block text-sm text-gray-700 dark:text-gray-300">
+                Start Date
               </label>
               <input
                 id="start-date"
@@ -691,9 +691,9 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               />
             </div>
 
-            <div>
-              <label htmlFor="end-date" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                End Date *
+            <div className="space-y-3">
+              <label htmlFor="end-date" className="block text-sm text-gray-700 dark:text-gray-300">
+                End Date
               </label>
               <input
                 id="end-date"

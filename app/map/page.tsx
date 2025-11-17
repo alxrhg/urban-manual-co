@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
 import MapView from '@/components/MapView';
-import { Search, X, List, ChevronRight } from 'lucide-react';
+import { Search, X, List, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import Image from 'next/image';
 
 // Lazy load components
@@ -172,70 +172,23 @@ export default function MapPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      {/* Filters Bar - Top (below header) */}
+      {/* Header - Back button left, Filter button right */}
       <div className="relative left-0 right-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top">
-        <div className="w-full px-6 md:px-10 lg:px-12 py-4 md:py-6">
-          <div className="flex flex-col gap-4">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <input
-                type="search"
-                value={filters.searchQuery}
-                onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                placeholder="Search cities, places, vibes…"
-                className="w-full pl-10 pr-10 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
-              />
-              {filters.searchQuery && (
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Category Chips - Scrollable on mobile */}
-            <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible md:pb-0 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {categories.map(category => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryToggle(category)}
-                  className={`px-4 py-2 rounded-2xl text-xs font-medium border transition-all duration-200 ease-out whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
-                    filters.categories.has(category.toLowerCase())
-                      ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:opacity-60'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-              
-              {/* Michelin Filter */}
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
-                className={`px-4 py-2 rounded-2xl text-xs font-medium border transition-all duration-200 ease-out flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-h-[44px] md:min-h-0 ${
-                  filters.michelin
-                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                    : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:opacity-60'
-                }`}
-              >
-                <img
-                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                  alt="Michelin"
-                  className="h-3 w-3"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src !== '/michelin-star.svg') {
-                      target.src = '/michelin-star.svg';
-                    }
-                  }}
-                />
-                Michelin
-              </button>
-            </div>
-          </div>
+        <div className="w-full px-6 md:px-10 lg:px-12 py-4 flex items-center justify-between">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <ChevronRight className="w-4 h-4 rotate-180" />
+            <span>Back</span>
+          </button>
+          <button
+            onClick={() => setShowListPanel(!showListPanel)}
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            <span>Filters</span>
+          </button>
         </div>
       </div>
 
@@ -297,19 +250,20 @@ export default function MapPage() {
       </div>
 
       {/* List Panel - Mobile (Bottom Sheet) */}
-      {showListPanel && (
-        <>
-          {/* Backdrop */}
+      <div className="md:hidden">
+        {/* Backdrop - Only show when expanded */}
+        {showListPanel && (
           <div 
-            className="md:hidden fixed inset-0 bg-black/20 z-20"
+            className="fixed inset-0 bg-black/20 z-20"
             onClick={() => setShowListPanel(false)}
           />
-          {/* Panel */}
-          <div className="md:hidden fixed inset-x-0 bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-30 overflow-hidden rounded-t-2xl shadow-2xl safe-area-bottom"
-            style={{ 
-              height: 'min(50vh, 400px)',
-              maxHeight: '50vh'
-            }}>
+        )}
+        {/* Panel */}
+        <div className="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-30 overflow-hidden rounded-t-2xl shadow-2xl safe-area-bottom"
+          style={{ 
+            height: showListPanel ? '70%' : '80px',
+            transition: 'height 0.3s ease-out'
+          }}>
             {/* Handle bar with close button */}
             <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-10 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -364,22 +318,8 @@ export default function MapPage() {
               </div>
             </div>
           </div>
-        </>
-      )}
-
-      {/* List Toggle Button - Mobile (Floating) */}
-      {!showListPanel && (
-        <button
-          onClick={() => setShowListPanel(true)}
-          className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white rounded-2xl text-xs font-medium hover:opacity-60 transition-all duration-200 ease-out shadow-lg min-h-[44px] safe-area-bottom"
-          style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
-        >
-          <div className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            <span>Show List ({filteredDestinations.length})</span>
-          </div>
-        </button>
-      )}
+        </div>
+      </div>
 
       {/* Destination Drawer */}
       <DestinationDrawer
