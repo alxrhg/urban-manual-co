@@ -51,7 +51,6 @@ import {
 } from '@/lib/tracking';
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
-import { NavigationRow } from '@/components/NavigationRow';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { type RefinementTag } from '@/components/RefinementChips';
@@ -2576,76 +2575,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Navigation Row - Horizontal navigation with all controls */}
-        <NavigationRow
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          cities={cities}
-          selectedCity={selectedCity}
-          onCityChange={(city) => {
-            setSelectedCity(city);
-            setCurrentPage(1);
-            trackFilterChange({
-              filterType: "city",
-              value: city || "all",
-            });
-          }}
-          showAllCities={showAllCities}
-          onToggleShowAllCities={() => setShowAllCities(!showAllCities)}
-          filters={advancedFilters}
-          onFiltersChange={(newFilters) => {
-            setAdvancedFilters(newFilters);
-            if (newFilters.city !== undefined) {
-              setSelectedCity(newFilters.city || '');
-            }
-            if (newFilters.category !== undefined) {
-              setSelectedCategory(newFilters.category || '');
-            }
-            Object.entries(newFilters).forEach(([key, value]) => {
-              if (value !== undefined && value !== null && value !== '') {
-                trackFilterChange({ filterType: key, value });
-              }
-            });
-          }}
-          availableCities={cities}
-          availableCategories={categories}
-          onLocationChange={handleLocationChange}
-          sortBy={sortBy}
-          onSortChange={(newSort) => {
-            setSortBy(newSort);
-            setCurrentPage(1);
-          }}
-          isAdmin={isAdmin}
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={(category) => {
-            setSelectedCategory(category);
-            setCurrentPage(1);
-            trackFilterChange({
-              filterType: "category",
-              value: category || "all",
-            });
-          }}
-          advancedFilters={advancedFilters}
-          onAdvancedFiltersChange={(newFilters) => {
-            setAdvancedFilters(newFilters);
-            if (newFilters.category !== undefined) {
-              setSelectedCategory(newFilters.category || '');
-            }
-            setCurrentPage(1);
-          }}
-          onTrackFilterChange={trackFilterChange}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onCreateTrip={() => {
-            if (!user) {
-              router.push('/auth/login');
-            } else {
-              setShowTripPlanner(true);
-            }
-          }}
-          user={user}
-        />
 
         {/* Edit Mode Banner */}
         {editModeActive && (
