@@ -33,11 +33,14 @@
     "check:exa-progress": "tsx scripts/check-exa-enrichment-progress.ts",
     "enrich:architects": "tsx scripts/enrich-architects.ts",
     "enrich:movements": "tsx scripts/enrich-movements.ts",
-    "enrich:materials": "tsx scripts/enrich-materials.ts"
+    "enrich:materials": "tsx scripts/enrich-materials.ts",
+    "export:r2": "tsx scripts/export-destinations-to-r2.ts",
+    "export:r2:dry-run": "tsx scripts/export-destinations-to-r2.ts --dry-run"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.4",
     "@amcharts/amcharts5-geodata": "^5.1.5",
+    "@aws-sdk/client-s3": "^3.932.0",
     "@google-cloud/discoveryengine": "^2.5.2",
     "@google/generative-ai": "^0.24.1",
     "@payloadcms/db-postgres": "^3.63.0",
