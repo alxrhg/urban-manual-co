@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Edit2, Eye, Calendar, MapPin, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Eye, Calendar, MapPin, Loader2, X } from 'lucide-react';
 import { TripPlanner } from '@/components/TripPlanner';
 import { TripViewDrawer } from '@/components/TripViewDrawer';
 import type { Trip } from '@/types/trip';
@@ -23,6 +23,7 @@ export default function TripsPage() {
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [viewingTripId, setViewingTripId] = useState<string | null>(null);
   const [deleteConfirmTrip, setDeleteConfirmTrip] = useState<{ id: string; title: string } | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'planning' | 'upcoming' | 'past'>('all');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -138,11 +139,11 @@ export default function TripsPage() {
     
     const formatDate = (dateStr: string) => {
       const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
     if (startDate && endDate) {
-      return `${formatDate(startDate)} – ${formatDate(endDate)}`;
+      return `${formatDate(startDate)} → ${formatDate(endDate)}`;
     }
     if (startDate) {
       return `From ${formatDate(startDate)}`;
@@ -156,14 +157,14 @@ export default function TripsPage() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'planning':
-        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300';
       case 'upcoming':
       case 'ongoing':
-        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800';
+        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300';
       case 'completed':
-        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700';
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
       default:
-        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700';
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
     }
   };
 
@@ -197,36 +198,92 @@ export default function TripsPage() {
   const hasAnyTrips = trips.length > 0;
 
   return (
-    <main className="w-full px-6 md:px-10 lg:px-12 py-12 md:py-16 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-semibold text-gray-900 dark:text-white tracking-tight mb-2">
+    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+      <div className="w-full max-w-7xl mx-auto">
+        {/* Header - Editorial Style */}
+        <div className="mb-16 pb-8 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1">
+              <h1 className="text-4xl font-medium text-gray-900 dark:text-white tracking-tight mb-3">
                 Trips
               </h1>
-              {hasAnyTrips && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
-                  {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
-                </p>
-              )}
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-light max-w-2xl">
+                Plan and revisit your journeys with clarity.
+              </p>
             </div>
             <button
-              onClick={() => setShowCreateDialog(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:opacity-90 transition-all duration-180 ease-out"
+              onClick={() => {
+                if (!user) {
+                  router.push('/auth/login');
+                } else {
+                  setShowCreateDialog(true);
+                }
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:opacity-90 transition-all duration-180 ease-out flex-shrink-0"
             >
               <Plus className="h-4 w-4" />
-              <span>New Trip</span>
+              <span>{user ? "New Trip" : "Sign in to create trip"}</span>
             </button>
           </div>
+
+          {/* Optional Filters */}
+          {hasAnyTrips && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveFilter('all')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
+                  activeFilter === 'all'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                All
+              </button>
+              {groupedTrips.planning.length > 0 && (
+                <button
+                  onClick={() => setActiveFilter('planning')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
+                    activeFilter === 'planning'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Planning
+                </button>
+              )}
+              {groupedTrips.upcoming.length > 0 && (
+                <button
+                  onClick={() => setActiveFilter('upcoming')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
+                    activeFilter === 'upcoming'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Upcoming
+                </button>
+              )}
+              {groupedTrips.past.length > 0 && (
+                <button
+                  onClick={() => setActiveFilter('past')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
+                    activeFilter === 'past'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Past
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Empty State */}
         {!hasAnyTrips ? (
-          <div className="text-center py-20 space-y-6">
+          <div className="text-center py-24 space-y-6">
             <div className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
+              <h2 className="text-xl font-medium text-gray-900 dark:text-white tracking-tight">
                 No trips yet
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 font-light max-w-sm mx-auto">
@@ -234,21 +291,33 @@ export default function TripsPage() {
               </p>
             </div>
             <button
-              onClick={() => setShowCreateDialog(true)}
-              className="px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+              onClick={() => {
+                if (!user) {
+                  router.push('/auth/login');
+                } else {
+                  setShowCreateDialog(true);
+                }
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
             >
-              Create Your First Trip
+              <Plus className="h-4 w-4" />
+              {user ? "Create Trip" : "Sign in to create trip"}
             </button>
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-16">
             {/* In Planning */}
-            {groupedTrips.planning.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight uppercase">
-                  In Planning
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groupedTrips.planning.length > 0 && (activeFilter === 'all' || activeFilter === 'planning') && (
+              <section>
+                <div className="flex items-center gap-3 mb-6">
+                  <h2 className="text-base font-medium text-gray-900 dark:text-white tracking-tight">
+                    In Planning
+                  </h2>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-light">
+                    {groupedTrips.planning.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {groupedTrips.planning.map(trip => (
                     <TripCard
                       key={trip.id}
@@ -268,13 +337,18 @@ export default function TripsPage() {
               </section>
             )}
 
-            {/* Upcoming */}
-            {groupedTrips.upcoming.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight uppercase">
-                  Upcoming
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Upcoming Trips */}
+            {groupedTrips.upcoming.length > 0 && (activeFilter === 'all' || activeFilter === 'upcoming') && (
+              <section>
+                <div className="flex items-center gap-3 mb-6">
+                  <h2 className="text-base font-medium text-gray-900 dark:text-white tracking-tight">
+                    Upcoming Trips
+                  </h2>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-light">
+                    {groupedTrips.upcoming.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {groupedTrips.upcoming.map(trip => (
                     <TripCard
                       key={trip.id}
@@ -295,12 +369,17 @@ export default function TripsPage() {
             )}
 
             {/* Past Trips */}
-            {groupedTrips.past.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight uppercase">
-                  Past Trips
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groupedTrips.past.length > 0 && (activeFilter === 'all' || activeFilter === 'past') && (
+              <section>
+                <div className="flex items-center gap-3 mb-6">
+                  <h2 className="text-base font-medium text-gray-900 dark:text-white tracking-tight">
+                    Past Trips
+                  </h2>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-light">
+                    {groupedTrips.past.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {groupedTrips.past.map(trip => (
                     <TripCard
                       key={trip.id}
@@ -364,10 +443,10 @@ export default function TripsPage() {
             onClick={() => setDeleteConfirmTrip(null)}
           />
           <div className="relative bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               Delete Trip
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-light">
               Are you sure you want to delete &ldquo;{deleteConfirmTrip.title}&rdquo;? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
@@ -405,13 +484,16 @@ function TripCard({ trip, onView, onEdit, onDelete, formatDateRange, getStatusBa
   const imageUrl = trip.cover_image || trip.firstLocationImage;
   const dateRange = formatDateRange(trip.start_date, trip.end_date);
 
+  // Format meta info: {city} · {start_date} → {end_date}
+  const metaInfo = [trip.destination, dateRange].filter(Boolean).join(' · ');
+
   return (
     <div
-      className="group flex flex-col overflow-hidden rounded-xl border border-gray-200/50 dark:border-gray-800/50 bg-white dark:bg-gray-950 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180 ease-out cursor-pointer"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white dark:bg-gray-950 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180 ease-out cursor-pointer"
       onClick={onView}
     >
-      {/* Image */}
-      <div className="relative h-48 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+      {/* Image - 16:9 ratio */}
+      <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800 overflow-hidden">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -426,70 +508,56 @@ function TripCard({ trip, onView, onEdit, onDelete, formatDateRange, getStatusBa
           </div>
         )}
         {/* Status Badge */}
-        <div className="absolute top-3 right-3">
-          <span className={`px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-sm ${getStatusBadgeColor(trip.status)}`}>
+        <div className="absolute top-4 right-4">
+          <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusBadgeColor(trip.status)}`}>
             {getStatusLabel(trip.status)}
           </span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col p-5">
-        {/* Title */}
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2">
+      <div className="flex flex-1 flex-col p-5 md:p-6">
+        {/* Title - Bold, premium */}
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 tracking-tight">
           {trip.title}
         </h3>
 
-        {/* Destination */}
-        {trip.destination && (
-          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">{trip.destination}</span>
+        {/* Meta Info - {city} · {start_date} → {end_date} */}
+        {metaInfo && (
+          <div className="text-sm text-gray-500 dark:text-gray-400 mb-5 font-light">
+            {metaInfo}
           </div>
         )}
 
-        {/* Date Range */}
-        {dateRange && (
-          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-500 mb-4">
-            <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>{dateRange}</span>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-4 mt-auto border-t border-gray-200/50 dark:border-gray-800/50">
+        {/* Action Row - Inline text buttons */}
+        <div className="flex items-center gap-4 pt-4 mt-auto border-t border-gray-200/50 dark:border-gray-800/50">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onView();
             }}
-            className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white hover:opacity-70 transition-opacity"
+            className="text-sm font-medium text-gray-900 dark:text-white hover:opacity-70 transition-opacity"
           >
-            <Eye className="w-4 h-4" />
             View
           </button>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg transition-all duration-180 ease-out"
-              aria-label={`Edit ${trip.title}`}
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-180 ease-out"
-              aria-label={`Delete ${trip.title}`}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="text-sm font-medium text-red-600 dark:text-red-400 hover:opacity-70 transition-opacity ml-auto"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>
