@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
@@ -10,6 +10,17 @@ import {
   Edit2,
   Trash2,
   Loader2,
+  ArrowLeft,
+  Share2,
+  Link2,
+  Globe,
+  PlaneTakeoff,
+  PlaneLanding,
+  UserPlus,
+  Send,
+  Users,
+  Plus,
+  StickyNote,
 } from 'lucide-react';
 import { Drawer } from '@/components/ui/Drawer';
 import { TripDay } from '@/components/TripDay';
@@ -33,7 +44,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -42,6 +53,9 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
   const [editedStartDate, setEditedStartDate] = useState('');
   const [editedEndDate, setEditedEndDate] = useState('');
   const [savingChanges, setSavingChanges] = useState(false);
+  const [showDayPicker, setShowDayPicker] = useState(false);
+  const [updatingVisibility, setUpdatingVisibility] = useState(false);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && tripId) {
@@ -229,6 +243,75 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     return acc;
   }, {} as Record<number, ItineraryItem[]>);
 
+  const maxDayFromItems = itineraryItems.reduce((max, item) => Math.max(max, item.day), 0);
+  const dayCountFromDates = (() => {
+    if (!trip?.start_date || !trip?.end_date) return 0;
+    const start = new Date(trip.start_date);
+    const end = new Date(trip.end_date);
+    const diff = Math.max(0, end.getTime() - start.getTime());
+    return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
+  })();
+  const computedDayCount = Math.max(maxDayFromItems, dayCountFromDates, 1);
+  const dayNumbers = Array.from({ length: computedDayCount }, (_, index) => index + 1);
+  const totalDays = dayNumbers.length;
+  const totalStops = itineraryItems.length;
+  const coverImageUrl = trip?.cover_image || '/placeholder-image.jpg';
+  const shareCode = trip ? trip.id.slice(0, 5).toUpperCase() : '-----';
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/trips/${tripId}` : '';
+  const uniqueCities = new Set<string>();
+  itineraryItems.forEach((item) => {
+    const destinationData = item.destination_slug ? destinations.get(item.destination_slug) : null;
+    if (destinationData?.city) {
+      uniqueCities.add(destinationData.city);
+    }
+  });
+  if (trip?.destination) {
+    trip.destination
+      .split(',')
+      .map((city) => city.trim())
+      .filter(Boolean)
+      .forEach((city) => uniqueCities.add(city));
+  }
+  const visitingCities = Array.from(uniqueCities).slice(0, 3).join(', ');
+  const dateRangeLabel = trip?.start_date && trip?.end_date ? `${formatDate(trip.start_date)} – ${formatDate(trip.end_date)}` : null;
+  const tripStatusLabel = trip?.status ? trip.status.replace(/_/g, ' ') : 'Planning';
+  const memoPlaceholder = 'Leave yourself a quick note for this trip – packing reminders, mood boards, or restaurant lists.';
+  const overviewStats = [
+    { label: 'Days', value: totalDays > 0 ? `${totalDays}` : 'Add dates' },
+    { label: 'Stops', value: totalStops > 0 ? `${totalStops}` : '0 planned' },
+    { label: 'Status', value: tripStatusLabel },
+  ];
+  const parseNotesData = (notes?: string | null): ItineraryItemNotes => {
+    if (!notes) return {};
+    try {
+      return JSON.parse(notes) as ItineraryItemNotes;
+    } catch {
+      return { raw: notes };
+    }
+  };
+
+  const getFlightCity = (place?: any) => {
+    if (!place) return '';
+    if (typeof place === 'string') return place;
+    return place.city || place.name || place.code || '';
+  };
+
+  const flightItems = itineraryItems
+    .map((item) => {
+      const notesData = parseNotesData(item.notes);
+      const description = item.description?.toLowerCase() ?? '';
+      const looksLikeFlight =
+        description.includes('flight') ||
+        description.includes('airport') ||
+        Boolean(notesData.flightNumber || notesData.from || notesData.to);
+      if (!looksLikeFlight) return null;
+      return { item, notesData };
+    })
+    .filter(Boolean) as { item: ItineraryItem; notesData: ItineraryItemNotes }[];
+
+  const departureFlight = flightItems[0];
+  const returnFlight = flightItems.length > 1 ? flightItems[flightItems.length - 1] : flightItems[0];
+
   // Calculate date for a specific day based on trip start_date
   const getDateForDay = (dayNumber: number): string => {
     if (!trip?.start_date) {
@@ -249,14 +332,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
         : null;
 
       // Parse notes for additional data
-      let notesData: ItineraryItemNotes = {};
-      if (item.notes) {
-        try {
-          notesData = JSON.parse(item.notes) as ItineraryItemNotes;
-        } catch {
-          notesData = { raw: item.notes };
-        }
-      }
+      const notesData = parseNotesData(item.notes);
 
       // Generate location ID from item ID for display, but store original item ID
       const locationId = parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now();
@@ -277,6 +353,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
 
   const handleAddLocation = (dayNumber: number) => {
     setSelectedDay(dayNumber);
+    setShowDayPicker(false);
     setShowAddLocationModal(true);
   };
 
@@ -358,6 +435,59 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     }
   };
 
+  const handleVisibilityToggle = async (nextValue: boolean) => {
+    if (!trip || !user) return;
+
+    try {
+      setUpdatingVisibility(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .update({ is_public: nextValue })
+        .eq('id', trip.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setTrip((prev) => (prev ? { ...prev, is_public: nextValue } : prev));
+      setShareMessage(nextValue ? 'Trip is now public' : 'Trip kept private');
+      setTimeout(() => setShareMessage(null), 2500);
+    } catch (error) {
+      console.error('Error updating trip visibility:', error);
+      alert('Unable to update trip visibility. Please try again.');
+    } finally {
+      setUpdatingVisibility(false);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        throw new Error('Clipboard not available');
+      }
+      setShareMessage('Share link copied');
+      setTimeout(() => setShareMessage(null), 2500);
+    } catch (error) {
+      console.error('Error copying link:', error);
+      alert('Unable to copy link. Please try again or copy it manually.');
+    }
+  };
+
+  const handleShareAction = (message: string) => {
+    setShareMessage(message);
+    setTimeout(() => setShareMessage(null), 2000);
+  };
+
+  const handleDayPickerSelect = (dayNumber: number) => {
+    handleAddLocation(dayNumber);
+  };
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null;
     try {
@@ -380,54 +510,105 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     }
   };
 
+  const renderFlightTicket = (
+    label: string,
+    flight?: { item: ItineraryItem; notesData: ItineraryItemNotes },
+    icon?: React.ReactNode,
+  ) => {
+    const defaultDate = flight ? getDateForDay(flight.item.day) : null;
+    const formattedDate = defaultDate ? formatDate(defaultDate) : null;
+    const fromCity = flight ? getFlightCity(flight.notesData.from) : '';
+    const toCity = flight ? getFlightCity(flight.notesData.to) : '';
+    const route = fromCity && toCity
+      ? `${fromCity} → ${toCity}`
+      : visitingCities || trip?.destination || 'Add route';
+    const flightNumber = flight?.notesData.flightNumber || flight?.item.title || 'Add flight number';
+    const airline = flight?.notesData.airline || flight?.notesData.raw || 'Airline TBD';
+    const time = flight?.notesData.departureTime || flight?.notesData.arrivalTime || flight?.item.time;
+
+    return (
+      <div className="rounded-2xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-gray-950/80 p-4 shadow-sm">
+        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-blue-600 dark:text-blue-300">
+          <div className="flex items-center gap-2">
+            {icon}
+            <span>{label}</span>
+          </div>
+          <span>{formattedDate || 'Set date'}</span>
+        </div>
+        <div className="mt-3 space-y-2">
+          <p className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">{route}</p>
+          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+            <span>{flightNumber}</span>
+            <span>{time || 'Add time'}</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{airline}</p>
+        </div>
+      </div>
+    );
+  };
+
   // Build header with actions
   const headerContent = trip ? (
-    <div className="flex items-center justify-between w-full">
-      <div className="flex-1 min-w-0">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">{trip.title}</h2>
-        {trip.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{trip.description}</p>
+    <div className="flex items-center gap-3 w-full">
+      <button
+        onClick={onClose}
+        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+        aria-label="Close trip drawer"
+      >
+        <ArrowLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+      </button>
+      <div className="flex-1 text-center">
+        <p className="text-[11px] uppercase tracking-[0.4em] text-gray-400 dark:text-gray-500">information</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{trip.title}</p>
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={handleCopyShareLink}
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+          aria-label="Copy share link"
+        >
+          <Share2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+        </button>
+        {trip.user_id === user?.id && (
+          <div className="flex items-center gap-1">
+            {isEditMode ? (
+              <>
+                <button
+                  onClick={handleSaveChanges}
+                  disabled={savingChanges || !editedTitle.trim()}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-900 text-white dark:bg-white dark:text-gray-900 transition-colors disabled:opacity-50"
+                >
+                  {savingChanges ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  disabled={savingChanges}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsEditMode(true)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+                  aria-label="Edit trip"
+                >
+                  <Edit2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  aria-label="Delete trip"
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
-      {trip.user_id === user?.id && (
-        <div className="flex items-center gap-2 ml-4">
-          {isEditMode ? (
-            <>
-              <button
-                onClick={handleSaveChanges}
-                disabled={savingChanges || !editedTitle.trim()}
-                className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
-              >
-                {savingChanges ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                onClick={handleCancelEdit}
-                disabled={savingChanges}
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setIsEditMode(true)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                aria-label="Edit trip"
-              >
-                <Edit2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                aria-label="Delete trip"
-              >
-                <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-              </button>
-            </>
-          )}
-        </div>
-      )}
     </div>
   ) : undefined;
 
@@ -443,207 +624,384 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
           <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Edit Mode Banner */}
+        <div className="space-y-6 pb-12">
           {isEditMode && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
-              <p className="text-xs text-blue-700 dark:text-blue-300">
-                <strong>Edit Mode:</strong> You can now edit trip details, add/remove locations, and reorder items.
-              </p>
+            <div className="rounded-2xl border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-900/20 px-4 py-3 text-xs text-blue-700 dark:text-blue-200">
+              <strong className="font-semibold">Edit mode:</strong> Update trip info, logistics, and itinerary items. Don’t forget to save when you’re done.
             </div>
           )}
 
-          {/* Trip Details - Edit Mode */}
-          {isEditMode ? (
-            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Trip Title
-                </label>
+          <section className="rounded-3xl border border-amber-100 dark:border-gray-800 bg-[#f9f5ef] dark:bg-gray-950/60 p-5 space-y-5">
+            <div className="space-y-3">
+              <p className="text-[11px] uppercase tracking-[0.35em] text-amber-700/70">Trip title</p>
+              {isEditMode ? (
                 <input
                   type="text"
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  placeholder="Enter trip title"
+                  className="w-full px-3 py-2 text-lg border border-amber-200 rounded-2xl bg-white/80 focus:outline-none focus:border-amber-500"
+                  placeholder="Name this adventure"
                 />
+              ) : (
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white leading-snug">{trip.title}</h2>
+              )}
+              <div className="flex flex-wrap gap-2 text-xs text-amber-900/70">
+                {dateRangeLabel ? (
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {dateRangeLabel}
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 text-amber-800"
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    Add timeframe
+                  </button>
+                )}
+                {visitingCities && (
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {visitingCities}
+                  </span>
+                )}
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description (Optional)
-                </label>
-                <textarea
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm resize-none"
-                  placeholder="Describe your trip"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Cities Visiting (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={editedDestination}
-                  onChange={(e) => setEditedDestination(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  placeholder="e.g., Paris, London, Rome"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Start Date (Optional)
-                  </label>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-amber-700/70">Departure</p>
+                {isEditMode ? (
                   <input
                     type="date"
                     value={formatDateForInput(editedStartDate)}
                     onChange={(e) => setEditedStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                    className="mt-1 w-full px-3 py-2 rounded-2xl border border-amber-200 bg-white/90 focus:outline-none focus:border-amber-500"
                   />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    End Date (Optional)
-                  </label>
+                ) : (
+                  <p className="mt-1 text-sm text-gray-900 dark:text-white">{formatDate(editedStartDate) || 'Add date'}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-amber-700/70">Return</p>
+                {isEditMode ? (
                   <input
                     type="date"
                     value={formatDateForInput(editedEndDate)}
                     onChange={(e) => setEditedEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                    className="mt-1 w-full px-3 py-2 rounded-2xl border border-amber-200 bg-white/90 focus:outline-none focus:border-amber-500"
                   />
-                </div>
+                ) : (
+                  <p className="mt-1 text-sm text-gray-900 dark:text-white">{formatDate(editedEndDate) || 'Add date'}</p>
+                )}
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-amber-700/70">Cities</p>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={editedDestination}
+                    onChange={(e) => setEditedDestination(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 rounded-2xl border border-amber-200 bg-white/90 focus:outline-none focus:border-amber-500"
+                    placeholder="Seoul, Busan, Tokyo"
+                  />
+                ) : (
+                  <p className="mt-1 text-sm text-gray-900 dark:text-white">{trip.destination || 'Add cities'}</p>
+                )}
               </div>
             </div>
-          ) : (
-            /* Trip Metadata - View Mode */
-            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-              {trip.destination && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>{trip.destination}</span>
-                </div>
-              )}
-              {(trip.start_date || trip.end_date) && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>
-                    {formatDate(trip.start_date)}
-                    {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                  trip.status === 'planning' ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' :
-                  trip.status === 'upcoming' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                  trip.status === 'ongoing' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                  'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                }`}>
-                  {trip.status}
-                </span>
-              </div>
-            </div>
-          )}
 
-          {/* Itinerary by Day */}
-          {Object.keys(itemsByDay).length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 px-6 py-12 text-center space-y-4">
-              <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700" />
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">No items yet</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {isEditMode 
-                  ? 'Click "Add Location" to start building your itinerary.'
-                  : 'No locations added to this trip yet.'}
+            <div className="flex flex-wrap gap-3">
+              {overviewStats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="px-4 py-2 rounded-full bg-white/80 text-xs tracking-[0.2em] uppercase text-amber-800/80"
+                >
+                  <span className="block text-[10px] text-amber-400">{stat.label}</span>
+                  <span className="text-base font-semibold tracking-normal">{stat.value}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <section className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400">Members</p>
+                  <p className="text-xl font-semibold text-gray-900 dark:text-white">{shareCode}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Share this code to co-plan with friends.</p>
+                </div>
+                <div className="flex -space-x-2">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center text-[11px] text-gray-600 dark:text-gray-300">
+                    You
+                  </div>
+                  <div className="w-10 h-10 rounded-full border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-lg text-gray-400">
+                    +
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => handleShareAction('Invite flow coming soon')}
+                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-700 dark:text-gray-200"
+              >
+                Invite followers
+                <UserPlus className="w-3.5 h-3.5" />
+              </button>
+            </section>
+
+            <section className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400">Cover</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Set the vibe for this trip.</p>
+                </div>
+                <button
+                  onClick={() => handleShareAction('Cover uploads coming soon')}
+                  className="text-xs uppercase tracking-[0.3em] text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Edit
+                </button>
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-dashed border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40">
+                <img src={coverImageUrl} alt={`${trip.title} cover art`} className="w-full h-48 object-cover" />
+              </div>
+            </section>
+          </div>
+
+          <section className="rounded-3xl border border-blue-200 dark:border-blue-900/40 bg-gradient-to-br from-blue-50 via-white to-white dark:from-blue-950/40 dark:via-gray-950 dark:to-gray-950 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-blue-500">Flight</p>
+                <p className="text-xs text-blue-800/70 dark:text-blue-200">Track departure & return tickets here.</p>
+              </div>
+              <Globe className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="space-y-3">
+              {renderFlightTicket('Departure', departureFlight, <PlaneTakeoff className="w-4 h-4" />)}
+              {renderFlightTicket('Return', returnFlight, <PlaneLanding className="w-4 h-4" />)}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400">Memo</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Quick notes, reminders, or inspiration.</p>
+              </div>
+              {!isEditMode && trip.user_id === user?.id && (
+                <button
+                  onClick={() => setIsEditMode(true)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900"
+                >
+                  <StickyNote className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
+            </div>
+            {isEditMode ? (
+              <textarea
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50 dark:bg-gray-900/50 focus:outline-none focus:border-gray-500 text-sm"
+                placeholder={memoPlaceholder}
+              />
+            ) : (
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                {trip.description?.trim() || memoPlaceholder}
+              </p>
+            )}
+          </section>
+
+          <section className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 space-y-5">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400">Share Trip Itinerary with friends</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Sharing lets friends view this plan. Invite collaborators or send a read-only link.
               </p>
             </div>
-          ) : (
-            <div className="space-y-8">
-              {Object.entries(itemsByDay)
-                .sort(([a], [b]) => Number(a) - Number(b))
-                .map(([day, items]) => {
-                  const dayNumber = Number(day);
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={() => handleShareAction('Invite followers coming soon')}
+                className="flex items-center justify-between px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-left"
+              >
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500">Invite followers</p>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">Send the itinerary link to your circle.</p>
+                </div>
+                <Users className="w-5 h-5 text-gray-400" />
+              </button>
+              <button
+                onClick={() => handleShareAction('Send to friends coming soon')}
+                className="flex items-center justify-between px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl text-left"
+              >
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500">Send to friends</p>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">Drop it in chat, SMS, or email.</p>
+                </div>
+                <Send className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleCopyShareLink}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-full text-xs uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300"
+              >
+                <Link2 className="w-4 h-4" /> Copy share link
+              </button>
+              {shareMessage && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">{shareMessage}</span>
+              )}
+            </div>
+            <div className="flex items-center justify-between rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-900 dark:text-white">Publish this Trip Itinerary</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                  When enabled, friends can view this trip over its full timeline.
+                </p>
+                <a
+                  className="text-[11px] text-gray-600 dark:text-gray-300 underline"
+                  href="/trips"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  See public Trip Itineraries for ideas.
+                </a>
+              </div>
+              <button
+                role="switch"
+                aria-checked={trip.is_public}
+                onClick={() => handleVisibilityToggle(!trip.is_public)}
+                disabled={updatingVisibility}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  trip.is_public ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700'
+                } ${updatingVisibility ? 'opacity-60' : ''}`}
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transform transition-transform ${
+                    trip.is_public ? 'translate-x-6' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => setShowDayPicker((prev) => !prev)}
+                className="w-full flex items-center justify-between px-4 py-3 border border-dashed border-gray-300 dark:border-gray-700 rounded-2xl text-sm text-gray-700 dark:text-gray-200"
+              >
+                <span className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Add item to Trip Itinerary
+                </span>
+                <span className="text-[11px] uppercase tracking-[0.3em] text-gray-400">{showDayPicker ? 'Close' : 'Choose day'}</span>
+              </button>
+              {showDayPicker && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {dayNumbers.map((dayNumber) => (
+                    <button
+                      key={dayNumber}
+                      onClick={() => handleDayPickerSelect(dayNumber)}
+                      className="px-3 py-2 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 text-xs text-gray-600 dark:text-gray-300"
+                    >
+                      Day {dayNumber}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5 space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400">Daily itinerary</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Plan each day with places, flights, and notes.</p>
+              </div>
+            </div>
+            {totalStops === 0 && !isEditMode ? (
+              <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-6 py-10 text-center space-y-3">
+                <MapPin className="w-6 h-6 mx-auto text-gray-400" />
+                <p className="text-sm text-gray-600 dark:text-gray-300">No itinerary items yet.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Switch to edit mode to start adding your favorite spots.</p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {dayNumbers.map((dayNumber) => {
+                  const items = itemsByDay[dayNumber] || [];
                   const dayDate = getDateForDay(dayNumber);
                   const locations = transformItemsToLocations(items);
 
                   return (
-                    <TripDay
-                      key={day}
-                      dayNumber={dayNumber}
-                      date={dayDate}
-                      locations={locations}
-                      onAddLocation={isEditMode ? () => handleAddLocation(dayNumber) : undefined}
-                      onRemoveLocation={isEditMode ? handleRemoveLocation : undefined}
-                      onReorderLocations={isEditMode ? async (reorderedLocations) => {
-                        try {
-                          const supabaseClient = createClient();
-                          if (!supabaseClient || !user) return;
+                    <div key={dayNumber} className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4">
+                      <TripDay
+                        dayNumber={dayNumber}
+                        date={dayDate}
+                        locations={locations}
+                        onAddLocation={isEditMode ? () => handleAddLocation(dayNumber) : undefined}
+                        onRemoveLocation={isEditMode ? handleRemoveLocation : undefined}
+                        onReorderLocations={isEditMode ? async (reorderedLocations) => {
+                          try {
+                            const supabaseClient = createClient();
+                            if (!supabaseClient || !user) return;
 
-                          await supabaseClient
-                            .from('itinerary_items')
-                            .delete()
-                            .eq('trip_id', tripId)
-                            .eq('day', dayNumber);
-
-                          const itemsToInsert = reorderedLocations.map((loc, idx) => {
-                            const originalItem = items.find(
-                              (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
-                            );
-                            
-                            let notesData: ItineraryItemNotes = {};
-                            if (originalItem?.notes) {
-                              try {
-                                notesData = JSON.parse(originalItem.notes) as ItineraryItemNotes;
-                              } catch {
-                                notesData = { raw: originalItem.notes };
-                              }
-                            }
-
-                            const updatedNotes = JSON.stringify({
-                              raw: loc.notes || notesData.raw || '',
-                              duration: loc.duration || notesData.duration,
-                              image: loc.image || notesData.image,
-                              city: loc.city || notesData.city,
-                              category: loc.category || notesData.category,
-                            });
-
-                            return {
-                              trip_id: tripId,
-                              destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
-                              day: dayNumber,
-                              order_index: idx,
-                              time: loc.time || originalItem?.time || null,
-                              title: loc.name,
-                              description: loc.category || originalItem?.description || '',
-                              notes: updatedNotes,
-                            };
-                          });
-
-                          if (itemsToInsert.length > 0) {
                             await supabaseClient
                               .from('itinerary_items')
-                              .insert(itemsToInsert);
-                          }
+                              .delete()
+                              .eq('trip_id', tripId)
+                              .eq('day', dayNumber);
 
-                          await fetchTripDetails();
-                        } catch (error) {
-                          console.error('Error reordering locations:', error);
-                          alert('Failed to reorder locations. Please try again.');
-                        }
-                      } : undefined}
-                      onDuplicateDay={isEditMode ? async () => {
-                        alert('Duplicate day feature coming soon');
-                      } : undefined}
-                      onOptimizeRoute={isEditMode ? async () => {
-                        alert('Route optimization feature coming soon');
-                      } : undefined}
-                    />
+                            const itemsToInsert = reorderedLocations.map((loc, idx) => {
+                              const originalItem = items.find(
+                                (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
+                              );
+
+                              const notesData = originalItem?.notes ? parseNotesData(originalItem.notes) : {};
+
+                              const updatedNotes = JSON.stringify({
+                                raw: loc.notes || notesData.raw || '',
+                                duration: loc.duration || notesData.duration,
+                                image: loc.image || notesData.image,
+                                city: loc.city || notesData.city,
+                                category: loc.category || notesData.category,
+                              });
+
+                              return {
+                                trip_id: tripId,
+                                destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
+                                day: dayNumber,
+                                order_index: idx,
+                                time: loc.time || originalItem?.time || null,
+                                title: loc.name,
+                                description: loc.category || originalItem?.description || '',
+                                notes: updatedNotes,
+                              };
+                            });
+
+                            if (itemsToInsert.length > 0) {
+                              await supabaseClient
+                                .from('itinerary_items')
+                                .insert(itemsToInsert);
+                            }
+
+                            await fetchTripDetails();
+                          } catch (error) {
+                            console.error('Error reordering locations:', error);
+                            alert('Failed to reorder locations. Please try again.');
+                          }
+                        } : undefined}
+                        onDuplicateDay={isEditMode ? async () => {
+                          alert('Duplicate day feature coming soon');
+                        } : undefined}
+                        onOptimizeRoute={isEditMode ? async () => {
+                          alert('Route optimization feature coming soon');
+                        } : undefined}
+                      />
+                    </div>
                   );
                 })}
-            </div>
-          )}
+              </div>
+            )}
+          </section>
         </div>
       )}
     </div>
