@@ -47,7 +47,7 @@ export function Drawer({
   showBackdrop = true,
   backdropOpacity = '50',
   position = 'right',
-  style = 'glassy',
+  style = 'solid',
   mobileWidth = 'max-w-md',
   desktopSpacing = 'right-4 top-4 bottom-4',
 }: DrawerProps) {

@@ -612,7 +612,7 @@ export function AccountDrawer({
         desktopSpacing="right-4 top-4 bottom-4"
         desktopWidth="440px"
         position="right"
-        style="glassy"
+        style="solid"
       >
         {accountContent}
       </Drawer>

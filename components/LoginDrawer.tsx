@@ -247,7 +247,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
       desktopSpacing="right-4 top-4 bottom-4"
       desktopWidth="440px"
       position="right"
-      style="glassy"
+      style="solid"
     >
       {loginContent}
     </Drawer>
