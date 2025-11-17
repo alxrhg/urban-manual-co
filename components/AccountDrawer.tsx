@@ -412,7 +412,7 @@ export function AccountDrawer({
           </section>
 
           <section>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                 Travel snapshot
               </p>
@@ -420,16 +420,16 @@ export function AccountDrawer({
                 <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {statCards.map(card => (
                 <div
                   key={card.label}
-                  className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/70 p-4 shadow-sm"
+                  className="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-4"
                 >
-                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
                     {card.label}
                   </p>
-                  <div className="mt-2 flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-semibold text-gray-900 dark:text-white">
                       {card.value}
                     </span>
