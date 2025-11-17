@@ -20,6 +20,10 @@ export interface DrawerProps {
   style?: 'glassy' | 'solid'; // Background style
   mobileWidth?: string; // For side drawer on mobile
   desktopSpacing?: string; // Spacing for desktop side drawer (e.g., 'right-4 top-4 bottom-4')
+  mobileHeight?: string; // Height for the mobile bottom sheet
+  mobileMaxHeight?: string; // Max height for the mobile bottom sheet
+  mobileBorderRadius?: string; // Custom border radius for the mobile bottom sheet
+  mobileExpanded?: boolean; // Whether the sheet should be fully expanded
 }
 
 /**
@@ -50,6 +54,10 @@ export function Drawer({
   style = 'solid',
   mobileWidth = 'max-w-md',
   desktopSpacing = 'right-4 top-4 bottom-4',
+  mobileHeight,
+  mobileMaxHeight,
+  mobileBorderRadius,
+  mobileExpanded = false,
 }: DrawerProps) {
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -88,6 +96,18 @@ export function Drawer({
 
   const shadowClasses = style === 'solid' ? 'shadow-2xl ring-1 ring-black/5' : '';
 
+  const computedMobileHeight =
+    mobileHeight ?? 'calc(96vh - env(safe-area-inset-bottom) - 1rem)';
+  const computedMobileMaxHeight =
+    mobileMaxHeight ?? 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.5rem)';
+  const peekOffset = 'clamp(3.5rem, 32vh, 14rem)';
+  const bottomSheetTransform = !isOpen
+    ? 'translate3d(0, 120%, 0) scale(0.98)'
+    : mobileExpanded
+    ? 'translate3d(0, 0, 0) scale(1)'
+    : `translate3d(0, ${peekOffset}, 0) scale(0.985)`;
+  const radiusClass = mobileBorderRadius ?? 'rounded-[32px]';
+
   return (
     <>
       {/* Backdrop */}
@@ -107,10 +127,15 @@ export function Drawer({
       {/* Mobile Drawer - Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
-          className={`md:hidden fixed inset-x-4 bottom-4 transform transition-transform duration-300 ease-out ${
-            isOpen ? 'translate-y-0' : 'translate-y-full'
-          } flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-2rem)] max-w-full overflow-hidden overscroll-contain rounded-3xl`}
-          style={{ zIndex, maxHeight: '50vh', height: '50vh' }}
+          className={`md:hidden fixed inset-x-4 bottom-4 transform transition-transform duration-500 ease-[cubic-bezier(0.18,0.89,0.32,1.28)] will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-2rem)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
+            mobileExpanded ? 'drawer-expanded' : 'drawer-collapsed'
+          }`}
+          style={{
+            zIndex,
+            maxHeight: computedMobileMaxHeight,
+            height: computedMobileHeight,
+            transform: bottomSheetTransform,
+          }}
         >
           {/* Header */}
           {(title || headerContent) && (
