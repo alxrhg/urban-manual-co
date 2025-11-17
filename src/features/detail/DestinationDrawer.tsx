@@ -1006,9 +1006,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Always render drawer when open, even if destination is null (show loading state)
   if (!isOpen) return null;
 
-  // Check if destination is null, undefined, or missing required fields
-  if (!destination || !destination.slug || !destination.name) {
-    // Show loading state if destination is incomplete
+  // Only show loading state if destination is completely null/undefined
+  // Allow rendering even if some fields are missing (they'll have fallbacks)
+  if (!destination) {
+    // Show loading state if destination is null
     return (
       <>
         {/* Backdrop */}
