@@ -34,7 +34,6 @@ export function AddToTripModal({
     hotel: '',
     start_date: '',
     end_date: '',
-    budget: '',
   });
   const [creating, setCreating] = useState(false);
 
@@ -226,7 +225,7 @@ export function AddToTripModal({
       await handleAddToTrip(data.id);
       
       // Reset form
-      setNewTrip({ title: '', description: '', destination: '', hotel: '', start_date: '', end_date: '', budget: '' });
+      setNewTrip({ title: '', description: '', destination: '', hotel: '', start_date: '', end_date: '' });
       setShowCreateForm(false);
       await fetchTrips();
     } catch (error: any) {
@@ -357,7 +356,7 @@ export function AddToTripModal({
             <button
               onClick={() => {
                 setShowCreateForm(false);
-                setNewTrip({ title: '', description: '', destination: '', hotel: '', start_date: '', end_date: '', budget: '' });
+                setNewTrip({ title: '', description: '', destination: '', hotel: '', start_date: '', end_date: '' });
               }}
               className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >

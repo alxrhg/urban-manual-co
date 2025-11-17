@@ -35,10 +35,6 @@ export async function generateRealTimeAdjustments(
   const weatherAdjustments = await checkWeatherAdjustments(destinationIds, dates);
   adjustments.push(...weatherAdjustments);
 
-  // Crowding intelligence
-  const crowdingAdjustments = await checkCrowdingIntelligence(destinationIds, dates);
-  adjustments.push(...crowdingAdjustments);
-
   // Event integration
   const eventAdjustments = await checkEvents(destinationIds, dates);
   adjustments.push(...eventAdjustments);
@@ -81,21 +77,6 @@ async function checkWeatherAdjustments(
       });
     }
   }
-
-  return adjustments;
-}
-
-/**
- * Check crowding levels
- */
-async function checkCrowdingIntelligence(
-  destinationIds: number[],
-  dates: { start: Date; end: Date }
-): Promise<RealtimeAdjustment[]> {
-  const adjustments: RealtimeAdjustment[] = [];
-
-  // This would integrate with Google Places Popular Times or similar
-  // For now, return empty - would need actual crowding data source
 
   return adjustments;
 }
