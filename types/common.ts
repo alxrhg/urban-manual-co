@@ -33,32 +33,41 @@ export interface Collection {
   destination_count?: number;
 }
 
-// Trip type
-export interface Trip {
-  id: number;
+// Itinerary type
+export interface Itinerary {
+  id: string;
   user_id: string;
   name: string;
-  title?: string; // Alternative field name
-  destination?: string; // Trip destination/location
   description?: string;
   start_date?: string;
   end_date?: string;
-  cover_image_url?: string;
-  status?: string; // Trip status (planning, ongoing, completed, etc.)
-  public: boolean;
+  is_archived: boolean;
   created_at: string;
   updated_at?: string;
-  days?: TripDay[];
+  days?: ItineraryDay[];
 }
 
-// Trip Day type
-export interface TripDay {
-  id: number;
-  trip_id: number;
+// Itinerary Day type
+export interface ItineraryDay {
+  id: string;
+  itinerary_id: string;
   day_number: number;
-  date?: string;
+  date: string;
   notes?: string;
-  destinations?: Destination[];
+  items?: ItineraryItem[];
+}
+
+// Itinerary Item type
+export interface ItineraryItem {
+  id: string;
+  itinerary_day_id: string;
+  destination_slug: string;
+  start_time?: string;
+  end_time?: string;
+  notes?: string;
+  position: number;
+  created_at: string;
+  destination?: Destination;
 }
 
 // Visited Place type

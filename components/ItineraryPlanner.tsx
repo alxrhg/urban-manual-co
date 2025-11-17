@@ -24,9 +24,9 @@ import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripShareModal } from './TripShareModal';
 import { Drawer } from './ui/Drawer';
-import type { Trip as TripSchema, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import type { Itinerary as ItinerarySchema, ItineraryItem, ItineraryDay as ItineraryDaySchema } from '@/types/common';
 
-interface TripPlannerProps {
+interface ItineraryPlannerProps {
   isOpen: boolean;
   onClose: () => void;
   tripId?: string; // If provided, load existing trip
@@ -44,13 +44,14 @@ interface TripLocation {
 }
 
 interface DayItinerary {
+  id: string;
   date: string;
   locations: TripLocation[];
   budget?: number;
   notes?: string;
 }
 
-export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
+export function ItineraryPlanner({ isOpen, onClose, tripId }: ItineraryPlannerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [tripName, setTripName] = useState('');
@@ -107,8 +108,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       // Load trip
       const { data: trip, error: tripError } = await supabaseClient
-        .from('trips')
-        .select('*')
+        .from('itineraries')
+        .select('*, itinerary_days(*), itinerary_items(*)')
         .eq('id', id)
         .eq('user_id', user.id)
         .single();
@@ -119,116 +120,34 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         return;
       }
 
-      const tripData = trip as TripSchema;
+      const tripData = trip as any;
 
-      setTripName(tripData.title);
-      setDestination(tripData.destination || '');
+      setTripName(tripData.name);
+      setDestination(tripData.description || '');
       setStartDate(tripData.start_date || '');
       setEndDate(tripData.end_date || '');
-      setHotelLocation(tripData.description || ''); // Using description for hotel location
       setCurrentTripId(tripData.id);
       setCoverImage(tripData.cover_image || null);
+      setHotelLocation(tripData.hotel || '');
+      setTotalBudget(tripData.budget || 0);
 
-      // Load itinerary items
-      // First verify trip ownership to avoid RLS recursion
-      const { data: tripCheck, error: tripCheckError } = await supabaseClient
-        .from('trips')
-        .select('id')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+      const loadedDays = tripData.itinerary_days.map((day: any) => ({
+        id: day.id,
+        date: day.date,
+        locations: tripData.itinerary_items
+          .filter((item: any) => item.itinerary_day_id === day.id)
+          .map((item: any) => ({
+            id: item.id,
+            name: item.destination_slug, // This should be resolved to a full destination object
+            city: '',
+            category: '',
+            image: '',
+            time: item.start_time,
+            notes: item.notes,
+          })),
+      }));
 
-      if (tripCheckError || !tripCheck) {
-        console.error('Error verifying trip ownership:', tripCheckError);
-        alert('Trip not found or access denied');
-        return;
-      }
-
-      const { data: items, error: itemsError } = await supabaseClient
-        .from('itinerary_items')
-        .select('*')
-        .eq('trip_id', id)
-        .order('day', { ascending: true })
-        .order('order_index', { ascending: true });
-
-      if (itemsError) {
-        console.error('Error loading itinerary items:', itemsError);
-        // If recursion error, continue with empty items
-        if (itemsError.message && itemsError.message.includes('infinite recursion')) {
-          console.warn('RLS recursion detected, continuing with empty items');
-        }
-      }
-
-      // Group items by day
-      if (items && items.length > 0) {
-        const daysMap = new Map<number, TripLocation[]>();
-        (items as ItineraryItem[]).forEach((item) => {
-          const day = item.day;
-          if (!daysMap.has(day)) {
-            daysMap.set(day, []);
-          }
-
-          // Parse notes for additional data (duration, etc.)
-          let notesData: ItineraryItemNotes = {};
-          if (item.notes) {
-            try {
-              notesData = JSON.parse(item.notes) as ItineraryItemNotes;
-            } catch {
-              notesData = { raw: item.notes };
-            }
-          }
-
-          const location: TripLocation = {
-            id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
-            name: item.title,
-            city: destination || '',
-            category: item.description || '',
-            image: notesData.image || '/placeholder-image.jpg',
-            time: item.time || undefined,
-            notes: notesData.raw || undefined,
-            duration: notesData.duration || undefined,
-          };
-
-          daysMap.get(day)!.push(location);
-        });
-
-        // Create days array
-        const start = new Date(tripData.start_date || Date.now());
-        const end = new Date(tripData.end_date || Date.now());
-        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-        const newDays: DayItinerary[] = [];
-        for (let i = 0; i < dayCount; i++) {
-          const date = new Date(start);
-          date.setDate(start.getDate() + i);
-          const dayNum = i + 1;
-          newDays.push({
-            date: date.toISOString().split('T')[0],
-            locations: daysMap.get(dayNum) || [],
-            budget: 0,
-          });
-        }
-
-        setDays(newDays);
-      } else {
-        // No items, create empty days
-        const start = new Date(tripData.start_date || Date.now());
-        const end = new Date(tripData.end_date || Date.now());
-        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-        const newDays: DayItinerary[] = [];
-        for (let i = 0; i < dayCount; i++) {
-          const date = new Date(start);
-          date.setDate(start.getDate() + i);
-          newDays.push({
-            date: date.toISOString().split('T')[0],
-            locations: [],
-            budget: 0,
-          });
-        }
-        setDays(newDays);
-      }
-
+      setDays(loadedDays);
       setStep('plan');
     } catch (error) {
       console.error('Error loading trip:', error);
@@ -251,15 +170,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       // Create trip in database
       const { data: trip, error: tripError } = await supabaseClient
-        .from('trips')
+        .from('itineraries')
         .insert({
-          title: tripName,
-          description: hotelLocation || null,
-          destination: destination,
+          name: tripName,
+          description: destination,
           start_date: startDate,
           end_date: endDate,
-          status: 'planning',
           user_id: user.id,
+          hotel: hotelLocation,
+          budget: totalBudget,
         })
         .select()
         .single();
@@ -281,6 +200,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         date.setDate(start.getDate() + i);
 
         newDays.push({
+          id: '', // Will be set on save
           date: date.toISOString().split('T')[0],
           locations: [],
           budget: 0,
@@ -308,116 +228,85 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
-      // Upload cover image if file selected
       let coverImageUrl = coverImage;
       if (coverImageFile) {
         setUploadingCover(true);
-        try {
-          const formDataToSend = new FormData();
-          formDataToSend.append('file', coverImageFile);
-          formDataToSend.append('tripId', currentTripId);
-
-          const { data: { session } } = await supabaseClient.auth.getSession();
-          const token = session?.access_token;
-          if (!token) {
-            throw new Error('Not authenticated');
-          }
-
-          const res = await fetch('/api/upload-trip-cover', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formDataToSend,
+        const { data, error } = await supabaseClient.storage
+          .from('trip-covers')
+          .upload(`${user.id}/${currentTripId}/${coverImageFile.name}`, coverImageFile, {
+            cacheControl: '3600',
+            upsert: true,
           });
 
-          if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Upload failed');
-          }
+        if (error) throw error;
 
-          const data = await res.json();
-          coverImageUrl = data.url;
-          setCoverImage(coverImageUrl);
-        } catch (error: any) {
-          console.error('Cover image upload error:', error);
-          toast.error(`Cover image upload failed: ${error.message}`);
-          setUploadingCover(false);
-          return;
-        } finally {
-          setUploadingCover(false);
-        }
+        const { data: { publicUrl } } = supabaseClient.storage.from('trip-covers').getPublicUrl(data.path);
+        coverImageUrl = publicUrl;
+        setUploadingCover(false);
       }
 
-      // Update trip (note: budget is not in schema, storing in description or notes)
+      // Update trip
       const { error: tripError } = await supabaseClient
-        .from('trips')
+        .from('itineraries')
         .update({
-          title: tripName,
-          description: hotelLocation || null,
-          destination: destination || null,
-          start_date: startDate || null,
-          end_date: endDate || null,
-          cover_image: coverImageUrl || null,
+          name: tripName,
+          description: destination,
+          start_date: startDate,
+          end_date: endDate,
+          cover_image: coverImageUrl,
+          hotel: hotelLocation,
+          budget: totalBudget,
         })
         .eq('id', currentTripId)
         .eq('user_id', user.id);
 
       if (tripError) throw tripError;
 
-      // Delete all existing itinerary items
-      const { error: deleteError } = await supabaseClient
-        .from('itinerary_items')
+      // Delete all existing itinerary days and items
+      const { error: deleteDaysError } = await supabaseClient
+        .from('itinerary_days')
         .delete()
-        .eq('trip_id', currentTripId);
+        .eq('itinerary_id', currentTripId);
 
-      if (deleteError) throw deleteError;
+      if (deleteDaysError) throw deleteDaysError;
+
+      // Create itinerary days
+      const daysToInsert = days.map((day, index) => ({
+        itinerary_id: currentTripId,
+        day_number: index + 1,
+        date: day.date,
+        notes: day.notes,
+      }));
+
+      const { data: newDays, error: insertDaysError } = await supabaseClient
+        .from('itinerary_days')
+        .insert(daysToInsert)
+        .select();
+
+      if (insertDaysError) throw insertDaysError;
 
       // Insert all itinerary items
-      const itemsToInsert: Array<{
-        trip_id: string;
-        destination_slug: string | null;
-        day: number;
-        order_index: number;
-        time: string | null;
-        title: string;
-        description: string | null;
-        notes: string | null;
-      }> = [];
+      const itemsToInsert: Array<Partial<ItineraryItem>> = [];
       days.forEach((day, dayIndex) => {
         day.locations.forEach((location, locationIndex) => {
-          // Store additional data in notes as JSON
-          const notesData: ItineraryItemNotes = {
-            raw: location.notes || '',
-            duration: location.duration,
-            image: location.image,
-            city: location.city,
-            category: location.category,
-          };
-
           itemsToInsert.push({
-            trip_id: currentTripId,
-            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-') || null,
-            day: dayIndex + 1,
-            order_index: locationIndex,
-            time: location.time || null,
-            title: location.name,
-            description: location.category || null,
-            notes: JSON.stringify(notesData),
+            itinerary_day_id: (newDays as ItineraryDaySchema[])[dayIndex].id,
+            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-'),
+            start_time: location.time,
+            notes: location.notes,
+            position: locationIndex,
           });
         });
       });
 
       if (itemsToInsert.length > 0) {
-        const { error: insertError } = await supabaseClient
+        const { error: insertItemsError } = await supabaseClient
           .from('itinerary_items')
           .insert(itemsToInsert);
 
-        if (insertError) throw insertError;
+        if (insertItemsError) throw insertItemsError;
       }
 
-      // Show success feedback without alert
-      // The save button will show "Saved" briefly
       const saveButton = document.querySelector('[title="Save trip"]') as HTMLButtonElement;
       if (saveButton) {
         const originalText = saveButton.textContent;
@@ -514,16 +403,13 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   };
 
   const handleOptimizeRoute = (dayIndex: number) => {
-    // Simple optimization - in real app would use actual routing API
     setDays((prev) =>
       prev.map((day, idx) => {
         if (idx !== dayIndex) return day;
         const optimized = [...day.locations].sort((a, b) => {
-          // Sort by time if available
           if (a.time && b.time) {
             return a.time.localeCompare(b.time);
           }
-          // Put items with time first
           if (a.time && !b.time) return -1;
           if (!a.time && b.time) return 1;
           return 0;
@@ -537,11 +423,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   };
 
   const handleExportToCalendar = () => {
-    // Generate ICS file content
     let icsContent =
-      'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Urban Manual//Trip Planner//EN\n';
+      'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Urban Manual//Itinerary Planner//EN\n';
 
-    days.forEach((day, dayIndex) => {
+    days.forEach((day) => {
       day.locations.forEach((location) => {
         const date = day.date.replace(/-/g, '');
         const time = location.time?.replace(':', '') || '0900';
@@ -571,7 +456,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   };
 
   const getAISuggestions = () => {
-    // Mock AI suggestions - in real app would call AI API
     return [
       'Consider adding a morning cafe visit before the museum',
       'Your dinner reservation is 2km from your last location - allow 30 min travel time',
@@ -579,7 +463,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     ];
   };
 
-  // Build custom header with tabs and actions
   const headerContent = step === 'plan' ? (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-4">
@@ -631,7 +514,6 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     </div>
   ) : undefined;
 
-  // Build content based on step and tab
   const content = (
     <div className="px-6 py-6">
       {loading ? (
@@ -643,7 +525,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         <div className="space-y-6">
           <div>
             <label htmlFor="trip-name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Trip Name *
+              Itinerary Name *
             </label>
             <input
               id="trip-name"
@@ -736,7 +618,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 Creating...
               </>
             ) : (
-              'Create Trip'
+              'Create Itinerary'
             )}
           </button>
         </div>
@@ -885,7 +767,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       <Drawer
         isOpen={isOpen}
         onClose={onClose}
-        title={step === 'create' ? 'Create Trip' : undefined}
+        title={step === 'create' ? 'Create Itinerary' : undefined}
         headerContent={headerContent}
         desktopWidth="600px"
       >
