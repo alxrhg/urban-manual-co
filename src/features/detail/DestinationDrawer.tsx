@@ -1011,51 +1011,27 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   if (!destination) {
     // Show loading state if destination is null
     return (
-      <>
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 opacity-100"
-          onClick={onClose}
-        />
-        {/* Drawer with loading state */}
-        <div className="md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl overflow-hidden flex flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
-          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
+      <Drawer
+        isOpen={isOpen}
+        onClose={onClose}
+        mobileVariant="side"
+        desktopSpacing="right-4 top-4 bottom-4"
+        desktopWidth="440px"
+        position="right"
+        style="solid"
+        headerContent={
+          <div className="flex items-center justify-between w-full">
             <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-            </button>
           </div>
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="text-center">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
-            </div>
+        }
+      >
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
           </div>
         </div>
-        {/* Desktop drawer loading state */}
-        <div className="hidden md:flex fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl overflow-hidden flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
-          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-            </button>
-          </div>
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="text-center">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
-            </div>
-          </div>
-        </div>
-      </>
+      </Drawer>
     );
   }
 
@@ -1080,53 +1056,150 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const appleMapsDirectionsUrl = `https://maps.apple.com/?q=${encodeURIComponent(defaultMapsQuery)}`;
   const directionsUrl = googleMapsDirectionsUrl || appleMapsDirectionsUrl;
 
+  // Create custom header content
+  const headerContent = (
+    <div className="flex items-center justify-between w-full relative">
+      <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+      <div className="flex items-center gap-2">
+        {destination?.slug && destination.slug.trim() && (
+          <Link
+            href={`/destination/${destination.slug}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            title="Open destination page"
+            aria-label="Open destination page"
+          >
+            <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+
+  // Create mobile footer content
+  const mobileFooterContent = (
+    <div className="px-6 py-4">
+      <div className="flex gap-3">
+        {destination.slug && (
+          <Link
+            href={`/destination/${destination.slug}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="flex-1 rounded-2xl bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
+          >
+            View details
+          </Link>
+        )}
+
+        <button
+          onClick={() => {
+            if (!user) {
+              router.push('/auth/login');
+              return;
+            }
+            if (isAddedToTrip) return;
+            setShowAddToTripModal(true);
+          }}
+          className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${
+            isAddedToTrip
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+              : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100'
+          }`}
+          disabled={isAddedToTrip}
+        >
+          {isAddedToTrip ? (
+            <>
+              <Check className="h-4 w-4" />
+              Added
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              Plan trip
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
+  // Create desktop footer content
+  const desktopFooterContent = (
+    <div className="px-6 py-4">
+      <div className="flex gap-3">
+        {destination.slug && (
+          <Link
+            href={`/destination/${destination.slug}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
+          >
+            View More Details
+          </Link>
+        )}
+        
+        <button
+          onClick={() => {
+            if (!user) {
+              router.push('/auth/login');
+              return;
+            }
+            if (isAddedToTrip) return;
+            setShowAddToTripModal(true);
+          }}
+          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
+            isAddedToTrip
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+          disabled={isAddedToTrip}
+        >
+          {isAddedToTrip ? (
+            <>
+              <Check className="h-4 w-4" />
+              <span>Added</span>
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              <span>Add to Trip</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={onClose}
-      />
-
-      {/* Mobile Drawer (mimics desktop design) */}
-      <div
-        className={`md:hidden fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-hidden flex flex-col`}
+      <Drawer
+        isOpen={isOpen}
+        onClose={onClose}
+        mobileVariant="side"
+        desktopSpacing="right-4 top-4 bottom-4"
+        desktopWidth="440px"
+        position="right"
+        style="solid"
+        headerContent={headerContent}
+        footerContent={
+          <>
+            {/* Mobile Footer */}
+            <div className="md:hidden">{mobileFooterContent}</div>
+            {/* Desktop Footer */}
+            <div className="hidden md:block">{desktopFooterContent}</div>
+          </>
+        }
       >
-        {/* Header with Close Button */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-          <div className="flex items-center gap-2">
-            {destination?.slug && destination.slug.trim() && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
-              >
-                <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              </Link>
-            )}
-          </div>
-          {/* Close Button - Top Right */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="p-6">
+          {/* Mobile Content */}
+          <div className="md:hidden space-y-4">
           {/* Image */}
           {destination.image && (
             <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
@@ -1312,93 +1385,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </button>
             </div>
           )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className={`flex-shrink-0 px-6 py-4 ${DRAWER_STYLES.glassyBorderTop} ${DRAWER_STYLES.footerBackground}`}>
-          <div className="flex gap-3">
-            {destination.slug && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="flex-1 rounded-2xl bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
-              >
-                View details
-              </Link>
-            )}
-
-            <button
-              onClick={() => {
-                if (!user) {
-                  router.push('/auth/login');
-                  return;
-                }
-                if (isAddedToTrip) return;
-                setShowAddToTripModal(true);
-              }}
-              className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${
-                isAddedToTrip
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100'
-              }`}
-              disabled={isAddedToTrip}
-            >
-              {isAddedToTrip ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Added
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  Plan trip
-                </>
-              )}
-            </button>
           </div>
-        </div>
-      </div>
 
-      {/* Desktop Slideover Card (existing design) */}
-      <div
-        className={`hidden md:flex fixed right-4 top-4 bottom-4 w-[440px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-950 z-50 shadow-2xl ring-1 ring-black/5 rounded-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
-        } overflow-hidden flex-col`}
-      >
-        {/* Header with Close Button */}
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between relative">
-          <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-          <div className="flex items-center gap-2">
-            {destination?.slug && destination.slug.trim() && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                title="Open destination page"
-                aria-label="Open destination page"
-              >
-                <ExternalLink className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              </Link>
-            )}
-          </div>
-          {/* Close Button - Top Right */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+          {/* Desktop Content */}
+          <div className="hidden md:block">
           {/* Image */}
           {destination.image && (
             <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
@@ -2073,57 +2063,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-        </div>
-
-        {/* Desktop Action Buttons - Bottom */}
-        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-          <div className="flex gap-3">
-            {/* View More Details Button */}
-            {destination.slug && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                  }}
-                className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
-                    >
-                View More Details
-              </Link>
-                      )}
-            
-            {/* Add to Trip Button */}
-                <button
-                  onClick={() => {
-                if (!user) {
-                  router.push('/auth/login');
-                  return;
-                }
-                if (isAddedToTrip) return;
-                setShowAddToTripModal(true);
-                  }}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                isAddedToTrip
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-              disabled={isAddedToTrip}
-            >
-              {isAddedToTrip ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  <span>Added</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  <span>Add to Trip</span>
-                </>
-              )}
-                </button>
           </div>
         </div>
-      </div>
+      </Drawer>
 
       {/* Save Destination Modal */}
       {destination?.id && (
