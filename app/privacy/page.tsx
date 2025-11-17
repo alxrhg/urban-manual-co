@@ -284,6 +284,20 @@ export default function PrivacyPage() {
                       </p>
                     </div>
 
+                    <div className="mt-4">
+                      <strong className="font-medium text-black dark:text-white">Consent Signals:</strong> We use Google Analytics consent signals to respect your privacy preferences:
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        <li><strong>Behavioral Analytics Consent (analytics_storage):</strong> Controls whether cookie data can be collected for behavioral analytics purposes, including audience measurement and behavioral modeling.</li>
+                        <li><strong>Ads Cookie Consent (ad_storage):</strong> Controls whether cookie data can be collected for advertising purposes, including ads measurement, demographics & interest insights, and audience remarketing.</li>
+                        <li><strong>Ads Measurement Consent (ad_user_data):</strong> Controls whether user data can be collected for advertising and ads measurement purposes, including conversion export, ads measurement, and audience remarketing.</li>
+                        <li><strong>Ads Personalization Consent (ad_personalization):</strong> Controls whether the user can be included in audiences exported to linked ads accounts for audience remarketing.</li>
+                      </ul>
+                      <p className="mt-2">
+                        All consent signals default to &ldquo;denied&rdquo; until you explicitly grant consent through our Cookie Settings. 
+                        You can manage these preferences at any time by clicking <button onClick={openCookieSettings} className="underline hover:text-black dark:hover:text-white transition-colors">Cookie Settings</button> in the footer.
+                      </p>
+                    </div>
+
                     <p>
                       <strong className="font-medium text-black dark:text-white">Google Places Autocomplete:</strong> When you use our trip planning feature to search for and add locations,
                       we use Google Places Autocomplete to provide location suggestions. We track anonymized analytics about which places

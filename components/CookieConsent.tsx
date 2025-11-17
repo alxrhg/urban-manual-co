@@ -117,25 +117,24 @@ export function CookieConsent() {
   const savePreferences = (prefs: CookiePreferences) => {
     persistConsent(prefs);
 
-    // Set cookies based on preferences
-    if (prefs.analytics && typeof window !== 'undefined' && window.gtag) {
-      // Enable Google Analytics
+    // Update Google Analytics consent signals
+    if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('consent', 'update', {
-        analytics_storage: 'granted',
+        // Behavioral analytics consent signals
+        analytics_storage: prefs.analytics ? 'granted' : 'denied',
+        
+        // Advertising consent signals
+        ad_storage: prefs.marketing ? 'granted' : 'denied',
+        ad_user_data: prefs.marketing ? 'granted' : 'denied',
+        ad_personalization: prefs.marketing ? 'granted' : 'denied',
       });
-      window.gtag('config', 'G-ZLGK6QXD88', {
-        page_path: window.location.pathname,
-      });
-    } else if (!prefs.analytics && typeof window !== 'undefined' && window.gtag) {
-      // Revoke consent
-      window.gtag('consent', 'update', {
-        analytics_storage: 'denied',
-      });
-    }
 
-    if (prefs.marketing) {
-      // Enable marketing cookies
-      // ...
+      // Initialize or update Google Analytics config if analytics is enabled
+      if (prefs.analytics) {
+        window.gtag('config', 'G-ZLGK6QXD88', {
+          page_path: window.location.pathname,
+        });
+      }
     }
 
     setIsVisible(false);
@@ -244,8 +243,13 @@ export function CookieConsent() {
                       <div className="text-xs font-medium mb-1">
                         Marketing Cookies
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
-                        Used to deliver personalized ads and track campaign performance.
+                      <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                        <p>
+                          Used to deliver personalized ads and track campaign performance.
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-500">
+                          When enabled, this activates ads cookie consent (ad_storage), ads measurement consent (ad_user_data), and ads personalization consent (ad_personalization) signals. See our Privacy Policy for details.
+                        </p>
                       </div>
                     </div>
                     <div className="flex-shrink-0">

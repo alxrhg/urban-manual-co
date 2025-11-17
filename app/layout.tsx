@@ -117,8 +117,12 @@ export default function RootLayout({
               gtag('js', new Date());
               // Set default consent mode to denied - will be updated when user consents
               gtag('consent', 'default', {
+                // Behavioral analytics consent signals
                 analytics_storage: 'denied',
+                // Advertising consent signals
                 ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
               });
             `,
           }}
