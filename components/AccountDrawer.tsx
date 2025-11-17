@@ -539,18 +539,19 @@ export function AccountDrawer({
           </section>
         </div>
       ) : (
-        <div className="text-center py-10 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Join The Urban Manual
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Save places, build trips, and sync your travel profile across every
-            device.
-          </p>
+        <div className="text-center py-12 space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+              Join The Urban Manual
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-light max-w-sm mx-auto">
+              Save places, build trips, and sync your travel profile across every device.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => handleNavigate("/auth/login")}
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+            className="px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
           >
             Sign In
           </button>
