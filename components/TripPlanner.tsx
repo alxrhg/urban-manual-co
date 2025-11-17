@@ -64,14 +64,7 @@ interface HotelOption {
   city: string | null;
 }
 
-const studioFlowSteps = [
-  { key: 'create', label: 'Create' },
-  { key: 'view', label: 'View' },
-  { key: 'edit', label: 'Edit' },
-  { key: 'save', label: 'Save' },
-] as const;
-
-type StudioFlowKey = (typeof studioFlowSteps)[number]['key'];
+type StudioMode = 'hub' | 'create' | 'view' | 'edit';
 
 export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const { user } = useAuth();
@@ -81,7 +74,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [endDate, setEndDate] = useState('');
   const [days, setDays] = useState<DayItinerary[]>([]);
   const [showAddLocation, setShowAddLocation] = useState<number | null>(null);
-  const [studioMode, setStudioMode] = useState<'hub' | 'create' | 'plan'>(tripId ? 'plan' : 'hub');
+  const [studioMode, setStudioMode] = useState<StudioMode>(tripId ? 'view' : 'hub');
   const [tripList, setTripList] = useState<TripSummary[]>([]);
   const [tripListLoading, setTripListLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -400,7 +393,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         setDays(newDays);
       }
 
-        setStudioMode('plan');
+      setStudioMode('view');
     } catch (error) {
       console.error('Error loading trip:', error);
       alert('Failed to load trip');
@@ -458,8 +451,8 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         });
       }
 
-      setDays(newDays);
-        setStudioMode('plan');
+        setDays(newDays);
+        setStudioMode('edit');
     } catch (error: any) {
       console.error('Error creating trip:', error);
       alert(error?.message || 'Failed to create trip. Please try again.');
@@ -761,7 +754,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                   : tripName || 'Untitled trip'}
             </h2>
           </div>
-          {studioMode === 'plan' && currentTripId && (
+            {studioMode === 'edit' && currentTripId && (
             <button
               onClick={handleSaveTrip}
               disabled={saving}
@@ -813,31 +806,31 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
     let content: React.ReactNode;
 
-    if (studioMode === 'hub') {
-      content = (
-        <div className="px-6 py-6 space-y-6">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-              Library
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => fetchUserTrips()}
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
-              >
-                Refresh
-              </button>
-              <button
-                onClick={() => {
-                  resetForm();
-                  setStudioMode('create');
-                }}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-85 transition-opacity"
-              >
-                Plan new trip
-              </button>
-            </div>
+  if (studioMode === 'hub') {
+    content = (
+      <div className="px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+            Library
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchUserTrips()}
+              className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={() => {
+                resetForm();
+                setStudioMode('create');
+              }}
+              className="px-4 py-2 bg-black dark:bg_white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-85 transition-opacity"
+            >
+              Plan new trip
+            </button>
           </div>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {hubStats.map((stat) => (
             <div key={stat.label} className="rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3 bg-white dark:bg-gray-900">
@@ -846,84 +839,59 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             </div>
           ))}
         </div>
-          {tripListLoading ? (
-            <div className="text-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
-            </div>
-          ) : tripList.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 py-12 text-center space-y-3">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No trips yet. Create one to get started.
-              </p>
-              <button
-                onClick={() => {
-                  resetForm();
-                  setStudioMode('create');
-                }}
-                className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+        {tripListLoading ? (
+          <div className="text-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+          </div>
+        ) : tripList.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 py-12 text-center space-y-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No trips yet. Create one to get started.
+            </p>
+            <button
+              onClick={() => {
+                resetForm();
+                setStudioMode('create');
+              }}
+              className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+            >
+              Launch Trip Studio
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {tripList.map((trip) => (
+              <div
+                key={trip.id}
+                className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-4 bg-white dark:bg-gray-900"
               >
-                Launch Trip Studio
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {tripList.map((trip) => (
-                <div
-                  key={trip.id}
-                  className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-4 bg-white dark:bg-gray-900"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{trip.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {trip.destination || 'Destination TBD'}
-                    </p>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mt-1">
-                      {trip.status}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => loadTrip(trip.id)}
-                      className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      Open
-                    </button>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{trip.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {trip.destination || 'Destination TBD'}
+                  </p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mt-1">
+                    {trip.status}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-      } else {
-        content = (
-          <div className="px-6 py-6">
-            <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400 mb-8">
-              {studioFlowSteps.map((step, index) => (
-                <React.Fragment key={step.key}>
-                  <span
-                    className={`px-3 py-1 rounded-full border text-[10px] tracking-[0.2em] ${
-                      currentFlowStep === step.key
-                        ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
-                        : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400'
-                    }`}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => loadTrip(trip.id)}
+                    className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
-                    {step.label}
-                  </span>
-                  {index < studioFlowSteps.length - 1 && (
-                    <span className="text-[10px] text-gray-400 dark:text-gray-600 mx-1">-&gt;</span>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-
-            {loading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
-            </div>
-          ) : studioMode === 'create' ? (
-            <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-8">
+                    Open
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  } else if (studioMode === 'create') {
+    content = (
+      <div className="px-6 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-8">
               <div className="space-y-6">
                 <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-5">
                   <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
