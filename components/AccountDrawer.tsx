@@ -20,10 +20,11 @@ import {
   Globe2,
   Bookmark,
   ShieldCheck,
-  Gift,
-  CreditCard,
   LifeBuoy,
+  ChevronRight,
+  Mail,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
@@ -271,113 +272,109 @@ export function AccountDrawer({
     setTimeout(callback, 300);
   };
 
-  const handleInviteFriends = async () => {
-    const inviteUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/?ref=${user?.id ?? ""}`
-        : "https://urbanmanual.com";
-
-    const canShare =
-      typeof navigator !== "undefined" && typeof navigator.share === "function";
-
-    if (canShare) {
-      try {
-        await navigator.share({
-          title: "Explore Urban Manual",
-          text: "Discover curated city guides with me on Urban Manual.",
-          url: inviteUrl,
-        });
-        toast.success("Invite sent");
-        return;
-      } catch (error) {
-        if ((error as DOMException).name === "AbortError") {
-          return;
-        }
-      }
-    }
-
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(inviteUrl);
-        toast.success("Invite link copied");
-        return;
-      } catch {
-        // fall through to error toast
-      }
-    }
-
-    toast.error("Unable to share invite link");
+  type DrawerLink = {
+    label: string;
+    description?: string;
+    icon: LucideIcon;
+    action: () => void;
+    variant?: "default" | "destructive";
   };
 
-  const travelToolkit = [
+  const libraryLinks: DrawerLink[] = [
     {
-      label: "Saved Places",
-      description: "Organize your wishlist",
+      label: "Saved places",
+      description: "Wishlist & future research",
       icon: Heart,
       action: () => runAfterClose(() => setIsSavedPlacesOpen(true)),
     },
     {
-      label: "Visited Places",
+      label: "Visited places",
       description: "Log every check-in",
       icon: Check,
       action: () => runAfterClose(() => setIsVisitedPlacesOpen(true)),
     },
     {
       label: "Trips",
-      description: "Plan upcoming adventures",
+      description: "Upcoming and archived itineraries",
       icon: Map,
       action: () => runAfterClose(() => setIsTripsOpen(true)),
     },
     {
       label: "Collections",
-      description: "Craft themed shortlists",
+      description: "Curated lists by theme",
       icon: Bookmark,
       action: () => handleNavigate("/account?tab=collections"),
     },
   ];
 
-  const exploreNavigation = [
+  const exploreLinks: DrawerLink[] = [
     {
-      label: "City Directory",
+      label: "City directory",
       description: "Browse every curated city",
       icon: Globe2,
       action: () => handleNavigate("/cities"),
     },
     {
-      label: "Homepage Map View",
-      description: "Jump straight to the interactive map on home",
+      label: "Map & atlas",
+      description: "Jump straight to the interactive map",
       icon: MapPinned,
       action: () => handleNavigate("/?view=map"),
     },
   ];
 
-  if (user) {
-    exploreNavigation.push({
-      label: "Concierge Chat",
-      description: "Ask for tailor-made plans from AI",
+  if (user && onOpenChat) {
+    exploreLinks.push({
+      label: "Concierge chat",
+      description: "Ask for bespoke recommendations",
       icon: MessageSquare,
-      action: () => runAfterClose(() => onOpenChat?.()),
+      action: () => runAfterClose(() => onOpenChat()),
     });
   }
 
-  const accountLinks = [
+  const supportLinks: DrawerLink[] = [
     {
-      label: "View Full Account",
-      description: "Deep stats, trips, privacy controls",
+      label: "Help center",
+      description: "Guides, policies & onboarding",
+      icon: LifeBuoy,
+      action: () => handleNavigate("/account?tab=help"),
+    },
+    {
+      label: "Contact support",
+      description: "Email the editorial team",
+      icon: Mail,
+      action: () => {
+        if (typeof window !== "undefined") {
+          window.location.href = "mailto:help@urbanmanual.com";
+        }
+      },
+    },
+  ];
+
+  const systemLinks: DrawerLink[] = [
+    {
+      label: "Account overview",
+      description: "Billing, exports, security",
       icon: User,
       action: () => handleNavigate("/account"),
     },
     {
-      label: "Settings & Preferences",
-      description: "Notifications, privacy, personalization",
+      label: "Settings & privacy",
+      description: "Notifications and personalization",
       icon: Settings,
       action: () => runAfterClose(() => setIsSettingsOpen(true)),
     },
+    {
+      label: "Sign out",
+      description: "End this session",
+      icon: LogOut,
+      action: handleSignOut,
+      variant: "destructive",
+    },
   ];
 
-  const adminLinks = [
+  const adminLinks: DrawerLink[] = [
     {
-      label: "Admin Panel",
+      label: "Admin panel",
       description: "Approve curation & manage data",
       icon: ShieldCheck,
       action: () => handleNavigate("/admin"),
@@ -397,33 +394,6 @@ export function AccountDrawer({
     { label: "Collections", value: stats.collections, caption: "Lists" },
   ];
 
-  const lifestyleCards = [
-    {
-      label: "Standard",
-      description: "Your plan",
-      icon: CreditCard,
-      actionLabel: "Manage",
-      onClick: () => handleNavigate("/account"),
-    },
-    {
-      label: "Invite friends",
-      description: "Earn $80 or more",
-      icon: Gift,
-      actionLabel: "Share",
-      onClick: handleInviteFriends,
-    },
-  ];
-
-  const essentials = [
-    {
-      label: "Help Center",
-      description: "Questions, tips & policies",
-      icon: LifeBuoy,
-      action: () => handleNavigate("/account"),
-    },
-    ...accountLinks,
-  ];
-
   const SectionHeading = ({ children }: { children: ReactNode }) => (
     <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
       {children}
@@ -431,21 +401,60 @@ export function AccountDrawer({
   );
 
   const ListGroup = ({ children }: { children: ReactNode }) => (
-    <div className="divide-y divide-gray-200 rounded-3xl border border-gray-200 bg-white/70 dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-950/40">
+    <div className="divide-y divide-gray-200 rounded-3xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
       {children}
     </div>
   );
 
+  const ListRow = ({
+    icon: Icon,
+    label,
+    description,
+    action,
+    trailing,
+    variant = "default",
+  }: DrawerLink & { trailing?: ReactNode }) => {
+    const baseText =
+      variant === "destructive"
+        ? "text-red-600 dark:text-red-400"
+        : "text-gray-900 dark:text-white";
+
+    const iconStyles =
+      variant === "destructive"
+        ? "border-red-200 text-red-600 dark:border-red-900/60 dark:text-red-400"
+        : "border-gray-200 text-gray-600 dark:border-gray-800 dark:text-gray-300";
+
+    return (
+      <button
+        type="button"
+        onClick={action}
+        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
+      >
+        <span className={`flex h-10 w-10 items-center justify-center rounded-2xl border ${iconStyles}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="flex-1">
+          <p className={`text-sm font-medium ${baseText}`}>{label}</p>
+          {description && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+          )}
+        </div>
+        {trailing ?? <ChevronRight className="h-4 w-4 text-gray-400" />}
+      </button>
+    );
+  };
+
   const accountContent = (
-    <div className="px-4 sm:px-6 py-6">
+    <div className="px-4 sm:px-6 py-6 text-gray-900 dark:text-white">
       {user ? (
         <div className="space-y-8">
-          <section className="rounded-3xl border border-gray-200 bg-white/70 p-6 text-gray-900 dark:border-gray-800 dark:bg-gray-950/60 dark:text-white">
+          <section className="space-y-4">
+            <SectionHeading>Profile</SectionHeading>
             <div className="flex flex-col gap-5">
               <div className="flex items-start gap-4">
                 <button
                   onClick={handleAvatarClick}
-                  className="relative h-16 w-16 rounded-2xl border border-gray-200 bg-white text-gray-500 transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900"
+                  className="relative h-16 w-16 rounded-2xl border border-gray-200 text-gray-500 transition hover:border-gray-300 dark:border-gray-800"
                   aria-label="Change profile picture"
                 >
                   <div className="relative h-full w-full overflow-hidden rounded-[18px]">
@@ -468,7 +477,6 @@ export function AccountDrawer({
                   </div>
                 </button>
                 <div className="flex-1 space-y-2">
-                  <SectionHeading>Account</SectionHeading>
                   <div>
                     <p className="text-xl font-semibold leading-tight">{displayName}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">@{username}</p>
@@ -485,206 +493,88 @@ export function AccountDrawer({
                   </div>
                 </div>
               </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleNavigate("/account")}
-                  className="inline-flex flex-1 min-w-[180px] items-center justify-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-black dark:bg-white dark:text-black"
-                >
-                  Open full account
-                  <ExternalLink className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
-                  className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
-                >
-                  Preferences
-                  <Settings className="h-4 w-4" />
-                </button>
-                {onOpenChat && (
-                  <button
-                    type="button"
-                    onClick={() => runAfterClose(() => onOpenChat())}
-                    className="inline-flex flex-1 min-w-[150px] items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
-                  >
-                    Concierge chat
-                    <MessageSquare className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
             </div>
-          </section>
-
-          <section className="space-y-3">
-            <SectionHeading>Plan & invites</SectionHeading>
-            <ListGroup>
-              {lifestyleCards.map(card => {
-                const Icon = card.icon;
-                return (
-                  <button
-                    key={card.label}
-                    onClick={card.onClick}
-                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{card.label}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{card.description}</p>
-                    </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
-                      {card.actionLabel}
-                    </span>
-                  </button>
-                );
-              })}
-            </ListGroup>
           </section>
 
           <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <SectionHeading>Activity snapshot</SectionHeading>
+              <SectionHeading>Activity</SectionHeading>
               {statsLoading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
             </div>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {statCards.map(card => (
-                <div
-                  key={card.label}
-                  className="rounded-2xl border border-gray-200 p-4 dark:border-gray-800"
-                >
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
-                    {card.label}
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                    {statsLoading ? "—" : card.value}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{card.caption}</p>
-                </div>
-              ))}
+            <div className="rounded-3xl border border-gray-200 px-5 py-4 dark:border-gray-800">
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+                {statCards.map(card => (
+                  <div key={card.label}>
+                    <dt className="text-[11px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                      {card.label}
+                    </dt>
+                    <dd className="mt-1 text-2xl font-semibold">
+                      {statsLoading ? "—" : card.value}
+                    </dd>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{card.caption}</p>
+                  </div>
+                ))}
+              </dl>
             </div>
           </section>
 
           <section className="space-y-3">
-            <SectionHeading>Travel toolkit</SectionHeading>
+            <SectionHeading>Workspace</SectionHeading>
             <ListGroup>
-              {travelToolkit.map(item => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    type="button"
-                    key={item.label}
-                    onClick={item.action}
-                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
-                    </div>
-                  </button>
-                );
-              })}
+              {libraryLinks.map(link => (
+                <ListRow key={link.label} {...link} />
+              ))}
             </ListGroup>
           </section>
 
           <section className="space-y-3">
-            <SectionHeading>Explore more</SectionHeading>
+            <SectionHeading>Explore</SectionHeading>
             <ListGroup>
-              {exploreNavigation.map(item => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    type="button"
-                    key={item.label}
-                    onClick={item.action}
-                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-gray-400" />
-                  </button>
-                );
-              })}
+              {exploreLinks.map(link => (
+                <ListRow
+                  key={link.label}
+                  {...link}
+                  trailing={<ExternalLink className="h-4 w-4 text-gray-400" />}
+                />
+              ))}
             </ListGroup>
           </section>
 
           <section className="space-y-3">
-            <SectionHeading>Account & Support</SectionHeading>
+            <SectionHeading>Support</SectionHeading>
             <ListGroup>
-              {essentials.map(item => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    type="button"
-                    key={item.label}
-                    onClick={item.action}
-                    className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
-                    </div>
-                  </button>
-                );
-              })}
+              {supportLinks.map(link => (
+                <ListRow key={link.label} {...link} />
+              ))}
+            </ListGroup>
+          </section>
+
+          <section className="space-y-3">
+            <SectionHeading>System</SectionHeading>
+            <ListGroup>
+              {systemLinks.map(link => (
+                <ListRow key={link.label} {...link} />
+              ))}
             </ListGroup>
           </section>
 
           {isAdmin && (
             <section className="space-y-3">
-              <SectionHeading>Admin tools</SectionHeading>
+              <SectionHeading>Admin</SectionHeading>
               <ListGroup>
-                {adminLinks.map(item => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      type="button"
-                      key={item.label}
-                      onClick={item.action}
-                      className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-900/40"
-                    >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-gray-400" />
-                    </button>
-                  );
-                })}
+                {adminLinks.map(link => (
+                  <ListRow
+                    key={link.label}
+                    {...link}
+                    trailing={<ExternalLink className="h-4 w-4 text-gray-400" />}
+                  />
+                ))}
               </ListGroup>
             </section>
           )}
-
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-900 transition hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-          </div>
         </div>
       ) : (
-        <div className="space-y-4 rounded-3xl border border-gray-200 bg-white/70 px-8 py-10 text-center text-gray-900 dark:border-gray-800 dark:bg-gray-950/60 dark:text-white">
+        <div className="space-y-4 rounded-3xl border border-gray-200 px-8 py-10 text-center text-gray-900 dark:border-gray-800 dark:text-white">
           <SectionHeading>Account</SectionHeading>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold">Sign in to continue</h3>
