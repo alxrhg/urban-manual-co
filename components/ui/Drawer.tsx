@@ -27,6 +27,9 @@ export interface DrawerProps {
   mobileBorderRadius?: string;
   mobileExpanded?: boolean;
   keepStateOnClose?: boolean; // New: Keep state when drawer closes
+  customBorderRadius?: { topLeft?: string; topRight?: string; bottomLeft?: string; bottomRight?: string };
+  customShadow?: string;
+  customBlur?: string;
 }
 
 /**
