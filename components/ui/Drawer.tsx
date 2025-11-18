@@ -279,13 +279,14 @@ export function Drawer({
           {/* Backdrop for side drawer */}
           {showBackdrop !== false && (
             <div
-              className={`fixed inset-0 z-40 transition-opacity duration-[220ms] ${
+              className={`fixed inset-0 transition-opacity duration-[220ms] ${
                 isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
               style={{
                 backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity || '50') / 100})`,
                 backdropFilter: 'blur(18px)',
                 WebkitBackdropFilter: 'blur(18px)',
+                zIndex: zIndex - 1, // Backdrop should be below drawer content
               }}
               onClick={onClose}
             />
