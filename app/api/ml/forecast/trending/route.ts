@@ -26,7 +26,7 @@ function resolveMlServiceUrl() {
       console.error(`Invalid protocol for ML_SERVICE_URL: ${url.protocol}`);
       return null;
     }
-  } catch (e) {
+  } catch {
     console.error(`Invalid ML_SERVICE_URL: ${mlServiceUrl}`);
     return null;
   }
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
 
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       console.error('ML forecast request timed out');
       return NextResponse.json(
         {
