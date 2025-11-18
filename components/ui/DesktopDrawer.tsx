@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useRef } from 'react';
+import { CSSProperties, useRef } from 'react';
 import { X } from 'lucide-react';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
 import { DrawerProps } from './Drawer';
@@ -18,6 +18,12 @@ export function DesktopDrawer({
   position = 'right',
   style = 'solid',
   desktopSpacing = 'right-4 top-4 bottom-4',
+  customBorderRadius,
+  customShadow,
+  customBlur,
+  customBackground,
+  customBorder,
+  customMargin,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -39,16 +45,51 @@ export function DesktopDrawer({
     ? DRAWER_STYLES.headerBackground
     : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md';
 
+  const sharedInlineStyles: CSSProperties = {
+    zIndex,
+    ...(customBackground
+      ? {
+          background: customBackground,
+          backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+          WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+        }
+      : {}),
+    ...(customBorderRadius
+      ? {
+          borderTopLeftRadius: customBorderRadius.topLeft,
+          borderTopRightRadius: customBorderRadius.topRight,
+          borderBottomLeftRadius: customBorderRadius.bottomLeft,
+          borderBottomRightRadius: customBorderRadius.bottomRight,
+        }
+      : {}),
+    ...(customBorder
+      ? {
+          borderStyle: 'solid',
+          borderColor: customBorder.color ?? 'rgba(255,255,255,0.12)',
+          borderWidth: customBorder.thickness ?? '1px',
+        }
+      : {}),
+    ...(customShadow ? { boxShadow: customShadow } : {}),
+    ...(customMargin?.top ? { top: customMargin.top } : {}),
+    ...(customMargin?.right ? { right: customMargin.right } : {}),
+    ...(customMargin?.bottom ? { bottom: customMargin.bottom } : {}),
+    ...(customMargin?.left ? { left: customMargin.left } : {}),
+  };
+
+  const appliedBackgroundClasses = customBackground ? '' : backgroundClasses;
+  const appliedBorderClasses = customBorder ? '' : borderClasses;
+  const appliedShadowClasses = customShadow ? '' : shadowClasses;
+
   return (
     <>
       {/* Desktop Drawer - Side Drawer with responsive widths */}
       <div
         ref={drawerRef}
-        className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+        className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${appliedBackgroundClasses} ${appliedShadowClasses} ${appliedBorderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
         } overflow-hidden flex-col`}
         style={{ 
-          zIndex, 
+          ...sharedInlineStyles,
           width: '70%', // Tablet: 70% width
           maxWidth: 'calc(100vw - 2rem)',
         }}
@@ -92,11 +133,11 @@ export function DesktopDrawer({
       {/* Desktop Drawer - Fixed width for large screens */}
       <div
         ref={drawerRef}
-        className={`hidden lg:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+        className={`hidden lg:flex fixed ${desktopSpacing} rounded-2xl ${appliedBackgroundClasses} ${appliedShadowClasses} ${appliedBorderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
         } overflow-hidden flex-col`}
         style={{ 
-          zIndex, 
+          ...sharedInlineStyles,
           width: desktopWidth, // Desktop: fixed width (420px)
           maxWidth: 'calc(100vw - 2rem)',
         }}

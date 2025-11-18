@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -25,10 +25,9 @@ import {
   Calendar,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
 import type { Trip } from "@/types/trip";
-import { getDestinationImageUrl } from '@/lib/destination-images';
+import { getDestinationImageUrl, getSafeImageUrl } from '@/lib/destination-images';
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -56,6 +55,31 @@ type SubpageId =
   | 'create_trip_subpage'
   | 'achievements_subpage'
   | 'settings_subpage';
+
+interface DrawerImageProps {
+  src?: string | null;
+  alt: string;
+  className?: string;
+  style?: CSSProperties;
+}
+
+const DrawerImage = ({ src, alt, className, style }: DrawerImageProps) => {
+  const safeSrc = getSafeImageUrl(src);
+  if (!safeSrc) return null;
+
+  return (
+    <img
+      src={safeSrc}
+      alt={alt}
+      className={className}
+      style={style}
+      loading="lazy"
+      onError={(event) => {
+        event.currentTarget.style.display = 'none';
+      }}
+    />
+  );
+};
 
 export function AccountDrawer({
   isOpen,
@@ -313,6 +337,7 @@ export function AccountDrawer({
       {children}
     </div>
   );
+  };
 
   // Navigation handler
   const navigateToSubpage = (subpage: SubpageId, tripId?: string) => {
@@ -366,20 +391,22 @@ export function AccountDrawer({
   };
 
   // Render main drawer content (Tier 1)
-  const renderMainDrawer = () => (
+  const renderMainDrawer = () => {
+    const safeAvatarUrl = getSafeImageUrl(avatarUrl);
+
+    return (
     <div className="space-y-0" style={{ padding: '30px 26px', paddingTop: '30px', paddingBottom: '30px', paddingLeft: '26px', paddingRight: '26px' }}>
       {user ? (
         <>
           {/* Header: Avatar, Name, Username */}
           <div className="flex items-center gap-3" style={{ gap: '12px', marginBottom: '14px' }}>
             <div className="relative rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700" style={{ width: '64px', height: '64px' }}>
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
+              {safeAvatarUrl ? (
+                <img
+                  src={safeAvatarUrl}
                   alt="Profile"
-                  fill
-                  className="object-cover"
-                  sizes="64px"
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarUrl(null)}
                 />
               ) : (
                 <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -642,12 +669,10 @@ export function AccountDrawer({
               >
                 {recentTrips[0].cover_image && (
                   <div className="relative w-full h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
-                    <Image
+                    <DrawerImage
                       src={recentTrips[0].cover_image}
                       alt={recentTrips[0].title}
-                      fill
-                      className="object-cover"
-                      sizes="100%"
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                   </div>
                 )}
@@ -753,17 +778,13 @@ export function AccountDrawer({
                   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
                 }}
               >
-                {displayImage && (
-                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
-                    <Image
-                      src={displayImage}
-                      alt={visit.destination?.name || visit.slug}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  </div>
-                )}
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
+                  <DrawerImage
+                    src={displayImage}
+                    alt={visit.destination?.name || visit.slug}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
                     {visit.destination?.name || visit.slug}
@@ -827,17 +848,13 @@ export function AccountDrawer({
                   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
                 }}
               >
-                {displayImage && (
-                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
-                    <Image
-                      src={displayImage}
-                      alt={saved.destination?.name || saved.slug}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  </div>
-                )}
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
+                  <DrawerImage
+                    src={displayImage}
+                    alt={saved.destination?.name || saved.slug}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
                     {saved.destination?.name || saved.slug}
@@ -937,17 +954,13 @@ export function AccountDrawer({
                 e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
               }}
             >
-              {trip.cover_image && (
-                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
-                  <Image
-                    src={trip.cover_image}
-                    alt={trip.title}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
-                </div>
-              )}
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
+                <DrawerImage
+                  src={trip.cover_image}
+                  alt={trip.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
                   {trip.title}
@@ -990,12 +1003,10 @@ export function AccountDrawer({
       <div className="px-6 py-6 space-y-4">
         {selectedTrip.cover_image && (
           <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-            <Image
+            <DrawerImage
               src={selectedTrip.cover_image}
               alt={selectedTrip.title}
-              fill
-              className="object-cover"
-              sizes="100vw"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           </div>
         )}

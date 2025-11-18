@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, ReactNode, useRef } from 'react';
+import { CSSProperties, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
 import { DrawerProps } from './Drawer';
@@ -22,6 +22,12 @@ export function MobileDrawer({
   mobileMaxHeight,
   mobileBorderRadius,
   mobileExpanded = false,
+  customBackground,
+  customBlur,
+  customBorder,
+  customBorderRadius,
+  customShadow,
+  customMargin,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
@@ -92,10 +98,17 @@ export function MobileDrawer({
     : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md';
 
   const computedMobileHeight =
-    mobileHeight ?? 'calc(96vh - env(safe-area-inset-bottom) - 1rem)';
+    mobileHeight
+      ? `calc(${mobileHeight} - 20px)`
+      : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)';
   const computedMobileMaxHeight =
-    mobileMaxHeight ?? 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.5rem)';
+    mobileMaxHeight
+      ? `calc(${mobileMaxHeight} - 20px)`
+      : 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.5rem)';
   const peekOffset = 'clamp(3.5rem, 32vh, 14rem)';
+  const resolvedMobileWidth =
+    mobileWidth === 'max-w-md' ? 'calc(100% - 20px)' : mobileWidth;
+
   const bottomSheetTransform = !isOpen
     ? 'translate3d(0, 120%, 0) scale(0.98)'
     : mobileExpanded
@@ -103,19 +116,55 @@ export function MobileDrawer({
     : `translate3d(0, ${peekOffset}, 0) scale(0.985)`;
   const radiusClass = mobileBorderRadius ?? 'rounded-[32px]';
 
+  const sharedInlineStyles: CSSProperties = {
+    zIndex,
+    ...(customBackground
+      ? {
+          background: customBackground,
+          backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+          WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+        }
+      : {}),
+    ...(customBorderRadius
+      ? {
+          borderTopLeftRadius: customBorderRadius.topLeft,
+          borderTopRightRadius: customBorderRadius.topRight,
+          borderBottomLeftRadius: customBorderRadius.bottomLeft,
+          borderBottomRightRadius: customBorderRadius.bottomRight,
+        }
+      : {}),
+    ...(customBorder
+      ? {
+          borderStyle: 'solid',
+          borderColor: customBorder.color ?? 'rgba(255,255,255,0.12)',
+          borderWidth: customBorder.thickness ?? '1px',
+        }
+      : {}),
+    ...(customShadow ? { boxShadow: customShadow } : {}),
+    ...(customMargin?.top ? { top: customMargin.top } : {}),
+    ...(customMargin?.right ? { right: customMargin.right } : {}),
+    ...(customMargin?.bottom ? { bottom: customMargin.bottom } : {}),
+    ...(customMargin?.left ? { left: customMargin.left } : {}),
+  };
+
+  const appliedBackgroundClasses = customBackground ? '' : backgroundClasses;
+  const appliedBorderClasses = customBorder ? '' : borderClasses;
+
   return (
     <>
       {/* Mobile Drawer - Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
           ref={drawerRef}
-          className={`md:hidden fixed inset-[10px] transform transition-transform duration-[220ms] ease-out will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
+          className={`md:hidden fixed inset-[10px] transform transition-transform duration-[220ms] ease-out will-change-transform flex flex-col ${appliedBackgroundClasses} ${customBorder ? '' : DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
             mobileExpanded ? 'drawer-expanded' : 'drawer-collapsed'
           } ${!isOpen ? 'translate-y-full' : ''}`}
           style={{
-            zIndex,
-            maxHeight: 'calc(100vh - 20px)',
-            height: mobileHeight ? `calc(${mobileHeight} - 20px)` : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)',
+            ...sharedInlineStyles,
+            width: resolvedMobileWidth ?? 'calc(100% - 20px)',
+            maxWidth: resolvedMobileWidth ?? 'calc(100% - 20px)',
+            maxHeight: computedMobileMaxHeight,
+            height: computedMobileHeight,
             transform: isOpen ? bottomSheetTransform : 'translate3d(0, 120%, 0) scale(0.98)',
           }}
         >
@@ -160,10 +209,10 @@ export function MobileDrawer({
       {mobileVariant === 'side' && (
         <div
           ref={drawerRef}
-          className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+          className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${appliedBackgroundClasses} ${appliedBorderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
             isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
           } overflow-hidden flex flex-col`}
-          style={{ zIndex }}
+          style={{ ...sharedInlineStyles }}
         >
           {/* Header - 56px height, blurred */}
           {(title || headerContent) && (
