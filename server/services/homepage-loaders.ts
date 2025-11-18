@@ -50,6 +50,13 @@ function isMissingArchitectInfoColumnError(error: any) {
   return message.includes('architect_info_json');
 }
 
+function coerceToDestinations(rows: unknown): Destination[] {
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+  return rows as Destination[];
+}
+
 function getAdminClient(): SupabaseClient | null {
   try {
     return createServiceRoleClient();
@@ -187,12 +194,12 @@ export async function getHomepageDestinations(limit = 500) {
         if (fallbackResult.error) {
           throw fallbackResult.error;
         }
-        return (fallbackResult.data ?? []) as Destination[];
+        return coerceToDestinations(fallbackResult.data);
       }
       throw error;
     }
 
-    return (data ?? []) as Destination[];
+    return coerceToDestinations(data);
   } catch (error: any) {
     // If it's a placeholder client error, return empty array gracefully
     if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {

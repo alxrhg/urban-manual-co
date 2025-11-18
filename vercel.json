@@ -15,6 +15,10 @@
     {
       "path": "/api/realtime/check-price-alerts",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/enrich-with-exa",
+      "schedule": "*/30 * * * *" 
     }
   ]
 }

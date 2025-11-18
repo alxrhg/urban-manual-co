@@ -21,6 +21,7 @@ export interface Destination {
   design_firm?: string | null;
   architectural_style?: string | null;
   design_period?: string | null;
+  designer_name?: string | null;
   architect_info_json?: Record<string, unknown> | null;
   architect_info_updated_at?: string | null;
   // NEW: Architecture-First fields (FKs and rich content)
