@@ -177,25 +177,25 @@ export function createServiceRoleClient() {
       console.error('[Supabase Service Role] Configuration Validation Failed:');
       console.error(errorMessage);
       console.warn('[Supabase Service Role] Using placeholder client. Fix configuration to enable admin operations.');
+      
+      // In development, return placeholder to allow development to continue
+      return createClient(
+        'https://placeholder.supabase.co',
+        'placeholder-key',
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
+      );
     } else {
-      // In production, log error but don't throw during build
-      // Runtime errors will occur when the client is actually used
+      // In production, throw error to prevent silent failures
+      // This will be caught by calling code and handled gracefully
       console.error('[Supabase Service Role] Configuration Validation Failed (production):');
       console.error(errorMessage);
+      throw new Error(`Supabase service role client configuration invalid: ${validation.errors.join(', ')}`);
     }
-
-    // Return placeholder client (allows build to proceed)
-    // Actual runtime errors will occur when client methods are called
-    return createClient(
-      'https://placeholder.supabase.co',
-      'placeholder-key',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
   }
 
   // Service role client doesn't need cookie handling - use regular createClient

@@ -104,10 +104,10 @@ export function validateSupabaseServiceRoleKey(key: string): ValidationResult {
     return { valid: false, errors };
   }
 
-  // Basic length check - service role keys should be at least 50 characters
-  // (more lenient than before to accommodate different key formats)
-  if (key.length < 50) {
-    errors.push('Supabase service role key appears too short (expected at least 50 characters)');
+  // Basic length check - service role keys should be at least 20 characters
+  // JWT tokens are typically much longer, but we're lenient to accommodate different key formats
+  if (key.length < 20) {
+    errors.push('Supabase service role key appears too short (expected at least 20 characters)');
   }
 
   // Note: We don't enforce JWT format (eyJ prefix) as some valid Supabase setups

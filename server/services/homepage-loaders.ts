@@ -11,7 +11,7 @@ function getAdminClient() {
     // If service role client creation fails, log and return null
     // The calling functions will handle the null case
     console.warn('[Homepage Loaders] Failed to create service role client:', error?.message);
-    return null as any; // Return placeholder to prevent crashes
+    return null as any; // Return null to prevent crashes
   }
 }
 
@@ -34,8 +34,19 @@ export async function getUserProfileById(userId: string) {
 
     return (data ?? null) as UserProfile | null;
   } catch (error: any) {
-    // If it's a placeholder client error, return null gracefully
-    if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+    // Handle various error types gracefully
+    const errorMessage = error?.message || String(error);
+    const errorCode = error?.code;
+    
+    if (
+      errorMessage.includes('placeholder') || 
+      errorMessage.includes('invalid') ||
+      errorMessage.includes('fetch failed') ||
+      errorCode === 'ECONNREFUSED' ||
+      errorCode === 'ETIMEDOUT' ||
+      errorCode === 'ENOTFOUND' ||
+      error?.name === 'TypeError'
+    ) {
       return null;
     }
     throw error;
@@ -62,8 +73,19 @@ export async function getVisitedSlugsForUser(userId: string) {
       .map(entry => entry.destination_slug)
       .filter((slug): slug is string => Boolean(slug));
   } catch (error: any) {
-    // If it's a placeholder client error, return empty array gracefully
-    if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+    // Handle various error types gracefully
+    const errorMessage = error?.message || String(error);
+    const errorCode = error?.code;
+    
+    if (
+      errorMessage.includes('placeholder') || 
+      errorMessage.includes('invalid') ||
+      errorMessage.includes('fetch failed') ||
+      errorCode === 'ECONNREFUSED' ||
+      errorCode === 'ETIMEDOUT' ||
+      errorCode === 'ENOTFOUND' ||
+      error?.name === 'TypeError'
+    ) {
       return [];
     }
     throw error;
@@ -90,8 +112,19 @@ export async function getFilterRows(limit = 1000) {
 
     return (data ?? []) as FilterRow[];
   } catch (error: any) {
-    // If it's a placeholder client error, return empty array gracefully
-    if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+    // Handle various error types gracefully
+    const errorMessage = error?.message || String(error);
+    const errorCode = error?.code;
+    
+    if (
+      errorMessage.includes('placeholder') || 
+      errorMessage.includes('invalid') ||
+      errorMessage.includes('fetch failed') ||
+      errorCode === 'ECONNREFUSED' ||
+      errorCode === 'ETIMEDOUT' ||
+      errorCode === 'ENOTFOUND' ||
+      error?.name === 'TypeError'
+    ) {
       return [];
     }
     throw error;
@@ -119,8 +152,21 @@ export async function getHomepageDestinations(limit = 500) {
 
     return (data ?? []) as Destination[];
   } catch (error: any) {
-    // If it's a placeholder client error, return empty array gracefully
-    if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+    // Handle various error types gracefully
+    const errorMessage = error?.message || String(error);
+    const errorCode = error?.code;
+    
+    // Check for placeholder client errors, fetch failures, or connection issues
+    if (
+      errorMessage.includes('placeholder') || 
+      errorMessage.includes('invalid') ||
+      errorMessage.includes('fetch failed') ||
+      errorCode === 'ECONNREFUSED' ||
+      errorCode === 'ETIMEDOUT' ||
+      errorCode === 'ENOTFOUND' ||
+      error?.name === 'TypeError'
+    ) {
+      console.warn('[Homepage Loaders] Database connection issue - returning empty destinations:', errorMessage);
       return [];
     }
     throw error;

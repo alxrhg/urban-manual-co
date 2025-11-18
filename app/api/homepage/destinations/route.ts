@@ -14,12 +14,21 @@ export function createHomepageDestinationsHandler(deps: DestinationsHandlerDeps)
     } catch (error: any) {
       console.error('[Homepage Destinations API] Error loading destinations:', error?.message || error);
       
-      // Check if it's a Supabase config error or connection issue
-      if (error?.message?.includes('placeholder') || 
-          error?.message?.includes('invalid') ||
-          error?.message?.includes('Failed to create service role client') ||
-          error?.code === 'ECONNREFUSED' ||
-          error?.code === 'ETIMEDOUT') {
+      // Check if it's a Supabase config error, fetch failure, or connection issue
+      const errorMessage = error?.message || String(error);
+      const errorCode = error?.code;
+      
+      if (
+        errorMessage.includes('placeholder') || 
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('Failed to create service role client') ||
+        errorMessage.includes('fetch failed') ||
+        errorMessage.includes('Supabase service role client configuration invalid') ||
+        errorCode === 'ECONNREFUSED' ||
+        errorCode === 'ETIMEDOUT' ||
+        errorCode === 'ENOTFOUND' ||
+        error?.name === 'TypeError'
+      ) {
         console.warn('[Homepage Destinations API] Database connection issue - returning empty destinations');
         return NextResponse.json({ success: true, destinations: [], note: 'Database temporarily unavailable' }, { status: 200 });
       }
