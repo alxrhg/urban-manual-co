@@ -16,26 +16,27 @@ export interface ValidationResult {
  */
 export function validateSupabaseUrl(url: string): ValidationResult {
   const errors: string[] = [];
+  const trimmedUrl = url ? url.trim() : '';
 
-  if (!url || url.trim() === '') {
+  if (!trimmedUrl) {
     errors.push('Supabase URL is required');
     return { valid: false, errors };
   }
 
   // Check for placeholder values
-  if (url.includes('placeholder') || url.includes('invalid') || url.includes('example')) {
+  if (trimmedUrl.includes('placeholder') || trimmedUrl.includes('invalid') || trimmedUrl.includes('example')) {
     errors.push('Supabase URL contains placeholder value');
     return { valid: false, errors };
   }
 
   // Must be HTTPS (except localhost in development)
-  if (!url.startsWith('https://') && !url.startsWith('http://localhost')) {
+  if (!trimmedUrl.startsWith('https://') && !trimmedUrl.startsWith('http://localhost')) {
     errors.push('Supabase URL must use HTTPS (or http://localhost for local development)');
   }
 
   // Must be a valid URL format
   try {
-    const urlObj = new URL(url);
+    const urlObj = new URL(trimmedUrl);
     if (!urlObj.hostname) {
       errors.push('Supabase URL must have a valid hostname');
     }
@@ -44,7 +45,7 @@ export function validateSupabaseUrl(url: string): ValidationResult {
     // Allow any valid domain - custom domains or different Supabase setups are valid
     // This is just a warning, not a hard requirement
   } catch (e) {
-    errors.push('Supabase URL is not a valid URL format');
+    errors.push(`Supabase URL is not a valid URL format: "${trimmedUrl}"`);
   }
 
   return {
@@ -59,21 +60,22 @@ export function validateSupabaseUrl(url: string): ValidationResult {
  */
 export function validateSupabaseAnonKey(key: string): ValidationResult {
   const errors: string[] = [];
+  const trimmedKey = key ? key.trim() : '';
 
-  if (!key || key.trim() === '') {
+  if (!trimmedKey) {
     errors.push('Supabase anon/publishable key is required');
     return { valid: false, errors };
   }
 
   // Check for placeholder values
-  if (key.includes('placeholder') || key.includes('invalid') || key.includes('example')) {
+  if (trimmedKey.includes('placeholder') || trimmedKey.includes('invalid') || trimmedKey.includes('example')) {
     errors.push('Supabase anon key contains placeholder value');
     return { valid: false, errors };
   }
 
   // Basic length check - keys should be at least 20 characters
   // (some valid keys might be shorter than 100, so we're more lenient)
-  if (key.length < 20) {
+  if (trimmedKey.length < 20) {
     errors.push('Supabase anon key appears too short (expected at least 20 characters)');
   }
 
@@ -92,24 +94,34 @@ export function validateSupabaseAnonKey(key: string): ValidationResult {
  */
 export function validateSupabaseServiceRoleKey(key: string): ValidationResult {
   const errors: string[] = [];
+  const trimmedKey = key ? key.trim() : '';
 
-  if (!key || key.trim() === '') {
+  if (!trimmedKey) {
     errors.push('Supabase service role key is required');
     return { valid: false, errors };
   }
 
   // Check for placeholder values
-  if (key.includes('placeholder') || key.includes('invalid') || key.includes('example')) {
+  if (trimmedKey.includes('placeholder') || trimmedKey.includes('invalid') || trimmedKey.includes('example')) {
     errors.push('Supabase service role key contains placeholder value');
     return { valid: false, errors };
   }
 
-  // Basic length check - service role keys should be at least 50 characters
-  // (more lenient than before to accommodate different key formats)
-  if (key.length < 50) {
-    errors.push('Supabase service role key appears too short (expected at least 50 characters)');
+  const isNewSecretKey = trimmedKey.startsWith('sb_secret_');
+  const isLegacyServiceRoleKey = trimmedKey.startsWith('eyJ');
+
+  if (!isNewSecretKey && !isLegacyServiceRoleKey) {
+    errors.push('Supabase service role key must start with "sb_secret_" or be a JWT (starting with "eyJ")');
   }
 
+  if (isLegacyServiceRoleKey && trimmedKey.length < 50) {
+    errors.push('Supabase legacy service role key appears too short (expected at least 50 characters)');
+  }
+
+  if (isNewSecretKey && trimmedKey.length < 60) { // New keys are longer
+    errors.push('Supabase service role key appears too short for its format');
+  }
+  
   // Note: We don't enforce JWT format (eyJ prefix) as some valid Supabase setups
   // might use different key formats. The key just needs to be non-empty and not a placeholder.
 
@@ -164,4 +176,3 @@ export function formatValidationErrors(errors: string[]): string {
     `  - NEXT_PUBLIC_SUPABASE_ANON_KEY (or SUPABASE_ANON_KEY or PUBLISHABLE_KEY)\n` +
     `  - SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) - for server-side operations\n`;
 }
-

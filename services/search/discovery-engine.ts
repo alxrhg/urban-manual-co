@@ -20,8 +20,12 @@ export class DiscoveryEngineService {
 
   constructor() {
     // Get configuration from environment variables
-    this.projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GCP_PROJECT_ID || '';
-    this.location = process.env.GOOGLE_CLOUD_LOCATION || 'global';
+    this.projectId =
+      process.env.GOOGLE_CLOUD_PROJECT_ID ||
+      process.env.DISCOVERY_ENGINE_PROJECT_ID ||
+      process.env.GCP_PROJECT_ID ||
+      '';
+    this.location = process.env.GOOGLE_CLOUD_LOCATION || process.env.DISCOVERY_ENGINE_LOCATION || 'global';
     this.dataStoreId = process.env.DISCOVERY_ENGINE_DATA_STORE_ID || 'urban-manual-destinations';
     this.collectionId = process.env.DISCOVERY_ENGINE_COLLECTION_ID || 'default_collection';
 
@@ -47,36 +51,13 @@ export class DiscoveryEngineService {
     }
 
     try {
-      // Check if we have explicit credentials
-      const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-      const credentialsJson = process.env.GOOGLE_CLOUD_CREDENTIALS_JSON;
-
-      const clientOptions: any = {};
-
-      // If we have explicit credentials JSON, use it
-      if (credentialsJson) {
-        try {
-          clientOptions.credentials = JSON.parse(credentialsJson);
-        } catch (parseError) {
-          console.warn('[Discovery Engine] Failed to parse GOOGLE_CLOUD_CREDENTIALS_JSON:', parseError);
-        }
-      } else if (credentialsPath) {
-        // If we have a path to credentials, the client will load it automatically
-        // Just set the path in the options
-        clientOptions.keyFilename = credentialsPath;
-      }
-      // Otherwise, let it try default credentials (but we'll catch the error)
-
-      // Initialize clients - they will load credentials lazily on first use
-      // We create them here but errors will be caught when they're actually used
-      this.documentClient = new DocumentServiceClient(clientOptions);
-      this.searchClient = new SearchServiceClient(clientOptions);
-      this.recommendationClient = new RecommendationServiceClient(clientOptions);
-      this.userEventClient = new UserEventServiceClient(clientOptions);
-
-      // Test that credentials work by making a simple call (but catch errors)
-      // We'll test with a simple operation that doesn't require actual API calls
-      // Just verify the client can be created without immediate credential errors
+      // The Google Cloud client libraries automatically handle authentication
+      // by checking environment variables like GOOGLE_APPLICATION_CREDENTIALS
+      // and GOOGLE_CLOUD_CREDENTIALS_JSON. We don't need to handle them manually.
+      this.documentClient = new DocumentServiceClient();
+      this.searchClient = new SearchServiceClient();
+      this.recommendationClient = new RecommendationServiceClient();
+      this.userEventClient = new UserEventServiceClient();
 
       this.clientsInitialized = true;
     } catch (error: any) {
@@ -96,22 +77,30 @@ export class DiscoveryEngineService {
    * Check if Discovery Engine is configured and available
    */
   isAvailable(): boolean {
-    // Check if we have the required configuration
-    if (!this.projectId || !this.dataStoreId) {
+    if (!this.hasConfiguration()) {
       return false;
     }
 
-    // If clients haven't been initialized yet, they're not available
-    // (but we don't want to trigger initialization here as it's async)
-    // Return false if we know initialization failed
     if (this.initializationError) {
       return false;
     }
 
-    // If clients are initialized and exist, we're available
-    return this.clientsInitialized && this.documentClient !== null && this.searchClient !== null;
+    // If we've already attempted initialization ensure the clients exist.
+    if (this.clientsInitialized) {
+      return this.documentClient !== null && this.searchClient !== null;
+    }
+
+    // Configuration is present and initialization hasn't failed yet.
+    return true;
   }
 
+  hasConfiguration(): boolean {
+    return Boolean(this.projectId && this.location && this.dataStoreId && this.collectionId);
+  }
+
+  /**
+   * Search destinations using Discovery Engine
+   */
   /**
    * Search destinations using Discovery Engine
    */
@@ -152,32 +141,8 @@ export class DiscoveryEngineService {
       boostSpec = [],
     } = options;
 
-    // Build filter string
-    const filterParts: string[] = [];
-    if (filters.city) {
-      filterParts.push(`city:${filters.city}`);
-    }
-    if (filters.category) {
-      filterParts.push(`category:${filters.category}`);
-    }
-    if (filters.priceLevel !== undefined) {
-      filterParts.push(`price_level<=${filters.priceLevel}`);
-    }
-    if (filters.minRating !== undefined) {
-      filterParts.push(`rating>=${filters.minRating}`);
-    }
-
-    const filterString = filterParts.length > 0 ? filterParts.join(' AND ') : undefined;
-
-    // Build boost specification
-    const boostSpecObj = boostSpec.length > 0
-      ? {
-          conditionBoostSpecs: boostSpec.map((spec) => ({
-            condition: spec.condition,
-            boost: spec.boost || 1.0,
-          })),
-        }
-      : undefined;
+    const filterString = this._buildFilterString(filters);
+    const boostSpecObj = this._buildBoostSpec(boostSpec);
 
     try {
       const request = {
@@ -248,6 +213,50 @@ export class DiscoveryEngineService {
       throw new Error(`Discovery Engine search failed: ${error?.message || 'Unknown error'}`);
     }
   }
+
+  /**
+   * Build filter string for search
+   */
+  private _buildFilterString(filters: {
+    city?: string;
+    category?: string;
+    priceLevel?: number;
+    minRating?: number;
+  }): string | undefined {
+    const filterParts: string[] = [];
+    if (filters.city) {
+      filterParts.push(`city:${filters.city}`);
+    }
+    if (filters.category) {
+      filterParts.push(`category:${filters.category}`);
+    }
+    if (filters.priceLevel !== undefined) {
+      filterParts.push(`price_level<=${filters.priceLevel}`);
+    }
+    if (filters.minRating !== undefined) {
+      filterParts.push(`rating>=${filters.minRating}`);
+    }
+
+    return filterParts.length > 0 ? filterParts.join(' AND ') : undefined;
+  }
+
+  /**
+   * Build boost specification for search
+   */
+  private _buildBoostSpec(boostSpec: {
+    condition?: string;
+    boost?: number;
+  }[]): { conditionBoostSpecs: { condition: string | undefined; boost: number; }[]; } | undefined {
+    return boostSpec.length > 0
+      ? {
+          conditionBoostSpecs: boostSpec.map((spec) => ({
+            condition: spec.condition,
+            boost: spec.boost || 1.0,
+          })),
+        }
+      : undefined;
+  }
+
 
   /**
    * Get personalized recommendations for a user
@@ -325,7 +334,10 @@ export class DiscoveryEngineService {
   /**
    * Transform a destination to Discovery Engine document format
    */
-  transformToDocument(destination: any): any {
+  transformToDocument(
+    destination: any,
+    contentBuilder?: (destination: any) => string
+  ): any {
     // For structured data, content should be an object with mimeType and rawBytes or uri
     // Or we can omit it and use structData only
     const document: any = {
@@ -356,7 +368,7 @@ export class DiscoveryEngineService {
           updated_at: destination.updated_at || new Date().toISOString(),
         },
         // Add searchable text content in structData for semantic search
-        content: this.buildContent(destination),
+        content: contentBuilder ? contentBuilder(destination) : this.buildContent(destination),
       },
       uri: `/destination/${destination.slug || destination.id}`,
     };
