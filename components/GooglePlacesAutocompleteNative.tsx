@@ -114,12 +114,20 @@ export default function GooglePlacesAutocompleteNative({
       containerRef.current.innerHTML = '';
 
       // Create the PlaceAutocompleteElement
-      // PlaceAutocompleteElement requires an options object, but the TypeScript definitions
-      // may not match the actual runtime API. Use type assertion to work around this.
-      const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
-        // @ts-ignore - PlaceAutocompleteElement options may not be fully typed
-        requestedResultTypes: types && types.length > 0 ? (types as any) : ['establishment', 'geocode'],
-      } as google.maps.places.PlaceAutocompleteElementOptions);
+      // PlaceAutocompleteElement doesn't accept requestedResultTypes in constructor
+      // Create without options first, then set properties if needed
+      const autocompleteElement = new google.maps.places.PlaceAutocompleteElement();
+      
+      // Try to set requestedResultTypes as a property (may not be supported)
+      if (types && types.length > 0) {
+        try {
+          // @ts-ignore - requestedResultTypes may exist as a property
+          (autocompleteElement as any).requestedResultTypes = types;
+        } catch (e) {
+          // Property may not be settable, ignore
+          console.warn('Could not set requestedResultTypes on PlaceAutocompleteElement');
+        }
+      }
 
       // Set up the input element
       const input = document.createElement('input');
