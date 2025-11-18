@@ -68,6 +68,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
   const toast = useToast();
 
   // Load existing trip if tripId is provided
@@ -94,6 +95,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setCoverImage(null);
     setCoverImageFile(null);
     setCoverImagePreview(null);
+    setIsPublic(false);
   };
 
   const loadTrip = async (id: string) => {
@@ -125,6 +127,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       setHotelLocation(tripData.description || ''); // Using description for hotel location
       setCurrentTripId(tripData.id);
       setCoverImage(tripData.cover_image || null);
+      setIsPublic(tripData.is_public);
 
       // Load itinerary items
       // First verify trip ownership to avoid RLS recursion
@@ -427,6 +430,29 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       alert(error?.message || 'Failed to save trip. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdatePublic = async (newIsPublic: boolean) => {
+    if (!currentTripId || !user) return;
+
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .update({ is_public: newIsPublic })
+        .eq('id', currentTripId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setIsPublic(newIsPublic);
+      toast.success(newIsPublic ? 'Trip is now public' : 'Trip is now private');
+    } catch (error: any) {
+      console.error('Error updating trip visibility:', error);
+      toast.error('Failed to update trip visibility');
     }
   };
 
@@ -882,7 +908,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       {showShare && (
         <TripShareModal
           tripName={tripName}
+          tripId={currentTripId || undefined}
+          isPublic={isPublic}
           onClose={() => setShowShare(false)}
+          onUpdatePublic={handleUpdatePublic}
         />
       )}
     </>

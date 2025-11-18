@@ -47,7 +47,10 @@ export interface ItineraryItem {
   destination_slug: string | null; // VARCHAR(255)
   day: number; // INTEGER NOT NULL
   order_index: number; // INTEGER NOT NULL
-  time: string | null; // VARCHAR(50)
+  time: string | null; // VARCHAR(50) - deprecated, use start_time/end_time
+  start_time: string | null; // TIMESTAMPTZ - ISO 8601 with timezone
+  end_time: string | null; // TIMESTAMPTZ - ISO 8601 with timezone
+  timezone: string | null; // VARCHAR(100) - e.g., 'America/New_York'
   title: string; // VARCHAR(255) NOT NULL
   description: string | null; // TEXT
   notes: string | null; // TEXT (can contain JSON)
@@ -59,7 +62,10 @@ export interface InsertItineraryItem {
   destination_slug?: string | null;
   day: number;
   order_index: number;
-  time?: string | null;
+  time?: string | null; // deprecated
+  start_time?: string | null; // ISO 8601 with timezone
+  end_time?: string | null; // ISO 8601 with timezone
+  timezone?: string | null;
   title: string;
   description?: string | null;
   notes?: string | null;
@@ -69,7 +75,10 @@ export interface UpdateItineraryItem {
   destination_slug?: string | null;
   day?: number;
   order_index?: number;
-  time?: string | null;
+  time?: string | null; // deprecated
+  start_time?: string | null; // ISO 8601 with timezone
+  end_time?: string | null; // ISO 8601 with timezone
+  timezone?: string | null;
   title?: string;
   description?: string | null;
   notes?: string | null;
@@ -107,5 +116,28 @@ export interface ItineraryItemNotes {
   arrivalTime?: string;
   // Train-specific fields
   trainNumber?: string;
+}
+
+/**
+ * Trip sharing types for collaborative trip planning
+ */
+export interface TripShare {
+  id: string; // UUID
+  trip_id: string; // UUID
+  shared_with_user_id: string; // UUID
+  permission_level: 'view' | 'edit'; // VARCHAR(20)
+  shared_by_user_id: string; // UUID
+  created_at: string; // TIMESTAMP WITH TIME ZONE
+}
+
+export interface InsertTripShare {
+  trip_id: string;
+  shared_with_user_id: string;
+  permission_level?: 'view' | 'edit';
+  shared_by_user_id: string;
+}
+
+export interface UpdateTripShare {
+  permission_level?: 'view' | 'edit';
 }
 
