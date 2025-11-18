@@ -514,45 +514,119 @@ export function Drawer({
           left: customMargin?.left ? customMargin.left : (customMargin ? undefined : (position === 'left' ? '1rem' : undefined)),
           borderRadius: customBorderRadius 
             ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
-            : '1rem',
-          boxShadow: customShadow || undefined,
-          backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
-          WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
-          backgroundColor: customBackground || undefined,
-          border: customBorder ? `${customBorder.thickness || '1px'} solid ${customBorder.color || 'rgba(255,255,255,0.08)'}` : undefined,
+            : tier === 'tier3' ? '0 0 24px 0' : '1rem',
+          boxShadow: customShadow || (tier === 'tier3' ? '0 0 32px rgba(0,0,0,0.5)' : undefined),
+          backdropFilter: customBlur ? `blur(${customBlur})` : (tier === 'tier3' ? 'blur(12px)' : undefined),
+          WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : (tier === 'tier3' ? 'blur(12px)' : undefined),
+          backgroundColor: customBackground || (tier === 'tier3' ? 'rgba(10,10,10,0.92)' : undefined),
+          border: customBorder ? `${customBorder.thickness || '1px'} solid ${customBorder.color || 'rgba(255,255,255,0.08)'}` : (tier === 'tier3' ? '1px solid rgba(255,255,255,0.08)' : undefined),
+          borderLeft: tier === 'tier3' ? '1px solid rgba(255,255,255,0.08)' : undefined,
         }}
       >
-        {/* Header - 56px height, blurred */}
-        {(title || headerContent) && (
-          <div className={`flex-shrink-0 h-14 border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between relative ${headerBackground}`}>
+        {/* Header - 56px height (tier1), 64px (tier2), or compact (tier3) */}
+        {(title || headerContent || subtitle) && (
+          <div 
+            className={`flex-shrink-0 border-b flex items-center justify-between relative ${
+              tier === 'tier3' ? '' : headerBackground
+            }`}
+            style={{
+              height: tier === 'tier2' ? '64px' : tier === 'tier3' ? 'auto' : '56px',
+              borderBottom: tier === 'tier2' ? '1px solid rgba(255,255,255,0.06)' : tier === 'tier3' ? 'none' : undefined,
+              padding: tier === 'tier3' ? '20px 28px' : undefined,
+            }}
+          >
             {headerContent || (
               <>
-                <button
-                  onClick={onClose}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
-                </button>
-                {title && (
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center">
-                    {title}
-                  </h2>
+                {tier === 'tier3' ? (
+                  <>
+                    <button
+                      onClick={onClose}
+                      className="flex items-center justify-center transition-all hover:opacity-80"
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.08)',
+                      }}
+                      aria-label="Close"
+                    >
+                      <X className="text-white" style={{ width: '18px', height: '18px' }} />
+                    </button>
+                    <div className="flex-1 ml-4">
+                      {title && (
+                        <h2 
+                          className="text-white"
+                          style={{
+                            fontSize: '20px',
+                            fontWeight: 600,
+                            letterSpacing: '-0.2px',
+                          }}
+                        >
+                          {title}
+                        </h2>
+                      )}
+                      {subtitle && (
+                        <p 
+                          className="text-white"
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 400,
+                            color: 'rgba(255,255,255,0.5)',
+                            marginTop: '-4px',
+                          }}
+                        >
+                          {subtitle}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={onClose}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      aria-label="Close"
+                    >
+                      <X className="h-4 w-4 text-gray-900 dark:text-gray-100" />
+                    </button>
+                    {title && (
+                      <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center">
+                        {title}
+                      </h2>
+                    )}
+                    <div className="w-8" />
+                  </>
                 )}
-                <div className="w-8" />
               </>
             )}
           </div>
         )}
 
         {/* Content - Independent scroll */}
-        <div className="flex-1 overflow-y-auto">
+        <div 
+          className="flex-1 overflow-y-auto"
+          style={{
+            padding: tier === 'tier3' ? '28px' : undefined,
+            maxWidth: tier === 'tier3' ? '360px' : undefined,
+            margin: tier === 'tier3' ? '0 auto' : undefined,
+          }}
+        >
           {children}
         </div>
 
         {/* Footer */}
         {footerContent && (
-          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
+          <div 
+            className={`flex-shrink-0 border-t ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}
+            style={{
+              borderTop: tier === 'tier3' ? '1px solid rgba(255,255,255,0.12)' : undefined,
+              padding: tier === 'tier3' ? '20px' : undefined,
+              boxShadow: tier === 'tier3' ? '0 -12px 32px rgba(0,0,0,0.35)' : undefined,
+              position: tier === 'tier3' ? 'sticky' : undefined,
+              bottom: tier === 'tier3' ? 0 : undefined,
+              backgroundColor: tier === 'tier3' ? 'rgba(10,10,10,0.92)' : undefined,
+            }}
+          >
             {footerContent}
           </div>
         )}
