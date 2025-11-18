@@ -1197,7 +1197,7 @@ export function AccountDrawer({
       headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
       mobileVariant="bottom"
       desktopSpacing="right-4 top-4 bottom-4"
-      desktopWidth={isTier1 ? "420px" : "480px"}
+      desktopWidth={isTier1 ? "420px" : "92vw"}
       position="right"
       style="glassy"
       backdropOpacity={isTier1 ? "18" : "35"}
