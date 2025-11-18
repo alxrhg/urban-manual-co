@@ -25,5 +25,8 @@ export default defineConfig({
   schema: {
     types: schemas,
   },
+  // Authentication - if using Sanity's built-in auth
+  // If using custom auth, you may need to configure this differently
+  // For Vercel integration, authentication is typically handled automatically
 });
 

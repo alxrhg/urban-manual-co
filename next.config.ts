@@ -216,8 +216,8 @@ const nextConfig: NextConfig = {
       patterns.push(
         { protocol: 'https', hostname: 'guide.michelin.com' },
         // Supabase Storage (primary image hosting)
-        { protocol: 'https', hostname: '*.supabase.co' },
-        { protocol: 'https', hostname: '*.supabase.in' },
+        { protocol: 'https', hostname: '**.supabase.co' },
+        { protocol: 'https', hostname: '**.supabase.in' },
         // External photography + Google imagery
         { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
         { protocol: 'https', hostname: 'maps.googleapis.com' },
