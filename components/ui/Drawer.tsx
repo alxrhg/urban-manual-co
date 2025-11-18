@@ -405,7 +405,17 @@ export function Drawer({
 
           {/* Footer */}
           {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
+            <div 
+              className={`flex-shrink-0 border-t ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}
+              style={{
+                borderTop: tier === 'tier3' ? '1px solid rgba(255,255,255,0.12)' : undefined,
+                padding: tier === 'tier3' ? '20px' : undefined,
+                boxShadow: tier === 'tier3' ? '0 -12px 32px rgba(0,0,0,0.35)' : undefined,
+                position: tier === 'tier3' ? 'sticky' : undefined,
+                bottom: tier === 'tier3' ? 0 : undefined,
+                backgroundColor: tier === 'tier3' ? 'rgba(10,10,10,0.92)' : undefined,
+              }}
+            >
               {footerContent}
             </div>
           )}
