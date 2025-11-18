@@ -2,6 +2,7 @@ import type { Destination } from '@/types/destination';
 import type { UserProfile } from '@/types/personalization';
 import { createServiceRoleClient, createServerClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
 
 export type FilterRow = { city: string | null; category: string | null };
 
@@ -208,3 +209,12 @@ export async function getHomepageDestinations(limit = 500) {
     throw error;
   }
 }
+
+export const getCachedHomepageDestinations = unstable_cache(
+  async (limit = 500) => getHomepageDestinations(limit),
+  ['homepage-destinations'],
+  {
+    revalidate: 3600, // 1 hour cache
+    tags: ['destinations']
+  }
+);

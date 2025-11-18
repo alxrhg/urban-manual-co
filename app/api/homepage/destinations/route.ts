@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Destination } from '@/types/destination';
-import { getHomepageDestinations } from '@/server/services/homepage-loaders';
+import { getCachedHomepageDestinations } from '@/server/services/homepage-loaders';
 
 type DestinationsHandlerDeps = {
   loadDestinations: () => Promise<Destination[]>;
@@ -33,9 +33,9 @@ export function createHomepageDestinationsHandler(deps: DestinationsHandlerDeps)
 }
 
 export const GET = createHomepageDestinationsHandler({
-  loadDestinations: () => getHomepageDestinations(),
+  loadDestinations: () => getCachedHomepageDestinations(),
 });
 
-// Disable caching completely to ensure new POIs show up immediately
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Use ISR with 1 hour revalidation
+// We rely on on-demand revalidation via tags for updates
+export const revalidate = 3600;
