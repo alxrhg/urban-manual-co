@@ -332,11 +332,11 @@ export function AccountDrawer({
   const displayUsername = username || user?.email?.split("@")[0] || "user";
 
   // Section Card Component
-const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`px-5 py-4 bg-white dark:bg-gray-950 rounded-2xl ${className}`}>
-    {children}
-  </div>
-);
+  const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`px-5 py-4 bg-white dark:bg-gray-950 rounded-2xl ${className}`}>
+      {children}
+    </div>
+  );
 
   // Navigation handler
   const navigateToSubpage = (subpage: SubpageId, tripId?: string) => {
@@ -740,6 +740,7 @@ const SectionCard = ({ children, className = "" }: { children: React.ReactNode; 
       )}
     </div>
   );
+  };
 
   // Render visited subpage
   const renderVisitedSubpage = () => (
