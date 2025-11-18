@@ -179,8 +179,6 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-import { useDestinationData } from './useDestinationData';
-
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
