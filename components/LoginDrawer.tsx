@@ -144,11 +144,11 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <label htmlFor="login-email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Email
                 </label>
                 <input
-                  id="email"
+                  id="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -160,11 +160,11 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <label htmlFor="login-password" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Password
                 </label>
                 <input
-                  id="password"
+                  id="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

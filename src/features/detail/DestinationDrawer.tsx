@@ -198,6 +198,7 @@ function parseTime(timeStr: string): number {
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isAddedToTrip, setIsAddedToTrip] = useState(false);
@@ -218,6 +219,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+
+  // Ensure component only renders on client-side to prevent hydration issues
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -253,18 +259,22 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
+    if (typeof document === 'undefined') return;
     if (isOpen) {
       document.documentElement.style.overflow = 'hidden';
     } else {
       document.documentElement.style.overflow = '';
     }
     return () => {
-      document.documentElement.style.overflow = '';
+      if (typeof document !== 'undefined') {
+        document.documentElement.style.overflow = '';
+      }
     };
   }, [isOpen]);
 
   // Close on escape key
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
@@ -1014,6 +1024,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Always render drawer when open, even if destination is null (show loading state)
   if (!isOpen) return null;
 
+  // Prevent rendering until mounted on client-side to avoid hydration issues
+  if (!isMounted) {
+    return null;
+  }
+
   // Only show loading state if destination is completely null/undefined
   // Allow rendering even if some fields are missing (they'll have fallbacks)
   if (!destination) {
@@ -1404,6 +1419,158 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   ⭐ {destination.michelin_stars}
                 </div>
               )}
+            </div>
+
+            {/* Action Row - Pill Buttons */}
+            <div className="flex items-center gap-2 mt-4 flex-wrap">
+              {/* Save Button with Dropdown */}
+              {isMounted && (
+                <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                      onClick={(e) => {
+                        if (!user) {
+                          e.preventDefault();
+                          router.push('/auth/login');
+                          return;
+                        }
+                        if (!isSaved) {
+                          // Quick save without opening dropdown
+                          e.preventDefault();
+                          setShowSaveModal(true);
+                          setShowSaveDropdown(false);
+                        }
+                      }}
+                    >
+                      <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                      {isSaved ? 'Saved' : 'Save'}
+                      {isSaved && <ChevronDown className="h-3 w-3 ml-0.5" />}
+                    </button>
+                  </DropdownMenuTrigger>
+                  {isSaved && isMounted && (
+                    <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => {
+                      setShowSaveModal(true);
+                      setShowSaveDropdown(false);
+                    }}>
+                      <List className="h-3 w-3 mr-2" />
+                      Save to List
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      router.push('/trips');
+                      setShowSaveDropdown(false);
+                    }}>
+                      <Map className="h-3 w-3 mr-2" />
+                      Save to Trip
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
+                      router.push('/account?tab=collections');
+                      setShowSaveDropdown(false);
+                    }}>
+                      <Plus className="h-3 w-3 mr-2" />
+                      Create a List
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={async () => {
+                      // Unsave from saved_places
+                      if (destination?.slug && user) {
+                        try {
+                          const supabaseClient = createClient();
+                          if (supabaseClient) {
+                            const { error } = await supabaseClient
+                              .from('saved_places')
+                              .delete()
+                              .eq('user_id', user.id)
+                              .eq('destination_slug', destination.slug);
+                            if (!error) {
+                              setIsSaved(false);
+                              if (onSaveToggle) onSaveToggle(destination.slug, false);
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error unsaving:', error);
+                          alert('Failed to unsave. Please try again.');
+                        }
+                      }
+                      setShowSaveDropdown(false);
+                    }}>
+                      <X className="h-3 w-3 mr-2" />
+                      Remove from Saved
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                )}
+                </DropdownMenu>
+              )}
+
+              <button
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                onClick={handleShare}
+              >
+                <Share2 className="h-3 w-3" />
+                {copied ? 'Copied!' : 'Share'}
+              </button>
+
+              {/* Visited Button with Dropdown */}
+              {user && isMounted && (
+                <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                        isVisited
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                      onClick={(e) => {
+                        if (!isVisited) {
+                          e.preventDefault();
+                          handleVisitToggle();
+                        }
+                        // If already visited, let the dropdown handle the click
+                      }}
+                    >
+                      <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
+                      {isVisited ? 'Visited' : 'Mark Visited'}
+                      {isVisited && <ChevronDown className="h-3 w-3 ml-0.5" />}
+                    </button>
+                  </DropdownMenuTrigger>
+                  {isVisited && isMounted && (
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onClick={() => {
+                        setShowVisitedModal(true);
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <Plus className="h-3 w-3 mr-2" />
+                        Add Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        handleVisitToggle();
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <X className="h-3 w-3 mr-2" />
+                        Remove Visit
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  )}
+                </DropdownMenu>
+              )}
+
+              {destination.slug && destination.slug.trim() ? (
+                <Link
+                  href={`/destination/${destination.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View Full Page
+                </Link>
+              ) : null}
+            </div>
             </div>
 
             {/* Highlight Tags */}
