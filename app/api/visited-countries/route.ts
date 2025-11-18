@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { getSupabaseConfigStatus } from '@/lib/supabase/config';
 import {
   apiRatelimit,
   memoryApiRatelimit,
@@ -12,6 +13,17 @@ import {
  */
 export async function GET(request: NextRequest) {
   try {
+    const supabaseConfig = getSupabaseConfigStatus();
+    if (!supabaseConfig.configured) {
+      return NextResponse.json(
+        {
+          error: 'Supabase is not configured',
+          missing: supabaseConfig.missing,
+        },
+        { status: 503 }
+      );
+    }
+
     const supabase = await createServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -67,6 +79,17 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabaseConfig = getSupabaseConfigStatus();
+    if (!supabaseConfig.configured) {
+      return NextResponse.json(
+        {
+          error: 'Supabase is not configured',
+          missing: supabaseConfig.missing,
+        },
+        { status: 503 }
+      );
+    }
+
     const supabase = await createServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -133,4 +156,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

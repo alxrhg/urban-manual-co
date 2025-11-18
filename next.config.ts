@@ -51,12 +51,18 @@ const connectSrc = [
   "https://googleads.g.doubleclick.net",
   "https://*.doubleclick.net",
   "https://ep1.adtrafficquality.google",
+  "https://ep2.adtrafficquality.google",
+  "https://fundingchoicesmessages.google.com",
+  "https://www.google.com/recaptcha/",
 ];
 
 const frameSrc = [
   "https://googleads.g.doubleclick.net",
   "https://*.doubleclick.net",
   "https://tpc.googlesyndication.com",
+  "https://fundingchoicesmessages.google.com",
+  "https://ep2.adtrafficquality.google",
+  "https://www.google.com/recaptcha/",
 ];
 
 const cspDirectives = [

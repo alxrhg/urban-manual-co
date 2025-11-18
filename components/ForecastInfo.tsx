@@ -1,52 +1,57 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Calendar, AlertCircle } from 'lucide-react';
+import { useForecastData } from '@/hooks/useForecastData';
 
 interface ForecastInfoProps {
   destinationId: number;
   compact?: boolean;
+  forecastDays?: number;
 }
 
-interface ForecastData {
-  peak_date: string;
-  peak_demand: number;
-  low_date: string;
-  low_demand: number;
-  average_demand: number;
-  recommendation: string;
-}
+export function ForecastInfo({ destinationId, compact = false, forecastDays = 30 }: ForecastInfoProps) {
+  const { forecast, loading, error } = useForecastData(destinationId, forecastDays);
 
-export function ForecastInfo({ destinationId, compact = false }: ForecastInfoProps) {
-  const [forecast, setForecast] = useState<ForecastData | null>(null);
-  const [loading, setLoading] = useState(true);
+  if (loading) {
+    return compact ? null : (
+      <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+            Demand Forecast
+          </h3>
+        </div>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600 dark:text-gray-400">Best time to visit:</span>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600 dark:text-gray-400">Peak demand:</span>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    async function fetchForecast() {
-      try {
-        const response = await fetch(
-          `/api/ml/forecast/peak-times?destination_id=${destinationId}&forecast_days=30`,
-          { signal: AbortSignal.timeout(3000) }
-        );
+  if (error) {
+    return compact ? null : (
+      <div className="border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-300">
+            Forecast Unavailable
+          </h3>
+        </div>
+        <p className="text-xs text-yellow-700 dark:text-yellow-200">
+          Could not load demand forecast data at this time.
+        </p>
+      </div>
+    );
+  }
 
-        if (response.ok) {
-          const data = await response.json();
-          setForecast(data);
-        }
-      } catch (error) {
-        // Silently fail - forecast is optional
-        console.debug('Forecast unavailable for destination', destinationId);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (destinationId) {
-      fetchForecast();
-    }
-  }, [destinationId]);
-
-  if (loading || !forecast) return null;
+  if (!forecast) return null;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -95,6 +100,7 @@ export function ForecastInfo({ destinationId, compact = false }: ForecastInfoPro
     </div>
   );
 }
+
 
 
 

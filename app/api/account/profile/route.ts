@@ -1,8 +1,20 @@
 import { createServerClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, createUnauthorizedError, createValidationError, handleSupabaseError } from '@/lib/errors';
+import { getSupabaseConfigStatus } from '@/lib/supabase/config';
 
 export const GET = withErrorHandling(async () => {
+  const supabaseConfig = getSupabaseConfigStatus();
+  if (!supabaseConfig.configured) {
+    return NextResponse.json(
+      {
+        error: 'Supabase is not configured',
+        missing: supabaseConfig.missing,
+      },
+      { status: 503 }
+    );
+  }
+
   const supabase = await createServerClient();
 
   // Get the authenticated user
@@ -30,6 +42,17 @@ export const GET = withErrorHandling(async () => {
 });
 
 export const PUT = withErrorHandling(async (request: NextRequest) => {
+  const supabaseConfig = getSupabaseConfigStatus();
+  if (!supabaseConfig.configured) {
+    return NextResponse.json(
+      {
+        error: 'Supabase is not configured',
+        missing: supabaseConfig.missing,
+      },
+      { status: 503 }
+    );
+  }
+
   const supabase = await createServerClient();
 
   // Get the authenticated user
