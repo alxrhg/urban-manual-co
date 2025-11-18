@@ -7,7 +7,6 @@
 
 import type { ArchitecturalJourney as ArchitecturalJourneyType } from '@/types/architecture';
 import { Building2, MapPin, Calendar } from 'lucide-react';
-import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface ArchitecturalJourneyProps {
   journey: ArchitecturalJourneyType;
@@ -54,7 +53,12 @@ export function ArchitecturalJourney({ journey }: ArchitecturalJourneyProps) {
         <h3 className="text-xl font-semibold mb-4">Destinations</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {journey.destinations.map((destination) => {
-            const displayImage = getDestinationImageUrl(destination);
+            // Extract image URL from ArchitectureDestination
+            const displayImage = 
+              destination.image || 
+              destination.hero_image || 
+              destination.architectural_photos?.[0]?.url || 
+              null;
             return (
               <div
                 key={destination.id}
