@@ -16,14 +16,5 @@
       "path": "/api/realtime/check-price-alerts",
       "schedule": "0 * * * *"
     }
-  ],
-  "checks": {
-    "deployment-health": {
-      "path": "/api/deployment-check",
-      "method": "GET",
-      "expectedStatus": 200,
-      "timeout": 30
-    }
-  }
+  ]
 }
-
