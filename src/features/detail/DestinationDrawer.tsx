@@ -4,20 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe } from 'lucide-react';
-
-// Helper function to extract domain from URL
-function extractDomain(url: string): string {
-  try {
-    // Remove protocol if present
-    let cleanUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
-    // Remove path and query params
-    cleanUrl = cleanUrl.split('/')[0].split('?')[0];
-    return cleanUrl;
-  } catch {
-    // If parsing fails, return original or a cleaned version
-    return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
-  }
-}
+import { useDestinationData } from './useDestinationData';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
@@ -38,8 +24,6 @@ import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
-import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
-import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
 
@@ -195,30 +179,39 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
+import { useDestinationData } from './useDestinationData';
+
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isVisited, setIsVisited] = useState(false);
-  const [isAddedToTrip, setIsAddedToTrip] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [showAddToTripModal, setShowAddToTripModal] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
-  const [enrichedData, setEnrichedData] = useState<any>(null);
-  const [enhancedDestination, setEnhancedDestination] = useState<Destination | null>(destination);
-  const [parentDestination, setParentDestination] = useState<Destination | null>(null);
-  const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
-  const [loadingNested, setLoadingNested] = useState(false);
-  const [reviewSummary, setReviewSummary] = useState<string | null>(null);
-  const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const {
+    enrichedData,
+    enhancedDestination,
+    parentDestination,
+    nestedDestinations,
+    loadingNested,
+    reviewSummary,
+    loadingReviewSummary,
+    isSaved,
+    setIsSaved,
+    isVisited,
+    setIsVisited,
+    isAddedToTrip,
+    setIsAddedToTrip,
+    isAdmin,
+    recommendations,
+    loadingRecommendations,
+  } = useDestinationData(destination, isOpen);
 
   // Ensure component only renders on client-side to prevent hydration issues
   useEffect(() => {
@@ -258,36 +251,37 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   };
 
   // Prevent body scroll when drawer is open
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (isOpen) {
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      if (typeof document !== 'undefined') {
-        document.documentElement.style.overflow = '';
-      }
-    };
-  }, [isOpen]);
+  // useEffect(() => {
+  //   if (typeof document === 'undefined') return;
+  //   if (isOpen) {
+  //     document.documentElement.style.overflow = 'hidden';
+  //   } else {
+  //     document.documentElement.style.overflow = '';
+  //   }
+  //   return () => {
+  //     if (typeof document !== 'undefined') {
+  //       document.documentElement.style.overflow = '';
+  //     }
+  //   };
+  // }, [isOpen]);
 
   // Close on escape key
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
+  // useEffect(() => {
+  //   if (typeof window === 'undefined') return;
+  //   const handleEscape = (e: KeyboardEvent) => {
+  //     if (e.key === 'Escape' && isOpen) {
+  //       onClose();
+  //     }
+  //   };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  //   window.addEventListener('keydown', handleEscape);
+  //   return () => window.removeEventListener('keydown', handleEscape);
+  // }, [isOpen, onClose]);
 
   // Update enhanced destination when destination prop changes
   useEffect(() => {
     setEnhancedDestination(destination);
+    setImageError(false);
   }, [destination]);
 
   // Load enriched data and saved/visited status
@@ -1058,6 +1052,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     );
   }
 
+  const drawerImage =
+    destination?.image_thumbnail ||
+    destination?.image ||
+    destination?.image_original ||
+    enrichedData?.image ||
+    null;
+
   // Get rating for display (safely handle null/undefined)
   const rating = enrichedData?.rating ?? destination?.rating ?? null;
   const highlightTags: string[] = (
@@ -1349,21 +1350,26 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       >
         <div style={{ padding: '28px', maxWidth: '360px', margin: '0 auto' }}>
           {/* Image Gallery */}
-          {destination?.image && (
-            <div className="mb-6 rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+          <div className="mb-6 rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 dark:bg-gray-800 border border-white/5">
+            {drawerImage && !imageError ? (
               <div className="relative w-full h-full">
                 <Image
-                  src={destination.image}
+                  src={drawerImage}
                   alt={destination?.name || 'Destination'}
                   fill
                   className="object-cover"
                   sizes="360px"
                   priority={false}
                   quality={85}
+                  onError={() => setImageError(true)}
                 />
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600">
+                <MapPin className="h-10 w-10 opacity-40" />
+              </div>
+            )}
+          </div>
 
           {/* Info Block: Rating, Category, Tags */}
           <div className="mb-6 space-y-3">

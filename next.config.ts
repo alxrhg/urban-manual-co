@@ -1,14 +1,71 @@
 import type { NextConfig } from "next";
 
+const scriptSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  "'unsafe-eval'",
+  "https://maps.googleapis.com",
+  "https://cdn.amcharts.com",
+  "https://*.supabase.co",
+  "https://*.supabase.in",
+  "https://pagead2.googlesyndication.com",
+  "https://vercel.live",
+  "https://cdn.apple-mapkit.com",
+  "https://www.googletagmanager.com",
+  "https://fundingchoicesmessages.google.com",
+  "https://ep2.adtrafficquality.google",
+];
+
+const styleSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  "https://fonts.googleapis.com",
+];
+
+const imgSrc = [
+  "'self'",
+  "data:",
+  "blob:",
+  "https://*",
+];
+
+const fontSrc = [
+  "'self'",
+  "data:",
+  "https://fonts.gstatic.com",
+];
+
+const connectSrc = [
+  "'self'",
+  "https://*.supabase.co",
+  "https://*.supabase.in",
+  "https://maps.googleapis.com",
+  "https://api.openai.com",
+  "https://*.upstash.io",
+  "https://*.googleapis.com",
+  "https://api.mapbox.com",
+  "https://events.mapbox.com",
+  "https://cdn.jsdelivr.net",
+  "https://cdn.apple-mapkit.com",
+  "https://api.apple-mapkit.com",
+  "https://googleads.g.doubleclick.net",
+  "https://*.doubleclick.net",
+  "https://ep1.adtrafficquality.google",
+];
+
+const frameSrc = [
+  "https://googleads.g.doubleclick.net",
+  "https://*.doubleclick.net",
+  "https://tpc.googlesyndication.com",
+];
+
 const cspDirectives = [
   "default-src 'self'",
-  // Inline scripts are occasionally required for Next.js hydration/runtime.
-  // Added external script sources: Google Ads, Vercel Live, Apple MapKit
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://vercel.live https://cdn.apple-mapkit.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://*",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.jsdelivr.net https://cdn.apple-mapkit.com https://api.apple-mapkit.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google",
+  `script-src ${scriptSrc.join(' ')}`,
+  `style-src ${styleSrc.join(' ')}`,
+  `img-src ${imgSrc.join(' ')}`,
+  `font-src ${fontSrc.join(' ')}`,
+  `connect-src ${connectSrc.join(' ')}`,
   "worker-src 'self' blob:",
   "child-src 'none'",
   "frame-ancestors 'none'",
@@ -17,14 +74,13 @@ const cspDirectives = [
   "manifest-src 'self'",
   "media-src 'self' https:",
   "object-src 'none'",
-  "frame-src https://googleads.g.doubleclick.net https://*.doubleclick.net https://tpc.googlesyndication.com",
+  `frame-src ${frameSrc.join(' ')}`,
   'upgrade-insecure-requests',
 ]
 
 const securityHeaders: { key: string; value: string }[] = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'X-XSS-Protection', value: '1; mode=block' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
     key: 'Permissions-Policy',
@@ -148,15 +204,17 @@ const nextConfig: NextConfig = {
       // Add common image CDN domains
       patterns.push(
         { protocol: 'https', hostname: 'guide.michelin.com' },
-        // Legacy: Framer/Webflow patterns kept for backwards compatibility
-        // All images have been migrated to Supabase Storage
-        { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
-        { protocol: 'https', hostname: 'framerusercontent.com' },
-        { protocol: 'https', hostname: '*.framerusercontent.com' },
-        { protocol: 'https', hostname: '*.webflow.com' },
         // Supabase Storage (primary image hosting)
         { protocol: 'https', hostname: '*.supabase.co' },
-        { protocol: 'https', hostname: '*.supabase.in' }
+        { protocol: 'https', hostname: '*.supabase.in' },
+        // External photography + Google imagery
+        { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+        { protocol: 'https', hostname: 'maps.googleapis.com' },
+        { protocol: 'https', hostname: 'maps.gstatic.com' },
+        { protocol: 'https', hostname: 'images.unsplash.com' },
+        { protocol: 'https', hostname: 'images.pexels.com' },
+        { protocol: 'https', hostname: 'assets-global.website-files.com' },
+        { protocol: 'https', hostname: 'images.ctfassets.net' }
       )
       return patterns
     })(),
