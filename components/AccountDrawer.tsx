@@ -680,37 +680,55 @@ export function AccountDrawer({
 
   // Render visited subpage
   const renderVisitedSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div style={{ padding: '12px 12px 24px 12px' }}>
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       ) : visitedPlaces.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {visitedPlaces.map((visit, index) => (
             <button
               key={index}
               onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+              className="w-full flex items-center transition-colors text-left"
+              style={{
+                height: '52px',
+                padding: '0 20px',
+                borderRadius: '14px',
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                fontSize: '16px',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.88)',
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+              }}
             >
               {visit.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
                   <Image
                     src={visit.destination.image}
                     alt={visit.destination.name}
                     fill
                     className="object-cover"
-                    sizes="48px"
+                    sizes="40px"
                   />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
                   {visit.destination?.name || visit.slug}
                 </p>
                 {visit.visited_at && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
                     {new Date(visit.visited_at).toLocaleDateString("en-US", { 
                       month: "short", 
                       day: "numeric",
@@ -719,80 +737,82 @@ export function AccountDrawer({
                   </p>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
             </button>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No visited places yet</p>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>No visited places yet</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/visited")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          View All Visited
-        </button>
-      </div>
     </div>
   );
 
   // Render saved subpage
   const renderSavedSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div style={{ padding: '12px 12px 24px 12px' }}>
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       ) : savedPlaces.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {savedPlaces.map((saved, index) => (
             <button
               key={index}
               onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+              className="w-full flex items-center transition-colors text-left"
+              style={{
+                height: '52px',
+                padding: '0 20px',
+                borderRadius: '14px',
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                fontSize: '16px',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.88)',
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+              }}
             >
               {saved.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
                   <Image
                     src={saved.destination.image}
                     alt={saved.destination.name}
                     fill
                     className="object-cover"
-                    sizes="48px"
+                    sizes="40px"
                   />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
                   {saved.destination?.name || saved.slug}
                 </p>
                 {saved.destination?.city && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
                     {saved.destination.city}
                   </p>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
             </button>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No saved places yet</p>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>No saved places yet</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/saved")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          View Full Saved
-        </button>
-      </div>
     </div>
   );
 
@@ -815,72 +835,72 @@ export function AccountDrawer({
 
   // Render trips subpage
   const renderTripsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      <button
-        onClick={() => {
-          // Open trip planner - you may need to pass a callback or use a context
-          onClose();
-        }}
-        className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium flex items-center justify-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        New Trip
-      </button>
+    <div style={{ padding: '12px 12px 24px 12px' }}>
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       ) : trips.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {trips.map((trip) => (
             <button
               key={trip.id}
               onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+              className="w-full flex items-center transition-colors text-left"
+              style={{
+                height: '52px',
+                padding: '0 20px',
+                borderRadius: '14px',
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                fontSize: '16px',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.88)',
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+              }}
             >
               {trip.cover_image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
                   <Image
                     src={trip.cover_image}
                     alt={trip.title}
                     fill
                     className="object-cover"
-                    sizes="48px"
+                    sizes="40px"
                   />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
                   {trip.title}
                 </p>
                 {trip.start_date && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(trip.start_date).toLocaleDateString("en-US", { 
-                      month: "short", 
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
+                    {new Date(trip.start_date).toLocaleDateString("en-US", {
+                      month: "short",
                       day: "numeric",
                       year: "numeric"
                     })}
                   </p>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
             </button>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No trips yet</p>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>No trips yet</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/trips")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          View All Trips
-        </button>
-      </div>
     </div>
   );
 
@@ -953,17 +973,9 @@ export function AccountDrawer({
 
   // Render achievements subpage
   const renderAchievementsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div style={{ padding: '12px 12px 24px 12px' }}>
       <div className="text-center py-12">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Achievements coming soon</p>
-      </div>
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/achievements")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          View All Achievements
-        </button>
+        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>Achievements coming soon</p>
       </div>
     </div>
   );
@@ -1049,24 +1061,36 @@ export function AccountDrawer({
 
     return (
       <div 
-        className="flex items-center gap-3 px-6 h-14"
+        className="flex items-center"
         style={{
-          background: 'rgba(18,18,18,0.6)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
+          height: '64px',
+          padding: '0 20px',
+          background: '#101010',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
         <button
           onClick={navigateBack}
-          className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
+          className="flex items-center justify-center transition-opacity hover:opacity-70"
+          style={{
+            width: '40px',
+            height: '40px',
+          }}
           aria-label="Back"
         >
-          <ArrowLeft className="h-5 w-5 text-[#F5F5F5] dark:text-[#F5F5F5]" />
+          <ChevronLeft className="text-[rgba(255,255,255,0.85)]" style={{ width: '22px', height: '22px' }} strokeWidth={1.5} />
         </button>
-        <h2 className="text-[20px] font-semibold text-[#F5F5F5] dark:text-[#F5F5F5] flex-1" style={{ fontWeight: 600 }}>
+        <h2 
+          className="flex-1 text-center"
+          style={{
+            fontSize: '17px',
+            fontWeight: 600,
+            color: 'rgba(255,255,255,0.92)',
+          }}
+        >
           {getDrawerTitle()}
         </h2>
-        <div className="w-9" /> {/* Spacer for centering */}
+        <div style={{ width: '40px' }} /> {/* Spacer for centering */}
       </div>
     );
   };
@@ -1090,19 +1114,22 @@ export function AccountDrawer({
       headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
       mobileVariant="bottom"
       desktopSpacing="right-4 top-4 bottom-4"
-      desktopWidth="420px"
+      desktopWidth={isTier1 ? "420px" : "480px"}
       position="right"
       style="glassy"
-      backdropOpacity={isTier1 ? "18" : "18"}
+      backdropOpacity={isTier1 ? "18" : "35"}
       keepStateOnClose={true}
       zIndex={getZIndex()}
       tier={isTier1 ? 'tier1' : 'tier2'}
       showHandle={isTier1}
-      customBorderRadius={isTier1 ? { topLeft: '22px', topRight: '22px', bottomLeft: '22px', bottomRight: '22px' } : undefined}
-      customShadow={isTier1 ? '0 12px 40px rgba(0,0,0,0.55)' : undefined}
-      customBlur={isTier1 ? '22px' : undefined}
+      customBorderRadius={isTier1 
+        ? { topLeft: '22px', topRight: '22px', bottomLeft: '22px', bottomRight: '22px' }
+        : { topLeft: '24px', topRight: '24px', bottomLeft: '24px', bottomRight: '24px' }
+      }
+      customShadow={isTier1 ? '0 12px 40px rgba(0,0,0,0.55)' : '0 12px 40px rgba(0,0,0,0.45)'}
+      customBlur={isTier1 ? '22px' : '12px'}
       customMargin={isTier1 ? { bottom: '16px', right: '16px' } : undefined}
-      customBackground={isTier1 ? 'rgba(18,18,18,0.78)' : undefined}
+      customBackground={isTier1 ? 'rgba(18,18,18,0.78)' : '#101010'}
       customBorder={isTier1 ? { color: 'rgba(255,255,255,0.08)', thickness: '1px' } : undefined}
     >
       <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>

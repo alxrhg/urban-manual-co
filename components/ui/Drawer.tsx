@@ -463,13 +463,16 @@ export function Drawer({
       <div
         id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
         ref={drawerRef}
-        className={`hidden lg:flex fixed ${customMargin ? '' : desktopSpacing} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+        className={`hidden lg:flex fixed ${customMargin ? '' : desktopSpacing} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform ${
+          tier === 'tier2' ? 'duration-[180ms] ease-[cubic-bezier(0.23,1,0.32,1)]' : 'duration-[220ms] ease-out'
+        } ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
         } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
         style={{ 
           zIndex, 
-          width: desktopWidth, // Desktop: fixed width (420px)
-          maxWidth: 'calc(100vw - 2rem)',
+          width: desktopWidth, // Desktop: fixed width (420px or 480px for tier2)
+          maxWidth: tier === 'tier2' ? '480px' : 'calc(100vw - 2rem)',
+          height: tier === 'tier2' ? '100vh' : undefined,
           top: customMargin?.top ? customMargin.top : (customMargin ? undefined : '1rem'),
           right: customMargin?.right ? customMargin.right : (customMargin ? undefined : (position === 'right' ? '1rem' : undefined)),
           bottom: customMargin?.bottom ? customMargin.bottom : (customMargin ? undefined : '1rem'),
