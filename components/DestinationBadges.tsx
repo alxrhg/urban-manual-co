@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getTrendingBadge, formatBestTimeText, type PeakTimeRecommendation, type TrendingDestination } from '@/lib/ml/forecasting';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 
 interface DestinationBadgesProps {
   destinationId: number;
@@ -16,6 +17,11 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
 
   useEffect(() => {
     async function fetchData() {
+      if (!isMlClientEnabled) {
+        setLoading(false);
+        return;
+      }
+
       try {
         // Fetch trending status
         const trendingRes = await fetch(

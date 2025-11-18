@@ -4,6 +4,7 @@
 
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 
 interface FeatureImportance {
   feature: string;
@@ -50,6 +51,11 @@ export function useMLExplain(options: UseExplainOptions): UseExplainReturn {
       return;
     }
 
+    if (!isMlClientEnabled) {
+      setError('ML service disabled');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -87,4 +93,3 @@ export function useMLExplain(options: UseExplainOptions): UseExplainReturn {
     explain
   };
 }
-

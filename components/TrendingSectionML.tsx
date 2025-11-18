@@ -8,6 +8,7 @@
 'use client';
 
 import { useMLTrending } from '@/hooks/useMLRecommendations';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Image from 'next/image';
 import { MapPin, TrendingUp, Flame } from 'lucide-react';
@@ -25,7 +26,7 @@ export function TrendingSectionML({
 }: TrendingSectionMLProps) {
   const router = useRouter();
   const { trending, loading, error } = useMLTrending({
-    enabled: true,
+    enabled: isMlClientEnabled,
     topN: limit,
     forecastDays
   });

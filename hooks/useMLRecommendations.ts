@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 
 interface MLRecommendation {
   destination_id: number;
@@ -67,6 +68,45 @@ export function useMLRecommendations(
       return;
     }
 
+    const fetchFallback = async () => {
+      if (!fallbackToExisting) {
+        setError('ML service unavailable');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const fallbackResponse = await fetch(`/api/personalization/${user.id}`);
+
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+
+          const transformedRecs: MLRecommendation[] = fallbackData.recommendations?.map((rec: any) => ({
+            destination_id: rec.id,
+            slug: rec.slug,
+            name: rec.name,
+            city: rec.city,
+            category: rec.category,
+            score: 0.8,
+            reason: 'Recommended for you'
+          })) || [];
+
+          setRecommendations(transformedRecs);
+          setIsMLPowered(false);
+          setIsFallback(true);
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback recommendations failed:', fallbackErr);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!isMlClientEnabled) {
+      fetchFallback();
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -95,61 +135,12 @@ export function useMLRecommendations(
       }
 
       // If ML service fails or returns no results, fall back to existing system
-      if (fallbackToExisting) {
-        console.log('ML service unavailable, falling back to existing recommendations');
-
-        const fallbackResponse = await fetch(`/api/personalization/${user.id}`);
-
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-
-          // Transform existing format to ML format for consistency
-          const transformedRecs: MLRecommendation[] = fallbackData.recommendations?.map((rec: any) => ({
-            destination_id: rec.id,
-            slug: rec.slug,
-            name: rec.name,
-            city: rec.city,
-            category: rec.category,
-            score: 0.8, // Default score for fallback
-            reason: 'Recommended for you'
-          })) || [];
-
-          setRecommendations(transformedRecs);
-          setIsMLPowered(false);
-          setIsFallback(true);
-        }
-      } else {
-        setError('ML service unavailable');
-      }
-
+      await fetchFallback();
     } catch (err) {
       console.error('Error fetching ML recommendations:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch recommendations');
 
-      // Try fallback
-      if (fallbackToExisting && user) {
-        try {
-          const fallbackResponse = await fetch(`/api/personalization/${user.id}`);
-          if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json();
-            const transformedRecs: MLRecommendation[] = fallbackData.recommendations?.map((rec: any) => ({
-              destination_id: rec.id,
-              slug: rec.slug,
-              name: rec.name,
-              city: rec.city,
-              category: rec.category,
-              score: 0.8,
-              reason: 'Recommended for you'
-            })) || [];
-
-            setRecommendations(transformedRecs);
-            setIsMLPowered(false);
-            setIsFallback(true);
-          }
-        } catch (fallbackErr) {
-          console.error('Fallback also failed:', fallbackErr);
-        }
-      }
+      await fetchFallback();
     } finally {
       setLoading(false);
     }
@@ -198,8 +189,12 @@ export function useMLTrending(options: UseTrendingOptions = {}) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !isMlClientEnabled) {
       setLoading(false);
+      setTrending([]);
+      if (!isMlClientEnabled) {
+        setError('ML service disabled');
+      }
       return;
     }
 

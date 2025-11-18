@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 
 interface Anomaly {
   date: string;
@@ -58,6 +59,13 @@ export function useMLAnomaly(options: UseAnomalyOptions = {}): UseAnomalyReturn 
       return;
     }
 
+    if (!isMlClientEnabled) {
+      setAnomalies(null);
+      setError('ML service disabled');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -101,4 +109,3 @@ export function useMLAnomaly(options: UseAnomalyOptions = {}): UseAnomalyReturn 
     refetch: fetchAnomalies
   };
 }
-

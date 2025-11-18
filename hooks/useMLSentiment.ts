@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 
 interface SentimentResult {
   text: string;
@@ -48,6 +49,13 @@ export function useMLSentiment(options: UseSentimentOptions = {}): UseSentimentR
       return;
     }
 
+    if (!isMlClientEnabled) {
+      setSentiment(null);
+      setError('ML service disabled');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -87,4 +95,3 @@ export function useMLSentiment(options: UseSentimentOptions = {}): UseSentimentR
     refetch: fetchSentiment
   };
 }
-

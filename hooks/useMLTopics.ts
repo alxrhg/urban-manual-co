@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 
 interface Topic {
   topic_id: number;
@@ -41,6 +42,13 @@ export function useMLTopics(options: UseTopicsOptions = {}): UseTopicsReturn {
 
   const fetchTopics = useCallback(async () => {
     if (!enabled || (!city && !destinationId)) {
+      setLoading(false);
+      return;
+    }
+
+    if (!isMlClientEnabled) {
+      setTopics(null);
+      setError('ML service disabled');
       setLoading(false);
       return;
     }
@@ -86,4 +94,3 @@ export function useMLTopics(options: UseTopicsOptions = {}): UseTopicsReturn {
     refetch: fetchTopics
   };
 }
-

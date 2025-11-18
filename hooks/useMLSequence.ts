@@ -3,6 +3,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { isMlClientEnabled } from '@/lib/ml/flags';
 
 interface SequencePrediction {
   action: string;
@@ -36,6 +37,11 @@ export function useMLSequence(options: UseSequenceOptions = {}): UseSequenceRetu
 
   const predict = useCallback(async (sequence: string[], topN = 3) => {
     if (!enabled || !sequence || sequence.length === 0) {
+      return;
+    }
+
+    if (!isMlClientEnabled) {
+      setError('ML service disabled');
       return;
     }
 
@@ -75,4 +81,3 @@ export function useMLSequence(options: UseSequenceOptions = {}): UseSequenceRetu
     predict
   };
 }
-
