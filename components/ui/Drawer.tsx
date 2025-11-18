@@ -275,13 +275,28 @@ export function Drawer({
 
       {/* Mobile Drawer - Side Drawer */}
       {mobileVariant === 'side' && (
-        <div
-          ref={drawerRef}
-          className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
-            isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
-          } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex flex-col`}
-          style={{ zIndex }}
-        >
+        <>
+          {/* Backdrop for side drawer */}
+          {showBackdrop !== false && (
+            <div
+              className={`fixed inset-0 z-40 transition-opacity duration-[220ms] ${
+                isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+              style={{
+                backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity || '50') / 100})`,
+                backdropFilter: 'blur(18px)',
+                WebkitBackdropFilter: 'blur(18px)',
+              }}
+              onClick={onClose}
+            />
+          )}
+          <div
+            ref={drawerRef}
+            className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+              isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
+            } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex flex-col`}
+            style={{ zIndex }}
+          >
           {/* Header - 56px height, blurred */}
           {(title || headerContent) && (
             <div className={`flex-shrink-0 h-14 border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between ${headerBackground}`}>
@@ -317,6 +332,7 @@ export function Drawer({
             </div>
           )}
         </div>
+        </>
       )}
 
       {/* Desktop Drawer - Side Drawer with responsive widths */}
