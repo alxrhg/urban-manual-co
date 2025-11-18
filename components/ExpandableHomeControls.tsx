@@ -185,8 +185,7 @@ export function ExpandableHomeControls({
           {/* Discover by Cities Pill */}
           <Link
             href="/cities"
-            className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px]"
-            style={{ borderRadius: '12px' }}
+            className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px]"
           >
             <Globe className="h-4 w-4" />
             <span>Discover by Cities</span>
@@ -195,10 +194,9 @@ export function ExpandableHomeControls({
           {/* Filter Pill */}
           <button
             onClick={handleFilterPillClick}
-            className={`flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px] ${
+            className={`flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px] ${
               hasActiveFilters ? 'ring-2 ring-blue-500/50' : ''
             }`}
-            style={{ borderRadius: '12px' }}
           >
             <Funnel className="h-4 w-4" />
             <span>Filters</span>
@@ -212,9 +210,8 @@ export function ExpandableHomeControls({
           {/* Grid/Map Toggle - Single Toggle Button */}
           <button
             onClick={() => onViewModeChange(viewMode === 'grid' ? 'map' : 'grid')}
-            className="flex items-center justify-center gap-1.5 h-11 px-4 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] active:bg-gray-100 dark:active:bg-[rgba(255,255,255,0.18)] backdrop-blur-[14px]"
+            className="flex items-center justify-center gap-1.5 h-11 px-4 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] active:bg-gray-100 dark:active:bg-[rgba(255,255,255,0.18)] backdrop-blur-[14px]"
             style={{ 
-              borderRadius: '12px',
               gap: '6px',
               fontWeight: 500
             }}
@@ -237,8 +234,7 @@ export function ExpandableHomeControls({
           {isAdmin && onAddPOI ? (
             <button
               onClick={onAddPOI}
-              className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-all duration-200"
-              style={{ borderRadius: '12px' }}
+              className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200"
             >
               <Plus className="h-4 w-4" />
               <span>Add POI</span>
@@ -246,8 +242,7 @@ export function ExpandableHomeControls({
           ) : (
             <button
               onClick={onCreateTrip}
-              className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-all duration-200"
-              style={{ borderRadius: '12px' }}
+              className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200"
             >
               <Plus className="h-4 w-4" />
               <span>Create Trip</span>
@@ -486,7 +481,7 @@ export function ExpandableHomeControls({
               )}
               <button
                 onClick={() => setIsExpanded(false)}
-                className="px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7] rounded-xl hover:opacity-90 transition-opacity"
+                className="px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7] rounded-full hover:opacity-90 transition-opacity"
               >
                 Apply Filters
               </button>
