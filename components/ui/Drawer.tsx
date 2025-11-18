@@ -470,7 +470,7 @@ export function Drawer({
         } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
         style={{ 
           zIndex, 
-          width: desktopWidth, // Desktop: fixed width (420px or 480px for tier2)
+          width: tier === 'tier2' ? '92vw' : desktopWidth, // Desktop: fixed width (420px) or 92vw for tier2
           maxWidth: tier === 'tier2' ? '480px' : 'calc(100vw - 2rem)',
           height: tier === 'tier2' ? '100vh' : undefined,
           top: customMargin?.top ? customMargin.top : (customMargin ? undefined : '1rem'),
