@@ -114,9 +114,9 @@ export default function GooglePlacesAutocompleteNative({
       containerRef.current.innerHTML = '';
 
       // Create the PlaceAutocompleteElement
-      // PlaceAutocompleteElement doesn't accept requestedResultTypes in constructor
-      // Create without options first, then set properties if needed
-      const autocompleteElement = new google.maps.places.PlaceAutocompleteElement();
+      // PlaceAutocompleteElement requires an options object, but doesn't accept requestedResultTypes in constructor
+      // Pass empty options object, then try to set properties if needed
+      const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({} as google.maps.places.PlaceAutocompleteElementOptions);
       
       // Try to set requestedResultTypes as a property (may not be supported)
       if (types && types.length > 0) {
