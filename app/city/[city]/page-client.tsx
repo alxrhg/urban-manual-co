@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
+import { DrawerSkeleton } from '@/components/skeletons/DrawerSkeleton';
+import { usePrefetchDestinationDrawer } from '@/src/features/detail/usePrefetchDestinationDrawer';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -21,7 +23,7 @@ const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   {
     ssr: false,
-    loading: () => null,
+    loading: () => <DrawerSkeleton />,
   }
 );
 
@@ -49,6 +51,7 @@ function capitalizeCategory(category: string): string {
 export default function CityPageClient() {
   const { user } = useAuth();
   const router = useRouter();
+  usePrefetchDestinationDrawer();
   const params = useParams();
   const citySlug = decodeURIComponent(params.city as string);
   const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';

@@ -9,10 +9,12 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/Ca
 import Image from 'next/image';
 import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
 import dynamic from 'next/dynamic';
+import { DrawerSkeleton } from '@/components/skeletons/DrawerSkeleton';
+import { usePrefetchDestinationDrawer } from '@/src/features/detail/usePrefetchDestinationDrawer';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  { ssr: false, loading: () => null }
+  { ssr: false, loading: () => <DrawerSkeleton /> }
 );
 
 interface CategoryPageClientProps {
@@ -21,6 +23,7 @@ interface CategoryPageClientProps {
 
 export default function CategoryPageClient({ category }: CategoryPageClientProps) {
   const router = useRouter();
+  usePrefetchDestinationDrawer();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);

@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import dynamic from "next/dynamic";
 import { Destination } from "@/types/destination";
 import {
   Search,
@@ -24,19 +25,7 @@ import {
   Funnel,
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
-// Lazy load drawer (only when opened)
-const DestinationDrawer = dynamic(
-  () =>
-    import("@/src/features/detail/DestinationDrawer").then(mod => ({
-      default: mod.DestinationDrawer,
-    })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
 import { useAuth } from "@/contexts/AuthContext";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSequenceTracker } from "@/hooks/useSequenceTracker";
@@ -65,6 +54,20 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import { ExpandableHomeControls } from '@/components/ExpandableHomeControls';
+import { DrawerSkeleton } from '@/components/skeletons/DrawerSkeleton';
+import { usePrefetchDestinationDrawer } from '@/src/features/detail/usePrefetchDestinationDrawer';
+
+// Lazy load drawer (only when opened)
+const DestinationDrawer = dynamic(
+  () =>
+    import("@/src/features/detail/DestinationDrawer").then(mod => ({
+      default: mod.DestinationDrawer,
+    })),
+  {
+    ssr: false,
+    loading: () => <DrawerSkeleton />,
+  }
+);
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -365,6 +368,7 @@ function normalizeDiscoveryEngineRecord(
 
 export default function Home() {
   const router = useRouter();
+  usePrefetchDestinationDrawer();
   const { user } = useAuth();
   const {
     isEditMode: adminEditMode,

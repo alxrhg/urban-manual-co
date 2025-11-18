@@ -9,11 +9,13 @@ import dynamic from 'next/dynamic';
 import MapView from '@/components/MapView';
 import { Search, X, List, ChevronRight, SlidersHorizontal, Globe2, LayoutGrid, Map, Plus, Filter } from 'lucide-react';
 import Image from 'next/image';
+import { DrawerSkeleton } from '@/components/skeletons/DrawerSkeleton';
+import { usePrefetchDestinationDrawer } from '@/src/features/detail/usePrefetchDestinationDrawer';
 
 // Lazy load components
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  { ssr: false, loading: () => null }
+  { ssr: false, loading: () => <DrawerSkeleton /> }
 );
 
 interface FilterState {
@@ -25,6 +27,7 @@ interface FilterState {
 export default function MapPage() {
   const router = useRouter();
   const { user } = useAuth();
+  usePrefetchDestinationDrawer();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);

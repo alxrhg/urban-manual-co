@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Building2 } from 'lucide-react';
+import { DrawerSkeleton } from '@/components/skeletons/DrawerSkeleton';
+import { usePrefetchDestinationDrawer } from '@/src/features/detail/usePrefetchDestinationDrawer';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -17,7 +19,7 @@ const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   {
     ssr: false,
-    loading: () => null,
+    loading: () => <DrawerSkeleton />,
   }
 );
 
@@ -31,6 +33,7 @@ function capitalizeCategory(category: string): string {
 export default function ArchitectPageClient() {
   const { user } = useAuth();
   const router = useRouter();
+  usePrefetchDestinationDrawer();
   const params = useParams();
   const architectSlug = decodeURIComponent(params.slug as string);
   const architectName = slugToArchitectName(architectSlug);
