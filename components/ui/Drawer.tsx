@@ -79,20 +79,33 @@ export function Drawer({
 
   // Prevent body scroll when drawer is open (but keep page visible)
   useEffect(() => {
-    if (isOpen) {
-      // Lock scroll but keep page visible
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
+    if (typeof document === 'undefined') return;
+    
+    try {
+      if (isOpen) {
+        // Lock scroll but keep page visible
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+      } else {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+      }
+    } catch (error) {
+      console.error('[Drawer] Error managing body scroll:', error);
     }
+    
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
+      try {
+        if (typeof document !== 'undefined') {
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.width = '';
+        }
+      } catch (error) {
+        console.error('[Drawer] Error cleaning up body scroll:', error);
+      }
     };
   }, [isOpen]);
 
@@ -112,48 +125,83 @@ export function Drawer({
   useEffect(() => {
     if (!isOpen || mobileVariant !== 'bottom') return;
 
-    const drawer = drawerRef.current;
-    if (!drawer) return;
+    // Use a timeout to ensure the drawer is fully painted before accessing it
+    const timeoutId = setTimeout(() => {
+      const drawer = drawerRef.current;
+      if (!drawer) return;
 
-    const handleTouchStart = (e: TouchEvent) => {
-      startXRef.current = e.touches[0].clientX;
-    };
+      const handleTouchStart = (e: TouchEvent) => {
+        try {
+          if (e.touches && e.touches.length > 0) {
+            startXRef.current = e.touches[0].clientX;
+          }
+        } catch (error) {
+          console.error('[Drawer] Error in handleTouchStart:', error);
+        }
+      };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (startXRef.current === null) return;
-      const currentX = e.touches[0].clientX;
-      const diffX = currentX - startXRef.current;
+      const handleTouchMove = (e: TouchEvent) => {
+        try {
+          if (startXRef.current === null || !drawer) return;
+          if (!e.touches || e.touches.length === 0) return;
+          
+          const currentX = e.touches[0].clientX;
+          const diffX = currentX - startXRef.current;
+          const drawerWidth = drawer.offsetWidth || 0;
 
-      // Only allow swipe right (positive diffX)
-      if (diffX > 0) {
-        const translateX = Math.min(diffX, drawer.offsetWidth);
-        drawer.style.transform = `translateX(${translateX}px)`;
-      }
-    };
+          // Only allow swipe right (positive diffX) and ensure drawer width is valid
+          if (diffX > 0 && drawerWidth > 0) {
+            const translateX = Math.min(diffX, drawerWidth);
+            drawer.style.transform = `translateX(${translateX}px)`;
+          }
+        } catch (error) {
+          console.error('[Drawer] Error in handleTouchMove:', error);
+        }
+      };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (startXRef.current === null) return;
-      const currentX = e.changedTouches[0].clientX;
-      const diffX = currentX - startXRef.current;
+      const handleTouchEnd = (e: TouchEvent) => {
+        try {
+          if (startXRef.current === null || !drawer) {
+            startXRef.current = null;
+            return;
+          }
+          
+          if (!e.changedTouches || e.changedTouches.length === 0) {
+            startXRef.current = null;
+            return;
+          }
+          
+          const currentX = e.changedTouches[0].clientX;
+          const diffX = currentX - startXRef.current;
+          const drawerWidth = drawer.offsetWidth || 0;
 
-      // If swiped more than 30% of drawer width, close
-      if (diffX > drawer.offsetWidth * 0.3) {
-        onClose();
-      } else {
-        // Snap back
-        drawer.style.transform = '';
-      }
-      startXRef.current = null;
-    };
+          // If swiped more than 30% of drawer width, close
+          if (drawerWidth > 0 && diffX > drawerWidth * 0.3) {
+            onClose();
+          } else {
+            // Snap back
+            drawer.style.transform = '';
+          }
+          startXRef.current = null;
+        } catch (error) {
+          console.error('[Drawer] Error in handleTouchEnd:', error);
+          startXRef.current = null;
+        }
+      };
 
-    drawer.addEventListener('touchstart', handleTouchStart);
-    drawer.addEventListener('touchmove', handleTouchMove);
-    drawer.addEventListener('touchend', handleTouchEnd);
+      drawer.addEventListener('touchstart', handleTouchStart, { passive: true });
+      drawer.addEventListener('touchmove', handleTouchMove, { passive: true });
+      drawer.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+      return () => {
+        drawer.removeEventListener('touchstart', handleTouchStart);
+        drawer.removeEventListener('touchmove', handleTouchMove);
+        drawer.removeEventListener('touchend', handleTouchEnd);
+      };
+    }, 0); // Use setTimeout to ensure DOM is ready
 
     return () => {
-      drawer.removeEventListener('touchstart', handleTouchStart);
-      drawer.removeEventListener('touchmove', handleTouchMove);
-      drawer.removeEventListener('touchend', handleTouchEnd);
+      clearTimeout(timeoutId);
     };
   }, [isOpen, mobileVariant, onClose]);
 
@@ -198,10 +246,10 @@ export function Drawer({
             isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
-            backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
+            backgroundColor: `rgba(0, 0, 0, ${(parseInt(backdropOpacity) || 15) / 100})`,
             backdropFilter: isOpen ? 'blur(18px)' : 'none',
             WebkitBackdropFilter: isOpen ? 'blur(18px)' : 'none',
-            zIndex: zIndex - 1, // Backdrop should be below drawer content
+            zIndex: Math.max(1, zIndex - 1), // Backdrop should be below drawer content, ensure positive
           }}
           onClick={onClose}
         />
@@ -283,10 +331,10 @@ export function Drawer({
                 isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
               style={{
-                backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity || '50') / 100})`,
+                backgroundColor: `rgba(0, 0, 0, ${(parseInt(backdropOpacity || '50') || 50) / 100})`,
                 backdropFilter: 'blur(18px)',
                 WebkitBackdropFilter: 'blur(18px)',
-                zIndex: zIndex - 1, // Backdrop should be below drawer content
+                zIndex: Math.max(1, zIndex - 1), // Backdrop should be below drawer content, ensure positive
               }}
               onClick={onClose}
             />
