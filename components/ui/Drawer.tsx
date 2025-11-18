@@ -201,7 +201,7 @@ export function Drawer({
             backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
             backdropFilter: isOpen ? 'blur(18px)' : 'none',
             WebkitBackdropFilter: isOpen ? 'blur(18px)' : 'none',
-            zIndex: 999,
+            zIndex: zIndex - 1, // Backdrop should be below drawer content
           }}
           onClick={onClose}
         />
