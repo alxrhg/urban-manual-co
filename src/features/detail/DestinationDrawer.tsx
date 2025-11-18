@@ -244,9 +244,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   //   return () => window.removeEventListener('keydown', handleEscape);
   // }, [isOpen, onClose]);
 
-  // Update enhanced destination when destination prop changes
+  // Reset image error when destination changes
   useEffect(() => {
-    setEnhancedDestination(destination);
     setImageError(false);
   }, [destination]);
 
@@ -1312,6 +1311,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         customShadow="0 0 32px rgba(0,0,0,0.5)"
         customBlur="12px"
       >
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
         <div style={{ padding: '28px', maxWidth: '360px', margin: '0 auto' }}>
           {/* Image Gallery */}
           <div className="mb-6 rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 dark:bg-gray-800 border border-white/5">
@@ -1319,12 +1321,28 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="relative w-full h-full">
                 <Image
                   src={drawerImage}
+=======
+=======
+>>>>>>> theirs
+        <div style={{ padding: '28px', maxWidth: '360px', margin: '0 auto' }}>
+          {/* Image Gallery */}
+          {destination?.image && (
+            <div className="mb-6 rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+              <div className="relative w-full h-full">
+                <Image
+                  src={destination.image}
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
                   alt={destination?.name || 'Destination'}
                   fill
                   className="object-cover"
                   sizes="360px"
                   priority={false}
                   quality={85}
+<<<<<<< ours
+<<<<<<< ours
                   onError={() => setImageError(true)}
                 />
               </div>
@@ -1334,6 +1352,33 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
           </div>
+=======
+        <div className="mx-auto max-w-[420px] px-6 pb-10 pt-6 text-gray-900 dark:text-gray-100">
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <p className="text-[0.65rem] uppercase tracking-[0.35em] text-gray-400">Destination</p>
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
+                  {destination?.name || 'Destination'}
+                </h1>
+                {drawerSubtitle && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{drawerSubtitle}</p>
+                )}
+              </div>
+            </div>
+>>>>>>> theirs
+=======
+                />
+              </div>
+            </div>
+          )}
+>>>>>>> theirs
+=======
+                />
+              </div>
+            </div>
+          )}
+>>>>>>> theirs
 
           {/* Info Block: Rating, Category, Tags */}
           <div className="mb-6 space-y-3">
