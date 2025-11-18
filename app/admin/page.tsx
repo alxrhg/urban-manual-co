@@ -23,7 +23,10 @@ type AutocompleteSelection = {
   address?: string;
 };
 
-type DestinationFormInput = Partial<Destination>;
+type DestinationFormInput = Partial<Destination> & {
+  michelin_stars?: number | null;
+  parent_destination_id?: number | null;
+};
 
 const sanitizeTextField = (value?: string | null) =>
   typeof value === 'string' ? value.replace(/\u0000/g, '') : value ?? undefined;
