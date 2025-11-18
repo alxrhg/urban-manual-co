@@ -33,6 +33,8 @@ export interface DrawerProps {
   customMargin?: { top?: string; right?: string; bottom?: string; left?: string };
   customBackground?: string;
   customBorder?: { color?: string; thickness?: string };
+  subtitle?: string; // For Tier 3 header subtitle
+  noOverlay?: boolean; // For Tier 3 - no overlay but backdrop blur
 }
 
 /**
@@ -73,6 +75,8 @@ export function Drawer({
   customMargin,
   customBackground,
   customBorder,
+  subtitle,
+  noOverlay = false,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
@@ -388,7 +392,14 @@ export function Drawer({
           )}
 
           {/* Content - Independent scroll */}
-          <div className="flex-1 overflow-y-auto">
+          <div 
+            className="flex-1 overflow-y-auto"
+            style={{
+              padding: tier === 'tier3' ? '28px' : undefined,
+              maxWidth: tier === 'tier3' ? '360px' : undefined,
+              margin: tier === 'tier3' ? '0 auto' : undefined,
+            }}
+          >
             {children}
           </div>
 
@@ -470,9 +481,9 @@ export function Drawer({
         } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
         style={{ 
           zIndex, 
-          width: tier === 'tier2' ? '92vw' : desktopWidth, // Desktop: fixed width (420px) or 92vw for tier2
-          maxWidth: tier === 'tier2' ? '480px' : 'calc(100vw - 2rem)',
-          height: tier === 'tier2' ? '100vh' : undefined,
+          width: tier === 'tier2' ? '92vw' : tier === 'tier3' ? '420px' : desktopWidth, // Desktop: fixed width (420px) or 92vw for tier2, 420px for tier3
+          maxWidth: tier === 'tier2' ? '480px' : tier === 'tier3' ? '420px' : 'calc(100vw - 2rem)',
+          height: tier === 'tier2' || tier === 'tier3' ? '100vh' : undefined,
           top: customMargin?.top ? customMargin.top : (customMargin ? undefined : '1rem'),
           right: customMargin?.right ? customMargin.right : (customMargin ? undefined : (position === 'right' ? '1rem' : undefined)),
           bottom: customMargin?.bottom ? customMargin.bottom : (customMargin ? undefined : '1rem'),
