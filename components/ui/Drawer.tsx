@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { DesktopDrawer } from './DesktopDrawer';
 import { MobileDrawer } from './MobileDrawer';
+import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
 export interface DrawerProps {
   isOpen: boolean;
@@ -48,7 +49,15 @@ export interface DrawerProps {
  * - Page scroll locked but visible.
  */
 export function Drawer(props: DrawerProps) {
-  const { isOpen, onClose, zIndex = 50, showBackdrop = true, backdropOpacity = '15', keepStateOnClose = true } = props;
+  const resolvedProps = applyTierDefaults(props);
+  const {
+    isOpen,
+    onClose,
+    zIndex = 50,
+    showBackdrop = true,
+    backdropOpacity = '15',
+    keepStateOnClose = true,
+  } = resolvedProps;
 
   useBodyScrollLock(isOpen);
 
@@ -71,8 +80,93 @@ export function Drawer(props: DrawerProps) {
         />
       )}
 
-      <MobileDrawer {...props} />
-      <DesktopDrawer {...props} />
+      <MobileDrawer {...resolvedProps} />
+      <DesktopDrawer {...resolvedProps} />
     </>
   );
+}
+
+function applyTierDefaults(props: DrawerProps): DrawerProps {
+  const tierDefaults = getTierDefaults(props.tier);
+
+  return {
+    ...props,
+    style: props.style ?? tierDefaults.style,
+    customBackground: props.customBackground ?? tierDefaults.customBackground,
+    customBorderRadius: props.customBorderRadius ?? tierDefaults.customBorderRadius,
+    customShadow: props.customShadow ?? tierDefaults.customShadow,
+    customBlur: props.customBlur ?? tierDefaults.customBlur,
+    customBorder: props.customBorder ?? tierDefaults.customBorder,
+    showHandle: props.showHandle ?? tierDefaults.showHandle,
+    mobileHeight: props.mobileHeight ?? tierDefaults.mobileHeight,
+    mobileMaxHeight: props.mobileMaxHeight ?? tierDefaults.mobileMaxHeight,
+    mobileBorderRadius: props.mobileBorderRadius ?? tierDefaults.mobileBorderRadius,
+    backdropOpacity: props.backdropOpacity ?? tierDefaults.backdropOpacity,
+  };
+}
+
+function getTierDefaults(tier?: DrawerProps['tier']): Partial<DrawerProps> {
+  const radius = (value?: number) =>
+    typeof value === 'number' ? `${value}px` : undefined;
+
+  switch (tier) {
+    case 'tier1': {
+      const cornerRadius = radius(DRAWER_STYLES.tier1.cornerRadius);
+      return {
+        style: 'glassy',
+        customBackground: DRAWER_STYLES.tier1.background,
+        customBorderRadius: cornerRadius
+          ? {
+              topLeft: cornerRadius,
+              topRight: cornerRadius,
+              bottomLeft: cornerRadius,
+              bottomRight: cornerRadius,
+            }
+          : undefined,
+        customShadow: DRAWER_STYLES.shadow.value,
+        customBlur: `${DRAWER_STYLES.backdrop.blur}px`,
+        customBorder: {
+          color: DRAWER_STYLES.darkMode.border,
+          thickness: '1px',
+        },
+        showHandle: DRAWER_STYLES.tier1.showHandle,
+        backdropOpacity: `${Math.round(DRAWER_STYLES.backdrop.opacity * 100)}`,
+      };
+    }
+    case 'tier2': {
+      const cornerRadius = radius(DRAWER_STYLES.tier2.cornerRadius);
+      return {
+        style: 'glassy',
+        customBackground: DRAWER_STYLES.tier2.background,
+        customBorderRadius: cornerRadius
+          ? {
+              topLeft: cornerRadius,
+              topRight: cornerRadius,
+              bottomLeft: cornerRadius,
+              bottomRight: cornerRadius,
+            }
+          : undefined,
+        customShadow: DRAWER_STYLES.shadow.value,
+        customBlur: `${DRAWER_STYLES.tier2.headerBlur ?? DRAWER_STYLES.backdrop.blur}px`,
+        customBorder: {
+          color: DRAWER_STYLES.darkMode.border,
+          thickness: '1px',
+        },
+      };
+    }
+    case 'tier3': {
+      return {
+        style: 'solid',
+        customBackground: DRAWER_STYLES.tier3.background,
+        customShadow: DRAWER_STYLES.shadow.value,
+        customBlur: `${DRAWER_STYLES.backdrop.blur}px`,
+        customBorder: {
+          color: DRAWER_STYLES.darkMode.border,
+          thickness: '1px',
+        },
+      };
+    }
+    default:
+      return {};
+  }
 }
