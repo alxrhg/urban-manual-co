@@ -17,7 +17,7 @@ interface UniversalGridProps<T> {
  * across all pages (homepage, cities, categories, etc.)
  * 
  * Grid breakpoints:
- * - Mobile: 2 columns
+ * - Mobile: swipeable horizontal track (auto column width ~65% viewport)
  * - sm: 3 columns
  * - md: 4 columns
  * - lg: 5 columns
@@ -49,9 +49,13 @@ export const UniversalGrid = memo(function UniversalGrid<T>({
 
   return (
     <div
-      className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 ${gapClasses[gap]} items-start ${className}`}
+      className="w-full overflow-x-auto pb-4 [-webkit-overflow-scrolling:touch] sm:overflow-visible sm:pb-0"
     >
-      {items.map((item, index) => renderItem(item, index))}
+      <div
+        className={`grid grid-flow-col auto-cols-[minmax(65%,_1fr)] snap-x snap-mandatory [&>*]:snap-start sm:grid-flow-row sm:auto-cols-auto sm:snap-none sm:[&>*]:snap-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 ${gapClasses[gap]} items-start ${className}`}
+      >
+        {items.map((item, index) => renderItem(item, index))}
+      </div>
     </div>
   );
 }) as <T>(props: UniversalGridProps<T>) => ReactNode;
