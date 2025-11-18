@@ -1043,8 +1043,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     );
   }
 
-  // Get rating for display
-  const rating = enrichedData?.rating || destination.rating;
+  // Get rating for display (safely handle null/undefined)
+  const rating = enrichedData?.rating ?? destination?.rating ?? null;
   const highlightTags: string[] = (
     Array.isArray(destination?.tags) && destination.tags.length > 0
       ? destination.tags
@@ -1056,9 +1056,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     .filter((tag: unknown): tag is string => Boolean(tag))
     .slice(0, 8);
 
-  const defaultMapsQuery = `${destination.name || 'Destination'}, ${destination.city ? capitalizeCity(destination.city) : ''}`;
-  const googleMapsDirectionsUrl = destination.google_maps_url
-    || (destination.latitude && destination.longitude
+  const defaultMapsQuery = `${destination?.name || 'Destination'}, ${destination?.city ? capitalizeCity(destination.city) : ''}`;
+  const googleMapsDirectionsUrl = destination?.google_maps_url
+    || (destination?.latitude && destination?.longitude
       ? `https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`
       : null);
   const appleMapsDirectionsUrl = `https://maps.apple.com/?q=${encodeURIComponent(defaultMapsQuery)}`;
@@ -1084,6 +1084,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               try {
                 const supabaseClient = createClient();
                 if (!supabaseClient) return;
+                if (!destination?.slug) return;
                 const { error } = await supabaseClient
                   .from('saved_places')
                   .delete()
@@ -1180,7 +1181,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const desktopFooterContent = (
     <div className="px-6 py-4">
       <div className="flex gap-3">
-        {destination.slug && (
+        {destination?.slug && (
           <Link
             href={`/destination/${destination.slug}`}
             onClick={(e) => {
