@@ -1571,7 +1571,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </Link>
               ) : null}
             </div>
-            </div>
 
             {/* Highlight Tags */}
             {highlightTags.length > 0 && (
