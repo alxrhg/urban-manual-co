@@ -125,8 +125,11 @@ export function Drawer({
   useEffect(() => {
     if (!isOpen || mobileVariant !== 'bottom') return;
 
+    let cleanup: (() => void) | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
+
     // Use a timeout to ensure the drawer is fully painted before accessing it
-    const timeoutId = setTimeout(() => {
+    timeoutId = setTimeout(() => {
       const drawer = drawerRef.current;
       if (!drawer) return;
 
@@ -193,7 +196,7 @@ export function Drawer({
       drawer.addEventListener('touchmove', handleTouchMove, { passive: true });
       drawer.addEventListener('touchend', handleTouchEnd, { passive: true });
 
-      return () => {
+      cleanup = () => {
         drawer.removeEventListener('touchstart', handleTouchStart);
         drawer.removeEventListener('touchmove', handleTouchMove);
         drawer.removeEventListener('touchend', handleTouchEnd);
@@ -201,7 +204,22 @@ export function Drawer({
     }, 0); // Use setTimeout to ensure DOM is ready
 
     return () => {
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (cleanup) {
+        cleanup();
+      }
+      // Reset transform if drawer is still mounted
+      const drawer = drawerRef.current;
+      if (drawer) {
+        try {
+          drawer.style.transform = '';
+        } catch (error) {
+          console.error('[Drawer] Error resetting transform:', error);
+        }
+      }
+      startXRef.current = null;
     };
   }, [isOpen, mobileVariant, onClose]);
 
