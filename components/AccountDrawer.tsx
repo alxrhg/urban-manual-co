@@ -1038,9 +1038,10 @@ export function AccountDrawer({
       zIndex={getZIndex()}
       tier={isTier1 ? 'tier1' : 'tier2'}
       showHandle={isTier1}
-      customBorderRadius={isTier1 ? { topLeft: '20px', topRight: '0' } : undefined}
+      customBorderRadius={isTier1 ? { topLeft: '20px', topRight: '20px', bottomLeft: '20px', bottomRight: '20px' } : undefined}
       customShadow={isTier1 ? '0 4px 28px rgba(0,0,0,0.45)' : undefined}
       customBlur={isTier1 ? '14px' : undefined}
+      customMargin={isTier1 ? { bottom: '16px', right: '16px' } : undefined}
     >
       <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
         {renderContent()}
