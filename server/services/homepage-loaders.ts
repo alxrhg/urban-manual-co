@@ -5,6 +5,51 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type FilterRow = { city: string | null; category: string | null };
 
+const HOMEPAGE_DESTINATION_BASE_COLUMNS = [
+  'id',
+  'slug',
+  'name',
+  'city',
+  'country',
+  'neighborhood',
+  'category',
+  'micro_description',
+  'description',
+  'content',
+  'image',
+  'image_thumbnail',
+  'michelin_stars',
+  'crown',
+  'tags',
+  'parent_destination_id',
+  'opening_hours_json',
+  'timezone_id',
+  'utc_offset',
+  'rating',
+  'architect',
+  'design_firm_id',
+  'architectural_style',
+  'design_period',
+  'designer_name',
+  'instagram_handle',
+  'instagram_url',
+  'created_at',
+] as const;
+
+const HOMEPAGE_DESTINATION_OPTIONAL_ARCHITECT_COLUMNS = ['architect_info_json'] as const;
+
+function buildHomepageDestinationSelect(includeArchitectInfo: boolean) {
+  return [
+    ...HOMEPAGE_DESTINATION_BASE_COLUMNS,
+    ...(includeArchitectInfo ? HOMEPAGE_DESTINATION_OPTIONAL_ARCHITECT_COLUMNS : []),
+  ].join(', ');
+}
+
+function isMissingArchitectInfoColumnError(error: any) {
+  const message = String(error?.message ?? '').toLowerCase();
+  return message.includes('architect_info_json');
+}
+
 function getAdminClient(): SupabaseClient | null {
   try {
     return createServiceRoleClient();
@@ -116,19 +161,34 @@ export async function getHomepageDestinations(limit = 500) {
   if (!client) {
     return [];
   }
-  
-  try {
-    const { data, error } = await client
+
+  const executeQuery = (includeArchitectInfo: boolean) => {
+    const selectColumns = buildHomepageDestinationSelect(includeArchitectInfo);
+    return client!
       .from('destinations')
-      .select('id, slug, name, city, country, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset, rating, architect, design_firm_id, architectural_style, design_period, designer_name, architect_info_json, instagram_handle, instagram_url, created_at')
+      .select(selectColumns)
       .is('parent_destination_id', null)
       .limit(limit)
       // Supabase TypeScript definitions do not expose `nullsLast`,
       // so we just sort descending which effectively surfaces the newest rows
       .order('created_at', { ascending: false })
       .order('id', { ascending: false }); // Fallback: newer IDs (higher numbers) first
+  };
+
+  try {
+    const { data, error } = await executeQuery(true);
 
     if (error) {
+      if (isMissingArchitectInfoColumnError(error)) {
+        console.warn(
+          '[Homepage Destinations API] architect_info_json column missing, retrying without optional architect fields.',
+        );
+        const fallbackResult = await executeQuery(false);
+        if (fallbackResult.error) {
+          throw fallbackResult.error;
+        }
+        return (fallbackResult.data ?? []) as Destination[];
+      }
       throw error;
     }
 
