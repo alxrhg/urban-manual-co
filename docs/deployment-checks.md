@@ -52,15 +52,46 @@ curl -X POST "https://api.vercel.com/v1/deployments/{deploymentId}/checks" \
   }'
 ```
 
-### Option 3: Via GitHub Actions / CI
+### Option 3: Via GitHub Actions (Recommended)
 
-Add a deployment check step to your CI pipeline:
+GitHub Actions workflows are set up to automatically check deployments:
 
-```yaml
-- name: Run Deployment Check
-  run: |
-    DEPLOYMENT_URL="https://${{ env.VERCEL_URL }}"
-    curl -f "$DEPLOYMENT_URL/api/deployment-check" || exit 1
+#### Workflows Included
+
+1. **`.github/workflows/deployment-check.yml`**
+   - Runs on pushes to `master`/`main`
+   - Builds and tests the project
+   - Waits for Vercel deployment
+   - Runs health check and comprehensive deployment check
+   - Comments on PRs if checks fail
+
+2. **`.github/workflows/vercel-deployment-check.yml`**
+   - Triggers on Vercel deployment status events
+   - Verifies deployment health automatically
+   - Updates deployment status in GitHub
+
+3. **`.github/workflows/ci.yml`**
+   - Runs on every push and PR
+   - Lints, type checks, and builds the project
+   - Ensures code quality before merge
+
+#### Setup
+
+1. **Add GitHub Secrets** (Repository Settings → Secrets and variables → Actions):
+   - `VERCEL_TOKEN` (optional): For fetching deployment URLs from Vercel API
+   - `VERCEL_PROJECT_ID` (optional): Your Vercel project ID
+   - `VERCEL_URL` (optional): Your Vercel deployment URL (e.g., `urban-manual.vercel.app`)
+
+2. **Configure Vercel Webhook** (optional):
+   - Go to Vercel Dashboard → Project Settings → Git → Deploy Hooks
+   - Add webhook: `https://api.github.com/repos/YOUR_USERNAME/urban-manual/dispatches`
+   - This enables automatic checks when Vercel deploys
+
+#### Manual Run
+
+You can manually trigger deployment checks:
+```bash
+gh workflow run "Deployment Check"
 ```
 
 ## Check Response Format
