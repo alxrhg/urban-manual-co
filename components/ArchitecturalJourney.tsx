@@ -7,6 +7,7 @@
 
 import type { ArchitecturalJourney as ArchitecturalJourneyType } from '@/types/architecture';
 import { Building2, MapPin, Calendar } from 'lucide-react';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface ArchitecturalJourneyProps {
   journey: ArchitecturalJourneyType;
@@ -52,36 +53,39 @@ export function ArchitecturalJourney({ journey }: ArchitecturalJourneyProps) {
       <div>
         <h3 className="text-xl font-semibold mb-4">Destinations</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {journey.destinations.map((destination) => (
-            <div
-              key={destination.id}
-              className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition"
-            >
-              {destination.image && (
-                <img
-                  src={destination.image}
-                  alt={destination.name}
-                  className="w-full h-48 object-cover"
-                />
-              )}
-              <div className="p-4">
-                <h4 className="font-semibold mb-2">{destination.name}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  {destination.city}, {destination.country}
-                </p>
-                {destination.architect && (
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    by {destination.architect.name}
-                  </p>
+          {journey.destinations.map((destination) => {
+            const displayImage = getDestinationImageUrl(destination);
+            return (
+              <div
+                key={destination.id}
+                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition"
+              >
+                {displayImage && (
+                  <img
+                    src={displayImage}
+                    alt={destination.name}
+                    className="w-full h-48 object-cover"
+                  />
                 )}
-                {destination.architectural_significance && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                    {destination.architectural_significance}
+                <div className="p-4">
+                  <h4 className="font-semibold mb-2">{destination.name}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    {destination.city}, {destination.country}
                   </p>
-                )}
+                  {destination.architect && (
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      by {destination.architect.name}
+                    </p>
+                  )}
+                  {destination.architectural_significance && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
+                      {destination.architectural_significance}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -105,4 +109,3 @@ export function ArchitecturalJourney({ journey }: ArchitecturalJourneyProps) {
     </div>
   );
 }
-

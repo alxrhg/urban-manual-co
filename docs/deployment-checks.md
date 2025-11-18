@@ -150,6 +150,11 @@ gh workflow run "Deployment Check"
 - Failed checks will show in red with error details
 - Check logs are available in the deployment details
 
+### Frontend Network Traces
+- During smoke tests, open DevTools → **Network** and filter for `/3f081888` or `/storage/v1` to ensure invalid asset calls (e.g., previously `/{uuid}` requests) no longer appear.
+- If new 404s surface, inspect the request URL and extend `lib/destination-images.ts` so its whitelist covers the storage scheme (Supabase public buckets, CDN hosts, etc.) before re‑deploying.
+- You can also review Vercel’s **Logs → Edge/Functions** stream for repeated asset errors to catch production-only issues.
+
 ### Alerts
 Configure webhooks in Vercel to get notified of failed checks:
 1. Go to **Settings** → **Webhooks**
@@ -204,4 +209,3 @@ try {
   };
 }
 ```
-
