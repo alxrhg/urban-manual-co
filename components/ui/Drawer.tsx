@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, ReactNode, useRef } from 'react';
+import { useEffect, ReactNode, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
@@ -80,6 +81,12 @@ export function Drawer({
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component only renders on client-side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Prevent body scroll when drawer is open (but keep page visible)
   useEffect(() => {
@@ -258,20 +265,28 @@ export function Drawer({
   // Don't unmount if keepStateOnClose is true
   if (!isOpen && !keepStateOnClose) return null;
 
-  return (
+  // Don't render until mounted on client
+  if (!mounted || typeof document === 'undefined') return null;
+
+  // Portal content - ensures drawer renders at document.body level
+  const drawerContent = (
     <>
-      {/* Backdrop */}
+      {/* Overlay - Fixed positioning, z-index 9998 */}
       {showBackdrop && !noOverlay && (
         <div
           id="drawer-overlay"
-          className={`fixed inset-0 transition-opacity duration-300 ${
-            isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
+          className="fixed inset-0 transition-opacity duration-300"
           style={{
-            backgroundColor: `rgba(0, 0, 0, ${(parseInt(backdropOpacity) || 15) / 100})`,
-            backdropFilter: isOpen ? 'blur(18px)' : 'none',
-            WebkitBackdropFilter: isOpen ? 'blur(18px)' : 'none',
-            zIndex: Math.max(1, zIndex - 1), // Backdrop should be below drawer content, ensure positive
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+            zIndex: 9998,
+            opacity: isOpen ? 1 : 0,
+            pointerEvents: isOpen ? 'auto' : 'none',
+            transition: 'opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
           }}
           onClick={onClose}
         />
@@ -279,14 +294,19 @@ export function Drawer({
       {/* Backdrop blur only (no overlay) for Tier 3 */}
       {showBackdrop && noOverlay && (
         <div
-          className={`fixed inset-0 transition-opacity duration-300 ${
-            isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
+          className="fixed inset-0 transition-opacity duration-300"
           style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
             backdropFilter: isOpen ? 'blur(12px)' : 'none',
             WebkitBackdropFilter: isOpen ? 'blur(12px)' : 'none',
-            zIndex: Math.max(1, zIndex - 1),
+            zIndex: 9998,
+            opacity: isOpen ? 1 : 0,
             pointerEvents: 'none', // Don't block clicks
+            transition: 'opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
           }}
         />
       )}
@@ -296,14 +316,23 @@ export function Drawer({
         <div
           id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
           ref={drawerRef}
-          className={`md:hidden fixed inset-[10px] transform transition-transform duration-[220ms] ease-out will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
+          className={`md:hidden flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} overflow-hidden overscroll-contain ${radiusClass} ${
             mobileExpanded ? 'drawer-expanded' : 'drawer-collapsed'
-          } ${!isOpen ? 'translate-y-full pointer-events-none' : ''}`}
+          }`}
           style={{
-            zIndex,
+            position: 'fixed',
+            top: '10px',
+            left: '10px',
+            right: '10px',
+            bottom: '10px',
+            width: 'calc(100% - 20px)',
+            maxWidth: '100%',
             maxHeight: tier === 'tier1' ? '45%' : tier === 'tier2' ? '88%' : 'calc(100vh - 20px)',
             height: tier === 'tier1' ? 'auto' : (mobileHeight ? `calc(${mobileHeight} - 20px)` : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)'),
+            zIndex: 9999,
             transform: isOpen ? bottomSheetTransform : 'translate3d(0, 120%, 0) scale(0.98)',
+            transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            pointerEvents: isOpen ? 'auto' : 'none',
             borderRadius: customBorderRadius 
               ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
               : (tier === 'tier1' || tier === 'tier2' ? '22px' : undefined),
@@ -363,24 +392,42 @@ export function Drawer({
           {/* Backdrop for side drawer */}
           {showBackdrop !== false && (
             <div
-              className={`fixed inset-0 transition-opacity duration-[220ms] ${
-                isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-              }`}
+              className="fixed inset-0 transition-opacity duration-[220ms]"
               style={{
-                backgroundColor: `rgba(0, 0, 0, ${(parseInt(backdropOpacity || '50') || 50) / 100})`,
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(0, 0, 0, 0.25)',
                 backdropFilter: 'blur(18px)',
                 WebkitBackdropFilter: 'blur(18px)',
-                zIndex: Math.max(1, zIndex - 1), // Backdrop should be below drawer content, ensure positive
+                zIndex: 9998,
+                opacity: isOpen ? 1 : 0,
+                pointerEvents: isOpen ? 'auto' : 'none',
+                transition: 'opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
               }}
               onClick={onClose}
             />
           )}
           <div
             ref={drawerRef}
-            className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
-              isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-full' : '-translate-x-full')
-            } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex flex-col`}
-            style={{ zIndex }}
+            className={`md:hidden ${backgroundClasses} ${shadowClasses} ${borderClasses} overflow-hidden flex flex-col`}
+            style={{ 
+              position: 'fixed',
+              top: 0,
+              right: position === 'right' ? 0 : undefined,
+              left: position === 'left' ? 0 : undefined,
+              bottom: 0,
+              width: '100%',
+              height: '100vh',
+              zIndex: 9999,
+              transform: isOpen 
+                ? 'translateX(0%)' 
+                : (position === 'right' ? 'translateX(100%)' : 'translateX(-100%)'),
+              transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+              pointerEvents: isOpen ? 'auto' : 'none',
+            }}
           >
           {/* Header - 56px height, blurred */}
           {(title || headerContent) && (
@@ -441,17 +488,26 @@ export function Drawer({
       <div
         id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
         ref={drawerRef}
-        className={`hidden md:flex lg:hidden fixed ${desktopSpacing} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
-          isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
-        } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
+        className={`hidden md:flex lg:hidden ${backgroundClasses} ${shadowClasses} ${borderClasses} overflow-hidden flex-col`}
         style={{ 
-          zIndex, 
-          width: '70%', // Tablet: 70% width
-          maxWidth: 'calc(100vw - 2rem)',
+          position: 'fixed',
+          top: 0,
+          right: position === 'right' ? 0 : undefined,
+          left: position === 'left' ? 0 : undefined,
+          height: '100vh',
+          width: '70%',
+          maxWidth: '90vw',
+          zIndex: 9999,
+          background: 'var(--background, white)',
+          boxShadow: customShadow || '-4px 0 20px rgba(0,0,0,0.1)',
+          transform: isOpen 
+            ? 'translateX(0%)' 
+            : (position === 'right' ? 'translateX(100%)' : 'translateX(-100%)'),
+          transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+          pointerEvents: isOpen ? 'auto' : 'none',
           borderRadius: customBorderRadius 
             ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
-            : '1rem',
-          boxShadow: customShadow || undefined,
+            : '0',
           backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
           WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
           backgroundColor: customBackground || undefined,
@@ -498,24 +554,28 @@ export function Drawer({
       <div
         id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
         ref={drawerRef}
-        className={`hidden lg:flex fixed ${customMargin ? '' : desktopSpacing} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform ${
-          tier === 'tier2' ? 'duration-[180ms] ease-[cubic-bezier(0.23,1,0.32,1)]' : 'duration-[220ms] ease-out'
-        } ${
-          isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
-        } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
+        className={`hidden lg:flex ${backgroundClasses} ${shadowClasses} ${borderClasses} overflow-hidden flex-col`}
         style={{ 
-          zIndex, 
-          width: tier === 'tier2' ? '92vw' : tier === 'tier3' ? '420px' : desktopWidth, // Desktop: fixed width (420px) or 92vw for tier2, 420px for tier3
-          maxWidth: tier === 'tier2' ? '480px' : tier === 'tier3' ? '420px' : 'calc(100vw - 2rem)',
-          height: tier === 'tier2' || tier === 'tier3' ? '100vh' : undefined,
-          top: customMargin?.top ? customMargin.top : (customMargin ? undefined : '1rem'),
-          right: customMargin?.right ? customMargin.right : (customMargin ? undefined : (position === 'right' ? '1rem' : undefined)),
-          bottom: customMargin?.bottom ? customMargin.bottom : (customMargin ? undefined : '1rem'),
-          left: customMargin?.left ? customMargin.left : (customMargin ? undefined : (position === 'left' ? '1rem' : undefined)),
+          // Enforce fixed positioning and z-index
+          position: 'fixed',
+          top: 0,
+          right: position === 'right' ? 0 : undefined,
+          left: position === 'left' ? 0 : undefined,
+          height: '100vh',
+          width: tier === 'tier2' ? '92vw' : tier === 'tier3' ? '420px' : desktopWidth,
+          maxWidth: tier === 'tier2' ? '480px' : tier === 'tier3' ? '420px' : '90vw',
+          zIndex: 9999,
+          background: 'var(--background, white)',
+          boxShadow: customShadow || (tier === 'tier3' ? '0 0 32px rgba(0,0,0,0.5)' : '-4px 0 20px rgba(0,0,0,0.1)'),
+          transform: isOpen 
+            ? 'translateX(0%)' 
+            : (position === 'right' ? 'translateX(100%)' : 'translateX(-100%)'),
+          transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+          pointerEvents: isOpen ? 'auto' : 'none',
+          // Custom styling
           borderRadius: customBorderRadius 
             ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
-            : tier === 'tier3' ? '0 0 24px 0' : '1rem',
-          boxShadow: customShadow || (tier === 'tier3' ? '0 0 32px rgba(0,0,0,0.5)' : undefined),
+            : tier === 'tier3' ? '0 0 24px 0' : '0',
           backdropFilter: customBlur ? `blur(${customBlur})` : (tier === 'tier3' ? 'blur(12px)' : undefined),
           WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : (tier === 'tier3' ? 'blur(12px)' : undefined),
           backgroundColor: customBackground || (tier === 'tier3' ? 'rgba(10,10,10,0.92)' : undefined),
@@ -631,7 +691,9 @@ export function Drawer({
           </div>
         )}
       </div>
-
     </>
   );
+
+  // Render via portal to document.body to prevent parent container interference
+  return createPortal(drawerContent, document.body);
 }
