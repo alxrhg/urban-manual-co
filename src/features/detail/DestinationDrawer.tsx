@@ -1079,176 +1079,29 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const appleMapsDirectionsUrl = `https://maps.apple.com/?q=${encodeURIComponent(defaultMapsQuery)}`;
   const directionsUrl = googleMapsDirectionsUrl || appleMapsDirectionsUrl;
 
-  // Create custom header content - Place Drawer spec
-  const headerContent = (
-    <div className="flex items-center justify-between w-full relative">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate flex-1">
-        {destination?.name || 'Destination'}
-      </h2>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {/* Bookmark Action */}
-        <button
-          onClick={async () => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (!isSaved) {
-              setShowSaveModal(true);
-            } else {
-              try {
-                const supabaseClient = createClient();
-                if (!supabaseClient) return;
-                if (!destination?.slug) return;
-                const { error } = await supabaseClient
-                  .from('saved_places')
-                  .delete()
-                  .eq('user_id', user.id)
-                  .eq('destination_slug', destination.slug);
-                if (!error) {
-                  setIsSaved(false);
-                  if (onSaveToggle) onSaveToggle(destination.slug, false);
-                }
-              } catch (error) {
-                console.error('Error unsaving:', error);
-              }
-            }
-          }}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
-        >
-          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
-        </button>
-        {/* Trip Action */}
-        <button
-          onClick={() => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (isAddedToTrip) return;
-            setShowAddToTripModal(true);
-          }}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label="Add to trip"
-          disabled={isAddedToTrip}
-        >
-          {isAddedToTrip ? (
-            <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
-          ) : (
-            <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-          )}
-        </button>
-      </div>
+  const minimalHeaderContent = (
+    <div className="flex items-center justify-end w-full px-2 py-2">
+      <button
+        onClick={onClose}
+        className="inline-flex items-center justify-center rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-900"
+        aria-label="Close drawer"
+      >
+        <X className="h-5 w-5" />
+      </button>
     </div>
   );
 
-  // Create mobile footer content
-  const mobileFooterContent = (
-    <div className="px-6 py-4">
-      <div className="flex gap-3">
-        {destination?.slug && (
-          <Link
-            href={`/destination/${destination.slug}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="flex-1 rounded-2xl bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
-          >
-            View Full Details
-          </Link>
-        )}
-
-        <button
-          onClick={() => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (isAddedToTrip) return;
-            setShowAddToTripModal(true);
-          }}
-          className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${
-            isAddedToTrip
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-              : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100'
-          }`}
-          disabled={isAddedToTrip}
-        >
-          {isAddedToTrip ? (
-            <>
-              <Check className="h-4 w-4" />
-              Added
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              Plan trip
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-
-  // Create desktop footer content
-  const desktopFooterContent = (
-    <div className="px-6 py-4">
-      <div className="flex gap-3">
-        {destination?.slug && (
-          <Link
-            href={`/destination/${destination.slug}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
-          >
-            View Full Details
-          </Link>
-        )}
-        
-        <button
-          onClick={() => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (isAddedToTrip) return;
-            setShowAddToTripModal(true);
-          }}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-            isAddedToTrip
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
-          disabled={isAddedToTrip}
-        >
-          {isAddedToTrip ? (
-            <>
-              <Check className="h-4 w-4" />
-              <span>Added</span>
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              <span>Add to Trip</span>
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
 
   // Get subtitle for header
-  const drawerSubtitle = destination?.city 
+  const drawerSubtitle = destination?.city
     ? `${capitalizeCity(destination.city)}${destination.category ? ` · ${destination.category}` : ''}`
     : undefined;
 
-  // Render footer with action buttons (Tier 3 style)
+  const infoBadgeClasses = 'inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-100';
+
+  // Render footer with simplified Lovably-inspired styling
   const renderFooter = () => (
-    <div className="flex gap-2.5" style={{ gap: '10px' }}>
+    <div className="flex flex-col gap-2.5 sm:flex-row" style={{ gap: '10px' }}>
       <button
         onClick={async () => {
           if (!user) {
@@ -1275,15 +1128,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             }
           }
         }}
-        className="flex-1 flex items-center justify-center gap-2 transition-all"
-        style={{
-          height: '48px',
-          borderRadius: '24px',
-          fontSize: '15px',
-          fontWeight: 500,
-          backgroundColor: isSaved ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.08)',
-          color: isSaved ? '#000' : '#fff',
-        }}
+        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-3 text-sm font-medium transition-colors ${
+          isSaved
+            ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
+            : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300 dark:border-gray-800 dark:bg-transparent dark:text-gray-100 dark:hover:border-gray-700'
+        }`}
       >
         <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
         {isSaved ? 'Saved' : 'Save'}
@@ -1298,16 +1147,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           setShowAddToTripModal(true);
         }}
         disabled={isAddedToTrip}
-        className="flex-1 flex items-center justify-center gap-2 transition-all"
-        style={{
-          height: '48px',
-          borderRadius: '24px',
-          fontSize: '15px',
-          fontWeight: 600,
-          backgroundColor: isAddedToTrip ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.92)',
-          color: isAddedToTrip ? 'rgba(34,197,94,1)' : '#000',
-          opacity: isAddedToTrip ? 0.8 : 1,
-        }}
+        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-colors ${
+          isAddedToTrip
+            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+            : 'bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-gray-900'
+        } ${isAddedToTrip ? 'cursor-default' : ''}`}
       >
         {isAddedToTrip ? (
           <>
@@ -1329,314 +1173,99 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       <Drawer
         isOpen={isOpen}
         onClose={onClose}
-        title={destination?.name || 'Destination'}
-        subtitle={drawerSubtitle}
+        headerContent={minimalHeaderContent}
         mobileVariant="bottom"
         desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
+        desktopWidth="480px"
         position="right"
-        style="glassy"
-        backdropOpacity="0"
+        style="solid"
+        backdropOpacity="0.35"
         keepStateOnClose={true}
         zIndex={1200}
         tier="tier3"
-        noOverlay={true}
         footerContent={destination ? renderFooter() : undefined}
-        customBorderRadius={{ topLeft: '0', topRight: '0', bottomLeft: '24px', bottomRight: '0' }}
-        customBackground="rgba(10,10,10,0.92)"
-        customShadow="0 0 32px rgba(0,0,0,0.5)"
-        customBlur="12px"
       >
-        <div style={{ padding: '28px', maxWidth: '360px', margin: '0 auto' }}>
-          {/* Image Gallery */}
-          {destination?.image && (
-            <div className="mb-6 rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 dark:bg-gray-800">
-              <div className="relative w-full h-full">
-                <Image
-                  src={destination.image}
-                  alt={destination?.name || 'Destination'}
-                  fill
-                  className="object-cover"
-                  sizes="360px"
-                  priority={false}
-                  quality={85}
-                />
+        <div className="mx-auto max-w-[420px] px-6 pb-10 pt-6 text-gray-900 dark:text-gray-100">
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <p className="text-[0.65rem] uppercase tracking-[0.35em] text-gray-400">Destination</p>
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
+                  {destination?.name || 'Destination'}
+                </h1>
+                {drawerSubtitle && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{drawerSubtitle}</p>
+                )}
               </div>
             </div>
-          )}
 
-          {/* Info Block: Rating, Category, Tags */}
-          <div className="mb-6 space-y-3">
-            {/* Rating and Category Row */}
-            <div className="flex flex-wrap items-center gap-2">
-              {rating && (
-                <div className="flex items-center gap-1.5" style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  <Star className="w-3.5 h-3.5 fill-current text-yellow-400" />
-                  <span>{rating.toFixed(1)}</span>
+            {destination?.image && (
+              <div className="aspect-square w-full overflow-hidden rounded-3xl bg-gray-100 dark:bg-gray-900">
+                <div className="relative h-full w-full">
+                  <Image
+                    src={destination.image}
+                    alt={destination?.name || 'Destination'}
+                    fill
+                    className="object-cover"
+                    sizes="420px"
+                    priority={false}
+                    quality={85}
+                  />
                 </div>
-              )}
-              {destination.category && (
-                <div style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  {destination.category}
-                </div>
-              )}
-              {destination.crown && (
-                <div style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  <Crown className="w-3.5 h-3.5 inline mr-1" />
-                  Crown
-                </div>
-              )}
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  ⭐ {destination.michelin_stars}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Action Row - Pill Buttons */}
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
-              {/* Save Button with Dropdown */}
-              {isMounted && (
-                <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                      onClick={(e) => {
-                        if (!user) {
-                          e.preventDefault();
-                          router.push('/auth/login');
-                          return;
-                        }
-                        if (!isSaved) {
-                          // Quick save without opening dropdown
-                          e.preventDefault();
-                          setShowSaveModal(true);
-                          setShowSaveDropdown(false);
-                        }
-                      }}
-                    >
-                      <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
-                      {isSaved ? 'Saved' : 'Save'}
-                      {isSaved && <ChevronDown className="h-3 w-3 ml-0.5" />}
-                    </button>
-                  </DropdownMenuTrigger>
-                  {isSaved && isMounted && (
-                    <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem onClick={() => {
-                      setShowSaveModal(true);
-                      setShowSaveDropdown(false);
-                    }}>
-                      <List className="h-3 w-3 mr-2" />
-                      Save to List
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      router.push('/trips');
-                      setShowSaveDropdown(false);
-                    }}>
-                      <Map className="h-3 w-3 mr-2" />
-                      Save to Trip
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => {
-                      router.push('/account?tab=collections');
-                      setShowSaveDropdown(false);
-                    }}>
-                      <Plus className="h-3 w-3 mr-2" />
-                      Create a List
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={async () => {
-                      // Unsave from saved_places
-                      if (destination?.slug && user) {
-                        try {
-                          const supabaseClient = createClient();
-                          if (supabaseClient) {
-                            const { error } = await supabaseClient
-                              .from('saved_places')
-                              .delete()
-                              .eq('user_id', user.id)
-                              .eq('destination_slug', destination.slug);
-                            if (!error) {
-                              setIsSaved(false);
-                              if (onSaveToggle) onSaveToggle(destination.slug, false);
-                            }
-                          }
-                        } catch (error) {
-                          console.error('Error unsaving:', error);
-                          alert('Failed to unsave. Please try again.');
-                        }
-                      }
-                      setShowSaveDropdown(false);
-                    }}>
-                      <X className="h-3 w-3 mr-2" />
-                      Remove from Saved
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                )}
-                </DropdownMenu>
-              )}
-
-              <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                onClick={handleShare}
-              >
-                <Share2 className="h-3 w-3" />
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-
-              {/* Visited Button with Dropdown */}
-              {user && isMounted && (
-                <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
-                        isVisited
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                      onClick={(e) => {
-                        if (!isVisited) {
-                          e.preventDefault();
-                          handleVisitToggle();
-                        }
-                        // If already visited, let the dropdown handle the click
-                      }}
-                    >
-                      <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
-                      {isVisited ? 'Visited' : 'Mark Visited'}
-                      {isVisited && <ChevronDown className="h-3 w-3 ml-0.5" />}
-                    </button>
-                  </DropdownMenuTrigger>
-                  {isVisited && isMounted && (
-                    <DropdownMenuContent align="start" className="w-48">
-                      <DropdownMenuItem onClick={() => {
-                        setShowVisitedModal(true);
-                        setShowVisitedDropdown(false);
-                      }}>
-                        <Plus className="h-3 w-3 mr-2" />
-                        Add Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
-                        handleVisitToggle();
-                        setShowVisitedDropdown(false);
-                      }}>
-                        <X className="h-3 w-3 mr-2" />
-                        Remove Visit
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  )}
-                </DropdownMenu>
-              )}
-
-              {destination.slug && destination.slug.trim() ? (
-                <Link
-                  href={`/destination/${destination.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  View Full Page
-                </Link>
-              ) : null}
-            </div>
-
-            {/* Highlight Tags */}
-            {highlightTags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {highlightTags.map(tag => (
-                  <span
-                    key={tag}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '24px',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'rgba(255,255,255,0.9)',
-                    }}
-                  >
-                    {tag}
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {rating && (
+                  <span className={`${infoBadgeClasses} text-sm`}>
+                    <Star className="h-3.5 w-3.5 fill-current text-yellow-400" />
+                    {rating.toFixed(1)}
                   </span>
-                ))}
+                )}
+                {destination.category && (
+                  <span className={infoBadgeClasses}>{destination.category}</span>
+                )}
+                {destination.crown && (
+                  <span className={infoBadgeClasses}>
+                    <Crown className="mr-1 inline h-3.5 w-3.5" />
+                    Crown
+                  </span>
+                )}
+                {destination.michelin_stars && destination.michelin_stars > 0 && (
+                  <span className={infoBadgeClasses}>⭐ {destination.michelin_stars}</span>
+                )}
+              </div>
+
+              {highlightTags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {highlightTags.map(tag => (
+                    <span key={tag} className={`${infoBadgeClasses} text-[0.75rem] uppercase tracking-wide text-gray-500 dark:text-gray-300`}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {(destination.micro_description || destination.description) && (
+              <div>
+                <p className="text-base leading-relaxed text-gray-600 dark:text-gray-300">
+                  {destination.micro_description || (destination.description ? stripHtmlTags(destination.description) : '')}
+                </p>
               </div>
             )}
           </div>
-
-          {/* Text Block: Description */}
-          {(destination.micro_description || destination.description) && (
-            <div className="mb-6">
-              <p style={{
-                fontSize: '15px',
-                lineHeight: 1.6,
-                color: 'rgba(255,255,255,0.85)',
-              }}>
-                {destination.micro_description || (destination.description ? stripHtmlTags(destination.description) : '')}
-              </p>
-            </div>
-          )}
-
           {/* Divider */}
-          <div style={{ 
-            height: '1px', 
-            backgroundColor: 'rgba(255,255,255,0.12)', 
-            margin: '16px 0' 
-          }} />
+          <div className="my-6 h-px bg-gray-200 dark:bg-gray-800" />
 
           {/* Action Row */}
-          <div className="mb-6 flex gap-2.5" style={{ gap: '10px' }}>
+          <div className="mb-6 flex gap-2.5">
             <button
               onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-2 transition-all"
-              style={{
-                height: '42px',
-                borderRadius: '22px',
-                paddingLeft: '18px',
-                paddingRight: '18px',
-                fontSize: '14px',
-                fontWeight: 500,
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.9)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-              }}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-100 dark:hover:border-gray-700 dark:hover:bg-gray-900"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="h-4 w-4" />
               <span>{copied ? 'Copied!' : 'Share'}</span>
             </button>
             {directionsUrl && (
@@ -1644,37 +1273,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 href={directionsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 transition-all"
-                style={{
-                  height: '42px',
-                  borderRadius: '22px',
-                  paddingLeft: '18px',
-                  paddingRight: '18px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: 'rgba(255,255,255,0.9)',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-100 dark:hover:border-gray-700 dark:hover:bg-gray-900"
               >
-                <Navigation className="w-4 h-4" />
+                <Navigation className="h-4 w-4" />
                 <span>Directions</span>
               </a>
             )}
           </div>
 
-          {/* Divider */}
-          <div style={{ 
-            height: '1px', 
-            backgroundColor: 'rgba(255,255,255,0.12)', 
-            margin: '16px 0' 
-          }} />
+            {/* Divider */}
+            <div className="my-6 h-px bg-gray-200 dark:bg-gray-800" />
 
           {/* Metadata Rows */}
           <div className="space-y-5" style={{ gap: '20px' }}>
