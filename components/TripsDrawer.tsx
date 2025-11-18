@@ -6,18 +6,48 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
-import { Plus, MapPin, Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import { Plus, MapPin, Calendar, ArrowRight, Loader2, Plane } from 'lucide-react';
 import Image from 'next/image';
+import type { Trip as TripType } from '@/types/trip';
 
 interface TripsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface AirportSummary {
+  iata?: string | null;
+  city?: string | null;
+  name?: string | null;
+  country?: string | null;
+}
+
+interface FlightDetails {
+  from?: AirportSummary | null;
+  to?: AirportSummary | null;
+  airline?: string | null;
+  flightNumber?: string | null;
+  departureTime?: string | null;
+  arrivalTime?: string | null;
+}
+
+interface FlightSegment {
+  label: string;
+  subtitle: string;
+  code: string;
+  date: string | null;
+  time: string | null;
+}
+
+type TripWithPreview = TripType & {
+  firstLocationImage: string | null;
+  flightDetails?: FlightDetails | null;
+};
+
 export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const [trips, setTrips] = useState<any[]>([]);
+  const [trips, setTrips] = useState<TripWithPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
@@ -43,11 +73,11 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
       if (error) throw error;
       
       // Fetch first location image for each trip
-      const tripsWithImages = await Promise.all(
-        (data || []).map(async (trip) => {
-          if (trip.cover_image) {
-            return { ...trip, firstLocationImage: null };
-          }
+        const tripsWithImages: TripWithPreview[] = await Promise.all(
+          (data || []).map(async (trip: TripType) => {
+            if (trip.cover_image) {
+              return { ...trip, firstLocationImage: null, flightDetails: null };
+            }
 
           const { data: items } = await supabaseClient
             .from('itinerary_items')
@@ -60,28 +90,42 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
 
           let firstLocationImage: string | null = null;
 
-          if (items?.destination_slug) {
-            const { data: dest } = await supabaseClient
-              .from('destinations')
-              .select('image')
-              .eq('slug', items.destination_slug)
-              .maybeSingle();
-            
-            if (dest?.image) {
-              firstLocationImage = dest.image;
-            }
-          } else if (items?.notes) {
+            let flightDetails: FlightDetails | null = null;
+
+          if (items?.notes) {
             try {
-              const notesData = JSON.parse(items.notes);
-              if (notesData.image) {
-                firstLocationImage = notesData.image;
+              const parsedNotes = JSON.parse(items.notes);
+              if (parsedNotes?.from || parsedNotes?.to) {
+                flightDetails = {
+                  from: parsedNotes.from,
+                  to: parsedNotes.to,
+                  airline: parsedNotes.airline || null,
+                  flightNumber: parsedNotes.flightNumber || null,
+                  departureTime: parsedNotes.departureTime || null,
+                  arrivalTime: parsedNotes.arrivalTime || null,
+                };
+              }
+              if (parsedNotes?.image && !firstLocationImage) {
+                firstLocationImage = parsedNotes.image;
               }
             } catch {
               // Ignore parse errors
             }
           }
 
-          return { ...trip, firstLocationImage };
+          if (items?.destination_slug) {
+            const { data: dest } = await supabaseClient
+              .from('destinations')
+              .select('image')
+              .eq('slug', items.destination_slug)
+              .maybeSingle();
+
+            if (dest?.image) {
+              firstLocationImage = dest.image;
+            }
+          }
+
+          return { ...trip, firstLocationImage, flightDetails };
         })
       );
 
@@ -148,6 +192,57 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
     }
   };
 
+  const formatDetailedDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const buildFlightSegments = (trip: TripWithPreview): { segments: FlightSegment[]; flightDetails?: FlightDetails | null } => {
+    const { flightDetails } = trip;
+    const hasFlightDetails = flightDetails && (flightDetails.from || flightDetails.to);
+
+    const rawDestinationCode = trip.destination
+      ? trip.destination
+          .split(' ')
+          .filter((word: string) => word && word.length > 0)
+          .map((word: string) => word[0])
+          .join('')
+          .slice(0, 3)
+          .toUpperCase()
+      : '';
+    const destinationCode = rawDestinationCode || 'TBD';
+
+    const segments = [
+      {
+        label: flightDetails?.from?.city || 'Departure',
+        subtitle: flightDetails?.from?.name || 'Add departure airport',
+        code: flightDetails?.from?.iata || '—',
+        date: formatDetailedDate(trip.start_date),
+        time: flightDetails?.departureTime || null,
+      },
+      {
+        label: flightDetails?.to?.city || trip.destination || 'Arrival',
+        subtitle: flightDetails?.to?.name || trip.destination || 'Add arrival airport',
+        code: flightDetails?.to?.iata || destinationCode,
+        date: formatDetailedDate(trip.end_date || trip.start_date),
+        time: flightDetails?.arrivalTime || null,
+      },
+    ];
+
+    if (!hasFlightDetails && !trip.destination) {
+      segments[1].subtitle = 'Set your destination to see it here';
+      segments[1].label = 'Arrival';
+      segments[1].code = '—';
+    }
+
+    return { segments, flightDetails };
+  };
+
   const content = (
     <div className="px-5 py-6">
       {loading ? (
@@ -178,8 +273,9 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
           ) : (
             <div className="space-y-3">
               {trips.map((trip) => {
-                const imageUrl = trip.cover_image || (trip as any).firstLocationImage;
+                const imageUrl = trip.cover_image || trip.firstLocationImage;
                 const dateRange = formatDateRange(trip.start_date, trip.end_date);
+                const { segments, flightDetails } = buildFlightSegments(trip);
 
                 return (
                   <div
@@ -227,6 +323,70 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
                           <span>{trip.destination}</span>
                         </div>
                       )}
+
+                      {/* Flight preview */}
+                      <div className="mt-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/30 p-3">
+                        <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
+                          <span>Your Trip</span>
+                          <button
+                            onClick={() => {
+                              if (!user) {
+                                router.push('/auth/login');
+                                return;
+                              }
+                              setEditingTripId(trip.id);
+                              setShowTripDialog(true);
+                            }}
+                            className="text-[11px] font-semibold tracking-wide text-gray-900 dark:text-white hover:opacity-70"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                        <div className="mt-3 flex gap-3">
+                          <div className="flex flex-col items-center">
+                            <span className="w-2 h-2 rounded-full bg-gray-900 dark:bg-gray-100" />
+                            <span className="flex-1 w-px bg-gray-300 dark:bg-gray-700" />
+                            <Plane className="h-4 w-4 text-gray-400" />
+                            <span className="flex-1 w-px bg-gray-300 dark:bg-gray-700" />
+                            <span className="w-2 h-2 rounded-full bg-gray-900 dark:bg-gray-100" />
+                          </div>
+                          <div className="flex-1 space-y-5">
+                            {segments.map((segment, index) => (
+                              <div key={`${trip.id}-${segment.label}-${index}`} className="space-y-1">
+                                <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                                  {segment.date || 'Add trip dates'}
+                                </p>
+                                <div className="flex items-start justify-between gap-4">
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{segment.label}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      {segment.subtitle}
+                                    </p>
+                                    <p className="text-[11px] font-mono text-gray-400 dark:text-gray-500 mt-1">
+                                      {segment.code || '—'}
+                                    </p>
+                                  </div>
+                                  {segment.time ? (
+                                    <div className="text-right">
+                                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{segment.time}</p>
+                                      {index === 0 && flightDetails?.airline && (
+                                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                          {flightDetails.airline}
+                                          {flightDetails.flightNumber ? ` · ${flightDetails.flightNumber}` : ''}
+                                        </p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="text-right text-[11px] text-gray-400 dark:text-gray-500">
+                                      Add time
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
 
                       {/* Action - Arrow Right */}
                       <button
