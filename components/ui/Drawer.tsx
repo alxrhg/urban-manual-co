@@ -224,9 +224,10 @@ export function Drawer({
               ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
               : (tier === 'tier1' || tier === 'tier2' ? '22px' : undefined),
             boxShadow: customShadow || (DRAWER_STYLES.shadow.enabled ? DRAWER_STYLES.shadow.value : undefined),
-            backgroundColor: tier === 'tier1' ? DRAWER_STYLES.darkMode.tier1Bg : tier === 'tier2' ? DRAWER_STYLES.darkMode.tier2Bg : undefined,
+            backgroundColor: customBackground || (tier === 'tier1' ? DRAWER_STYLES.darkMode.tier1Bg : tier === 'tier2' ? DRAWER_STYLES.darkMode.tier2Bg : undefined),
             backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
             WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+            border: customBorder ? `${customBorder.thickness || '1px'} solid ${customBorder.color || 'rgba(255,255,255,0.08)'}` : undefined,
           }}
         >
           {/* Handle */}
