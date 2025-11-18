@@ -1,38 +1,28 @@
 import type { Destination } from '@/types/destination';
 import type { UserProfile } from '@/types/personalization';
-import { createServiceRoleClient, createServerClient } from '@/lib/supabase/server';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
 export type FilterRow = { city: string | null; category: string | null };
 
-function getAdminClient(): SupabaseClient | null {
+function getAdminClient() {
   try {
     return createServiceRoleClient();
   } catch (error: any) {
     // If service role client creation fails, log and return null
+    // The calling functions will handle the null case
     console.warn('[Homepage Loaders] Failed to create service role client:', error?.message);
-    return null;
-  }
-}
-
-async function getPublicClient(): Promise<SupabaseClient | null> {
-  try {
-    return await createServerClient();
-  } catch (error: any) {
-    console.warn('[Homepage Loaders] Failed to create public server client:', error?.message);
-    return null;
+    return null as any; // Return placeholder to prevent crashes
   }
 }
 
 export async function getUserProfileById(userId: string) {
-  // User profiles might be protected, so use admin client if possible, or authenticated client
-  const client = getAdminClient() || await getPublicClient();
-  if (!client) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
     return null;
   }
   
   try {
-    const { data, error } = await client
+    const { data, error } = await adminClient
       .from('user_profiles')
       .select('*')
       .eq('user_id', userId)
@@ -53,13 +43,13 @@ export async function getUserProfileById(userId: string) {
 }
 
 export async function getVisitedSlugsForUser(userId: string) {
-  const client = getAdminClient() || await getPublicClient();
-  if (!client) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
     return [];
   }
   
   try {
-    const { data, error } = await client
+    const { data, error } = await adminClient
       .from('visited_places')
       .select('destination_slug')
       .eq('user_id', userId);
@@ -81,14 +71,13 @@ export async function getVisitedSlugsForUser(userId: string) {
 }
 
 export async function getFilterRows(limit = 1000) {
-  // Filter rows are public
-  const client = await getPublicClient() || getAdminClient();
-  if (!client) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
     return [];
   }
   
   try {
-    const { data, error } = await client
+    const { data, error } = await adminClient
       .from('destinations')
       .select('city, category')
       .is('parent_destination_id', null)
@@ -110,21 +99,13 @@ export async function getFilterRows(limit = 1000) {
 }
 
 export async function getHomepageDestinations(limit = 500) {
-  // Destinations are public - try public client first (uses anon key), fallback to admin
-  // This is more robust if service role key is missing
-  let client = await getPublicClient();
-  
-  // If public client fails (e.g. env var issue), try admin client
-  if (!client) {
-    client = getAdminClient();
-  }
-
-  if (!client) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
     return [];
   }
   
   try {
-    const { data, error } = await (client as any)
+    const { data, error } = await adminClient
       .from('destinations')
       .select('id, slug, name, city, country, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset, rating, architect, design_firm_id, architectural_style, design_period, designer_name, architect_info_json, instagram_handle, instagram_url, created_at')
       .is('parent_destination_id', null)
