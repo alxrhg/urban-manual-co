@@ -1465,12 +1465,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Desktop Content */}
           <div className="hidden md:block">
           {/* Image */}
-          {destination.image && (
+          {destination?.image && (
             <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
               <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
-                alt={destination.name}
+                alt={destination?.name || 'Destination'}
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 100vw, 420px"
