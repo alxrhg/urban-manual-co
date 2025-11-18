@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 
+type BrandDestination = {
+  brand?: string | null;
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : 'Unknown error';
+
 /**
  * GET /api/account/brand-affinity
  * Get user's brand affinity based on saved and visited places
@@ -20,8 +27,8 @@ export async function GET(_request: NextRequest) {
       supabase.rpc('get_user_visited_destinations', { target_user_id: user.id }),
     ]);
 
-    const saved = savedResult.data || [];
-    const visited = visitedResult.data || [];
+    const saved = (savedResult.data || []) as BrandDestination[];
+    const visited = (visitedResult.data || []) as BrandDestination[];
 
     // Calculate brand affinity scores
     const brandScores: Record<string, {
@@ -32,7 +39,7 @@ export async function GET(_request: NextRequest) {
     }> = {};
 
     // Visited places have higher weight (3x) than saved
-    visited.forEach((place: any) => {
+    visited.forEach((place) => {
       if (place.brand) {
         const brand = place.brand;
         if (!brandScores[brand]) {
@@ -43,7 +50,7 @@ export async function GET(_request: NextRequest) {
       }
     });
 
-    saved.forEach((place: any) => {
+    saved.forEach((place) => {
       if (place.brand) {
         const brand = place.brand;
         if (!brandScores[brand]) {
@@ -79,10 +86,11 @@ export async function GET(_request: NextRequest) {
       brand_affinity: topBrandsWithExamples,
       total_brands: brandAffinity.length,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Brand affinity API error:', error);
+    const message = getErrorMessage(error);
     return NextResponse.json(
-      { error: 'Failed to get brand affinity', details: error.message },
+      { error: 'Failed to get brand affinity', details: message },
       { status: 500 }
     );
   }

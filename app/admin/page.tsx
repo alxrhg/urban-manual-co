@@ -9,10 +9,27 @@ import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
-import { createColumns } from "./columns";
+import { createColumns, type Destination as TableDestination } from "./columns";
 import type { Destination } from '@/types/destination';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import { capitalizeCity } from '@/lib/utils';
+
+type AutocompleteSelection = {
+  placeId?: string;
+  place_id?: string;
+  description?: string;
+  name?: string;
+  city?: string;
+  address?: string;
+};
+
+type DestinationFormInput = Partial<Destination>;
+
+const sanitizeTextField = (value?: string | null) =>
+  typeof value === 'string' ? value.replace(/\u0000/g, '') : value ?? undefined;
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : 'Unknown error';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -32,8 +49,8 @@ function DestinationForm({
   isSaving,
   toast
 }: {
-  destination?: Destination;
-  onSave: (data: Partial<Destination>) => Promise<void>;
+  destination?: DestinationFormInput | null;
+  onSave: (data: DestinationFormInput) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
   toast: Toast;
@@ -231,9 +248,10 @@ function DestinationForm({
         throw new Error(`Invalid response format: ${text || 'Unable to parse response'}`);
       }
       return data.url;
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       console.error('Upload error:', error);
-      toast.error(`Image upload failed: ${error.message}`);
+      toast.error(`Image upload failed: ${message}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -304,9 +322,10 @@ function DestinationForm({
 
       // Show success message
       toast.success(`Fetched data from Google Places! Name: ${data.name}, City: ${data.city}`);
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       console.error('Fetch Google error:', error);
-      toast.error(`Failed to fetch from Google: ${error.message}`);
+      toast.error(`Failed to fetch from Google: ${message}`);
     } finally {
       setFetchingGoogle(false);
     }
@@ -328,13 +347,13 @@ function DestinationForm({
       }
     }
 
-    const data: any = {
+    const payload: DestinationFormInput = {
       ...formData,
       image: imageUrl,
       michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : null,
       parent_destination_id: selectedParent?.id || null,
     };
-    await onSave(data);
+    await onSave(payload);
   };
 
   return (
@@ -349,7 +368,7 @@ function DestinationForm({
               <GooglePlacesAutocomplete
                 value={formData.name}
                 onChange={(value) => setFormData({ ...formData, name: value })}
-                onPlaceSelect={async (placeDetails: any) => {
+                onPlaceSelect={async (placeDetails: AutocompleteSelection) => {
                   if (placeDetails.placeId) {
                     setFetchingGoogle(true);
                     try {
@@ -753,7 +772,7 @@ export default function AdminPage() {
     disableEditMode: disableInlineEditMode,
   } = useAdminEditMode();
   const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
-  const [destinationList, setDestinationList] = useState<any[]>([]);
+  const [destinationList, setDestinationList] = useState<TableDestination[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
@@ -764,7 +783,7 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [listSearchQuery, setListSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingDestination, setEditingDestination] = useState<any>(null);
+  const [editingDestination, setEditingDestination] = useState<DestinationFormInput | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const loadAdminStats = useCallback(async () => {
@@ -865,38 +884,28 @@ export default function AdminPage() {
         return;
       }
        
+      const destinationRows = (data ?? []) as TableDestination[];
+
       // Sanitize data to prevent JSON parse errors from malformed content
-      const sanitizedData = (data || []).map((item: any) => {
-        try {
-          // Ensure description and content are strings and handle any encoding issues
-          const sanitized = { ...item };
-          if (sanitized.description && typeof sanitized.description === 'string') {
-            // Remove any problematic characters that might break JSON
-            sanitized.description = sanitized.description.replace(/\u0000/g, ''); // Remove null bytes
-          }
-          if (sanitized.content && typeof sanitized.content === 'string') {
-            sanitized.content = sanitized.content.replace(/\u0000/g, ''); // Remove null bytes
-          }
-          return sanitized;
-        } catch (sanitizeError) {
-          console.warn('[Admin] Error sanitizing destination item:', item?.slug, sanitizeError);
-          // Return item as-is if sanitization fails
-          return item;
-        }
-      });
+      const sanitizedData = destinationRows.map((item) => ({
+        ...item,
+        description: sanitizeTextField(item.description),
+        content: sanitizeTextField(item.content),
+      }));
       
       setDestinationList(sanitizedData);
       
       if (sanitizedData.length === 0 && !listSearchQuery.trim()) {
         toast.warning('No destinations found in database. Add some destinations to get started.');
       }
-    } catch (e: any) {
-      console.error('[Admin] Error loading destinations:', e);
+    } catch (error) {
+      console.error('[Admin] Error loading destinations:', error);
+      const message = getErrorMessage(error);
       // Check if it's a JSON parse error
-      if (e.message?.includes('JSON') || e.message?.includes('parse') || e instanceof SyntaxError) {
+      if (message.includes('JSON') || message.includes('parse') || error instanceof SyntaxError) {
         toast.error('Failed to load destinations: Invalid data format. Some destinations may have corrupted content.');
       } else {
-        toast.error(`Error loading destinations: ${e.message || 'Unknown error'}`);
+        toast.error(`Error loading destinations: ${message}`);
       }
       setDestinationList([]);
     } finally {
@@ -948,9 +957,10 @@ export default function AdminPage() {
             await loadAdminStats();
 
           toast.success(`Successfully deleted "${name}"`);
-        } catch (e: any) {
-          console.error('Delete error:', e);
-          toast.error(`Failed to delete: ${e.message}`);
+        } catch (error) {
+          const message = getErrorMessage(error);
+          console.error('Delete error:', error);
+          toast.error(`Failed to delete: ${message}`);
         }
       }
     });
@@ -1145,7 +1155,7 @@ export default function AdminPage() {
                       }
                       const { error } = await supabase
                         .from('destinations')
-                        .insert([data] as any);
+                        .insert([data]);
                       if (error) throw error;
                     }
 
@@ -1154,8 +1164,8 @@ export default function AdminPage() {
                     await loadDestinationList();
                     await loadAdminStats();
                     toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
-                  } catch (e: any) {
-                    toast.error(`Error: ${e.message}`);
+                  } catch (error) {
+                    toast.error(`Error: ${getErrorMessage(error)}`);
                   } finally {
                     setIsSaving(false);
                   }

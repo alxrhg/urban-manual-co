@@ -90,8 +90,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
 
-  } catch (error) {
-    if (error.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
       console.error('ML forecast request timed out');
       return NextResponse.json(
         {

@@ -4,9 +4,16 @@ import { useState } from 'react';
 import { Loader2, Play } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
+type EnrichmentOutput =
+  | Record<string, unknown>
+  | Array<unknown>
+  | string
+  | number
+  | boolean;
+
 export default function AdminEnrichPage() {
   const [slug, setSlug] = useState('');
-  const [output, setOutput] = useState<any>(null);
+  const [output, setOutput] = useState<EnrichmentOutput | null>(null);
   const [loading, setLoading] = useState(false);
 
   const run = async () => {
@@ -30,8 +37,9 @@ export default function AdminEnrichPage() {
 
       const json = await res.json();
       setOutput(json);
-    } catch (e: any) {
-      setOutput({ error: e?.message || 'Failed to run enrichment' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to run enrichment';
+      setOutput({ error: message });
     } finally {
       setLoading(false);
     }
@@ -77,7 +85,7 @@ export default function AdminEnrichPage() {
         </p>
       </div>
 
-      {output && (
+      {output !== null && (
         <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-4">
           <p className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400 mb-2">Latest run</p>
           <pre className="text-xs whitespace-pre-wrap break-all max-h-[320px] overflow-auto">

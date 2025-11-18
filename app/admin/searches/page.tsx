@@ -4,11 +4,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCcw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
+type SearchMetadata = {
+  query?: string;
+  intent?: {
+    city?: string;
+    category?: string;
+    [key: string]: unknown;
+  };
+  filters?: {
+    city?: string;
+    category?: string;
+    [key: string]: unknown;
+  };
+  count?: number;
+  source?: string;
+  [key: string]: unknown;
+} | null;
+
 type SearchLog = {
   id: number;
   created_at: string;
   user_id: string | null;
-  metadata: Record<string, any>;
+  metadata: SearchMetadata;
 };
 
 export default function AdminSearchesPage() {
@@ -29,8 +46,9 @@ export default function AdminSearchesPage() {
         .limit(200);
       if (error) throw error;
       setLogs(data ?? []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load search logs');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load search logs';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -88,11 +106,11 @@ export default function AdminSearchesPage() {
               <tbody>
                 {logs.map((log) => {
                   const metadata = log.metadata ?? {};
-                  const q = metadata.query || '';
-                  const intent = metadata.intent || {};
-                  const filters = metadata.filters || {};
+                  const q = metadata.query ?? '';
+                  const intent = metadata.intent ?? {};
+                  const filters = metadata.filters ?? {};
                   const count = metadata.count ?? '';
-                  const source = metadata.source || '';
+                  const source = metadata.source ?? '';
                   return (
                     <tr key={log.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="py-2 pr-4 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
