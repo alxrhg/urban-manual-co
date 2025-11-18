@@ -17,6 +17,7 @@ import {
   Trophy,
   Folder,
   ArrowLeft,
+  ChevronLeft,
   Plus,
   Share2,
   Download,
@@ -982,50 +983,132 @@ export function AccountDrawer({
 
   // Render settings subpage
   const renderSettingsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      <div className="space-y-2">
+    <div style={{ padding: '12px 12px 24px 12px' }}>
+      <div className="space-y-1">
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=privacy")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className="w-full flex items-center justify-between transition-colors"
+          style={{
+            height: '52px',
+            padding: '0 20px',
+            borderRadius: '14px',
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.88)',
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
         >
           <span>Privacy</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=personalization")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className="w-full flex items-center justify-between transition-colors"
+          style={{
+            height: '52px',
+            padding: '0 20px',
+            borderRadius: '14px',
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.88)',
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
         >
           <span>Personalization</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=notifications")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className="w-full flex items-center justify-between transition-colors"
+          style={{
+            height: '52px',
+            padding: '0 20px',
+            borderRadius: '14px',
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.88)',
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
         >
           <span>Notifications</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/account")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className="w-full flex items-center justify-between transition-colors"
+          style={{
+            height: '52px',
+            padding: '0 20px',
+            borderRadius: '14px',
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.88)',
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
         >
           <span>Account Info</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=profile")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className="w-full flex items-center justify-between transition-colors"
+          style={{
+            height: '52px',
+            padding: '0 20px',
+            borderRadius: '14px',
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.88)',
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+          }}
         >
           <span>Public Profile</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-        </button>
-      </div>
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/settings")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          Open Full Settings
+          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
         </button>
       </div>
     </div>
@@ -1100,7 +1183,7 @@ export function AccountDrawer({
     if (currentSubpage === 'main_drawer') {
       return 1000; // Tier 1
     }
-    return 1100; // Tier 2
+    return 1200; // Tier 2 (subDrawer)
   };
 
   const isTier1 = currentSubpage === 'main_drawer';
