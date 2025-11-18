@@ -498,7 +498,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           setEnrichedData(enriched);
           console.log('Enriched data loaded:', enriched);
         } else if (error) {
-          console.error('Error fetching enriched data:', error);
+          // Log error details safely without causing rendering issues
+          console.error('Error fetching enriched data:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code,
+            details: error?.details,
+            hint: error?.hint,
+          });
           // Set enriched data to null on error to prevent rendering issues
           setEnrichedData(null);
         } else {
@@ -506,7 +512,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           setEnrichedData(null);
         }
       } catch (error) {
-        console.error('Error loading enriched data:', error);
+        // Log error safely without causing rendering issues
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('Error loading enriched data:', errorMessage);
         // Set enriched data to null on error to prevent rendering issues
         setEnrichedData(null);
       }
@@ -1038,7 +1046,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Get rating for display
   const rating = enrichedData?.rating || destination.rating;
   const highlightTags: string[] = (
-    Array.isArray(destination.tags) && destination.tags.length > 0
+    Array.isArray(destination?.tags) && destination.tags.length > 0
       ? destination.tags
       : Array.isArray(enrichedData?.place_types)
         ? enrichedData.place_types
@@ -1060,7 +1068,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const headerContent = (
     <div className="flex items-center justify-between w-full relative">
       <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate flex-1">
-        {destination.name || 'Destination'}
+        {destination?.name || 'Destination'}
       </h2>
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Bookmark Action */}
