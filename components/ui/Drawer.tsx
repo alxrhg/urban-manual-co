@@ -261,7 +261,7 @@ export function Drawer({
   return (
     <>
       {/* Backdrop */}
-      {showBackdrop && (
+      {showBackdrop && !noOverlay && (
         <div
           id="drawer-overlay"
           className={`fixed inset-0 transition-opacity duration-300 ${
@@ -274,6 +274,20 @@ export function Drawer({
             zIndex: Math.max(1, zIndex - 1), // Backdrop should be below drawer content, ensure positive
           }}
           onClick={onClose}
+        />
+      )}
+      {/* Backdrop blur only (no overlay) for Tier 3 */}
+      {showBackdrop && noOverlay && (
+        <div
+          className={`fixed inset-0 transition-opacity duration-300 ${
+            isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          style={{
+            backdropFilter: isOpen ? 'blur(12px)' : 'none',
+            WebkitBackdropFilter: isOpen ? 'blur(12px)' : 'none',
+            zIndex: Math.max(1, zIndex - 1),
+            pointerEvents: 'none', // Don't block clicks
+          }}
         />
       )}
 
