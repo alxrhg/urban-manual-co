@@ -5,6 +5,7 @@ import { schemas } from './sanity/schemas';
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production';
+const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2021-06-07';
 
 if (!projectId) {
   console.warn('NEXT_PUBLIC_SANITY_PROJECT_ID is not set. Sanity Studio will not work properly.');
@@ -15,6 +16,7 @@ export default defineConfig({
   title: 'Urban Manual CMS',
   projectId: projectId || 'placeholder',
   dataset,
+  apiVersion,
   basePath: '/studio',
   plugins: [
     structureTool(),
