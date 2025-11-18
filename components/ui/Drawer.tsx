@@ -397,6 +397,8 @@ export function Drawer({
           boxShadow: customShadow || undefined,
           backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
           WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+          backgroundColor: customBackground || undefined,
+          border: customBorder ? `${customBorder.thickness || '1px'} solid ${customBorder.color || 'rgba(255,255,255,0.08)'}` : undefined,
         }}
       >
         {/* Header - 56px height, blurred */}
