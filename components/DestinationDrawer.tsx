@@ -28,6 +28,7 @@ import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import { POIDrawer } from './POIDrawer';
 import { ArchitectDesignInfo } from './ArchitectDesignInfo';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -199,6 +200,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [newListDescription, setNewListDescription] = useState('');
   const [newListPublic, setNewListPublic] = useState(true);
   const [creatingList, setCreatingList] = useState(false);
+  const drawerImage = getDestinationImageUrl(destination);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -783,10 +785,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         {/* Content */}
         <div className="p-6">
           {/* Image */}
-          {destination.image && (
+          {drawerImage && (
             <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 relative">
               <Image
-                src={destination.image}
+                src={drawerImage}
                 alt={destination.name}
                 fill
                 sizes="(max-width: 640px) 100vw, 480px"

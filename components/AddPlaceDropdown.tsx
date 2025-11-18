@@ -6,6 +6,7 @@ import { Search, Plus, Check } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface AddPlaceDropdownProps {
   onPlaceAdded?: () => void;
@@ -162,18 +163,20 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
               </div>
             ) : (
               <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                {results.map((destination) => (
-                  <button
-                    key={destination.slug}
-                    onClick={() => handleAddPlace(destination)}
-                    disabled={adding === destination.slug}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors text-left disabled:opacity-50"
-                  >
+                {results.map((destination) => {
+                  const displayImage = getDestinationImageUrl(destination);
+                  return (
+                    <button
+                      key={destination.slug}
+                      onClick={() => handleAddPlace(destination)}
+                      disabled={adding === destination.slug}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors text-left disabled:opacity-50"
+                    >
                     {/* Image */}
                     <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                      {destination.image ? (
+                      {displayImage ? (
                         <Image
-                          src={destination.image}
+                          src={displayImage}
                           alt={destination.name}
                           fill
                           className="object-cover"
@@ -202,8 +205,9 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
                     ) : (
                       <Check className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     )}
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

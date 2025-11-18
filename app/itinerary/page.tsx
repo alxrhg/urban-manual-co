@@ -7,6 +7,7 @@ import { Destination } from '@/types/destination';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 export default function ItineraryPage() {
   const { items, removeItem, updateItem, clearItinerary } = useItinerary();
@@ -95,6 +96,7 @@ export default function ItineraryPage() {
           {items.map((item, index) => {
             const destination = destinations.get(item.listingSlug);
             if (!destination) return null;
+            const displayImage = getDestinationImageUrl(destination);
 
             return (
               <div
@@ -103,9 +105,9 @@ export default function ItineraryPage() {
               >
                 {/* Image */}
                 <div className="relative w-24 h-24 flex-shrink-0 rounded overflow-hidden">
-                  {destination.image ? (
+                  {displayImage ? (
                     <Image
-                      src={destination.image}
+                      src={displayImage}
                       alt={destination.name}
                       fill
                       className="object-cover"
@@ -185,4 +187,3 @@ export default function ItineraryPage() {
     </div>
   );
 }
-

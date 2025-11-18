@@ -9,6 +9,7 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/Ca
 import Image from 'next/image';
 import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
 import dynamic from 'next/dynamic';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -135,19 +136,21 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {filteredDestinations.map((destination, index) => (
-              <button
-                key={destination.slug}
-                onClick={() => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
+            {filteredDestinations.map((destination, index) => {
+              const displayImage = getDestinationImageUrl(destination);
+              return (
+                <button
+                  key={destination.slug}
+                  onClick={() => {
+                    setSelectedDestination(destination);
+                    setIsDrawerOpen(true);
                 }}
                 className={`${CARD_WRAPPER} group text-left`}
               >
                 <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
-                  {(destination.image_thumbnail || destination.image) ? (
+                  {displayImage ? (
                     <Image
-                      src={destination.image_thumbnail || destination.image!}
+                      src={displayImage}
                       alt={destination.name}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -175,7 +178,8 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
                   <span>{destination.city}</span>
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -191,4 +195,3 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
     </div>
   );
 }
-

@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { PageLoader } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {
@@ -275,46 +276,49 @@ export default function CollectionDetailPage() {
           />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-            {destinations.map((destination) => (
-              <div key={destination.slug} className="group relative">
-                <button
-                  onClick={() => router.push(`/destination/${destination.slug}`)}
-                  className="w-full text-left"
-                >
-                  <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
-                    {destination.image ? (
-                      <Image
-                        src={destination.image}
-                        alt={destination.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                        <span className="text-4xl">🏞️</span>
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-xs font-medium line-clamp-2 mb-1">{destination.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {capitalizeCity(destination.city)}
-                  </p>
-                </button>
+            {destinations.map((destination) => {
+              const displayImage = getDestinationImageUrl(destination);
+              return (
+                <div key={destination.slug} className="group relative">
+                  <button
+                    onClick={() => router.push(`/destination/${destination.slug}`)}
+                    className="w-full text-left"
+                  >
+                    <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
+                      {displayImage ? (
+                        <Image
+                          src={displayImage}
+                          alt={destination.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                          <span className="text-4xl">🏞️</span>
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="text-xs font-medium line-clamp-2 mb-1">{destination.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {capitalizeCity(destination.city)}
+                    </p>
+                  </button>
 
-                {/* Remove button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveDestination(destination.slug);
-                  }}
-                  className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
-                  title="Remove from collection"
-                >
-                  <Trash2 className="h-3 w-3 text-red-600" />
-                </button>
-              </div>
-            ))}
+                  {/* Remove button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveDestination(destination.slug);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
+                    title="Remove from collection"
+                  >
+                    <Trash2 className="h-3 w-3 text-red-600" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

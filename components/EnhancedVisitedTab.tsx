@@ -7,6 +7,7 @@ import { Check, Grid3x3, List, Star } from 'lucide-react';
 import { NoVisitedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
 import { AddPlaceDropdown } from './AddPlaceDropdown';
 import type { VisitedPlace } from '@/types/common';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface EnhancedVisitedTabProps {
   visitedPlaces: VisitedPlace[];
@@ -190,74 +191,80 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
       {/* Grid View */}
       {viewMode === 'grid' && filteredPlaces.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
-          {filteredPlaces.map((place) => (
-            <button
-              key={place.destination_slug}
-              onClick={() => router.push(`/destination/${place.destination_slug}`)}
-              className="group relative text-left"
-            >
-              <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
-                {place.destination?.image && (
-                  <Image
-                    src={place.destination.image}
-                    alt={place.destination.name || ''}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                  />
-                )}
-                <div className="absolute top-2 right-2 w-6 h-6 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center">
-                  <Check className="w-3 h-3" />
-                </div>
-                {place.rating && (
-                  <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                    ⭐ {place.rating}
+          {filteredPlaces.map((place) => {
+            const displayImage = getDestinationImageUrl(place.destination || null);
+            return (
+              <button
+                key={place.destination_slug}
+                onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                className="group relative text-left"
+              >
+                <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
+                  {displayImage && (
+                    <Image
+                      src={displayImage}
+                      alt={place.destination?.name || ''}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  )}
+                  <div className="absolute top-2 right-2 w-6 h-6 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3" />
                   </div>
-                )}
-              </div>
-              <h3 className="font-medium text-sm leading-tight line-clamp-2">
-                {place.destination?.name}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {place.destination?.city && capitalizeCity(place.destination.city)}
-              </p>
-            </button>
-          ))}
+                  {place.rating && (
+                    <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                      ⭐ {place.rating}
+                    </div>
+                  )}
+                </div>
+                <h3 className="font-medium text-sm leading-tight line-clamp-2">
+                  {place.destination?.name}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  {place.destination?.city && capitalizeCity(place.destination.city)}
+                </p>
+              </button>
+            );
+          })}
         </div>
       )}
 
       {/* List View - Minimal */}
       {viewMode === 'list' && filteredPlaces.length > 0 && (
         <div className="space-y-2">
-          {filteredPlaces.map((place) => (
-            <button
-              key={place.destination_slug}
-              onClick={() => router.push(`/destination/${place.destination_slug}`)}
-              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
-            >
-              {place.destination?.image && (
-                <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  <Image
-                    src={place.destination.image}
-                    alt={place.destination.name || ''}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
+          {filteredPlaces.map((place) => {
+            const displayImage = getDestinationImageUrl(place.destination || null);
+            return (
+              <button
+                key={place.destination_slug}
+                onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+              >
+                {displayImage && (
+                  <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <Image
+                      src={displayImage}
+                      alt={place.destination?.name || ''}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{place.destination?.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {place.destination?.city && capitalizeCity(place.destination.city)} • {place.destination?.category}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
+                    {place.rating && ` • ⭐ ${place.rating}`}
+                  </div>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{place.destination?.name}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {place.destination?.city && capitalizeCity(place.destination.city)} • {place.destination?.category}
-                </div>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
-                  {place.rating && ` • ⭐ ${place.rating}`}
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

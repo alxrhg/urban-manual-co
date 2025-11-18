@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
 import { ChevronLeft, ChevronRight, List, MapPin, X } from 'lucide-react';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
@@ -107,6 +108,7 @@ export default function HomeMapSplitView({
     <div className="space-y-3">
       {destinations.map(destination => {
         const isSelected = selectedDestination?.slug === destination.slug;
+        const displayImage = getDestinationImageUrl(destination);
         return (
           <button
             key={destination.slug}
@@ -125,9 +127,9 @@ export default function HomeMapSplitView({
             }`}
           >
             <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-              {destination.image ? (
+              {displayImage ? (
                 <Image
-                  src={destination.image}
+                  src={displayImage}
                   alt={destination.name}
                   fill
                   sizes="56px"

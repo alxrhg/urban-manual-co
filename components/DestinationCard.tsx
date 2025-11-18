@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
 
@@ -39,6 +40,7 @@ export const DestinationCard = memo(function DestinationCard({
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
   const cardRef = useRef<HTMLButtonElement>(null);
+  const displayImage = getDestinationImageUrl(destination);
 
   // Intersection Observer for progressive loading
   useEffect(() => {
@@ -98,9 +100,9 @@ export const DestinationCard = memo(function DestinationCard({
         )}
 
         {/* Actual Image - Use thumbnail for cards, fallback to full image */}
-        {isInView && (destination.image_thumbnail || destination.image) && !imageError ? (
+        {isInView && displayImage && !imageError ? (
           <Image
-            src={destination.image_thumbnail || destination.image!}
+            src={displayImage}
             alt={`${destination.name} in ${capitalizeCity(destination.city)}${destination.category ? ` - ${destination.category}` : ''}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -290,4 +292,3 @@ export function LazyDestinationCard(props: DestinationCardProps) {
     </div>
   );
 }
-

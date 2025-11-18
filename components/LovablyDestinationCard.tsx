@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import { DestinationBadges } from './DestinationBadges';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface LovablyDestinationCardProps {
   destination: Destination;
@@ -24,6 +25,7 @@ export const LOVABLY_BORDER_COLORS = [
 ];
 
 export function LovablyDestinationCard({ destination, borderColor, onClick, showMLBadges = true }: LovablyDestinationCardProps) {
+  const displayImage = getDestinationImageUrl(destination);
   return (
     <button
       onClick={onClick}
@@ -36,10 +38,10 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
       `}
     >
       {/* Image */}
-      {destination.image ? (
+      {displayImage ? (
         <div className="absolute inset-0">
           <Image
-            src={destination.image}
+            src={displayImage}
             alt={destination.name}
             fill
             className="object-cover"
@@ -95,4 +97,3 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
     </button>
   );
 }
-

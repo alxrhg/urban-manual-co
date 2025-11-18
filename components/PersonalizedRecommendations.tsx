@@ -7,6 +7,7 @@ import { MapPin, Sparkles } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Link from 'next/link';
 import { useMemo, memo } from 'react';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface PersonalizedRecommendationsProps {
   limit?: number;
@@ -87,6 +88,7 @@ function PersonalizedRecommendationsComponent({
       )}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
         {destinations.map((destination) => {
+          const displayImage = getDestinationImageUrl(destination);
           const rec = recommendations.find((r) => r.destinationId === destination.id);
           return (
             <Link
@@ -110,9 +112,9 @@ function PersonalizedRecommendationsComponent({
 
               {/* Image Container */}
               <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
-                {destination.image ? (
+                {displayImage ? (
                   <Image
-                    src={destination.image}
+                    src={displayImage}
                     alt={destination.name}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -176,4 +178,3 @@ function PersonalizedRecommendationsComponent({
 
 // Memoize component to prevent unnecessary re-renders
 export const PersonalizedRecommendations = memo(PersonalizedRecommendationsComponent);
-

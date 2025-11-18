@@ -29,6 +29,7 @@ import { ExplanationPanel } from '@/components/ExplanationPanel';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface Recommendation {
   slug: string;
@@ -74,6 +75,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
+  const heroImage = getDestinationImageUrl(destination);
 
   // Parse enriched JSON fields from initial destination
   const enrichedData = useState(() => {
@@ -588,10 +590,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         )}
 
         {/* Image */}
-        {destination.image && (
+        {heroImage && (
           <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
             <Image
-              src={destination.image}
+              src={heroImage}
               alt={`${destination.name} - ${destination.category} in ${destination.city}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"

@@ -18,6 +18,7 @@ import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import type { Collection, Trip, SavedPlace, VisitedPlace } from "@/types/common";
 import type { User } from "@supabase/supabase-js";
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -544,34 +545,37 @@ export default function Account() {
               <div>
                 <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Recent Visits</h2>
                 <div className="space-y-2">
-                  {visitedPlaces.slice(0, 5).map((place) => (
-                    <button
-                      key={place.destination_slug}
-                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
-                    >
-                      {place.destination?.image && (
-                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                          <Image
-                            src={place.destination.image}
-                            alt={place.destination.name}
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                          />
+                  {visitedPlaces.slice(0, 5).map((place) => {
+                    const displayImage = getDestinationImageUrl(place.destination || null);
+                    return (
+                      <button
+                        key={place.destination_slug}
+                        onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                        className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+                      >
+                        {displayImage && (
+                          <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                            <Image
+                              src={displayImage}
+                              alt={place.destination?.name || 'Destination'}
+                              fill
+                              className="object-cover"
+                              sizes="64px"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{place.destination?.name}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{place.destination?.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
-                        </div>
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

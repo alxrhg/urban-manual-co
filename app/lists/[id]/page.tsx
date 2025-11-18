@@ -21,6 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/CardStyles';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface List {
   id: string;
@@ -366,52 +367,55 @@ export default function ListDetailPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 items-start">
-            {destinations.map((destination) => (
-              <div key={destination.slug} className={`${CARD_WRAPPER} group flex flex-col`}>
-                <Link href={`/destination/${destination.slug}`} className="flex flex-col flex-1">
-                  <div className={`${CARD_MEDIA} mb-2 hover-lift`}>
-                    {(destination.image_thumbnail || destination.image) ? (
-                      <Image
-                        src={destination.image_thumbnail || destination.image!}
-                        alt={destination.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                        <MapPin className="h-8 w-8 opacity-20" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-0 flex-1 flex flex-col">
-                    <h3 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>
-                      {destination.name}
-                    </h3>
-                    <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
-                      {destination.micro_description || 
-                       (destination.category && destination.city 
-                         ? `${destination.category} in ${capitalizeCity(destination.city)}`
-                         : destination.city 
-                           ? capitalizeCity(destination.city)
-                           : destination.category || '')}
+            {destinations.map((destination) => {
+              const displayImage = getDestinationImageUrl(destination);
+              return (
+                <div key={destination.slug} className={`${CARD_WRAPPER} group flex flex-col`}>
+                  <Link href={`/destination/${destination.slug}`} className="flex flex-col flex-1">
+                    <div className={`${CARD_MEDIA} mb-2 hover-lift`}>
+                      {displayImage ? (
+                        <Image
+                          src={displayImage}
+                          alt={destination.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                          <MapPin className="h-8 w-8 opacity-20" />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </Link>
-                {user?.id === list.user_id && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      removeDestinationFromList(destination.slug, destination.name);
-                    }}
-                    className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-900 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 dark:hover:bg-red-900/20 z-10"
-                    title="Remove from list"
-                  >
-                    <X className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  </button>
-                )}
-              </div>
-            ))}
+                    <div className="space-y-0 flex-1 flex flex-col">
+                      <h3 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>
+                        {destination.name}
+                      </h3>
+                      <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
+                        {destination.micro_description ||
+                          (destination.category && destination.city
+                            ? `${destination.category} in ${capitalizeCity(destination.city)}`
+                            : destination.city
+                              ? capitalizeCity(destination.city)
+                              : destination.category || '')}
+                      </div>
+                    </div>
+                  </Link>
+                  {user?.id === list.user_id && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        removeDestinationFromList(destination.slug, destination.name);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-900 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 dark:hover:bg-red-900/20 z-10"
+                      title="Remove from list"
+                    >
+                      <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -537,32 +541,35 @@ export default function ListDetailPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {searchResults.map((destination) => (
-                    <button
-                      key={destination.slug}
-                      onClick={() => addDestinationToList(destination)}
-                      disabled={addingDestination}
-                      className="text-left hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2">
-                        {destination.image && (
-                          <Image
-                            src={destination.image}
-                            alt={destination.name}
-                            fill
-                            className="object-cover"
-                            sizes="200px"
-                          />
-                        )}
-                      </div>
-                      <h3 className="font-medium text-sm line-clamp-2 mb-1">
-                        {destination.name}
-                      </h3>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {capitalizeCity(destination.city)}
-                      </span>
-                    </button>
-                  ))}
+                  {searchResults.map((destination) => {
+                    const displayImage = getDestinationImageUrl(destination);
+                    return (
+                      <button
+                        key={destination.slug}
+                        onClick={() => addDestinationToList(destination)}
+                        disabled={addingDestination}
+                        className="text-left hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2">
+                          {displayImage && (
+                            <Image
+                              src={displayImage}
+                              alt={destination.name}
+                              fill
+                              className="object-cover"
+                              sizes="200px"
+                            />
+                          )}
+                        </div>
+                        <h3 className="font-medium text-sm line-clamp-2 mb-1">
+                          {destination.name}
+                        </h3>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {capitalizeCity(destination.city)}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

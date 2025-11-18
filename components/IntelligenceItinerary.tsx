@@ -6,6 +6,7 @@
 'use client';
 
 import { Calendar, Clock, MapPin } from 'lucide-react';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface DayItinerary {
   date: string;
@@ -71,35 +72,37 @@ export function IntelligenceItinerary({ itinerary }: IntelligenceItineraryProps)
 
           {/* Destinations */}
           <div className="px-6 py-4 space-y-4">
-            {day.destinations.map((destination, destIndex) => (
-              <div
-                key={destination.id || destIndex}
-                className="flex gap-4 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
-              >
-                {destination.image && (
-                  <img
-                    src={destination.image}
-                    alt={destination.name}
-                    className="w-24 h-24 object-cover rounded"
-                  />
-                )}
-                <div className="flex-1">
-                  <h4 className="font-semibold mb-1">{destination.name}</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {destination.category} • {destination.city}
-                  </p>
-                  {destination.architect && (
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      by {destination.architect.name || destination.architect}
-                    </p>
+            {day.destinations.map((destination, destIndex) => {
+              const displayImage = getDestinationImageUrl(destination);
+              return (
+                <div
+                  key={destination.id || destIndex}
+                  className="flex gap-4 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                >
+                  {displayImage && (
+                    <img
+                      src={displayImage}
+                      alt={destination.name}
+                      className="w-24 h-24 object-cover rounded"
+                    />
                   )}
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">{destination.name}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      {destination.category} • {destination.city}
+                    </p>
+                    {destination.architect && (
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        by {destination.architect.name || destination.architect}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}
     </div>
   );
 }
-

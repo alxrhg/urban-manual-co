@@ -2,13 +2,18 @@ import { Destination } from '@/types/destination';
 
 const VALID_IMAGE_PREFIXES = ['http://', 'https://', '/', 'data:', 'blob:'];
 
-const isValidImageUrl = (url?: string | null): url is string => {
+export const isValidImageUrl = (url?: string | null): url is string => {
   if (!url) return false;
 
   const trimmed = url.trim();
   if (!trimmed || trimmed.length < 5) return false;
 
   return VALID_IMAGE_PREFIXES.some((prefix) => trimmed.startsWith(prefix));
+};
+
+export const getSafeImageUrl = (url?: string | null): string | null => {
+  if (!isValidImageUrl(url)) return null;
+  return url.trim();
 };
 
 export const getDestinationImageUrl = (destination?: Destination | null): string | null => {

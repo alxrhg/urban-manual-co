@@ -28,6 +28,7 @@ import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
 import { createClient } from '@/lib/supabase/client';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
+import { getDestinationImageUrl, getSafeImageUrl } from '@/lib/destination-images';
 
 function extractDomain(url: string): string {
   try {
@@ -992,13 +993,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             if (relatedResponse.ok) {
               const relatedData = await relatedResponse.json();
               if (relatedData.related) {
-                setRecommendations(
+                    setRecommendations(
                   relatedData.related.map((dest: any) => ({
                     slug: dest.slug,
                     name: dest.name,
                     city: dest.city,
                     category: dest.category,
-                    image: dest.image,
+                    image: getDestinationImageUrl(dest as Destination),
                     michelin_stars: dest.michelin_stars,
                     crown: dest.crown,
                     rating: dest.rating,
@@ -1073,12 +1074,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     );
   }
 
-  const drawerImage =
-    destination?.image_thumbnail ||
-    destination?.image ||
-    destination?.image_original ||
-    enrichedData?.image ||
-    null;
+  const drawerImage = getDestinationImageUrl(destination) || getSafeImageUrl(enrichedData?.image);
 
   // Get rating for display (safely handle null/undefined)
   const rating = enrichedData?.rating ?? destination?.rating ?? null;
@@ -2001,55 +1997,72 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
                 }}>
-                  {recommendations.map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => {
-                        if (rec.slug && rec.slug.trim()) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${rec.slug}`), 100);
-                        }
-                      }}
-                      className="group text-left flex-shrink-0 flex flex-col"
-                      style={{ width: '120px' }}
-                    >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border" style={{
-                        borderColor: 'rgba(255,255,255,0.12)',
-                      }}>
-                        {rec.image ? (
-                          <Image
-                            src={rec.image}
-                            alt={rec.name}
-                            fill
-                            sizes="120px"
-                            className="object-cover group-hover:opacity-90 transition-opacity"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="h-8 w-8 opacity-20" />
-                          </div>
-                        )}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 rounded-xl text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1" style={{
-                            border: '1px solid rgba(255,255,255,0.12)',
-                          }}>
-                            ⭐ {rec.michelin_stars}
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1" style={{
-                        color: 'rgba(255,255,255,0.88)',
-                      }}>
-                        {rec.name}
-                      </h4>
-                      <span className="text-xs" style={{
-                        color: 'rgba(255,255,255,0.55)',
-                      }}>
-                        {capitalizeCity(rec.city)}
-                      </span>
-                    </button>
-                  ))}
+                  {recommendations.map((rec) => {
+                    const recImage =
+                      getDestinationImageUrl(rec as Destination) ||
+                      getSafeImageUrl(rec.image);
+                    return (
+                      <button
+                        key={rec.slug}
+                        onClick={() => {
+                          if (rec.slug && rec.slug.trim()) {
+                            onClose();
+                            setTimeout(() => router.push(`/destination/${rec.slug}`), 100);
+                          }
+                        }}
+                        className="group text-left flex-shrink-0 flex flex-col"
+                        style={{ width: '120px' }}
+                      >
+                        <div
+                          className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border"
+                          style={{
+                            borderColor: 'rgba(255,255,255,0.12)',
+                          }}
+                        >
+                          {recImage ? (
+                            <Image
+                              src={recImage}
+                              alt={rec.name}
+                              fill
+                              sizes="120px"
+                              className="object-cover group-hover:opacity-90 transition-opacity"
+                              quality={85}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <MapPin className="h-8 w-8 opacity-20" />
+                            </div>
+                          )}
+                          {rec.michelin_stars && rec.michelin_stars > 0 && (
+                            <div
+                              className="absolute bottom-2 left-2 px-2 py-1 rounded-xl text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1"
+                              style={{
+                                border: '1px solid rgba(255,255,255,0.12)',
+                              }}
+                            >
+                              ⭐ {rec.michelin_stars}
+                            </div>
+                          )}
+                        </div>
+                        <h4
+                          className="font-medium text-xs leading-tight line-clamp-2 mb-1"
+                          style={{
+                            color: 'rgba(255,255,255,0.88)',
+                          }}
+                        >
+                          {rec.name}
+                        </h4>
+                        <span
+                          className="text-xs"
+                          style={{
+                            color: 'rgba(255,255,255,0.55)',
+                          }}
+                        >
+                          {capitalizeCity(rec.city)}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -28,6 +28,7 @@ import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
 import type { Trip } from "@/types/trip";
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -726,58 +727,61 @@ export function AccountDrawer({
         </div>
       ) : visitedPlaces.length > 0 ? (
         <div className="space-y-1">
-          {visitedPlaces.map((visit, index) => (
-            <button
-              key={index}
-              onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
-              className="w-full flex items-center transition-colors text-left"
-              style={{
-                height: '52px',
-                padding: '0 20px',
-                borderRadius: '14px',
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                fontSize: '16px',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.88)',
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-              }}
-            >
-              {visit.destination?.image && (
-                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
-                  <Image
-                    src={visit.destination.image}
-                    alt={visit.destination.name}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
-                  {visit.destination?.name || visit.slug}
-                </p>
-                {visit.visited_at && (
-                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
-                    {new Date(visit.visited_at).toLocaleDateString("en-US", { 
-                      month: "short", 
-                      day: "numeric",
-                      year: "numeric"
-                    })}
-                  </p>
+          {visitedPlaces.map((visit, index) => {
+            const displayImage = getDestinationImageUrl(visit.destination || null);
+            return (
+              <button
+                key={index}
+                onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
+                className="w-full flex items-center transition-colors text-left"
+                style={{
+                  height: '52px',
+                  padding: '0 20px',
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.88)',
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                }}
+              >
+                {displayImage && (
+                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
+                    <Image
+                      src={displayImage}
+                      alt={visit.destination?.name || visit.slug}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  </div>
                 )}
-              </div>
-              <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
-            </button>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
+                    {visit.destination?.name || visit.slug}
+                  </p>
+                  {visit.visited_at && (
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
+                      {new Date(visit.visited_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12">
@@ -797,54 +801,57 @@ export function AccountDrawer({
         </div>
       ) : savedPlaces.length > 0 ? (
         <div className="space-y-1">
-          {savedPlaces.map((saved, index) => (
-            <button
-              key={index}
-              onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
-              className="w-full flex items-center transition-colors text-left"
-              style={{
-                height: '52px',
-                padding: '0 20px',
-                borderRadius: '14px',
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                fontSize: '16px',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.88)',
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-              }}
-            >
-              {saved.destination?.image && (
-                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
-                  <Image
-                    src={saved.destination.image}
-                    alt={saved.destination.name}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
-                  {saved.destination?.name || saved.slug}
-                </p>
-                {saved.destination?.city && (
-                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
-                    {saved.destination.city}
-                  </p>
+          {savedPlaces.map((saved, index) => {
+            const displayImage = getDestinationImageUrl(saved.destination || null);
+            return (
+              <button
+                key={index}
+                onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
+                className="w-full flex items-center transition-colors text-left"
+                style={{
+                  height: '52px',
+                  padding: '0 20px',
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.88)',
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                }}
+              >
+                {displayImage && (
+                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
+                    <Image
+                      src={displayImage}
+                      alt={saved.destination?.name || saved.slug}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  </div>
                 )}
-              </div>
-              <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
-            </button>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
+                    {saved.destination?.name || saved.slug}
+                  </p>
+                  {saved.destination?.city && (
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
+                      {saved.destination.city}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12">

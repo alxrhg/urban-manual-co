@@ -15,6 +15,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
+import { getDestinationImageUrl } from '@/lib/destination-images';
 
 interface Airport {
   iata: string;
@@ -464,45 +465,48 @@ export function AddLocationToTrip({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {destinations.map((destination) => (
-                    <button
-                      key={destination.slug}
-                      onClick={() => handleSelectDestination(destination)}
-                      className={`w-full flex items-center gap-4 p-3 border transition-colors text-left rounded-lg ${
-                        selectedDestination?.slug === destination.slug
-                          ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-50 dark:bg-neutral-900/50'
-                          : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
-                      }`}
-                    >
-                      {destination.image && (
-                        <div className="w-14 h-14 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800 rounded-lg">
-                          <img
-                            src={destination.image}
-                            alt={destination.name}
-                            className="w-full h-full object-cover"
-                          />
+                  {destinations.map((destination) => {
+                    const displayImage = getDestinationImageUrl(destination);
+                    return (
+                      <button
+                        key={destination.slug}
+                        onClick={() => handleSelectDestination(destination)}
+                        className={`w-full flex items-center gap-4 p-3 border transition-colors text-left rounded-lg ${
+                          selectedDestination?.slug === destination.slug
+                            ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-50 dark:bg-neutral-900/50'
+                            : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
+                        }`}
+                      >
+                        {displayImage && (
+                          <div className="w-14 h-14 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800 rounded-lg">
+                            <img
+                              src={displayImage}
+                              alt={destination.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-normal text-neutral-900 dark:text-neutral-100 truncate mb-1">
+                            {destination.name}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
+                              {destination.category}
+                            </span>
+                            {destination.city && (
+                              <>
+                                <span className="text-neutral-300 dark:text-neutral-600">•</span>
+                                <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                                  {destination.city}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-normal text-neutral-900 dark:text-neutral-100 truncate mb-1">
-                          {destination.name}
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase">
-                            {destination.category}
-                          </span>
-                          {destination.city && (
-                            <>
-                              <span className="text-neutral-300 dark:text-neutral-600">•</span>
-                              <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                                {destination.city}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
