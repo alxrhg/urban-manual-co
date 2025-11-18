@@ -216,38 +216,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     setIsMounted(true);
   }, []);
 
-  // Generate AI summary of reviews
-  const generateReviewSummary = async (reviews: any[], destinationName: string) => {
-    if (!reviews || reviews.length === 0) return;
-    
-    setLoadingReviewSummary(true);
-    try {
-      const response = await fetch('/api/reviews/summarize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reviews,
-          destinationName,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate review summary');
-      }
-
-      const data = await response.json();
-      if (data.summary) {
-        setReviewSummary(data.summary);
-      }
-    } catch (error) {
-      console.error('Error generating review summary:', error);
-    } finally {
-      setLoadingReviewSummary(false);
-    }
-  };
-
   // Prevent body scroll when drawer is open
   // useEffect(() => {
   //   if (typeof document === 'undefined') return;
@@ -389,9 +357,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 : dataObj.reviews_json;
               
               // Generate AI summary of reviews
-              if (Array.isArray(enriched.reviews) && enriched.reviews.length > 0) {
-                generateReviewSummary(enriched.reviews, destination.name);
-              }
+              // AI summary handled within destination data hook
             } catch (e) {
               console.error('Error parsing reviews_json:', e);
             }
