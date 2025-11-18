@@ -328,109 +328,225 @@ export function AccountDrawer({
 
   // Render main drawer content (Tier 1)
   const renderMainDrawer = () => (
-    <div className="px-6 py-6 space-y-6">
+    <div className="p-6 space-y-0" style={{ padding: '24px' }}>
       {user ? (
         <>
           {/* Header: Avatar, Name, Username */}
-          <div className="flex items-center gap-3">
-            <div className="relative w-[42px] h-[42px] rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 mb-6" style={{ gap: '12px' }}>
+            <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700" style={{ width: '56px', height: '56px' }}>
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
                   alt="Profile"
                   fill
                   className="object-cover"
-                  sizes="42px"
+                  sizes="56px"
                 />
               ) : (
-                <User className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <User className="w-7 h-7 text-gray-400 dark:text-gray-500" />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[18px] font-medium text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight">
+              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight" style={{ fontSize: '20px', fontWeight: 600 }}>
                 {displayUsername}
               </p>
-              <p className="text-[14px] text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)] truncate leading-tight mt-0.5">
+              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight mt-0.5" style={{ fontSize: '15px', opacity: 0.7 }}>
                 @{displayUsername.toLowerCase().replace(/\s+/g, '')}
               </p>
             </div>
             <button
               onClick={() => handleNavigateToFullPage("/account")}
-              className="text-xs font-medium text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)] hover:text-[#F5F5F5] dark:hover:text-[#F5F5F5] transition-colors flex items-center gap-1"
+              className="flex items-center gap-1.5 rounded-full transition-colors"
+              style={{
+                height: '36px',
+                paddingLeft: '14px',
+                paddingRight: '14px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                color: '#F5F5F5',
+                fontSize: '14px',
+              }}
             >
               View Full Profile
-              <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
+              <ChevronRight className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
           </div>
 
-          {/* Quick Stats: Pill Group */}
-          <div className="flex flex-wrap gap-2">
-            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.visited}</div>
-              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Visited</div>
+          {/* Stats Bar: Horizontal Layout */}
+          <div className="flex items-center py-3 mb-6" style={{ paddingTop: '12px', paddingBottom: '12px' }}>
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '16px', fontWeight: 600 }}>
+                {stats.visited}
+              </div>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.65 }}>
+                Visited
+              </div>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.saved}</div>
-              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Saved</div>
+            <div className="w-px h-8 bg-[rgba(255,255,255,0.08)]" style={{ width: '1px' }} />
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '16px', fontWeight: 600 }}>
+                {stats.saved}
+              </div>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.65 }}>
+                Saved
+              </div>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.trips}</div>
-              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Trips</div>
+            <div className="w-px h-8 bg-[rgba(255,255,255,0.08)]" style={{ width: '1px' }} />
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '16px', fontWeight: 600 }}>
+                {stats.trips}
+              </div>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.65 }}>
+                Trips
+              </div>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-[rgba(255,255,255,0.08)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">{stats.cities}</div>
-              <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">Cities</div>
+            <div className="w-px h-8 bg-[rgba(255,255,255,0.08)]" style={{ width: '1px' }} />
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '16px', fontWeight: 600 }}>
+                {stats.cities}
+              </div>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.65 }}>
+                Cities
+              </div>
             </div>
           </div>
 
-          {/* Quick Actions: Card Menu */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => navigateToSubpage('saved_subpage')}
-              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
-            >
-              <Bookmark className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Saved</div>
-            </button>
-            <button
-              onClick={() => navigateToSubpage('visited_subpage')}
-              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
-            >
-              <MapPin className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Visited</div>
-            </button>
-            <button
-              onClick={() => navigateToSubpage('collections_subpage')}
-              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
-            >
-              <Folder className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Lists</div>
-            </button>
-            <button
-              onClick={() => navigateToSubpage('trips_subpage')}
-              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
-            >
-              <Compass className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Trips</div>
-            </button>
-            <button
-              onClick={() => navigateToSubpage('settings_subpage')}
-              className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left col-span-2"
-            >
-              <Settings className="w-5 h-5 text-[#F5F5F5] dark:text-[#F5F5F5] mb-2" strokeWidth={1.5} />
-              <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5]">Settings</div>
-            </button>
+          {/* Your Spaces Section */}
+          <div className="space-y-0">
+            <h3 className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '14px', opacity: 0.6, paddingTop: '12px', paddingBottom: '6px' }}>
+              Your Spaces
+            </h3>
+            <div className="space-y-1">
+              <button
+                onClick={() => navigateToSubpage('saved_subpage')}
+                className="w-full flex items-center gap-3 transition-colors rounded-xl"
+                style={{
+                  height: '48px',
+                  paddingLeft: '8px',
+                  paddingRight: '8px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <Bookmark className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '18px', height: '18px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Saved</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+              <button
+                onClick={() => navigateToSubpage('visited_subpage')}
+                className="w-full flex items-center gap-3 transition-colors rounded-xl"
+                style={{
+                  height: '48px',
+                  paddingLeft: '8px',
+                  paddingRight: '8px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <MapPin className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '18px', height: '18px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Visited</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+              <button
+                onClick={() => navigateToSubpage('collections_subpage')}
+                className="w-full flex items-center gap-3 transition-colors rounded-xl"
+                style={{
+                  height: '48px',
+                  paddingLeft: '8px',
+                  paddingRight: '8px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <Folder className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '18px', height: '18px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Lists</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+              <button
+                onClick={() => navigateToSubpage('trips_subpage')}
+                className="w-full flex items-center gap-3 transition-colors rounded-xl"
+                style={{
+                  height: '48px',
+                  paddingLeft: '8px',
+                  paddingRight: '8px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <Compass className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '18px', height: '18px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Trips</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+              <button
+                onClick={() => navigateToSubpage('settings_subpage')}
+                className="w-full flex items-center gap-3 transition-colors rounded-xl"
+                style={{
+                  height: '48px',
+                  paddingLeft: '8px',
+                  paddingRight: '8px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <Settings className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '18px', height: '18px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Settings</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+            </div>
           </div>
 
           {/* Contextual Section: Continue Planning */}
           {recentTrips.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-[#F5F5F5] dark:text-[#F5F5F5]">
-                Continue Planning
-              </h3>
+            <div className="mt-4">
               <button
                 onClick={() => navigateToSubpage('trip_details_subpage', recentTrips[0].id)}
-                className="w-full p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] dark:bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-all text-left"
+                className="w-full text-left transition-all rounded-2xl"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  marginTop: '16px',
+                }}
               >
                 {recentTrips[0].cover_image && (
                   <div className="relative w-full h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
@@ -443,11 +559,11 @@ export function AccountDrawer({
                     />
                   </div>
                 )}
-                <div className="text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5] mb-1">
+                <div className="text-[#F5F5F5] dark:text-[#F5F5F5] mb-1" style={{ fontSize: '16px', fontWeight: 600 }}>
                   {recentTrips[0].title}
                 </div>
                 {recentTrips[0].start_date && (
-                  <div className="text-xs text-[rgba(255,255,255,0.56)] dark:text-[rgba(255,255,255,0.56)]">
+                  <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '14px', opacity: 0.65 }}>
                     {new Date(recentTrips[0].start_date).toLocaleDateString("en-US", { 
                       month: "short", 
                       day: "numeric",
@@ -460,15 +576,24 @@ export function AccountDrawer({
           )}
 
           {/* Footer: Sign Out */}
-          <div className="pt-4 border-t border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
+          <div className="pt-6 mt-6 border-t border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]">
             <button
               type="button"
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[#F5F5F5] dark:text-[#F5F5F5] hover:opacity-70 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 text-[#F5F5F5] dark:text-[#F5F5F5] transition-opacity"
+              style={{
+                fontSize: '15px',
+                paddingTop: '18px',
+                paddingBottom: '18px',
+                opacity: 0.75,
+              }}
             >
               <LogOut className="w-4 h-4" strokeWidth={1.5} />
               <span>Sign Out</span>
             </button>
+            <div className="text-center text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '12px', opacity: 0.45, marginTop: '8px' }}>
+              © {new Date().getFullYear()} Urban Manual
+            </div>
           </div>
         </>
       ) : (
@@ -913,6 +1038,9 @@ export function AccountDrawer({
       zIndex={getZIndex()}
       tier={isTier1 ? 'tier1' : 'tier2'}
       showHandle={isTier1}
+      customBorderRadius={isTier1 ? { topLeft: '20px', topRight: '0' } : undefined}
+      customShadow={isTier1 ? '0 4px 28px rgba(0,0,0,0.45)' : undefined}
+      customBlur={isTier1 ? '14px' : undefined}
     >
       <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
         {renderContent()}

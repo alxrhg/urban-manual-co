@@ -61,6 +61,9 @@ export function Drawer({
   keepStateOnClose = true,
   tier = 'tier1',
   showHandle = false,
+  customBorderRadius,
+  customShadow,
+  customBlur,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
@@ -208,9 +211,13 @@ export function Drawer({
             maxHeight: tier === 'tier1' ? '45%' : tier === 'tier2' ? '88%' : 'calc(100vh - 20px)',
             height: tier === 'tier1' ? 'auto' : (mobileHeight ? `calc(${mobileHeight} - 20px)` : 'calc(96vh - env(safe-area-inset-bottom) - 1rem - 20px)'),
             transform: isOpen ? bottomSheetTransform : 'translate3d(0, 120%, 0) scale(0.98)',
-            borderRadius: tier === 'tier1' || tier === 'tier2' ? '22px' : undefined,
-            boxShadow: DRAWER_STYLES.shadow.enabled ? DRAWER_STYLES.shadow.value : undefined,
+            borderRadius: customBorderRadius 
+              ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
+              : (tier === 'tier1' || tier === 'tier2' ? '22px' : undefined),
+            boxShadow: customShadow || (DRAWER_STYLES.shadow.enabled ? DRAWER_STYLES.shadow.value : undefined),
             backgroundColor: tier === 'tier1' ? DRAWER_STYLES.darkMode.tier1Bg : tier === 'tier2' ? DRAWER_STYLES.darkMode.tier2Bg : undefined,
+            backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+            WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
           }}
         >
           {/* Handle */}
@@ -306,13 +313,19 @@ export function Drawer({
       <div
         id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
         ref={drawerRef}
-        className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+        className={`hidden md:flex lg:hidden fixed ${desktopSpacing} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
         } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
         style={{ 
           zIndex, 
           width: '70%', // Tablet: 70% width
           maxWidth: 'calc(100vw - 2rem)',
+          borderRadius: customBorderRadius 
+            ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
+            : '1rem',
+          boxShadow: customShadow || undefined,
+          backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+          WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
         }}
       >
         {/* Header - 56px height, blurred */}
@@ -355,13 +368,19 @@ export function Drawer({
       <div
         id={tier === 'tier1' ? 'drawer-tier-1' : tier === 'tier2' ? 'drawer-tier-2' : tier === 'tier3' ? 'drawer-tier-3' : undefined}
         ref={drawerRef}
-        className={`hidden lg:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
+        className={`hidden lg:flex fixed ${desktopSpacing} ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-[220ms] ease-out ${
           isOpen ? 'translate-x-0' : (position === 'right' ? 'translate-x-[calc(100%+2rem)]' : '-translate-x-[calc(100%+2rem)]')
         } ${!isOpen ? 'pointer-events-none' : ''} overflow-hidden flex-col`}
         style={{ 
           zIndex, 
           width: desktopWidth, // Desktop: fixed width (420px)
           maxWidth: 'calc(100vw - 2rem)',
+          borderRadius: customBorderRadius 
+            ? `${customBorderRadius.topLeft || '0'} ${customBorderRadius.topRight || '0'} ${customBorderRadius.bottomRight || '0'} ${customBorderRadius.bottomLeft || '0'}`
+            : '1rem',
+          boxShadow: customShadow || undefined,
+          backdropFilter: customBlur ? `blur(${customBlur})` : undefined,
+          WebkitBackdropFilter: customBlur ? `blur(${customBlur})` : undefined,
         }}
       >
         {/* Header - 56px height, blurred */}
