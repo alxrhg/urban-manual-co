@@ -157,13 +157,6 @@ const RealtimeStatusBadge = dynamic(
     })),
   { ssr: false }
 );
-const TripPlanner = dynamic(
-  () =>
-    import("@/components/TripPlanner").then(mod => ({
-      default: mod.TripPlanner,
-    })),
-  { ssr: false }
-);
 const POIDrawer = dynamic(
   () =>
     import("@/components/POIDrawer").then(mod => ({ default: mod.POIDrawer })),
@@ -416,7 +409,6 @@ export default function Home() {
     useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
-  const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
 
   const trackDestinationEngagement = useCallback(
@@ -2821,7 +2813,10 @@ export default function Home() {
                     onTrackFilterChange={trackFilterChange}
                     viewMode={viewMode}
                     onViewModeChange={setViewMode}
-                    onCreateTrip={() => setShowTripPlanner(true)}
+                    onCreateTrip={() => {
+                      // Open account drawer -> trips -> create trip
+                      window.dispatchEvent(new CustomEvent('openAccountDrawer', { detail: { subpage: 'trips_subpage' } }));
+                    }}
                     onAddPOI={() => {
                       setEditingDestination(null);
                       setShowPOIDrawer(true);
@@ -3243,10 +3238,6 @@ export default function Home() {
         />
 
         {/* Trip Planner Modal */}
-        <TripPlanner
-          isOpen={showTripPlanner}
-          onClose={() => setShowTripPlanner(false)}
-        />
 
         {/* POI Drawer (Admin only) */}
         {isAdmin && (

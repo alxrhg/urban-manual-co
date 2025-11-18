@@ -33,6 +33,7 @@ interface AccountDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenChat?: () => void;
+  initialSubpage?: SubpageId; // Allow opening directly to a subpage
 }
 
 interface UserStats {
@@ -51,6 +52,7 @@ type SubpageId =
   | 'collections_subpage'
   | 'trips_subpage'
   | 'trip_details_subpage'
+  | 'create_trip_subpage'
   | 'achievements_subpage'
   | 'settings_subpage';
 
@@ -58,10 +60,11 @@ export function AccountDrawer({
   isOpen,
   onClose,
   onOpenChat,
+  initialSubpage,
 }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
+  const [currentSubpage, setCurrentSubpage] = useState<SubpageId>(initialSubpage || 'main_drawer');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -81,6 +84,13 @@ export function AccountDrawer({
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
+  // Create trip form state
+  const [tripName, setTripName] = useState('');
+  const [tripDestination, setTripDestination] = useState('');
+  const [tripHotel, setTripHotel] = useState('');
+  const [tripStartDate, setTripStartDate] = useState('');
+  const [tripEndDate, setTripEndDate] = useState('');
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
 
   // Reset to main drawer when drawer closes
   useEffect(() => {
@@ -318,12 +328,24 @@ export function AccountDrawer({
         return 'Your Trips';
       case 'trip_details_subpage':
         return selectedTrip?.title || 'Trip Details';
+      case 'create_trip_subpage':
+        return 'Create Trip';
       case 'achievements_subpage':
         return 'Achievements';
       case 'settings_subpage':
         return 'Settings';
       default:
         return 'Your Manual';
+    }
+  };
+
+  // Get drawer subtitle based on current subpage
+  const getDrawerSubtitle = () => {
+    switch (currentSubpage) {
+      case 'create_trip_subpage':
+        return 'Plan your next getaway';
+      default:
+        return undefined;
     }
   };
 
@@ -837,6 +859,31 @@ export function AccountDrawer({
   // Render trips subpage
   const renderTripsSubpage = () => (
     <div style={{ padding: '12px 12px 24px 12px' }}>
+      <button
+        onClick={() => navigateToSubpage('create_trip_subpage')}
+        className="w-full flex items-center justify-center gap-2 transition-colors mb-4"
+        style={{
+          height: '52px',
+          padding: '0 20px',
+          borderRadius: '14px',
+          backgroundColor: 'rgba(255,255,255,0.08)',
+          fontSize: '16px',
+          fontWeight: 500,
+          color: 'rgba(255,255,255,0.88)',
+        }}
+        onMouseDown={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
+        }}
+        onMouseUp={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+        }}
+      >
+        <Plus className="w-4 h-4" />
+        <span>New Trip</span>
+      </button>
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
@@ -967,6 +1014,193 @@ export function AccountDrawer({
           >
             Open Full Trip
           </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Render create trip subpage (Tier 3)
+  const renderCreateTripSubpage = () => {
+    return (
+      <div style={{ padding: '28px', maxWidth: '360px', margin: '0 auto' }}>
+        <div className="space-y-5" style={{ gap: '20px' }}>
+          {/* Trip Name */}
+          <div>
+            <label 
+              htmlFor="trip-name"
+              style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.7)',
+                display: 'block',
+                marginBottom: '8px',
+              }}
+            >
+              Trip Name *
+            </label>
+            <input
+              id="trip-name"
+              type="text"
+              value={tripName}
+              onChange={(e) => setTripName(e.target.value)}
+              placeholder="e.g., Summer in Tokyo"
+              required
+              style={{
+                width: '100%',
+                height: '42px',
+                padding: '0 18px',
+                borderRadius: '22px',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#fff',
+              }}
+              className="focus:outline-none focus:ring-2 focus:ring-white/20"
+            />
+          </div>
+
+          {/* Destination */}
+          <div>
+            <label 
+              htmlFor="trip-destination"
+              style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.7)',
+                display: 'block',
+                marginBottom: '8px',
+              }}
+            >
+              Destination *
+            </label>
+            <input
+              id="trip-destination"
+              type="text"
+              value={tripDestination}
+              onChange={(e) => setTripDestination(e.target.value)}
+              placeholder="e.g., Tokyo, Japan"
+              required
+              style={{
+                width: '100%',
+                height: '42px',
+                padding: '0 18px',
+                borderRadius: '22px',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#fff',
+              }}
+              className="focus:outline-none focus:ring-2 focus:ring-white/20"
+            />
+          </div>
+
+          {/* Hotel / Base Location */}
+          <div>
+            <label 
+              htmlFor="trip-hotel"
+              style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.7)',
+                display: 'block',
+                marginBottom: '8px',
+              }}
+            >
+              Hotel / Base Location
+            </label>
+            <input
+              id="trip-hotel"
+              type="text"
+              value={tripHotel}
+              onChange={(e) => setTripHotel(e.target.value)}
+              placeholder="e.g., Four Seasons Hotel"
+              style={{
+                width: '100%',
+                height: '42px',
+                padding: '0 18px',
+                borderRadius: '22px',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#fff',
+              }}
+              className="focus:outline-none focus:ring-2 focus:ring-white/20"
+            />
+          </div>
+
+          {/* Date Range */}
+          <div className="space-y-4">
+            <div>
+              <label 
+                htmlFor="start-date"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.7)',
+                  display: 'block',
+                  marginBottom: '8px',
+                }}
+              >
+                Start Date *
+              </label>
+              <input
+                id="start-date"
+                type="date"
+                value={tripStartDate}
+                onChange={(e) => setTripStartDate(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  height: '42px',
+                  padding: '0 18px',
+                  borderRadius: '22px',
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#fff',
+                }}
+                className="focus:outline-none focus:ring-2 focus:ring-white/20"
+              />
+            </div>
+            <div>
+              <label 
+                htmlFor="end-date"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.7)',
+                  display: 'block',
+                  marginBottom: '8px',
+                }}
+              >
+                End Date *
+              </label>
+              <input
+                id="end-date"
+                type="date"
+                value={tripEndDate}
+                onChange={(e) => setTripEndDate(e.target.value)}
+                min={tripStartDate}
+                required
+                style={{
+                  width: '100%',
+                  height: '42px',
+                  padding: '0 18px',
+                  borderRadius: '22px',
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#fff',
+                }}
+                className="focus:outline-none focus:ring-2 focus:ring-white/20"
+              />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1127,6 +1361,8 @@ export function AccountDrawer({
         return renderTripsSubpage();
       case 'trip_details_subpage':
         return renderTripDetailsSubpage();
+      case 'create_trip_subpage':
+        return renderCreateTripSubpage();
       case 'achievements_subpage':
         return renderAchievementsSubpage();
       case 'settings_subpage':
@@ -1187,23 +1423,106 @@ export function AccountDrawer({
   };
 
   const isTier1 = currentSubpage === 'main_drawer';
-  const isTier2 = currentSubpage !== 'main_drawer';
+  const isTier2 = currentSubpage !== 'main_drawer' && currentSubpage !== 'create_trip_subpage';
+  const isTier3 = currentSubpage === 'create_trip_subpage';
+
+  // Handle create trip
+  const handleCreateTrip = async () => {
+    if (!tripName || !tripDestination || !tripStartDate || !tripEndDate) {
+      return;
+    }
+
+    setIsCreatingTrip(true);
+    try {
+      const supabaseClient = createClient();
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      if (!user) {
+        return;
+      }
+
+      const { data: newTrip, error } = await supabaseClient
+        .from('trips')
+        .insert({
+          user_id: user.id,
+          title: tripName,
+          destination: tripDestination,
+          hotel: tripHotel || null,
+          start_date: tripStartDate,
+          end_date: tripEndDate,
+          status: 'planning',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating trip:', error);
+        return;
+      }
+
+      // Close create trip drawer and open trip details
+      if (newTrip) {
+        setSelectedTripId(newTrip.id);
+        setCurrentSubpage('trip_details_subpage');
+        // Refresh trips list
+        const { data: tripsData } = await supabaseClient
+          .from('trips')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        setTrips((tripsData as Trip[]) || []);
+      }
+    } catch (error) {
+      console.error('Error creating trip:', error);
+    } finally {
+      setIsCreatingTrip(false);
+    }
+  };
+
+  // Render footer for create trip subpage
+  const renderCreateTripFooter = () => {
+    if (currentSubpage !== 'create_trip_subpage') return null;
+
+    return (
+      <div className="flex gap-2.5" style={{ gap: '10px' }}>
+        <button
+          onClick={handleCreateTrip}
+          disabled={isCreatingTrip || !tripName || !tripDestination || !tripStartDate || !tripEndDate}
+          className="flex-1 flex items-center justify-center transition-all"
+          style={{
+            height: '48px',
+            borderRadius: '24px',
+            fontSize: '15px',
+            fontWeight: 600,
+            backgroundColor: 'rgba(255,255,255,0.92)',
+            color: '#000',
+            opacity: (!tripName || !tripDestination || !tripStartDate || !tripEndDate) ? 0.5 : 1,
+          }}
+        >
+          {isCreatingTrip ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Trip'}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <Drawer 
       isOpen={isOpen} 
       onClose={onClose}
       title={currentSubpage === 'main_drawer' ? undefined : getDrawerTitle()}
-      headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
+      subtitle={isTier3 ? getDrawerSubtitle() : undefined}
+      headerContent={currentSubpage !== 'main_drawer' && !isTier3 ? renderHeader() : undefined}
       mobileVariant="bottom"
       desktopSpacing="right-4 top-4 bottom-4"
-      desktopWidth={isTier1 ? "420px" : "92vw"}
+      desktopWidth={isTier1 ? "420px" : isTier3 ? "420px" : "92vw"}
       position="right"
       style="glassy"
-      backdropOpacity={isTier1 ? "18" : "35"}
+      backdropOpacity={isTier1 ? "18" : isTier3 ? "0" : "35"}
       keepStateOnClose={true}
       zIndex={getZIndex()}
-      tier={isTier1 ? 'tier1' : 'tier2'}
+      tier={isTier1 ? 'tier1' : isTier3 ? 'tier3' : 'tier2'}
+      noOverlay={isTier3}
+      footerContent={isTier3 ? renderCreateTripFooter() : undefined}
       showHandle={isTier1}
       customBorderRadius={isTier1 
         ? { topLeft: '22px', topRight: '22px', bottomLeft: '22px', bottomRight: '22px' }

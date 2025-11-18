@@ -13,6 +13,7 @@ export function Header() {
   const router = useRouter();
   const { user } = useAuth();
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+  const [accountDrawerInitialSubpage, setAccountDrawerInitialSubpage] = useState<'main_drawer' | 'trips_subpage' | undefined>(undefined);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -80,6 +81,21 @@ export function Header() {
     }
     fetchBuildVersion();
   }, [isAdmin]);
+
+  // Listen for custom event to open account drawer with specific subpage
+  useEffect(() => {
+    const handleOpenAccountDrawer = (event: CustomEvent<{ subpage?: 'trips_subpage' }>) => {
+      if (event.detail?.subpage) {
+        setAccountDrawerInitialSubpage(event.detail.subpage);
+      }
+      setIsAccountDrawerOpen(true);
+    };
+
+    window.addEventListener('openAccountDrawer', handleOpenAccountDrawer as EventListener);
+    return () => {
+      window.removeEventListener('openAccountDrawer', handleOpenAccountDrawer as EventListener);
+    };
+  }, []);
 
   const navigate = (path: string) => {
     router.push(path);
@@ -156,8 +172,12 @@ export function Header() {
       {/* Account Drawer */}
       <AccountDrawer
         isOpen={isAccountDrawerOpen}
-        onClose={() => setIsAccountDrawerOpen(false)}
+        onClose={() => {
+          setIsAccountDrawerOpen(false);
+          setAccountDrawerInitialSubpage(undefined);
+        }}
         onOpenChat={() => setIsChatDrawerOpen(true)}
+        initialSubpage={accountDrawerInitialSubpage}
       />
 
       {/* Chat Drawer */}
