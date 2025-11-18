@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe } from 'lucide-react';
 import { useDestinationData } from './useDestinationData';
-import { useDestinationData } from './useDestinationData';
 import {
   DropdownMenu,
   DropdownMenuContent,
