@@ -26,6 +26,19 @@ import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
+import { createClient } from '@/lib/supabase/client';
+import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
+
+function extractDomain(url: string): string {
+  try {
+    return url
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0] || url;
+  } catch {
+    return url;
+  }
+}
 
 // Dynamically import POIDrawer to avoid SSR issues
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
@@ -194,12 +207,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   const {
     enrichedData,
+    setEnrichedData,
     enhancedDestination,
+    setEnhancedDestination,
     parentDestination,
+    setParentDestination,
     nestedDestinations,
+    setNestedDestinations,
     loadingNested,
+    setLoadingNested,
     reviewSummary,
     loadingReviewSummary,
+    setLoadingReviewSummary,
+    setReviewSummary,
     isSaved,
     setIsSaved,
     isVisited,
@@ -207,8 +227,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     isAddedToTrip,
     setIsAddedToTrip,
     isAdmin,
+    setIsAdmin,
     recommendations,
+    setRecommendations,
     loadingRecommendations,
+    setLoadingRecommendations,
   } = useDestinationData(destination, isOpen);
 
   // Ensure component only renders on client-side to prevent hydration issues

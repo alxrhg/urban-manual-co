@@ -522,10 +522,15 @@ export function useDestinationData(destination: Destination | null, isOpen: bool
 
   return {
     enrichedData,
+    setEnrichedData,
     enhancedDestination,
+    setEnhancedDestination,
     parentDestination,
+    setParentDestination,
     nestedDestinations,
+    setNestedDestinations,
     loadingNested,
+    setLoadingNested,
     reviewSummary,
     loadingReviewSummary,
     isSaved,
@@ -535,7 +540,12 @@ export function useDestinationData(destination: Destination | null, isOpen: bool
     isAddedToTrip,
     setIsAddedToTrip,
     isAdmin,
+    setIsAdmin,
     recommendations,
+    setRecommendations,
     loadingRecommendations,
+    setLoadingRecommendations,
+    setLoadingReviewSummary,
+    setReviewSummary,
   };
 }

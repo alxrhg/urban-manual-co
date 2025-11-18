@@ -23,10 +23,23 @@ type AutocompleteSelection = {
   address?: string;
 };
 
-type DestinationFormInput = Partial<Destination> & {
+type DestinationFormInput = Partial<Omit<Destination, 'michelin_stars' | 'parent_destination_id'>> & {
   michelin_stars?: number | null;
   parent_destination_id?: number | null;
 };
+
+interface DestinationFormState {
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  description: string;
+  content: string;
+  image: string;
+  michelin_stars: number | null;
+  crown: boolean;
+  parent_destination_id: number | null;
+}
 
 const sanitizeTextField = (value?: string | null) =>
   typeof value === 'string' ? value.replace(/\u0000/g, '') : value ?? undefined;
@@ -58,7 +71,7 @@ function DestinationForm({
   isSaving: boolean;
   toast: Toast;
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<DestinationFormState>({
     slug: destination?.slug || '',
     name: destination?.name || '',
     city: destination?.city || '',
@@ -66,9 +79,9 @@ function DestinationForm({
     description: stripHtmlTags(destination?.description || ''),
     content: stripHtmlTags(destination?.content || ''),
     image: destination?.image || '',
-    michelin_stars: destination?.michelin_stars || null,
+    michelin_stars: destination?.michelin_stars ?? null,
     crown: destination?.crown || false,
-    parent_destination_id: destination?.parent_destination_id || null,
+    parent_destination_id: destination?.parent_destination_id ?? null,
   });
   const [parentSearchQuery, setParentSearchQuery] = useState('');
   const [parentSearchResults, setParentSearchResults] = useState<Destination[]>([]);
@@ -91,9 +104,9 @@ function DestinationForm({
         description: stripHtmlTags(destination.description || ''),
         content: stripHtmlTags(destination.content || ''),
         image: destination.image || '',
-        michelin_stars: destination.michelin_stars || null,
+        michelin_stars: destination.michelin_stars ?? null,
         crown: destination.crown || false,
-        parent_destination_id: destination.parent_destination_id || null,
+        parent_destination_id: destination.parent_destination_id ?? null,
       });
       setImagePreview(destination.image || null);
       setImageFile(null);

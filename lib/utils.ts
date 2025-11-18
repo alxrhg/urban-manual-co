@@ -33,6 +33,18 @@ export function capitalizeCategory(category: string): string {
 }
 
 /**
+ * Slugify text for URLs
+ * @example "New York City" → "new-york-city"
+ */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
  * Format distance for display
  * @example 0.5 → "500m", 5 → "5km"
  */

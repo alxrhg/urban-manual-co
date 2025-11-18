@@ -363,6 +363,8 @@ function normalizeDiscoveryEngineRecord(
   };
 }
 
+import { useDestinations } from "@/hooks/useDestinations";
+
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
@@ -379,22 +381,20 @@ export default function Home() {
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   const editModeActive = isAdmin && adminEditMode;
 
-  const handleToggleEditMode = useCallback(() => {
-    if (!isAdmin || !canUseEditMode) {
-      return;
-    }
-    toggleEditMode();
-  }, [canUseEditMode, isAdmin, toggleEditMode]);
-  
-  // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
-  const [isAIEnabled, setIsAIEnabled] = useState(true);
-
-  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const {
+    destinations,
+    cities,
+    categories,
+    loading: destinationsLoading,
+    refetch: refetchDestinations,
+    applyDestinationData,
+    extendFilterOptions,
+    setCityOptions,
+    setCategoryOptions,
+  } = useDestinations();
   const [filteredDestinations, setFilteredDestinations] = useState<
     Destination[]
   >([]);
-  const [cities, setCities] = useState<string[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -410,6 +410,7 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripSidebar, setShowTripSidebar] = useState(false);
+  const isAIEnabled = true;
 
   const trackDestinationEngagement = useCallback(
     (
@@ -714,22 +715,11 @@ export default function Home() {
     }
 
     if (updateDestinations) {
-      setDestinations(fallback);
+      applyDestinationData(fallback);
     }
 
     if (ensureFilters) {
-      const { cities: fallbackCities, categories: fallbackCategories } =
-        extractFilterOptions(fallback);
-      if (fallbackCities.length) {
-        setCities(prev =>
-          fallbackCities.length > prev.length ? fallbackCities : prev
-        );
-      }
-      if (fallbackCategories.length) {
-        setCategories(prev =>
-          fallbackCategories.length > prev.length ? fallbackCategories : prev
-        );
-      }
+      extendFilterOptions(fallback);
     }
   };
 
@@ -759,22 +749,22 @@ export default function Home() {
       if (compareWithExisting) {
         // Only update if Discovery Engine has more options
         if (discoveryCities.length > compareWithExisting.cities.length) {
-          setCities(discoveryCities);
+          setCityOptions(discoveryCities);
         }
         if (
           discoveryCategories.length > compareWithExisting.categories.length
         ) {
-          setCategories(discoveryCategories);
+          setCategoryOptions(discoveryCategories);
         }
       } else {
         // Always update if no comparison
-        setCities(discoveryCities);
-        setCategories(discoveryCategories);
+        setCityOptions(discoveryCities);
+        setCategoryOptions(discoveryCategories);
       }
     }
 
     if (updateDestinations) {
-      setDestinations(discoveryBaseline);
+      applyDestinationData(discoveryBaseline);
       const filtered = filterDestinationsWithData(
         discoveryBaseline,
         "",
@@ -912,21 +902,6 @@ export default function Home() {
     discoveryBootstrapPromiseRef.current = promise;
     return promise;
   };
-
-  useEffect(() => {
-    // Initialize session tracking
-    initializeSession();
-
-    // Track homepage view
-    trackPageView({ pageType: "home" });
-
-    // Fire-and-forget: Load data in background, don't block render
-    // Page renders immediately, data loads asynchronously
-    // Prioritize fetchDestinations first (it also sets cities), then fetchFilterData for enhancement
-    void fetchDestinations();
-    // fetchFilterData will enhance cities if it has more, but won't block initial display
-    void fetchFilterData();
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -1128,7 +1103,7 @@ export default function Home() {
     if (!searchTerm.trim()) {
       // Only fetch destinations if we haven't already
       if (destinations.length === 0) {
-        fetchDestinations();
+        refetchDestinations();
       } else {
         // If destinations are already loaded, just re-filter (don't re-fetch)
         // This prevents unnecessary re-fetching when visitedSlugs changes after login
@@ -1206,11 +1181,11 @@ export default function Home() {
           const { cities: discoveryCities, categories: discoveryCategories } =
             extractFilterOptions(discoveryBaseline);
           React.startTransition(() => {
-            setCities(discoveryCities);
-            setCategories(discoveryCategories);
+            setCityOptions(discoveryCities);
+            setCategoryOptions(discoveryCategories);
           });
           if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
+            applyDestinationData(discoveryBaseline);
             const filtered = filterDestinationsWithData(
               discoveryBaseline,
               "",
@@ -1235,8 +1210,8 @@ export default function Home() {
 
       // OPTIMIZATION: Batch state updates
       React.startTransition(() => {
-        setCities(uniqueCities);
-        setCategories(uniqueCategories);
+        setCityOptions(uniqueCities);
+        setCategoryOptions(uniqueCategories);
       });
 
       // OPTIMIZATION: Reuse the already-started Discovery Engine call
@@ -1254,12 +1229,12 @@ export default function Home() {
         }
         if (Object.keys(updates).length > 0) {
           React.startTransition(() => {
-            if (updates.cities) setCities(updates.cities);
-            if (updates.categories) setCategories(updates.categories);
+            if (updates.cities) setCityOptions(updates.cities);
+            if (updates.categories) setCategoryOptions(updates.categories);
           });
         }
         if (destinations.length === 0) {
-          setDestinations(discoveryBaseline);
+          applyDestinationData(discoveryBaseline);
           const filtered = filterDestinationsWithData(discoveryBaseline);
           setFilteredDestinations(filtered);
         }
@@ -1284,11 +1259,11 @@ export default function Home() {
             extractFilterOptions(discoveryBaseline);
           // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
-            setCities(discoveryCities);
-            setCategories(discoveryCategories);
+            setCityOptions(discoveryCities);
+            setCategoryOptions(discoveryCategories);
           });
           if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
+            applyDestinationData(discoveryBaseline);
             const filtered = filterDestinationsWithData(
               discoveryBaseline,
               "",
@@ -1309,8 +1284,8 @@ export default function Home() {
         console.warn("[Filter Data] Fallback also failed:", fallbackError);
         // OPTIMIZATION: Batch state updates
         React.startTransition(() => {
-          setCities([]);
-          setCategories([]);
+          setCityOptions([]);
+          setCategoryOptions([]);
         });
       }
     }
@@ -1532,198 +1507,6 @@ export default function Home() {
       sortBy,
     ]
   );
-  const fetchDestinations = useCallback(async () => {
-    try {
-      let destinationsData: Destination[] | null = null;
-      let fetchError: any = null;
-      const controller =
-        typeof window !== "undefined" ? new AbortController() : null;
-      const timeoutId = controller
-        ? window.setTimeout(() => controller.abort(), 30000)
-        : null;
-      try {
-        // Add cache-busting query parameter to ensure fresh data after POI creation
-        const response = await fetch(
-          `/api/homepage/destinations?t=${Date.now()}`,
-          {
-            signal: controller?.signal,
-            cache: "no-store",
-          }
-        );
-        if (!response.ok) {
-          fetchError = new Error(await response.text());
-        } else {
-          const payload = await response.json();
-          destinationsData = payload.destinations || [];
-        }
-      } catch (networkError: any) {
-        console.warn(
-          "[Destinations] Network error:",
-          networkError?.message || networkError
-        );
-        fetchError = networkError;
-      } finally {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-      }
-
-      if (
-        fetchError ||
-        !destinationsData ||
-        !Array.isArray(destinationsData) ||
-        destinationsData.length === 0
-      ) {
-        if (fetchError && !isIgnorableSupabaseError(fetchError)) {
-          if (
-            !fetchError.message?.includes("Network") &&
-            !fetchError.message?.includes("timeout")
-          ) {
-            console.warn(
-              "Error fetching destinations:",
-              fetchError.message || fetchError
-            );
-          }
-        }
-
-        const discoveryBaseline = await fetchDiscoveryBootstrap().catch(
-          () => []
-        );
-        if (discoveryBaseline.length) {
-          setDestinations(discoveryBaseline);
-          // Don't filter destinations if there's an active AI chat search (submittedQuery)
-          // AI chat handles its own filtering via performAISearch
-          if (!submittedQuery) {
-            const filtered = filterDestinationsWithData(
-              discoveryBaseline,
-              searchTerm,
-              advancedFilters,
-              selectedCity,
-              selectedCategory,
-              user,
-              visitedSlugs,
-              sortBy
-            );
-            setFilteredDestinations(filtered);
-          }
-          const { cities: discoveryCities, categories: discoveryCategories } =
-            extractFilterOptions(discoveryBaseline);
-          React.startTransition(() => {
-            if (discoveryCities.length) setCities(discoveryCities);
-            if (discoveryCategories.length) setCategories(discoveryCategories);
-          });
-        } else {
-          await applyFallbackData({ updateDestinations: true });
-        }
-        return;
-      }
-
-      setDestinations(destinationsData as Destination[]);
-
-      const { cities: uniqueCities, categories: uniqueCategories } =
-        extractFilterOptions(destinationsData as any[]);
-      if (uniqueCities.length) {
-        setCities(uniqueCities);
-      }
-      if (uniqueCategories.length) {
-        setCategories(uniqueCategories);
-      }
-
-      // Don't filter destinations if there's an active AI chat search (submittedQuery)
-      // AI chat handles its own filtering via performAISearch
-      if (!submittedQuery) {
-        const filtered = filterDestinationsWithData(
-          destinationsData as Destination[],
-          searchTerm,
-          advancedFilters,
-          selectedCity,
-          selectedCategory,
-          user,
-          visitedSlugs,
-          sortBy
-        );
-        setFilteredDestinations(filtered);
-      }
-
-      setDiscoveryEngineLoading(true);
-      fetchDiscoveryBootstrap()
-        .then(discoveryBaseline => {
-          if (discoveryBaseline.length > 0) {
-            const merged = [
-              ...(destinationsData as Destination[]),
-              ...discoveryBaseline,
-            ];
-            const uniqueMerged = merged.filter(
-              (dest, index, self) =>
-                index === self.findIndex(d => d.slug === dest.slug)
-            );
-
-            if (uniqueMerged.length > destinationsData!.length) {
-              setDestinations(uniqueMerged);
-              // Don't filter destinations if there's an active AI chat search (submittedQuery)
-              // AI chat handles its own filtering via performAISearch
-              if (!submittedQuery) {
-                const filteredMerged = filterDestinationsWithData(
-                  uniqueMerged,
-                  searchTerm,
-                  advancedFilters,
-                  selectedCity,
-                  selectedCategory,
-                  user,
-                  visitedSlugs,
-                  sortBy
-                );
-                setFilteredDestinations(filteredMerged);
-              }
-
-              const {
-                cities: discoveryCities,
-                categories: discoveryCategories,
-              } = extractFilterOptions(discoveryBaseline);
-              const updates: { cities?: string[]; categories?: string[] } = {};
-              if (discoveryCities.length > uniqueCities.length) {
-                updates.cities = discoveryCities;
-              }
-              if (discoveryCategories.length > uniqueCategories.length) {
-                updates.categories = discoveryCategories;
-              }
-              if (Object.keys(updates).length > 0) {
-                React.startTransition(() => {
-                  if (updates.cities) setCities(updates.cities);
-                  if (updates.categories) setCategories(updates.categories);
-                });
-              }
-            }
-          }
-        })
-        .catch(() => {
-          // Discovery Engine failed - that's fine, we already have initial data
-        })
-        .finally(() => {
-          setDiscoveryEngineLoading(false);
-        });
-    } catch (error: any) {
-      if (!isIgnorableSupabaseError(error)) {
-        console.warn("Error fetching destinations:", error?.message || error);
-      }
-
-      const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
-      if (!discoveryBaseline.length) {
-        await applyFallbackData({ updateDestinations: true });
-      }
-    }
-  }, [
-    user,
-    visitedSlugs,
-    filterDestinationsWithData,
-    searchTerm,
-    advancedFilters,
-    selectedCity,
-    selectedCategory,
-    sortBy,
-    submittedQuery,
-  ]);
-
   const fetchVisitedPlaces = async (): Promise<void> => {
     if (!user) return;
 
@@ -2762,7 +2545,7 @@ export default function Home() {
                 </button>
                 <EditModeToggle
                   active={editModeActive}
-                  onToggle={handleToggleEditMode}
+                  onToggle={toggleEditMode}
                 />
               </div>
             </div>
@@ -3254,7 +3037,7 @@ export default function Home() {
               await new Promise(resolve => setTimeout(resolve, 200));
 
               // Fetch fresh destinations (this will automatically apply current filters)
-              await fetchDestinations();
+              await refetchDestinations();
 
               // Reset to first page to show the newly created POI at the top
               setCurrentPage(1);

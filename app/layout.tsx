@@ -12,6 +12,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { CookieConsent } from "@/components/CookieConsent";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import GoogleAdSense from "@/components/GoogleAdSense";
 import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
@@ -63,6 +64,10 @@ export const metadata: Metadata = {
   },
 };
 
+import { getResourceHints } from "@/lib/resource-hints";
+
+const resourceHints = getResourceHints();
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -77,21 +82,12 @@ export default function RootLayout({
         <meta name="google-adsense-account" content="ca-pub-3052286230434362" />
         {/* Revert iOS-specific app meta to default web behavior */}
 
-        {/* Preconnect hints for faster resource loading */}
-        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
-          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
-        )}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet" />
+        {/* Resource hints for faster resource loading */}
+        {resourceHints.map((hint) => (
+          <link key={hint.href} {...hint} />
+        ))}
         
-        {/* DNS Prefetch for additional domains */}
-        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
-        <link rel="dns-prefetch" href="https://guide.michelin.com" />
-        <link rel="dns-prefetch" href="https://maps.googleapis.com" />
-        <link rel="dns-prefetch" href="https://api.mapbox.com" />
-        <link rel="dns-prefetch" href="https://cdn.amcharts.com" />
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet" />
 
         {/* RSS Feed */}
         <link
@@ -99,37 +95,6 @@ export default function RootLayout({
           type="application/rss+xml"
           title="The Urban Manual RSS Feed"
           href="https://www.urbanmanual.co/feed.xml"
-        />
-
-        {/* Google AdSense */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3052286230434362"
-          crossOrigin="anonymous"
-        />
-        
-        {/* Google Analytics - Load script, but only initialize with consent */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              // Set default consent mode to denied - will be updated when user consents
-              gtag('consent', 'default', {
-                // Behavioral analytics consent signals
-                analytics_storage: 'denied',
-                // Advertising consent signals
-                ad_storage: 'denied',
-                ad_user_data: 'denied',
-                ad_personalization: 'denied',
-              });
-            `,
-          }}
-        />
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-ZLGK6QXD88"
         />
         
         {/* Critical inline CSS for above-the-fold content */}
@@ -207,6 +172,7 @@ export default function RootLayout({
           </TRPCProvider>
           <ToastContainer />
           <GoogleAnalytics />
+          <GoogleAdSense />
           <Analytics />
           <SpeedInsights />
         </ThemeProvider>
