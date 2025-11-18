@@ -92,14 +92,29 @@ export function AccountDrawer({
   const [tripEndDate, setTripEndDate] = useState('');
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
 
-  // Reset to main drawer when drawer closes
+  // Reset to main drawer when drawer closes, or set initial subpage when opening
   useEffect(() => {
     if (!isOpen) {
       setCurrentSubpage('main_drawer');
       setSelectedTripId(null);
       setSelectedTrip(null);
+      // Reset create trip form
+      setTripName('');
+      setTripDestination('');
+      setTripHotel('');
+      setTripStartDate('');
+      setTripEndDate('');
+    } else if (initialSubpage && initialSubpage !== 'main_drawer') {
+      // If drawer opens with an initial subpage, navigate to it
+      setCurrentSubpage(initialSubpage);
+      // If opening to trips subpage, also open create trip after a short delay
+      if (initialSubpage === 'trips_subpage') {
+        setTimeout(() => {
+          setCurrentSubpage('create_trip_subpage');
+        }, 300);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialSubpage]);
 
   // Fetch user profile, avatar, stats, and data
   useEffect(() => {
