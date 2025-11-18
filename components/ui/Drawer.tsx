@@ -31,6 +31,8 @@ export interface DrawerProps {
   customShadow?: string;
   customBlur?: string;
   customMargin?: { top?: string; right?: string; bottom?: string; left?: string };
+  customBackground?: string;
+  customBorder?: { color?: string; thickness?: string };
 }
 
 /**
@@ -69,6 +71,8 @@ export function Drawer({
   customShadow,
   customBlur,
   customMargin,
+  customBackground,
+  customBorder,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
