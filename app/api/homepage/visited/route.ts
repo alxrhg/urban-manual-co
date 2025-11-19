@@ -19,17 +19,19 @@ export function createHomepageVisitedHandler(deps: VisitedHandlerDeps) {
       return NextResponse.json({ success: true, slugs });
     } catch (error: any) {
       // Check if it's a Supabase config error or network error
+      const cause = error?.cause as any;
       const isConfigError = error?.message?.includes('placeholder') || 
                            error?.message?.includes('invalid') ||
                            error?.message?.includes('fetch failed') ||
                            error?.code === 'ECONNREFUSED' ||
                            error?.code === 'ETIMEDOUT' ||
-                           error?.cause?.code === 'ECONNREFUSED' ||
-                           error?.cause?.message?.includes('fetch failed');
+                           cause?.code === 'ECONNREFUSED' ||
+                           cause?.message?.includes('fetch failed');
       
       if (isConfigError) {
         // Return 200 with empty slugs for graceful degradation
-        console.warn('[Homepage Visited] Supabase config/network error, returning empty slugs:', error?.message || error?.cause?.message);
+        const cause = error?.cause as any;
+        console.warn('[Homepage Visited] Supabase config/network error, returning empty slugs:', error?.message || cause?.message);
         return NextResponse.json({ success: true, slugs: [] }, { status: 200 });
       }
       
@@ -48,11 +50,12 @@ async function getUserIdFromSession() {
 
     if (error) {
       // Check if it's a network/config error (placeholder client)
+      const cause = error?.cause as any;
       if (error?.message?.includes('fetch failed') ||
           error?.message?.includes('ECONNREFUSED') ||
           error?.message?.includes('ETIMEDOUT') ||
-          error?.cause?.code === 'ECONNREFUSED' ||
-          error?.cause?.message?.includes('fetch failed')) {
+          cause?.code === 'ECONNREFUSED' ||
+          cause?.message?.includes('fetch failed')) {
         console.warn('[Homepage Visited] Supabase config error, returning null user');
         return null;
       }
@@ -63,13 +66,14 @@ async function getUserIdFromSession() {
     return data?.user?.id ?? null;
   } catch (error: any) {
     // Handle network errors and config errors gracefully
+    const cause = error?.cause as any;
     if (error?.message?.includes('placeholder') || 
         error?.message?.includes('invalid') ||
         error?.message?.includes('fetch failed') ||
         error?.code === 'ECONNREFUSED' ||
         error?.code === 'ETIMEDOUT' ||
-        error?.cause?.code === 'ECONNREFUSED') {
-      console.warn('[Homepage Visited] Supabase client error:', error?.message || error?.cause?.message);
+        cause?.code === 'ECONNREFUSED') {
+      console.warn('[Homepage Visited] Supabase client error:', error?.message || cause?.message);
       return null;
     }
     throw error;
