@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { DestinationCard } from '@/components/DestinationCard';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
@@ -74,7 +75,6 @@ export default function CityPageClient() {
   }>({});
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
@@ -82,6 +82,8 @@ export default function CityPageClient() {
   const [isCreatingNewPOI, setIsCreatingNewPOI] = useState(false);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
+
+  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
 
   const handleAdminEdit = (destination: Destination) => {
     if (!isAdmin) return;
@@ -417,7 +419,7 @@ export default function CityPageClient() {
                         destination={destination}
                         onClick={() => {
                           setSelectedDestination(destination);
-                          setIsDrawerOpen(true);
+                          openDrawer('destination');
                         }}
                         index={globalIndex}
                         isVisited={isVisited}
@@ -506,12 +508,12 @@ export default function CityPageClient() {
       </main>
 
       {/* Destination Drawer - Only render when open */}
-      {isDrawerOpen && selectedDestination && (
+      {isDrawerTypeOpen('destination') && selectedDestination && (
         <DestinationDrawer
           destination={selectedDestination}
           isOpen={true}
           onClose={() => {
-            setIsDrawerOpen(false);
+            closeDrawer();
             setSelectedDestination(null);
           }}
         onSaveToggle={async (slug: string) => {
