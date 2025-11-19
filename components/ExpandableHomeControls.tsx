@@ -142,6 +142,10 @@ export function ExpandableHomeControls({
            advancedFilters[key as keyof SearchFilters] !== null &&
            advancedFilters[key as keyof SearchFilters] !== ''
   ) || selectedCity || selectedCategory;
+  const activeFiltersCount = Object.keys(advancedFilters).reduce((count, key) => {
+    const value = advancedFilters[key as keyof SearchFilters];
+    return value !== undefined && value !== null && value !== '' ? count + 1 : count;
+  }, 0) + (selectedCity ? 1 : 0) + (selectedCategory ? 1 : 0);
 
   // Spring animation style - iOS-style spring interpolation
   const springStyle = {
@@ -177,7 +181,7 @@ export function ExpandableHomeControls({
       >
         {/* Collapsed State - Right-aligned horizontal stack */}
         <div 
-          className={`flex items-center justify-end gap-2 transition-all duration-300 ${
+          className={`flex flex-wrap lg:flex-nowrap items-center justify-end gap-2 transition-all duration-300 ${
             isExpanded ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100 h-11'
           }`}
           style={{ gap: '8px' }}
@@ -194,39 +198,29 @@ export function ExpandableHomeControls({
           {/* Filter Pill */}
           <button
             onClick={handleFilterPillClick}
-            className={`flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px] ${
+            className={`relative flex items-center justify-center h-11 w-11 rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px] ${
               hasActiveFilters ? 'ring-2 ring-blue-500/50' : ''
             }`}
+            aria-label="Toggle filters"
           >
             <Funnel className="h-4 w-4" />
-            <span>Filters</span>
             {hasActiveFilters && (
-              <span className="flex items-center justify-center min-w-[18px] h-4.5 px-1.5 text-xs bg-blue-500 text-white rounded-full">
-                {Object.keys(advancedFilters).filter(key => advancedFilters[key as keyof SearchFilters] !== undefined && advancedFilters[key as keyof SearchFilters] !== null && advancedFilters[key as keyof SearchFilters] !== '').length + (selectedCity ? 1 : 0) + (selectedCategory ? 1 : 0)}
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] bg-blue-500 text-white rounded-full">
+                {Math.min(activeFiltersCount, 99)}
               </span>
             )}
           </button>
 
-          {/* Grid/Map Toggle - Single Toggle Button */}
+          {/* Grid/Map Toggle - Single Icon Button */}
           <button
             onClick={() => onViewModeChange(viewMode === 'grid' ? 'map' : 'grid')}
-            className="flex items-center justify-center gap-1.5 h-11 px-4 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] active:bg-gray-100 dark:active:bg-[rgba(255,255,255,0.18)] backdrop-blur-[14px]"
-            style={{ 
-              gap: '6px',
-              fontWeight: 500
-            }}
-            aria-label={viewMode === 'grid' ? 'Switch to Map' : 'Switch to Grid'}
+            className="flex items-center justify-center h-11 w-11 rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] active:bg-gray-100 dark:active:bg-[rgba(255,255,255,0.18)] backdrop-blur-[14px]"
+            aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
           >
             {viewMode === 'grid' ? (
-              <>
-                <Map className="h-4 w-4" style={{ width: '16px', height: '16px' }} />
-                <span>Map</span>
-              </>
+              <Map className="h-4 w-4" />
             ) : (
-              <>
-                <LayoutGrid className="h-4 w-4" style={{ width: '16px', height: '16px' }} />
-                <span>Grid</span>
-              </>
+              <LayoutGrid className="h-4 w-4" />
             )}
           </button>
 
@@ -492,4 +486,3 @@ export function ExpandableHomeControls({
     </div>
   );
 }
-

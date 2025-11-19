@@ -2824,35 +2824,25 @@ export default function Home() {
                       />
                     </div>
 
-                    {/* View Switch - Segment Control */}
-                    <div className="flex items-center rounded-full h-[44px] px-1.5 bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.10)]" style={{ borderRadius: '9999px' }}>
-                      <button
-                        onClick={() => setViewMode('grid')}
-                        className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
-                          viewMode === 'grid'
-                            ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[rgba(255,255,255,0.95)] dark:border dark:border-[rgba(255,255,255,0.22)] shadow-sm'
-                            : 'text-gray-600 dark:text-[rgba(255,255,255,0.68)] hover:text-gray-900 dark:hover:text-[rgba(255,255,255,0.92)]'
-                        }`}
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Grid view"
-                      >
-                        <LayoutGrid className="h-4 w-4" />
-                        <span>Grid</span>
-                      </button>
-                      <button
-                        onClick={() => setViewMode('map')}
-                        className={`flex items-center gap-1.5 px-5 h-full text-sm font-medium transition-all rounded-full ${
-                          viewMode === 'map'
-                            ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-[rgba(255,255,255,0.95)] dark:border dark:border-[rgba(255,255,255,0.22)] shadow-sm'
-                            : 'text-gray-600 dark:text-[rgba(255,255,255,0.68)] hover:text-gray-900 dark:hover:text-[rgba(255,255,255,0.92)]'
-                        }`}
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Map view"
-                      >
-                        <Map className="h-4 w-4" />
-                        <span>Map</span>
-                      </button>
-                    </div>
+                    {/* View Toggle - Single Button showing opposite mode */}
+                    <button
+                      onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                      className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.08)] text-gray-900 dark:text-[rgba(255,255,255,0.92)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.15)]"
+                      style={{ borderRadius: '9999px' }}
+                      aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
+                    >
+                      {viewMode === 'grid' ? (
+                        <>
+                          <Map className="h-4 w-4" />
+                          <span>Map</span>
+                        </>
+                      ) : (
+                        <>
+                          <LayoutGrid className="h-4 w-4" />
+                          <span>Grid</span>
+                        </>
+                      )}
+                    </button>
 
                     {/* Create Trip - Pill Filled (Black) */}
                     {isAdmin ? (
