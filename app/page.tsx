@@ -2581,7 +2581,7 @@ export default function Home() {
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="mb-[50px]">
                       {/* City Buttons */}
-                      <div className="flex flex-nowrap gap-x-5 overflow-x-auto text-xs">
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
                           onClick={() => {
                             setSelectedCity("");
@@ -2641,7 +2641,7 @@ export default function Home() {
                     
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
-                      <div className="flex flex-nowrap gap-x-5 overflow-x-auto text-xs">
+                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                         <button
                           onClick={() => {
                             setSelectedCategory("");
@@ -2780,9 +2780,9 @@ export default function Home() {
               {/* Content Section - Grid directly below hero */}
               <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
-                {/* Mid Nav - Vertical Pile, Right Aligned */}
+                {/* Mid Nav - Horizontal Row, Right Aligned */}
                 <div className="mb-6 flex justify-end">
-                  <div className="flex flex-col items-end w-auto" style={{ gap: '12px' }}>
+                  <div className="flex flex-row items-center gap-3 w-auto">
                     {/* Discover by Cities - Pill */}
                     <Link
                       href="/cities"
