@@ -4,6 +4,7 @@
  */
 
 import { BaseAgent, AgentResult, Tool } from './base-agent';
+import { generateJSON } from '@/lib/llm';
 import { getAllTools } from './tools';
 
 export interface ItineraryRequest {
@@ -116,11 +117,13 @@ export class ItineraryBuilderAgent extends BaseAgent {
       const isCulture = ['culture', 'museum', 'gallery', 'theater'].some(c => category.includes(c));
       const isOutdoor = ['park', 'beach', 'outdoor'].some(c => category.includes(c));
 
-      // Estimate duration based on category
-      let estimatedDuration = 60; // Default 1 hour
-      if (isDining) estimatedDuration = 90; // 1.5 hours for meals
-      if (isCulture) estimatedDuration = 120; // 2 hours for museums
-      if (isOutdoor) estimatedDuration = 90; // 1.5 hours for outdoor activities
+      const heuristicDuration = this.estimateDurationHeuristic({
+        category,
+        isDining,
+        isCulture,
+        isOutdoor,
+      });
+      const estimatedDuration = await this.estimateDurationWithLLM(dest, heuristicDuration);
 
       analysis.set(dest.id, {
         ...dest,
@@ -132,6 +135,70 @@ export class ItineraryBuilderAgent extends BaseAgent {
     }
 
     return analysis;
+  }
+
+  /**
+   * Heuristic baseline duration when LLM isn't available
+   */
+  private estimateDurationHeuristic({
+    category,
+    isDining,
+    isCulture,
+    isOutdoor,
+  }: {
+    category: string;
+    isDining: boolean;
+    isCulture: boolean;
+    isOutdoor: boolean;
+  }): number {
+    let estimatedDuration = 60; // Default 1 hour
+    if (isDining) estimatedDuration = 90; // 1.5 hours for meals
+    if (isCulture) estimatedDuration = 120; // 2 hours for museums
+    if (isOutdoor) estimatedDuration = 90; // 1.5 hours for outdoor activities
+
+    // Light adjustments for long-form experiences
+    if (category.includes('tour')) estimatedDuration = Math.max(estimatedDuration, 120);
+    if (category.includes('nightlife')) estimatedDuration = Math.max(estimatedDuration, 120);
+
+    return estimatedDuration;
+  }
+
+  /**
+   * Ask an LLM for a context-aware visit duration
+   */
+  private async estimateDurationWithLLM(
+    destination: ItineraryRequest['destinations'][number],
+    fallbackMinutes: number
+  ): Promise<number> {
+    const system = `You are a travel planner estimating realistic visit durations in minutes.
+- Use typical pacing for one visit (no multi-day durations).
+- Fine dining tasting menus (e.g., Michelin 3-star) often take 150-210 minutes.
+- Casual counter service or quick snacks can be 15-40 minutes.
+- Museums and galleries are often 90-150 minutes.
+Return strictly JSON with a positive integer duration_minutes field.`;
+
+    const user = `Destination:
+- Name: ${destination.name}
+- City: ${destination.city}
+- Category: ${destination.category}
+- Additional context: ${destination.opening_hours ? 'Has opening hours info' : 'No timing data'}
+
+Respond with the typical duration in minutes as duration_minutes.`;
+
+    try {
+      const response = await generateJSON(system, user);
+      const parsed = typeof response === 'object' ? response : null;
+      const candidate = parsed?.duration_minutes ?? parsed?.durationMinutes;
+      const duration = Number(candidate);
+
+      if (Number.isFinite(duration) && duration > 0 && duration < 600) {
+        return Math.round(duration);
+      }
+    } catch (error) {
+      console.error('[ItineraryBuilderAgent] LLM duration estimation failed:', error);
+    }
+
+    return fallbackMinutes;
   }
 
   /**
