@@ -284,6 +284,10 @@ export function AccountDrawer() {
     setCurrentSubpage(subpage);
   };
 
+  const openChatDrawer = () => {
+    openDrawer("chat");
+  };
+
   const navigateBack = () => {
     if (currentSubpage === 'trip_details_subpage') {
       setCurrentSubpage('trips_subpage');
@@ -291,6 +295,10 @@ export function AccountDrawer() {
     } else {
       setCurrentSubpage('main_drawer');
     }
+  };
+
+  const handleDrawerClose = () => {
+    closeDrawer();
   };
 
   // Get drawer title based on current subpage
@@ -385,14 +393,12 @@ export function AccountDrawer() {
               >
                 Edit profile
               </button>
-              {onOpenChat && (
-                <button
-                  onClick={onOpenChat}
-                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                >
-                  Message concierge
-                </button>
-              )}
+              <button
+                onClick={openChatDrawer}
+                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+              >
+                Message concierge
+              </button>
             </div>
           </div>
 
@@ -423,7 +429,7 @@ export function AccountDrawer() {
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </button>
             <button
-              onClick={() => (onOpenChat ? onOpenChat() : handleNavigateToFullPage("/account"))}
+              onClick={openChatDrawer}
               className="flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
@@ -904,7 +910,7 @@ export function AccountDrawer() {
   return (
     <Drawer
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleDrawerClose}
       title={undefined}
       headerContent={undefined}
       mobileVariant="bottom"
