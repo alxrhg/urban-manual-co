@@ -47,6 +47,19 @@ const ACCOUNT_DRAWER_THEME = {
   headerBg: "var(--account-drawer-header-bg)",
 } as const;
 
+const CTA_BUTTON_BASE_CLASSES =
+  "w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ease-out flex items-center justify-center gap-2";
+const CTA_BUTTON_THEME_CLASSES =
+  "text-[var(--account-drawer-foreground)] bg-[var(--account-drawer-button-bg)] hover:bg-[var(--account-drawer-button-hover)] active:bg-[var(--account-drawer-button-active)]";
+const GHOST_BUTTON_CLASSES =
+  "w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium rounded-lg transition-colors duration-200";
+const GHOST_BUTTON_THEME_CLASSES =
+  "text-[var(--account-drawer-foreground)] hover:bg-[var(--account-drawer-tile-hover)] active:bg-[var(--account-drawer-tile-active)]";
+const TILE_BUTTON_CLASSES =
+  "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-200 text-[var(--account-drawer-foreground)]";
+const TILE_BUTTON_THEME_CLASSES =
+  "hover:bg-[var(--account-drawer-tile-hover)] active:bg-[var(--account-drawer-tile-active)]";
+
 interface AccountDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -346,7 +359,15 @@ export function AccountDrawer({
         <>
           {/* Header: Avatar, Name, Username */}
           <div className="flex items-center gap-3" style={{ gap: '12px', marginBottom: '14px' }}>
-            <div className="relative rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700" style={{ width: '64px', height: '64px' }}>
+            <div
+              className="relative rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border"
+              style={{
+                width: '64px',
+                height: '64px',
+                backgroundColor: ACCOUNT_DRAWER_THEME.buttonBg,
+                borderColor: ACCOUNT_DRAWER_THEME.divider,
+              }}
+            >
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
@@ -356,7 +377,7 @@ export function AccountDrawer({
                   sizes="64px"
                 />
               ) : (
-                <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                <User className="w-8 h-8" style={{ color: ACCOUNT_DRAWER_THEME.icon, opacity: 0.55 }} />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -615,7 +636,7 @@ export function AccountDrawer({
                 }}
               >
                 {recentTrips[0].cover_image && (
-                  <div className="relative w-full h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
+                  <div className="relative w-full h-24 rounded-xl overflow-hidden bg-[var(--account-drawer-button-bg)] mb-3">
                     <Image
                       src={recentTrips[0].cover_image}
                       alt={recentTrips[0].title}
@@ -672,17 +693,17 @@ export function AccountDrawer({
       ) : (
         <div className="text-center py-8 space-y-4">
           <div className="space-y-2">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+            <h3 className="text-base font-semibold text-[var(--account-drawer-foreground)] tracking-tight">
               Join The Urban Manual
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-light">
+            <p className="text-xs font-light text-[var(--account-drawer-muted)]">
               Sign in to save places, build trips, and sync your travel profile.
             </p>
           </div>
           <button
             type="button"
             onClick={() => handleNavigateToFullPage("/auth/login")}
-            className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+            className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
           >
             Sign In
           </button>
@@ -696,19 +717,19 @@ export function AccountDrawer({
     <div className="px-6 py-6 space-y-4">
       {loading ? (
         <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--account-drawer-muted)] mx-auto mb-2" />
+          <p className="text-sm text-[var(--account-drawer-muted)]">Loading...</p>
         </div>
       ) : visitedPlaces.length > 0 ? (
         <div className="space-y-2">
           {visitedPlaces.map((visit, index) => (
-              <button
-                key={index}
-                onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            <button
+              key={index}
+              onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
+              className={`${TILE_BUTTON_CLASSES} ${TILE_BUTTON_THEME_CLASSES}`}
             >
               {visit.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[var(--account-drawer-button-bg)] flex-shrink-0">
                   <Image
                     src={visit.destination.image}
                     alt={visit.destination.name}
@@ -719,11 +740,11 @@ export function AccountDrawer({
                 </div>
               )}
                 <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-[var(--account-drawer-foreground)] truncate">
                     {visit.destination?.name || visit.slug}
                   </p>
                   {visit.visited_at && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-[var(--account-drawer-muted)]">
                     {new Date(visit.visited_at).toLocaleDateString("en-US", { 
                       month: "short", 
                       day: "numeric",
@@ -732,19 +753,19 @@ export function AccountDrawer({
                     </p>
                   )}
                 </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4" style={{ color: ACCOUNT_DRAWER_THEME.icon, opacity: 0.45 }} />
               </button>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No visited places yet</p>
+          <p className="text-sm text-[var(--account-drawer-muted)]">No visited places yet</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="pt-4 border-t" style={{ borderColor: ACCOUNT_DRAWER_THEME.divider }}>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=visited")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
         >
           View All Visited
         </button>
@@ -757,19 +778,19 @@ export function AccountDrawer({
     <div className="px-6 py-6 space-y-4">
       {loading ? (
         <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--account-drawer-muted)] mx-auto mb-2" />
+          <p className="text-sm text-[var(--account-drawer-muted)]">Loading...</p>
         </div>
       ) : savedPlaces.length > 0 ? (
         <div className="space-y-2">
           {savedPlaces.map((saved, index) => (
-              <button
-                key={index}
-                onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            <button
+              key={index}
+              onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
+              className={`${TILE_BUTTON_CLASSES} ${TILE_BUTTON_THEME_CLASSES}`}
             >
               {saved.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[var(--account-drawer-button-bg)] flex-shrink-0">
                   <Image
                     src={saved.destination.image}
                     alt={saved.destination.name}
@@ -780,28 +801,28 @@ export function AccountDrawer({
                 </div>
               )}
                 <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-[var(--account-drawer-foreground)] truncate">
                     {saved.destination?.name || saved.slug}
                   </p>
                   {saved.destination?.city && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-[var(--account-drawer-muted)]">
                       {saved.destination.city}
                     </p>
                   )}
                 </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4" style={{ color: ACCOUNT_DRAWER_THEME.icon, opacity: 0.45 }} />
               </button>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No saved places yet</p>
+          <p className="text-sm text-[var(--account-drawer-muted)]">No saved places yet</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="pt-4 border-t" style={{ borderColor: ACCOUNT_DRAWER_THEME.divider }}>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=saved")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
         >
           View Full Saved
         </button>
@@ -813,12 +834,12 @@ export function AccountDrawer({
   const renderCollectionsSubpage = () => (
     <div className="px-6 py-6 space-y-4">
       <div className="text-center py-12">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Collections coming soon</p>
+        <p className="text-sm text-[var(--account-drawer-muted)]">Collections coming soon</p>
       </div>
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="pt-4 border-t" style={{ borderColor: ACCOUNT_DRAWER_THEME.divider }}>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=collections")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
         >
           View All Collections
         </button>
@@ -836,15 +857,15 @@ export function AccountDrawer({
             router.push('/trips');
           }, 200);
         }}
-        className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium flex items-center justify-center gap-2"
+        className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
       >
         <Plus className="w-4 h-4" />
         New Trip
       </button>
       {loading ? (
         <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--account-drawer-muted)] mx-auto mb-2" />
+          <p className="text-sm text-[var(--account-drawer-muted)]">Loading...</p>
         </div>
       ) : trips.length > 0 ? (
         <div className="space-y-2">
@@ -852,10 +873,10 @@ export function AccountDrawer({
             <button
               key={trip.id}
               onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+              className={`${TILE_BUTTON_CLASSES} ${TILE_BUTTON_THEME_CLASSES}`}
             >
               {trip.cover_image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[var(--account-drawer-button-bg)] flex-shrink-0">
                   <Image
                   src={trip.cover_image}
                   alt={trip.title}
@@ -866,11 +887,11 @@ export function AccountDrawer({
               </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-[var(--account-drawer-foreground)] truncate">
                   {trip.title}
                 </p>
                 {trip.start_date && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-[var(--account-drawer-muted)]">
                     {new Date(trip.start_date).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -879,19 +900,19 @@ export function AccountDrawer({
                   </p>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4" style={{ color: ACCOUNT_DRAWER_THEME.icon, opacity: 0.45 }} />
             </button>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No trips yet</p>
+          <p className="text-sm text-[var(--account-drawer-muted)]">No trips yet</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="pt-4 border-t" style={{ borderColor: ACCOUNT_DRAWER_THEME.divider }}>
         <button
           onClick={() => handleNavigateToFullPage("/trips")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
         >
           View All Trips
         </button>
@@ -905,7 +926,7 @@ export function AccountDrawer({
       return (
         <div className="px-6 py-6">
           <div className="text-center py-12">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
+            <p className="text-sm text-[var(--account-drawer-muted)]">Trip not found</p>
           </div>
         </div>
       );
@@ -914,7 +935,7 @@ export function AccountDrawer({
     return (
       <div className="px-6 py-6 space-y-4">
         {selectedTrip.cover_image && (
-          <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <div className="relative w-full h-48 rounded-xl overflow-hidden bg-[var(--account-drawer-button-bg)]">
             <Image
               src={selectedTrip.cover_image}
               alt={selectedTrip.title}
@@ -925,7 +946,7 @@ export function AccountDrawer({
           </div>
         )}
         {selectedTrip.start_date && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-[var(--account-drawer-muted)]">
             <Calendar className="w-4 h-4" />
             <span>
               {new Date(selectedTrip.start_date).toLocaleDateString("en-US", { 
@@ -942,22 +963,22 @@ export function AccountDrawer({
           </div>
         )}
         <div className="flex gap-2">
-          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+          <button className="flex-1 px-4 py-2 bg-[var(--account-drawer-button-bg)] text-[var(--account-drawer-foreground)] rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
             <Share2 className="w-4 h-4" />
             Share
           </button>
-          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+          <button className="flex-1 px-4 py-2 bg-[var(--account-drawer-button-bg)] text-[var(--account-drawer-foreground)] rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
             <Download className="w-4 h-4" />
             Export
           </button>
-          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+          <button className="px-4 py-2 bg-[var(--account-drawer-button-bg)] text-[var(--account-drawer-foreground)] rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="pt-4 border-t" style={{ borderColor: ACCOUNT_DRAWER_THEME.divider }}>
           <button
             onClick={() => handleNavigateToFullPage(`/trips/${selectedTrip.id}`)}
-            className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+            className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
           >
             Open Full Trip
           </button>
@@ -970,12 +991,12 @@ export function AccountDrawer({
   const renderAchievementsSubpage = () => (
     <div className="px-6 py-6 space-y-4">
       <div className="text-center py-12">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Achievements coming soon</p>
+        <p className="text-sm text-[var(--account-drawer-muted)]">Achievements coming soon</p>
       </div>
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="pt-4 border-t" style={{ borderColor: ACCOUNT_DRAWER_THEME.divider }}>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=achievements")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
         >
           View All Achievements
         </button>
@@ -989,16 +1010,16 @@ export function AccountDrawer({
       <div className="space-y-2">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className={`${GHOST_BUTTON_CLASSES} ${GHOST_BUTTON_THEME_CLASSES}`}
         >
           <span>Settings</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <ChevronRight className="w-4 h-4" style={{ color: ACCOUNT_DRAWER_THEME.icon, opacity: 0.45 }} />
         </button>
       </div>
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="pt-4 border-t" style={{ borderColor: ACCOUNT_DRAWER_THEME.divider }}>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className={`${CTA_BUTTON_BASE_CLASSES} ${CTA_BUTTON_THEME_CLASSES}`}
         >
           Open Full Settings
         </button>
@@ -1045,7 +1066,7 @@ export function AccountDrawer({
       >
         <button
           onClick={navigateBack}
-          className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
+          className="p-2 flex items-center justify-center rounded-full transition-colors duration-200 hover:bg-[var(--account-drawer-button-hover)] active:bg-[var(--account-drawer-button-active)]"
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5 text-[var(--account-drawer-foreground)]" />
