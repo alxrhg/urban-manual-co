@@ -29,6 +29,24 @@ import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
 import type { Trip } from "@/types/trip";
 
+const ACCOUNT_DRAWER_THEME = {
+  text: "var(--account-drawer-foreground)",
+  muted: "var(--account-drawer-muted)",
+  subtle: "var(--account-drawer-subtle)",
+  divider: "var(--account-drawer-divider)",
+  buttonBg: "var(--account-drawer-button-bg)",
+  buttonHover: "var(--account-drawer-button-hover)",
+  buttonActive: "var(--account-drawer-button-active)",
+  tileHover: "var(--account-drawer-tile-hover)",
+  tileActive: "var(--account-drawer-tile-active)",
+  pillBg: "var(--account-drawer-pill-bg)",
+  pillHover: "var(--account-drawer-pill-hover)",
+  pillActive: "var(--account-drawer-pill-active)",
+  pillBorder: "var(--account-drawer-pill-border)",
+  icon: "var(--account-drawer-icon)",
+  headerBg: "var(--account-drawer-header-bg)",
+} as const;
+
 interface AccountDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -342,10 +360,10 @@ export function AccountDrawer({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight" style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.2px' }}>
+              <p className="text-[var(--account-drawer-foreground)] truncate leading-tight" style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.2px' }}>
                 {displayUsername}
               </p>
-              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight mt-0.5" style={{ fontSize: '14px', opacity: 0.55 }}>
+              <p className="text-[var(--account-drawer-foreground)] truncate leading-tight mt-0.5" style={{ fontSize: '14px', opacity: 0.55 }}>
                 @{displayUsername.toLowerCase().replace(/\s+/g, '')}
               </p>
             </div>
@@ -357,21 +375,21 @@ export function AccountDrawer({
                 paddingLeft: '18px',
                 paddingRight: '18px',
                 borderRadius: '999px',
-                backgroundColor: 'rgba(255,255,255,0.09)',
-                color: '#F5F5F5',
+                backgroundColor: ACCOUNT_DRAWER_THEME.buttonBg,
+                color: ACCOUNT_DRAWER_THEME.text,
                 fontSize: '14px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.buttonHover;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.09)';
+                e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.buttonBg;
               }}
               onMouseDown={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.18)';
+                e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.buttonActive;
               }}
               onMouseUp={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.buttonHover;
               }}
             >
               View Full Profile
@@ -382,37 +400,37 @@ export function AccountDrawer({
           {/* Stats Bar: Horizontal Layout */}
           <div className="flex items-center" style={{ paddingTop: '16px', paddingBottom: '16px', marginBottom: '28px', gap: '22px' }}>
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '18px', fontWeight: 600 }}>
                 {stats.visited}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '13px', opacity: 0.48 }}>
                 Visited
               </div>
             </div>
-            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="w-px h-8" style={{ width: '1px', backgroundColor: ACCOUNT_DRAWER_THEME.divider }} />
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '18px', fontWeight: 600 }}>
                 {stats.saved}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '13px', opacity: 0.48 }}>
                 Saved
               </div>
             </div>
-            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="w-px h-8" style={{ width: '1px', backgroundColor: ACCOUNT_DRAWER_THEME.divider }} />
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '18px', fontWeight: 600 }}>
                 {stats.trips}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '13px', opacity: 0.48 }}>
                 Trips
               </div>
             </div>
-            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="w-px h-8" style={{ width: '1px', backgroundColor: ACCOUNT_DRAWER_THEME.divider }} />
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '18px', fontWeight: 600 }}>
                 {stats.cities}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '13px', opacity: 0.48 }}>
                 Cities
               </div>
             </div>
@@ -420,7 +438,7 @@ export function AccountDrawer({
 
           {/* Your Spaces Section */}
           <div className="space-y-0" style={{ marginBottom: '28px' }}>
-            <h3 className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.45, letterSpacing: '0.3px', paddingBottom: '8px' }}>
+            <h3 className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '13px', opacity: 0.45, letterSpacing: '0.3px', paddingBottom: '8px' }}>
               Your Spaces
             </h3>
             <div className="space-y-1">
@@ -435,24 +453,24 @@ export function AccountDrawer({
                   fontSize: '16px',
                   fontWeight: 500,
                   letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
+                  color: ACCOUNT_DRAWER_THEME.text,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileActive;
                 }}
                 onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
               >
-                <Bookmark className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Bookmark className="text-[var(--account-drawer-foreground)]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
                 <span className="flex-1 text-left">Saved</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[var(--account-drawer-foreground)]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
               </button>
               <button
                 onClick={() => navigateToSubpage('visited_subpage')}
@@ -465,24 +483,24 @@ export function AccountDrawer({
                   fontSize: '16px',
                   fontWeight: 500,
                   letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
+                  color: ACCOUNT_DRAWER_THEME.text,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileActive;
                 }}
                 onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
               >
-                <MapPin className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <MapPin className="text-[var(--account-drawer-foreground)]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
                 <span className="flex-1 text-left">Visited</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[var(--account-drawer-foreground)]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
               </button>
               <button
                 onClick={() => navigateToSubpage('collections_subpage')}
@@ -495,24 +513,24 @@ export function AccountDrawer({
                   fontSize: '16px',
                   fontWeight: 500,
                   letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
+                  color: ACCOUNT_DRAWER_THEME.text,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileActive;
                 }}
                 onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
               >
-                <Folder className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Folder className="text-[var(--account-drawer-foreground)]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
                 <span className="flex-1 text-left">Lists</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[var(--account-drawer-foreground)]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
               </button>
               <button
                 onClick={() => navigateToSubpage('trips_subpage')}
@@ -525,24 +543,24 @@ export function AccountDrawer({
                   fontSize: '16px',
                   fontWeight: 500,
                   letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
+                  color: ACCOUNT_DRAWER_THEME.text,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileActive;
                 }}
                 onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
               >
-                <Compass className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Compass className="text-[var(--account-drawer-foreground)]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
                 <span className="flex-1 text-left">Trips</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[var(--account-drawer-foreground)]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
               </button>
               <button
                 onClick={() => navigateToSubpage('settings_subpage')}
@@ -555,24 +573,24 @@ export function AccountDrawer({
                   fontSize: '16px',
                   fontWeight: 500,
                   letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
+                  color: ACCOUNT_DRAWER_THEME.text,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileActive;
                 }}
                 onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
                 }}
               >
-                <Settings className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Settings className="text-[var(--account-drawer-foreground)]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
                 <span className="flex-1 text-left">Settings</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[var(--account-drawer-foreground)]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
               </button>
             </div>
           </div>
@@ -584,16 +602,16 @@ export function AccountDrawer({
                 onClick={() => navigateToSubpage('trip_details_subpage', recentTrips[0].id)}
                 className="w-full text-left transition-all"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
+                  background: ACCOUNT_DRAWER_THEME.pillBg,
                   borderRadius: '18px',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  border: `1px solid ${ACCOUNT_DRAWER_THEME.pillBorder}`,
                   padding: '18px',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.pillHover;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                  e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.pillBg;
                 }}
               >
                 {recentTrips[0].cover_image && (
@@ -607,11 +625,11 @@ export function AccountDrawer({
                     />
                   </div>
                 )}
-                <div className="text-[#F5F5F5] dark:text-[#F5F5F5] mb-1" style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.2px' }}>
+                <div className="text-[var(--account-drawer-foreground)] mb-1" style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.2px' }}>
                   {recentTrips[0].title}
                 </div>
                 {recentTrips[0].start_date && (
-                  <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.55 }}>
+                  <div className="text-[var(--account-drawer-foreground)]" style={{ fontSize: '13px', opacity: 0.55 }}>
                     {new Date(recentTrips[0].start_date).toLocaleDateString("en-US", { 
                       month: "short", 
                       day: "numeric",
@@ -624,11 +642,11 @@ export function AccountDrawer({
           )}
 
           {/* Footer: Sign Out */}
-          <div className="border-t border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]" style={{ paddingTop: '28px' }}>
+          <div className="border-t" style={{ paddingTop: '28px', borderColor: ACCOUNT_DRAWER_THEME.divider }}>
             <button
               type="button"
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 text-[#F5F5F5] dark:text-[#F5F5F5] transition-colors"
+              className="w-full flex items-center justify-center gap-2 text-[var(--account-drawer-foreground)] transition-colors"
               style={{
                 fontSize: '15px',
                 paddingTop: '16px',
@@ -637,7 +655,7 @@ export function AccountDrawer({
                 borderRadius: '12px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                e.currentTarget.style.backgroundColor = ACCOUNT_DRAWER_THEME.tileHover;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -646,7 +664,7 @@ export function AccountDrawer({
               <LogOut className="w-4 h-4" strokeWidth={1.5} />
               <span>Sign Out</span>
             </button>
-            <div className="text-center text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '12px', opacity: 0.35, marginTop: '6px' }}>
+            <div className="text-center text-[var(--account-drawer-foreground)]" style={{ fontSize: '12px', opacity: 0.35, marginTop: '6px' }}>
               © {new Date().getFullYear()} Urban Manual
             </div>
           </div>
@@ -1020,7 +1038,7 @@ export function AccountDrawer({
       <div 
         className="flex items-center gap-3 px-6 h-14"
         style={{
-          background: 'rgba(18,18,18,0.6)',
+          background: ACCOUNT_DRAWER_THEME.headerBg,
           backdropFilter: 'blur(18px)',
           WebkitBackdropFilter: 'blur(18px)',
         }}
@@ -1030,9 +1048,9 @@ export function AccountDrawer({
           className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
           aria-label="Back"
         >
-          <ArrowLeft className="h-5 w-5 text-[#F5F5F5] dark:text-[#F5F5F5]" />
+          <ArrowLeft className="h-5 w-5 text-[var(--account-drawer-foreground)]" />
         </button>
-        <h2 className="text-[20px] font-semibold text-[#F5F5F5] dark:text-[#F5F5F5] flex-1" style={{ fontWeight: 600 }}>
+        <h2 className="text-[20px] font-semibold text-[var(--account-drawer-foreground)] flex-1" style={{ fontWeight: 600 }}>
           {getDrawerTitle()}
         </h2>
         <div className="w-9" /> {/* Spacer for centering */}
