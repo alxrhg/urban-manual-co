@@ -2257,8 +2257,38 @@ export default function Home() {
           Discover the World's Best Hotels, Restaurants & Travel Destinations -
           The Urban Manual
         </h1>
+        {/* New UI announcement */}
+        <section className="px-6 md:px-10 py-4 md:py-5 border-b border-neutral-200 dark:border-neutral-900 bg-white/70 dark:bg-black/40">
+          <div className="max-w-6xl mx-auto flex flex-col gap-3 md:gap-0 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[1.5px] text-gray-500 dark:text-gray-400 font-medium">
+                Introducing the refreshed UI
+              </p>
+              <p className="text-sm md:text-base text-gray-700 dark:text-gray-200 leading-relaxed">
+                Cleaner hero layout, calmer filters, and a tighter map + grid pairing to spotlight every destination.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/new-ui"
+                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs md:text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                See what's new
+              </Link>
+              <Link
+                href="#search-section"
+                className="inline-flex items-center justify-center px-4 py-2 rounded-full border border-black/10 dark:border-white/20 text-xs md:text-sm font-medium hover:opacity-80 transition-opacity"
+              >
+                Start exploring
+              </Link>
+            </div>
+          </div>
+        </section>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
+        <section
+          id="search-section"
+          className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12"
+        >
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
