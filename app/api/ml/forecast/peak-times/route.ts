@@ -65,14 +65,17 @@ export async function GET(request: NextRequest) {
     );
 
     if (!mlResponse.ok) {
-      console.error('ML peak times service error:', mlResponse.statusText);
-
+      console.warn('[ML Forecast Peak Times] Service error:', mlResponse.status, mlResponse.statusText);
+      // Return 200 with empty results instead of 503 to prevent breaking the UI
       return NextResponse.json(
         {
           error: 'ML peak times service unavailable',
-          fallback: true
+          fallback: true,
+          peak_date: null,
+          low_date: null,
+          recommendation: null,
         },
-        { status: 503 }
+        { status: 200 }
       );
     }
 
@@ -80,15 +83,31 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
 
-  } catch (error) {
-    console.error('ML peak times error:', error);
-
+  } catch (error: any) {
+    // Handle connection errors gracefully (especially localhost in production)
+    const isConnectionError = 
+      error?.message?.includes('fetch failed') ||
+      error?.message?.includes('ECONNREFUSED') ||
+      error?.code === 'ECONNREFUSED' ||
+      error?.code === 'ETIMEDOUT' ||
+      error?.cause?.code === 'ECONNREFUSED';
+    
+    if (isConnectionError) {
+      console.warn('[ML Forecast Peak Times] Connection error (ML service unavailable):', error?.message || error?.cause?.message);
+    } else {
+      console.error('[ML Forecast Peak Times] Error:', error instanceof Error ? error.message : 'Unknown error');
+    }
+    
+    // Return 200 with empty results instead of 500 to prevent breaking the UI
     return NextResponse.json(
       {
         error: 'Failed to fetch peak times',
-        fallback: true
+        fallback: true,
+        peak_date: null,
+        low_date: null,
+        recommendation: null,
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

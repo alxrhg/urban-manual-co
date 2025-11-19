@@ -62,14 +62,14 @@ export async function GET(request: NextRequest) {
     );
 
     if (!mlResponse.ok) {
-      console.error('ML forecast service error:', mlResponse.statusText);
-
+      console.warn('[ML Forecast Demand] Service error:', mlResponse.status, mlResponse.statusText);
+      // Return 200 with empty results instead of 503 to prevent breaking the UI
       return NextResponse.json(
         {
           error: 'ML forecast service unavailable',
           fallback: true
         },
-        { status: 503 }
+        { status: 200 }
       );
     }
 
@@ -77,15 +77,28 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
 
-  } catch (error) {
-    console.error('ML forecast error:', error);
-
+  } catch (error: any) {
+    // Handle connection errors gracefully (especially localhost in production)
+    const isConnectionError = 
+      error?.message?.includes('fetch failed') ||
+      error?.message?.includes('ECONNREFUSED') ||
+      error?.code === 'ECONNREFUSED' ||
+      error?.code === 'ETIMEDOUT' ||
+      error?.cause?.code === 'ECONNREFUSED';
+    
+    if (isConnectionError) {
+      console.warn('[ML Forecast Demand] Connection error (ML service unavailable):', error?.message || error?.cause?.message);
+    } else {
+      console.error('[ML Forecast Demand] Error:', error instanceof Error ? error.message : 'Unknown error');
+    }
+    
+    // Return 200 with empty results instead of 500 to prevent breaking the UI
     return NextResponse.json(
       {
         error: 'Failed to fetch demand forecast',
         fallback: true
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
