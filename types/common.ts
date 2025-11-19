@@ -1,6 +1,7 @@
 // Common type definitions used across the application
 
 import { Destination } from './destination';
+export type { Trip } from './trip';
 
 // User type from Supabase Auth
 export interface User {
@@ -31,34 +32,6 @@ export interface Collection {
   updated_at?: string;
   destinations?: Destination[];
   destination_count?: number;
-}
-
-// Trip type
-export interface Trip {
-  id: number;
-  user_id: string;
-  name: string;
-  title?: string; // Alternative field name
-  destination?: string; // Trip destination/location
-  description?: string;
-  start_date?: string;
-  end_date?: string;
-  cover_image_url?: string;
-  status?: string; // Trip status (planning, ongoing, completed, etc.)
-  public: boolean;
-  created_at: string;
-  updated_at?: string;
-  days?: TripDay[];
-}
-
-// Trip Day type
-export interface TripDay {
-  id: number;
-  trip_id: number;
-  day_number: number;
-  date?: string;
-  notes?: string;
-  destinations?: Destination[];
 }
 
 // Visited Place type
