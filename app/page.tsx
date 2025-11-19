@@ -532,7 +532,7 @@ export default function Home() {
           ? nearbyDestinations
           : filteredDestinations;
       const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
-      
+
       if (totalPages <= 1 || viewMode !== 'grid') {
         return;
       }
@@ -658,12 +658,14 @@ export default function Home() {
     try {
       const response = await fetch("/destinations.json");
       if (!response.ok) {
+        console.error("[Fallback] Failed to fetch destinations.json:", response.status);
         throw new Error(
           `Failed to load fallback destinations: ${response.status}`
         );
       }
 
       const raw = await response.json();
+      console.log("[Fallback] Loaded raw destinations:", Array.isArray(raw) ? raw.length : "not array");
       const normalized: Destination[] = (Array.isArray(raw) ? raw : [])
         .map((item: any) => {
           const slug = slugify(item.slug || item.name || "");
@@ -672,9 +674,9 @@ export default function Home() {
             ? item.tags
             : typeof item.cardTags === "string"
               ? item.cardTags
-                  .split(",")
-                  .map((tag: string) => tag.trim())
-                  .filter(Boolean)
+                .split(",")
+                .map((tag: string) => tag.trim())
+                .filter(Boolean)
               : undefined;
 
           return {
@@ -852,8 +854,8 @@ export default function Home() {
 
         const normalized = Array.isArray(payload.results)
           ? payload.results
-              .map(normalizeDiscoveryEngineRecord)
-              .filter((item): item is Destination => Boolean(item))
+            .map(normalizeDiscoveryEngineRecord)
+            .filter((item): item is Destination => Boolean(item))
           : [];
 
         discoveryBootstrapRef.current = normalized;
@@ -1238,6 +1240,22 @@ export default function Home() {
           const filtered = filterDestinationsWithData(discoveryBaseline);
           setFilteredDestinations(filtered);
         }
+      } else {
+        // Fallback if no Discovery Engine results AND no filter data (implies DB issue)
+        console.log("[Filter Data] Checking fallback condition:", {
+          uniqueCities: uniqueCities.length,
+          uniqueCategories: uniqueCategories.length,
+          destinations: destinations.length
+        });
+
+        if (uniqueCities.length === 0 && uniqueCategories.length === 0) {
+          console.log(
+            "[Filter Data] No data from DB or Discovery Engine, applying fallback"
+          );
+          await applyFallbackData({
+            updateDestinations: destinations.length === 0,
+          });
+        }
       }
 
       console.log("[Filter Data] State updated:", {
@@ -1291,6 +1309,10 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    fetchFilterData();
+  }, []);
+
   const filterDestinationsWithData = useCallback(
     (
       dataToFilter: Destination[],
@@ -1320,7 +1342,7 @@ export default function Home() {
             const categoryMatch =
               d.category &&
               d.category.toLowerCase().trim() ===
-                categoryFilter.toLowerCase().trim();
+              categoryFilter.toLowerCase().trim();
 
             // If category matches, include it
             if (categoryMatch) return true;
@@ -2214,82 +2236,82 @@ export default function Home() {
                       >
                         {chatMessages.length > 0
                           ? chatMessages.map((message, index) => (
-                              <div key={index} className="space-y-2">
-                                {message.type === "user" ? (
-                                  <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                    {message.content}
-                                  </div>
-                                ) : (
-                                  <div className="space-y-4">
-                                    <MarkdownRenderer
-                                      content={message.content}
-                                      className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                    />
-                                    {message.contextPrompt && (
-                                      <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                        {message.contextPrompt}
-                                      </div>
+                            <div key={index} className="space-y-2">
+                              {message.type === "user" ? (
+                                <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                  {message.content}
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  <MarkdownRenderer
+                                    content={message.content}
+                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                  />
+                                  {message.contextPrompt && (
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                      {message.contextPrompt}
+                                    </div>
+                                  )}
+                                  {/* Show follow-up suggestions after the last assistant message */}
+                                  {index === chatMessages.length - 1 &&
+                                    followUpSuggestions.length > 0 && (
+                                      <FollowUpSuggestions
+                                        suggestions={followUpSuggestions}
+                                        onSuggestionClick={suggestion => {
+                                          // Only set searchTerm - the useEffect will handle the search
+                                          // This prevents duplicate searches
+                                          setSearchTerm(suggestion);
+                                          setFollowUpInput("");
+                                        }}
+                                        isLoading={searching}
+                                      />
                                     )}
-                                    {/* Show follow-up suggestions after the last assistant message */}
-                                    {index === chatMessages.length - 1 &&
-                                      followUpSuggestions.length > 0 && (
-                                        <FollowUpSuggestions
-                                          suggestions={followUpSuggestions}
-                                          onSuggestionClick={suggestion => {
-                                            // Only set searchTerm - the useEffect will handle the search
-                                            // This prevents duplicate searches
-                                            setSearchTerm(suggestion);
-                                            setFollowUpInput("");
-                                          }}
-                                          isLoading={searching}
-                                        />
-                                      )}
-                                  </div>
-                                )}
-                              </div>
-                            ))
+                                </div>
+                              )}
+                            </div>
+                          ))
                           : null}
 
                         {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
                         {(searching ||
                           (submittedQuery && chatMessages.length === 0)) && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                            <div className="flex items-center gap-2">
-                              {discoveryEngineLoading && (
-                                <div className="flex gap-1">
-                                  <span
-                                    className="animate-bounce"
-                                    style={{
-                                      animationDelay: "0ms",
-                                      animationDuration: "1.4s",
-                                    }}
-                                  >
-                                    .
-                                  </span>
-                                  <span
-                                    className="animate-bounce"
-                                    style={{
-                                      animationDelay: "200ms",
-                                      animationDuration: "1.4s",
-                                    }}
-                                  >
-                                    .
-                                  </span>
-                                  <span
-                                    className="animate-bounce"
-                                    style={{
-                                      animationDelay: "400ms",
-                                      animationDuration: "1.4s",
-                                    }}
-                                  >
-                                    .
-                                  </span>
-                                </div>
-                              )}
-                              <span>{currentLoadingText}</span>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                              <div className="flex items-center gap-2">
+                                {discoveryEngineLoading && (
+                                  <div className="flex gap-1">
+                                    <span
+                                      className="animate-bounce"
+                                      style={{
+                                        animationDelay: "0ms",
+                                        animationDuration: "1.4s",
+                                      }}
+                                    >
+                                      .
+                                    </span>
+                                    <span
+                                      className="animate-bounce"
+                                      style={{
+                                        animationDelay: "200ms",
+                                        animationDuration: "1.4s",
+                                      }}
+                                    >
+                                      .
+                                    </span>
+                                    <span
+                                      className="animate-bounce"
+                                      style={{
+                                        animationDelay: "400ms",
+                                        animationDuration: "1.4s",
+                                      }}
+                                    >
+                                      .
+                                    </span>
+                                  </div>
+                                )}
+                                <span>{currentLoadingText}</span>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
 
                       {/* Follow-up input field - Chat style */}
@@ -2348,7 +2370,7 @@ export default function Home() {
                     )}
                 </div>
               </div>
-              
+
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
@@ -2363,11 +2385,10 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
+                          className={`transition-all duration-200 ease-out ${!selectedCity
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
                         >
                           All Cities
                         </button>
@@ -2380,17 +2401,16 @@ export default function Home() {
                               setCurrentPage(1);
                               trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                             }}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCity === city
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
+                            className={`transition-all duration-200 ease-out ${selectedCity === city
+                              ? "font-medium text-black dark:text-white"
+                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                              }`}
                           >
                             {capitalizeCity(city)}
                           </button>
                         ))}
                       </div>
-                      
+
                       {/* More Cities / Show Less Button */}
                       {cities.length > displayedCities.length && !showAllCities && (
                         <button
@@ -2413,7 +2433,7 @@ export default function Home() {
                         </button>
                       )}
                     </div>
-                    
+
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
                       <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
@@ -2424,11 +2444,10 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCategory && !advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
+                          className={`transition-all duration-200 ease-out ${!selectedCategory && !advancedFilters.michelin
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
                         >
                           All Categories
                         </button>
@@ -2441,11 +2460,10 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                            advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${advancedFilters.michelin
+                            ? "font-medium text-black dark:text-white"
+                            : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
                         >
                           <Image
                             src="/michelin-star.svg"
@@ -2468,11 +2486,10 @@ export default function Home() {
                                 setCurrentPage(1);
                                 trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                               }}
-                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                selectedCategory === category && !advancedFilters.michelin
-                                  ? "font-medium text-black dark:text-white"
-                                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                              }`}
+                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${selectedCategory === category && !advancedFilters.michelin
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                                }`}
                             >
                               {IconComponent && (
                                 <IconComponent className="h-3 w-3" size={12} />
@@ -2552,60 +2569,60 @@ export default function Home() {
           </div>
         )}
 
-              {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 pb-12 mt-8">
-                <div className="max-w-[1800px] mx-auto">
-                {/* Expandable Home Controls */}
-                <div className="mb-6">
-                  <ExpandableHomeControls
-                    cities={cities}
-                    selectedCity={selectedCity}
-                    onCityChange={(city) => {
-                      setSelectedCity(city);
-                      setCurrentPage(1);
-                    }}
-                    displayedCities={displayedCities}
-                    showAllCities={showAllCities}
-                    onToggleShowAllCities={() => setShowAllCities(!showAllCities)}
-                    categories={categories}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={(category) => {
-                      setSelectedCategory(category);
-                      setCurrentPage(1);
-                    }}
-                    advancedFilters={advancedFilters}
-                    onFiltersChange={(newFilters) => {
-                      setAdvancedFilters(newFilters);
-                      if (newFilters.city !== undefined) {
-                        setSelectedCity(newFilters.city || '');
-                      }
-                      if (newFilters.category !== undefined) {
-                        setSelectedCategory(newFilters.category || '');
-                      }
-                      setCurrentPage(1);
-                    }}
-                    availableCities={cities}
-                    availableCategories={categories}
-                    onLocationChange={handleLocationChange}
-                    sortBy={sortBy}
-                    onSortChange={(newSort) => {
-                      setSortBy(newSort);
-                      setCurrentPage(1);
-                    }}
-                    isAdmin={isAdmin}
-                    onTrackFilterChange={trackFilterChange}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                    onCreateTrip={() => {
-                      // Open account drawer -> trips -> create trip
-                      window.dispatchEvent(new CustomEvent('openAccountDrawer', { detail: { subpage: 'trips_subpage' } }));
-                    }}
-                    onAddPOI={() => {
-                      setEditingDestination(null);
-                      setShowPOIDrawer(true);
-                    }}
-                  />
-                </div>
+        {/* Content Section - Grid directly below hero */}
+        <div className="w-full px-6 md:px-10 pb-12 mt-8">
+          <div className="max-w-[1800px] mx-auto">
+            {/* Expandable Home Controls */}
+            <div className="mb-6">
+              <ExpandableHomeControls
+                cities={cities}
+                selectedCity={selectedCity}
+                onCityChange={(city) => {
+                  setSelectedCity(city);
+                  setCurrentPage(1);
+                }}
+                displayedCities={displayedCities}
+                showAllCities={showAllCities}
+                onToggleShowAllCities={() => setShowAllCities(!showAllCities)}
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onCategoryChange={(category) => {
+                  setSelectedCategory(category);
+                  setCurrentPage(1);
+                }}
+                advancedFilters={advancedFilters}
+                onFiltersChange={(newFilters) => {
+                  setAdvancedFilters(newFilters);
+                  if (newFilters.city !== undefined) {
+                    setSelectedCity(newFilters.city || '');
+                  }
+                  if (newFilters.category !== undefined) {
+                    setSelectedCategory(newFilters.category || '');
+                  }
+                  setCurrentPage(1);
+                }}
+                availableCities={cities}
+                availableCategories={categories}
+                onLocationChange={handleLocationChange}
+                sortBy={sortBy}
+                onSortChange={(newSort) => {
+                  setSortBy(newSort);
+                  setCurrentPage(1);
+                }}
+                isAdmin={isAdmin}
+                onTrackFilterChange={trackFilterChange}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onCreateTrip={() => {
+                  // Open account drawer -> trips -> create trip
+                  window.dispatchEvent(new CustomEvent('openAccountDrawer', { detail: { subpage: 'trips_subpage' } }));
+                }}
+                onAddPOI={() => {
+                  setEditingDestination(null);
+                  setShowPOIDrawer(true);
+                }}
+              />
+            </div>
 
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
@@ -2726,13 +2743,30 @@ export default function Home() {
                   ? nearbyDestinations
                   : filteredDestinations;
 
+              console.log("[Render] Destinations state:", {
+                all: destinations.length,
+                filtered: filteredDestinations.length,
+                display: displayDestinations.length,
+                loading: destinationsLoading
+              });
+
               // Always render the grid structure, even if empty (for instant page load)
               // Show empty state if no destinations
-              if (displayDestinations.length === 0 && !advancedFilters.nearMe) {
+              if (destinationsLoading && displayDestinations.length === 0) {
                 return (
                   <div className="text-center py-12 px-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Loading destinations...
+                    </p>
+                  </div>
+                );
+              }
+
+              if (displayDestinations.length === 0 && !advancedFilters.nearMe) {
+                return (
+                  <div className="text-center py-12 px-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No destinations found.
                     </p>
                   </div>
                 );
@@ -2762,95 +2796,95 @@ export default function Home() {
               };
 
               return (
-                  <>
-                    {viewMode === "map" ? (
-                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                        <HomeMapSplitView
-                          destinations={displayDestinations}
-                          selectedDestination={selectedDestination}
-                          onMarkerSelect={destination =>
-                            openDestinationFromMap(destination, "map_marker")
-                          }
-                          onListItemSelect={destination =>
-                            openDestinationFromMap(destination, "map_list")
-                          }
-                        />
-                      </div>
-                    ) : (
+                <>
+                  {viewMode === "map" ? (
+                    <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                      <HomeMapSplitView
+                        destinations={displayDestinations}
+                        selectedDestination={selectedDestination}
+                        onMarkerSelect={destination =>
+                          openDestinationFromMap(destination, "map_marker")
+                        }
+                        onListItemSelect={destination =>
+                          openDestinationFromMap(destination, "map_list")
+                        }
+                      />
+                    </div>
+                  ) : (
                     (() => {
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
+                      const startIndex = (currentPage - 1) * itemsPerPage;
+                      const endIndex = startIndex + itemsPerPage;
                       const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-                    return (
-                      <UniversalGrid
-                        items={paginatedDestinations}
-                        renderItem={(destination, index) => {
-                          const isVisited = !!(
-                            user && visitedSlugs.has(destination.slug)
-                          );
-                          const globalIndex = startIndex + index;
+                      return (
+                        <UniversalGrid
+                          items={paginatedDestinations}
+                          renderItem={(destination, index) => {
+                            const isVisited = !!(
+                              user && visitedSlugs.has(destination.slug)
+                            );
+                            const globalIndex = startIndex + index;
 
-                          return (
-                            <DestinationCard
-                              key={destination.slug}
-                              destination={destination}
-                              isAdmin={isAdmin}
-                              onEdit={dest => {
-                                setEditingDestination(dest);
-                                setShowPOIDrawer(true);
-                              }}
-                              showEditAffordance={editModeActive}
-                            onClick={() => {
-                              setSelectedDestination(destination);
-                              setIsDrawerOpen(true);
+                            return (
+                              <DestinationCard
+                                key={destination.slug}
+                                destination={destination}
+                                isAdmin={isAdmin}
+                                onEdit={dest => {
+                                  setEditingDestination(dest);
+                                  setShowPOIDrawer(true);
+                                }}
+                                showEditAffordance={editModeActive}
+                                onClick={() => {
+                                  setSelectedDestination(destination);
+                                  setIsDrawerOpen(true);
 
-                              // Track destination click
-                              trackDestinationClick({
-                                destinationSlug: destination.slug,
-                                position: globalIndex,
-                                source: "grid",
-                              });
+                                  // Track destination click
+                                  trackDestinationClick({
+                                    destinationSlug: destination.slug,
+                                    position: globalIndex,
+                                    source: "grid",
+                                  });
 
-                              // Also track with new analytics system
-                              if (destination.id) {
-                                import("@/lib/analytics/track").then(
-                                  ({ trackEvent }) => {
-                                    trackEvent({
-                                      event_type: "click",
-                                      destination_id: destination.id,
-                                      destination_slug: destination.slug,
-                                      metadata: {
-                                        category: destination.category,
-                                        city: destination.city,
-                                        source: "homepage_grid",
-                                        position: globalIndex,
+                                  // Also track with new analytics system
+                                  if (destination.id) {
+                                    import("@/lib/analytics/track").then(
+                                      ({ trackEvent }) => {
+                                        trackEvent({
+                                          event_type: "click",
+                                          destination_id: destination.id,
+                                          destination_slug: destination.slug,
+                                          metadata: {
+                                            category: destination.category,
+                                            city: destination.city,
+                                            source: "homepage_grid",
+                                            position: globalIndex,
+                                          },
+                                        });
+                                      }
+                                    );
+                                  }
+
+                                  // Track click event to Discovery Engine for personalization
+                                  if (user?.id) {
+                                    fetch("/api/discovery/track-event", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
                                       },
+                                      body: JSON.stringify({
+                                        userId: user.id,
+                                        eventType: "click",
+                                        documentId: destination.slug,
+                                      }),
+                                    }).catch(error => {
+                                      console.warn(
+                                        "Failed to track click event:",
+                                        error
+                                      );
                                     });
                                   }
-                                );
-                              }
-
-                              // Track click event to Discovery Engine for personalization
-                              if (user?.id) {
-                                fetch("/api/discovery/track-event", {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    userId: user.id,
-                                    eventType: "click",
-                                    documentId: destination.slug,
-                                  }),
-                                }).catch(error => {
-                                  console.warn(
-                                    "Failed to track click event:",
-                                    error
-                                  );
-                                });
-                              }
-                            }}
+                                }}
                                 index={globalIndex}
                                 isVisited={isVisited}
                                 showBadges={true}
@@ -2916,11 +2950,10 @@ export default function Home() {
                                   <button
                                     key={pageNum}
                                     onClick={() => setCurrentPage(pageNum)}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
-                                      isActive
-                                        ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
-                                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                                    }`}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${isActive
+                                      ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
+                                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                                      }`}
                                     aria-label={`Page ${pageNum}`}
                                     aria-current={isActive ? "page" : undefined}
                                   >
@@ -2968,8 +3001,8 @@ export default function Home() {
                 </>
               );
             })()}
-              </div>
-            </div>
+          </div>
+        </div>
 
         {/* Destination Drawer */}
         <DestinationDrawer

@@ -54,7 +54,7 @@ export default function GooglePlacesAutocompleteNative({
 
     setIsLoading(true);
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-    
+
     if (!apiKey) {
       console.error('Google Maps API key not found');
       setIsLoading(false);
@@ -67,7 +67,7 @@ export default function GooglePlacesAutocompleteNative({
     script.async = true;
     script.defer = true;
     script.setAttribute('data-google-maps-autocomplete', 'true');
-    
+
     script.onload = () => {
       // Wait for PlaceAutocompleteElement to be available
       const checkPlaceElement = setInterval(() => {
@@ -113,106 +113,104 @@ export default function GooglePlacesAutocompleteNative({
       // Clear container
       containerRef.current.innerHTML = '';
 
-      // Create the PlaceAutocompleteElement
-      // PlaceAutocompleteElement requires an options object, but doesn't accept requestedResultTypes in constructor
-      // Pass empty options object, then try to set properties if needed
-      const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({} as google.maps.places.PlaceAutocompleteElementOptions);
-      
-      // Try to set requestedResultTypes as a property (may not be supported)
-      if (types && types.length > 0) {
-        try {
-          // @ts-ignore - requestedResultTypes may exist as a property
-          (autocompleteElement as any).requestedResultTypes = types;
-        } catch (e) {
-          // Property may not be settable, ignore
-          console.warn('Could not set requestedResultTypes on PlaceAutocompleteElement');
-        }
-      }
+      try {
+        // Create the PlaceAutocompleteElement
+        const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({} as google.maps.places.PlaceAutocompleteElementOptions);
 
-      // Set up the input element
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = value;
-      input.placeholder = placeholder;
-      input.className = className;
-      input.disabled = isLoading;
-
-      // Append input to container
-      containerRef.current.appendChild(input);
-      // @ts-ignore - attachTo may exist at runtime even if not in TypeScript definitions
-      (autocompleteElement as any).attachTo(input);
-
-      autocompleteElementRef.current = autocompleteElement as any;
-
-      // Handle input changes to sync with parent
-      input.addEventListener('input', (e) => {
-        const target = e.target as HTMLInputElement;
-        if (target.value !== value) {
-          onChange(target.value);
-        }
-      });
-
-      // Handle place selection
-      autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
-        const place = event.place;
-        
-        if (!place.id) {
-          return;
+        // Try to set requestedResultTypes as a property (may not be supported)
+        if (types && types.length > 0) {
+          try {
+            // @ts-ignore - requestedResultTypes may exist as a property
+            (autocompleteElement as any).requestedResultTypes = types;
+          } catch (e) {
+            // Property may not be settable, ignore
+            console.warn('Could not set requestedResultTypes on PlaceAutocompleteElement');
+          }
         }
 
-        // Fetch full place details
-        const placeDetails = await place.fetchFields({
-          fields: ['id', 'displayName', 'formattedAddress', 'location', 'types', 'photos'],
+        // Append the autocomplete element directly to container
+        // PlaceAutocompleteElement is a custom element that renders its own input
+        containerRef.current.appendChild(autocompleteElement as any);
+        autocompleteElementRef.current = autocompleteElement as any;
+
+        // Get the input element that was created by PlaceAutocompleteElement
+        const input = (autocompleteElement as any).querySelector?.('input') ||
+          containerRef.current.querySelector('input');
+
+        if (input) {
+          input.value = value;
+          input.placeholder = placeholder;
+          input.className = className;
+          input.disabled = isLoading;
+
+          // Handle input changes to sync with parent
+          input.addEventListener('input', (e: Event) => {
+            const target = e.target as HTMLInputElement;
+            if (target.value !== value) {
+              onChange(target.value);
+            }
+          });
+        }
+
+        // Handle place selection
+        autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
+          const place = event.place;
+
+          if (!place.id) {
+            return;
+          }
+
+          // Fetch full place details
+          const placeDetails = await place.fetchFields({
+            fields: ['id', 'displayName', 'formattedAddress', 'location', 'types', 'photos'],
+          });
+
+          // Update input value
+          const placeName = placeDetails.displayName || placeDetails.formattedAddress || '';
+          onChange(placeName);
+
+          // Track Google Autocomplete usage for trip planning
+          if (typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'trip_place_autocomplete', {
+              place_id: placeDetails.id,
+              place_name: placeName,
+              place_types: placeDetails.types?.join(',') || '',
+              has_geometry: !!placeDetails.location,
+            });
+          }
+
+          // Call onPlaceSelect callback with place details
+          if (onPlaceSelect) {
+            onPlaceSelect({
+              place_id: placeDetails.id,
+              placeId: placeDetails.id,
+              name: placeDetails.displayName,
+              formatted_address: placeDetails.formattedAddress,
+              geometry: placeDetails.location ? {
+                location: {
+                  lat: () => placeDetails.location.lat,
+                  lng: () => placeDetails.location.lng,
+                },
+              } : undefined,
+              types: placeDetails.types,
+              photos: placeDetails.photos,
+            });
+          }
         });
 
-        // Update input value
-        const placeName = placeDetails.displayName || placeDetails.formattedAddress || '';
-        onChange(placeName);
+        return () => {
+          if (containerRef.current) {
+            containerRef.current.innerHTML = '';
+          }
+          autocompleteElementRef.current = null;
+        };
+      } catch (error) {
+        console.error('Error initializing PlaceAutocompleteElement:', error);
+        // Fall through to old Autocomplete API
+      }
+    }
 
-        // Track Google Autocomplete usage for trip planning
-        if (typeof window !== 'undefined' && (window as any).gtag) {
-          (window as any).gtag('event', 'trip_place_autocomplete', {
-            place_id: placeDetails.id,
-            place_name: placeName,
-            place_types: placeDetails.types?.join(',') || '',
-            has_geometry: !!placeDetails.location,
-          });
-        }
-
-        // Call onPlaceSelect callback with place details
-        if (onPlaceSelect) {
-          onPlaceSelect({
-            place_id: placeDetails.id,
-            placeId: placeDetails.id,
-            name: placeDetails.displayName,
-            formatted_address: placeDetails.formattedAddress,
-            geometry: placeDetails.location ? {
-              location: {
-                lat: () => placeDetails.location.lat,
-                lng: () => placeDetails.location.lng,
-              },
-            } : undefined,
-            types: placeDetails.types,
-            photos: placeDetails.photos,
-          });
-        }
-      });
-
-      // Sync external value changes
-      const syncValue = () => {
-        if (input.value !== value) {
-          input.value = value;
-        }
-      };
-      syncValue();
-
-      return () => {
-        if (containerRef.current) {
-          containerRef.current.innerHTML = '';
-        }
-        autocompleteElementRef.current = null;
-      };
-    } else if (window.google?.maps?.places?.Autocomplete) {
+    if (window.google?.maps?.places?.Autocomplete) {
       // Fallback to old Autocomplete API (for backward compatibility)
       const input = document.createElement('input');
       input.type = 'text';
@@ -225,11 +223,11 @@ export default function GooglePlacesAutocompleteNative({
       const autocompleteOptions: google.maps.places.AutocompleteOptions = {
         fields: ['place_id', 'name', 'formatted_address', 'geometry', 'types', 'photos'],
       };
-      
+
       if (types && types.length > 0) {
         autocompleteOptions.types = types;
       }
-      
+
       const autocomplete = new google.maps.places.Autocomplete(input, autocompleteOptions);
       autocompleteElementRef.current = autocomplete as any;
 
@@ -243,7 +241,7 @@ export default function GooglePlacesAutocompleteNative({
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        
+
         if (!place.place_id) {
           return;
         }

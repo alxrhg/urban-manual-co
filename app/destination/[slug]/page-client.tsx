@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Bookmark, Check, Plus, ChevronDown, X } from 'lucide-react';
@@ -130,7 +131,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         console.warn('Failed to track view event:', error);
       });
     }
-    
+
     if (destination?.id) {
       trackEvent({
         event_type: 'view',
@@ -255,7 +256,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         }
 
         setIsVisited(true);
-        
+
         // Track visit action for sequence prediction
         trackAction({
           type: 'visit',
@@ -405,13 +406,12 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           <div className="space-y-3">
             {/* Location */}
             <div className="flex items-center gap-2">
-              <a
-                href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 text-xs"
-              >
-                <MapPin className="h-3 w-3" />
-                {destination.country ? `${cityName}, ${destination.country}` : cityName}
-              </a>
+              <Link href={`/destinations/cities/${encodeURIComponent(destination.city)}`} className="hover:underline">
+                <a className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 text-xs">
+                  <MapPin className="h-3 w-3" />
+                  {destination.country ? `${cityName}, ${destination.country}` : cityName}
+                </a>
+              </Link>
             </div>
 
             {/* Title and Action Buttons */}
@@ -427,11 +427,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                         setShowSaveModal(true);
                       }
                     }}
-                    className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
-                      isSaved
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+                    className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${isSaved
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                   >
                     <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
                     {isSaved ? 'Saved' : 'Save'}
@@ -441,11 +440,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
-                          isVisited
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        }`}
+                        className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${isVisited
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
                         onClick={(e) => {
                           if (!isVisited) {
                             e.preventDefault();
@@ -491,7 +489,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   onClick={() => router.push(`/destination/${parentDestination.slug}`)}
                 />
               )}
-              
+
               {destination.category && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
                   {formatLabel(destination.category)}
@@ -524,10 +522,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {(enrichedData?.rating || destination.rating) && (
                 <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
                   {enrichedData?.user_ratings_total && (
@@ -565,8 +563,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         {/* Sequence Predictions - Show next suggested actions */}
         {user && predictions && predictions.predictions && predictions.predictions.length > 0 && (
           <div className="mt-4">
-            <SequencePredictionsInline 
-              predictions={predictions.predictions} 
+            <SequencePredictionsInline
+              predictions={predictions.predictions}
               compact={false}
             />
           </div>
@@ -577,13 +575,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           <div className="mt-4 space-y-4">
             {/* Anomaly Alert */}
             <AnomalyAlert destinationId={destination.id} type="traffic" />
-            
+
             {/* Forecast Info */}
             <ForecastInfo destinationId={destination.id} />
-            
+
             {/* Sentiment Analysis */}
             <SentimentDisplay destinationId={destination.id} days={30} />
-            
+
             {/* Topics */}
             <TopicsDisplay destinationId={destination.id} minTopicSize={3} />
           </div>
@@ -819,7 +817,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   });
                 if (!error) {
                   setIsSaved(true);
-                  
+
                   // Track save action for sequence prediction
                   trackAction({
                     type: 'save',

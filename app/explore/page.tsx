@@ -217,7 +217,7 @@ export default function ExplorePage() {
               <h2 className="text-2xl font-bold">Popular Cities</h2>
             </div>
             <button
-              onClick={() => router.push('/cities')}
+              onClick={() => router.push('/destinations/cities')}
               className="text-sm font-bold hover:opacity-60 transition-opacity flex items-center gap-1"
             >
               View All
@@ -228,7 +228,7 @@ export default function ExplorePage() {
             {popularCities.map((city, index) => (
               <button
                 key={city.city}
-                onClick={() => router.push(`/city/${encodeURIComponent(city.city)}`)}
+                onClick={() => router.push(`/destinations/cities/${encodeURIComponent(city.city)}`)}
                 className="group p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-200 text-left animate-in fade-in slide-in-from-bottom-4"
                 style={{ animationDelay: `${index * 50}ms` }}
               >

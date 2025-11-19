@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.95,
     },
     {
-      url: `${baseUrl}/cities`,
+      url: `${baseUrl}/destinations/cities`,
       lastModified: currentDate,
       changeFrequency: 'weekly',
       priority: 0.9,
@@ -71,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/trips`,
+      url: `${baseUrl}/planning/trips`,
       lastModified: currentDate,
       changeFrequency: 'daily',
       priority: 0.7,
@@ -80,7 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // City pages - important for discovery
   const cityPages: MetadataRoute.Sitemap = cities.map(city => ({
-    url: `${baseUrl}/city/${encodeURIComponent(city)}`,
+    url: `${baseUrl}/destinations/cities/${encodeURIComponent(city)}`,
     lastModified: currentDate,
     changeFrequency: 'weekly',
     priority: 0.85,

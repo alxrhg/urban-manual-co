@@ -63,7 +63,7 @@ async function handleGenerateSitemapJob(request: NextRequest, body: any) {
     // City pages
     cities.forEach(city => {
       xml += '  <url>\n';
-      xml += `    <loc>${BASE_URL}/city/${encodeURIComponent(city)}</loc>\n`;
+      xml += `    <loc>${BASE_URL}/destinations/cities/${encodeURIComponent(city)}</loc>\n`;
       xml += `    <changefreq>weekly</changefreq>\n`;
       xml += `    <priority>0.8</priority>\n`;
       xml += '  </url>\n';
@@ -109,8 +109,8 @@ async function handleGenerateSitemapJob(request: NextRequest, body: any) {
   } catch (error) {
     console.error('Generate sitemap job error:', error);
     return NextResponse.json(
-      { 
-        error: 'Internal server error', 
+      {
+        error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

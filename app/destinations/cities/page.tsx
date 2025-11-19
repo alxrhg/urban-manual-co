@@ -115,12 +115,12 @@ export default function CitiesPage() {
 
   const applyFilters = (cities: CityStats[], country: string, filters: typeof advancedFilters) => {
     let filtered = [...cities];
-    
+
     // Country filter
     if (country) {
       filtered = filtered.filter(c => c.country === country);
     }
-    
+
     setFilteredCities(filtered);
     // Reset display count when filters change
     setDisplayCount(itemsPerPage);
@@ -181,11 +181,11 @@ export default function CitiesPage() {
         .sort((a, b) => b.count - a.count); // Sort by count descending
 
       setCityStats(stats);
-      
+
       // Extract unique countries
       const uniqueCountries = Array.from(new Set(stats.map(s => s.country).filter(Boolean))) as string[];
       setCountries(uniqueCountries.sort());
-      
+
       // Apply initial filtering
       applyFilters(stats, selectedCountry, advancedFilters);
     } catch (error) {
@@ -243,172 +243,170 @@ export default function CitiesPage() {
   return (
     <>
       <main className="relative min-h-screen bg-white dark:bg-gray-900">
-      {/* Hero Section */}
-      <section className="px-6 md:px-10 py-12 md:py-16">
-        <div className="max-w-[1800px] mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 ease-out mb-8"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            <span>Back to Discovery</span>
-          </button>
+        {/* Hero Section */}
+        <section className="px-6 md:px-10 py-12 md:py-16">
+          <div className="max-w-[1800px] mx-auto">
+            {/* Back Button */}
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 ease-out mb-8"
+            >
+              <ArrowLeft className="h-3 w-3" />
+              <span>Back to Discovery</span>
+            </button>
 
-          {/* Hero Content */}
-          <div className="space-y-4 mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight text-black dark:text-white">
-              Cities Around the World
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-              Explore destinations curated by locals and travelers. Each city tells a story through its places—from hidden cafes to celebrated landmarks.
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-              {cityStats.length} cities • {countries.length} countries
-            </p>
-          </div>
+            {/* Hero Content */}
+            <div className="space-y-4 mb-12">
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight text-black dark:text-white">
+                Cities Around the World
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                Explore destinations curated by locals and travelers. Each city tells a story through its places—from hidden cafes to celebrated landmarks.
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                {cityStats.length} cities • {countries.length} countries
+              </p>
+            </div>
 
-          {/* Featured Cities Carousel - At the top */}
-          {featuredCities.length > 0 && (
-            <div className="mb-12">
-              <div className="mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold mb-2 text-black dark:text-white">Featured Cities</h2>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Most explored destinations this month
-                </p>
-              </div>
-              {/* Horizontal scrolling carousel */}
-              <div className="relative -mx-6 md:-mx-10">
-                <div className="overflow-x-auto scrollbar-hide px-6 md:px-10">
-                  <div className="flex gap-5 md:gap-7 lg:gap-8 pb-4">
-                    {featuredCities.map((cityData) => (
-                      <div key={cityData.city} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px]">
-                        <DestinationCard
-                          destination={cityStatsToDestination(cityData)}
-                          onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
-                          isAdmin={isAdmin}
-                          onEdit={isAdmin ? () => {
-                            setCityToEdit(cityData);
-                            setIsEditDrawerOpen(true);
-                          } : undefined}
-                          showBadges={false}
-                        />
-                      </div>
-                    ))}
+            {/* Featured Cities Carousel - At the top */}
+            {featuredCities.length > 0 && (
+              <div className="mb-12">
+                <div className="mb-6">
+                  <h2 className="text-2xl md:text-3xl font-bold mb-2 text-black dark:text-white">Featured Cities</h2>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Most explored destinations this month
+                  </p>
+                </div>
+                {/* Horizontal scrolling carousel */}
+                <div className="relative -mx-6 md:-mx-10">
+                  <div className="overflow-x-auto scrollbar-hide px-6 md:px-10">
+                    <div className="flex gap-5 md:gap-7 lg:gap-8 pb-4">
+                      {featuredCities.map((cityData) => (
+                        <div key={cityData.city} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px]">
+                          <DestinationCard
+                            destination={cityStatsToDestination(cityData)}
+                            onClick={() => router.push(`/destinations/cities/${encodeURIComponent(cityData.city)}`)}
+                            isAdmin={isAdmin}
+                            onEdit={isAdmin ? () => {
+                              setCityToEdit(cityData);
+                              setIsEditDrawerOpen(true);
+                            } : undefined}
+                            showBadges={false}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Country Filter Panel */}
-          {countries.length > 0 && (
-            <div className="mb-12">
-              <div className="mb-4">
-                <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
-                  Explore by Country
+            {/* Country Filter Panel */}
+            {countries.length > 0 && (
+              <div className="mb-12">
+                <div className="mb-4">
+                  <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+                    Explore by Country
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Select a country to discover its cities
+                  </p>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Select a country to discover its cities
-                </p>
-              </div>
 
-              <div className="flex flex-wrap gap-x-5 gap-y-3">
-                <button
-                  onClick={() => {
-                    setSelectedCountry("");
-                    setAdvancedFilters(prev => ({ ...prev, city: undefined }));
-                  }}
-                  className={`text-xs font-medium transition-all duration-200 ease-out ${
-                    !selectedCountry
-                      ? "text-black dark:text-white"
-                      : "text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                  }`}
-                >
-                  All Countries
-                </button>
-                {countries.map((country) => (
+                <div className="flex flex-wrap gap-x-5 gap-y-3">
                   <button
-                    key={country}
                     onClick={() => {
-                      const newCountry = country === selectedCountry ? "" : country;
-                      setSelectedCountry(newCountry);
+                      setSelectedCountry("");
                       setAdvancedFilters(prev => ({ ...prev, city: undefined }));
                     }}
-                    className={`text-xs font-medium transition-all duration-200 ease-out ${
-                      selectedCountry === country
+                    className={`text-xs font-medium transition-all duration-200 ease-out ${!selectedCountry
+                      ? "text-black dark:text-white"
+                      : "text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                      }`}
+                  >
+                    All Countries
+                  </button>
+                  {countries.map((country) => (
+                    <button
+                      key={country}
+                      onClick={() => {
+                        const newCountry = country === selectedCountry ? "" : country;
+                        setSelectedCountry(newCountry);
+                        setAdvancedFilters(prev => ({ ...prev, city: undefined }));
+                      }}
+                      className={`text-xs font-medium transition-all duration-200 ease-out ${selectedCountry === country
                         ? "text-black dark:text-white"
                         : "text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                    }`}
-                  >
-                    {country}
-                  </button>
-                ))}
+                        }`}
+                    >
+                      {country}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
 
-      {/* Grid Section */}
-      <div className="pb-12 px-6 md:px-10">
-        <div className="max-w-[1800px] mx-auto">
-          {filteredCities.length === 0 ? (
-            <div className="text-center py-16">
-              <span className="text-sm text-gray-600 dark:text-gray-400">No cities found</span>
-            </div>
-          ) : (
-            <>
-              <UniversalGrid
-                items={filteredCities.slice(0, displayCount)}
-                gap="md"
-                renderItem={(cityData) => (
-                  <DestinationCard
-                    key={cityData.city}
-                    destination={cityStatsToDestination(cityData)}
-                    onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
-                    isAdmin={isAdmin}
-                    onEdit={isAdmin ? () => {
-                      setCityToEdit(cityData);
-                      setIsEditDrawerOpen(true);
-                    } : undefined}
-                    showBadges={false}
-                  />
-                )}
-              />
-
-              {/* Show More Button */}
-              {displayCount < filteredCities.length && (
-                <div className="mt-8 flex justify-center">
-                  <button
-                    onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
-                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
-                  >
-                    Show More ({filteredCities.length - displayCount} remaining)
-                  </button>
-                </div>
-              )}
-
-              {/* Horizontal Ad below pagination */}
-              {filteredCities.length > 0 && (
-                <div className="mt-8 w-full">
-                  <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-white dark:bg-gray-900">
-                    <div className="text-xs text-gray-400 dark:text-gray-500 mb-2 text-center uppercase tracking-wide">Sponsored</div>
-                    <ins
-                      className="adsbygoogle"
-                      style={{ display: 'block', height: '90px' }}
-                      data-ad-client="ca-pub-3052286230434362"
-                      data-ad-slot="3271683710"
-                      data-ad-format="horizontal"
-                      data-full-width-responsive="false"
+        {/* Grid Section */}
+        <div className="pb-12 px-6 md:px-10">
+          <div className="max-w-[1800px] mx-auto">
+            {filteredCities.length === 0 ? (
+              <div className="text-center py-16">
+                <span className="text-sm text-gray-600 dark:text-gray-400">No cities found</span>
+              </div>
+            ) : (
+              <>
+                <UniversalGrid
+                  items={filteredCities.slice(0, displayCount)}
+                  gap="md"
+                  renderItem={(cityData) => (
+                    <DestinationCard
+                      key={cityData.city}
+                      destination={cityStatsToDestination(cityData)}
+                      onClick={() => router.push(`/destinations/cities/${encodeURIComponent(cityData.city)}`)}
+                      isAdmin={isAdmin}
+                      onEdit={isAdmin ? () => {
+                        setCityToEdit(cityData);
+                        setIsEditDrawerOpen(true);
+                      } : undefined}
+                      showBadges={false}
                     />
+                  )}
+                />
+
+                {/* Show More Button */}
+                {displayCount < filteredCities.length && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
+                      className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
+                    >
+                      Show More ({filteredCities.length - displayCount} remaining)
+                    </button>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+
+                {/* Horizontal Ad below pagination */}
+                {filteredCities.length > 0 && (
+                  <div className="mt-8 w-full">
+                    <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-white dark:bg-gray-900">
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-2 text-center uppercase tracking-wide">Sponsored</div>
+                      <ins
+                        className="adsbygoogle"
+                        style={{ display: 'block', height: '90px' }}
+                        data-ad-client="ca-pub-3052286230434362"
+                        data-ad-slot="3271683710"
+                        data-ad-format="horizontal"
+                        data-full-width-responsive="false"
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
       </main>
 
       {isAdmin && (

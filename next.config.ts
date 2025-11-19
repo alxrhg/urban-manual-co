@@ -203,6 +203,7 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     unoptimized: false, // Ensure image optimization is enabled
+    loader: 'default',
     remotePatterns: (() => {
       const patterns: { protocol: 'https'; hostname: string }[] = []
       try {
@@ -211,7 +212,7 @@ const nextConfig: NextConfig = {
           const { hostname } = new URL(supabaseUrl)
           patterns.push({ protocol: 'https', hostname })
         }
-      } catch {}
+      } catch { }
       // Add common image CDN domains
       patterns.push(
         { protocol: 'https', hostname: 'guide.michelin.com' },
@@ -225,7 +226,10 @@ const nextConfig: NextConfig = {
         { protocol: 'https', hostname: 'images.unsplash.com' },
         { protocol: 'https', hostname: 'images.pexels.com' },
         { protocol: 'https', hostname: 'assets-global.website-files.com' },
-        { protocol: 'https', hostname: 'images.ctfassets.net' }
+        { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
+        { protocol: 'https', hostname: 'images.ctfassets.net' },
+        { protocol: 'https', hostname: 'framerusercontent.com' },
+        { protocol: 'https', hostname: 'cdn.sanity.io' }
       )
       return patterns
     })(),

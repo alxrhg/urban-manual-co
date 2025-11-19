@@ -5,13 +5,37 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 function normalizePrivateKey(pk: string): string {
-  // Handle env var with escaped newlines
-  let key = pk.replace(/\\n/g, '\n');
-  // Ensure proper PEM headers if missing
+  // Handle env var with escaped newlines (\\n -> actual newlines)
+  let key = pk.replace(/\\\\n/g, '\n');
+
+  // Remove any extra whitespace or quotes
+  key = key.trim().replace(/^["']|["']$/g, '');
+
+  // Ensure proper PEM format with headers
   if (!key.includes('BEGIN PRIVATE KEY')) {
+    // If no headers, add them
     key = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+  } else {
+    // Ensure headers are on their own lines
+    key = key
+      .replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n')
+      .replace(/\s*-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----');
   }
-  return key;
+
+  // Ensure there are newlines in the key body (not one long line)
+  // Split by newlines, filter out headers, rejoin in 64-char chunks
+  const lines = key.split('\n');
+  const beginLine = lines.find(l => l.includes('BEGIN PRIVATE KEY'));
+  const endLine = lines.find(l => l.includes('END PRIVATE KEY'));
+  const keyBody = lines
+    .filter(l => !l.includes('BEGIN') && !l.includes('END'))
+    .join('')
+    .replace(/\s/g, ''); // Remove all whitespace
+
+  // Split into 64-character lines (standard PEM format)
+  const formattedBody = keyBody.match(/.{1,64}/g)?.join('\n') || keyBody;
+
+  return `${beginLine}\n${formattedBody}\n${endLine}`;
 }
 
 export async function GET(request: Request) {
@@ -40,7 +64,7 @@ export async function GET(request: Request) {
       if (refererHeader) {
         refererOrigin = new URL(refererHeader).origin.replace(/\/$/, '');
       }
-    } catch {}
+    } catch { }
     const fallbackOrigin = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
     const origin = originHeader || refererOrigin || fallbackOrigin;
 
