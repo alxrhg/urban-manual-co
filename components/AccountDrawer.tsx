@@ -844,56 +844,59 @@ export function AccountDrawer({
     </div>
   );
 
+  // Render header with back button for subpages (Tier 2)
+  const renderHeader = () => {
+    if (currentSubpage === 'main_drawer') {
+      return null;
+    }
+
+    return (
+      <div className="sticky top-0 z-10 flex items-center gap-3 px-6 pb-4 pt-5">
+        <button
+          onClick={navigateBack}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900/80 text-white shadow-sm ring-1 ring-white/15 transition hover:bg-gray-800/90 dark:bg-white/10 dark:text-white"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h2 className="text-lg font-semibold text-white drop-shadow-sm dark:text-white flex-1">{getDrawerTitle()}</h2>
+        <div className="w-10" />
+      </div>
+    );
+  };
+
+  const wrapWithSubpageHeader = (content: ReactNode) => {
+    if (currentSubpage === 'main_drawer') return content;
+
+    return (
+      <div className="relative flex h-full flex-col">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-gray-950/80 via-gray-950/50 to-transparent dark:from-black/80 dark:via-black/40" />
+        {renderHeader()}
+        <div className="flex-1 overflow-y-auto">{content}</div>
+      </div>
+    );
+  };
+
   // Render content based on current subpage
   const renderContent = () => {
     switch (currentSubpage) {
       case 'visited_subpage':
-        return renderVisitedSubpage();
+        return wrapWithSubpageHeader(renderVisitedSubpage());
       case 'saved_subpage':
-        return renderSavedSubpage();
+        return wrapWithSubpageHeader(renderSavedSubpage());
       case 'collections_subpage':
-        return renderCollectionsSubpage();
+        return wrapWithSubpageHeader(renderCollectionsSubpage());
       case 'trips_subpage':
-        return renderTripsSubpage();
+        return wrapWithSubpageHeader(renderTripsSubpage());
       case 'trip_details_subpage':
-        return renderTripDetailsSubpage();
+        return wrapWithSubpageHeader(renderTripDetailsSubpage());
       case 'achievements_subpage':
-        return renderAchievementsSubpage();
+        return wrapWithSubpageHeader(renderAchievementsSubpage());
       case 'settings_subpage':
-        return renderSettingsSubpage();
+        return wrapWithSubpageHeader(renderSettingsSubpage());
       default:
         return renderMainDrawer();
     }
-  };
-
-  // Render header with back button for subpages (Tier 2)
-  const renderHeader = () => {
-    if (currentSubpage === 'main_drawer') {
-      return undefined; // Use default header
-    }
-
-    return (
-      <div 
-        className="flex items-center gap-3 px-6 h-14"
-        style={{
-          background: 'rgba(18,18,18,0.6)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-        }}
-      >
-        <button
-          onClick={navigateBack}
-          className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
-          aria-label="Back"
-        >
-          <ArrowLeft className="h-5 w-5 text-[#F5F5F5] dark:text-[#F5F5F5]" />
-        </button>
-        <h2 className="text-[20px] font-semibold text-[#F5F5F5] dark:text-[#F5F5F5] flex-1" style={{ fontWeight: 600 }}>
-          {getDrawerTitle()}
-        </h2>
-        <div className="w-9" /> {/* Spacer for centering */}
-      </div>
-    );
   };
 
   // Determine z-index based on subpage tier
@@ -908,11 +911,11 @@ export function AccountDrawer({
   const isTier2 = currentSubpage !== 'main_drawer';
 
   return (
-    <Drawer 
-      isOpen={isOpen} 
+    <Drawer
+      isOpen={isOpen}
       onClose={onClose}
-      title={currentSubpage === 'main_drawer' ? undefined : getDrawerTitle()}
-      headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
+      title={undefined}
+      headerContent={undefined}
       mobileVariant="bottom"
       desktopSpacing="right-4 top-4 bottom-4"
       desktopWidth="420px"
