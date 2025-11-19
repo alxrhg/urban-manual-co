@@ -59,10 +59,12 @@ export function Drawer({
   keepStateOnClose = false, // Changed default to false to prevent multiple drawers
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const initialTransformRef = useRef<string>('');
   const activeDirectionRef = useRef<'horizontal' | 'vertical' | null>(null);
+  const verticalSwipeEligibleRef = useRef(false);
 
   // Prevent body scroll when drawer is open (but keep page visible)
   useEffect(() => {
@@ -106,6 +108,9 @@ export function Drawer({
       startXRef.current = e.touches[0].clientX;
       startYRef.current = e.touches[0].clientY;
       activeDirectionRef.current = null;
+      const isTouchWithinContent = contentRef.current?.contains(e.target as Node) ?? false;
+      const isContentAtTop = (contentRef.current?.scrollTop ?? 0) <= 0;
+      verticalSwipeEligibleRef.current = isTouchWithinContent && isContentAtTop;
       initialTransformRef.current = drawer.style.transform;
       drawer.style.transition = 'none';
     };
@@ -122,7 +127,7 @@ export function Drawer({
         const absY = Math.abs(diffY);
         if (absX > absY && absX > 10) {
           activeDirectionRef.current = 'horizontal';
-        } else if (absY > absX && absY > 10) {
+        } else if (absY > absX && absY > 10 && verticalSwipeEligibleRef.current) {
           activeDirectionRef.current = 'vertical';
         } else {
           return;
@@ -269,7 +274,10 @@ export function Drawer({
           )}
 
           {/* Content - Independent scroll */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">
+          <div
+            ref={contentRef}
+            className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full"
+          >
             {children}
           </div>
 
