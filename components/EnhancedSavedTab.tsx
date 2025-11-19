@@ -25,6 +25,9 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recent' | 'name'>('recent');
 
+  const handleBrowseTopCities = () => router.push('/cities');
+  const handleImportTrip = () => router.push('/trips');
+
   // Extract unique cities and categories
   const { cities, categories } = useMemo(() => {
     const citiesSet = new Set<string>();
@@ -63,7 +66,12 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
   }, [savedPlaces, filterCity, filterCategory, sortBy]);
 
   if (savedPlaces.length === 0) {
-    return <NoSavedPlacesEmptyState />;
+    return (
+      <NoSavedPlacesEmptyState
+        onBrowseTopCities={handleBrowseTopCities}
+        onImportTrip={handleImportTrip}
+      />
+    );
   }
 
   return (

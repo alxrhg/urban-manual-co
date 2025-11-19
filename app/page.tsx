@@ -65,6 +65,7 @@ import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { NoResultsEmptyState } from '@/components/EmptyStates';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -392,6 +393,10 @@ export default function Home() {
     }
     toggleEditMode();
   }, [canUseEditMode, isAdmin, toggleEditMode]);
+
+  const handleTryNearbyFilters = useCallback(() => {
+    router.push('/search?nearby=true');
+  }, [router]);
   
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
@@ -2578,8 +2583,11 @@ export default function Home() {
                     !searching &&
                     filteredDestinations.length === 0 &&
                     !chatResponse && (
-                      <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                        <span>No results found. Try refining your search.</span>
+                      <div className="mt-6 text-left">
+                        <NoResultsEmptyState
+                          searchTerm={submittedQuery}
+                          onTryNearby={handleTryNearbyFilters}
+                        />
                       </div>
                     )}
                 </div>

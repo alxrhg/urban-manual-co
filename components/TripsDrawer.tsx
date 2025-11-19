@@ -8,6 +8,7 @@ import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
 import { Plus, MapPin, Calendar, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
+import { TripsEmptyState } from '@/components/EmptyStates';
 
 interface TripsDrawerProps {
   isOpen: boolean;
@@ -24,6 +25,21 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   const [error, setError] = useState<string | null>(null);
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
+
+  const handleCreateTrip = () => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    setEditingTripId(null);
+    setShowTripDialog(true);
+  };
+
+  const handleImportTrip = () => {
+    onClose();
+    router.push('/trips');
+  };
 
   const fetchTrips = useCallback(async () => {
     if (!user) {
@@ -198,28 +214,15 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
             Try Again
           </button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {trips.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-              <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">You have no trips yet.</p>
-              <button
-                onClick={() => {
-                  if (!user) {
-                    router.push('/auth/login');
-                  } else {
-                    setEditingTripId(null);
-                    setShowTripDialog(true);
-                  }
-                }}
-                className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-xl hover:opacity-80 transition-opacity"
-              >
-                Create Trip
-              </button>
-            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-6">
+              {trips.length === 0 ? (
+                <TripsEmptyState
+                  onCreateTrip={handleCreateTrip}
+                  onImportTrip={handleImportTrip}
+                />
+              ) : (
+                <div className="space-y-3">
               {trips.map((trip) => {
                 const imageUrl = trip.cover_image || (trip as any).firstLocationImage;
                 const dateRange = formatDateRange(trip.start_date, trip.end_date);
@@ -305,14 +308,7 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
           <div className="flex items-center justify-between w-full">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Your Trips</h2>
             <button
-              onClick={() => {
-                if (!user) {
-                  router.push('/auth/login');
-                } else {
-                  setEditingTripId(null);
-                  setShowTripDialog(true);
-                }
-              }}
+              onClick={handleCreateTrip}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity"
             >
               <Plus className="w-3.5 h-3.5" />

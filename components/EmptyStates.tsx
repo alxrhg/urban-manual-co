@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LucideIcon, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +12,9 @@ interface EmptyStateProps {
   actionLabel?: string;
   actionHref?: string;
   onAction?: () => void;
+  secondaryActionLabel?: string;
+  secondaryActionHref?: string;
+  onSecondaryAction?: () => void;
 }
 
 export function EmptyState({
@@ -20,7 +23,10 @@ export function EmptyState({
   description,
   actionLabel,
   actionHref,
-  onAction
+  onAction,
+  secondaryActionLabel,
+  secondaryActionHref,
+  onSecondaryAction
 }: EmptyStateProps) {
   const router = useRouter();
 
@@ -32,56 +38,127 @@ export function EmptyState({
     }
   };
 
+  const handleSecondaryAction = () => {
+    if (onSecondaryAction) {
+      onSecondaryAction();
+    } else if (secondaryActionHref) {
+      router.push(secondaryActionHref);
+    }
+  };
+
   return (
-    <div className="text-center py-20">
-      <div className="text-4xl mb-4">{icon}</div>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+    <div className="text-center py-16 px-6 sm:px-8 bg-gray-50 dark:bg-gray-900/40 rounded-3xl border border-gray-200 dark:border-gray-800">
+      <div className="text-4xl mb-3" aria-hidden>
+        {icon}
+      </div>
+      <p className="text-base font-semibold text-gray-900 dark:text-white">{title}</p>
       {description && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{description}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed max-w-xl mx-auto">
+          {description}
+        </p>
       )}
-      {actionLabel && (
-        <button
-          onClick={handleAction}
-          className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
-        >
-          {actionLabel}
-        </button>
+      {(actionLabel || secondaryActionLabel) && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3" role="group" aria-label="Empty state actions">
+          {actionLabel && (
+            <Button onClick={handleAction} size="sm" className="w-full sm:w-auto">
+              {actionLabel}
+            </Button>
+          )}
+          {secondaryActionLabel && (
+            <Button
+              onClick={handleSecondaryAction}
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              {secondaryActionLabel}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
 }
 
 // Pre-built empty states for common scenarios
-export function NoResultsEmptyState({ searchTerm }: { searchTerm?: string }) {
+export function NoResultsEmptyState({
+  searchTerm,
+  onTryNearby,
+}: {
+  searchTerm?: string;
+  onTryNearby?: () => void;
+}) {
   return (
     <EmptyState
       icon="🔍"
       title="No results found"
-      description={searchTerm ? `No places match "${searchTerm}"` : "Try adjusting your filters"}
+      description={
+        searchTerm
+          ? `No places match "${searchTerm}". Try different filters or explore nearby.`
+          : 'Try adjusting your filters or exploring nearby suggestions.'
+      }
+      actionLabel="Try nearby filters"
+      onAction={onTryNearby}
+      secondaryActionLabel="Browse top cities"
+      secondaryActionHref="/cities"
     />
   );
 }
 
-export function NoSavedPlacesEmptyState() {
+export function NoSavedPlacesEmptyState({
+  onBrowseTopCities,
+  onImportTrip,
+}: {
+  onBrowseTopCities?: () => void;
+  onImportTrip?: () => void;
+}) {
   return (
     <EmptyState
       icon="💝"
-      title="No saved places yet"
-      description="Save places to create your wishlist"
-      actionLabel="Browse Destinations"
-      actionHref="/"
+      title="Save places you love"
+      description="Build curated lists and sync them to your trips."
+      actionLabel="Browse top cities"
+      onAction={onBrowseTopCities}
+      actionHref="/cities"
+      secondaryActionLabel="Import a Google trip"
+      onSecondaryAction={onImportTrip}
+      secondaryActionHref="/trips"
     />
   );
 }
 
-export function NoVisitedPlacesEmptyState() {
+export function NoVisitedPlacesEmptyState({
+  onLogVisit,
+  onImportTrip,
+}: {
+  onLogVisit?: () => void;
+  onImportTrip?: () => void;
+}) {
   return (
     <EmptyState
       icon="✈️"
-      title="No visits yet"
-      description="Mark places as visited to track your journey"
-      actionLabel="Browse Destinations"
-      actionHref="/"
+      title="Nothing marked as visited"
+      description="Celebrate your travels by logging recent stops and syncing your itineraries."
+      actionLabel="Log a recent visit"
+      onAction={onLogVisit}
+      actionHref="/search"
+      secondaryActionLabel="Import a Google trip"
+      onSecondaryAction={onImportTrip}
+      secondaryActionHref="/trips"
+    />
+  );
+}
+
+export function TripsEmptyState({ onCreateTrip, onImportTrip }: { onCreateTrip: () => void; onImportTrip: () => void }) {
+  return (
+    <EmptyState
+      icon="🧭"
+      title="No trips planned yet"
+      description="Start organizing your next adventure or import plans you already have."
+      actionLabel="Plan a new trip"
+      onAction={onCreateTrip}
+      secondaryActionLabel="Import a Google trip"
+      onSecondaryAction={onImportTrip}
     />
   );
 }

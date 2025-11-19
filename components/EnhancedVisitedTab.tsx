@@ -27,6 +27,9 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recent' | 'name'>('recent');
 
+  const handleLogVisit = () => router.push('/search');
+  const handleImportTrip = () => router.push('/trips');
+
   // Extract unique cities and categories
   const { cities, categories } = useMemo(() => {
     const citiesSet = new Set<string>();
@@ -65,7 +68,12 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
   }, [visitedPlaces, filterCity, filterCategory, sortBy]);
 
   if (visitedPlaces.length === 0) {
-    return <NoVisitedPlacesEmptyState />;
+    return (
+      <NoVisitedPlacesEmptyState
+        onLogVisit={handleLogVisit}
+        onImportTrip={handleImportTrip}
+      />
+    );
   }
 
   return (

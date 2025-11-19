@@ -6,6 +6,7 @@ import type { Trip } from '@/types/common';
 import { MapPin, Plus, Calendar, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { TripPlanner } from '@/components/TripPlanner';
+import { TripsEmptyState } from '@/components/EmptyStates';
 
 interface TripsTabProps {
   trips: Trip[];
@@ -17,14 +18,20 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<number | null>(null);
 
+  const handleCreateTrip = () => {
+    setEditingTripId(null);
+    setShowTripDialog(true);
+  };
+
+  const handleImportTrip = () => {
+    router.push('/trips');
+  };
+
   return (
     <div className="fade-in">
       <div className="flex justify-end mb-4">
         <button
-          onClick={() => {
-            setEditingTripId(null);
-            setShowTripDialog(true);
-          }}
+          onClick={handleCreateTrip}
           className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
         >
           <Plus className="h-3 w-3" />
@@ -33,19 +40,10 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
       </div>
 
       {trips.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-          <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
-          <button
-            onClick={() => {
-              setEditingTripId(null);
-              setShowTripDialog(true);
-            }}
-            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
-          >
-            Create your first trip
-          </button>
-        </div>
+        <TripsEmptyState
+          onCreateTrip={handleCreateTrip}
+          onImportTrip={handleImportTrip}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {trips.map((trip) => (
