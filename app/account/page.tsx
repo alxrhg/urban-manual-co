@@ -16,6 +16,7 @@ import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
+import { TravelHistory } from "@/components/TravelHistory";
 import type { Collection, Trip, SavedPlace, VisitedPlace } from "@/types/common";
 import type { User } from "@supabase/supabase-js";
 
@@ -532,12 +533,14 @@ export default function Account() {
                     {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
                   </p>
                 </div>
-                <WorldMapVisualization 
+                <WorldMapVisualization
                   visitedCountries={stats.uniqueCountries}
                   visitedDestinations={stats.visitedDestinationsWithCoords}
                 />
               </div>
             )}
+
+            <TravelHistory visitedPlaces={visitedPlaces} />
 
             {/* Recent Visits */}
             {visitedPlaces.length > 0 && (
