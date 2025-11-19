@@ -68,9 +68,26 @@
     --container-padding-desktop: 48px;
     --gutter-nav: 12px;
     --gutter-grid: 20px;
-    
+
     /* Ensure container uses 1280px max-width */
     --tw-container-max-width: 1280px;
+
+    /* Account drawer theme tokens */
+    --account-drawer-foreground: #111111;
+    --account-drawer-muted: rgba(17, 17, 17, 0.65);
+    --account-drawer-subtle: rgba(17, 17, 17, 0.45);
+    --account-drawer-divider: rgba(17, 17, 17, 0.08);
+    --account-drawer-button-bg: rgba(17, 17, 17, 0.08);
+    --account-drawer-button-hover: rgba(17, 17, 17, 0.12);
+    --account-drawer-button-active: rgba(17, 17, 17, 0.18);
+    --account-drawer-tile-hover: rgba(17, 17, 17, 0.05);
+    --account-drawer-tile-active: rgba(17, 17, 17, 0.12);
+    --account-drawer-pill-bg: rgba(17, 17, 17, 0.04);
+    --account-drawer-pill-hover: rgba(17, 17, 17, 0.08);
+    --account-drawer-pill-active: rgba(17, 17, 17, 0.12);
+    --account-drawer-pill-border: rgba(17, 17, 17, 0.08);
+    --account-drawer-icon: #111111;
+    --account-drawer-header-bg: rgba(255, 255, 255, 0.85);
   }
 
   .dark {
@@ -93,6 +110,23 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Account drawer theme tokens */
+    --account-drawer-foreground: #F5F5F5;
+    --account-drawer-muted: rgba(245, 245, 245, 0.65);
+    --account-drawer-subtle: rgba(245, 245, 245, 0.45);
+    --account-drawer-divider: rgba(255, 255, 255, 0.12);
+    --account-drawer-button-bg: rgba(255, 255, 255, 0.09);
+    --account-drawer-button-hover: rgba(255, 255, 255, 0.14);
+    --account-drawer-button-active: rgba(255, 255, 255, 0.18);
+    --account-drawer-tile-hover: rgba(255, 255, 255, 0.06);
+    --account-drawer-tile-active: rgba(255, 255, 255, 0.14);
+    --account-drawer-pill-bg: rgba(255, 255, 255, 0.04);
+    --account-drawer-pill-hover: rgba(255, 255, 255, 0.06);
+    --account-drawer-pill-active: rgba(255, 255, 255, 0.08);
+    --account-drawer-pill-border: rgba(255, 255, 255, 0.06);
+    --account-drawer-icon: #F5F5F5;
+    --account-drawer-header-bg: rgba(18, 18, 18, 0.6);
   }
 
   * {
