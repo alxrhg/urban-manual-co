@@ -18,6 +18,7 @@ export function createHomepageDestinationsHandler(deps: DestinationsHandlerDeps)
       if (error?.message?.includes('placeholder') || 
           error?.message?.includes('invalid') ||
           error?.message?.includes('Failed to create service role client') ||
+          error?.message?.includes('fetch failed') ||
           error?.code === 'ECONNREFUSED' ||
           error?.code === 'ETIMEDOUT') {
         console.warn('[Homepage Destinations API] Database connection issue - returning empty destinations');
