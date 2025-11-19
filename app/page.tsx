@@ -2792,95 +2792,97 @@ export default function Home() {
               <div className="w-full px-6 md:px-10 pb-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Mid Nav - Horizontal Row, Right Aligned */}
-                <div className="mb-6 flex justify-end">
-                  <div className="flex flex-row items-center gap-3 w-auto">
-                    {/* Discover by Cities - Pill */}
-                    <Link
-                      href="/cities"
-                      className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out bg-white border border-gray-200 text-gray-900 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
-                      style={{ borderRadius: '9999px' }}
-                    >
-                      <Globe className="h-4 w-4" />
-                      <span>Discover by Cities</span>
-                    </Link>
+                <div className="mb-6">
+                  <div className="flex justify-start sm:justify-end">
+                    <div className="-mx-2 flex w-full max-w-full flex-nowrap items-center gap-3 overflow-x-auto px-2 pb-2 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent sm:flex-wrap sm:justify-end sm:overflow-visible">
+                      {/* Discover by Cities - Pill */}
+                      <Link
+                        href="/cities"
+                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 ease-out hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
+                        style={{ borderRadius: '9999px' }}
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span>Discover by Cities</span>
+                      </Link>
 
-                    {/* Filters - Pill */}
-                    <div className="relative">
-                      <SearchFiltersComponent
-                        filters={advancedFilters}
-                        onFiltersChange={(newFilters) => {
-                          setAdvancedFilters(newFilters);
-                          if (newFilters.city !== undefined) {
-                            setSelectedCity(newFilters.city || '');
-                          }
-                          if (newFilters.category !== undefined) {
-                            setSelectedCategory(newFilters.category || '');
-                          }
-                          Object.entries(newFilters).forEach(([key, value]) => {
-                            if (value !== undefined && value !== null && value !== '') {
-                              trackFilterChange({ filterType: key, value });
+                      {/* Filters - Pill */}
+                      <div className="relative flex-shrink-0">
+                        <SearchFiltersComponent
+                          filters={advancedFilters}
+                          onFiltersChange={(newFilters) => {
+                            setAdvancedFilters(newFilters);
+                            if (newFilters.city !== undefined) {
+                              setSelectedCity(newFilters.city || '');
                             }
-                          });
-                        }}
-                        availableCities={cities}
-                        availableCategories={categories}
-                        onLocationChange={handleLocationChange}
-                        sortBy={sortBy}
-                        onSortChange={(newSort) => {
-                          setSortBy(newSort);
-                          setCurrentPage(1);
-                        }}
-                        isAdmin={isAdmin}
-                        fullWidthPanel={true}
-                        useFunnelIcon={true}
-                      />
-                    </div>
+                            if (newFilters.category !== undefined) {
+                              setSelectedCategory(newFilters.category || '');
+                            }
+                            Object.entries(newFilters).forEach(([key, value]) => {
+                              if (value !== undefined && value !== null && value !== '') {
+                                trackFilterChange({ filterType: key, value });
+                              }
+                            });
+                          }}
+                          availableCities={cities}
+                          availableCategories={categories}
+                          onLocationChange={handleLocationChange}
+                          sortBy={sortBy}
+                          onSortChange={(newSort) => {
+                            setSortBy(newSort);
+                            setCurrentPage(1);
+                          }}
+                          isAdmin={isAdmin}
+                          fullWidthPanel={true}
+                          useFunnelIcon={true}
+                        />
+                      </div>
 
-                    {/* View Toggle - Single Button showing opposite mode */}
-                    <button
-                      onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
-                      className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.08)] text-gray-900 dark:text-[rgba(255,255,255,0.92)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.15)]"
-                      style={{ borderRadius: '9999px' }}
-                      aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
-                    >
-                      {viewMode === 'grid' ? (
-                        <>
-                          <Map className="h-4 w-4" />
-                          <span>Map</span>
-                        </>
+                      {/* View Toggle - Single Button showing opposite mode */}
+                      <button
+                        onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+                        style={{ borderRadius: '9999px' }}
+                        aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
+                      >
+                        {viewMode === 'grid' ? (
+                          <>
+                            <Map className="h-4 w-4" />
+                            <span>Map</span>
+                          </>
+                        ) : (
+                          <>
+                            <LayoutGrid className="h-4 w-4" />
+                            <span>Grid</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Create Trip - Pill Filled (Black) */}
+                      {isAdmin ? (
+                        <button
+                          onClick={() => {
+                            setEditingDestination(null);
+                            setShowPOIDrawer(true);
+                          }}
+                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
+                          style={{ borderRadius: '9999px' }}
+                          aria-label="Add New POI"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Add New POI</span>
+                        </button>
                       ) : (
-                        <>
-                          <LayoutGrid className="h-4 w-4" />
-                          <span>Grid</span>
-                        </>
+                        <button
+                          onClick={() => setShowTripPlanner(true)}
+                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
+                          style={{ borderRadius: '9999px' }}
+                          aria-label="Create Trip"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Create Trip</span>
+                        </button>
                       )}
-                    </button>
-
-                    {/* Create Trip - Pill Filled (Black) */}
-                    {isAdmin ? (
-                      <button
-                        onClick={() => {
-                          setEditingDestination(null);
-                          setShowPOIDrawer(true);
-                        }}
-                        className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Add New POI"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add New POI</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowTripPlanner(true)}
-                        className="flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                        style={{ borderRadius: '9999px' }}
-                        aria-label="Create Trip"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Create Trip</span>
-                      </button>
-                    )}
+                    </div>
                   </div>
                 </div>
 
