@@ -1,7 +1,7 @@
 # Sanity Troubleshooting
 
 ### 1. `Missing NEXT_PUBLIC_SANITY_PROJECT_ID`
-The Studio and client throw if the project ID is absent. Confirm `NEXT_PUBLIC_SANITY_PROJECT_ID` is present locally (`.env.local`) and in hosted environments.
+The Studio and client throw if no project ID can be found. We first check `NEXT_PUBLIC_SANITY_PROJECT_ID`, then `SANITY_STUDIO_PROJECT_ID`/`SANITY_API_PROJECT_ID`. Ensure at least one of those variables is defined locally (`.env.local`) and in hosted environments.
 
 ### 2. `Error: Project ID is not a valid` or CORS errors
 Ensure the Sanity project allows the domain you are using:

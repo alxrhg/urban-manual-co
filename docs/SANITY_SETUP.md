@@ -17,6 +17,7 @@ SANITY_TOKEN=<optional editor token>
 
 - `NEXT_PUBLIC_` prefixed variables are required both on the client (for Studio) and server (for GROQ queries).
 - `SANITY_TOKEN` is only required for server-side mutations or preview drafts.
+- If you are using Vercel’s default Sanity integration, the project automatically reads `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`, `SANITY_API_PROJECT_ID`, and `SANITY_API_DATASET` as fallbacks—no aliasing necessary.
 
 ## Local Development
 
