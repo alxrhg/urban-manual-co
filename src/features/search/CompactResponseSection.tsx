@@ -100,7 +100,9 @@ export function CompactResponseSection({
 
       {/* Clickable refinement chips */}
       {suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div
+          className="flex gap-2 mb-4 overflow-x-auto flex-nowrap sm:flex-wrap sm:overflow-visible scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent -mx-1 px-1"
+        >
           {suggestions.map((suggestion, i) => (
             <Button
               key={i}
@@ -108,7 +110,7 @@ export function CompactResponseSection({
               variant="pill"
               size="xs"
               onClick={() => onChipClick(suggestion.refinement)}
-              className="border-neutral-300 text-neutral-600 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-200"
+              className="shrink-0 border-neutral-300 text-neutral-600 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-200"
             >
               {suggestion.label}
             </Button>
