@@ -495,6 +495,17 @@ export default function Home() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  const gridSwipeState = useRef<{
+    startX: number;
+    startY: number;
+    isActive: boolean;
+    isHorizontal: boolean;
+  }>({
+    startX: 0,
+    startY: 0,
+    isActive: false,
+    isHorizontal: false,
+  });
   // Calculate items per page based on 4 full rows × current grid columns
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   // Advanced filters state
@@ -2991,6 +3002,9 @@ export default function Home() {
                 advancedFilters.nearMe && nearbyDestinations.length > 0
                   ? nearbyDestinations
                   : filteredDestinations;
+              const totalPages = Math.ceil(
+                displayDestinations.length / itemsPerPage
+              );
 
               // Always render the grid structure, even if empty (for instant page load)
               // Show empty state if no destinations
@@ -3048,10 +3062,76 @@ export default function Home() {
                   const endIndex = startIndex + itemsPerPage;
                       const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
+                    const handleTouchStart = (
+                      event: React.TouchEvent<HTMLDivElement>
+                    ) => {
+                      if (totalPages <= 1) return;
+                      const touch = event.touches[0];
+                      gridSwipeState.current.startX = touch.clientX;
+                      gridSwipeState.current.startY = touch.clientY;
+                      gridSwipeState.current.isActive = true;
+                      gridSwipeState.current.isHorizontal = false;
+                    };
+
+                    const handleTouchMove = (
+                      event: React.TouchEvent<HTMLDivElement>
+                    ) => {
+                      const state = gridSwipeState.current;
+                      if (!state.isActive) return;
+                      const touch = event.touches[0];
+                      const deltaX = touch.clientX - state.startX;
+                      const deltaY = touch.clientY - state.startY;
+
+                      if (!state.isHorizontal) {
+                        const absDeltaX = Math.abs(deltaX);
+                        const absDeltaY = Math.abs(deltaY);
+
+                        if (absDeltaX > 10 && absDeltaX > absDeltaY) {
+                          state.isHorizontal = true;
+                        } else if (absDeltaY > 10 && absDeltaY > absDeltaX) {
+                          state.isActive = false;
+                        }
+                      }
+                    };
+
+                    const handleTouchEnd = (
+                      event: React.TouchEvent<HTMLDivElement>
+                    ) => {
+                      const state = gridSwipeState.current;
+                      if (!state.isActive) return;
+
+                      state.isActive = false;
+                      if (!state.isHorizontal || totalPages <= 1) {
+                        return;
+                      }
+
+                      const touch = event.changedTouches[0];
+                      const deltaX = touch.clientX - state.startX;
+                      const threshold = 50;
+
+                      if (Math.abs(deltaX) < threshold) {
+                        return;
+                      }
+
+                      if (deltaX < 0) {
+                        setCurrentPage(prev =>
+                          Math.min(totalPages, prev + 1)
+                        );
+                      } else {
+                        setCurrentPage(prev => Math.max(1, prev - 1));
+                      }
+                    };
+
                     return (
-                      <UniversalGrid
-                        items={paginatedDestinations}
-                        renderItem={(destination, index) => {
+                      <div
+                        className="relative w-full touch-pan-y"
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                      >
+                        <UniversalGrid
+                          items={paginatedDestinations}
+                          renderItem={(destination, index) => {
                           const isVisited = !!(
                             user && visitedSlugs.has(destination.slug)
                           );
@@ -3124,16 +3204,14 @@ export default function Home() {
                             );
                           }}
                         />
-                      );
-                    })()
-                  )}
+                      </div>
+                    );
+                  })()
+                )}
 
                   {/* Pagination - Only show in grid view */}
                   {viewMode === "grid" &&
                     (() => {
-                      const totalPages = Math.ceil(
-                        displayDestinations.length / itemsPerPage
-                      );
                       if (totalPages <= 1) return null;
 
                       return (
