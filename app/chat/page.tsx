@@ -2,9 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { ConversationBubble } from '@/app/components/chat/ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
 import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
+import { TripPlanner, TripPlannerInitialDetails } from '@/components/TripPlanner';
+import type { TripPlannerCommand } from '@/types/trip-intent';
 // Analytics tracking via API
 async function trackPageView(page: string, userId?: string) {
   fetch('/api/analytics/feature-usage', {
@@ -49,9 +52,13 @@ export default function ChatPage() {
   const [streamingContent, setStreamingContent] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [guestSessionToken, setGuestSessionToken] = useState<string | null>(null);
+  const [pendingTripAction, setPendingTripAction] = useState<TripPlannerCommand | null>(null);
+  const [tripPlannerPrefill, setTripPlannerPrefill] = useState<TripPlannerInitialDetails | null>(null);
+  const [showTripPlanner, setShowTripPlanner] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     trackPageView('chat', user?.id);
@@ -113,6 +120,7 @@ export default function ChatPage() {
     setIsStreaming(true);
     setStreamingContent('');
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setPendingTripAction(null);
     trackChatMessage(user?.id, { messageLength: userMessage.length });
 
     try {
@@ -168,6 +176,11 @@ export default function ChatPage() {
                 case 'complete':
                   setSessionId(data.session_id || sessionId);
                   lastSuggestions = data.suggestions || [];
+                  if (data.trip_action) {
+                    setPendingTripAction(data.trip_action as TripPlannerCommand);
+                  } else {
+                    setPendingTripAction(null);
+                  }
                   break;
 
                 case 'error':
@@ -247,9 +260,66 @@ export default function ChatPage() {
     }, 100);
   }
 
+  const tripActionDescription = (action: TripPlannerCommand) => {
+    if (action.action === 'openTripPlanner') {
+      const pieces: string[] = [];
+      if (action.city) pieces.push(action.city);
+      if (action.timeDescriptor) pieces.push(action.timeDescriptor);
+      if (action.activityType) pieces.push(action.activityType);
+      if (!pieces.length) {
+        pieces.push('a new');
+      }
+      return `Want me to start ${pieces.join(' · ')} trip plan?`;
+    }
+    if (action.action === 'addToTrip') {
+      return action.itemName
+        ? `Add ${action.itemName} to your itinerary?`
+        : 'Want to drop this into your trip plan?';
+    }
+    return 'Need to revisit your itinerary?';
+  };
+
+  const tripActionPrimaryLabel = (action: TripPlannerCommand) => {
+    switch (action.action) {
+      case 'openTripPlanner':
+        return action.city ? `Start ${action.city} plan` : 'Start trip plan';
+      case 'addToTrip':
+        return 'Go to trips';
+      case 'openTripPage':
+      default:
+        return 'Open trips';
+    }
+  };
+
+  const handleTripActionPrimary = () => {
+    if (!pendingTripAction) return;
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (pendingTripAction.action === 'openTripPlanner') {
+      setTripPlannerPrefill({
+        destination: pendingTripAction.city || undefined,
+        startDate: pendingTripAction.startDate || undefined,
+        endDate: pendingTripAction.endDate || undefined,
+      });
+      setShowTripPlanner(true);
+      return;
+    }
+
+    router.push('/trips');
+    setPendingTripAction(null);
+  };
+
+  const dismissTripAction = () => {
+    setPendingTripAction(null);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-8">
+    <>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="w-full px-6 md:px-10 lg:px-12 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Travel Chat
@@ -309,6 +379,44 @@ export default function ChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
+            {pendingTripAction && (
+              <div className="px-4">
+                <div className="mb-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 px-4 py-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                        {tripActionDescription(pendingTripAction)}
+                      </p>
+                      {pendingTripAction.requiresDates && pendingTripAction.action === 'openTripPlanner' && (
+                        <p className="text-xs text-amber-700/80 dark:text-amber-200/80 mt-1">
+                          Add your dates once the planner opens and I&apos;ll keep everything synced.
+                        </p>
+                      )}
+                      {pendingTripAction.slot && pendingTripAction.action === 'addToTrip' && (
+                        <p className="text-xs text-amber-700/80 dark:text-amber-200/80 mt-1">
+                          Suggested slot: {pendingTripAction.slot}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2 md:flex-row">
+                      <button
+                        onClick={handleTripActionPrimary}
+                        className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-900 text-white hover:bg-amber-800 transition-colors"
+                      >
+                        {tripActionPrimaryLabel(pendingTripAction)}
+                      </button>
+                      <button
+                        onClick={dismissTripAction}
+                        className="px-4 py-2 text-xs font-medium rounded-xl border border-amber-200 text-amber-900 dark:text-amber-100 hover:bg-amber-100/60 dark:hover:bg-amber-800/40 transition-colors"
+                      >
+                        Not now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Input */}
             <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-800">
               <div className="flex gap-2">
@@ -333,6 +441,16 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      <TripPlanner
+        isOpen={showTripPlanner}
+        initialDetails={tripPlannerPrefill ?? undefined}
+        onClose={() => {
+          setShowTripPlanner(false);
+          setTripPlannerPrefill(null);
+        }}
+      />
+    </>
   );
 }
 

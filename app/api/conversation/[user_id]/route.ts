@@ -21,6 +21,7 @@ import {
 } from '../utils/contextHandler';
 import { extractIntent } from '@/app/api/intent/schema';
 import { logConversationMetrics } from '@/lib/metrics/conversationMetrics';
+import { detectTripAction } from '../utils/tripActionDetector';
 import {
   conversationRatelimit,
   memoryConversationRatelimit,
@@ -114,6 +115,7 @@ export async function POST(
     }
 
     const intent = await extractIntent(message, messages, userContext);
+    const tripAction = detectTripAction(intent, message);
 
     // Save user message
     await saveMessage(session.sessionId, {
@@ -256,6 +258,7 @@ export async function POST(
       message: assistantResponse,
       context: { ...session.context, ...contextUpdates },
       intent,
+      trip_action: tripAction,
       suggestions: suggestions.slice(0, 3),
       session_id: session.sessionId,
       session_token: session.sessionToken,

@@ -26,10 +26,19 @@ import { TripShareModal } from './TripShareModal';
 import { Drawer } from './ui/Drawer';
 import type { Trip as TripSchema, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 
+export interface TripPlannerInitialDetails {
+  tripName?: string;
+  destination?: string;
+  startDate?: string;
+  endDate?: string;
+  hotelLocation?: string;
+}
+
 interface TripPlannerProps {
   isOpen: boolean;
   onClose: () => void;
   tripId?: string; // If provided, load existing trip
+  initialDetails?: TripPlannerInitialDetails;
 }
 
 interface TripLocation {
@@ -49,7 +58,7 @@ interface DayItinerary {
   notes?: string;
 }
 
-export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
+export function TripPlanner({ isOpen, onClose, tripId, initialDetails }: TripPlannerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [tripName, setTripName] = useState('');
@@ -72,23 +81,25 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
   // Load existing trip if tripId is provided
   useEffect(() => {
-    if (isOpen && tripId && user) {
+    if (!isOpen) return;
+
+    if (tripId && user) {
       loadTrip(tripId);
-    } else if (isOpen && !tripId) {
-      // Reset form for new trip
-      resetForm();
+    } else if (!tripId) {
+      // Reset form for new trip, optionally pre-filling details from chat intent
+      resetForm(initialDetails);
     }
-  }, [isOpen, tripId, user]);
+  }, [isOpen, tripId, user, initialDetails]);
 
   // Body scroll is handled by Drawer component
 
-  const resetForm = () => {
-    setTripName('');
-    setDestination('');
-    setStartDate('');
-    setEndDate('');
+  const resetForm = (details?: TripPlannerInitialDetails) => {
+    setTripName(details?.tripName || '');
+    setDestination(details?.destination || '');
+    setStartDate(details?.startDate || '');
+    setEndDate(details?.endDate || '');
     setDays([]);
-    setHotelLocation('');
+    setHotelLocation(details?.hotelLocation || '');
     setStep('create');
     setCurrentTripId(null);
     setCoverImage(null);
