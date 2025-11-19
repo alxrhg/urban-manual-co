@@ -6,16 +6,14 @@ import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { EnhancedVisitedTab } from '@/components/EnhancedVisitedTab';
 import { Loader2, AlertCircle } from 'lucide-react';
-
-interface VisitedPlacesDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { useDrawer } from '@/contexts/DrawerContext';
 
 const LOADING_TIMEOUT = 10000; // 10 seconds
 
-export function VisitedPlacesDrawer({ isOpen, onClose }: VisitedPlacesDrawerProps) {
+export function VisitedPlacesDrawer() {
   const { user } = useAuth();
+  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const isOpen = isDrawerOpen('visited-places');
   const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +141,7 @@ export function VisitedPlacesDrawer({ isOpen, onClose }: VisitedPlacesDrawerProp
   return (
     <Drawer
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={closeDrawer}
       title="Visited Places"
     >
       {content}

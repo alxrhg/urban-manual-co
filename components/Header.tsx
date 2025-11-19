@@ -152,11 +152,7 @@ export function Header() {
       </div>
       {/* Account Drawer - Only render when open */}
       {isDrawerOpen('account') && (
-        <AccountDrawer
-          isOpen={true}
-          onClose={closeDrawer}
-          onOpenChat={() => openDrawer('chat')}
-        />
+        <AccountDrawer />
       )}
 
       {/* Chat Drawer - Only render when open */}

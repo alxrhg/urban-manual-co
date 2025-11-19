@@ -8,17 +8,15 @@ import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
 import { Plus, MapPin, Calendar, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
-
-interface TripsDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { useDrawer } from '@/contexts/DrawerContext';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds (longer for trips with images)
 
-export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
+export function TripsDrawer() {
   const router = useRouter();
   const { user } = useAuth();
+  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const isOpen = isDrawerOpen('trips');
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -274,7 +272,7 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
                       {/* Action - Arrow Right */}
                       <button
                         onClick={() => {
-                          onClose();
+                          closeDrawer();
                           setTimeout(() => {
                             router.push(`/trips/${trip.id}`);
                           }, 200);
@@ -299,7 +297,7 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
     <>
       <Drawer
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={closeDrawer}
         title="Your Trips"
         headerContent={
           <div className="flex items-center justify-between w-full">
