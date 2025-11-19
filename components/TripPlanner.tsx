@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   CalendarIcon,
   MapPinIcon,
@@ -14,6 +14,7 @@ import {
   X,
   Camera,
   Image as ImageIcon,
+  AlertCircle,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/useToast';
@@ -64,11 +65,21 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{
+    tripName?: string;
+    destination?: string;
+    startDate?: string;
+    endDate?: string;
+  }>({});
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const toast = useToast();
+
+  const draftStorageKey = 'tripPlannerDraft';
 
   // Load existing trip if tripId is provided
   useEffect(() => {
@@ -94,6 +105,9 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     setCoverImage(null);
     setCoverImageFile(null);
     setCoverImagePreview(null);
+    setValidationErrors([]);
+    setFieldErrors({});
+    setDraftRestored(false);
   };
 
   const loadTrip = async (id: string) => {
@@ -233,9 +247,102 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     }
   };
 
+  const validateRequiredFields = () => {
+    const errors: string[] = [];
+    const nextFieldErrors: typeof fieldErrors = {};
+
+    if (!tripName.trim()) {
+      errors.push('Trip name is required.');
+      nextFieldErrors.tripName = 'Please add a name for your trip.';
+    }
+
+    if (!destination.trim()) {
+      errors.push('Destination is required.');
+      nextFieldErrors.destination = 'Please choose where you are travelling.';
+    }
+
+    if (!startDate) {
+      errors.push('Start date is required.');
+      nextFieldErrors.startDate = 'Select when your trip begins.';
+    }
+
+    if (!endDate) {
+      errors.push('End date is required.');
+      nextFieldErrors.endDate = 'Select when your trip ends.';
+    }
+
+    setValidationErrors(errors);
+    setFieldErrors(nextFieldErrors);
+
+    return errors.length === 0;
+  };
+
+  const persistDraft = useCallback(() => {
+    if (typeof window === 'undefined' || step !== 'create' || !isOpen) return;
+
+    const draft = {
+      tripName,
+      destination,
+      startDate,
+      endDate,
+      hotelLocation,
+      coverImage: coverImagePreview || coverImage,
+    };
+
+    localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }, [coverImage, coverImagePreview, destination, endDate, hotelLocation, isOpen, startDate, step, tripName]);
+
+  useEffect(() => {
+    if (!isOpen || tripId || step !== 'create' || draftRestored) return;
+
+    if (typeof window === 'undefined') return;
+
+    const savedDraft = localStorage.getItem(draftStorageKey);
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft) as {
+          tripName?: string;
+          destination?: string;
+          startDate?: string;
+          endDate?: string;
+          hotelLocation?: string;
+          coverImage?: string | null;
+        };
+
+        setTripName(parsedDraft.tripName || '');
+        setDestination(parsedDraft.destination || '');
+        setStartDate(parsedDraft.startDate || '');
+        setEndDate(parsedDraft.endDate || '');
+        setHotelLocation(parsedDraft.hotelLocation || '');
+        if (parsedDraft.coverImage) {
+          setCoverImagePreview(parsedDraft.coverImage);
+        }
+      } catch (error) {
+        console.error('Error parsing trip planner draft', error);
+      }
+    }
+
+    setDraftRestored(true);
+  }, [draftRestored, draftStorageKey, isOpen, step, tripId]);
+
+  useEffect(() => {
+    if (step === 'create') {
+      persistDraft();
+    }
+  }, [destination, endDate, hotelLocation, persistDraft, startDate, step, tripName, coverImagePreview]);
+
+  const handleSaveDraft = () => {
+    persistDraft();
+    toast.success('Draft saved locally.');
+  };
+
   const handleCreateTrip = async () => {
-    if (!tripName || !destination || !startDate || !endDate || !user) {
-      alert('Please fill in all required fields');
+    if (!validateRequiredFields()) {
+      return;
+    }
+
+    if (!user) {
+      toast.error('Please sign in to create a trip.');
       return;
     }
 
@@ -283,6 +390,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
       setDays(newDays);
       setStep('plan');
+      setValidationErrors([]);
+      setFieldErrors({});
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(draftStorageKey);
+      }
     } catch (error: any) {
       console.error('Error creating trip:', error);
       alert(error?.message || 'Failed to create trip. Please try again.');
@@ -292,6 +404,10 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   };
 
   const handleSaveTrip = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     if (!currentTripId || !user) {
       alert('No trip to save');
       return;
@@ -409,6 +525,9 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
         if (insertError) throw insertError;
       }
+
+      setValidationErrors([]);
+      setFieldErrors({});
 
       // Show success feedback without alert
       // The save button will show "Saved" briefly
@@ -573,6 +692,42 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     ];
   };
 
+  const progressHeader = (
+    <div className="mb-6">
+      <div className="flex items-center justify-between text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em]">
+        <div className="flex items-center gap-3">
+          <span className={`px-2 py-1 rounded-full ${
+            step === 'create'
+              ? 'bg-black text-white dark:bg-white dark:text-black'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
+          }`}>
+            Details
+          </span>
+          <span className="text-gray-300 dark:text-gray-700">→</span>
+          <span className={`px-2 py-1 rounded-full ${
+            step === 'plan'
+              ? 'bg-black text-white dark:bg-white dark:text-black'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
+          }`}>
+            Itinerary
+          </span>
+        </div>
+        {(saving || uploadingCover) && (
+          <div className="flex items-center gap-2 text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Saving changes...</span>
+          </div>
+        )}
+      </div>
+      <div className="mt-3 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-black dark:bg-white transition-all duration-300"
+          style={{ width: step === 'plan' ? '100%' : '50%' }}
+        />
+      </div>
+    </div>
+  );
+
   // Build custom header with tabs and actions
   const headerContent = step === 'plan' ? (
     <div className="flex items-center justify-between w-full">
@@ -602,21 +757,24 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         )}
         <button
           onClick={() => setShowShare(true)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          disabled={saving}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Share trip"
         >
           <ShareIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
         </button>
         <button
           onClick={handleExportToCalendar}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          disabled={saving}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Export to calendar"
         >
           <DownloadIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
         </button>
         <button
           onClick={handlePrint}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          disabled={saving}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Print itinerary"
         >
           <PrinterIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -628,6 +786,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
   // Build content based on step and tab
   const content = (
     <div className="px-6 py-6">
+      {progressHeader}
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
@@ -635,6 +794,19 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         </div>
       ) : step === 'create' ? (
         <div className="space-y-8">
+          {validationErrors.length > 0 && (
+            <div className="rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-4 flex gap-3 text-sm text-red-800 dark:text-red-200">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <div>
+                <p className="font-semibold mb-2">Please fix the required fields:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
           <div className="space-y-3">
             <label htmlFor={`trip-planner-name-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
               Trip Name
@@ -646,8 +818,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               onChange={(e) => setTripName(e.target.value)}
               placeholder="Summer in Paris"
               autoComplete="off"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+              className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                fieldErrors.tripName
+                  ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
+                  : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+              }`}
             />
+            {fieldErrors.tripName && (
+              <p className="text-xs text-red-700 dark:text-red-300">{fieldErrors.tripName}</p>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -661,8 +840,15 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               onChange={(e) => setDestination(e.target.value)}
               placeholder="Paris, France"
               autoComplete="off"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+              className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                fieldErrors.destination
+                  ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
+                  : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+              }`}
             />
+            {fieldErrors.destination && (
+              <p className="text-xs text-red-700 dark:text-red-300">{fieldErrors.destination}</p>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -691,7 +877,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 autoComplete="off"
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                  fieldErrors.startDate
+                    ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
+                    : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+                }`}
               />
             </div>
 
@@ -705,10 +895,20 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 autoComplete="off"
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                  fieldErrors.endDate
+                    ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
+                    : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+                }`}
               />
             </div>
           </div>
+
+          {(fieldErrors.startDate || fieldErrors.endDate) && (
+            <p className="text-xs text-red-700 dark:text-red-300">
+              {fieldErrors.startDate || fieldErrors.endDate}
+            </p>
+          )}
 
           <button
             onClick={handleCreateTrip}
@@ -724,10 +924,32 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
               'Create Trip'
             )}
           </button>
+
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            disabled={saving}
+            className="w-full px-6 py-3 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+          >
+            Save draft locally
+          </button>
         </div>
       ) : (
         <>
           <div className="space-y-8">
+            {validationErrors.length > 0 && (
+              <div className="rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-4 flex gap-3 text-sm text-red-800 dark:text-red-200">
+                <AlertCircle className="h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-semibold mb-2">Please fix the required fields before saving:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {validationErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
             {/* Cover Image Upload */}
               <div className="mb-6">
                 <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
